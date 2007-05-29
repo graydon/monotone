@@ -620,7 +620,7 @@ UNIT_TEST(charset, idna_encoding)
 
   for (size_t i = 0; i < sizeof(idna_vec) / sizeof(struct idna); ++i)
     {
-      BOOST_CHECKPOINT("IDNA language: " + string(idna_vec[i].name));
+      UNIT_TEST_CHECKPOINT("IDNA language: " + string(idna_vec[i].name));
 
       size_t p, q;
       char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in,
@@ -634,9 +634,9 @@ UNIT_TEST(charset, idna_encoding)
       ace tace;
       utf8_to_ace(utf, tace);
       L(FL("ACE-encoded %s: '%s'") % idna_vec[i].name % tace());
-      BOOST_CHECK(lowercase(a()) == lowercase(tace()));
+      UNIT_TEST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
-      BOOST_CHECK(lowercase(utf()) == lowercase(tutf()));
+      UNIT_TEST_CHECK(lowercase(utf()) == lowercase(tutf()));
     }
 }
 
@@ -857,10 +857,10 @@ UNIT_TEST(charset, utf8_validation)
   };
 
   for (int i = 0; good_strings[i]; ++i)
-    BOOST_CHECK(utf8_validate(utf8(good_strings[i])) == true);
+    UNIT_TEST_CHECK(utf8_validate(utf8(good_strings[i])) == true);
 
   for (int i = 0; bad_strings[i]; ++i)
-    BOOST_CHECK(utf8_validate(utf8(bad_strings[i])) == false);
+    UNIT_TEST_CHECK(utf8_validate(utf8(bad_strings[i])) == false);
 }
 
 #endif // BUILD_UNIT_TESTS

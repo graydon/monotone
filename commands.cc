@@ -940,15 +940,15 @@ UNIT_TEST(commands, make_command_id)
 
   {
     command_id id = make_command_id("foo");
-    BOOST_CHECK(id.size() == 1);
-    BOOST_CHECK(id[0]() == "foo");
+    UNIT_TEST_CHECK(id.size() == 1);
+    UNIT_TEST_CHECK(id[0]() == "foo");
   }
 
   {
     command_id id = make_command_id("foo bar");
-    BOOST_CHECK(id.size() == 2);
-    BOOST_CHECK(id[0]() == "foo");
-    BOOST_CHECK(id[1]() == "bar");
+    UNIT_TEST_CHECK(id.size() == 2);
+    UNIT_TEST_CHECK(id[0]() == "foo");
+    UNIT_TEST_CHECK(id[1]() == "bar");
   }
 }
 
@@ -961,31 +961,31 @@ UNIT_TEST(commands, complete_command)
   // Single-word identifier, top-level category.
   {
     command_id id = complete_command(mkargs("top"));
-    BOOST_CHECK(id == make_command_id("top"));
+    UNIT_TEST_CHECK(id == make_command_id("top"));
   }
 
   // Single-word identifier.
   {
     command_id id = complete_command(mkargs("testg"));
-    BOOST_CHECK(id == make_command_id("top testg"));
+    UNIT_TEST_CHECK(id == make_command_id("top testg"));
   }
 
   // Single-word identifier, non-primary name.
   {
     command_id id = complete_command(mkargs("alias1"));
-    BOOST_CHECK(id == make_command_id("top alias1"));
+    UNIT_TEST_CHECK(id == make_command_id("top alias1"));
   }
 
   // Multi-word identifier.
   {
     command_id id = complete_command(mkargs("testg testg1"));
-    BOOST_CHECK(id == make_command_id("top testg testg1"));
+    UNIT_TEST_CHECK(id == make_command_id("top testg testg1"));
   }
 
   // Multi-word identifier, non-primary names.
   {
     command_id id = complete_command(mkargs("al testg1"));
-    BOOST_CHECK(id == make_command_id("top aliasg testg1"));
+    UNIT_TEST_CHECK(id == make_command_id("top aliasg testg1"));
   }
 }
 
@@ -998,103 +998,103 @@ UNIT_TEST(commands, command_complete_command)
   {
     command_id id = make_command_id("foo");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 0);
+    UNIT_TEST_REQUIRE(matches.size() == 0);
   }
 
   // Non-existent multi-word identifier.
   {
     command_id id = make_command_id("foo bar");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 0);
+    UNIT_TEST_REQUIRE(matches.size() == 0);
   }
 
   // Single-word identifier with one match.
   {
     command_id id = make_command_id("test1");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 1);
-    BOOST_CHECK(*matches.begin() == make_command_id("test1"));
+    UNIT_TEST_REQUIRE(matches.size() == 1);
+    UNIT_TEST_CHECK(*matches.begin() == make_command_id("test1"));
   }
 
   // Single-word identifier with one match, non-primary name.
   {
     command_id id = make_command_id("alias1");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 1);
-    BOOST_CHECK(*matches.begin() == make_command_id("alias1"));
+    UNIT_TEST_REQUIRE(matches.size() == 1);
+    UNIT_TEST_CHECK(*matches.begin() == make_command_id("alias1"));
   }
 
   // Single-word identifier with multiple matches.
   {
     command_id id = make_command_id("test");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 3);
+    UNIT_TEST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
     expected.insert(make_command_id("test1"));
     expected.insert(make_command_id("test2"));
     expected.insert(make_command_id("testg"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 
   // Single-word identifier with multiple matches, non-primary name.
   {
     command_id id = make_command_id("alias");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 3);
+    UNIT_TEST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
     expected.insert(make_command_id("alias1"));
     expected.insert(make_command_id("alias2"));
     expected.insert(make_command_id("aliasg"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with one match.
   {
     command_id id = make_command_id("testg testg1");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 1);
+    UNIT_TEST_REQUIRE(matches.size() == 1);
 
     set< command_id > expected;
     expected.insert(make_command_id("testg testg1"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with multiple matches.
   {
     command_id id = make_command_id("testg testg");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 2);
+    UNIT_TEST_REQUIRE(matches.size() == 2);
 
     set< command_id > expected;
     expected.insert(make_command_id("testg testg1"));
     expected.insert(make_command_id("testg testg2"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with multiple matches at different levels.
   {
     command_id id = make_command_id("test testg1");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 3);
+    UNIT_TEST_REQUIRE(matches.size() == 3);
 
     set< command_id > expected;
     expected.insert(make_command_id("test1"));
     expected.insert(make_command_id("test2"));
     expected.insert(make_command_id("testg testg1"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 
   // Multi-word identifier with one match and extra words.
   {
     command_id id = make_command_id("testg testg1 foo");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    BOOST_REQUIRE(matches.size() == 1);
+    UNIT_TEST_REQUIRE(matches.size() == 1);
 
     set< command_id > expected;
     expected.insert(make_command_id("testg testg1"));
-    BOOST_CHECK(matches == expected);
+    UNIT_TEST_CHECK(matches == expected);
   }
 }
 
@@ -1108,63 +1108,63 @@ UNIT_TEST(commands, command_find_command)
   {
     command_id id = make_command_id("foo");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == NULL);
+    UNIT_TEST_CHECK(cmd == NULL);
   }
 
   // Non-existent multi-word identifier.
   {
     command_id id = make_command_id("foo bar");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == NULL);
+    UNIT_TEST_CHECK(cmd == NULL);
   }
 
   // Single-word identifier that could be completed.
   {
     command_id id = make_command_id("test");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == NULL);
+    UNIT_TEST_CHECK(cmd == NULL);
   }
 
   // Single-word identifier.
   {
     command_id id = make_command_id("test1");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == CMD_REF(test1));
+    UNIT_TEST_CHECK(cmd == CMD_REF(test1));
   }
 
   // Hidden single-word identifier.
   {
     command_id id = make_command_id("test3");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == CMD_REF(test3));
+    UNIT_TEST_CHECK(cmd == CMD_REF(test3));
   }
 
   // Multi-word identifier that could be completed.
   {
     command_id id = make_command_id("testg testg");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == NULL);
+    UNIT_TEST_CHECK(cmd == NULL);
   }
 
   // Multi-word identifier.
   {
     command_id id = make_command_id("testg testg1");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == CMD_REF(testg1));
+    UNIT_TEST_CHECK(cmd == CMD_REF(testg1));
   }
 
   // Hidden multi-word identifier.
   {
     command_id id = make_command_id("testg testg3");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == CMD_REF(testg3));
+    UNIT_TEST_CHECK(cmd == CMD_REF(testg3));
   }
 
   // Multi-word identifier with extra words.
   {
     command_id id = make_command_id("testg testg1 foo");
     command * cmd = CMD_REF(top)->find_command(id);
-    BOOST_CHECK(cmd == NULL);
+    UNIT_TEST_CHECK(cmd == NULL);
   }
 }
 #endif // BUILD_UNIT_TESTS

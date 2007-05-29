@@ -237,53 +237,53 @@ void dump(manifest_data const & d, string &);
 UNIT_TEST(vocab, verify_hexenc_id)
 {
   // -------- magic empty string and default constructor are okay:
-  BOOST_CHECK(hexenc<id>("")() == "");
+  UNIT_TEST_CHECK(hexenc<id>("")() == "");
   hexenc<id> my_default_id;
-  BOOST_CHECK(my_default_id() == "");
+  UNIT_TEST_CHECK(my_default_id() == "");
 
   // -------- wrong length:
-  BOOST_CHECK_THROW(hexenc<id>("a"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("a"), informative_failure);
   // 39 letters
-  BOOST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+  UNIT_TEST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
                     informative_failure);
   // 41 letters
-  BOOST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+  UNIT_TEST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
                     informative_failure);
   // but 40 is okay
-  BOOST_CHECK(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")()
+  UNIT_TEST_CHECK(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")()
               == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
   // -------- bad characters:
-  BOOST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("h000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("G000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("H000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("*000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("`000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("z000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("Z000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("h000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("G000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("H000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("*000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("`000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("z000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("Z000000000000000000000000000000000000000"), informative_failure);
   // different positions:
-  BOOST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("0g00000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("00g0000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("000g000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("0000g00000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("000000000000000000000g000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("0000000000000000000000g00000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("000000000000000000000000000000g000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000g000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("0000000000000000000000000000000000000g00"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("00000000000000000000000000000000000000g0"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000000g"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0g00000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("00g0000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000g000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000g00000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000g000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000000000000000000000g00000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000g000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000g000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000000000000000000000000000000000000g00"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("00000000000000000000000000000000000000g0"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000000g"), informative_failure);
   // uppercase hex is bad too!
-  BOOST_CHECK_THROW(hexenc<id>("A000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("B000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("C000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("D000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("E000000000000000000000000000000000000000"), informative_failure);
-  BOOST_CHECK_THROW(hexenc<id>("F000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("A000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("B000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("C000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("D000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("E000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("F000000000000000000000000000000000000000"), informative_failure);
   // but lowercase and digits are all fine
-  BOOST_CHECK(hexenc<id>("0123456789abcdef0123456789abcdef01234567")()
+  UNIT_TEST_CHECK(hexenc<id>("0123456789abcdef0123456789abcdef01234567")()
               == "0123456789abcdef0123456789abcdef01234567");
 }
 

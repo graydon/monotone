@@ -164,30 +164,30 @@ UNIT_TEST(globish, checked_globish_to_regex)
   string pat;
 
   checked_globish_to_regex("*", pat);
-  BOOST_CHECK(pat == ".*");
+  UNIT_TEST_CHECK(pat == ".*");
   checked_globish_to_regex("?", pat);
-  BOOST_CHECK(pat == ".");
+  UNIT_TEST_CHECK(pat == ".");
   checked_globish_to_regex("{a,b,c}d", pat);
-  BOOST_CHECK(pat == "(a|b|c)d");
+  UNIT_TEST_CHECK(pat == "(a|b|c)d");
   checked_globish_to_regex("foo{a,{b,c},?*}d", pat);
-  BOOST_CHECK(pat == "foo(a|(b|c)|..*)d");
+  UNIT_TEST_CHECK(pat == "foo(a|(b|c)|..*)d");
   checked_globish_to_regex("\\a\\b\\|\\{\\*", pat);
-  BOOST_CHECK(pat == "ab\\|\\{\\*");
+  UNIT_TEST_CHECK(pat == "ab\\|\\{\\*");
   checked_globish_to_regex(".+$^{}", pat);
-  BOOST_CHECK(pat == "\\.\\+\\$\\^()");
+  UNIT_TEST_CHECK(pat == "\\.\\+\\$\\^()");
   checked_globish_to_regex(",", pat);
   // we're very conservative about metacharacters, and quote all
   // non-alphanumerics, hence the backslash
-  BOOST_CHECK(pat == "\\,");
+  UNIT_TEST_CHECK(pat == "\\,");
   checked_globish_to_regex("\\.\\+\\$\\^\\(\\)", pat);
-  BOOST_CHECK(pat == "\\.\\+\\$\\^\\(\\)");
+  UNIT_TEST_CHECK(pat == "\\.\\+\\$\\^\\(\\)");
 
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{foo,bar{baz,quux}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("foo,bar{baz,quux}}", pat), informative_failure);
-  BOOST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{foo,bar{baz,quux}", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo}", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo,bar{baz,quux}}", pat), informative_failure);
+  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}", pat), informative_failure);
 }
 
 UNIT_TEST(globish, combine_and_check_globish)
@@ -198,39 +198,39 @@ UNIT_TEST(globish, combine_and_check_globish)
   s.push_back(globish("c"));
   globish combined;
   combine_and_check_globish(s, combined);
-  BOOST_CHECK(combined() == "{a,b,c}");
+  UNIT_TEST_CHECK(combined() == "{a,b,c}");
 }
 
 UNIT_TEST(globish, globish_matcher)
 {
   {
     globish_matcher m(globish("{a,b}?*\\*|"), globish("*c*"));
-    BOOST_CHECK(m("aq*|"));
-    BOOST_CHECK(m("bq*|"));
-    BOOST_CHECK(!m("bc*|"));
-    BOOST_CHECK(!m("bq|"));
-    BOOST_CHECK(!m("b*|"));
-    BOOST_CHECK(!m(""));
+    UNIT_TEST_CHECK(m("aq*|"));
+    UNIT_TEST_CHECK(m("bq*|"));
+    UNIT_TEST_CHECK(!m("bc*|"));
+    UNIT_TEST_CHECK(!m("bq|"));
+    UNIT_TEST_CHECK(!m("b*|"));
+    UNIT_TEST_CHECK(!m(""));
   }
   {
     globish_matcher m(globish("{a,\\\\,b*}"), globish("*c*"));
-    BOOST_CHECK(m("a"));
-    BOOST_CHECK(!m("ab"));
-    BOOST_CHECK(m("\\"));
-    BOOST_CHECK(!m("\\\\"));
-    BOOST_CHECK(m("b"));
-    BOOST_CHECK(m("bfoobar"));
-    BOOST_CHECK(!m("bfoobarcfoobar"));
+    UNIT_TEST_CHECK(m("a"));
+    UNIT_TEST_CHECK(!m("ab"));
+    UNIT_TEST_CHECK(m("\\"));
+    UNIT_TEST_CHECK(!m("\\\\"));
+    UNIT_TEST_CHECK(m("b"));
+    UNIT_TEST_CHECK(m("bfoobar"));
+    UNIT_TEST_CHECK(!m("bfoobarcfoobar"));
   }
   {
     globish_matcher m(globish("*"), globish(""));
-    BOOST_CHECK(m("foo"));
-    BOOST_CHECK(m(""));
+    UNIT_TEST_CHECK(m("foo"));
+    UNIT_TEST_CHECK(m(""));
   }
   {
     globish_matcher m(globish("{foo}"), globish(""));
-    BOOST_CHECK(m("foo"));
-    BOOST_CHECK(!m("bar"));
+    UNIT_TEST_CHECK(m("foo"));
+    UNIT_TEST_CHECK(!m("bar"));
   }
 }
 

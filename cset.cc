@@ -519,14 +519,14 @@ UNIT_TEST(cset, cset_written)
              "add_dir \"pling\"\n");
     data d1(s);
     cset cs;
-    BOOST_CHECK_THROW(read_cset(d1, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(d1, cs), logic_error);
     // check that it still fails if there's extra stanzas past the
     // mis-ordered entries
     data d2(s + "\n"
                 "  set \"bar\"\n"
                 " attr \"flavoursome\"\n"
                 "value \"mostly\"\n");
-    BOOST_CHECK_THROW(read_cset(d2, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(d2, cs), logic_error);
   }
 
   {
@@ -536,7 +536,7 @@ UNIT_TEST(cset, cset_written)
              "\n"
              "delete \"bar\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -548,7 +548,7 @@ UNIT_TEST(cset, cset_written)
              "rename \"bar\"\n"
              "    to \"barnew\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -558,7 +558,7 @@ UNIT_TEST(cset, cset_written)
              "\n"
              "add_dir \"bar\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -570,7 +570,7 @@ UNIT_TEST(cset, cset_written)
              "add_file \"bar\"\n"
              " content [0000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -582,7 +582,7 @@ UNIT_TEST(cset, cset_written)
              "add_file \"bar\"\n"
              " content [0000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -596,7 +596,7 @@ UNIT_TEST(cset, cset_written)
              " from [0000000000000000000000000000000000000000]\n"
              "   to [1000000000000000000000000000000000000000]\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -608,7 +608,7 @@ UNIT_TEST(cset, cset_written)
              "clear \"bar\"\n"
              " attr \"flavoursome\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -622,7 +622,7 @@ UNIT_TEST(cset, cset_written)
              " attr \"flavoursome\"\n"
              "value \"yes\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -631,7 +631,7 @@ UNIT_TEST(cset, cset_written)
              "\n"
              "delete \"foo\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -645,7 +645,7 @@ UNIT_TEST(cset, cset_written)
               " attr \"smell\"\n"
               "value \"socks\"\n");
     cset cs;
-    BOOST_CHECK_NOT_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -657,7 +657,7 @@ UNIT_TEST(cset, cset_written)
               "clear \"bar\"\n"
               " attr \"fooish\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -671,7 +671,7 @@ UNIT_TEST(cset, cset_written)
               " attr \"fooish\"\n"
               "value \"seldom\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -685,7 +685,7 @@ UNIT_TEST(cset, cset_written)
               " attr \"flavoursome\"\n"
               "value \"sometimes\"\n");
     cset cs;
-    BOOST_CHECK_THROW(read_cset(dat, cs), logic_error);
+    UNIT_TEST_CHECK_THROW(read_cset(dat, cs), logic_error);
   }
 
   {
@@ -750,7 +750,7 @@ UNIT_TEST(cset, cset_written)
                  );
     MM(expected);
     // I() so that it'll dump on failure
-    BOOST_CHECK_NOT_THROW(I(expected == dat), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(I(expected == dat), logic_error);
   }
 }
 
@@ -779,10 +779,10 @@ UNIT_TEST(cset, basic_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(baz, f2));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(is_file_t(r.get_node(baz)));
-    BOOST_CHECK(downcast_to_file_t(r.get_node(baz))->content == f2);
-    BOOST_CHECK(r.all_nodes().size() == 4);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(is_file_t(r.get_node(baz)));
+    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(baz))->content == f2);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 4);
   }
 
   {
@@ -790,9 +790,9 @@ UNIT_TEST(cset, basic_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(quux);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(is_dir_t(r.get_node(quux)));
-    BOOST_CHECK(r.all_nodes().size() == 4);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(quux)));
+    UNIT_TEST_CHECK(r.all_nodes().size() == 4);
   }
 
   {
@@ -801,8 +801,8 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(r.all_nodes().size() == 1); // only the root left
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 1); // only the root left
   }
 
   {
@@ -810,11 +810,11 @@ UNIT_TEST(cset, basic_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, quux));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(is_file_t(r.get_node(quux)));
-    BOOST_CHECK(is_dir_t(r.get_node(foo)));
-    BOOST_CHECK(!r.has_node(foo_bar));
-    BOOST_CHECK(r.all_nodes().size() == 3);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(is_file_t(r.get_node(quux)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo)));
+    UNIT_TEST_CHECK(!r.has_node(foo_bar));
+    UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   {
@@ -824,11 +824,11 @@ UNIT_TEST(cset, basic_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo, quux));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(is_dir_t(r.get_node(quux)));
-    BOOST_CHECK(is_file_t(r.get_node(quux_bar)));
-    BOOST_CHECK(!r.has_node(foo));
-    BOOST_CHECK(r.all_nodes().size() == 3);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(quux)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(quux_bar)));
+    UNIT_TEST_CHECK(!r.has_node(foo));
+    UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   {
@@ -836,11 +836,11 @@ UNIT_TEST(cset, basic_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo_bar, make_pair(f1, f2)));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(is_dir_t(r.get_node(foo)));
-    BOOST_CHECK(is_file_t(r.get_node(foo_bar)));
-    BOOST_CHECK(downcast_to_file_t(r.get_node(foo_bar))->content == f2);
-    BOOST_CHECK(r.all_nodes().size() == 3);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_bar)));
+    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(foo_bar))->content == f2);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   {
@@ -849,15 +849,15 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")),
                                   attr_value("klang")));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
 
     full_attr_map_t attrs = (r.get_node(foo_bar))->attrs;
-    BOOST_CHECK(attrs[attr_key("ping")] == make_pair(true, attr_value("klang")));
+    UNIT_TEST_CHECK(attrs[attr_key("ping")] == make_pair(true, attr_value("klang")));
 
     attrs = (r.get_node(foo))->attrs;
-    BOOST_CHECK(attrs[attr_key("attr_dir")] == make_pair(true, attr_value("value_dir")));
+    UNIT_TEST_CHECK(attrs[attr_key("attr_dir")] == make_pair(true, attr_value("value_dir")));
 
-    BOOST_CHECK(r.all_nodes().size() == 3);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   {
@@ -867,10 +867,10 @@ UNIT_TEST(cset, basic_csets)
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("ping")),
                                   attr_value("klang")));
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")]
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")]
                 == make_pair(false, attr_value("")));
-    BOOST_CHECK(r.all_nodes().size() == 3);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   // some renaming tests
@@ -897,8 +897,8 @@ UNIT_TEST(cset, basic_csets)
       cs.dirs_added.insert(foo_sub);
       cs.files_added.insert(make_pair(foo_sub_deep, f2));
       cs.files_added.insert(make_pair(quux_sub_thing, f1));
-      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-      BOOST_CHECK(r.all_nodes().size() == 8);
+      UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+      UNIT_TEST_CHECK(r.all_nodes().size() == 8);
     }
 
     { // some renames
@@ -906,21 +906,21 @@ UNIT_TEST(cset, basic_csets)
       cs.nodes_renamed.insert(make_pair(foo, quux));
       cs.nodes_renamed.insert(make_pair(quux, foo));
       cs.nodes_renamed.insert(make_pair(foo_sub, foo_subsub));
-      BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+      UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     }
 
-    BOOST_CHECK(r.all_nodes().size() == 8);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 8);
     // /foo/bar -> /quux/bar
-    BOOST_CHECK(is_file_t(r.get_node(quux_bar)));
-    BOOST_CHECK(!(r.has_node(foo_bar)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(quux_bar)));
+    UNIT_TEST_CHECK(!(r.has_node(foo_bar)));
     // /foo/sub/deep -> /foo/subsub/deep
-    BOOST_CHECK(is_file_t(r.get_node(foo_subsub_deep)));
-    BOOST_CHECK(!(r.has_node(foo_sub_deep)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_subsub_deep)));
+    UNIT_TEST_CHECK(!(r.has_node(foo_sub_deep)));
     // /quux/sub -> /foo/sub
-    BOOST_CHECK(is_dir_t(r.get_node(foo_sub)));
-    BOOST_CHECK(!(r.has_node(quux_sub)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo_sub)));
+    UNIT_TEST_CHECK(!(r.has_node(quux_sub)));
     // /quux/sub/thing -> /foo/sub/thing
-    BOOST_CHECK(is_file_t(r.get_node(foo_sub_thing)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_sub_thing)));
   }
 
   {
@@ -929,9 +929,9 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, foo));
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK(r.all_nodes().size() == 2);
-    BOOST_CHECK(is_file_t(r.get_node(foo)));
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK(r.all_nodes().size() == 2);
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo)));
   }
 }
 
@@ -957,23 +957,23 @@ UNIT_TEST(cset, invalid_csets)
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't double-add file"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(baz, f2));
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add file on top of dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(foo, f2));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delete+rename"));
@@ -981,7 +981,7 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo_bar);
     cs.nodes_renamed.insert(make_pair(foo_bar, baz));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add+rename"));
@@ -989,28 +989,28 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.dirs_added.insert(baz);
     cs.nodes_renamed.insert(make_pair(baz, quux));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't add on top of root dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.dirs_added.insert(root);
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename on top of root dir"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo, root));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename 'a' 'a'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, foo_bar));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't rename 'a' 'b'; rename 'a/foo' 'b/foo'"));
@@ -1020,7 +1020,7 @@ UNIT_TEST(cset, invalid_csets)
     file_path_internal("baz/bar").split(baz_bar);
     cs.nodes_renamed.insert(make_pair(foo, baz));
     cs.nodes_renamed.insert(make_pair(foo_bar, baz_bar));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't attr_set + attr_cleared"));
@@ -1029,7 +1029,7 @@ UNIT_TEST(cset, invalid_csets)
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("blah")),
                                        attr_value("blahblah")));
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("blah")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't no-op attr_set"));
@@ -1037,14 +1037,14 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.attrs_set.insert(make_pair(make_pair(foo_bar, attr_key("attr_file")),
                                        attr_value("value_file")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't clear non-existent attr"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("blah")));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't clear non-existent attr that once existed"));
@@ -1052,9 +1052,9 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
     // exists now, so should be fine
-    BOOST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     // but last time killed it, so can't be killed again
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't have no-op deltas"));
@@ -1062,7 +1062,7 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo_bar,
                                             make_pair(f1, f1)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't have add+delta"));
@@ -1071,7 +1071,7 @@ UNIT_TEST(cset, invalid_csets)
     cs.files_added.insert(make_pair(baz, f1));
     cs.deltas_applied.insert(make_pair(baz,
                                             make_pair(f1, f2)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delta a directory"));
@@ -1079,14 +1079,14 @@ UNIT_TEST(cset, invalid_csets)
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo,
                                             make_pair(f1, f2)));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't delete non-empty directory"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(foo);
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: attach node with no root directory present"));
@@ -1096,7 +1096,7 @@ UNIT_TEST(cset, invalid_csets)
     split_path sp;
     file_path_internal("blah/blah/blah").split(sp);
     cs.dirs_added.insert(sp);
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
   {
     L(FL("TEST: can't move a directory underneath itself"));
@@ -1105,7 +1105,7 @@ UNIT_TEST(cset, invalid_csets)
     split_path foo_blah;
     file_path_internal("foo/blah").split(foo_blah);
     cs.nodes_renamed.insert(make_pair(foo, foo_blah));
-    BOOST_CHECK_THROW(cs.apply_to(tree), logic_error);
+    UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
 }
 
@@ -1140,7 +1140,7 @@ UNIT_TEST(cset, root_dir)
     cset cs; MM(cs);
     cs.nodes_deleted.insert(root);
     cs.apply_to(tree);
-    BOOST_CHECK_THROW(r.check_sane(true), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error);
   }
   {
     L(FL("TEST: can delete and replace root"));

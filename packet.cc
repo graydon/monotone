@@ -359,7 +359,7 @@ UNIT_TEST(packet, roundabout)
       packet_writer pw(oss);
       istringstream iss(tmp);
       read_packets(iss, pw, aaa);
-      BOOST_CHECK(oss.str() == tmp);
+      UNIT_TEST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }
 }

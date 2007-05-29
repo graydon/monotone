@@ -181,20 +181,3 @@ AC_DEFUN([MTN_BOOST_LIB_REGEX],
     ]],[[
       regex expr("foo");
     ]])])])
-
-dnl Unlike all the others, if we don't have this library we can still
-dnl build monotone; we just can't do all the tests.
-AC_DEFUN([MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK],
-[BOOST_LIB_IFELSE([unit_test_framework],
-  [AC_LANG_SOURCE([[
-      #include <boost/test/unit_test_suite.hpp>
-      #include <boost/test/test_tools.hpp>
-      using boost::unit_test_framework::test_suite;
-      test_suite * init_unit_test_suite(int argc, char * argv[]) 
-      { return NULL; }
-    ]])],
- [AM_CONDITIONAL(BUILD_UNIT_TESTS, true)
-  BOOST_UNITTEST="$lib"],
- [AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
- AC_SUBST(BOOST_UNITTEST)
-])

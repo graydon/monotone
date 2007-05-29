@@ -193,12 +193,12 @@ trim_ws(string const & s)
 
 UNIT_TEST(simplestring_xform, caseconv)
 {
-  BOOST_CHECK(uppercase("hello") == "HELLO");
-  BOOST_CHECK(uppercase("heLlO") == "HELLO");
-  BOOST_CHECK(lowercase("POODLE DAY") == "poodle day");
-  BOOST_CHECK(lowercase("PooDLe DaY") == "poodle day");
-  BOOST_CHECK(uppercase("!@#$%^&*()") == "!@#$%^&*()");
-  BOOST_CHECK(lowercase("!@#$%^&*()") == "!@#$%^&*()");
+  UNIT_TEST_CHECK(uppercase("hello") == "HELLO");
+  UNIT_TEST_CHECK(uppercase("heLlO") == "HELLO");
+  UNIT_TEST_CHECK(lowercase("POODLE DAY") == "poodle day");
+  UNIT_TEST_CHECK(lowercase("PooDLe DaY") == "poodle day");
+  UNIT_TEST_CHECK(uppercase("!@#$%^&*()") == "!@#$%^&*()");
+  UNIT_TEST_CHECK(lowercase("!@#$%^&*()") == "!@#$%^&*()");
 }
 
 UNIT_TEST(simplestring_xform, join_lines)
@@ -208,19 +208,19 @@ UNIT_TEST(simplestring_xform, join_lines)
 
   strs.clear();
   join_lines(strs, joined);
-  BOOST_CHECK(joined == "");
+  UNIT_TEST_CHECK(joined == "");
 
   strs.push_back("hi");
   join_lines(strs, joined);
-  BOOST_CHECK(joined == "hi\n");
+  UNIT_TEST_CHECK(joined == "hi\n");
 
   strs.push_back("there");
   join_lines(strs, joined);
-  BOOST_CHECK(joined == "hi\nthere\n");
+  UNIT_TEST_CHECK(joined == "hi\nthere\n");
 
   strs.push_back("user");
   join_lines(strs, joined);
-  BOOST_CHECK(joined == "hi\nthere\nuser\n");
+  UNIT_TEST_CHECK(joined == "hi\nthere\nuser\n");
 }
 
 UNIT_TEST(simplestring_xform, join_words)
@@ -229,43 +229,43 @@ UNIT_TEST(simplestring_xform, join_words)
   set< utf8 > s;
 
   v.clear();
-  BOOST_CHECK(join_words(v)() == "");
+  UNIT_TEST_CHECK(join_words(v)() == "");
 
   v.clear();
   v.push_back(utf8("a"));
-  BOOST_CHECK(join_words(v)() == "a");
-  BOOST_CHECK(join_words(v, ", ")() == "a");
+  UNIT_TEST_CHECK(join_words(v)() == "a");
+  UNIT_TEST_CHECK(join_words(v, ", ")() == "a");
 
   s.clear();
   s.insert(utf8("a"));
-  BOOST_CHECK(join_words(s)() == "a");
-  BOOST_CHECK(join_words(s, ", ")() == "a");
+  UNIT_TEST_CHECK(join_words(s)() == "a");
+  UNIT_TEST_CHECK(join_words(s, ", ")() == "a");
 
   v.clear();
   v.push_back(utf8("a"));
   v.push_back(utf8("b"));
-  BOOST_CHECK(join_words(v)() == "a b");
-  BOOST_CHECK(join_words(v, ", ")() == "a, b");
+  UNIT_TEST_CHECK(join_words(v)() == "a b");
+  UNIT_TEST_CHECK(join_words(v, ", ")() == "a, b");
 
   s.clear();
   s.insert(utf8("b"));
   s.insert(utf8("a"));
-  BOOST_CHECK(join_words(s)() == "a b");
-  BOOST_CHECK(join_words(s, ", ")() == "a, b");
+  UNIT_TEST_CHECK(join_words(s)() == "a b");
+  UNIT_TEST_CHECK(join_words(s, ", ")() == "a, b");
 
   v.clear();
   v.push_back(utf8("a"));
   v.push_back(utf8("b"));
   v.push_back(utf8("c"));
-  BOOST_CHECK(join_words(v)() == "a b c");
-  BOOST_CHECK(join_words(v, ", ")() == "a, b, c");
+  UNIT_TEST_CHECK(join_words(v)() == "a b c");
+  UNIT_TEST_CHECK(join_words(v, ", ")() == "a, b, c");
 
   s.clear();
   s.insert(utf8("b"));
   s.insert(utf8("a"));
   s.insert(utf8("c"));
-  BOOST_CHECK(join_words(s)() == "a b c");
-  BOOST_CHECK(join_words(s, ", ")() == "a, b, c");
+  UNIT_TEST_CHECK(join_words(s)() == "a b c");
+  UNIT_TEST_CHECK(join_words(s, ", ")() == "a, b, c");
 }
 
 UNIT_TEST(simplestring_xform, split_into_words)
@@ -273,32 +273,32 @@ UNIT_TEST(simplestring_xform, split_into_words)
   vector< utf8 > words;
 
   words = split_into_words(utf8(""));
-  BOOST_CHECK(words.size() == 0);
+  UNIT_TEST_CHECK(words.size() == 0);
 
   words = split_into_words(utf8("foo"));
-  BOOST_CHECK(words.size() == 1);
-  BOOST_CHECK(words[0]() == "foo");
+  UNIT_TEST_CHECK(words.size() == 1);
+  UNIT_TEST_CHECK(words[0]() == "foo");
 
   words = split_into_words(utf8("foo bar"));
-  BOOST_CHECK(words.size() == 2);
-  BOOST_CHECK(words[0]() == "foo");
-  BOOST_CHECK(words[1]() == "bar");
+  UNIT_TEST_CHECK(words.size() == 2);
+  UNIT_TEST_CHECK(words[0]() == "foo");
+  UNIT_TEST_CHECK(words[1]() == "bar");
 
   // describe() in commands.cc assumes this behavior.  If it ever changes,
   // remember to modify that function accordingly!
   words = split_into_words(utf8("foo  bar"));
-  BOOST_CHECK(words.size() == 3);
-  BOOST_CHECK(words[0]() == "foo");
-  BOOST_CHECK(words[1]() == "");
-  BOOST_CHECK(words[2]() == "bar");
+  UNIT_TEST_CHECK(words.size() == 3);
+  UNIT_TEST_CHECK(words[0]() == "foo");
+  UNIT_TEST_CHECK(words[1]() == "");
+  UNIT_TEST_CHECK(words[2]() == "bar");
 }
 
 UNIT_TEST(simplestring_xform, strip_ws)
 {
-  BOOST_CHECK(trim_ws("\n  leading space") == "leading space");
-  BOOST_CHECK(trim_ws("trailing space  \n") == "trailing space");
-  BOOST_CHECK(trim_ws("\t\n both \r \n\r\n") == "both");
-  BOOST_CHECK(remove_ws("  I like going\tfor walks\n  ")
+  UNIT_TEST_CHECK(trim_ws("\n  leading space") == "leading space");
+  UNIT_TEST_CHECK(trim_ws("trailing space  \n") == "trailing space");
+  UNIT_TEST_CHECK(trim_ws("\t\n both \r \n\r\n") == "both");
+  UNIT_TEST_CHECK(remove_ws("  I like going\tfor walks\n  ")
               == "Ilikegoingforwalks");
 }
 

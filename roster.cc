@@ -3196,8 +3196,8 @@ check_sane_roster_do_tests(int to_run, int& total)
   MM(r);
 
   // roster must have a root dir
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
 
   split_path sp_, sp_foo, sp_foo_bar, sp_foo_baz;
   file_path().split(sp_);
@@ -3207,40 +3207,40 @@ check_sane_roster_do_tests(int to_run, int& total)
   node_id nid_f = r.create_file_node(file_id(string("0000000000000000000000000000000000000000")),
                                      nis);
   // root must be a directory, not a file
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_f, sp_), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_f, sp_), logic_error));
 
   node_id root_dir = r.create_dir_node(nis);
   r.attach_node(root_dir, sp_);
   // has a root dir, but a detached file
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
 
   r.attach_node(nid_f, sp_foo);
   // now should be sane
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   node_id nid_d = r.create_dir_node(nis);
   // if "foo" exists, can't attach another node at "foo"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_d, sp_foo), logic_error));
   // if "foo" is a file, can't attach a node at "foo/bar"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), logic_error));
 
-  BOOST_CHECK(r.detach_node(sp_foo) == nid_f);
+  UNIT_TEST_CHECK(r.detach_node(sp_foo) == nid_f);
   r.attach_node(nid_d, sp_foo);
   r.attach_node(nid_f, sp_foo_bar);
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   temp_node_id_source nis_tmp;
   node_id nid_tmp = r.create_dir_node(nis_tmp);
   // has a detached node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
   r.attach_node(nid_tmp, sp_foo_baz);
   // now has no detached nodes, but one temp node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 }
 
 #undef MAYBE
@@ -3269,7 +3269,7 @@ UNIT_TEST(roster, check_sane_roster_loop)
   node_id nid_bar = r.create_dir_node(nis);
   r.attach_node(nid_foo, nid_bar, foo_bar[1]);
   r.attach_node(nid_bar, nid_foo, foo_bar[2]);
-  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 UNIT_TEST(roster, check_sane_roster_screwy_dir_map)
@@ -3284,18 +3284,18 @@ UNIT_TEST(roster, check_sane_roster_screwy_dir_map)
   node_id other_nid = other.create_dir_node(nis);
   dir_t root_n = downcast_to_dir_t(r.get_node(root));
   root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
   // well, but that one was easy, actually, because a dir traversal will hit
   // more nodes than actually exist... so let's make it harder, by making sure
   // that a dir traversal will hit exactly as many nodes as actually exist.
   node_id distractor_nid = r.create_dir_node(nis);
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
   // and even harder, by making that node superficially valid too
   dir_t distractor_n = downcast_to_dir_t(r.get_node(distractor_nid));
   distractor_n->parent = distractor_nid;
   distractor_n->name = *(foo.end()-1);
   distractor_n->children.insert(make_pair(distractor_n->name, distractor_n));
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
 }
 
 UNIT_TEST(roster, bad_attr)
@@ -3305,14 +3305,14 @@ UNIT_TEST(roster, bad_attr)
   split_path root;
   file_path().split(root);
   r.attach_node(r.create_dir_node(nis), root);
-  BOOST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
+  UNIT_TEST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
                                make_pair(false, attr_value("invalid"))),
                     logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
   safe_insert(r.get_node(root)->attrs,
               make_pair(attr_key("test_key2"),
                         make_pair(false, attr_value("invalid"))));
-  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -4317,7 +4317,7 @@ UNIT_TEST(roster, die_die_die_merge)
 
   // because the dir was created in the old rev, the left side has logically
   // seen it and killed it, so it needs to be dead in the result.
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
                            singleton(left_rid),
                            right_rid, right_roster, right_markings, right_cs,
@@ -4325,7 +4325,7 @@ UNIT_TEST(roster, die_die_die_merge)
                            new_rid, new_roster, new_markings,
                            nis),
      logic_error);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(right_rid, right_roster, right_markings, right_cs,
                            singleton(right_rid),
                            left_rid, left_roster, left_markings, left_cs,
@@ -4373,14 +4373,14 @@ UNIT_TEST(roster, same_nid_diff_type)
   file_roster.check_sane_against(file_markings);
 
   cset cs; MM(cs);
-  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), logic_error);
-  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), logic_error);
+  UNIT_TEST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), logic_error);
+  UNIT_TEST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), logic_error);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
   roster_t new_roster; MM(new_roster);
   marking_map new_markings; MM(new_markings);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, dir_roster, dir_markings, left_cs,
                            singleton(left_rid),
                            right_rid, file_roster, file_markings, right_cs,
@@ -4388,7 +4388,7 @@ UNIT_TEST(roster, same_nid_diff_type)
                            new_rid, new_roster, new_markings,
                            nis),
      logic_error);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, file_roster, file_markings, left_cs,
                            singleton(left_rid),
                            right_rid, dir_roster, dir_markings, right_cs,
@@ -4488,7 +4488,7 @@ UNIT_TEST(roster, write_roster)
                       ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
   }
 
   {
@@ -4546,7 +4546,7 @@ UNIT_TEST(roster, write_roster)
                       ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == rdat), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW( I(expected == rdat), logic_error);
   }
 }
 
@@ -4582,7 +4582,7 @@ UNIT_TEST(roster, check_sane_against)
     r.attach_node(nid, bar);
     // missing the marking
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4606,7 +4606,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.detach_node(bar);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4625,7 +4625,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].birth_revision = revision_id();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4644,7 +4644,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].parent_name.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4663,7 +4663,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4682,7 +4682,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4697,7 +4697,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4712,7 +4712,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_key")].clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4727,7 +4727,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_second_key")].insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 }
 

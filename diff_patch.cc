@@ -1396,15 +1396,15 @@ UNIT_TEST(diff_patch, randomizing_merge)
 
       file_randomizer::build_random_fork(anc, d1, d2, gm, (10 + 2 * i), rng);
 
-      BOOST_CHECK(merge3(anc, d1, d2, m1));
+      UNIT_TEST_CHECK(merge3(anc, d1, d2, m1));
       if (gm != m1)
         dump_incorrect_merge (gm, m1, "random_merge 1");
-      BOOST_CHECK(gm == m1);
+      UNIT_TEST_CHECK(gm == m1);
 
-      BOOST_CHECK(merge3(anc, d2, d1, m2));
+      UNIT_TEST_CHECK(merge3(anc, d2, d1, m2));
       if (gm != m2)
         dump_incorrect_merge (gm, m2, "random_merge 2");
-      BOOST_CHECK(gm == m2);
+      UNIT_TEST_CHECK(gm == m2);
     }
 }
 
@@ -1412,7 +1412,7 @@ UNIT_TEST(diff_patch, randomizing_merge)
 // old boring tests
 UNIT_TEST(diff_patch, merge_prepend)
 {
-  BOOST_CHECKPOINT("prepend test");
+  UNIT_TEST_CHECKPOINT("prepend test");
   vector<string> anc, d1, d2, m1, m2, gm;
   for (int i = 10; i < 20; ++i)
     {
@@ -1428,21 +1428,21 @@ UNIT_TEST(diff_patch, merge_prepend)
       gm.push_back(lexical_cast<string>(i));
     }
 
-  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  UNIT_TEST_CHECK(merge3(anc, d1, d2, m1));
   if (gm != m1)
     dump_incorrect_merge (gm, m1, "merge_prepend 1");
-  BOOST_CHECK(gm == m1);
+  UNIT_TEST_CHECK(gm == m1);
 
 
-  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  UNIT_TEST_CHECK(merge3(anc, d2, d1, m2));
   if (gm != m2)
     dump_incorrect_merge (gm, m2, "merge_prepend 2");
-  BOOST_CHECK(gm == m2);
+  UNIT_TEST_CHECK(gm == m2);
 }
 
 UNIT_TEST(diff_patch, merge_append)
 {
-  BOOST_CHECKPOINT("append test");
+  UNIT_TEST_CHECKPOINT("append test");
   vector<string> anc, d1, d2, m1, m2, gm;
   for (int i = 0; i < 10; ++i)
       anc.push_back(lexical_cast<string>(i));
@@ -1457,22 +1457,22 @@ UNIT_TEST(diff_patch, merge_append)
       gm.push_back(lexical_cast<string>(i));
     }
 
-  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  UNIT_TEST_CHECK(merge3(anc, d1, d2, m1));
   if (gm != m1)
     dump_incorrect_merge (gm, m1, "merge_append 1");
-  BOOST_CHECK(gm == m1);
+  UNIT_TEST_CHECK(gm == m1);
 
-  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  UNIT_TEST_CHECK(merge3(anc, d2, d1, m2));
   if (gm != m2)
     dump_incorrect_merge (gm, m2, "merge_append 2");
-  BOOST_CHECK(gm == m2);
+  UNIT_TEST_CHECK(gm == m2);
 
 
 }
 
 UNIT_TEST(diff_patch, merge_additions)
 {
-  BOOST_CHECKPOINT("additions test");
+  UNIT_TEST_CHECKPOINT("additions test");
   string ancestor("I like oatmeal\nI like orange juice\nI like toast");
   string desc1("I like oatmeal\nI don't like spam\nI like orange juice\nI like toast");
   string confl("I like oatmeal\nI don't like tuna\nI like orange juice\nI like toast");
@@ -1486,17 +1486,17 @@ UNIT_TEST(diff_patch, merge_additions)
   split_into_lines(desc2, d2);
   split_into_lines(good_merge, gm);
 
-  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  UNIT_TEST_CHECK(merge3(anc, d1, d2, m1));
   if (gm != m1)
     dump_incorrect_merge (gm, m1, "merge_addition 1");
-  BOOST_CHECK(gm == m1);
+  UNIT_TEST_CHECK(gm == m1);
 
-  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  UNIT_TEST_CHECK(merge3(anc, d2, d1, m2));
   if (gm != m2)
     dump_incorrect_merge (gm, m2, "merge_addition 2");
-  BOOST_CHECK(gm == m2);
+  UNIT_TEST_CHECK(gm == m2);
 
-  BOOST_CHECK(!merge3(anc, d1, cf, m1));
+  UNIT_TEST_CHECK(!merge3(anc, d1, cf, m1));
 }
 
 UNIT_TEST(diff_patch, merge_deletions)
@@ -1511,15 +1511,15 @@ UNIT_TEST(diff_patch, merge_deletions)
   d1 = anc;
   gm = d2;
 
-  BOOST_CHECK(merge3(anc, d1, d2, m1));
+  UNIT_TEST_CHECK(merge3(anc, d1, d2, m1));
   if (gm != m1)
     dump_incorrect_merge (gm, m1, "merge_deletion 1");
-  BOOST_CHECK(gm == m1);
+  UNIT_TEST_CHECK(gm == m1);
 
-  BOOST_CHECK(merge3(anc, d2, d1, m2));
+  UNIT_TEST_CHECK(merge3(anc, d2, d1, m2));
   if (gm != m2)
     dump_incorrect_merge (gm, m2, "merge_deletion 2");
-  BOOST_CHECK(gm == m2);
+  UNIT_TEST_CHECK(gm == m2);
 }
 
 #endif // BUILD_UNIT_TESTS

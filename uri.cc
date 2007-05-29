@@ -161,14 +161,14 @@ test_one_uri(string scheme,
 
   L(FL("testing parse of URI '%s'") % built);
   uri u;
-  BOOST_CHECK(parse_uri(built, u));
-  BOOST_CHECK(u.scheme == scheme);
-  BOOST_CHECK(u.user == user);
-  BOOST_CHECK(u.host == host);
-  BOOST_CHECK(u.port == port);
-  BOOST_CHECK(u.path == path);
-  BOOST_CHECK(u.query == query);
-  BOOST_CHECK(u.fragment == fragment);
+  UNIT_TEST_CHECK(parse_uri(built, u));
+  UNIT_TEST_CHECK(u.scheme == scheme);
+  UNIT_TEST_CHECK(u.user == user);
+  UNIT_TEST_CHECK(u.host == host);
+  UNIT_TEST_CHECK(u.port == port);
+  UNIT_TEST_CHECK(u.path == path);
+  UNIT_TEST_CHECK(u.query == query);
+  UNIT_TEST_CHECK(u.fragment == fragment);
 }
 
 UNIT_TEST(uri, uri)
