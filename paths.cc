@@ -10,6 +10,7 @@
 #include <string>
 #include <sstream>
 
+#include <boost/version.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 
@@ -254,6 +255,9 @@ internal_string_to_split_path(string const & path, split_path & sp)
 static fs::path
 normalize_path(fs::path const & in)
 {
+#if BOOST_VERSION < 103400
+  return in.normalize();
+#else
   fs::path out;
   vector<string> stack;
   for (fs::path::iterator i = in.begin(); i != in.end(); ++i)
@@ -278,6 +282,7 @@ normalize_path(fs::path const & in)
       out /= *i;
     }
   return out;
+#endif
 }
 
 static void
