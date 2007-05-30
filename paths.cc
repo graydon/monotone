@@ -604,7 +604,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
 static inline string const_system_path(utf8 const & path)
 {
   N(!path().empty(), F("invalid path ''"));
-  string expanded = tilde_expand(path)();
+  string expanded = tilde_expand(path());
   if (is_absolute_here(expanded))
     return normalize_out_dots(expanded);
   else
