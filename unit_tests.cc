@@ -109,6 +109,7 @@ void unit_test::do_require(bool checkval, char const * file,
     {
       this_test_failed = true;
       log_fail(file, line, "REQUIRE FAILED", message);
+      throw require_failed();
     }
   else
     note_checkpoint(file, line, "REQUIRE OK", message);
