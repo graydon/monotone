@@ -28,6 +28,8 @@
 #include "ui.hh"
 #include "work.hh"
 
+namespace fs = boost::filesystem;
+
 using std::exception;
 using std::map;
 using std::string;

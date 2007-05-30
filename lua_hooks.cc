@@ -38,6 +38,8 @@ extern char const std_hooks_constant[];
 extern char const test_hooks_constant[];
 #endif
 
+namespace fs = boost::filesystem;
+
 using std::make_pair;
 using std::map;
 using std::pair;

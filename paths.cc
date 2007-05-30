@@ -11,8 +11,11 @@
 #include <sstream>
 
 #include <boost/version.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+
+namespace fs = boost::filesystem;
 
 #include "constants.hh"
 #include "paths.hh"
