@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-23 20:17+0200\n"
-"PO-Revision-Date: 2007-05-30 13:47+0200\n"
+"PO-Revision-Date: 2007-05-30 15:03+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -937,11 +937,10 @@ msgid "Prints an annotated copy of a file"
 msgstr "Skriver ut en annoterad kopia av en fil"
 
 #: cmd_files.cc:124
-#, fuzzy
 msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
-msgstr "skriv ut filen från REVISION med extra detaljer"
+msgstr "Skriver ut en annoterad kopia av en given fil från en given REVISION."
 
 #: cmd_files.cc:159
 #, c-format
@@ -972,9 +971,8 @@ msgid "[PATH]"
 msgstr "[SÖKVÄG]"
 
 #: cmd_files.cc:193
-#, fuzzy
 msgid "Calculates the identity of a file or stdin"
-msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
+msgstr "Räkna ut identiteten för SÖKVÄG eller stdin"
 
 #: cmd_files.cc:194
 msgid ""
@@ -1001,9 +999,8 @@ msgid "FILENAME"
 msgstr "FILNAMN"
 
 #: cmd_files.cc:290
-#, fuzzy
 msgid "Prints a file from the database"
-msgstr "skriv ut angiven fil från databasen"
+msgstr "Skriver ut angiven fil från databasen"
 
 #: cmd_files.cc:291
 msgid ""
@@ -1034,14 +1031,12 @@ msgid "KEYID"
 msgstr "NYCKELID"
 
 #: cmd_key_cert.cc:33
-#, fuzzy
 msgid "Generates an RSA key-pair"
-msgstr "skapa ett RSA-nyckelpar"
+msgstr "Skapar ett RSA-nyckelpar"
 
 #: cmd_key_cert.cc:61
-#, fuzzy
 msgid "Drops a public and/or private key"
-msgstr "släng publik och privat nyckel"
+msgstr "Slänger en publik och/eller privat nyckel"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -1070,9 +1065,8 @@ msgstr ""
 "databas angavs"
 
 #: cmd_key_cert.cc:103
-#, fuzzy
 msgid "Changes the passphrase of a private RSA key"
-msgstr "ändra lösen till en privat RSA-nyckel"
+msgstr "Ändra lösen till en privat RSA-nyckel"
 
 #: cmd_key_cert.cc:114
 #, c-format
@@ -1089,9 +1083,8 @@ msgid "[FILENAME]"
 msgstr "[FILNAMN]"
 
 #: cmd_key_cert.cc:126
-#, fuzzy
 msgid "Exports a private key for use with ssh-agent"
-msgstr "exportera din monotonenyckel för att användas med ssh-agent"
+msgstr "Exporterar din privata nyckel för att användas med ssh-agent"
 
 #: cmd_key_cert.cc:136 cmd_key_cert.cc:176
 #, c-format
@@ -1099,29 +1092,24 @@ msgid "the key you specified cannot be found"
 msgstr "kan inte hitta nyckeln du angav"
 
 #: cmd_key_cert.cc:166
-#, fuzzy
 msgid "Adds a private key to ssh-agent"
-msgstr "Lägg till din monotonenyckel till ssh-agent"
+msgstr "Lägger till en privat nyckel till ssh-agent"
 
 #: cmd_key_cert.cc:183
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION CERTNAMN [CERTVÄRDE]"
 
 #: cmd_key_cert.cc:184
-#, fuzzy
 msgid "Creates a certificate for a revision"
-msgstr "skapa ett cert för en revision"
+msgstr "Skapar ett cert för en revision"
 
 #: cmd_key_cert.cc:217
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAMN VÄRDE SIGNERARE1 [SIGNERARE2 [...]]"
 
 #: cmd_key_cert.cc:218
-#, fuzzy
 msgid "Tests whether a hypothetical certificate would be trusted"
-msgstr ""
-"kontrollera ifall ett hypotetiskt cert skulle vara pålitligt\n"
-"enligt nuvarande inställningar"
+msgstr "Kontrollera ifall ett hypotetiskt cert är pålitligt"
 
 #: cmd_key_cert.cc:219
 msgid "The current settings are used to run the test."
@@ -1155,27 +1143,24 @@ msgid "REVISION TAGNAME"
 msgstr "REVISION TAGNAMN"
 
 #: cmd_key_cert.cc:265
-#, fuzzy
 msgid "Puts a symbolic tag certificate on a revision"
-msgstr "sätt ett symboliskt tagg-cert på en revision"
+msgstr "Sätter ett symboliskt tagg-cert på en revision"
 
 #: cmd_key_cert.cc:279
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:280
-#, fuzzy
 msgid "Notes the results of running a test on a revision"
-msgstr "notera ett testresultat för en revision"
+msgstr "Noterar ett testresultat för en revision"
 
 #: cmd_key_cert.cc:293 cmd_ws_commit.cc:277
 msgid "REVISION"
 msgstr "REVISION"
 
 #: cmd_key_cert.cc:294
-#, fuzzy
 msgid "Approves a particular revision"
-msgstr "godkänn en specifik revision"
+msgstr "Godkänner en specifik revision"
 
 #: cmd_key_cert.cc:304
 #, c-format
@@ -1187,9 +1172,8 @@ msgid "REVISION [COMMENT]"
 msgstr "REVISION [KOMMENTAR]"
 
 #: cmd_key_cert.cc:309
-#, fuzzy
 msgid "Comments on a particular revision"
-msgstr "kommentera en specifik revision"
+msgstr "Kommenterar en specifik revision"
 
 #: cmd_key_cert.cc:323
 #, c-format
@@ -1202,9 +1186,8 @@ msgid "empty comment"
 msgstr "tom kommentar"
 
 #: cmd_list.cc:43
-#, fuzzy
 msgid "Shows database objects"
-msgstr "ingen databas angiven"
+msgstr "Visar databasobjekt"
 
 #: cmd_list.cc:44
 #, fuzzy
