@@ -333,7 +333,8 @@ namespace commands {
             else if (!child->hidden() &&
                      prefix().length() < (*iter2)().length())
               {
-                utf8 p(string((*iter2)(), 0, prefix().length()));
+                string temp((*iter2)(), 0, prefix().length());
+                utf8 p(temp);
                 if (prefix == p)
                   matches[caux] = child;
               }
