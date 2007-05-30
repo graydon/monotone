@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-23 20:17+0200\n"
-"PO-Revision-Date: 2007-05-25 08:00+0200\n"
+"PO-Revision-Date: 2007-05-30 13:47+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -821,7 +821,6 @@ msgid "Shows current differences"
 msgstr "Visa nuvarande skillnader"
 
 #: cmd_diff_log.cc:473
-#, fuzzy
 msgid ""
 "Compares the current tree with the files in the repository and prints the "
 "differences on the standard output.\n"
@@ -829,7 +828,7 @@ msgid ""
 "is shown.  If two revisions are given, the diff between them is given.  If "
 "no format is specified, unified is used by default."
 msgstr ""
-"skriv ut skillnader till stdout.\n"
+"Jämför det nuvarande trädet med filerna i arkivet och skriv ut skillnader till stdout.\n"
 "Om en revision anges visas skillnaden mellan arbetskopian och den\n"
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
@@ -864,14 +863,10 @@ msgid "Prints history in reverse order"
 msgstr "Skriver ut historien i omvänd ordning"
 
 #: cmd_diff_log.cc:608
-#, fuzzy
 msgid ""
 "This command prints history in reverse order, filtering it by FILE if "
 "given.  If one or more revisions are given, uses them as a starting point."
-msgstr ""
-"skriv ut historiken i omvänd ordning för angivna filer eller för hela "
-"arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
-"angivits används de som utgångspunkter."
+msgstr "Skriv ut historiken i omvänd ordning för angivna filer eller för hela arbetskatalogen om inga filer angivits. Om en eller flera revisioner har angivits används de som utgångspunkter."
 
 #: cmd_diff_log.cc:624
 #, c-format
@@ -884,18 +879,16 @@ msgid "(Revision: %s)"
 msgstr "(Revision: %s)"
 
 #: cmd_files.cc:30
-#, fuzzy
 msgid "Loads a file's contents into the database"
-msgstr "ladda in filinnehållet i databasen"
+msgstr "Laddar in en fils innehåll till databasen"
 
 #: cmd_files.cc:47
 msgid "<parent> <left> <right>"
 msgstr "<förälder> <vänster> <höger>"
 
 #: cmd_files.cc:48
-#, fuzzy
 msgid "Merges 3 files and outputs the result"
-msgstr "slå ihop 3 filer och skriv ut resultatet"
+msgstr "Slår ihop 3 filer och skriver ut resultatet"
 
 #: cmd_files.cc:63
 #, c-format
@@ -922,9 +915,8 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr "KÄLLNAMN MÅLNAMN KÄLLID MÅLID"
 
 #: cmd_files.cc:86
-#, fuzzy
 msgid "Differences 2 files and outputs the result"
-msgstr "skriv ut skillnaden mellan 2 filer"
+msgstr "Skriver ut skillnaden mellan 2 filer"
 
 #: cmd_files.cc:104
 #, c-format
@@ -941,9 +933,8 @@ msgid "PATH"
 msgstr "SÖKVÄG"
 
 #: cmd_files.cc:123
-#, fuzzy
 msgid "Prints an annotated copy of a file"
-msgstr "skriv ut filen från REVISION med extra detaljer"
+msgstr "Skriver ut en annoterad kopia av en fil"
 
 #: cmd_files.cc:124
 #, fuzzy
