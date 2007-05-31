@@ -148,7 +148,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-05-23 20:17+0200\n"
-"PO-Revision-Date: 2007-05-25 08:00+0200\n"
+"PO-Revision-Date: 2007-05-31 13:10+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -821,7 +821,6 @@ msgid "Shows current differences"
 msgstr "Visa nuvarande skillnader"
 
 #: cmd_diff_log.cc:473
-#, fuzzy
 msgid ""
 "Compares the current tree with the files in the repository and prints the "
 "differences on the standard output.\n"
@@ -829,7 +828,7 @@ msgid ""
 "is shown.  If two revisions are given, the diff between them is given.  If "
 "no format is specified, unified is used by default."
 msgstr ""
-"skriv ut skillnader till stdout.\n"
+"Jämför det nuvarande trädet med filerna i arkivet och skriv ut skillnader till stdout.\n"
 "Om en revision anges visas skillnaden mellan arbetskopian och den\n"
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
@@ -864,14 +863,10 @@ msgid "Prints history in reverse order"
 msgstr "Skriver ut historien i omvänd ordning"
 
 #: cmd_diff_log.cc:608
-#, fuzzy
 msgid ""
 "This command prints history in reverse order, filtering it by FILE if "
 "given.  If one or more revisions are given, uses them as a starting point."
-msgstr ""
-"skriv ut historiken i omvänd ordning för angivna filer eller för hela "
-"arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
-"angivits används de som utgångspunkter."
+msgstr "Skriv ut historiken i omvänd ordning för angivna filer eller för hela arbetskatalogen om inga filer angivits. Om en eller flera revisioner har angivits används de som utgångspunkter."
 
 #: cmd_diff_log.cc:624
 #, c-format
@@ -884,18 +879,16 @@ msgid "(Revision: %s)"
 msgstr "(Revision: %s)"
 
 #: cmd_files.cc:30
-#, fuzzy
 msgid "Loads a file's contents into the database"
-msgstr "ladda in filinnehållet i databasen"
+msgstr "Laddar in en fils innehåll till databasen"
 
 #: cmd_files.cc:47
 msgid "<parent> <left> <right>"
 msgstr "<förälder> <vänster> <höger>"
 
 #: cmd_files.cc:48
-#, fuzzy
 msgid "Merges 3 files and outputs the result"
-msgstr "slå ihop 3 filer och skriv ut resultatet"
+msgstr "Slår ihop 3 filer och skriver ut resultatet"
 
 #: cmd_files.cc:63
 #, c-format
@@ -922,9 +915,8 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr "KÄLLNAMN MÅLNAMN KÄLLID MÅLID"
 
 #: cmd_files.cc:86
-#, fuzzy
 msgid "Differences 2 files and outputs the result"
-msgstr "skriv ut skillnaden mellan 2 filer"
+msgstr "Skriver ut skillnaden mellan 2 filer"
 
 #: cmd_files.cc:104
 #, c-format
@@ -941,16 +933,14 @@ msgid "PATH"
 msgstr "SÖKVÄG"
 
 #: cmd_files.cc:123
-#, fuzzy
 msgid "Prints an annotated copy of a file"
-msgstr "skriv ut filen från REVISION med extra detaljer"
+msgstr "Skriver ut en annoterad kopia av en fil"
 
 #: cmd_files.cc:124
-#, fuzzy
 msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
-msgstr "skriv ut filen från REVISION med extra detaljer"
+msgstr "Skriver ut en annoterad kopia av en given fil från en given REVISION."
 
 #: cmd_files.cc:159
 #, c-format
@@ -981,9 +971,8 @@ msgid "[PATH]"
 msgstr "[SÖKVÄG]"
 
 #: cmd_files.cc:193
-#, fuzzy
 msgid "Calculates the identity of a file or stdin"
-msgstr "räkna ut identiteten för SÖKVÄG eller stdin"
+msgstr "Räkna ut identiteten för SÖKVÄG eller stdin"
 
 #: cmd_files.cc:194
 msgid ""
@@ -1010,9 +999,8 @@ msgid "FILENAME"
 msgstr "FILNAMN"
 
 #: cmd_files.cc:290
-#, fuzzy
 msgid "Prints a file from the database"
-msgstr "skriv ut angiven fil från databasen"
+msgstr "Skriver ut angiven fil från databasen"
 
 #: cmd_files.cc:291
 msgid ""
@@ -1043,14 +1031,12 @@ msgid "KEYID"
 msgstr "NYCKELID"
 
 #: cmd_key_cert.cc:33
-#, fuzzy
 msgid "Generates an RSA key-pair"
-msgstr "skapa ett RSA-nyckelpar"
+msgstr "Skapar ett RSA-nyckelpar"
 
 #: cmd_key_cert.cc:61
-#, fuzzy
 msgid "Drops a public and/or private key"
-msgstr "släng publik och privat nyckel"
+msgstr "Slänger en publik och/eller privat nyckel"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -1079,9 +1065,8 @@ msgstr ""
 "databas angavs"
 
 #: cmd_key_cert.cc:103
-#, fuzzy
 msgid "Changes the passphrase of a private RSA key"
-msgstr "ändra lösen till en privat RSA-nyckel"
+msgstr "Ändra lösen till en privat RSA-nyckel"
 
 #: cmd_key_cert.cc:114
 #, c-format
@@ -1098,9 +1083,8 @@ msgid "[FILENAME]"
 msgstr "[FILNAMN]"
 
 #: cmd_key_cert.cc:126
-#, fuzzy
 msgid "Exports a private key for use with ssh-agent"
-msgstr "exportera din monotonenyckel för att användas med ssh-agent"
+msgstr "Exporterar din privata nyckel för att användas med ssh-agent"
 
 #: cmd_key_cert.cc:136 cmd_key_cert.cc:176
 #, c-format
@@ -1108,29 +1092,24 @@ msgid "the key you specified cannot be found"
 msgstr "kan inte hitta nyckeln du angav"
 
 #: cmd_key_cert.cc:166
-#, fuzzy
 msgid "Adds a private key to ssh-agent"
-msgstr "Lägg till din monotonenyckel till ssh-agent"
+msgstr "Lägger till en privat nyckel till ssh-agent"
 
 #: cmd_key_cert.cc:183
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "REVISION CERTNAMN [CERTVÄRDE]"
 
 #: cmd_key_cert.cc:184
-#, fuzzy
 msgid "Creates a certificate for a revision"
-msgstr "skapa ett cert för en revision"
+msgstr "Skapar ett cert för en revision"
 
 #: cmd_key_cert.cc:217
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "REVISION NAMN VÄRDE SIGNERARE1 [SIGNERARE2 [...]]"
 
 #: cmd_key_cert.cc:218
-#, fuzzy
 msgid "Tests whether a hypothetical certificate would be trusted"
-msgstr ""
-"kontrollera ifall ett hypotetiskt cert skulle vara pålitligt\n"
-"enligt nuvarande inställningar"
+msgstr "Kontrollera ifall ett hypotetiskt cert är pålitligt"
 
 #: cmd_key_cert.cc:219
 msgid "The current settings are used to run the test."
@@ -1164,27 +1143,24 @@ msgid "REVISION TAGNAME"
 msgstr "REVISION TAGNAMN"
 
 #: cmd_key_cert.cc:265
-#, fuzzy
 msgid "Puts a symbolic tag certificate on a revision"
-msgstr "sätt ett symboliskt tagg-cert på en revision"
+msgstr "Sätter ett symboliskt tagg-cert på en revision"
 
 #: cmd_key_cert.cc:279
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:280
-#, fuzzy
 msgid "Notes the results of running a test on a revision"
-msgstr "notera ett testresultat för en revision"
+msgstr "Noterar ett testresultat för en revision"
 
 #: cmd_key_cert.cc:293 cmd_ws_commit.cc:277
 msgid "REVISION"
 msgstr "REVISION"
 
 #: cmd_key_cert.cc:294
-#, fuzzy
 msgid "Approves a particular revision"
-msgstr "godkänn en specifik revision"
+msgstr "Godkänner en specifik revision"
 
 #: cmd_key_cert.cc:304
 #, c-format
@@ -1196,9 +1172,8 @@ msgid "REVISION [COMMENT]"
 msgstr "REVISION [KOMMENTAR]"
 
 #: cmd_key_cert.cc:309
-#, fuzzy
 msgid "Comments on a particular revision"
-msgstr "kommentera en specifik revision"
+msgstr "Kommenterar en specifik revision"
 
 #: cmd_key_cert.cc:323
 #, c-format
@@ -1211,19 +1186,15 @@ msgid "empty comment"
 msgstr "tom kommentar"
 
 #: cmd_list.cc:43
-#, fuzzy
 msgid "Shows database objects"
-msgstr "ingen databas angiven"
+msgstr "Visar databasobjekt"
 
 #: cmd_list.cc:44
-#, fuzzy
 msgid ""
 "This command is used to query information from the database.  It shows "
 "database objects, or the current workspace manifest, or known, unknown, "
 "intentionally ignored, missing, or changed-state files."
-msgstr ""
-"visa databasobjekten, arbetskopians manifest, okända filer, kända \n"
-"filer, medvetet ignorerade filer, saknade filer eller ändrade filer"
+msgstr "Detta kommando används för att hämta information från databasen. Det visar databasobjekt, arbetskopians manifest, okända filer, kända filer, medvetet ignorerade filer, saknade filer eller ändrade filer"
 
 #: cmd_list.cc:50
 msgid "Lists certificates attached to an identifier"
@@ -1292,9 +1263,8 @@ msgid "no epoch for branch %s"
 msgstr "ingen epok i grenen %s"
 
 #: cmd_list.cc:305
-#, fuzzy
 msgid "Lists all tags in the database"
-msgstr "revisionen %s finns redan i databasen"
+msgstr "Visar alla taggar i databasen"
 
 #: cmd_list.cc:321
 msgid "Lists variables in the whole database or a domain"
@@ -1309,18 +1279,16 @@ msgid "Lists workspace files that do not belong to the current branch"
 msgstr "Visar de filer i arbetskopian som inte hör till nuvarande gren"
 
 #: cmd_list.cc:429
-#, fuzzy
 msgid "Lists files that belong to the branch but are not in the workspace"
-msgstr "filen '%s' är okänd i denna arbetskopia"
+msgstr "Visar alla filer som hör till den nuvarande grenen men inte finns i arbetskopia"
 
 #: cmd_list.cc:453
 msgid "Lists files that have changed with respect to the current revision"
 msgstr "Visar de filer som har ändrats med avseende på nuvarande revision"
 
 #: cmd_list.cc:561
-#, fuzzy
 msgid "Lists all keys in the keystore"
-msgstr "nyckeln '%s' finns inte i nyckellagret"
+msgstr "Visar alla nycklar i nyckellagret"
 
 #: cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
@@ -1352,23 +1320,16 @@ msgstr ""
 "nästa ändring hamnar i grenen %s"
 
 #: cmd_merging.cc:131
-#, fuzzy
 msgid "Updates the workspace"
-msgstr "lägg till filer i arbetskopian"
+msgstr "Uppdaterar arbetskopian"
 
 #: cmd_merging.cc:132
-#, fuzzy
 msgid ""
 "This command modifies your workspace to be based off of a different "
 "revision, preserving uncommitted changes as it does so.  If a revision is "
 "given, update the workspace to that revision.  If not, update the workspace "
 "to the head of the branch."
-msgstr ""
-"uppdaterar arbetskopian.\n"
-"Detta kommando ändrar din arbetskopia så att den baseras på en annan\n"
-"revision samtidigt som dina ej arkiverade ändringar bibehålls.\n"
-"Om en revision har angivits så uppdateras arbetskopian till den,\n"
-"i annat fall uppdateras den till lövet i grenen."
+msgstr "Detta kommando ändrar din arbetskopia så att den baseras på en annan revision samtidigt som dina ej arkiverade ändringar bibehålls.  Om en revision har angivits så uppdateras arbetskopian till den, i annat fall uppdateras den till lövet i grenen."
 
 #: cmd_merging.cc:155
 #, c-format
@@ -1447,9 +1408,8 @@ msgid "[merged] %s"
 msgstr "[ihopslagen] %s"
 
 #: cmd_merging.cc:334
-#, fuzzy
 msgid "Merges unmerged heads of a branch"
-msgstr "slå ihop ej ihopslagna löv i grenen"
+msgstr "Slår ihop ej ihopslagna löv i grenen"
 
 #: cmd_merging.cc:345 cmd_merging.cc:946
 #, c-format
@@ -1494,18 +1454,16 @@ msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "KÄLLGREN MÅLGREN"
 
 #: cmd_merging.cc:436
-#, fuzzy
 msgid "Merges from one branch to another asymmetrically"
-msgstr "slå ihop asymmetriskt från en gren till en annan"
+msgstr "Slår ihop asymmetriskt från en gren till en annan"
 
 #: cmd_merging.cc:448
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "KÄLLGREN MÅLGREN KATALOG"
 
 #: cmd_merging.cc:449
-#, fuzzy
 msgid "Merges one branch into a subdirectory in another branch"
-msgstr "slå ihop en gren till en underkatalog i en annan gren"
+msgstr "Slår ihop en gren till en underkatalog i en annan gren"
 
 #: cmd_merging.cc:489 cmd_merging.cc:492
 #, c-format
@@ -1552,24 +1510,17 @@ msgid "OTHER-REVISION"
 msgstr "ANNAN-REVISION"
 
 #: cmd_merging.cc:607
-#, fuzzy
 msgid "Merges a revision into the current workspace's base revision"
-msgstr "filen '%s' är okänd i denna arbetskopia"
+msgstr "Slår ihop en revision med arbetskopians basrevision och sparar det i arbetskopian"
 
 #: cmd_merging.cc:608
-#, fuzzy
 msgid ""
 "Merges OTHER-REVISION into the current workspace's base revision, and update "
 "the current workspace with the result.  There can be no pending changes in "
 "the current workspace.  Both OTHER-REVISION and the workspace's base "
 "revision will be recorded as parents on commit.  The workspace's selected "
 "branch is not changed."
-msgstr ""
-"slå ihop ANNAN-REVISION med denna arbetskopias grundrevision och uppdatera "
-"denna arbetskopia med resultatet.  Det får inte finnas några ej arkiverade "
-"förändringar i denna arbetskopia.  När arkivering görs kommer både ANNAN-"
-"REVISION och arbetskopians grundrevision att anges som föräldrar till den ny "
-"revisionen.  Arbetskopians gren kommer inte att ändras."
+msgstr "Slår ihop ANNAN-REVISION med denna arbetskopias grundrevision och uppdatera denna arbetskopia med resultatet.  Det får inte finnas några ej arkiverade förändringar i denna arbetskopia.  När arkivering görs kommer både ANNAN-REVISION och arbetskopians grundrevision att anges som föräldrar till den ny revisionen.  Arbetskopians gren kommer inte att ändras."
 
 #: cmd_merging.cc:639
 #, c-format
@@ -1599,10 +1550,8 @@ msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "VÄNSTERREVISION HÖGERREVISION MÅLGREN"
 
 #: cmd_merging.cc:702
-#, fuzzy
 msgid "Merges two explicitly given revisions"
-msgstr ""
-"slå ihop två explicit angivna revisioner, placera resultatet i angiven gren"
+msgstr "Slår ihop två explicit angivna revisioner"
 
 #: cmd_merging.cc:703
 msgid ""
@@ -1624,10 +1573,8 @@ msgid "REV REV"
 msgstr "REV REV"
 
 #: cmd_merging.cc:728
-#, fuzzy
 msgid "Shows what conflicts need resolution between two revisions"
-msgstr ""
-"Visa de konflikter som behöver lösas om de givna revisionerna slås ihop."
+msgstr "Visar de konflikter som behöver lösas om de givna revisionerna slås ihop."
 
 #: cmd_merging.cc:729
 msgid ""
@@ -1679,7 +1626,6 @@ msgid "Applies changes made at arbitrary places in history"
 msgstr "Applicerar ändringar som gjorts på godtyckliga platser i historien"
 
 #: cmd_merging.cc:771
-#, fuzzy
 msgid ""
 "This command takes changes made at any point in history, and edits your "
 "current workspace to include those changes.  The end result is identical to "
@@ -1691,18 +1637,9 @@ msgid ""
 "If two revisions are given, applies the changes made to get from the first "
 "revision to the second."
 msgstr ""
-"Tar ändringar från vald(a) revision(er) och utför dem i arbetskopian.\n"
-"Det här kommandot plockar ändringar från någon punkt i historien och\n"
-"skriver om din arbetskopia i enlighet med dessa ändringar. Slut-\n"
-"resultatet är exakt som 'mtn diff -r FRÅN -r TILL | patch -p0', förutom\n"
-"att monotones ihopslagningsmekanism används, och därmed hanteras\n"
-"namnbyten, konflikter och så vidare.\n"
-"\n"
-"Om enbart en revision har givits utförs ändringarna gjorda i den\n"
-"revisionen jämfört med dess förälder.\n"
-"\n"
-"Om två revisioner har givits utförs alla ändringar som gjorts för att\n"
-"komma från den första till den andra."
+"Det här kommandot plockar ändringar från någon punkt i historien och skriver om din arbetskopia i enlighet med dessa ändringar. Slutresultatet är exakt som 'mtn diff -r FRÅN -r TILL | patch -p0', förutom att monotones ihopslagningsmekanism används, och därmed hanteras namnbyten, konflikter och så vidare.\n"
+"Om enbart en revision har givits utförs ändringarna gjorda i den revisionen jämfört med dess förälder.\n"
+"Om två revisioner har givits utförs alla ändringar som gjorts för att komma från den första till den andra."
 
 #: cmd_merging.cc:793
 #, c-format
@@ -1736,9 +1673,8 @@ msgid "applied changes to workspace"
 msgstr "utförde ändringarna i arbetskopian"
 
 #: cmd_merging.cc:937
-#, fuzzy
 msgid "Shows unmerged head revisions of a branch"
-msgstr "visa ej ihopslagna lövrevisioner i grenen"
+msgstr "Visar ej ihopslagna lövrevisioner i grenen"
 
 #: cmd_merging.cc:953
 #, c-format
@@ -1751,11 +1687,8 @@ msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
 #: cmd_merging.cc:963
-#, fuzzy
 msgid "Dumps the roster associated with a given identifier"
-msgstr ""
-"skriv ut den lista som hör ihop med angivet REVID, eller arbetskopian om "
-"REVID inte angavs"
+msgstr "Skriver ut den lista som hör ihop med angiven identifierare"
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
@@ -1796,28 +1729,24 @@ msgid "[ADDRESS[:PORTNUMBER] [PATTERN ...]]"
 msgstr "[ADRESS[:PORTNUMMER] [MÖNSTER ...]]"
 
 #: cmd_netsync.cc:126
-#, fuzzy
 msgid "Pushes branches to a netsync server"
-msgstr "skicka grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Skickar grenar till en netsync-server"
 
 #: cmd_netsync.cc:127
-#, fuzzy
 msgid ""
 "This will push all branches that match the pattern given in PATTERN to the "
 "netsync server at the address ADDRESS."
-msgstr "skicka grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Det här kommer att skicka alla grenar som matchar MÖNSTER till netsync-server på adressen ADRESS"
 
 #: cmd_netsync.cc:144
-#, fuzzy
 msgid "Pulls branches from a netsync server"
-msgstr "hämta grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Hämtar grenar från netsync-server"
 
 #: cmd_netsync.cc:145
-#, fuzzy
 msgid ""
 "This pulls all branches that match the pattern given in PATTERN from the "
 "netsync server at the address ADDRESS."
-msgstr "hämta grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Det här hämtar alla grenar som matchar MÖNSTER till netsync-server på adressen ADRESS"
 
 #: cmd_netsync.cc:155 cmd_netsync.cc:263
 #, c-format
@@ -1825,16 +1754,14 @@ msgid "doing anonymous pull; use -kKEYNAME if you need authentication"
 msgstr "hämtar anonymt; använd -kNYCKELNAMN om du behöver autentisera"
 
 #: cmd_netsync.cc:163
-#, fuzzy
 msgid "Synchronizes branches with a netsync server"
-msgstr "synkronisera grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Synkronisera grenar med en netsync-server"
 
 #: cmd_netsync.cc:164
-#, fuzzy
 msgid ""
 "This synchronizes branches that match the pattern given in PATTERN with the "
 "netsync server at the address ADDRESS."
-msgstr "synkronisera grenar som matchar MÖNSTER till netsync-server på ADRESS"
+msgstr "Det här synkronisera grenar som matchar MÖNSTER med netsync-server på adressen ADRESS"
 
 #: cmd_netsync.cc:207
 msgid "ADDRESS[:PORTNUMBER] [DIRECTORY]"
@@ -1845,16 +1772,11 @@ msgid "Checks out a revision from a remote database into a directory"
 msgstr "Hämtar en revision från en databas på en annan dator till en katalog"
 
 #: cmd_netsync.cc:209
-#, fuzzy
 msgid ""
 "If a revision is given, that's the one that will be checked out.  Otherwise, "
 "it will be the head of the branch supplied.  If no directory is given, the "
 "branch name will be used as directory"
-msgstr ""
-"hämta en revision från servern till den angivna katalogen.\n"
-"Om en revision anges kommer just den att hämtas. Om ingen revision\n"
-"anges kommer lövet i grenen (implicit eller angiven) att hämtas. Om\n"
-"ingen katalog anges kommer grenens namn att användas som katalognamn."
+msgstr "Om en revision anges kommer just den att hämtas. Om ingen revision anges kommer lövet i grenen (implicit eller angiven) att hämtas. Om ingen katalog anges kommer grenens namn att användas som katalognamn."
 
 #: cmd_netsync.cc:222
 #, c-format
@@ -1902,9 +1824,8 @@ msgid "failed to create pid file '%s'"
 msgstr "misslyckades med att skapa pid-filen %s"
 
 #: cmd_netsync.cc:395
-#, fuzzy
 msgid "Serves the database to connecting clients"
-msgstr "servera databasen till anslutande klienter"
+msgstr "Servera databasen till anslutande klienter"
 
 #: cmd_netsync.cc:412
 #, c-format
@@ -1925,18 +1846,15 @@ msgid "RCSFILE..."
 msgstr "RCSFIL..."
 
 #: cmd_othervcs.cc:17
-#, fuzzy
 msgid "Parses versions in RCS files"
-msgstr "uttyder RCS-fil %s"
+msgstr "Uttyder versioner i RCS-filer"
 
 #: cmd_othervcs.cc:18
-#, fuzzy
 msgid ""
 "This command doesn't reconstruct or import revisions.  You probably want to "
 "use cvs_import."
 msgstr ""
-"läser versioner från RCS-filer\n"
-"detta kommando importerar inte revisioner; du vill antagligen använda\n"
+"Detta kommando importerar inte revisioner; du vill antagligen använda\n"
 "cvs_import"
 
 #: cmd_othervcs.cc:33
@@ -1944,18 +1862,16 @@ msgid "CVSROOT"
 msgstr "CVSROOT"
 
 #: cmd_othervcs.cc:34
-#, fuzzy
 msgid "Imports all versions in a CVS repository"
-msgstr "importera alla revisioner i ett CVS-arkiv"
+msgstr "Importerar alla revisioner i ett CVS-arkiv"
 
 #: cmd_packet.cc:22 cmd_packet.cc:52
 msgid "ID"
 msgstr "ID"
 
 #: cmd_packet.cc:23
-#, fuzzy
 msgid "Prints a public key packet"
-msgstr "skriv it datapaket för publik nyckel till stdout"
+msgstr "Skriver ut datapaket för publik nyckel till stdout"
 
 #: cmd_packet.cc:46
 #, c-format
@@ -1963,9 +1879,8 @@ msgid "public key '%s' does not exist"
 msgstr "den publika nyckeln '%s' finns inte"
 
 #: cmd_packet.cc:53
-#, fuzzy
 msgid "Prints a private key packet"
-msgstr "skriv it datapaket för privat nyckel till stdout"
+msgstr "Skriver ut datapaket för privat nyckel till stdout"
 
 #: cmd_packet.cc:62
 #, c-format
@@ -1973,9 +1888,8 @@ msgid "public and private key '%s' do not exist in keystore"
 msgstr "den publika och privata nyckeln '%s' finns inte i nyckellagret"
 
 #: cmd_packet.cc:134
-#, fuzzy
 msgid "Reads packets from files"
-msgstr "läs paket från filer eller stdin"
+msgstr "Läser paket från filer eller stdin"
 
 #: cmd_packet.cc:135
 msgid "If no files are provided, the standard input is used."
@@ -2091,9 +2005,8 @@ msgid "failed to remove magic line; commit cancelled"
 msgstr "den magiska raden är inte borttagen; arkivering avbryts"
 
 #: cmd_ws_commit.cc:146
-#, fuzzy
 msgid "Reverts files and/or directories"
-msgstr "ingen sådan fil eller katalog: '%s'"
+msgstr "Återställer filer och/eller kataloger"
 
 #: cmd_ws_commit.cc:147
 msgid ""
@@ -2126,9 +2039,8 @@ msgid "recreating %s/"
 msgstr "återställer %s/"
 
 #: cmd_ws_commit.cc:278
-#, fuzzy
 msgid "Disapproves a particular revision"
-msgstr "underkänn en specifik revision"
+msgstr "Underkänner en specifik revision"
 
 #: cmd_ws_commit.cc:295
 #, c-format
@@ -2145,9 +2057,8 @@ msgid "[DIRECTORY...]"
 msgstr "[KATALOG...]"
 
 #: cmd_ws_commit.cc:332
-#, fuzzy
 msgid "Creates directories and adds them to the workspace"
-msgstr "skapa en eller flera kataloger och lägg till dem i arbetskopian"
+msgstr "Skapar en eller flera kataloger och lägger till dem i arbetskopian"
 
 #: cmd_ws_commit.cc:353
 #, c-format
@@ -2160,14 +2071,12 @@ msgid "ignoring directory '%s' [see .mtn-ignore]"
 msgstr "ignorerar katalogen '%s' [se .mtn-ignore]"
 
 #: cmd_ws_commit.cc:377
-#, fuzzy
 msgid "Adds files to the workspace"
-msgstr "lägg till filer i arbetskopian"
+msgstr "Lägger till filer i arbetskopian"
 
 #: cmd_ws_commit.cc:411
-#, fuzzy
 msgid "Drops files from the workspace"
-msgstr "överge filer i arbetskopian"
+msgstr "Överger filer i arbetskopian"
 
 #: cmd_ws_commit.cc:440
 msgid ""
@@ -2178,31 +2087,25 @@ msgstr ""
 "KÄLLA1 [KÄLLA2 [...]] MÅLKATALOG"
 
 #: cmd_ws_commit.cc:442
-#, fuzzy
 msgid "Renames entries in the workspace"
-msgstr "byt namn på filer i arbetskopian"
+msgstr "Byter namn på filer i arbetskopian"
 
 #: cmd_ws_commit.cc:463
 msgid "NEW_ROOT PUT_OLD"
 msgstr "NY_ROT PLACERA_GAMLA"
 
 #: cmd_ws_commit.cc:464
-#, fuzzy
 msgid "Renames the root directory"
-msgstr "kan inte ta bort rotkatalogen"
+msgstr "Byter namn på rotkatalogen"
 
 #: cmd_ws_commit.cc:465
-#, fuzzy
 msgid ""
 "After this command, the directory that currently has the name NEW_ROOT will "
 "be the root directory, and the directory that is currently the root "
 "directory will have name PUT_OLD.\n"
 "Use of --bookkeep-only is NOT recommended."
 msgstr ""
-"flytta på rotkatalogen\n"
-"när det här kommandot är klart har katalogen som just nu heter NY_ROT\n"
-"blivit rotkatalogen, och den nuvarande rotkatalogen blivit katalogen\n"
-"PLACERA_GAMLA.\n"
+"När det här kommandot är klart har katalogen som just nu heter NY_ROT blivit rotkatalogen, och den nuvarande rotkatalogen blivit katalogen PLACERA_GAMLA.\n"
 "Det är INTE rekommenderat att använda --bookkeep-only."
 
 #: cmd_ws_commit.cc:483
@@ -2218,16 +2121,11 @@ msgid "Checks out a revision from the database into a directory"
 msgstr "Hämtar en revision från databasen till en katalog"
 
 #: cmd_ws_commit.cc:513
-#, fuzzy
 msgid ""
 "If a revision is given, that's the one that will be checked out.  Otherwise, "
 "it will be the head of the branch (given or implicit).  If no directory is "
 "given, the branch name will be used as directory."
-msgstr ""
-"hämta en revision ur databasen till den angivna katalogen.\n"
-"Om en revision anges kommer den att hämtas. Om ingen revision anges\n"
-"kommer lövet i grenen (implicit eller angiven) att hämtas. Om\n"
-"ingen katalog anges kommer grenens namn att användas som katalognamn."
+msgstr "Om en revision anges kommer den att hämtas. Om ingen revision anges kommer lövet i grenen (implicit eller angiven) att hämtas. Om ingen katalog anges kommer grenens namn att användas som katalognamn."
 
 #: cmd_ws_commit.cc:575
 #, c-format
@@ -2240,24 +2138,20 @@ msgid "checkout directory '%s' already exists"
 msgstr "arbetskatalogen '%s' finns redan"
 
 #: cmd_ws_commit.cc:619
-#, fuzzy
 msgid "Manages file attributes"
-msgstr "sätt, hämta eller ta bort attribut"
+msgstr "Hanterar filattribut"
 
 #: cmd_ws_commit.cc:620
-#, fuzzy
 msgid "This command is used to set, get or drop file attributes."
-msgstr "sätt, hämta eller ta bort attribut"
+msgstr "Detta kommando används för att sätta, hämta eller ta bort attribut"
 
 #: cmd_ws_commit.cc:622 cmd_ws_commit.cc:671
-#, fuzzy
 msgid "PATH [ATTR]"
-msgstr "SÖKVÄG [NYCKEL]"
+msgstr "SÖKVÄG [ATTR]"
 
 #: cmd_ws_commit.cc:623
-#, fuzzy
 msgid "Removes attributes from a file"
-msgstr "Inga attribut till '%s'"
+msgstr "Tar bort attribut från en fil"
 
 #: cmd_ws_commit.cc:624
 msgid ""
@@ -2278,9 +2172,8 @@ msgid "Path '%s' does not have attribute '%s'"
 msgstr "Sökvägen '%s' har inget attribut '%s'"
 
 #: cmd_ws_commit.cc:672
-#, fuzzy
 msgid "Gets the values of a file's attributes"
-msgstr "sätt, hämta eller ta bort attribut"
+msgstr "Hämta värdet för ett filattribut"
 
 #: cmd_ws_commit.cc:673
 msgid ""
@@ -2300,9 +2193,8 @@ msgid "No attribute '%s' on path '%s'"
 msgstr "Inget attribut '%s' för sökvägen '%s'"
 
 #: cmd_ws_commit.cc:724
-#, fuzzy
 msgid "PATH ATTR VALUE"
-msgstr "SÖKVÄG NYCKEL VÄRDE"
+msgstr "SÖKVÄG ATTR VÄRDE"
 
 #: cmd_ws_commit.cc:725
 msgid "Sets an attribute on a file"
@@ -2335,9 +2227,8 @@ msgid "Drops an attribute or all of them from a certain path"
 msgstr "Kata ett eller alla attribut för en given sökväg"
 
 #: cmd_ws_commit.cc:987
-#, fuzzy
 msgid "Commits workspace changes to the database"
-msgstr "arkivera arbetskopian i databasen"
+msgstr "Arkiverar ändringar i arbetskopian till databasen"
 
 #: cmd_ws_commit.cc:1022
 #, c-format
@@ -2411,14 +2302,12 @@ msgstr ""
 "obs: du kan tänkas vilja (eller kanske inte) köra '%s merge'"
 
 #: cmd_ws_commit.cc:1234
-#, fuzzy
 msgid "Sets up a new workspace directory"
-msgstr "initiera en ny arbetskatalog (nuvarande om katalog ej anges)"
+msgstr "Initierar en ny arbetskopie-katalog"
 
 #: cmd_ws_commit.cc:1235
-#, fuzzy
 msgid "If no directory is specified, uses the current directory."
-msgstr "målkatalogen %s är inte en katalog"
+msgstr "Använd nuvarande katalog om inget annat anges."
 
 #: cmd_ws_commit.cc:1241
 #, c-format
@@ -2430,9 +2319,8 @@ msgid "DIRECTORY"
 msgstr "KATALOG"
 
 #: cmd_ws_commit.cc:1258
-#, fuzzy
 msgid "Imports the contents of a directory into a branch"
-msgstr "importera den givna katalogens innehåll till den givna grenen"
+msgstr "Importerar den givna katalogens innehåll till den givna grenen"
 
 #: cmd_ws_commit.cc:1270
 #, c-format
@@ -2450,30 +2338,24 @@ msgid "import directory '%s' is a file"
 msgstr "importkatalogen '%s' är en fil"
 
 #: cmd_ws_commit.cc:1360
-#, fuzzy
 msgid "Migrates a workspace directory's metadata to the latest format"
-msgstr ""
-"migrera en arbetskopias metadata till det senaste formatet; nuvarande "
-"katalog avses om inget annat anges"
+msgstr "Migrerar en arbetskopias metadata till det senaste formatet"
 
 #: cmd_ws_commit.cc:1361
-#, fuzzy
 msgid "If no directory is given, defaults to the current workspace."
-msgstr "filen '%s' är okänd i denna arbetskopia"
+msgstr "Nuvarande katalog avses om inget annat anges"
 
 #: cmd_ws_commit.cc:1374
-#, fuzzy
 msgid "Refreshes the inodeprint cache"
-msgstr "uppdatera inodeprint-cachen"
+msgstr "Uppdaterar inodeprint-cachen"
 
 #: commands.cc:57
 msgid "Commands that aid in scripted execution"
 msgstr "Kommandon som kan användas för skriptat körning"
 
 #: commands.cc:60
-#, fuzzy
 msgid "Commands that manipulate the database"
-msgstr "gör ändringar direkt i databasen"
+msgstr "Kommandon för att manipulera databasen"
 
 #: commands.cc:63
 msgid "Commands that aid in program debugging"
@@ -2500,9 +2382,8 @@ msgid "Commands for interaction with RCS and CVS"
 msgstr "Kommandon för att hämta data från RCS och CVS"
 
 #: commands.cc:81
-#, fuzzy
 msgid "Commands to review revisions"
-msgstr "uppdaterad till revisionen %s"
+msgstr "Kommandon för att undersöka revisioner"
 
 #: commands.cc:84
 msgid "Commands to manipulate the tree"
@@ -2527,9 +2408,9 @@ msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' är flertydigt; möjliga tolkningar är:"
 
 #: commands.cc:610
-#, fuzzy, c-format
+#, c-format
 msgid "Aliases: %s."
-msgstr "Synonym för %s"
+msgstr "Synonym: %s."
 
 #: commands.cc:654
 #, c-format
@@ -2537,9 +2418,9 @@ msgid "command '%s' is invalid; it is a group"
 msgstr "kommandot '%s' är ogiltigt, det är en grupp"
 
 #: commands.cc:657
-#, fuzzy, c-format
+#, c-format
 msgid "no subcommand specified for '%s'"
-msgstr "filen '%s' finns inte"
+msgstr "inga underkommandon angivna för '%s'"
 
 #: commands.cc:660
 #, c-format
@@ -3443,9 +3324,9 @@ msgid "Shows the program version"
 msgstr "Visar programversionen"
 
 #: mt_version.cc:40
-#, fuzzy, c-format
+#, c-format
 msgid "no arguments allowed"
-msgstr "inga argument behövs"
+msgstr "inga argument tillåtna"
 
 #: mt_version.cc:53
 #, c-format
@@ -4061,9 +3942,8 @@ msgstr ""
 "jämföra"
 
 #: options_list.hh:262
-#, fuzzy
 msgid "print detailed version number"
-msgstr "skriv ut detaljerad versionsinformation och avsluta sedan omedelbart"
+msgstr "skriv ut detaljerad versionsinformation"
 
 #: options_list.hh:269
 msgid "display help message"
@@ -4675,7 +4555,7 @@ msgid "warning: "
 msgstr "varning: "
 
 #: ui.cc:477
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "fatal: %s\n"
 "this is almost certainly a bug in monotone.\n"
