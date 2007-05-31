@@ -46,6 +46,10 @@
 # selector		-> (el) selector
 # sink			-> ?????????????
 # status		-> status
+# standard input	-> standard input
+# standard output	-> standard output
+# stdin			-> stdin
+# stdout		-> stdout
 # stream		-> (el) flujo
 # summary		-> (el) sumario
 # (to) sync		-> sincronizar
@@ -63,8 +67,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-22 16:45-0400\n"
-"PO-Revision-Date: 2007-05-25 15:50-0400\n"
+"POT-Creation-Date: 2007-05-30 15:18-0400\n"
+"PO-Revision-Date: 2007-05-30 15:44-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -104,7 +108,7 @@ msgstr "SELECTOR"
 
 #: asciik.cc:369
 msgid "Prints an ASCII representation of the revisions' graph"
-msgstr "imprime una representación ASCII del grafo de revisiones"
+msgstr "Imprime una representación ASCII del grafo de revisiones"
 
 #: asciik.cc:374 automate.cc:70 automate.cc:97 automate.cc:147 automate.cc:261
 #: automate.cc:361 automate.cc:389 automate.cc:473 automate.cc:861
@@ -255,7 +259,7 @@ msgstr "Imprime los datos de una revisión en formato paquetizado"
 #: automate.cc:1735 cmd_db.cc:41 cmd_diff_log.cc:396 cmd_diff_log.cc:423
 #: cmd_diff_log.cc:425 cmd_files.cc:175 cmd_files.cc:265 cmd_merging.cc:185
 #: cmd_merging.cc:789 cmd_merging.cc:804 cmd_merging.cc:807 cmd_netsync.cc:326
-#: cmd_ws_commit.cc:551 cmd_ws_commit.cc:1277 commands.cc:806
+#: cmd_ws_commit.cc:551 cmd_ws_commit.cc:1277 commands.cc:807
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisión '%s' no existe"
@@ -500,7 +504,7 @@ msgstr ""
 
 #: cmd_automate.cc:26
 msgid "Interface for scripted execution"
-msgstr ""
+msgstr "Interfaz para ejecución mediante scripts"
 
 #: cmd_automate.cc:62
 msgid "Prints the automation interface's version"
@@ -653,11 +657,11 @@ msgstr "Regenera los caches almacenados en la base de datos"
 
 #: cmd_db.cc:215
 msgid "Clears the branch's epoch"
-msgstr ""
+msgstr "Limpia la época de la rama"
 
 #: cmd_db.cc:226
 msgid "Sets the branch's epoch"
-msgstr ""
+msgstr "Define la época de la rama"
 
 #: cmd_db.cc:235
 #, c-format
@@ -889,7 +893,8 @@ msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
 msgstr ""
-"Calcula e mprime copia anotada del archivo dado de la REVISIÓN especificada."
+"Calcula e imprime copia anotada del archivo dado de la REVISIÓN "
+"especificada."
 
 #: cmd_files.cc:159
 #, c-format
@@ -897,7 +902,7 @@ msgid ""
 "with no revision selected, this command can only be used in a single-parent "
 "workspace"
 msgstr ""
-"sin una revisión seleccionada; este comando solo puede ser utilizado en un "
+"sin una revisión seleccionada, este comando solo puede ser utilizado en un "
 "área de trabajo con un solo padre"
 
 #: cmd_files.cc:173
@@ -1213,7 +1218,7 @@ msgstr "Lista las ramas en la base de datos que concuerdan con un patrón"
 
 #: cmd_list.cc:275
 msgid "Lists the current epoch of branches that match a pattern"
-msgstr ""
+msgstr "Lista la época actual de las ramas que concuerdan con el patrón dado"
 
 #: cmd_list.cc:298
 #, c-format
@@ -2363,7 +2368,7 @@ msgstr "Refresca el cache inodeprint"
 
 #: commands.cc:57
 msgid "Commands that aid in scripted execution"
-msgstr ""
+msgstr "Comandos que ayudan en la ejecución mediante scripts"
 
 #: commands.cc:60
 msgid "Commands that manipulate the database"
@@ -2409,73 +2414,73 @@ msgstr "Comandos para manejar variables persistentes"
 msgid "Commands that deal with the workspace"
 msgstr "Comandos que lidian con el área de trabajo"
 
-#: commands.cc:466
+#: commands.cc:467
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando desconocido '%s'"
 
-#: commands.cc:476
+#: commands.cc:477
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' es ambiguo; posibles completaciones son:"
 
-#: commands.cc:610
+#: commands.cc:611
 #, c-format
 msgid "Aliases: %s."
 msgstr "Alias: %s."
 
-#: commands.cc:654
+#: commands.cc:655
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr "commando '%s' es inválido; es un grupo"
 
-#: commands.cc:657
+#: commands.cc:658
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "no se ha especificado subcomando para '%s'"
 
-#: commands.cc:660
+#: commands.cc:661
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "'%s' no concuerda como un subcomando de '%s'"
 
-#: commands.cc:681
+#: commands.cc:682
 msgid "command [ARGS...]"
 msgstr "comando [ARGUMENTOS...]"
 
-#: commands.cc:682
+#: commands.cc:683
 msgid "Displays help about commands and options"
 msgstr "Muestra ayuda sobre comandos y opciones"
 
-#: commands.cc:699
+#: commands.cc:700
 msgid "Triggers the specified kind of crash"
-msgstr ""
+msgstr "Dispara el tipo de falla especificado"
 
-#: commands.cc:813
+#: commands.cc:814
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiendo selección '%s'"
 
-#: commands.cc:821
+#: commands.cc:822
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "no hay concordancia para la selección '%s'"
 
-#: commands.cc:828
+#: commands.cc:829
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido a '%s'"
 
-#: commands.cc:845
+#: commands.cc:846
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "selección '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:862
+#: commands.cc:863
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:863
+#: commands.cc:864
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2484,7 +2489,7 @@ msgstr ""
 "rama '%s' tiene múltiples cabezas\n"
 "considere utilizar '%s merge'"
 
-#: commands.cc:878
+#: commands.cc:879
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "'--message' y '--message-file' son mutuamente exclusivos"
@@ -3634,7 +3639,7 @@ msgstr "%s con hash '%s' no existe en nuestra base de datos"
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr ""
-"Epoca no concordante en rama %s. Servidor tiene '%s', cliente tiene '%s'."
+"Época no concordante en rama %s. Servidor tiene '%s', cliente tiene '%s'."
 
 #: netsync.cc:1921
 #, c-format
