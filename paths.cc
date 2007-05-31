@@ -652,12 +652,6 @@ dirname_basename(split_path const & sp,
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 
-system_path
-current_root_path()
-{
-  return system_path(fs::initial_path().root_path().string());
-}
-
 static bool
 find_bookdir(fs::path const & root, fs::path const & bookdir, 
              fs::path & current, fs::path & removed)
@@ -736,13 +730,26 @@ find_bookdir(fs::path const & root, fs::path const & bookdir,
 
 
 bool
-find_and_go_to_workspace(system_path const & search_root)
+find_and_go_to_workspace(std::string const & search_root)
 {
-  fs::path root(search_root.as_external(), fs::native);
   fs::path bookdir(bookkeeping_root.as_external(), fs::native);
   fs::path oldbookdir(old_bookkeeping_root.as_external(), fs::native);
-  fs::path current, removed;
+  fs::path root, current, removed;
 
+  if (search_root.empty())
+    root = fs::initial_path().root_path();
+  else
+    {
+      L(FL("limiting search for workspace to %s") % search_root);
+      // converting through system_path makes it absolute
+      root = fs::path(system_path(search_root).as_external(), fs::native);
+
+      N(fs::exists(root),
+        F("search root '%s' does not exist") % search_root);
+      N(fs::is_directory(root),
+         F("search root '%s' is not a directory") % search_root);
+    }
+  
   // first look for the current name of the bookkeeping directory.
   // if we don't find it, look for it under the old name, so that
   // migration has a chance to work.

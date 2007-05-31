@@ -90,7 +90,6 @@ public:
 
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);
-  void set_root(system_path const & root);
   void set_diff_format(diff_type dtype);
 
   explicit app_state();

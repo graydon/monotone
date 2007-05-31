@@ -253,13 +253,10 @@ dirname_basename(split_path const & sp,
 void
 save_initial_path();
 
-system_path
-current_root_path();
-
 // returns true if workspace found, in which case cwd has been changed
 // returns false if workspace not found
 bool
-find_and_go_to_workspace(system_path const & search_root);
+find_and_go_to_workspace(std::string const & search_root);
 
 // this is like change_current_working_dir, but also initializes the various
 // root paths that are needed to interpret paths

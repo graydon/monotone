@@ -463,11 +463,11 @@ OPTION(revision, revision, true, "revision,r",
 }
 #endif
 
-GOPT(root, "root", system_path, current_root_path(),
+GOPT(root, "root", std::string, ,
      gettext_noop("limit search for workspace to specified root"))
 #ifdef option_bodies
 {
-  root = system_path(arg);
+  root = arg;
 }
 #endif
 
