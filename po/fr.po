@@ -249,7 +249,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.36\n"
 "Report-Msgid-Bugs-To: monotone-devel@nongnu.org\n"
-"POT-Creation-Date: 2007-05-22 22:40+0200\n"
+"POT-Creation-Date: 2007-06-01 22:31+0200\n"
 "PO-Revision-Date: 2007-05-22 22:51+0200\n"
 "Last-Translator: Benoît Dejean <benoit@placenet.org>\n"
 "Language-Team: Benoît Dejean <benoit@placenet.org>\n"
@@ -712,7 +712,7 @@ msgstr "écrire un paquet pour une révision sur la sortie standard"
 #: ../cmd_files.cc:175 ../cmd_files.cc:265 ../cmd_merging.cc:185
 #: ../cmd_merging.cc:789 ../cmd_merging.cc:804 ../cmd_merging.cc:807
 #: ../cmd_netsync.cc:326 ../cmd_ws_commit.cc:551 ../cmd_ws_commit.cc:1277
-#: ../commands.cc:806
+#: ../commands.cc:807
 #, c-format
 msgid "no such revision '%s'"
 msgstr "aucune révision « %s »"
@@ -2431,7 +2431,9 @@ msgstr "Envoie des branches à un serveur netsync"
 msgid ""
 "This will push all branches that match the pattern given in PATTERN to the "
 "netsync server at the address ADDRESS."
-msgstr "Toutes les branches correspondant au MOTIF vont être envoyées au serveur netsync à l'ADRESSE."
+msgstr ""
+"Toutes les branches correspondant au MOTIF vont être envoyées au serveur "
+"netsync à l'ADRESSE."
 
 #: ../cmd_netsync.cc:144
 msgid "Pulls branches from a netsync server"
@@ -2441,12 +2443,15 @@ msgstr "Récupère des branches depuis un serveur netsync"
 msgid ""
 "This pulls all branches that match the pattern given in PATTERN from the "
 "netsync server at the address ADDRESS."
-msgstr "Toutes les branches correspondant au MOTIF vont être récupérées depuis le serveur netsync à l'ADRESSE."
+msgstr ""
+"Toutes les branches correspondant au MOTIF vont être récupérées depuis le "
+"serveur netsync à l'ADRESSE."
 
 #: ../cmd_netsync.cc:155 ../cmd_netsync.cc:263
 #, c-format
 msgid "doing anonymous pull; use -kKEYNAME if you need authentication"
-msgstr "réception anonyme ; utilisez -kNOMCLEF si vous avez besoin d'être authentifié"
+msgstr ""
+"réception anonyme ; utilisez -kNOMCLEF si vous avez besoin d'être authentifié"
 
 #: ../cmd_netsync.cc:163
 msgid "Synchronizes branches with a netsync server"
@@ -2456,7 +2461,9 @@ msgstr "Synchronise des branches avec un serveur netsync"
 msgid ""
 "This synchronizes branches that match the pattern given in PATTERN with the "
 "netsync server at the address ADDRESS."
-msgstr "Toutes les branches correspondant au MOTIF vont être synchronisées avec le serveur netsync à l'ADRESSE."
+msgstr ""
+"Toutes les branches correspondant au MOTIF vont être synchronisées avec le "
+"serveur netsync à l'ADRESSE."
 
 #: ../cmd_netsync.cc:207
 msgid "ADDRESS[:PORTNUMBER] [DIRECTORY]"
@@ -3162,74 +3169,74 @@ msgstr ""
 msgid "Commands that deal with the workspace"
 msgstr ""
 
-#: ../commands.cc:466
+#: ../commands.cc:467
 #, c-format
 msgid "unknown command '%s'"
 msgstr "commande inconnue « %s »"
 
-#: ../commands.cc:476
+#: ../commands.cc:477
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr ""
 
-#: ../commands.cc:610
+#: ../commands.cc:611
 #, c-format
 msgid "Aliases: %s."
 msgstr "Synonyme : %s"
 
-#: ../commands.cc:654
+#: ../commands.cc:655
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr ""
 
-#: ../commands.cc:657
+#: ../commands.cc:658
 #, fuzzy, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "aucun manifeste « %s »"
 
-#: ../commands.cc:660
+#: ../commands.cc:661
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr ""
 
 #. //////////////////////////////////////////////////////////////////////
-#: ../commands.cc:681
+#: ../commands.cc:682
 msgid "command [ARGS...]"
 msgstr "commande [ARGUMENTS...]"
 
-#: ../commands.cc:682
+#: ../commands.cc:683
 msgid "Displays help about commands and options"
 msgstr ""
 
-#: ../commands.cc:699
+#: ../commands.cc:700
 msgid "Triggers the specified kind of crash"
 msgstr ""
 
-#: ../commands.cc:813
+#: ../commands.cc:814
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expansion de la sélection « %s »"
 
-#: ../commands.cc:821
+#: ../commands.cc:822
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "aucune correspondance pour la sélection « %s »"
 
-#: ../commands.cc:828
+#: ../commands.cc:829
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expansion à « %s »"
 
-#: ../commands.cc:845
+#: ../commands.cc:846
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "la sélection « %s » possède plusieurs expansions ambiguës :"
 
-#: ../commands.cc:862
+#: ../commands.cc:863
 msgid "note: "
 msgstr "note : "
 
-#: ../commands.cc:863
+#: ../commands.cc:864
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -3238,7 +3245,7 @@ msgstr ""
 "la branche « %s » possède plusieurs têtes\n"
 "Vous devriez peut-être lancer « %s merge »."
 
-#: ../commands.cc:878
+#: ../commands.cc:879
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message et --message-file sont mutuellement exclusifs"
