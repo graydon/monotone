@@ -773,7 +773,7 @@ msgstr "ANCIEN_FICHIER NOUVEAU_FICHIER"
 #: ../automate.cc:1134
 #, fuzzy
 msgid "Prints the file delta in packet format"
-msgstr "écrire le paquet delta pour un fichier sur la sortie standard"
+msgstr "Affiche le paquet delta pour un fichier"
 
 #: ../automate.cc:1171
 msgid "Prints revisions that are common ancestors of a list of revisions"
