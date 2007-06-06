@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-01 15:02+0200\n"
-"PO-Revision-Date: 2007-06-01 15:03+0200\n"
+"POT-Creation-Date: 2007-06-02 14:10+0200\n"
+"PO-Revision-Date: 2007-06-02 14:11+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -3315,22 +3315,22 @@ msgstr "make_signature: signaturen är ogiltig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
 
-#: lua.cc:469 lua.cc:483 lua.cc:518
+#: lua.cc:469 lua.cc:480 lua.cc:492
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s anropades med inkorrekt parameter"
 
-#: lua.cc:486 lua.cc:521
+#: lua.cc:550
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:487 lua.cc:522 rcs_import.cc:1229 work.cc:1604
+#: lua.cc:551 rcs_import.cc:1229 work.cc:1604
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
 
-#: lua.cc:506 lua.cc:543
+#: lua.cc:573
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
@@ -5156,7 +5156,7 @@ msgid "could not determine configuration path"
 msgstr "kunde inte räkna ut vägen till konfigurationen"
 
 #: win32/fs.cc:136
-#, fuzzy, c-format
+#, c-format
 msgid "%s: GetFileAttributes error: %s"
 msgstr "%s: fel i GetFileAttributes: %s"
 

@@ -14,7 +14,6 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
 #include <boost/filesystem/exception.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <boost/version.hpp>
 
@@ -32,7 +31,6 @@ using std::memcpy;
 using std::getenv;
 using std::exit;
 using std::make_pair;
-using boost::lexical_cast;
 
 // Lua uses the c i/o functions, so we need to too.
 struct tester_sanity : public sanity
@@ -544,8 +542,7 @@ int main(int argc, char **argv)
   try
     {
       run_string(st, testlib_constant, "tester builtin functions");
-      //printf("Loading test file %s\n", testfile.c_str());
-      run_file(st, testfile);
+      run_file(st, testfile.c_str());
       Lua ll(st);
       ll.func("run_tests");
       ll.push_table();

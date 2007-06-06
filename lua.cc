@@ -395,11 +395,11 @@ Lua::func(string const & fname)
 }
 
 Lua &
-Lua::loadstring(string const & str, string const & identity)
+Lua::loadstring(char const * str, char const * identity)
 {
   if (!failed)
     {
-      if (luaL_loadbuffer(st, str.c_str(), str.size(), identity.c_str()))
+      if (luaL_loadbuffer(st, str, strlen(str), identity))
         {
           report_error();
         }
@@ -408,11 +408,11 @@ Lua::loadstring(string const & str, string const & identity)
 }
 
 Lua &
-Lua::loadfile(string const & filename)
+Lua::loadfile(char const * filename)
 {
   if (!failed)
     {
-      if (luaL_loadfile(st, filename.c_str()))
+      if (luaL_loadfile(st, filename))
         {
           report_error();
         }
@@ -468,10 +468,7 @@ LUAEXT(include, )
   const char *path = luaL_checkstring(L, -1);
   N(path, F("%s called with an invalid parameter") % "Include");
 
-  bool res =Lua(L)
-  .loadfile(string(path, lua_strlen(L, -1)))
-  .call(0,1)
-  .ok();
+  bool res = run_file(L, path);
 
   lua_pushboolean(L, res);
   return 1;
@@ -482,30 +479,7 @@ LUAEXT(includedir, )
   const char *pathstr = luaL_checkstring(L, -1);
   N(pathstr, F("%s called with an invalid parameter") % "IncludeDir");
 
-  fs::path locpath(pathstr, fs::native);
-  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
-  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
-
-  // directory, iterate over it, skipping subdirs, taking every filename,
-  // sorting them and loading in sorted order
-  fs::directory_iterator it(locpath);
-  vector<fs::path> arr;
-  while (it != fs::directory_iterator())
-    {
-      if (!fs::is_directory(*it))
-        arr.push_back(*it);
-      ++it;
-    }
-  sort(arr.begin(), arr.end());
-  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
-    {
-      bool res =Lua(L)
-      .loadfile(i->string())
-      .call(0,1)
-      .ok();
-      N(res, F("lua error while loading rcfile '%s'") % i->string());
-    }
-
+  run_directory(L, pathstr, "*");
   lua_pushboolean(L, true);
   return 1;
 }
@@ -517,32 +491,7 @@ LUAEXT(includedirpattern, )
   N(pathstr && pattern,
     F("%s called with an invalid parameter") % "IncludeDirPattern");
 
-  fs::path locpath(pathstr, fs::native);
-  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
-  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
-
-  // directory, iterate over it, skipping subdirs, taking every filename
-  // matching the pattern, sorting them and loading in sorted order
-  fs::directory_iterator it(locpath);
-  globish r = globish(pattern);
-  globish_matcher glob(r, globish());
-  vector<fs::path> arr;
-  while (it != fs::directory_iterator())
-    {
-      if (!fs::is_directory(*it) && glob(it->string()))
-        arr.push_back(*it);
-      ++it;
-    }
-  sort(arr.begin(), arr.end());
-  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
-    {
-      bool res =Lua(L)
-      .loadfile(i->string())
-      .call(0,1)
-      .ok();
-      N(res, F("lua error while loading rcfile '%s'") % i->string());
-    }
-
+  run_directory(L, pathstr, pattern);
   lua_pushboolean(L, true);
   return 1;
 }
@@ -573,7 +522,7 @@ LUAEXT(gettext, )
 }
 
 bool
-run_string(lua_State * st, string const &str, string const & identity)
+run_string(lua_State * st, char const * str, char const * identity)
 {
   I(st);
   return
@@ -584,7 +533,7 @@ run_string(lua_State * st, string const &str, string const & identity)
 }
 
 bool
-run_file(lua_State * st, string const &filename)
+run_file(lua_State * st, char const * filename)
 {
   I(st);
   return
@@ -592,6 +541,38 @@ run_file(lua_State * st, string const &filename)
     .loadfile(filename)
     .call(0,1)
     .ok();
+}
+
+void
+run_directory(lua_State * st, char const * pathstr, char const * pattern)
+{
+  fs::path locpath(pathstr, fs::native);
+  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
+  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
+
+  // directory, iterate over it, skipping subdirs, taking every filename
+  // matching the pattern, sorting them and loading in sorted order
+  fs::directory_iterator it(locpath);
+  globish r = globish(pattern);
+  globish_matcher glob(r, globish());
+  vector<fs::path> arr;
+  while (it != fs::directory_iterator())
+    {
+      if (!fs::is_directory(*it) && glob(it->string()))
+        arr.push_back(*it);
+      ++it;
+    }
+  sort(arr.begin(), arr.end());
+  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+    {
+      L(FL("opening rcfile '%s'") % i->string());
+      bool res = Lua(st)
+        .loadfile(i->string().c_str())
+        .call(0,1)
+        .ok();
+      N(res, F("lua error while loading rcfile '%s'") % i->string());
+      L(FL("'%s' is ok") % i->string());
+    }
 }
 
 // Local Variables:
