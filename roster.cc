@@ -2824,6 +2824,18 @@ do_testing_on_one_roster(roster_t const & r)
     ++dfs_counted;
   I(n == dfs_counted);
 
+  // Test dfs_iter's path calculations.
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name)), true);
+       !i.finished(); ++i)
+    {
+      file_path from_iter = file_path_internal(i.path());
+      split_path sp;
+      node_t curr = *i;
+      r.get_name(curr->self, sp);
+      file_path from_getname(sp);
+      I(from_iter == from_getname);
+    }
+
   // do a read/write spin
   roster_data r_dat; MM(r_dat);
   marking_map fm;
