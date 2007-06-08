@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "cset.hh"
+#include "hybrid_map.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
@@ -49,7 +50,7 @@ null_node(node_id n)
 // "undefined" value).
 typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
-typedef std::map<node_id, node_t> node_map;
+typedef hybrid_map<node_id, node_t> node_map;
 
 template <> void dump(full_attr_map_t const & val, std::string & out);
 

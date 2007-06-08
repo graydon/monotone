@@ -1191,8 +1191,8 @@ namespace
   {
     // left and right should be equal, except that each may have some attr
     // corpses that the other does not
-    map<node_id, node_t>::const_iterator left_i = left.all_nodes().begin();
-    map<node_id, node_t>::const_iterator right_i = right.all_nodes().begin();
+    node_map::const_iterator left_i = left.all_nodes().begin();
+    node_map::const_iterator right_i = right.all_nodes().begin();
     while (left_i != left.all_nodes().end() || right_i != right.all_nodes().end())
       {
         I(left_i->second->self == right_i->second->self);
@@ -1550,10 +1550,8 @@ mark_merge_roster(roster_t const & left_roster,
        i != merge.all_nodes().end(); ++i)
     {
       node_t const & n = i->second;
-      // SPEEDUP?: instead of using find repeatedly, iterate everything in
-      // parallel
-      map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
-      map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
+      node_map::const_iterator lni = left_roster.all_nodes().find(i->first);
+      node_map::const_iterator rni = right_roster.all_nodes().find(i->first);
 
       bool exists_in_left = (lni != left_roster.all_nodes().end());
       bool exists_in_right = (rni != right_roster.all_nodes().end());
