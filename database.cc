@@ -44,6 +44,7 @@
 #include "graph.hh"
 #include "roster_delta.hh"
 #include "rev_height.hh"
+#include "vocab_hash.hh"
 
 // defined in schema.c, generated from schema.sql:
 extern char const schema_constant[];
@@ -1435,7 +1436,7 @@ public:
   
   void look_at_roster(roster_t const & roster, marking_map const & mm)
   {
-    map<node_id, marking_t>::const_iterator mmi =
+    marking_map::const_iterator mmi =
       mm.find(nid);
     I(mmi != mm.end());
     markings = mmi->second;
@@ -3265,10 +3266,23 @@ database::put_roster(revision_id const & rev_id,
 // for get_uncommon_ancestors
 struct rev_height_graph : rev_graph
 {
+  typedef hashmap::hash_map<revision_id, set<revision_id> > parent_map;
+  typedef hashmap::hash_map<revision_id, rev_height> height_map;
+  static parent_map parent_cache;
+  static height_map height_cache;
   rev_height_graph(database & db) : db(db) {}
   virtual void get_parents(revision_id const & rev, set<revision_id> & parents) const
   {
-    db.get_revision_parents(rev, parents);
+    parent_map::iterator i = parent_cache.find(rev);
+    if (i == parent_cache.end())
+      {
+        db.get_revision_parents(rev, parents);
+        parent_cache.insert(make_pair(rev, parents));
+      }
+    else
+      {
+        parents = i->second;
+      }
   }
   virtual void get_children(revision_id const & rev, set<revision_id> & parents) const
   {
@@ -3277,11 +3291,22 @@ struct rev_height_graph : rev_graph
   }
   virtual void get_height(revision_id const & rev, rev_height & h) const
   {
-      db.get_rev_height(rev, h);
+    height_map::iterator i = height_cache.find(rev);
+    if (i == height_cache.end())
+      {
+        db.get_rev_height(rev, h);
+        height_cache.insert(make_pair(rev, h));
+      }
+    else
+      {
+        h = i->second;
+      }
   }
   
   database & db;
 };
+rev_height_graph::parent_map rev_height_graph::parent_cache;
+rev_height_graph::height_map rev_height_graph::height_cache;
 
 void
 database::get_uncommon_ancestors(revision_id const & a,
