@@ -1179,14 +1179,16 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       ros.get_name(nid, sp);
       file_path fp(sp);
 
+      const path::status status(get_path_status(fp));
+
       if (is_dir_t(node))
         {
-          if (!path_exists(fp))
+          if (status == path::nonexistent)
             {
               W(F("missing directory '%s'") % (fp));
               missing_items++;
             }
-          else if (!directory_exists(fp))
+          else if (status != path::directory)
             {
               W(F("not a directory '%s'") % (fp));
               missing_items++;
@@ -1199,19 +1201,19 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
           if (inodeprint_unchanged(ipm, fp))
             continue;
 
-          if (!path_exists(fp))
+          if (status == path::nonexistent)
             {
               W(F("missing file '%s'") % (fp));
               missing_items++;
             }
-          else if (!file_exists(fp))
+          else if (status != path::file)
             {
               W(F("not a file '%s'") % (fp));
               missing_items++;
             }
 
           file_t file = downcast_to_file_t(node);
-          ident_existing_file(fp, file->content);
+          ident_existing_file(fp, file->content, status);
         }
 
     }

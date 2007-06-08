@@ -556,7 +556,13 @@ walk_tree(file_path const & path,
 bool
 ident_existing_file(file_path const & p, file_id & ident)
 {
-  switch (get_path_status(p))
+  return ident_existing_file(p, ident, get_path_status(p));
+}
+
+bool
+ident_existing_file(file_path const & p, file_id & ident, path::status status)
+{
+  switch (status)
     {
     case path::nonexistent:
       return false;
