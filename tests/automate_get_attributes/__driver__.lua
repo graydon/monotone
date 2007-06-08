@@ -82,3 +82,22 @@ for _,l in pairs(parsed) do
     end
 end
 
+-- check that new attributes which resemble the name of previously
+-- dropped attributes are correctly listed as added, and not changed
+-- (bug in 0.35)
+check(mtn("attr", "set", "testfile", "key2", "new_value"), 0, false, false)
+check(mtn("automate", "get_attributes", "testfile"), 0, true, true)
+check(fsize("stderr") == 0)
+parsed = parse_basic_io(readfile("stdout"))
+
+curkey = ""
+for _,l in pairs(parsed) do
+    if l.name == "attr" then 
+        curkey = l.values[1]
+    end
+    if l.name == "state" and curkey == "key2" then
+        state = l.values[1]
+        check(state == "added")
+    end
+end
+
