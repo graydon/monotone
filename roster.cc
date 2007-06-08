@@ -287,7 +287,7 @@ roster_t::do_deep_copy_from(roster_t const & other)
   I(nodes.empty());
   for (node_map::const_iterator i = other.nodes.begin(); i != other.nodes.end();
        ++i)
-    safe_insert(nodes, make_pair(i->first, i->second->clone()));
+    hinted_safe_insert(nodes, nodes.end(), make_pair(i->first, i->second->clone()));
   for (node_map::iterator i = nodes.begin(); i != nodes.end(); ++i)
     if (is_dir_t(i->second))
       {
