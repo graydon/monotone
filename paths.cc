@@ -390,6 +390,13 @@ file_path::file_path(split_path const & sp)
   I(null_name(*i));
   string tmp;
   bool start = true;
+  size_t size = 0;
+  for (++i; i != sp.end(); ++i)
+    {
+      size = size + 1 + (*i)().length();
+    }
+  tmp.reserve(size);
+  i = sp.begin();
   for (++i; i != sp.end(); ++i)
     {
       I(!null_name(*i));
