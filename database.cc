@@ -1736,10 +1736,11 @@ database::put_file_version(file_id const & old_id,
     invert_xdelta(old_data.inner()(), del.inner()(), tmp);
     reverse_delta = file_delta(tmp);
     data old_tmp;
-    hexenc<id> old_tmp_id;
     patch(new_data.inner(), reverse_delta.inner(), old_tmp);
-    calculate_ident(old_tmp, old_tmp_id);
-    I(file_id(old_tmp_id) == old_id);
+    // We already have the real old data, so compare the
+    // reconstruction to that directly instead of hashing
+    // the reconstruction and comparing hashes.
+    I(old_tmp == old_data.inner());
   }
   
   transaction_guard guard(*this);  
