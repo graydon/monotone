@@ -818,7 +818,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
        i != n->attrs.end(); ++i)
   {
     std::string value(i->second.second());
-    std::string state("unchanged");
+    std::string state;
     
     // if if the first value of the value pair is false this marks a
     // dropped attribute
@@ -851,18 +851,22 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
             node_t prev_node = base.get_node(path);
             full_attr_map_t::const_iterator j = 
               prev_node->attrs.find(i->first);
-            // attribute not found? this is new
-            if (j == prev_node->attrs.end())
+            
+            // the attribute is new if it either hasn't been found
+            // in the previous roster or has been deleted there
+            if (j == prev_node->attrs.end() || !j->second.first)
               {
                 state = "added";
               }
-            // check if this attribute has been changed 
-            // (dropped and set again)
+            // check if the attribute's value has been changed 
             else if (i->second.second() != j->second.second())
               {
                 state = "changed";
               }
-                
+            else
+              {
+                state = "unchanged";
+              }
           }
         // its added since the whole node has been just added
         else

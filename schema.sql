@@ -48,6 +48,8 @@ CREATE TABLE revision_ancestry
 	unique(parent, child)
 	);
 
+CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
+
 CREATE TABLE heights
 	(
 	revision not null,	-- joins with revisions.id
@@ -76,8 +78,6 @@ CREATE TABLE next_roster_node_number
 	(
 	node primary key        -- only one entry in this table, ever
 	);
-
-CREATE INDEX revision_ancestry__child ON revision_ancestry (child);
 
 -- structures for managing RSA keys and file / revision certs
  

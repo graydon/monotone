@@ -13,10 +13,6 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
-#include <boost/lexical_cast.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-
 #include <set>
 #include <map>
 #include <fstream>
@@ -45,8 +41,6 @@ using std::set;
 using std::sort;
 using std::string;
 using std::vector;
-
-using boost::lexical_cast;
 
 static int panic_thrower(lua_State * st)
 {
@@ -93,12 +87,16 @@ lua_hooks::lua_hooks()
 
   // Disable any functions we don't want. This is easiest
   // to do just by running a lua string.
-  if (!run_string(st,
-                  // "os.unsafeexecute = os.execute "
-                  // "io.unsafepopen = io.popen "
-                  "os.execute = function(c) error(\"os.execute disabled for security reasons.  Try spawn().\") end "
-                  "io.popen = function(c,t) error(\"io.popen disabled for security reasons.  Try spawn_pipe().\") end ",
-                  string("<disabled dangerous functions>")))
+  static char const disable_dangerous[] =
+    "os.execute = function(c) "
+    " error(\"os.execute disabled for security reasons.  Try spawn().\") "
+    "end "
+    "io.popen = function(c,t) "
+    " error(\"io.popen disabled for security reasons.  Try spawn_pipe().\") "
+    "end ";
+  
+    if (!run_string(st, disable_dangerous,
+                    "<disabled dangerous functions>"))
     throw oops("lua error while disabling existing functions");
 }
 
@@ -123,7 +121,7 @@ lua_hooks::set_app(app_state *_app)
 void
 lua_hooks::add_test_hooks()
 {
-  if (!run_string(st, test_hooks_constant, string("<test hooks>")))
+  if (!run_string(st, test_hooks_constant, "<test hooks>"))
     throw oops("lua error while setting up testing hooks");
 }
 #endif
@@ -131,7 +129,7 @@ lua_hooks::add_test_hooks()
 void
 lua_hooks::add_std_hooks()
 {
-  if (!run_string(st, std_hooks_constant, string("<std hooks>")))
+  if (!run_string(st, std_hooks_constant, "<std hooks>"))
     throw oops("lua error while setting up standard hooks");
 }
 
@@ -154,35 +152,17 @@ void
 lua_hooks::load_rcfile(utf8 const & rc)
 {
   I(st);
-  if (rc() != "-")
+  if (rc() != "-" && directory_exists(system_path(rc)))
+    run_directory(st, system_path(rc).as_external().c_str(), "*");
+  else
     {
-      fs::path locpath(system_path(rc).as_external(), fs::native);
-      if (fs::exists(locpath) && fs::is_directory(locpath))
-        {
-          // directory, iterate over it, skipping subdirs, taking every filename,
-          // sorting them and loading in sorted order
-          fs::directory_iterator it(locpath);
-          vector<fs::path> arr;
-          while (it != fs::directory_iterator())
-            {
-              if (!fs::is_directory(*it))
-                arr.push_back(*it);
-              ++it;
-            }
-          sort(arr.begin(), arr.end());
-          for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
-            {
-              load_rcfile(system_path(i->native_directory_string()), true);
-            }
-          return; // directory read, skip the rest ...
-        }
+      data dat;
+      L(FL("opening rcfile '%s'") % rc);
+      read_data_for_command_line(rc, dat);
+      N(run_string(st, dat().c_str(), rc().c_str()),
+        F("lua error while loading rcfile '%s'") % rc);
+      L(FL("'%s' is ok") % rc);
     }
-  data dat;
-  L(FL("opening rcfile '%s'") % rc);
-  read_data_for_command_line(rc, dat);
-  N(run_string(st, dat(), rc().c_str()),
-    F("lua error while loading rcfile '%s'") % rc);
-  L(FL("'%s' is ok") % rc);
 }
 
 void
@@ -192,7 +172,7 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
   if (path_exists(rc))
     {
       L(FL("opening rcfile '%s'") % rc);
-      N(run_file(st, rc.as_external()),
+      N(run_file(st, rc.as_external().c_str()),
         F("lua error while loading '%s'") % rc);
       L(FL("'%s' is ok") % rc);
     }

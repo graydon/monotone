@@ -15,32 +15,28 @@
 #include <stdio.h>
 #include <fcntl.h>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
-
 #include "sanity.hh"
 #include "platform.hh"
 
-namespace fs = boost::filesystem;
+using std::string;
 
-std::string
+string
 get_current_working_dir()
 {
   char buffer[4096];
   E(getcwd(buffer, 4096),
     F("cannot get working directory: %s") % os_strerror(errno));
-  return std::string(buffer);
+  return string(buffer);
 }
 
 void
-change_current_working_dir(std::string const & to)
+change_current_working_dir(string const & to)
 {
   E(!chdir(to.c_str()),
     F("cannot change to directory %s: %s") % to % os_strerror(errno));
 }
 
-std::string
+string
 get_default_confdir()
 {
   return get_homedir() + "/.monotone";
@@ -49,56 +45,54 @@ get_default_confdir()
 // FIXME: BUG: this probably mangles character sets
 // (as in, we're treating system-provided data as utf8, but it's probably in
 // the filesystem charset)
-std::string
+string
 get_homedir()
 {
   char * home = getenv("HOME");
   if (home != NULL)
-    return std::string(home);
+    return string(home);
 
   struct passwd * pw = getpwuid(getuid());
   N(pw != NULL, F("could not find home directory for uid %d") % getuid());
-  return std::string(pw->pw_dir);
+  return string(pw->pw_dir);
 }
 
-std::string
-tilde_expand(std::string const & in)
+string
+tilde_expand(string const & in)
 {
   if (in.empty() || in[0] != '~')
     return in;
-  fs::path tmp(in, fs::native);
-  fs::path::iterator i = tmp.begin();
-  if (i != tmp.end())
+  if (in.size() == 1) // just ~
+    return get_homedir();
+  if (in[1] == '/') // ~/...
+    return get_homedir() + in.substr(1);
+
+  string user, after;
+  string::size_type slashpos = in.find('/');
+  if (slashpos == string::npos)
     {
-      fs::path res;
-      if (*i == "~")
-        {
-          fs::path restmp(get_homedir(), fs::native);
-          res /= restmp;
-          ++i;
-        }
-      else if (i->size() > 1 && i->at(0) == '~')
-        {
-          struct passwd * pw;
-          // FIXME: BUG: this probably mangles character sets (as in, we're
-          // treating system-provided data as utf8, but it's probably in the
-          // filesystem charset)
-          pw = getpwnam(i->substr(1).c_str());
-          N(pw != NULL,
-            F("could not find home directory for user %s") % i->substr(1));
-          res /= std::string(pw->pw_dir);
-          ++i;
-        }
-      while (i != tmp.end())
-        res /= *i++;
-      return res.string();
+      user = in.substr(1);
+      after = "";
+    }
+  else
+    {
+      user = in.substr(1, slashpos-1);
+      after = in.substr(slashpos);
     }
 
-  return tmp.string();
+  struct passwd * pw;
+  // FIXME: BUG: this probably mangles character sets (as in, we're
+  // treating system-provided data as utf8, but it's probably in the
+  // filesystem charset)
+  pw = getpwnam(user.c_str());
+  N(pw != NULL,
+    F("could not find home directory for user %s") % user);
+
+  return string(pw->pw_dir) + after;
 }
 
 path::status
-get_path_status(std::string const & path)
+get_path_status(string const & path)
 {
   struct stat buf;
   int res;
@@ -122,7 +116,7 @@ get_path_status(std::string const & path)
 }
 
 void
-rename_clobberingly(std::string const & from, std::string const & to)
+rename_clobberingly(string const & from, string const & to)
 {
   E(!rename(from.c_str(), to.c_str()),
     F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
@@ -141,7 +135,7 @@ rename_clobberingly(std::string const & from, std::string const & to)
 // files from 62**6 to 36**6, oh noes.
 
 static int
-make_temp_file(std::string const & dir, std::string & name, mode_t mode)
+make_temp_file(string const & dir, string & name, mode_t mode)
 {
   static const char letters[]
     = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -151,7 +145,7 @@ make_temp_file(std::string const & dir, std::string & name, mode_t mode)
 
   static u32 value;
   struct timeval tv;
-  std::string tmp = dir + "/mtxxxxxx.tmp";
+  string tmp = dir + "/mtxxxxxx.tmp";
 
   gettimeofday(&tv, 0);
   value += ((u32) tv.tv_usec << 16) ^ tv.tv_sec ^ getpid();
@@ -210,9 +204,9 @@ make_temp_file(std::string const & dir, std::string & name, mode_t mode)
 // will be passed mode 0600 or 0666 -- the actual permissions are modified
 // by umask as usual).
 void
-write_data_worker(std::string const & fname,
-                  std::string const & dat,
-                  std::string const & tmpdir,
+write_data_worker(string const & fname,
+                  string const & dat,
+                  string const & tmpdir,
                   bool user_private)
 {
   struct auto_closer
@@ -222,7 +216,7 @@ write_data_worker(std::string const & fname,
     ~auto_closer() { close(fd); }
   };
 
-  std::string tmp;
+  string tmp;
   int fd = make_temp_file(tmpdir, tmp, user_private ? 0600 : 0666);
 
   {
@@ -260,10 +254,10 @@ write_data_worker(std::string const & fname,
   rename_clobberingly(tmp, fname);
 }
 
-std::string
+string
 get_locale_dir()
 {
-  return std::string(LOCALEDIR);
+  return string(LOCALEDIR);
 }
 
 // Local Variables:

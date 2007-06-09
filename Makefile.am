@@ -16,7 +16,7 @@ SANITY_CORE_SOURCES =							\
 LUAEXT_SOURCES = 							\
 	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
 	charset.cc charset.hh paths.cc paths.hh				\
-	interner.hh hash_map.hh						\
+	interner.hh hash_map.hh	vocab_hash.hh				\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
 	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
@@ -74,7 +74,7 @@ MOST_SOURCES = 								\
 	asciik.cc asciik.hh						\
 	dates.cc dates.hh						\
 									\
-	lru_writeback_cache.hh						\
+	lru_writeback_cache.hh hybrid_map.hh				\
 									\
 	cleanup.hh unit_tests.hh					\
 	cycle_detector.hh randomfile.hh adler32.hh			\

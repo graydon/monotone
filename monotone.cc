@@ -39,6 +39,8 @@
 #include "simplestring_xform.hh"
 #include "platform.hh"
 
+namespace fs = boost::filesystem;
+
 using std::cout;
 using std::cerr;
 using std::string;

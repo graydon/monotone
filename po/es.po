@@ -67,8 +67,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-05-30 15:18-0400\n"
-"PO-Revision-Date: 2007-05-30 15:44-0400\n"
+"POT-Creation-Date: 2007-05-31 18:43-0400\n"
+"PO-Revision-Date: 2007-05-31 18:54-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -77,30 +77,20 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: KBabel 1.11.4\n"
 
-#: app_state.cc:136
+#: app_state.cc:128
 #, c-format
 msgid "workspace required but not found%s%s"
 msgstr "Área de trabajo requerida pero no encontrada%s%s"
 
-#: app_state.cc:144
+#: app_state.cc:136
 #, c-format
 msgid "invalid directory ''"
 msgstr "directorio inválido ''"
 
-#: app_state.cc:153
+#: app_state.cc:145
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "directorio de servicio de monotone '%s' ya existe en '%s'"
-
-#: app_state.cc:240
-#, c-format
-msgid "search root '%s' does not exist"
-msgstr "la raiz de búsqueda '%s' no existe"
-
-#: app_state.cc:241
-#, c-format
-msgid "search root '%s' is not a directory"
-msgstr "la raiz de búsqueda '%s' no es un directorio"
 
 #: asciik.cc:368 automate.cc:467
 msgid "SELECTOR"
@@ -893,8 +883,7 @@ msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
 msgstr ""
-"Calcula e imprime copia anotada del archivo dado de la REVISIÓN "
-"especificada."
+"Calcula e imprime copia anotada del archivo dado de la REVISIÓN especificada."
 
 #: cmd_files.cc:159
 #, c-format
@@ -3067,7 +3056,7 @@ msgstr ""
 "[  derecha] %s\n"
 "[   merged] %s"
 
-#: file_io.cc:205 file_io.cc:212
+#: file_io.cc:202 file_io.cc:209
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -3076,7 +3065,7 @@ msgstr ""
 "no se pudo crear directorio '%s'\n"
 "es un archivo"
 
-#: file_io.cc:207
+#: file_io.cc:204
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -3085,17 +3074,17 @@ msgstr ""
 "no se pudo crear directorio '%s'\n"
 "%s"
 
-#: file_io.cc:211
+#: file_io.cc:208
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "no se pudo crear directorio '%s'"
 
-#: file_io.cc:224
+#: file_io.cc:221
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
 msgstr "creación de directorio '%s' para '%s' falló"
 
-#: file_io.cc:238
+#: file_io.cc:235
 #, c-format
 msgid ""
 "could not remove '%s'\n"
@@ -3104,109 +3093,109 @@ msgstr ""
 "no se pudo remover '%s'\n"
 "%s"
 
-#: file_io.cc:248
+#: file_io.cc:245
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "archivo a borrar '%s' no existe"
 
-#: file_io.cc:249
+#: file_io.cc:246
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "archivo a borrar, '%s', no es un archivo sinó un directorio"
 
-#: file_io.cc:257
+#: file_io.cc:254
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "directorio a borrar '%s' no existe"
 
-#: file_io.cc:258
+#: file_io.cc:255
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "directorio a borrar, '%s', no es un directorio sinó un archivo"
 
-#: file_io.cc:265
+#: file_io.cc:262
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "objeto a borrar, '%s', no existe"
 
-#: file_io.cc:273
+#: file_io.cc:270
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "directorio a borrar, '%s', no existe"
 
-#: file_io.cc:274
+#: file_io.cc:271
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "directorio a borrar, '%s', es un archivo"
 
-#: file_io.cc:283
+#: file_io.cc:280
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "archivo fuente a renombrar '%s' no existe"
 
-#: file_io.cc:284
+#: file_io.cc:281
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr "archivo fuente a renombrar '%s' es un directorio -- bug en monotone?"
 
-#: file_io.cc:287 file_io.cc:300
+#: file_io.cc:284 file_io.cc:297
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "destino al renombrar '%s' ya existe"
 
-#: file_io.cc:296
+#: file_io.cc:293
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "directorio fuente a renombrar '%s' no existe"
 
-#: file_io.cc:297
+#: file_io.cc:294
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "directorio fuente a renombrar '%s' es un archivo -- bug en monotone?"
 
-#: file_io.cc:311
+#: file_io.cc:308
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "camino de la fuente a renombrar '%s' no existe"
 
-#: file_io.cc:326
+#: file_io.cc:323
 #, c-format
 msgid "file %s does not exist"
 msgstr "archivo %s no existe"
 
-#: file_io.cc:327
+#: file_io.cc:324
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "archivo %s no puede ser leido como data; es un directorio"
 
-#: file_io.cc:331
+#: file_io.cc:328
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "no se pudo abrir archivo %s para lectura"
 
-#: file_io.cc:371
+#: file_io.cc:368
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "no se pudo leer 'standard input' múltiples veces"
 
-#: file_io.cc:402
+#: file_io.cc:399
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "archivo '%s' no puede ser reescrito como data; es un directorio"
 
-#: file_io.cc:455
+#: file_io.cc:452
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr ""
 "se recibió un error en tiempo de ejecución %s construyendo el camino del "
 "archivo para %s"
 
-#: file_io.cc:542 work.cc:1313
+#: file_io.cc:539 work.cc:1313
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "no existe el archivo o directorio: '%s'"
 
-#: file_io.cc:566
+#: file_io.cc:563
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "se esperaba archivo '%s', pero es un directorio"
@@ -3327,17 +3316,17 @@ msgstr "nivel del nodo es %d, excede el máximo %d"
 msgid "mismatched node hash value %s, expected %s"
 msgstr "nodo no concordante tiene un valor de hash %s, esperaba %s"
 
-#: monotone.cc:288
+#: monotone.cc:290
 #, c-format
 msgid "Usage: %s [OPTION...] command [ARG...]"
 msgstr "Uso: %s [OPCIÓN...] comando [ARGUMENTO...]"
 
-#: monotone.cc:299
+#: monotone.cc:301
 #, c-format
 msgid "Options specific to '%s %s':"
 msgstr "Opciones especificas a '%s %s':"
 
-#: monotone.cc:325
+#: monotone.cc:327
 msgid "error: memory exhausted"
 msgstr "error: memoria totalmente consumida"
 
@@ -5025,57 +5014,57 @@ msgstr "área de trabajo corrupta: %s existe pero no es un archivo regular"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "esta área de trabajo está en el formato actual, no es necesario migrar"
 
-#: unix/fs.cc:32 win32/fs.cc:29
+#: unix/fs.cc:28 win32/fs.cc:23
 #, c-format
 msgid "cannot get working directory: %s"
 msgstr "no puede obtener el directorio de trabajo: %s"
 
-#: unix/fs.cc:40 win32/fs.cc:40
+#: unix/fs.cc:36 win32/fs.cc:34
 #, c-format
 msgid "cannot change to directory %s: %s"
 msgstr "no se puede cambiar al al directorio %s: %s"
 
-#: unix/fs.cc:60
+#: unix/fs.cc:56
 #, c-format
 msgid "could not find home directory for uid %d"
 msgstr "no se pudo encontrar el directorio hogar para el UID %d"
 
-#: unix/fs.cc:88
+#: unix/fs.cc:89
 #, c-format
 msgid "could not find home directory for user %s"
 msgstr "no se pudo encontrar el directorio hogar para el usuario %s"
 
-#: unix/fs.cc:111
+#: unix/fs.cc:105
 #, c-format
 msgid "error accessing file %s: %s"
 msgstr "error accediendo al archivo %s: %s"
 
-#: unix/fs.cc:120
+#: unix/fs.cc:114
 #, c-format
 msgid "cannot handle special file %s"
 msgstr "no se puede manipular el archivo especial %s"
 
-#: unix/fs.cc:128
+#: unix/fs.cc:122
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "renombrado de '%s' a '%s' falló: %s"
 
-#: unix/fs.cc:192 win32/fs.cc:272
+#: unix/fs.cc:186 win32/fs.cc:274
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "creación del archivo temporal %s falló: %s"
 
-#: unix/fs.cc:201
+#: unix/fs.cc:195
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr "todos los %d posibles nombres de archivos temporales estan en uso"
 
-#: unix/fs.cc:241 win32/fs.cc:332
+#: unix/fs.cc:235 win32/fs.cc:334
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "error escribiendo el archivo temporal %s: %s"
 
-#: unix/fs.cc:246 win32/fs.cc:339
+#: unix/fs.cc:240 win32/fs.cc:341
 #, c-format
 msgid ""
 "giving up after four zero-length writes to %s (%d byte written, %d left)"
@@ -5133,23 +5122,28 @@ msgstr "lectura del flujo falló (%i)"
 msgid "%u extra bytes from ssh-agent"
 msgstr "%u bytes extra de ssh-agent"
 
-#: win32/fs.cc:57
+#: win32/fs.cc:51
 #, c-format
 msgid "could not determine configuration path"
 msgstr "no se pudo determinar el camino de la configuración"
 
-#: win32/fs.cc:211
+#: win32/fs.cc:136
+#, c-format
+msgid "%s: GetFileAttributes error: %s"
+msgstr "%s: error en GetFileAttributes: %s"
+
+#: win32/fs.cc:213
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "renombrando '%s' a '%s' falló: %s (%d)"
 
-#: win32/fs.cc:280
+#: win32/fs.cc:282
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr ""
 "no se pudo encontrar un archivo temporal (se probaron %d posibilidades)"
 
-#: win32/fs.cc:307
+#: win32/fs.cc:309
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr "%s será accesible a todos los usuarios de este computador\n"

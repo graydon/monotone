@@ -23,6 +23,7 @@
 #include "platform-wrapped.hh"
 #include "numeric_vocab.hh"
 
+namespace fs = boost::filesystem;
 
 // Parts of boost::filesystem change in 1.34 . One particular
 // difference is that some exceptions are different now.
@@ -36,10 +37,6 @@
 # define FS_ERROR fs::filesystem_path_error
 # define FS_ERROR_SYSTEM system_error
 #endif
-
-
-
-
 
 // this file deals with talking to the filesystem, loading and
 // saving files.

@@ -11,8 +11,11 @@
 #include <sstream>
 
 #include <boost/version.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
+
+namespace fs = boost::filesystem;
 
 #include "constants.hh"
 #include "paths.hh"
@@ -387,6 +390,13 @@ file_path::file_path(split_path const & sp)
   I(null_name(*i));
   string tmp;
   bool start = true;
+  size_t size = 0;
+  for (++i; i != sp.end(); ++i)
+    {
+      size = size + 1 + (*i)().length();
+    }
+  tmp.reserve(size);
+  i = sp.begin();
   for (++i; i != sp.end(); ++i)
     {
       I(!null_name(*i));
@@ -601,7 +611,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
 static inline string const_system_path(utf8 const & path)
 {
   N(!path().empty(), F("invalid path ''"));
-  string expanded = tilde_expand(path)();
+  string expanded = tilde_expand(path());
   if (is_absolute_here(expanded))
     return normalize_out_dots(expanded);
   else
@@ -648,12 +658,6 @@ dirname_basename(split_path const & sp,
 ///////////////////////////////////////////////////////////////////////////
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
-
-system_path
-current_root_path()
-{
-  return system_path(fs::initial_path().root_path().string());
-}
 
 static bool
 find_bookdir(fs::path const & root, fs::path const & bookdir, 
@@ -733,13 +737,26 @@ find_bookdir(fs::path const & root, fs::path const & bookdir,
 
 
 bool
-find_and_go_to_workspace(system_path const & search_root)
+find_and_go_to_workspace(std::string const & search_root)
 {
-  fs::path root(search_root.as_external(), fs::native);
   fs::path bookdir(bookkeeping_root.as_external(), fs::native);
   fs::path oldbookdir(old_bookkeeping_root.as_external(), fs::native);
-  fs::path current, removed;
+  fs::path root, current, removed;
 
+  if (search_root.empty())
+    root = fs::initial_path().root_path();
+  else
+    {
+      L(FL("limiting search for workspace to %s") % search_root);
+      // converting through system_path makes it absolute
+      root = fs::path(system_path(search_root).as_external(), fs::native);
+
+      N(fs::exists(root),
+        F("search root '%s' does not exist") % search_root);
+      N(fs::is_directory(root),
+         F("search root '%s' is not a directory") % search_root);
+    }
+  
   // first look for the current name of the bookkeeping directory.
   // if we don't find it, look for it under the old name, so that
   // migration has a chance to work.
