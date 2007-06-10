@@ -23,13 +23,12 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
+#include "specialized_lexical_cast.hh"
 #include "file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
 #include "ui.hh"
-
-#include <boost/lexical_cast.hpp>
 
 using std::inserter;
 using std::make_pair;
