@@ -122,7 +122,7 @@ get_path_status(std::string const & path)
 
   if (attrs == INVALID_FILE_ATTRIBUTES)
     {
-      uint err = GetLastError();
+      DWORD err = GetLastError();
       // this list of errors that mean the path doesn't exist borrowed from
       // boost 1.33.1, with unnecessary parenthesis removal by zack
       if(err == ERROR_FILE_NOT_FOUND
@@ -133,7 +133,7 @@ get_path_status(std::string const & path)
          || err == ERROR_BAD_NETPATH)
         return path::nonexistent;
 
-      E(F("%s: GetFileAttributes error: %s") % path % os_strerror(err));
+      E(false, F("%s: GetFileAttributes error: %s") % path % os_strerror(err));
     }
   else if (attrs & FILE_ATTRIBUTE_DIRECTORY)
     return path::directory;
