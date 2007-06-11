@@ -14,7 +14,14 @@
           renamed item making it easier to copy and paste these paths
           for external program usage.
 
+        - `automate attributes` has been renamed to `automate get_attributes`,
+          also a bug has been fixed there so resurrected attributes are now
+          properly outputted as "new" and not "changed".
+
         New features
+
+        - Two new commands to set and drop attributes over automate:
+          `automate set_attribute` and `automate drop_attribute`
 
         Other
 
