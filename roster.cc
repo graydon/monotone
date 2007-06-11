@@ -23,13 +23,12 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
+#include "specialized_lexical_cast.hh"
 #include "file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
 #include "ui.hh"
-
-#include <boost/lexical_cast.hpp>
 
 using std::inserter;
 using std::make_pair;
@@ -287,7 +286,7 @@ roster_t::do_deep_copy_from(roster_t const & other)
   I(nodes.empty());
   for (node_map::const_iterator i = other.nodes.begin(); i != other.nodes.end();
        ++i)
-    safe_insert(nodes, make_pair(i->first, i->second->clone()));
+    hinted_safe_insert(nodes, nodes.end(), make_pair(i->first, i->second->clone()));
   for (node_map::iterator i = nodes.begin(); i != nodes.end(); ++i)
     if (is_dir_t(i->second))
       {
@@ -319,12 +318,14 @@ dfs_iter
 {
 
   dir_t root;
+  string curr_path;
   bool return_root;
+  bool track_path;
   stack< pair<dir_t, dir_map::const_iterator> > stk;
 
 
-  dfs_iter(dir_t r)
-    : root(r), return_root(root)
+  dfs_iter(dir_t r, bool t = false)
+    : root(r), return_root(root), track_path(t)
   {
     if (root && !root->children.empty())
       stk.push(make_pair(root, root->children.begin()));
@@ -334,6 +335,13 @@ dfs_iter
   bool finished() const
   {
     return (!return_root) && stk.empty();
+  }
+
+
+  string const & path() const
+  {
+    I(track_path);
+    return curr_path;
   }
 
 
@@ -349,6 +357,33 @@ dfs_iter
       }
   }
 
+private:
+  void advance_top()
+  {
+    int prevsize = 0;
+    int nextsize = 0;
+    if (track_path)
+      {
+        prevsize = stk.top().second->first().size();
+      }
+
+    ++stk.top().second;
+
+    if (track_path)
+      {
+        if (stk.top().second != stk.top().first->children.end())
+          nextsize = stk.top().second->first().size();
+
+        int tmpsize = curr_path.size()-prevsize;
+        I(tmpsize >= 0);
+        curr_path.resize(tmpsize);
+        if (nextsize != 0)
+          curr_path.insert(curr_path.end(),
+                           stk.top().second->first().begin(),
+                           stk.top().second->first().end());
+      }
+  }
+public:
 
   void operator++()
   {
@@ -357,6 +392,8 @@ dfs_iter
     if (return_root)
       {
         return_root = false;
+        if (!stk.empty())
+          curr_path = stk.top().second->first();
         return;
       }
 
@@ -367,16 +404,32 @@ dfs_iter
       {
         dir_t dtmp = downcast_to_dir_t(ntmp);
         stk.push(make_pair(dtmp, dtmp->children.begin()));
+
+        if (track_path)
+          {
+            if (!curr_path.empty())
+              curr_path += "/";
+            if (!dtmp->children.empty())
+              curr_path += dtmp->children.begin()->first();
+          }
       }
     else
-      ++(stk.top().second);
+      {
+        advance_top();
+      }
 
     while (!stk.empty()
            && stk.top().second == stk.top().first->children.end())
       {
         stk.pop();
         if (!stk.empty())
-          ++stk.top().second;
+          {
+            if (track_path)
+              {
+                curr_path.resize(curr_path.size()-1);
+              }
+            advance_top();
+          }
       }
   }
 };
@@ -1191,8 +1244,8 @@ namespace
   {
     // left and right should be equal, except that each may have some attr
     // corpses that the other does not
-    map<node_id, node_t>::const_iterator left_i = left.all_nodes().begin();
-    map<node_id, node_t>::const_iterator right_i = right.all_nodes().begin();
+    node_map::const_iterator left_i = left.all_nodes().begin();
+    node_map::const_iterator right_i = right.all_nodes().begin();
     while (left_i != left.all_nodes().end() || right_i != right.all_nodes().end())
       {
         I(left_i->second->self == right_i->second->self);
@@ -1550,10 +1603,8 @@ mark_merge_roster(roster_t const & left_roster,
        i != merge.all_nodes().end(); ++i)
     {
       node_t const & n = i->second;
-      // SPEEDUP?: instead of using find repeatedly, iterate everything in
-      // parallel
-      map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
-      map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
+      node_map::const_iterator lni = left_roster.all_nodes().find(i->first);
+      node_map::const_iterator rni = right_roster.all_nodes().find(i->first);
 
       bool exists_in_left = (lni != left_roster.all_nodes().end());
       bool exists_in_right = (rni != right_roster.all_nodes().end());
@@ -2353,11 +2404,12 @@ roster_t::extract_path_set(path_set & paths) const
   paths.clear();
   if (has_root())
     {
-      for (dfs_iter i(root_dir); !i.finished(); ++i)
+      for (dfs_iter i(root_dir, true); !i.finished(); ++i)
         {
           node_t curr = *i;
           split_path pth;
-          get_name(curr->self, pth);
+          //get_name(curr->self, pth);
+          internal_string_to_split_path(i.path(), pth);
           if (!workspace_root(pth))
             paths.insert(pth);
         }
@@ -2472,27 +2524,31 @@ roster_t::print_to(basic_io::printer & pr,
     st.push_str_pair(basic_io::syms::format_version, "1");
     pr.print_stanza(st);
   }
-  for (dfs_iter i(root_dir); !i.finished(); ++i)
+  for (dfs_iter i(root_dir, true); !i.finished(); ++i)
     {
       node_t curr = *i;
-      split_path pth;
-      get_name(curr->self, pth);
-
-      file_path fp = file_path(pth);
-
       basic_io::stanza st;
-      if (is_dir_t(curr))
-        {
-          // L(FL("printing dir %s") % fp);
-          st.push_file_pair(basic_io::syms::dir, fp);
-        }
-      else
-        {
-          file_t ftmp = downcast_to_file_t(curr);
-          st.push_file_pair(basic_io::syms::file, fp);
-          st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
-          // L(FL("printing file %s") % fp);
-        }
+
+      {
+        //split_path pth;
+        //get_name(curr->self, pth);
+        //file_path fp = file_path(pth);
+
+        if (is_dir_t(curr))
+          {
+            // L(FL("printing dir %s") % fp);
+            //st.push_file_pair(basic_io::syms::dir, fp);
+            st.push_str_pair(basic_io::syms::dir, i.path());
+          }
+        else
+          {
+            file_t ftmp = downcast_to_file_t(curr);
+            //st.push_file_pair(basic_io::syms::file, fp);
+            st.push_str_pair(basic_io::syms::file, i.path());
+            st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
+            // L(FL("printing file %s") % fp);
+          }
+      }
 
       if (print_local_parts)
         {
@@ -2766,6 +2822,18 @@ do_testing_on_one_roster(roster_t const & r)
   for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
     ++dfs_counted;
   I(n == dfs_counted);
+
+  // Test dfs_iter's path calculations.
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name)), true);
+       !i.finished(); ++i)
+    {
+      file_path from_iter = file_path_internal(i.path());
+      split_path sp;
+      node_t curr = *i;
+      r.get_name(curr->self, sp);
+      file_path from_getname(sp);
+      I(from_iter == from_getname);
+    }
 
   // do a read/write spin
   roster_data r_dat; MM(r_dat);

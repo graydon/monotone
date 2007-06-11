@@ -46,6 +46,25 @@ do_safe_insert(T & container, typename T::value_type const & val,
   do_safe_insert((CONT), (VAL), #CONT, __FILE__, __LINE__)
 
 
+// errors out if the key already exists
+template <typename T>
+typename T::iterator
+do_safe_insert(T & container, typename T::iterator where,
+               typename T::value_type const & val,
+               char const * container_name, char const * file, int line)
+{
+  typename T::size_type pre_size = container.size();
+  typename T::iterator r = container.insert(where, val);
+  if (pre_size == container.size())
+    global_sanity.invariant_failure((F("inserting duplicate entry into %s")
+                                     % container_name).str().c_str(),
+                                    file, line);
+  return r;
+}
+#define hinted_safe_insert(CONT, HINT, VAL)                             \
+  do_safe_insert((CONT), (HINT), (VAL), #CONT, __FILE__, __LINE__)
+
+
 // errors out if the key does not exist
 template <typename T>
 typename T::mapped_type const &

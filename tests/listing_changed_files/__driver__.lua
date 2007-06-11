@@ -11,7 +11,7 @@ check(mtn("ls", "changed"), 0, "")
 check(mtn("drop", "foo"), 0, false, false)
 check(mtn("rename", "bar", "bartender"), 0, false, false)
 check(mtn("ls", "changed"), 0, true, 0)
-check(samelines("stdout", {"bar", "foo"}))
+check(samelines("stdout", {"bartender", "foo"}))
 commit()
 
 check(mtn("ls", "changed"), 0, "")

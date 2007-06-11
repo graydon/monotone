@@ -13,7 +13,7 @@
 #include <set>
 #include <map>
 
-#include <boost/lexical_cast.hpp>
+#include "specialized_lexical_cast.hh"
 
 #include "safe_map.hh"
 #include "parallel_iter.hh"
