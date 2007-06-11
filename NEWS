@@ -10,6 +10,10 @@
         - The help command now shows a brief abstract of each command,
           instead of only listing their names.
 
+        - The command `list changed` now outputs the new path of any
+          renamed item making it easier to copy and paste these paths
+          for external program usage.
+
         New features
 
         Other

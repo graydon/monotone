@@ -489,10 +489,10 @@ CMD(changed, "changed", "", CMD_REF(list), "",
            ++i)
         {
           split_path sp;
-          if (old_roster.has_node(*i))
-            old_roster.get_name(*i, sp);
-          else
+          if (new_roster.has_node(*i))
             new_roster.get_name(*i, sp);
+          else
+            old_roster.get_name(*i, sp);
           print_paths.insert(sp);
         }
     }
