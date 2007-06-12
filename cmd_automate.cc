@@ -358,8 +358,16 @@ CMD_AUTOMATE(stdio, "",
 
               set< command_id > matches =
                 CMD_REF(automate)->complete_command(id);
-              N(matches.size() == 1,
-                F("invalid automation specified"));
+
+              if (matches.size() == 0)
+                {
+                  N(false, F("no completions for this command"));
+                }
+              else if (matches.size() > 1)
+                {
+                  N(false, F("multiple completions possible for this command"));
+                }
+
               id = *matches.begin();
 
               I(args.size() >= id.size());

@@ -16,15 +16,6 @@ check(mtn("automate", "stdio"), 1, false, false, "o6:author3:fooe l6:leavese")
 check(mtn("automate", "stdio"), 0, false, false, "o3:key0:el6:leavese")
 check(mtn("automate", "stdio"), 0, false, false, "o3:key0:e l6:leavese")
 
--- check if stdio's command finding code doesn't get confused with
--- equal named commands from other groups (f.e. mtn cert vs mtn automate cert)
--- mtn automate cert here will fail
-addfile("foo", "stuff");
-commit()
-R = base_revision();
-check(mtn("automate", "stdio"), 0, true, false, "l4:cert40:" .. R .. "3:foo3:bare");
-check(readfile("stdout") == "0:0:l:0")
-
 function parse_stdio(dat, which)
   local got = {}
   while true do
