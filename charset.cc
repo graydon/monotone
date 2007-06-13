@@ -620,7 +620,7 @@ UNIT_TEST(charset, idna_encoding)
 
   for (size_t i = 0; i < sizeof(idna_vec) / sizeof(struct idna); ++i)
     {
-      UNIT_TEST_CHECKPOINT("IDNA language: " + string(idna_vec[i].name));
+      UNIT_TEST_CHECKPOINT(("IDNA language: " + string(idna_vec[i].name)).c_str());
 
       size_t p, q;
       char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in,

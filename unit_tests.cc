@@ -12,6 +12,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
@@ -23,6 +24,7 @@
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "current_exception.hh"
 
 using std::map;
 using std::pair;
@@ -33,14 +35,13 @@ using std::cout;
 using std::cerr;
 using std::clog;
 using std::exit;
-using std::atexit;
 
 typedef unit_test::unit_test_case test_t;
 typedef map<string const, test_t> test_list_t;
 typedef map<string const, test_list_t> group_list_t;
 
 // This is used by other global constructors, so initialize on demand.
-group_list_t & unit_tests()
+static group_list_t & unit_tests()
 {
   static group_list_t tests;
   return tests;
@@ -58,36 +59,68 @@ unit_test::unit_test_case::unit_test_case()
 {}
 
 // Testsuite state.
-bool any_test_failed = false;
-int number_of_failed_tests = 0;
-int number_of_succeeded_tests = 0;
+static bool any_test_failed = false;
+static int number_of_failed_tests = 0;
+static int number_of_succeeded_tests = 0;
+static bool log_to_stderr = false;
 
 // Test state.
-bool this_test_failed;
-string last_checkpoint;
+static bool this_test_failed;
 
-struct require_failed {};
+namespace { struct require_failed {}; }
 
-void note_checkpoint(char const * file, int line,
-                     char const * kind, string const & msg)
+static void log_state(char const * file, int line,
+                      char const * kind, char const * msg)
 {
-  last_checkpoint = (FL("%s:%s> %s: %s")
-                     % file % line % kind % msg).str();
+  L(FL("%s:%s: %s: %s") % file % line % kind % msg);
 }
 
-void log_checkpoint()
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is from the std::exception hierarchy.  In this case we
+// can access the exception object.
+static void log_exception(std::exception const & ex)
 {
-  if (last_checkpoint == "")
-    return;
-  cerr<<"Last checkpoint: "<<last_checkpoint<<"\n";
-  last_checkpoint = "";
+  using std::strcmp;
+  using std::strncmp;
+  char const * ex_name = typeid(ex).name();
+  char const * ex_dem  = demangle_typename(ex_name);
+  char const * ex_what = ex.what();
+
+  if (ex_dem == 0)
+    ex_dem = ex_name;
+
+  // some demanglers stick "class" at the beginning of their output,
+  // which looks dumb in this context
+  if (!strncmp(ex_dem, "class ", 6))
+    ex_dem += 6;
+
+  // only print what() if it's interesting, i.e. nonempty and different
+  // from the name (mangled or otherwise) of the exception type.
+  if (ex_what == 0 || ex_what[0] == 0
+      || !strcmp(ex_what, ex_name)
+      || !strcmp(ex_what, ex_dem))
+    L(FL("UNCAUGHT EXCEPTION: %s") % ex_dem);
+  else
+    L(FL("UNCAUGHT EXCEPTION: %s: %s") % ex_dem % ex_what);
 }
 
-void log_fail(char const * file, int line,
-              char const * kind, string const & msg)
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is of unknown type.  If we have the <cxxabi.h> interfaces,
+// we can at least get the type_info object.
+static void
+log_exception()
 {
-  cerr<<FL("%s:%s> %s: %s\n") % file % line % kind % msg;
-  log_checkpoint();
+  std::type_info *ex_type = get_current_exception_type();
+  if (ex_type)
+    {
+      char const * ex_name = ex_type->name();
+      char const * ex_dem  = demangle_typename(ex_name);
+      if (ex_dem == 0)
+        ex_dem = ex_name;
+      L(FL("UNCAUGHT EXCEPTION: %s") % ex_dem);
+    }
+  else
+    L(FL("UNCAUGHT EXCEPTION: unknown type"));
 }
 
 void unit_test::do_check(bool checkval, char const * file,
@@ -96,10 +129,10 @@ void unit_test::do_check(bool checkval, char const * file,
   if (!checkval)
     {
       this_test_failed = true;
-      log_fail(file, line, "CHECK FAILED", message);
+      log_state(file, line, "CHECK FAILED", message);
     }
   else
-    note_checkpoint(file, line, "CHECK OK", message);
+    log_state(file, line, "CHECK OK", message);
 }
 
 void unit_test::do_require(bool checkval, char const * file,
@@ -108,133 +141,71 @@ void unit_test::do_require(bool checkval, char const * file,
   if (!checkval)
     {
       this_test_failed = true;
-      log_fail(file, line, "REQUIRE FAILED", message);
+      log_state(file, line, "REQUIRE FAILED", message);
       throw require_failed();
     }
   else
-    note_checkpoint(file, line, "REQUIRE OK", message);
+    log_state(file, line, "REQUIRE OK", message);
 }
 
 void unit_test::do_checkpoint(char const * file, int line,
-                              string const & message)
+                              char const * message)
 {
-  note_checkpoint(file, line, "CHECKPOINT", message);
+  log_state(file, line, "CHECKPOINT", message);
 }
 
-void run_test(test_t test)
+static void run_test(test_t test)
 {
   this_test_failed = false;
-  last_checkpoint = "";
 
-  cerr<<"----------------------------------------\n";
-  cerr<<(FL("Beginning test %s:%s\n") % test.group % test.name);
+  L(FL("----------------------------------------\n"
+       "Beginning test %s:%s") % test.group % test.name);
 
+  if (!log_to_stderr)
+    {
+      string groupname = string(test.group) + ':' + test.name;
+      cerr << "    " << std::left << std::setw(46) << groupname;
+      if (groupname.size() >= 46)
+        cerr << " ";
+      // lack of carriage return is intentional
+    }
+    
   try
     {
       test.func();
     }
   catch(require_failed &)
     {
+      // no action required
+    }
+  catch(std::exception & e)
+    {
+      log_exception(e);
       this_test_failed = true;
     }
   catch(...)
     {
-      cerr<<test.group<<":"<<test.name<<"> UNCAUGHT EXCEPTION\n";
+      log_exception();
       this_test_failed = true;
     }
 
   if (this_test_failed)
     {
       ++number_of_failed_tests;
-      cerr<<(FL("Test %s:%s failed.\n") % test.group % test.name);
-      log_checkpoint();
+      L(FL("Test %s:%s failed.\n") % test.group % test.name);
+      if (!log_to_stderr)
+        cerr << "FAIL\n";
     }
   else
     {
       ++number_of_succeeded_tests;
-      cerr<<(FL("Test %s:%s succeeded.\n") % test.group % test.name);
+      L(FL("Test %s:%s succeeded.\n") % test.group % test.name);
+      if (!log_to_stderr)
+        cerr << "ok\n";
     }
 
   if (this_test_failed)
     any_test_failed = true;
-}
-
-
-// A teebuf implements the basic_streambuf interface and forwards all
-// operations to two 'targets'.  This is used to get progress messages sent
-// to both the log file and the terminal.  Note that it cannot be used for
-// reading (and does not implement the read-side interfaces) nor is it
-// seekable.
-namespace {
-  template <class C, class T = std::char_traits<C> >
-  class basic_teebuf : public std::basic_streambuf<C, T>
-  {
-  public:
-    // grmbl grmbl typedefs not inherited grmbl.
-    typedef C char_type;
-    typedef T traits_type;
-    typedef typename T::int_type int_type;
-    typedef typename T::pos_type pos_type;
-    typedef typename T::off_type off_type;
-
-    virtual ~basic_teebuf() {}
-    basic_teebuf(std::basic_streambuf<C,T> * t1,
-                 std::basic_streambuf<C,T> * t2)
-      : std::basic_streambuf<C,T>(), target1(t1), target2(t2) {}
-
-  protected:
-    std::basic_streambuf<C, T> * target1;
-    std::basic_streambuf<C, T> * target2;
-
-    virtual void imbue(std::locale const & loc)
-    {
-      target1->pubimbue(loc);
-      target2->pubimbue(loc);
-    }
-    virtual basic_teebuf * setbuf(C * p, std::streamsize n)
-    {
-      target1->pubsetbuf(p,n);
-      target2->pubsetbuf(p,n);
-      return this;
-    }
-    virtual int sync()
-    {
-      int r1 = target1->pubsync();
-      int r2 = target2->pubsync();
-      return (r1 == 0 && r2 == 0) ? 0 : -1;
-    }
-
-    // Not overriding the seek, get, or putback functions produces a
-    // streambuf which always fails those operations, thanks to the defaults
-    // in basic_streambuf.
-
-    // As we do no buffering in this object, it would be correct to forward
-    // xsputn to the targets.  However, this could cause a headache in the
-    // case that one target consumed fewer characters than the other.  As
-    // this streambuf is not used for much data (most of the chatter goes to
-    // clog) it is okay to fall back on the dumb-but-reliable default xsputn
-    // in basic_streambuf.
-
-    // You might think that overflow in this object should forward to
-    // overflow in the targets, but that would defeat buffering in those
-    // objects.
-    virtual int_type overflow(int_type c = traits_type::eof())
-    {
-      if (!traits_type::eq_int_type(c,traits_type::eof()))
-        {
-          int_type r1 = target1->sputc(c);
-          int_type r2 = target2->sputc(c);
-          if (r1 == traits_type::eof() || r2 == traits_type::eof())
-            return traits_type::eof();
-          return traits_type::not_eof(c);
-        }
-      else
-        {
-          return sync() ? traits_type::eof() : traits_type::not_eof(c);
-        }
-    }
-  };
-  typedef basic_teebuf<char> teebuf;
 }
 
 int main(int argc, char * argv[])
@@ -332,12 +303,9 @@ int main(int argc, char * argv[])
           exit(1);
         }
       clog.rdbuf(logbuf);
-
-      // Redirect both cerr and cout to a teebuf which will send their data
-      // to both the logfile and wherever cerr currently goes.
-      teebuf * progress_output = new teebuf(logbuf, cerr.rdbuf());
-      cerr.rdbuf(progress_output);
-      cout.rdbuf(progress_output);
+      // Nobody should be writing to cout, but just in case, send it to
+      // the log.
+      cout.rdbuf(logbuf);
     }
   else
     {
@@ -353,13 +321,18 @@ int main(int argc, char * argv[])
       // stream each one is written to.
       clog.rdbuf(cerr.rdbuf());
       cout.rdbuf(cerr.rdbuf());
+
+      // Suppress double progress messages.
+      log_to_stderr = true;
     }
 
   global_sanity.set_debug();
 
-
   if (tests.size() == 0) // run all tests
     {
+      if (!log_to_stderr)
+        cerr << "Running unit tests...\n";
+      
       for (group_list_t::const_iterator i = unit_tests().begin();
            i != unit_tests().end(); i++)
         {
@@ -431,6 +404,8 @@ int main(int argc, char * argv[])
         }
       else
         {
+          if (!log_to_stderr)
+            cerr << "Running unit tests...\n";
           for (vector<test_t>::const_iterator i = to_run.begin();
                i != to_run.end(); ++i)
             {
@@ -439,8 +414,11 @@ int main(int argc, char * argv[])
         }
     }
 
-  cerr<<FL("Number of tests that failed: %d\n") % number_of_failed_tests;
-  cerr<<FL("Number of tests that succeeded: %d\n") % number_of_succeeded_tests;
+  if (!log_to_stderr)
+    cerr << "\nOf " << (number_of_failed_tests + number_of_succeeded_tests)
+         << " tests run:\n\t"
+         << number_of_succeeded_tests << " succeeded\n\t"
+         << number_of_failed_tests << " failed\n";
 
   return any_test_failed?1:0;
 }
@@ -455,6 +433,7 @@ localize_monotone()
 // Obviously, these tests are not run by default.
 // They are also not listed by --list-groups or --list-tests .
 // Use "unit_tests :" to run them; they should all fail.
+#include <stdexcept>
 
 UNIT_TEST(, fail_check)
 {
@@ -485,6 +464,15 @@ UNIT_TEST(, uncaught)
   throw int();
 }
 
+UNIT_TEST(, uncaught_std)
+{
+  throw std::bad_exception();
+}
+
+UNIT_TEST(, uncaught_std_what)
+{
+  throw std::runtime_error("There is no spoon.");
+}
 
 // Local Variables:
 // mode: C++
