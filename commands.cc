@@ -25,7 +25,7 @@
 #include "app_state.hh"
 
 #ifndef _WIN32
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <signal.h>
 #endif
 

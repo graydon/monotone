@@ -19,7 +19,7 @@
 #include <functional>
 #include <list>
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <boost/dynamic_bitset.hpp>
 #include <boost/shared_ptr.hpp>
 

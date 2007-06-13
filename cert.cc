@@ -12,11 +12,11 @@
 #include <string>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 
+#include "lexical_cast.hh"
 #include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"

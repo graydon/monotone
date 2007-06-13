@@ -23,7 +23,7 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
-#include "specialized_lexical_cast.hh"
+#include "lexical_cast.hh"
 #include "file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"

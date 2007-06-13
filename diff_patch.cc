@@ -1352,7 +1352,7 @@ make_diff(string const & filename1,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include "transforms.hh"
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include "randomfile.hh"
 
 using std::cerr;

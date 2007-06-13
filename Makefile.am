@@ -83,8 +83,8 @@ MOST_SOURCES = 								\
 	package_revision.c package_revision.h				\
 	package_full_revision.c package_full_revision.h			\
 	option.cc option.hh options.cc options.hh options_list.hh	\
-	specialized_lexical_cast.cc specialized_lexical_cast.hh		\
-	i18n.h parallel_iter.hh safe_map.hh pch.hh
+	specialized_lexical_cast.cc lexical_cast.hh			\
+	i18n.h parallel_iter.hh safe_map.hh pch.hh current_exception.hh
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\

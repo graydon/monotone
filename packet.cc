@@ -10,7 +10,7 @@
 #include <string>
 
 #include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "app_state.hh"
 #include "cset.hh"

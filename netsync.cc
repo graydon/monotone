@@ -17,7 +17,7 @@
 
 #include <time.h>
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>

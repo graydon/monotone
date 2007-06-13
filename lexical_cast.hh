@@ -1,6 +1,5 @@
-#ifndef __SPECIALIZED_LEXICAL_CAST_HH__
-#define __SPECIALIZED_LEXICAL_CAST_HH__
-
+#ifndef __LEXICAL_CAST_HH__
+#define __LEXICAL_CAST_HH__
 
 // Copyright (C) 2007 Timothy Brownawell <tbrownaw@gmail.com>
 //
@@ -16,6 +15,11 @@
 
 // Generic lexical_cast can be a bit slow sometimes. If a particular
 // version shows up in profiles, consider writing a specialization.
+// Note: because we do this, every file that uses boost::lexical_cast
+// _must_ include this file instead of <boost/lexical_cast.hpp>, or we
+// risk violating the One Definition Rule (if some file instantiates
+// the generic template for the types we specialize here).  This is not
+// a theoretical problem; the Windows linker will fail.
 
 namespace boost {
   template<>

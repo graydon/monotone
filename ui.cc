@@ -24,7 +24,7 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include <cstring>
 

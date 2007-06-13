@@ -14,7 +14,7 @@
 #include "file_io.hh"
 #include "work.hh"
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <exception>
 
 using std::string;

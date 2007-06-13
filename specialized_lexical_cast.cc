@@ -8,7 +8,7 @@
 // PURPOSE.
 
 
-#include "specialized_lexical_cast.hh"
+#include "lexical_cast.hh"
 
 template<>
 std::string boost::lexical_cast<std::string, unsigned int>(unsigned int const & _i)

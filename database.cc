@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include <sqlite3.h>
 

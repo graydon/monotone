@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <boost/function.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "sanity.hh"
 #include "vocab.hh"

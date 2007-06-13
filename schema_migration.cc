@@ -8,7 +8,7 @@
 // PURPOSE.
 
 #include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <sqlite3.h>
 #include <string.h>
 

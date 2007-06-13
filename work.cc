@@ -12,7 +12,7 @@
 #include <cerrno>
 #include <queue>
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "work.hh"
 #include "basic_io.hh"
