@@ -41,6 +41,11 @@ void dump(T const &, std::string &)
 // than string refcopy on my system (g++ 4). This only happens because
 // we tell Boost not to worry about threads... but I don't recognize any
 // thread stuff in the string headers.
+namespace
+{
+  std::string empty;
+}
+
 class immutable_string
 {
   boost::shared_ptr<std::string> _rep;
@@ -54,7 +59,6 @@ public:
 
   std::string const & get() const
   {
-    static std::string empty;
     if (_rep)
       return *_rep;
     else
