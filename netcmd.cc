@@ -554,7 +554,7 @@ netcmd::write_usher_reply_cmd(utf8 const & server, globish const & pattern)
 
 #include "unit_tests.hh"
 #include "transforms.hh"
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 UNIT_TEST(netcmd, mac)
 {

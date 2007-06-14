@@ -75,21 +75,21 @@ public:                                                \
 
 #define hh_ATOMIC(ty)                                  \
 class ty {                                             \
-  std::string s;                                       \
+  immutable_string s;                                  \
 public:                                                \
   bool ok;                                             \
   ty() : ok(false) {}                                  \
   explicit ty(std::string const & str);                \
   ty(ty const & other);                                \
   std::string const & operator()() const               \
-    { return s; }                                      \
+    { return s.get(); }                                \
   bool operator<(ty const & other) const               \
-    { return s < other(); }                            \
+    { return s.get() < other(); }                      \
   ty const & operator=(ty const & other);              \
   bool operator==(ty const & other) const              \
-    { return s == other(); }                           \
+    { return s.get() == other(); }                     \
   bool operator!=(ty const & other) const              \
-    { return s != other(); }                           \
+    { return s.get() != other(); }                     \
   friend void verify(ty &);                            \
   friend void verify_full(ty &);                       \
   friend std::ostream & operator<<(std::ostream &,     \
@@ -136,7 +136,7 @@ ty const & ty::operator=(ty const & other)   \
                                              \
   std::ostream & operator<<(std::ostream & o,\
                             ty const & a)    \
-{ return (o << a.s); }                       \
+  { return (o << a.s.get()); }               \
                                              \
 template <>                                  \
 void dump(ty const & obj, std::string & out) \
@@ -166,7 +166,7 @@ enc<INNER>::enc(string const & s) : i(s), ok(false)      \
                                                          \
 template<typename INNER>                                 \
 enc<INNER>::enc(enc<INNER> const & other)                \
-  : i(other.i()), ok(other.ok) { verify(*this); }        \
+  : i(other.i), ok(other.ok) { verify(*this); }          \
                                                          \
 template<typename INNER>                                 \
 enc<INNER>::enc(INNER const & inner) :                   \

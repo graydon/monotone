@@ -124,7 +124,7 @@ verify_full(netsync_session_key & val)
 {
   if (val().size() == 0)
     {
-      val.s.append(constants::netsync_session_key_length_in_bytes, 0);
+      val.s = std::string(constants::netsync_session_key_length_in_bytes, 0);
       return;
     }
 
@@ -139,7 +139,7 @@ verify_full(netsync_hmac_value & val)
 {
   if (val().size() == 0)
     {
-      val.s.append(constants::netsync_hmac_value_length_in_bytes, 0);
+      val.s = std::string(constants::netsync_hmac_value_length_in_bytes, 0);
       return;
     }
 

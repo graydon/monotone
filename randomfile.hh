@@ -12,7 +12,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "randomizer.hh"
 

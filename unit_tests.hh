@@ -10,8 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
-
 // Log a success/failure message, and set the test state to 'fail' if needed
 #define UNIT_TEST_CHECK(expression)             \
   unit_test::do_check(expression, __FILE__, __LINE__, #expression)
@@ -63,7 +61,7 @@ namespace unit_test {
   void do_require(bool checkval, char const * file,
                   int line, char const * message);
 
-  void do_checkpoint(char const * file, int line, std::string const & message);
+  void do_checkpoint(char const * file, int line, char const * message);
 
   // Declarative mechanism for specifying unit tests, similar to
   // auto_unit_test in boost, but more suited to our needs.

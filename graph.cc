@@ -136,7 +136,7 @@ get_reconstruction_path(std::string const & start,
 #include "unit_tests.hh"
 #include "randomizer.hh"
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 using boost::lexical_cast;
 using std::pair;

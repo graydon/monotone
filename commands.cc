@@ -25,7 +25,7 @@
 #include "app_state.hh"
 
 #ifndef _WIN32
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <signal.h>
 #endif
 
@@ -328,10 +328,24 @@ namespace commands {
           {
             command_id caux = completed;
             caux.push_back(*iter2);
+
+            // If one of the command names was an exact match,
+            // do not try to find other possible completions.
+            // This would  eventually hinder us to ever call a command
+            // whose name is also the prefix for another command in the
+            // same group (f.e. mtn automate cert and mtn automate certs)
             if (prefix == *iter2)
-              matches[caux] = child;
-            else if (!child->hidden() &&
-                     prefix().length() < (*iter2)().length())
+              {
+                // since the command children are not sorted, we
+                // need to ensure that no other partial completed
+                // commands matched
+                matches.clear();
+                matches[caux] = child;
+                return matches;
+              }
+
+            if (!child->hidden() &&
+                 prefix().length() < (*iter2)().length())
               {
                 string temp((*iter2)(), 0, prefix().length());
                 utf8 p(temp);
@@ -911,7 +925,8 @@ process_commit_message_args(bool & given,
 
 CMD_GROUP(top, "top", "", CMD_REF(__root__),
           "", "");
-
+CMD(test, "test", "", CMD_REF(top),
+    "", "", "", options::opts::none) {}
 CMD(test1, "test1", "alias1", CMD_REF(top),
     "", "", "", options::opts::none) {}
 CMD(test2, "test2", "alias2", CMD_REF(top),
@@ -1009,12 +1024,13 @@ UNIT_TEST(commands, command_complete_command)
     UNIT_TEST_REQUIRE(matches.size() == 0);
   }
 
-  // Single-word identifier with one match.
+  // Single-word identifier with one match. Exact matches are found
+  // before any possible completions.
   {
-    command_id id = make_command_id("test1");
+    command_id id = make_command_id("test");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
     UNIT_TEST_REQUIRE(matches.size() == 1);
-    UNIT_TEST_CHECK(*matches.begin() == make_command_id("test1"));
+    UNIT_TEST_CHECK(*matches.begin() == make_command_id("test"));
   }
 
   // Single-word identifier with one match, non-primary name.
@@ -1025,13 +1041,14 @@ UNIT_TEST(commands, command_complete_command)
     UNIT_TEST_CHECK(*matches.begin() == make_command_id("alias1"));
   }
 
-  // Single-word identifier with multiple matches.
+  // Single-word identifier with multiple matches. 
   {
-    command_id id = make_command_id("test");
+    command_id id = make_command_id("tes");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    UNIT_TEST_REQUIRE(matches.size() == 3);
+    UNIT_TEST_REQUIRE(matches.size() == 4);
 
     set< command_id > expected;
+    expected.insert(make_command_id("test"));
     expected.insert(make_command_id("test1"));
     expected.insert(make_command_id("test2"));
     expected.insert(make_command_id("testg"));
@@ -1076,11 +1093,12 @@ UNIT_TEST(commands, command_complete_command)
 
   // Multi-word identifier with multiple matches at different levels.
   {
-    command_id id = make_command_id("test testg1");
+    command_id id = make_command_id("tes testg1");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    UNIT_TEST_REQUIRE(matches.size() == 3);
+    UNIT_TEST_REQUIRE(matches.size() == 4);
 
     set< command_id > expected;
+    expected.insert(make_command_id("test"));
     expected.insert(make_command_id("test1"));
     expected.insert(make_command_id("test2"));
     expected.insert(make_command_id("testg testg1"));
@@ -1121,7 +1139,7 @@ UNIT_TEST(commands, command_find_command)
 
   // Single-word identifier that could be completed.
   {
-    command_id id = make_command_id("test");
+    command_id id = make_command_id("tes");
     command * cmd = CMD_REF(top)->find_command(id);
     UNIT_TEST_CHECK(cmd == NULL);
   }

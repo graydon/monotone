@@ -16,6 +16,8 @@
 #include <string>
 #include <iosfwd>
 
+#include <boost/shared_ptr.hpp>
+
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and
 // generally describe the "vocabulary" (nouns anyways) that modules in this
@@ -34,6 +36,38 @@ void dump(T const &, std::string &)
   enum dummy { d = (sizeof(struct dump_must_be_specialized_for_this_type)
                     == sizeof(T)) };
 }
+
+// For some reason, shared_ptr copy is about a hundred times faster
+// than string refcopy on my system (g++ 4). This only happens because
+// we tell Boost not to worry about threads... but I don't recognize any
+// thread stuff in the string headers.
+namespace
+{
+  std::string empty;
+}
+
+class immutable_string
+{
+  boost::shared_ptr<std::string> _rep;
+  
+public:
+  immutable_string()
+  {}
+  immutable_string(std::string const & s)
+    : _rep(new std::string(s))
+  {}
+
+  std::string const & get() const
+  {
+    if (_rep)
+      return *_rep;
+    else
+      return empty;
+  }
+};
+
+
+
 
 #include "vocab_macros.hh"
 #define ENCODING(enc) hh_ENCODING(enc)
