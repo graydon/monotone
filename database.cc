@@ -1953,7 +1953,7 @@ database::deltify_revision(revision_id const & rid)
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
+        for (map<file_path, pair<file_id, file_id> >::const_iterator
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
@@ -2009,7 +2009,7 @@ database::put_revision(revision_id const & new_id,
           return false;
         }
 
-      for (map<split_path, file_id>::const_iterator a
+      for (map<file_path, file_id>::const_iterator a
              = edge_changes(i).files_added.begin();
            a != edge_changes(i).files_added.end(); ++a)
         {
@@ -2021,7 +2021,7 @@ database::put_revision(revision_id const & new_id,
             }
         }
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
+      for (map<file_path, pair<file_id, file_id> >::const_iterator d
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {

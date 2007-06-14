@@ -461,17 +461,31 @@ template <>
 void dump(split_path const & sp, string & out)
 {
   ostringstream oss;
+  oss << sp << '\n';
+  out = oss.str();
+}
 
-  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    {
-      if (null_name(*i))
-        oss << '.';
-      else
-        oss << '/' << *i;
-    }
+template <>
+void dump(file_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
 
-  oss << '\n';
+template <>
+void dump(system_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
 
+template <>
+void dump(bookkeeping_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
   out = oss.str();
 }
 

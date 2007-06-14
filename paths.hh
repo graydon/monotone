@@ -123,8 +123,6 @@ null_name(path_component pc)
 bool
 workspace_root(split_path const & sp);
 
-template <> void dump(split_path const & sp, std::string & out);
-
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
 // much point ATM...
@@ -151,6 +149,8 @@ protected:
 std::ostream & operator<<(std::ostream & o, any_path const & a);
 std::ostream & operator<<(std::ostream & o, split_path const & s);
 
+template <> void dump(split_path const & sp, std::string & out);
+
 class file_path : public any_path
 {
 public:
@@ -168,6 +168,8 @@ public:
 
   bool operator <(const file_path & other) const
   { return data < other.data; }
+
+  void clear() { data = utf8(); }
 
 private:
   typedef enum { internal, external } source_type;
@@ -245,6 +247,12 @@ public:
   system_path(utf8 const & path);
   system_path operator /(std::string const & to_append) const;
 };
+
+template <> void dump(file_path const & sp, std::string & out);
+template <> void dump(bookkeeping_path const & sp, std::string & out);
+template <> void dump(system_path const & sp, std::string & out);
+
+// utilities
 
 void
 dirname_basename(split_path const & sp,

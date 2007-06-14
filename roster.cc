@@ -1072,10 +1072,12 @@ editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
 {}
 
 node_id
-editable_roster_base::detach_node(split_path const & src)
+editable_roster_base::detach_node(file_path const & src)
 {
   // L(FL("detach_node('%s')") % file_path(src));
-  return r.detach_node(src);
+  split_path sp;
+  src.split(sp);
+  return r.detach_node(sp);
 }
 
 void
@@ -1104,38 +1106,46 @@ editable_roster_base::create_file_node(file_id const & content)
 }
 
 void
-editable_roster_base::attach_node(node_id nid, split_path const & dst)
+editable_roster_base::attach_node(node_id nid, file_path const & dst)
 {
   // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
   MM(dst);
   MM(this->r);
-  r.attach_node(nid, dst);
+  split_path sd;
+  dst.split(sd);
+  r.attach_node(nid, sd);
 }
 
 void
-editable_roster_base::apply_delta(split_path const & pth,
+editable_roster_base::apply_delta(file_path const & pth,
                                   file_id const & old_id,
                                   file_id const & new_id)
 {
-  // L(FL("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
-  r.apply_delta(pth, old_id, new_id);
+  // L(FL("apply_delta('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
+  split_path sp;
+  pth.split(sp);
+  r.apply_delta(sp, old_id, new_id);
 }
 
 void
-editable_roster_base::clear_attr(split_path const & pth,
+editable_roster_base::clear_attr(file_path const & pth,
                                  attr_key const & name)
 {
   // L(FL("clear_attr('%s', '%s')") % file_path(pth) % name);
-  r.clear_attr(pth, name);
+  split_path sp;
+  pth.split(sp);
+  r.clear_attr(sp, name);
 }
 
 void
-editable_roster_base::set_attr(split_path const & pth,
+editable_roster_base::set_attr(file_path const & pth,
                                attr_key const & name,
                                attr_value const & val)
 {
   // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
-  r.set_attr(pth, name, val);
+  split_path sp;
+  pth.split(sp);
+  r.set_attr(sp, name, val);
 }
 
 void
@@ -1662,7 +1672,7 @@ namespace {
         rid(rid), markings(markings)
     {}
 
-    virtual node_id detach_node(split_path const & src)
+    virtual node_id detach_node(file_path const & src)
     {
       node_id nid = this->editable_roster_base::detach_node(src);
       marking_map::iterator marking = markings.find(nid);
@@ -1688,24 +1698,26 @@ namespace {
       return handle_new(this->editable_roster_base::create_file_node(content));
     }
 
-    virtual void apply_delta(split_path const & pth,
+    virtual void apply_delta(file_path const & pth,
                              file_id const & old_id, file_id const & new_id)
     {
       this->editable_roster_base::apply_delta(pth, old_id, new_id);
-      node_id nid = r.get_node(pth)->self;
+      split_path sp;
+      pth.split(sp);
+      node_id nid = r.get_node(sp)->self;
       marking_map::iterator marking = markings.find(nid);
       I(marking != markings.end());
       marking->second.file_content.clear();
       marking->second.file_content.insert(rid);
     }
 
-    virtual void clear_attr(split_path const & pth, attr_key const & name)
+    virtual void clear_attr(file_path const & pth, attr_key const & name)
     {
       this->editable_roster_base::clear_attr(pth, name);
       handle_attr(pth, name);
     }
 
-    virtual void set_attr(split_path const & pth, attr_key const & name,
+    virtual void set_attr(file_path const & pth, attr_key const & name,
                           attr_value const & val)
     {
       this->editable_roster_base::set_attr(pth, name, val);
@@ -1721,9 +1733,11 @@ namespace {
       return nid;
     }
 
-    void handle_attr(split_path const & pth, attr_key const & name)
+    void handle_attr(file_path const & pth, attr_key const & name)
     {
-      node_id nid = r.get_node(pth)->self;
+      split_path sp;
+      pth.split(sp);
+      node_id nid = r.get_node(sp)->self;
       marking_map::iterator marking = markings.find(nid);
       map<attr_key, set<revision_id> >::iterator am = marking->second.attrs.find(name);
       if (am == marking->second.attrs.end())
@@ -2215,9 +2229,9 @@ class editable_roster_for_check
 {
  public:
   editable_roster_for_check(roster_t & r);
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
   int problems;
 
  private:
@@ -2248,9 +2262,11 @@ editable_roster_for_check::editable_roster_for_check(roster_t & r)
 }
 
 node_id
-editable_roster_for_check::detach_node(split_path const & src)
+editable_roster_for_check::detach_node(file_path const & src)
 {
-  node_t n = r.get_node(src);
+  split_path sp;
+  src.split(sp);
+  node_t n = r.get_node(sp);
   if (is_dir_t(n))
     {
       dir_t dir = downcast_to_dir_t(n);
@@ -2261,7 +2277,7 @@ editable_roster_for_check::detach_node(split_path const & src)
           children.push_back(i->first);
         }
       detached_dirs.insert(make_pair(dir->self, 
-                                     make_pair(src, children)));
+                                     make_pair(sp, children)));
     }
 
   return this->editable_roster_base::detach_node(src);
@@ -2295,11 +2311,13 @@ editable_roster_for_check::drop_detached_node(node_id nid)
 }
 
 void
-editable_roster_for_check::attach_node(node_id nid, split_path const & dst)
+editable_roster_for_check::attach_node(node_id nid, file_path const & dst)
 {
+  split_path sd;
+  dst.split(sd);
   split_path dirname;
   path_component basename;
-  dirname_basename(dst, dirname, basename);
+  dirname_basename(sd, dirname, basename);
 
   if (!dirname.empty() && !r.has_node(dirname))
     {
@@ -2343,15 +2361,15 @@ select_nodes_modified_by_cset(cset const & cs,
 {
   nodes_modified.clear();
 
-  path_set modified_prestate_nodes;
-  path_set modified_poststate_nodes;
+  set<file_path> modified_prestate_nodes;
+  set<file_path> modified_poststate_nodes;
 
   // Pre-state damage
 
   copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(),
        inserter(modified_prestate_nodes, modified_prestate_nodes.begin()));
 
-  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_prestate_nodes.insert(i->first);
 
@@ -2360,40 +2378,44 @@ select_nodes_modified_by_cset(cset const & cs,
   copy(cs.dirs_added.begin(), cs.dirs_added.end(),
        inserter(modified_poststate_nodes, modified_poststate_nodes.begin()));
 
-  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+  for (map<file_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_poststate_nodes.insert(i->second);
 
-  for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+  for (map<file_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+  for (set<pair<file_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+  for (map<pair<file_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     modified_poststate_nodes.insert(i->first.first);
 
   // Finale
 
-  for (path_set::const_iterator i = modified_prestate_nodes.begin();
+  for (set<file_path>::const_iterator i = modified_prestate_nodes.begin();
        i != modified_prestate_nodes.end(); ++i)
     {
-      I(old_roster.has_node(*i));
-      nodes_modified.insert(old_roster.get_node(*i)->self);
+      split_path s;
+      i->split(s);
+      I(old_roster.has_node(s));
+      nodes_modified.insert(old_roster.get_node(s)->self);
     }
 
-  for (path_set::const_iterator i = modified_poststate_nodes.begin();
+  for (set<file_path>::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
-      I(new_roster.has_node(*i));
-      nodes_modified.insert(new_roster.get_node(*i)->self);
+      split_path s;
+      i->split(s);
+      I(new_roster.has_node(s));
+      nodes_modified.insert(new_roster.get_node(s)->self);
     }
 
 }

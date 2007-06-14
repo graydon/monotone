@@ -664,19 +664,19 @@ struct editable_working_tree : public editable_tree
       messages(messages)
   {};
 
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
 
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
 
-  virtual void apply_delta(split_path const & pth,
+  virtual void apply_delta(file_path const & pth,
                            file_id const & old_id,
                            file_id const & new_id);
-  virtual void clear_attr(split_path const & pth,
+  virtual void clear_attr(file_path const & pth,
                           attr_key const & name);
-  virtual void set_attr(split_path const & pth,
+  virtual void set_attr(file_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
 
@@ -698,26 +698,26 @@ struct simulated_working_tree : public editable_tree
   roster_t & workspace;
   node_id_source & nis;
   
-  path_set blocked_paths;
-  map<node_id, split_path> nid_map;
+  set<split_path> blocked_paths;
+  map<node_id, file_path> nid_map;
   int conflicts;
 
   simulated_working_tree(roster_t & r, temp_node_id_source & n)
     : workspace(r), nis(n), conflicts(0) {}
 
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
 
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
 
-  virtual void apply_delta(split_path const & pth,
+  virtual void apply_delta(file_path const & pth,
                            file_id const & old_id,
                            file_id const & new_id);
-  virtual void clear_attr(split_path const & pth,
+  virtual void clear_attr(file_path const & pth,
                           attr_key const & name);
-  virtual void set_attr(split_path const & pth,
+  virtual void set_attr(file_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
 
@@ -773,11 +773,10 @@ path_for_detached_nid(node_id nid)
 // parent.
 
 node_id
-editable_working_tree::detach_node(split_path const & src)
+editable_working_tree::detach_node(file_path const & src_pth)
 {
   I(root_dir_attached);
   node_id nid = next_nid++;
-  file_path src_pth(src);
   bookkeeping_path dst_pth = path_for_detached_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   if (src_pth == file_path())
@@ -836,10 +835,9 @@ editable_working_tree::create_file_node(file_id const & content)
 }
 
 void
-editable_working_tree::attach_node(node_id nid, split_path const & dst)
+editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
 {
   bookkeeping_path src_pth = path_for_detached_nid(nid);
-  file_path dst_pth(dst);
 
   map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
@@ -876,35 +874,34 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 }
 
 void
-editable_working_tree::apply_delta(split_path const & pth,
+editable_working_tree::apply_delta(file_path const & pth,
                                    file_id const & old_id,
                                    file_id const & new_id)
 {
-  file_path pth_unsplit(pth);
-  require_path_is_file(pth_unsplit,
-                       F("file '%s' does not exist") % pth_unsplit,
-                       F("file '%s' is a directory") % pth_unsplit);
+  require_path_is_file(pth,
+                       F("file '%s' does not exist") % pth,
+                       F("file '%s' is a directory") % pth);
   hexenc<id> curr_id_raw;
-  calculate_ident(pth_unsplit, curr_id_raw);
+  calculate_ident(pth, curr_id_raw);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
-    F("content of file '%s' has changed, not overwriting") % pth_unsplit);
-  P(F("modifying %s") % pth_unsplit);
+    F("content of file '%s' has changed, not overwriting") % pth);
+  P(F("modifying %s") % pth);
 
   file_data dat;
   source.get_version(new_id, dat);
-  write_data(pth_unsplit, dat.inner());
+  write_data(pth, dat.inner());
 }
 
 void
-editable_working_tree::clear_attr(split_path const & pth,
+editable_working_tree::clear_attr(file_path const & pth,
                                   attr_key const & name)
 {
   // FIXME_ROSTERS: call a lua hook
 }
 
 void
-editable_working_tree::set_attr(split_path const & pth,
+editable_working_tree::set_attr(file_path const & pth,
                                 attr_key const & name,
                                 attr_value const & val)
 {
@@ -924,9 +921,11 @@ editable_working_tree::~editable_working_tree()
 
 
 node_id
-simulated_working_tree::detach_node(split_path const & src)
+simulated_working_tree::detach_node(file_path const & src)
 {
-  node_id nid = workspace.detach_node(src);
+  split_path sp;
+  src.split(sp);
+  node_id nid = workspace.detach_node(sp);
   nid_map.insert(make_pair(nid, src));
   return nid;
 }
@@ -940,10 +939,9 @@ simulated_working_tree::drop_detached_node(node_id nid)
       dir_t dir = downcast_to_dir_t(node);
       if (!dir->children.empty())
         {
-          map<node_id, split_path>::const_iterator i = nid_map.find(nid);
+          map<node_id, file_path>::const_iterator i = nid_map.find(nid);
           I(i != nid_map.end());
-          split_path path = i->second;
-          W(F("cannot drop non-empty directory '%s'") % path);
+          W(F("cannot drop non-empty directory '%s'") % i->second);
           conflicts++;
         }
     }
@@ -962,40 +960,42 @@ simulated_working_tree::create_file_node(file_id const & content)
 }
 
 void
-simulated_working_tree::attach_node(node_id nid, split_path const & dst)
+simulated_working_tree::attach_node(node_id nid, file_path const & dst)
 {
   // this check is needed for checkout because we're using a roster to
   // represent paths that *may* block the checkout. however to represent
   // these we *must* have a root node in the roster which will *always*
   // block us. so here we check for that case and avoid it.
+  split_path dsts;
+  dst.split(dsts);
 
-  if (workspace_root(dst) && workspace.has_root())
+  if (workspace_root(dsts) && workspace.has_root())
     return;
 
-  if (workspace.has_node(dst))
+  if (workspace.has_node(dsts))
     {
       W(F("attach node %d blocked by unversioned path '%s'") % nid % dst);
-      blocked_paths.insert(dst);
+      blocked_paths.insert(dsts);
       conflicts++;
     }
   else
     {
       split_path dirname;
       path_component basename;
-      dirname_basename(dst, dirname, basename);
+      dirname_basename(dsts, dirname, basename);
 
       if (blocked_paths.find(dirname) == blocked_paths.end())
-        workspace.attach_node(nid, dst);
+        workspace.attach_node(nid, dsts);
       else
         {
           W(F("attach node %d blocked by blocked parent '%s'") % nid % dst);
-          blocked_paths.insert(dst);
+          blocked_paths.insert(dsts);
         }
     }
 }
 
 void
-simulated_working_tree::apply_delta(split_path const & path,
+simulated_working_tree::apply_delta(file_path const & path,
                                     file_id const & old_id,
                                     file_id const & new_id)
 {
@@ -1004,13 +1004,13 @@ simulated_working_tree::apply_delta(split_path const & path,
 }
 
 void
-simulated_working_tree::clear_attr(split_path const & pth,
+simulated_working_tree::clear_attr(file_path const & pth,
                                    attr_key const & name)
 {
 }
 
 void
-simulated_working_tree::set_attr(split_path const & pth,
+simulated_working_tree::set_attr(file_path const & pth,
                                  attr_key const & name,
                                  attr_value const & val)
 {

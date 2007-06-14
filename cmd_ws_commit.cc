@@ -53,29 +53,29 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
       if (cs.empty())
         out += F("  no changes").str() += '\n';
 
-      for (path_set::const_iterator i = cs.nodes_deleted.begin();
+      for (set<file_path>::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
         out += (F("  dropped  %s") % *i).str() += '\n';
 
-      for (map<split_path, split_path>::const_iterator
+      for (map<file_path, file_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
         out += (F("  renamed  %s\n"
                    "       to  %s") % i->first % i->second).str() += '\n';
 
-      for (path_set::const_iterator i = cs.dirs_added.begin();
+      for (set<file_path>::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
         out += (F("  added    %s") % *i).str() += '\n';
 
-      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<file_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
         out += (F("  added    %s") % i->first).str() += '\n';
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator
+      for (map<file_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
         out += (F("  patched  %s") % (i->first)).str() += '\n';
 
-      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+      for (map<pair<file_path, attr_key>, attr_value >::const_iterator
              i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
         out += (F("  attr on  %s\n"
                    "    attr   %s\n"
@@ -83,7 +83,7 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
                  % (i->first.first) % (i->first.second) % (i->second)
                  ).str() += "\n";
 
-      for (set<pair<split_path, attr_key> >::const_iterator
+      for (set<pair<file_path, attr_key> >::const_iterator
              i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
         out += (F("  unset on %s\n"
                    "      attr %s")
@@ -1120,11 +1120,12 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
             // process file deltas or new files
             cset const & cs = edge_changes(edge);
 
-            for (map<split_path, pair<file_id, file_id> >::const_iterator
+            for (map<file_path, pair<file_id, file_id> >::const_iterator
                    i = cs.deltas_applied.begin();
                  i != cs.deltas_applied.end(); ++i)
               {
-                file_path path(i->first);
+                file_path path = i->first;
+
                 file_id old_content = i->second.first;
                 file_id new_content = i->second.second;
 
@@ -1160,11 +1161,11 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                     % old_content % path);
               }
 
-            for (map<split_path, file_id>::const_iterator
+            for (map<file_path, file_id>::const_iterator
                    i = cs.files_added.begin();
                  i != cs.files_added.end(); ++i)
               {
-                file_path path(i->first);
+                file_path path = i->first;
                 file_id new_content = i->second;
 
                 L(FL("inserting full version %s") % new_content);
