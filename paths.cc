@@ -647,10 +647,9 @@ system_path::system_path(utf8 const & path)
 ///////////////////////////////////////////////////////////////////////////
 
 bool
-workspace_root(split_path const & sp)
+workspace_root(file_path const & path)
 {
-  I(null_name(idx(sp,0)));
-  return sp.size() == 1;
+  return path.empty();
 }
 
 void

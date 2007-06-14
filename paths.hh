@@ -120,9 +120,6 @@ null_name(path_component pc)
   return pc == the_null_component;
 }
 
-bool
-workspace_root(split_path const & sp);
-
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
 // much point ATM...
@@ -253,6 +250,9 @@ template <> void dump(bookkeeping_path const & sp, std::string & out);
 template <> void dump(system_path const & sp, std::string & out);
 
 // utilities
+
+bool
+workspace_root(file_path const & path);
 
 void
 dirname_basename(split_path const & sp,
