@@ -562,13 +562,13 @@ inventory_post_state(inventory_map & inventory,
 
 static void
 inventory_node_state(inventory_map & inventory,
-                     path_set const & paths,
+                     set<file_path> const & paths,
                      inventory_item::nstate node_state)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
       L(FL("%d %d %s") % inventory[*i].node_state
-        % node_state % file_path(*i));
+        % node_state % *i);
       I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
       inventory[*i].node_state = node_state;
     }
@@ -664,7 +664,7 @@ CMD_AUTOMATE(inventory, "",
   revision_t rev;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, unknown, ignored;
+  set<file_path> unchanged, changed, missing, unknown, ignored;
 
   app.work.get_current_roster_shape(curr, nis);
   app.work.get_work_rev(rev);

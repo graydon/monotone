@@ -178,7 +178,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       // restriction we first find all missing files included by the
       // specified args and then make a restriction that includes only
       // these missing files.
-      path_set missing;
+      set<file_path> missing;
       app.work.find_missing(new_roster, mask, missing);
       if (missing.empty())
         {
@@ -187,11 +187,11 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
         }
 
       std::vector<file_path> missing_files;
-      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
+      for (set<file_path>::const_iterator i = missing.begin();
+           i != missing.end(); i++)
         {
-          file_path fp(*i);
-          L(FL("missing files are '%s'") % fp);
-          missing_files.push_back(fp);
+          L(FL("reverting missing file: %s") % *i);
+          missing_files.push_back(*i);
         }
       // replace the original mask with a more restricted one
       mask = node_restriction(missing_files, std::vector<file_path>(),
@@ -338,37 +338,29 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
 
   app.require_workspace();
 
-  path_set paths;
-  //spin through args and try to ensure that we won't have any collisions
-  //before doing any real filesystem modification.  we'll also verify paths
-  //against .mtn-ignore here.
-  for (args_vector::const_iterator i = args.begin();
-       i != args.end(); ++i)
+  set<file_path> paths;
+  // spin through args and try to ensure that we won't have any collisions
+  // before doing any real filesystem modification.  we'll also verify paths
+  // against .mtn-ignore here.
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      file_path fp(sp);
-
+      file_path fp = file_path_external(*i);
       require_path_is_nonexistent
         (fp, F("directory '%s' already exists") % fp);
 
-      //we'll treat this as a user (fatal) error.  it really
-      //wouldn't make sense to add a dir to .mtn-ignore and then
-      //try to add it to the project with a mkdir statement, but
-      //one never can tell...
+      // we'll treat this as a user (fatal) error.  it really wouldn't make
+      // sense to add a dir to .mtn-ignore and then try to add it to the
+      // project with a mkdir statement, but one never can tell...
       N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
         F("ignoring directory '%s' [see .mtn-ignore]") % fp);
 
-      paths.insert(sp);
+      paths.insert(fp);
     }
 
-  //this time, since we've verified that there should be no collisions,
-  //we'll just go ahead and do the filesystem additions.
-  for (path_set::const_iterator i = paths.begin();
-       i != paths.end(); ++i)
-    {
-      mkdir_p(file_path(*i));
-    }
+  // this time, since we've verified that there should be no collisions,
+  // we'll just go ahead and do the filesystem additions.
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    mkdir_p(*i);
 
   app.work.perform_additions(paths, false, !app.opts.no_ignore);
 }
@@ -384,14 +376,15 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  path_set paths;
+  vector<file_path> roots = args_to_paths(args);
+
+  set<file_path> paths;
   bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
-      vector<file_path> roots = args_to_paths(args);
       path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth, app);
-      path_set ignored;
+      set<file_path> ignored;
 
       // if no starting paths have been specified use the workspace root
       if (roots.empty())
@@ -402,7 +395,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
       app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
-    split_paths(args_to_paths(args), paths);
+    paths = set<file_path>(roots.begin(), roots.end());
 
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
@@ -417,7 +410,7 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  path_set paths;
+  set<file_path> paths;
   if (app.opts.missing)
     {
       temp_node_id_source nis;
@@ -430,7 +423,10 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    split_paths(args_to_paths(args), paths);
+    {
+      vector<file_path> roots = args_to_paths(args);
+      paths = set<file_path>(roots.begin(), roots.end());
+    }
 
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
