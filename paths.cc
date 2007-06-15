@@ -797,6 +797,7 @@ mark_std_paths_used(void)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
+#include "randomizer.hh"
 
 using std::logic_error;
 
@@ -1324,14 +1325,30 @@ UNIT_TEST(paths, access_tracker)
   UNIT_TEST_CHECK_THROW(a.may_not_initialize(), logic_error);
 }
 
-static void test_a_path_ordering(string const & left, string const & right)
+static void test_path_less_than(string const & left, string const & right)
 {
   MM(left);
   MM(right);
+  file_path left_fp = file_path_internal(left);
+  file_path right_fp = file_path_internal(right);
   split_path left_sp, right_sp;
-  file_path_internal(left).split(left_sp);
-  file_path_internal(right).split(right_sp);
+  left_fp.split(left_sp);
+  right_fp.split(right_sp);
   I(left_sp < right_sp);
+  I(left_fp < right_fp);
+}
+
+static void test_path_equal(string const & left, string const & right)
+{
+  MM(left);
+  MM(right);
+  file_path left_fp = file_path_internal(left);
+  file_path right_fp = file_path_internal(right);
+  split_path left_sp, right_sp;
+  left_fp.split(left_sp);
+  right_fp.split(right_sp);
+  I(left_sp == right_sp);
+  I(left_fp == right_fp);
 }
 
 UNIT_TEST(paths, ordering)
@@ -1342,23 +1359,179 @@ UNIT_TEST(paths, ordering)
   //   -- it is used to determine in what order cset operations can be applied
   //      (in particular, foo must sort before foo/bar, so that we can use it
   //      to do top-down and bottom-up traversals of a set of paths).
-  test_a_path_ordering("a", "b");
-  test_a_path_ordering("a", "c");
-  test_a_path_ordering("ab", "ac");
-  test_a_path_ordering("a", "ab");
-  test_a_path_ordering("", "a");
-  test_a_path_ordering("", ".foo");
-  test_a_path_ordering("foo", "foo/bar");
+  test_path_less_than("a", "b");
+  test_path_less_than("a", "c");
+  test_path_less_than("ab", "ac");
+  test_path_less_than("a", "ab");
+  test_path_less_than("", "a");
+  test_path_less_than("", ".foo");
+  test_path_less_than("foo", "foo/bar");
   // . is before / asciibetically, so sorting by strings will give the wrong
   // answer on this:
-  test_a_path_ordering("foo/bar", "foo.bar");
+  test_path_less_than("foo/bar", "foo.bar");
 
   // path_components used to be interned strings, and we used the default sort
   // order, which meant that in practice path components would sort in the
   // _order they were first used in the program_.  So let's put in a test that
   // would catch this sort of brokenness.
-  test_a_path_ordering("fallanopic_not_otherwise_mentioned", "xyzzy");
-  test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
+  test_path_less_than("fallanopic_not_otherwise_mentioned", "xyzzy");
+  test_path_less_than("fallanoooo_not_otherwise_mentioned_and_smaller",
+                       "fallanopic_not_otherwise_mentioned");
+}
+
+UNIT_TEST(paths, ordering_random)
+{
+  char x[4] = {0,0,0,0};
+  char y[4] = {0,0,0,0};
+  u8 a, b, c, d;
+  const int ntrials = 1000;
+  int i;
+  randomizer rng;
+
+  // use of numbers is intentional; these strings are defined to be UTF-8.
+
+  UNIT_TEST_CHECKPOINT("a and b");
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      y[0] = b;
+      if (a < b)
+        test_path_less_than(x, y);
+      else if (a > b)
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
+
+  UNIT_TEST_CHECKPOINT("ab and cd");
+  for (i = 0; i < ntrials; i++)
+    {
+      do
+        {
+          do a = rng.uniform(0x7f - 0x20) + 0x20;
+          while (a == 0x5c || a == 0x2f); // '\\', '/'
+
+          do b = rng.uniform(0x7f - 0x20) + 0x20;
+          while (b == 0x5c || b == 0x2f || b == 0x3a); // '\\', '/', ':'
+        }
+      while (a == 0x2e && b == 0x2e);  // ".."
+
+      do
+        {
+          do c = rng.uniform(0x7f - 0x20) + 0x20;
+          while (c == 0x5c || c == 0x2f); // '\\', '/'
+
+          do d = rng.uniform(0x7f - 0x20) + 0x20;
+          while (d == 0x5c || d == 0x2f || d == 0x3a); // '\\', '/', ':'
+        }
+      while (c == 0x2e && d == 0x2e);  // ".."
+
+      x[0] = a;
+      x[1] = b;
+      y[0] = c;
+      y[1] = d;
+
+      if (a < c || (a == c && b < d))
+        test_path_less_than(x, y);
+      else if (a > c || (a == c && b > d))
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
+
+  UNIT_TEST_CHECKPOINT("a and b/c");
+  x[1] = 0;
+  y[1] = '/';
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+      
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      y[0] = b;
+      y[2] = c;
+
+      // only the order of a and b matters.  1 sorts before 1/2.
+      if (a <= b)
+        test_path_less_than(x, y);
+      else
+        test_path_less_than(y, x);
+    }
+
+  UNIT_TEST_CHECKPOINT("ab and c/d");
+  for (i = 0; i < ntrials; i++)
+    {
+      do
+        {
+          do a = rng.uniform(0x7f - 0x20) + 0x20;
+          while (a == 0x5c || a == 0x2f); // '\\', '/'
+
+          do b = rng.uniform(0x7f - 0x20) + 0x20;
+          while (b == 0x5c || b == 0x2f || b == 0x3a); // '\\', '/', ':'
+        }
+      while (a == 0x2e && b == 0x2e);  // ".."
+
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      do d = rng.uniform(0x7f - 0x20) + 0x20;
+      while (d == 0x5c || d == 0x2f || d == 0x2e); // '\\', '/', '.'
+      
+
+      x[0] = a;
+      x[1] = b;
+      y[0] = c;
+      y[2] = d;
+
+      // only the order of a and c matters,
+      // but this time, 12 sorts after 1/2.
+      if (a < c)
+        test_path_less_than(x, y);
+      else
+        test_path_less_than(y, x);
+    }
+
+  
+  UNIT_TEST_CHECKPOINT("a/b and c/d");
+  x[1] = '/';
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+      
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      do d = rng.uniform(0x7f - 0x20) + 0x20;
+      while (d == 0x5c || d == 0x2f || d == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      x[2] = b;
+      y[0] = c;
+      y[2] = d;
+
+      if (a < c || (a == c && b < d))
+        test_path_less_than(x, y);
+      else if (a > c || (a == c && b > d))
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
 }
 
 UNIT_TEST(paths, test_internal_string_is_bookkeeping_path)

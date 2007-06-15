@@ -163,8 +163,33 @@ public:
   bool operator ==(const file_path & other) const
   { return data == other.data; }
 
+  // the ordering on file_path is not exactly that of strings.
+  // see the "ordering" unit test in paths.cc.
   bool operator <(const file_path & other) const
-  { return data < other.data; }
+  {
+    unsigned char const * p = (unsigned char const *)data().c_str();
+    unsigned char const * q = (unsigned char const *)other.data().c_str();
+    while (*p == *q && *p != '\0')
+      p++, q++;
+    if (*p == *q) // equal -> not less
+      return false;
+
+    // must do NUL before everything first, or 'foo' will sort after
+    // 'foo/bar' which is not what we want.
+    if (*p == '\0')
+      return true;
+    if (*q == '\0')
+      return false;
+
+    // the only special case needed is that / sorts before everything -
+    // this gives the effect of component-by-component comparison.
+    if (*p == '/')
+      return true;
+    if (*q == '/')
+      return false;
+
+    return *p < *q;
+  }
 
   void clear() { data = utf8(); }
 
