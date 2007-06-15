@@ -275,9 +275,6 @@ void mark_std_paths_used(void);
 
 typedef std::set<split_path> path_set;
 
-void
-split_paths(std::vector<file_path> const & file_paths, path_set & split_paths);
-
 // equivalent to file_path_internal(path).split(sp) but more efficient.
 void
 internal_string_to_split_path(std::string const & path, split_path & sp);

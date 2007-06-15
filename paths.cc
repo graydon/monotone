@@ -445,18 +445,6 @@ file_path::split(split_path & sp) const
     }
 }
 
-void
-split_paths(std::vector<file_path> const & file_paths, path_set & split_paths)
-{
-  for (vector<file_path>::const_iterator i = file_paths.begin();
-       i != file_paths.end(); ++i)
-    {
-      split_path sp;
-      i->split(sp);
-      split_paths.insert(sp);
-    }
-}
-
 template <>
 void dump(split_path const & sp, string & out)
 {
