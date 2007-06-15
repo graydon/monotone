@@ -31,29 +31,20 @@ using std::vector;
 // include these nodes.
 
 static void
-make_path_set(vector<file_path> const & paths, path_set & split_paths)
-{
-  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      split_path sp;
-      i->split(sp);
-      split_paths.insert(sp);
-    }
-}
-
-static void
 map_nodes(map<node_id, restricted_path::status> & node_map,
           roster_t const & roster,
-          path_set const & paths,
-          path_set & known_paths,
+          set<file_path> const & paths,
+          set<file_path> & known_paths,
           restricted_path::status const status)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      if (roster.has_node(*i))
+      split_path s;
+      i->split(s);
+      if (roster.has_node(s))
         {
           known_paths.insert(*i);
-          node_id nid = roster.get_node(*i)->self;
+          node_id nid = roster.get_node(s)->self;
 
           map<node_id, restricted_path::status>::iterator n = node_map.find(nid);
           if (n != node_map.end())
@@ -66,13 +57,13 @@ map_nodes(map<node_id, restricted_path::status> & node_map,
 }
 
 static void
-map_paths(map<split_path, restricted_path::status> & path_map,
-          path_set const & paths,
+map_paths(map<file_path, restricted_path::status> & path_map,
+          set<file_path> const & paths,
           restricted_path::status const status)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      map<split_path, restricted_path::status>::iterator p = path_map.find(*i);
+      map<file_path, restricted_path::status>::iterator p = path_map.find(*i);
       if (p != path_map.end())
         N(p->second == status,
           F("conflicting include/exclude on path '%s'") % *i);
@@ -82,14 +73,14 @@ map_paths(map<split_path, restricted_path::status> & path_map,
 }
 
 static void
-validate_roster_paths(path_set const & included_paths, 
-                      path_set const & excluded_paths, 
-                      path_set const & known_paths,
+validate_roster_paths(set<file_path> const & included_paths, 
+                      set<file_path> const & excluded_paths, 
+                      set<file_path> const & known_paths,
                       app_state & app)
 {
   int bad = 0;
 
-  for (path_set::const_iterator i = included_paths.begin();
+  for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
     {
       // ignored paths are allowed into the restriction but are not
@@ -97,8 +88,7 @@ validate_roster_paths(path_set const & included_paths,
       // rosters
       if (known_paths.find(*i) == known_paths.end())
         {
-          file_path fp(*i);
-          if (!app.lua.hook_ignore_file(fp))
+          if (!app.lua.hook_ignore_file(*i))
             {
               bad++;
               W(F("restriction includes unknown path '%s'") % *i);
@@ -106,7 +96,7 @@ validate_roster_paths(path_set const & included_paths,
         }
     }
 
-  for (path_set::const_iterator i = excluded_paths.begin();
+  for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
     {
       if (known_paths.find(*i) == known_paths.end())
@@ -120,13 +110,13 @@ validate_roster_paths(path_set const & included_paths,
 }
 
 void
-validate_workspace_paths(path_set const & included_paths, 
-                         path_set const & excluded_paths,
+validate_workspace_paths(set<file_path> const & included_paths, 
+                         set<file_path> const & excluded_paths,
                          app_state & app)
 {
   int bad = 0;
 
-  for (path_set::const_iterator i = included_paths.begin();
+  for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
     {
       if (workspace_root(*i)) 
@@ -135,22 +125,20 @@ validate_workspace_paths(path_set const & included_paths,
       // ignored paths are allowed into the restriction but are not
       // considered invalid if they are found in none of the restriction's
       // rosters
-      file_path fp(*i);
-      if (!path_exists(fp) && !app.lua.hook_ignore_file(fp))
+      if (!path_exists(*i) && !app.lua.hook_ignore_file(*i))
         {
           bad++;
           W(F("restriction includes unknown path '%s'") % *i);
         }
     }
 
-  for (path_set::const_iterator i = excluded_paths.begin();
+  for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
     {
       if (workspace_root(*i)) 
         continue;
 
-      file_path fp(*i);
-      if (!path_exists(fp))
+      if (!path_exists(*i))
         {
           bad++;
           W(F("restriction excludes unknown path '%s'") % *i);
@@ -163,11 +151,10 @@ validate_workspace_paths(path_set const & included_paths,
 restriction::restriction(std::vector<file_path> const & includes,
                          std::vector<file_path> const & excludes,
                          long depth)
-  : depth(depth)
-{
-  make_path_set(includes, included_paths);
-  make_path_set(excludes, excluded_paths);
-}
+  : included_paths(includes.begin(), includes.end()),
+    excluded_paths(excludes.begin(), excludes.end()),
+    depth(depth)
+{}
 
 node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
@@ -331,8 +318,10 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
 }
 
 bool
-path_restriction::includes(split_path const & sp) const
+path_restriction::includes(file_path const & pth) const
 {
+  split_path sp;
+  pth.split(sp);
   if (empty())
     {
       if (depth != -1)
@@ -356,50 +345,44 @@ path_restriction::includes(split_path const & sp) const
         }
     }
 
-  split_path current(sp);
-  int path_depth = 0;
-
   // FIXME: this uses depth+1 because the old semantics of depth=0 were
   // something like "the current directory and its immediate children". it
   // seems somewhat more reasonable here to use depth=0 to mean "exactly
   // this directory" and depth=1 to mean "this directory and its immediate
   // children"
 
-  while (!current.empty() && (depth == -1 || path_depth <= depth + 1))
+  int path_depth = 0;
+  while (!sp.empty() && (depth == -1 || path_depth <= depth + 1))
     {
-      map<split_path, restricted_path::status>::const_iterator 
-        r = path_map.find(current);
+      map<file_path, restricted_path::status>::const_iterator 
+        r = path_map.find(file_path(sp));
 
       if (r != path_map.end())
         {
           switch (r->second)
             {
             case restricted_path::included:
-              L(FL("explicit include of path '%s'") 
-                % file_path(sp));
+              L(FL("explicit include of path '%s'") % pth);
               return true;
 
             case restricted_path::excluded:
-              L(FL("explicit exclude of path '%s'") 
-                % file_path(sp));
+              L(FL("explicit exclude of path '%s'") % pth);
               return false;
             }
         }
 
-      current.pop_back();
+      sp.pop_back();
       path_depth++;
     }
 
   if (included_paths.empty())
     {
-      L(FL("default include of path '%s'") 
-        % file_path(sp));
+      L(FL("default include of path '%s'") % pth);
       return true;
     }
   else
     {
-      L(FL("default exclude of path '%s'") 
-        % file_path(sp));
+      L(FL("default exclude of path '%s'") % pth);
       return false;
     }
 }

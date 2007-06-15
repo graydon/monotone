@@ -445,33 +445,35 @@ file_path::split(split_path & sp) const
     }
 }
 
-void
-split_paths(std::vector<file_path> const & file_paths, path_set & split_paths)
-{
-  for (vector<file_path>::const_iterator i = file_paths.begin();
-       i != file_paths.end(); ++i)
-    {
-      split_path sp;
-      i->split(sp);
-      split_paths.insert(sp);
-    }
-}
-
 template <>
 void dump(split_path const & sp, string & out)
 {
   ostringstream oss;
+  oss << sp << '\n';
+  out = oss.str();
+}
 
-  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    {
-      if (null_name(*i))
-        oss << '.';
-      else
-        oss << '/' << *i;
-    }
+template <>
+void dump(file_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
 
-  oss << '\n';
+template <>
+void dump(system_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
 
+template <>
+void dump(bookkeeping_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
   out = oss.str();
 }
 
@@ -633,10 +635,9 @@ system_path::system_path(utf8 const & path)
 ///////////////////////////////////////////////////////////////////////////
 
 bool
-workspace_root(split_path const & sp)
+workspace_root(file_path const & path)
 {
-  I(null_name(idx(sp,0)));
-  return sp.size() == 1;
+  return path.empty();
 }
 
 void
