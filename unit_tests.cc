@@ -391,7 +391,7 @@ int main(int argc, char * argv[])
                 {
                   unrecognized = true;
                   cerr << argv[0] << ": unrecognized test: "
-                       << group << '\n';
+                       << group << ':' << test << '\n';
                   continue;
                 }
               to_run.push_back(t->second);
