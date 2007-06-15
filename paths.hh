@@ -102,11 +102,9 @@
 // file_path's can be split into split_path's, and split_path's can be joined
 // into file_path's.
 
-
 #include <iosfwd>
 #include <string>
 #include <vector>
-#include <set>
 
 #include "vocab.hh"
 
@@ -297,8 +295,6 @@ void
 go_to_workspace(system_path const & new_workspace);
 
 void mark_std_paths_used(void);
-
-typedef std::set<split_path> path_set;
 
 // equivalent to file_path_internal(path).split(sp) but more efficient.
 void

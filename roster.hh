@@ -227,7 +227,7 @@ public:
                 attr_key const & key,
                 attr_value & val) const;
 
-  void extract_path_set(path_set & paths) const;
+  void extract_path_set(std::set<file_path> & paths) const;
 
   node_map const & all_nodes() const
   {

@@ -2421,17 +2421,14 @@ select_nodes_modified_by_cset(cset const & cs,
 }
 
 void
-roster_t::extract_path_set(path_set & paths) const
+roster_t::extract_path_set(set<file_path> & paths) const
 {
   paths.clear();
   if (has_root())
     {
       for (dfs_iter i(root_dir, true); !i.finished(); ++i)
         {
-          node_t curr = *i;
-          split_path pth;
-          //get_name(curr->self, pth);
-          internal_string_to_split_path(i.path(), pth);
+          file_path pth = file_path_internal(i.path());
           if (!workspace_root(pth))
             paths.insert(pth);
         }

@@ -1255,16 +1255,12 @@ workspace::find_unknown_and_ignored(path_restriction const & mask,
                                     set<file_path> & unknown,
                                     set<file_path> & ignored)
 {
-  path_set known_ps;
+  set<file_path> known;
   roster_t new_roster;
   temp_node_id_source nis;
 
   get_current_roster_shape(new_roster, nis);
-  new_roster.extract_path_set(known_ps);
-
-  set<file_path> known;
-  for (path_set::const_iterator i = known_ps.begin(); i != known_ps.end(); i++)
-    known.insert(file_path(*i));
+  new_roster.extract_path_set(known);
 
   file_itemizer u(db, lua, known, unknown, ignored, mask);
   for (vector<file_path>::const_iterator 
@@ -1641,7 +1637,7 @@ workspace::perform_content_update(cset const & update,
 {
   roster_t roster;
   temp_node_id_source nis;
-  path_set known_ps;
+  set<file_path> known;
   roster_t new_roster;
   bookkeeping_path detached = path_for_detached_nids();
 
@@ -1651,11 +1647,7 @@ workspace::perform_content_update(cset const & update,
     % detached);
 
   get_current_roster_shape(new_roster, nis);
-  new_roster.extract_path_set(known_ps);
-
-  set<file_path> known;
-  for (path_set::const_iterator i = known_ps.begin(); i != known_ps.end(); i++)
-    known.insert(file_path(*i));
+  new_roster.extract_path_set(known);
 
   workspace_itemizer itemizer(roster, known, nis);
   walk_tree(file_path(), itemizer);
