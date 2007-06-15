@@ -42,12 +42,14 @@ namespace commands
     bool m_use_workspace_options;
     options::options_type m_opts;
     children_set m_children;
+    bool m_allow_completion;
 
     std::map< command_id, command * >
-      find_completions(utf8 const & prefix, command_id const & completed)
-      const;
+    find_completions(utf8 const & prefix, command_id const & completed,
+                     bool completion_ok = true) const;
     command * find_child_by_name(utf8 const & name) const;
 
+    bool allow_completion() const;
   public:
     command(std::string const & primary_name,
             std::string const & other_names,
@@ -57,7 +59,8 @@ namespace commands
             std::string const & abstract,
             std::string const & desc,
             bool use_workspace_options,
-            options::options_type const & opts);
+            options::options_type const & opts,
+            bool allow_completion);
 
     virtual ~command(void);
 
@@ -80,13 +83,14 @@ namespace commands
 
     virtual void exec(app_state & app,
                       command_id const & execid,
-                      args_vector const & args) = 0;
+                      args_vector const & args) const = 0;
 
     bool has_name(utf8 const & name) const;
-    command * find_command(command_id const & id);
+    command const * find_command(command_id const & id) const;
     std::set< command_id >
       complete_command(command_id const & id,
-                       command_id completed = command_id()) const;
+                       command_id completed = command_id(),
+                       bool completion_ok = true) const;
   };
 
   class automate : public command
@@ -112,7 +116,7 @@ namespace commands
 
     void exec(app_state & app,
               command_id const & execid,
-              args_vector const & args);
+              args_vector const & args) const;
   };
 };
 
@@ -177,17 +181,17 @@ namespace commands {                                                 \
   public:                                                            \
     cmd_ ## C() : command(name, aliases, parent, hidden, params,     \
                           abstract, desc, true,                      \
-                          options::options_type() | opts)            \
+                          options::options_type() | opts, true)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args);                     \
+                      args_vector const & args) const;               \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args)
+                               args_vector const & args) const
 
 #define CMD(C, name, aliases, parent, params, abstract, desc, opts) \
   _CMD2(C, name, aliases, parent, false, params, abstract, desc, opts)
@@ -195,27 +199,33 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 #define CMD_HIDDEN(C, name, aliases, parent, params, abstract, desc, opts) \
   _CMD2(C, name, aliases, parent, true, params, abstract, desc, opts)
 
-#define CMD_GROUP(C, name, aliases, parent, abstract, desc)          \
-namespace commands {                                                 \
+#define _CMD_GROUP2(C, name, aliases, parent, abstract, desc, cmpl)  \
+  namespace commands {                                               \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
     cmd_ ## C() : command(name, aliases, parent, false, "", abstract,\
                           desc, true,                                \
-                          options::options_type())                   \
+                          options::options_type(), cmpl)             \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args);                     \
+                      args_vector const & args) const;               \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args)             \
+                               args_vector const & args) const       \
 {                                                                    \
   I(false);                                                          \
 }
+
+#define CMD_GROUP(C, name, aliases, parent, abstract, desc)     \
+  _CMD_GROUP2(C, name, aliases, parent, abstract, desc, true)
+
+#define CMD_GROUP_NO_COMPLETE(C, name, aliases, parent, abstract, desc) \
+  _CMD_GROUP2(C, name, aliases, parent, abstract, desc, false)
 
 // Use this for commands that should specifically _not_ look for an
 // _MTN dir and load options from it.
@@ -228,17 +238,17 @@ namespace commands {                                                 \
   public:                                                            \
     cmd_ ## C() : command(name, aliases, parent, false, params,      \
                           abstract, desc, false,                     \
-                          options::options_type() | opts)            \
+                          options::options_type() | opts, true)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args);                     \
+                      args_vector const & args) const;               \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args)             \
+                               args_vector const & args) const
 
 // TODO: 'abstract' and 'desc' should be refactored so that the
 // command definition allows the description of input/output format,
