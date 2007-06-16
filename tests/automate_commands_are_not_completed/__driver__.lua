@@ -11,4 +11,4 @@ check(mtn("automate", "lea"), 1, false, false)
 check(mtn("automat", "leaves"), 1, false, false)
 
 -- Alias for people who like using automate manually
-check(mtn("auto", "leaves"), 0, false, false)
+check(mtn("au", "leaves"), 0, false, false)
