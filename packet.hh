@@ -13,7 +13,7 @@
 #include <iosfwd>
 #include "vocab.hh"
 
-class app_state;
+class key_store;
 struct cert;
 
 // the idea here is that monotone can produce and consume "packet streams",
@@ -79,7 +79,7 @@ struct packet_writer : public packet_consumer
                                 keypair const & kp);
 };
 
-size_t read_packets(std::istream & in, packet_consumer & cons, app_state & app);
+size_t read_packets(std::istream & in, packet_consumer & cons, key_store & keys);
 
 // Local Variables:
 // mode: C++

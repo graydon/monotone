@@ -12,7 +12,7 @@
 #include "outdated_indicator.hh"
 #include "vocab.hh"
 
-class app_state;
+class database;
 
 class tag_t
 {
@@ -26,13 +26,13 @@ bool operator < (tag_t const & a, tag_t const & b);
 
 class project_t
 {
-  app_state & app;
+  database & db;
   std::map<branch_name, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 
 public:
-  project_t(app_state & app);
+  project_t(database & db);
 
   void get_branch_list(std::set<branch_name> & names);
   void get_branch_list(globish const & glob, std::set<branch_name> & names);

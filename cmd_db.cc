@@ -36,7 +36,7 @@ static void
 kill_rev_locally(app_state& app, string const& id)
 {
   revision_id ident;
-  complete(app, id, ident);
+  complete(app.db, id, ident);
   N(app.db.revision_exists(ident),
     F("no such revision '%s'") % ident);
 
@@ -186,7 +186,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_changesets_from_manifest_ancestry(app);
+  build_changesets_from_manifest_ancestry(app.db);
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -197,7 +197,7 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_roster_style_revs_from_manifest_style_revs(app);
+  build_roster_style_revs_from_manifest_style_revs(app.db);
 }
 
 CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
@@ -208,7 +208,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  regenerate_caches(app);
+  regenerate_caches(app.db);
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
@@ -296,7 +296,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app, *i) << '\n';
+          else cout << describe_revision(app.db, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")
