@@ -1262,13 +1262,14 @@ UNIT_TEST(paths, system)
   UNIT_TEST_CHECK(tilde_expanded[0] == '/');
 #endif
   UNIT_TEST_CHECK(tilde_expanded.find('~') == string::npos);
-  // and check for the weird WIN32 version
+  // on Windows, ~name is not expanded
 #ifdef WIN32
-  string tilde_expanded2 = system_path("~this_user_does_not_exist_anywhere").as_external();
-  UNIT_TEST_CHECK(tilde_expanded2[1] == ':');
-  UNIT_TEST_CHECK(tilde_expanded2.find('~') == string::npos);
+  UNIT_TEST_CHECK(system_path("~this_user_does_not_exist_anywhere")
+                  .as_external()
+                  == "~this_user_does_not_exist_anywhere");
 #else
-  UNIT_TEST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"), informative_failure);
+  UNIT_TEST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"),
+                        informative_failure);
 #endif
 
   // finally, make sure that the copy-from-any_path constructor works right

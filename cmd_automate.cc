@@ -22,7 +22,7 @@ using std::set;
 using std::string;
 using std::vector;
 
-CMD_GROUP(automate, "automate", "", CMD_REF(automation),
+CMD_GROUP(automate, "automate", "au", CMD_REF(automation),
           N_("Interface for scripted execution"),
           "");
 
@@ -33,14 +33,14 @@ namespace commands {
                      string const & desc,
                      options::options_type const & opts) :
     command(name, "", CMD_REF(automate), false, params, abstract,
-            desc, true, opts)
+            desc, true, opts, false)
   {
   }
 
   void
   automate::exec(app_state & app,
                  command_id const & execid,
-                 args_vector const & args)
+                 args_vector const & args) const
   {
     make_io_binary();
     exec_from_automate(args, execid, app, std::cout);
@@ -374,9 +374,9 @@ CMD_AUTOMATE(stdio, "",
               for (command_id::size_type i = 0; i < id.size(); i++)
                 args.erase(args.begin());
 
-              command * cmd = CMD_REF(automate)->find_command(id);
+              command const * cmd = CMD_REF(automate)->find_command(id);
               I(cmd != NULL);
-              automate * acmd = reinterpret_cast< automate * >(cmd);
+              automate const * acmd = reinterpret_cast< automate const * >(cmd);
 
               opts = options::opts::globals() | acmd->opts();
               opts.instantiate(&app.opts).from_key_value_pairs(params);
