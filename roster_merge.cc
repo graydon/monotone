@@ -594,18 +594,18 @@ roster_merge(roster_t const & left_parent,
     {
       // we can't have an illegal _MTN dir unless we have a root node in the
       // first place...
-      split_path bookkeeping_root_split;
-      bookkeeping_root_split.push_back(the_null_component);
-      bookkeeping_root_split.push_back(bookkeeping_root_component);
-      if (result.roster.has_node(bookkeeping_root_split))
+      dir_t result_root = result.roster.root();
+
+      if (result_root->has_child(bookkeeping_root_component))
         {
           illegal_name_conflict conflict;
-          node_t n = result.roster.get_node(bookkeeping_root_split);
+          node_t n = result_root->get_child(bookkeeping_root_component);
           conflict.nid = n->self;
           conflict.parent_name.first = n->parent;
           conflict.parent_name.second = n->name;
           I(n->name == bookkeeping_root_component);
-          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+
+          result.roster.detach_node(n->self);
           result.illegal_name_conflicts.push_back(conflict);
         }
     }
@@ -862,12 +862,16 @@ struct name_shared_stuff : public virtual base_scalar
                // NB result is writeable -- we can scribble on it
                roster_merge_result & result, scalar_val expected_val)
   {
-    split_path name;
     switch (expected_val)
       {
       case scalar_a: case scalar_b:
-        result.roster.get_name(thing_nid, name);
-        I(name == path_for(expected_val));
+        {
+          file_path fp;
+          split_path name;
+          result.roster.get_name(thing_nid, fp);
+          fp.split(name);
+          I(name == path_for(expected_val));
+        }
         break;
       case scalar_conflict:
         node_name_conflict const & c = idx(result.node_name_conflicts, 0);

@@ -1313,8 +1313,10 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
               if (!parent_roster->has_node(n))
                 continue;
 
+              file_path fp;
+              parent_roster->get_name(n, fp);
               split_path sp;
-              parent_roster->get_name(n, sp);
+              fp.split(sp);
 
               // Try remapping the name.
               if (node_to_old_rev.find(j->first) != node_to_old_rev.end())

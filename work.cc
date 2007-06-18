@@ -452,9 +452,8 @@ workspace::maybe_update_inodeprints()
 
       if (all_same)
         {
-          split_path sp;
-          new_roster.get_name(nid, sp);
-          file_path fp(sp);
+          file_path fp;
+          new_roster.get_name(nid, fp);
           hexenc<inodeprint> ip;
           if (inodeprint_file(fp, ip))
             ipm_new.insert(inodeprint_entry(fp, ip));
@@ -1093,9 +1092,8 @@ workspace::classify_roster_paths(roster_t const & ros,
       node_id nid = i->first;
       node_t node = i->second;
 
-      split_path sp;
-      ros.get_name(nid, sp);
-      file_path fp(sp);
+      file_path fp;
+      ros.get_name(nid, fp);
 
       // if this node is a file, check the inodeprint cache for changes
       if (!is_dir_t(node) && inodeprint_unchanged(ipm, fp))
@@ -1171,9 +1169,8 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       if (!mask.includes(ros, nid))
         continue;
 
-      split_path sp;
-      ros.get_name(nid, sp);
-      file_path fp(sp);
+      file_path fp;
+      ros.get_name(nid, fp);
 
       const path::status status(get_path_status(fp));
 
@@ -1239,10 +1236,8 @@ workspace::find_missing(roster_t const & new_roster_shape,
       if (!new_roster_shape.is_root(nid)
           && mask.includes(new_roster_shape, nid))
         {
-          split_path sp;
-          new_roster_shape.get_name(nid, sp);
-          file_path fp(sp);
-
+          file_path fp;
+          new_roster_shape.get_name(nid, fp);
           if (!path_exists(fp))
             missing.insert(fp);
         }
@@ -1286,9 +1281,7 @@ workspace::perform_additions(set<file_path> const & paths,
 
   if (!new_roster.has_root())
     {
-      split_path root;
-      root.push_back(the_null_component);
-      er.attach_node(er.create_dir_node(), root);
+      er.attach_node(er.create_dir_node(), file_path_internal(""));
     }
 
   I(new_roster.has_root());
@@ -1373,17 +1366,15 @@ workspace::perform_deletions(set<file_path> const & paths,
   while (todo.size())
     {
       file_path const & name(todo.front());
-      split_path p;
-      name.split(p);
 
       E(!name.empty(),
         F("unable to drop the root directory"));
 
-      if (!new_roster.has_node(p))
+      if (!new_roster.has_node(name))
         P(F("skipping %s, not currently tracked") % name);
       else
         {
-          node_t n = new_roster.get_node(p);
+          node_t n = new_roster.get_node(name);
           if (is_dir_t(n))
             {
               dir_t d = downcast_to_dir_t(n);
@@ -1421,7 +1412,7 @@ workspace::perform_deletions(set<file_path> const & paths,
                 }
             }
           P(F("dropping %s from workspace manifest") % name);
-          new_roster.drop_detached_node(new_roster.detach_node(p));
+          new_roster.drop_detached_node(new_roster.detach_node(name));
         }
       todo.pop_front();
       if (i != paths.rend())
@@ -1673,14 +1664,14 @@ workspace::update_any_attrs()
   for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
-      split_path sp;
-      new_roster.get_name(i->first, sp);
+      file_path fp;
+      new_roster.get_name(i->first, fp);
 
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
            j != n->attrs.end(); ++j)
         if (j->second.first)
-          lua.hook_apply_attribute (j->first(), file_path(sp),
+          lua.hook_apply_attribute (j->first(), fp,
                                     j->second.second());
     }
 }

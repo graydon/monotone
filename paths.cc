@@ -240,19 +240,6 @@ is_valid_internal(string const & path)
           && !in_bookkeeping_dir(path));
 }
 
-// equivalent to file_path_internal(path).split(sp), but
-// avoids splitting the string twice
-void
-internal_string_to_split_path(string const & path, split_path & sp)
-{
-  I(utf8_validate(utf8(path)));
-  I(!in_bookkeeping_dir(path));
-  sp.clear();
-  sp.reserve(8);
-  sp.push_back(the_null_component);
-  I(fully_normalized_path_split(path, true, sp));
-}
-
 // path::normalize() is deprecated in Boost 1.34, and also
 // doesn't remove leading or trailing dots any more.
 static fs::path

@@ -39,14 +39,13 @@ map_nodes(map<node_id, restricted_path::status> & node_map,
 {
   for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      split_path s;
-      i->split(s);
-      if (roster.has_node(s))
+      if (roster.has_node(*i))
         {
           known_paths.insert(*i);
-          node_id nid = roster.get_node(s)->self;
+          node_id nid = roster.get_node(*i)->self;
 
-          map<node_id, restricted_path::status>::iterator n = node_map.find(nid);
+          map<node_id, restricted_path::status>::iterator n
+            = node_map.find(nid);
           if (n != node_map.end())
             N(n->second == status,
               F("conflicting include/exclude on path '%s'") % *i);
@@ -237,8 +236,10 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   MM(roster);
   I(roster.has_node(nid));
 
+  file_path fp;
   split_path sp;
-  roster.get_name(nid, sp);
+  roster.get_name(nid, fp);
+  fp.split(sp);
 
   if (empty())
     {
@@ -247,12 +248,12 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
           int path_depth = sp.size() - 1; // -1 to not count root path_component
           if (path_depth <= depth + 1)
             {
-              L(FL("depth includes nid %d path '%s'") % nid % file_path(sp));
+              L(FL("depth includes nid %d path '%s'") % nid % fp);
               return true;
             }
           else
             {
-              L(FL("depth excludes nid %d path '%s'") % nid % file_path(sp));
+              L(FL("depth excludes nid %d path '%s'") % nid % fp);
               return false;
             }
         }
@@ -284,12 +285,12 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
             {
             case restricted_path::included:
               L(FL("explicit include of nid %d path '%s'") 
-                % current % file_path(sp));
+                % current % fp);
               return true;
 
             case restricted_path::excluded:
               L(FL("explicit exclude of nid %d path '%s'") 
-                % current % file_path(sp));
+                % current % fp);
               return false;
             }
         }
@@ -302,7 +303,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   if (included_paths.empty())
     {
       L(FL("default include of nid %d path '%s'") 
-        % nid % file_path(sp));
+        % nid % fp);
       return true;
     }
   else
@@ -311,7 +312,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
       {
         // printing this slows down "log <file>".
         L(FL("(debug) default exclude of nid %d path '%s'") 
-          % nid % file_path(sp));
+          % nid % fp);
       }
       return false;
     }
@@ -403,29 +404,29 @@ using std::string;
 // x's and y's are directories
 // and this is rather painful
 
-split_path sp_root;
-split_path sp_f;
-split_path sp_g;
+file_path fp_root = file_path_internal("");
+file_path fp_f = file_path_internal("f");
+file_path fp_g = file_path_internal("g");
 
-split_path sp_x;
-split_path sp_xf;
-split_path sp_xg;
-split_path sp_xx;
-split_path sp_xxf;
-split_path sp_xxg;
-split_path sp_xy;
-split_path sp_xyf;
-split_path sp_xyg;
+file_path fp_x = file_path_internal("x");
+file_path fp_xf = file_path_internal("x/f");
+file_path fp_xg = file_path_internal("x/g");
+file_path fp_xx = file_path_internal("x/x");
+file_path fp_xxf = file_path_internal("x/x/f");
+file_path fp_xxg = file_path_internal("x/x/g");
+file_path fp_xy = file_path_internal("x/y");
+file_path fp_xyf = file_path_internal("x/y/f");
+file_path fp_xyg = file_path_internal("x/y/g");
 
-split_path sp_y;
-split_path sp_yf;
-split_path sp_yg;
-split_path sp_yx;
-split_path sp_yxf;
-split_path sp_yxg;
-split_path sp_yy;
-split_path sp_yyf;
-split_path sp_yyg;
+file_path fp_y = file_path_internal("y");
+file_path fp_yf = file_path_internal("y/f");
+file_path fp_yg = file_path_internal("y/g");
+file_path fp_yx = file_path_internal("y/x");
+file_path fp_yxf = file_path_internal("y/x/f");
+file_path fp_yxg = file_path_internal("y/x/g");
+file_path fp_yy = file_path_internal("y/y");
+file_path fp_yyf = file_path_internal("y/y/f");
+file_path fp_yyg = file_path_internal("y/y/g");
 
 node_id nid_root;
 node_id nid_f;
@@ -472,30 +473,6 @@ static void setup(roster_t & roster)
 {
   temp_node_id_source nis;
 
-  file_path_internal("").split(sp_root);
-  file_path_internal("f").split(sp_f);
-  file_path_internal("g").split(sp_g);
-
-  file_path_internal("x").split(sp_x);
-  file_path_internal("x/f").split(sp_xf);
-  file_path_internal("x/g").split(sp_xg);
-  file_path_internal("x/x").split(sp_xx);
-  file_path_internal("x/x/f").split(sp_xxf);
-  file_path_internal("x/x/g").split(sp_xxg);
-  file_path_internal("x/y").split(sp_xy);
-  file_path_internal("x/y/f").split(sp_xyf);
-  file_path_internal("x/y/g").split(sp_xyg);
-
-  file_path_internal("y").split(sp_y);
-  file_path_internal("y/f").split(sp_yf);
-  file_path_internal("y/g").split(sp_yg);
-  file_path_internal("y/x").split(sp_yx);
-  file_path_internal("y/x/f").split(sp_yxf);
-  file_path_internal("y/x/g").split(sp_yxg);
-  file_path_internal("y/y").split(sp_yy);
-  file_path_internal("y/y/f").split(sp_yyf);
-  file_path_internal("y/y/g").split(sp_yyg);
-
   // these directories must exist for the path_restrictions to be valid.  it
   // is a bit lame to be creating directories arbitrarily like this. perhaps
   // unit_tests should run in a unit_tests.dir or something.
@@ -529,29 +506,29 @@ static void setup(roster_t & roster)
   nid_yyf = roster.create_file_node(fid_yxf, nis);
   nid_yyg = roster.create_file_node(fid_yxg, nis);
 
-  roster.attach_node(nid_root, sp_root);
-  roster.attach_node(nid_f, sp_f);
-  roster.attach_node(nid_g, sp_g);
+  roster.attach_node(nid_root, fp_root);
+  roster.attach_node(nid_f, fp_f);
+  roster.attach_node(nid_g, fp_g);
 
-  roster.attach_node(nid_x,   sp_x);
-  roster.attach_node(nid_xf,  sp_xf);
-  roster.attach_node(nid_xg,  sp_xg);
-  roster.attach_node(nid_xx,  sp_xx);
-  roster.attach_node(nid_xxf, sp_xxf);
-  roster.attach_node(nid_xxg, sp_xxg);
-  roster.attach_node(nid_xy,  sp_xy);
-  roster.attach_node(nid_xyf, sp_xyf);
-  roster.attach_node(nid_xyg, sp_xyg);
+  roster.attach_node(nid_x,   fp_x);
+  roster.attach_node(nid_xf,  fp_xf);
+  roster.attach_node(nid_xg,  fp_xg);
+  roster.attach_node(nid_xx,  fp_xx);
+  roster.attach_node(nid_xxf, fp_xxf);
+  roster.attach_node(nid_xxg, fp_xxg);
+  roster.attach_node(nid_xy,  fp_xy);
+  roster.attach_node(nid_xyf, fp_xyf);
+  roster.attach_node(nid_xyg, fp_xyg);
 
-  roster.attach_node(nid_y,   sp_y);
-  roster.attach_node(nid_yf,  sp_yf);
-  roster.attach_node(nid_yg,  sp_yg);
-  roster.attach_node(nid_yx,  sp_yx);
-  roster.attach_node(nid_yxf, sp_yxf);
-  roster.attach_node(nid_yxg, sp_yxg);
-  roster.attach_node(nid_yy,  sp_yy);
-  roster.attach_node(nid_yyf, sp_yyf);
-  roster.attach_node(nid_yyg, sp_yyg);
+  roster.attach_node(nid_y,   fp_y);
+  roster.attach_node(nid_yf,  fp_yf);
+  roster.attach_node(nid_yg,  fp_yg);
+  roster.attach_node(nid_yx,  fp_yx);
+  roster.attach_node(nid_yxf, fp_yxf);
+  roster.attach_node(nid_yxg, fp_yxg);
+  roster.attach_node(nid_yy,  fp_yy);
+  roster.attach_node(nid_yyf, fp_yyf);
+  roster.attach_node(nid_yyg, fp_yyg);
 
 }
 
@@ -596,29 +573,29 @@ UNIT_TEST(restrictions, empty_restriction)
 
   UNIT_TEST_CHECK(pmask.empty());
 
-  UNIT_TEST_CHECK(pmask.includes(sp_root));
-  UNIT_TEST_CHECK(pmask.includes(sp_f));
-  UNIT_TEST_CHECK(pmask.includes(sp_g));
+  UNIT_TEST_CHECK(pmask.includes(fp_root));
+  UNIT_TEST_CHECK(pmask.includes(fp_f));
+  UNIT_TEST_CHECK(pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK(pmask.includes(sp_x));
-  UNIT_TEST_CHECK(pmask.includes(sp_xf));
-  UNIT_TEST_CHECK(pmask.includes(sp_xg));
-  UNIT_TEST_CHECK(pmask.includes(sp_xx));
-  UNIT_TEST_CHECK(pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK(pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK(pmask.includes(sp_xy));
-  UNIT_TEST_CHECK(pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK(pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(pmask.includes(fp_x));
+  UNIT_TEST_CHECK(pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK(pmask.includes(sp_y));
-  UNIT_TEST_CHECK(pmask.includes(sp_yf));
-  UNIT_TEST_CHECK(pmask.includes(sp_yg));
-  UNIT_TEST_CHECK(pmask.includes(sp_yx));
-  UNIT_TEST_CHECK(pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK(pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK(pmask.includes(sp_yy));
-  UNIT_TEST_CHECK(pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK(pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(pmask.includes(fp_y));
+  UNIT_TEST_CHECK(pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, simple_include)
@@ -668,29 +645,29 @@ UNIT_TEST(restrictions, simple_include)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_root));
-  UNIT_TEST_CHECK(!pmask.includes(sp_f));
-  UNIT_TEST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_x));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xx));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_y));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yy));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, simple_exclude)
@@ -740,29 +717,29 @@ UNIT_TEST(restrictions, simple_exclude)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK( pmask.includes(sp_root));
-  UNIT_TEST_CHECK( pmask.includes(sp_f));
-  UNIT_TEST_CHECK( pmask.includes(sp_g));
+  UNIT_TEST_CHECK( pmask.includes(fp_root));
+  UNIT_TEST_CHECK( pmask.includes(fp_f));
+  UNIT_TEST_CHECK( pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_x));
-  UNIT_TEST_CHECK( pmask.includes(sp_xf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xy));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_y));
-  UNIT_TEST_CHECK( pmask.includes(sp_yf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yx));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_exclude)
@@ -814,29 +791,29 @@ UNIT_TEST(restrictions, include_exclude)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_root));
-  UNIT_TEST_CHECK(!pmask.includes(sp_f));
-  UNIT_TEST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_x));
-  UNIT_TEST_CHECK( pmask.includes(sp_xf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xy));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_y));
-  UNIT_TEST_CHECK( pmask.includes(sp_yf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yx));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, exclude_include)
@@ -891,29 +868,29 @@ UNIT_TEST(restrictions, exclude_include)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_root));
-  UNIT_TEST_CHECK(!pmask.includes(sp_f));
-  UNIT_TEST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_x));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xx));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_y));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yy));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, invalid_roster_paths)
@@ -995,29 +972,29 @@ UNIT_TEST(restrictions, include_depth_0)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_root));
-  UNIT_TEST_CHECK(!pmask.includes(sp_f));
-  UNIT_TEST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_x));
-  UNIT_TEST_CHECK( pmask.includes(sp_xf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_y));
-  UNIT_TEST_CHECK( pmask.includes(sp_yf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_depth_0_empty_restriction)
@@ -1069,29 +1046,29 @@ UNIT_TEST(restrictions, include_depth_0_empty_restriction)
 
   UNIT_TEST_CHECK( pmask.empty());
 
-  UNIT_TEST_CHECK( pmask.includes(sp_root));
-  UNIT_TEST_CHECK( pmask.includes(sp_f));
-  UNIT_TEST_CHECK( pmask.includes(sp_g));
+  UNIT_TEST_CHECK( pmask.includes(fp_root));
+  UNIT_TEST_CHECK( pmask.includes(fp_f));
+  UNIT_TEST_CHECK( pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_x));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_y));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yx));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yy));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_depth_1)
@@ -1145,29 +1122,29 @@ UNIT_TEST(restrictions, include_depth_1)
 
   UNIT_TEST_CHECK(!pmask.empty());
 
-  UNIT_TEST_CHECK(!pmask.includes(sp_root));
-  UNIT_TEST_CHECK(!pmask.includes(sp_f));
-  UNIT_TEST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_x));
-  UNIT_TEST_CHECK( pmask.includes(sp_xf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xx));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_xy));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  UNIT_TEST_CHECK( pmask.includes(sp_y));
-  UNIT_TEST_CHECK( pmask.includes(sp_yf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yx));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yxg));
-  UNIT_TEST_CHECK( pmask.includes(sp_yy));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyf));
-  UNIT_TEST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 #endif // BUILD_UNIT_TESTS

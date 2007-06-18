@@ -179,16 +179,16 @@ public:
   roster_t(roster_t const & other);
   roster_t & operator=(roster_t const & other);
   bool has_root() const;
-  bool has_node(split_path const & sp) const;
+  bool has_node(file_path const & sp) const;
   bool has_node(node_id nid) const;
   bool is_root(node_id nid) const;
-  node_t get_node(split_path const & sp) const;
+  node_t get_node(file_path const & sp) const;
   node_t get_node(node_id nid) const;
-  void get_name(node_id nid, split_path & sp) const;
+  void get_name(node_id nid, file_path & sp) const;
   void replace_node_id(node_id from, node_id to);
 
   // editable_tree operations
-  node_id detach_node(split_path const & src);
+  node_id detach_node(file_path const & src);
   void drop_detached_node(node_id nid);
   node_id create_dir_node(node_id_source & nis);
   void create_dir_node(node_id nid);
@@ -197,17 +197,17 @@ public:
   void create_file_node(file_id const & content,
                         node_id nid);
   void insert_node(node_t n);
-  void attach_node(node_id nid, split_path const & dst);
+  void attach_node(node_id nid, file_path const & dst);
   void attach_node(node_id nid, node_id parent, path_component name);
-  void apply_delta(split_path const & pth,
+  void apply_delta(file_path const & pth,
                    file_id const & old_id,
                    file_id const & new_id);
-  void clear_attr(split_path const & pth,
+  void clear_attr(file_path const & pth,
                   attr_key const & name);
-  void set_attr(split_path const & pth,
+  void set_attr(file_path const & pth,
                 attr_key const & name,
                 attr_value const & val);
-  void set_attr(split_path const & pth,
+  void set_attr(file_path const & pth,
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
@@ -223,7 +223,7 @@ public:
 
   // misc.
 
-  bool get_attr(split_path const & pth,
+  bool get_attr(file_path const & pth,
                 attr_key const & key,
                 attr_value & val) const;
 

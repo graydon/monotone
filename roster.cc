@@ -580,8 +580,10 @@ equal_shapes(roster_t const & a, roster_t const & b)
 
 
 node_t
-roster_t::get_node(split_path const & sp) const
+roster_t::get_node(file_path const & p) const
 {
+  split_path sp;
+  p.split(sp);
   split_path dirname;
   path_component basename;
   dirname_basename(sp, dirname, basename);
@@ -616,8 +618,10 @@ roster_t::is_root(node_id n) const
 }
 
 bool
-roster_t::has_node(split_path const & sp) const
+roster_t::has_node(file_path const & p) const
 {
+  split_path sp;
+  p.split(sp);
   split_path dirname;
   path_component basename;
   dirname_basename(sp, dirname, basename);
@@ -655,10 +659,10 @@ roster_t::get_node(node_id nid) const
 
 
 void
-roster_t::get_name(node_id nid, split_path & sp) const
+roster_t::get_name(node_id nid, file_path & p) const
 {
+  split_path sp;
   I(!null_node(nid));
-  sp.clear();
   while (!null_node(nid))
     {
       node_t n = get_node(nid);
@@ -666,6 +670,7 @@ roster_t::get_name(node_id nid, split_path & sp) const
       nid = n->parent;
     }
   reverse(sp.begin(), sp.end());
+  p = file_path(sp);
 }
 
 
@@ -694,11 +699,13 @@ roster_t::replace_node_id(node_id from, node_id to)
 // this records the old location into the old_locations member, to prevent the
 // same node from being re-attached at the same place.
 node_id
-roster_t::detach_node(split_path const & pth)
+roster_t::detach_node(file_path const & p)
 {
+  split_path sp;
+  p.split(sp);
   split_path dirname;
   path_component basename;
-  dirname_basename(pth, dirname, basename);
+  dirname_basename(sp, dirname, basename);
 
   I(has_root());
   if (dirname.empty())
@@ -804,13 +811,15 @@ roster_t::create_file_node(file_id const & content, node_id nid)
 }
 
 void
-roster_t::attach_node(node_id nid, split_path const & dst)
+roster_t::attach_node(node_id nid, file_path const & p)
 {
+  split_path sp;
+  p.split(sp);
   split_path dirname;
   path_component basename;
-  dirname_basename(dst, dirname, basename);
+  dirname_basename(sp, dirname, basename);
 
-  MM(dst);
+  MM(sp);
 
   if (dirname.empty())
     // attaching the root node
@@ -856,7 +865,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
 }
 
 void
-roster_t::apply_delta(split_path const & pth,
+roster_t::apply_delta(file_path const & pth,
                       file_id const & old_id,
                       file_id const & new_id)
 {
@@ -877,7 +886,7 @@ roster_t::set_content(node_id nid, file_id const & new_id)
 
 
 void
-roster_t::clear_attr(split_path const & pth,
+roster_t::clear_attr(file_path const & pth,
                      attr_key const & name)
 {
   set_attr(pth, name, make_pair(false, attr_value()));
@@ -892,7 +901,7 @@ roster_t::erase_attr(node_id nid,
 }
 
 void
-roster_t::set_attr(split_path const & pth,
+roster_t::set_attr(file_path const & pth,
                    attr_key const & name,
                    attr_value const & val)
 {
@@ -901,7 +910,7 @@ roster_t::set_attr(split_path const & pth,
 
 
 void
-roster_t::set_attr(split_path const & pth,
+roster_t::set_attr(file_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
@@ -931,7 +940,7 @@ roster_t::set_attr_unknown_to_dead_ok(node_id nid,
 }
 
 bool
-roster_t::get_attr(split_path const & pth,
+roster_t::get_attr(file_path const & pth,
                    attr_key const & name,
                    attr_value & val) const
 {
@@ -1075,9 +1084,7 @@ node_id
 editable_roster_base::detach_node(file_path const & src)
 {
   // L(FL("detach_node('%s')") % file_path(src));
-  split_path sp;
-  src.split(sp);
-  return r.detach_node(sp);
+  return r.detach_node(src);
 }
 
 void
@@ -1111,9 +1118,7 @@ editable_roster_base::attach_node(node_id nid, file_path const & dst)
   // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
   MM(dst);
   MM(this->r);
-  split_path sd;
-  dst.split(sd);
-  r.attach_node(nid, sd);
+  r.attach_node(nid, dst);
 }
 
 void
@@ -1122,9 +1127,7 @@ editable_roster_base::apply_delta(file_path const & pth,
                                   file_id const & new_id)
 {
   // L(FL("apply_delta('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
-  split_path sp;
-  pth.split(sp);
-  r.apply_delta(sp, old_id, new_id);
+  r.apply_delta(pth, old_id, new_id);
 }
 
 void
@@ -1132,9 +1135,7 @@ editable_roster_base::clear_attr(file_path const & pth,
                                  attr_key const & name)
 {
   // L(FL("clear_attr('%s', '%s')") % file_path(pth) % name);
-  split_path sp;
-  pth.split(sp);
-  r.clear_attr(sp, name);
+  r.clear_attr(pth, name);
 }
 
 void
@@ -1143,9 +1144,7 @@ editable_roster_base::set_attr(file_path const & pth,
                                attr_value const & val)
 {
   // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
-  split_path sp;
-  pth.split(sp);
-  r.set_attr(sp, name, val);
+  r.set_attr(pth, name, val);
 }
 
 void
@@ -1208,13 +1207,13 @@ namespace
     for (set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
       {
         node_id const aid = *i;
-        split_path sp;
+        file_path p;
         // SPEEDUP?: climb out only so far as is necessary to find a shared
         // id?  possibly faster (since usually will get a hit immediately),
         // but may not be worth the effort (since it doesn't take that long to
         // get out in any case)
-        a.get_name(aid, sp);
-        node_id bid = b.get_node(sp)->self;
+        a.get_name(aid, p);
+        node_id bid = b.get_node(p)->self;
         if (b_new.find(bid) != b_new.end())
           {
             I(temp_node(bid));
@@ -1237,13 +1236,13 @@ namespace
     for (set<node_id>::const_iterator i = b_new.begin(); i != b_new.end(); i++)
       {
         node_id const bid = *i;
-        split_path sp;
+        file_path p;
         // SPEEDUP?: climb out only so far as is necessary to find a shared
         // id?  possibly faster (since usually will get a hit immediately),
         // but may not be worth the effort (since it doesn't take that long to
         // get out in any case)
-        b.get_name(bid, sp);
-        node_id aid = a.get_node(sp)->self;
+        b.get_name(bid, p);
+        node_id aid = a.get_node(p)->self;
         I(a_new.find(aid) == a_new.end());
         b.replace_node_id(bid, aid);
       }
@@ -1702,9 +1701,7 @@ namespace {
                              file_id const & old_id, file_id const & new_id)
     {
       this->editable_roster_base::apply_delta(pth, old_id, new_id);
-      split_path sp;
-      pth.split(sp);
-      node_id nid = r.get_node(sp)->self;
+      node_id nid = r.get_node(pth)->self;
       marking_map::iterator marking = markings.find(nid);
       I(marking != markings.end());
       marking->second.file_content.clear();
@@ -1735,9 +1732,7 @@ namespace {
 
     void handle_attr(file_path const & pth, attr_key const & name)
     {
-      split_path sp;
-      pth.split(sp);
-      node_id nid = r.get_node(sp)->self;
+      node_id nid = r.get_node(pth)->self;
       marking_map::iterator marking = markings.find(nid);
       map<attr_key, set<revision_id> >::iterator am = marking->second.attrs.find(name);
       if (am == marking->second.attrs.end())
@@ -2000,31 +1995,31 @@ namespace
                           node_id nid, node_t n,
                           cset & cs)
   {
-    split_path sp;
-    from.get_name(nid, sp);
-    safe_insert(cs.nodes_deleted, sp);
+    file_path pth;
+    from.get_name(nid, pth);
+    safe_insert(cs.nodes_deleted, pth);
   }
 
 
   void delta_only_in_to(roster_t const & to, node_id nid, node_t n,
                         cset & cs)
   {
-    split_path sp;
-    to.get_name(nid, sp);
+    file_path pth;
+    to.get_name(nid, pth);
     if (is_file_t(n))
       {
         safe_insert(cs.files_added,
-                    make_pair(sp, downcast_to_file_t(n)->content));
+                    make_pair(pth, downcast_to_file_t(n)->content));
       }
     else
       {
-        safe_insert(cs.dirs_added, sp);
+        safe_insert(cs.dirs_added, pth);
       }
     for (full_attr_map_t::const_iterator i = n->attrs.begin();
          i != n->attrs.end(); ++i)
       if (i->second.first)
         safe_insert(cs.attrs_set,
-                    make_pair(make_pair(sp, i->first), i->second.second));
+                    make_pair(make_pair(pth, i->first), i->second.second));
   }
 
   void delta_in_both(node_id nid,
@@ -2038,13 +2033,13 @@ namespace
     if (shallow_equal(from_n, to_n, false))
       return;
 
-    split_path from_sp, to_sp;
-    from.get_name(nid, from_sp);
-    to.get_name(nid, to_sp);
+    file_path from_p, to_p;
+    from.get_name(nid, from_p);
+    to.get_name(nid, to_p);
 
     // Compare name and path.
     if (from_n->name != to_n->name || from_n->parent != to_n->parent)
-      safe_insert(cs.nodes_renamed, make_pair(from_sp, to_sp));
+      safe_insert(cs.nodes_renamed, make_pair(from_p, to_p));
 
     // Compare file content.
     if (is_file_t(from_n))
@@ -2054,7 +2049,7 @@ namespace
         if (!(from_f->content == to_f->content))
           {
             safe_insert(cs.deltas_applied,
-                        make_pair(to_sp, make_pair(from_f->content,
+                        make_pair(to_p, make_pair(from_f->content,
                                                    to_f->content)));
           }
       }
@@ -2070,14 +2065,14 @@ namespace
               && i.left_data().first)
             {
               safe_insert(cs.attrs_cleared,
-                          make_pair(to_sp, i.left_key()));
+                          make_pair(to_p, i.left_key()));
             }
           else if ((i.state() == parallel::in_right
                     || (i.state() == parallel::in_both && !i.left_data().first))
                    && i.right_data().first)
             {
               safe_insert(cs.attrs_set,
-                          make_pair(make_pair(to_sp, i.right_key()),
+                          make_pair(make_pair(to_p, i.right_key()),
                                     i.right_data().second));
             }
           else if (i.state() == parallel::in_both
@@ -2086,7 +2081,7 @@ namespace
                    && i.right_data().second != i.left_data().second)
             {
               safe_insert(cs.attrs_set,
-                          make_pair(make_pair(to_sp, i.right_key()),
+                          make_pair(make_pair(to_p, i.right_key()),
                                     i.right_data().second));
             }
         }
@@ -2137,11 +2132,11 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
   for (node_map::const_iterator i = a.all_nodes().begin();
        i != a.all_nodes().end(); ++i)
     {
-      split_path sp;
-      a.get_name(i->first, sp);
-      if (!b.has_node(sp))
+      file_path p;
+      a.get_name(i->first, p);
+      if (!b.has_node(p))
         return false;
-      node_t b_n = b.get_node(sp);
+      node_t b_n = b.get_node(p);
       // we already know names are the same
       if (!same_type(i->second, b_n))
         return false;
@@ -2236,7 +2231,7 @@ class editable_roster_for_check
 
  private:
   temp_node_id_source nis;
-  map<node_id, pair<split_path, vector<path_component> > > detached_dirs;
+  map<node_id, pair<file_path, vector<path_component> > > detached_dirs;
 };
 
 editable_roster_for_check::editable_roster_for_check(roster_t & r)
@@ -2264,9 +2259,7 @@ editable_roster_for_check::editable_roster_for_check(roster_t & r)
 node_id
 editable_roster_for_check::detach_node(file_path const & src)
 {
-  split_path sp;
-  src.split(sp);
-  node_t n = r.get_node(sp);
+  node_t n = r.get_node(src);
   if (is_dir_t(n))
     {
       dir_t dir = downcast_to_dir_t(n);
@@ -2277,7 +2270,7 @@ editable_roster_for_check::detach_node(file_path const & src)
           children.push_back(i->first);
         }
       detached_dirs.insert(make_pair(dir->self, 
-                                     make_pair(sp, children)));
+                                     make_pair(src, children)));
     }
 
   return this->editable_roster_base::detach_node(src);
@@ -2289,18 +2282,17 @@ editable_roster_for_check::drop_detached_node(node_id nid)
   node_t n = r.get_node(nid);
   if (is_dir_t(n) && !downcast_to_dir_t(n)->children.empty())
     {
-      map<node_id, pair<split_path, vector<path_component> > >::const_iterator 
+      map<node_id, pair<file_path, vector<path_component> > >::const_iterator 
         i = detached_dirs.find(nid);
       I(i != detached_dirs.end());
 
-      split_path dir = i->second.first;
+      file_path dir = i->second.first;
       for (vector<path_component>::const_iterator 
              p = i->second.second.begin(); p != i->second.second.end(); ++p)
         {
-          split_path child(dir);
-          child.push_back(*p);
-          W(F("restriction includes deletion of '%s' but excludes deletion of '%s'")
-            % dir % child);
+          W(F("restriction includes deletion of '%s' "
+              "but excludes deletion of '%s'")
+            % dir % (dir / (*p)()));
           problems++;
         }
     }
@@ -2403,19 +2395,15 @@ select_nodes_modified_by_cset(cset const & cs,
   for (set<file_path>::const_iterator i = modified_prestate_nodes.begin();
        i != modified_prestate_nodes.end(); ++i)
     {
-      split_path s;
-      i->split(s);
-      I(old_roster.has_node(s));
-      nodes_modified.insert(old_roster.get_node(s)->self);
+      I(old_roster.has_node(*i));
+      nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
   for (set<file_path>::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
-      split_path s;
-      i->split(s);
-      I(new_roster.has_node(s));
-      nodes_modified.insert(new_roster.get_node(s)->self);
+      I(new_roster.has_node(*i));
+      nodes_modified.insert(new_roster.get_node(*i)->self);
     }
 
 }
@@ -2445,10 +2433,10 @@ get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
       node_t node = roster.get_node(i->first);
       if (is_file_t(node))
         {
-          split_path sp;
-          roster.get_name(i->first, sp);
+          file_path p;
+          roster.get_name(i->first, p);
           file_t file = downcast_to_file_t(node);
-          paths.insert(make_pair(file->content, file_path(sp)));
+          paths.insert(make_pair(file->content, p));
         }
     }
 }
@@ -2549,23 +2537,15 @@ roster_t::print_to(basic_io::printer & pr,
       basic_io::stanza st;
 
       {
-        //split_path pth;
-        //get_name(curr->self, pth);
-        //file_path fp = file_path(pth);
-
         if (is_dir_t(curr))
           {
-            // L(FL("printing dir %s") % fp);
-            //st.push_file_pair(basic_io::syms::dir, fp);
             st.push_str_pair(basic_io::syms::dir, i.path());
           }
         else
           {
             file_t ftmp = downcast_to_file_t(curr);
-            //st.push_file_pair(basic_io::syms::file, fp);
             st.push_str_pair(basic_io::syms::file, i.path());
             st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
-            // L(FL("printing file %s") % fp);
           }
       }
 
@@ -2688,9 +2668,7 @@ roster_t::parse_from(basic_io::parser & pa,
       else
         {
           I(!pth.empty());
-          split_path sp;
-          internal_string_to_split_path(pth, sp);
-          attach_node(n->self, sp);
+          attach_node(n->self, file_path_internal(pth));
         }
 
       // Non-dormant attrs
@@ -2836,21 +2814,19 @@ do_testing_on_one_roster(roster_t const & r)
   int n; MM(n);
   n = r.all_nodes().size();
   int dfs_counted = 0; MM(dfs_counted);
-  split_path root_name;
-  file_path().split(root_name);
-  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(file_path())));
+       !i.finished(); ++i)
     ++dfs_counted;
   I(n == dfs_counted);
 
   // Test dfs_iter's path calculations.
-  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name)), true);
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(file_path())), true);
        !i.finished(); ++i)
     {
       file_path from_iter = file_path_internal(i.path());
-      split_path sp;
+      file_path from_getname;
       node_t curr = *i;
-      r.get_name(curr->self, sp);
-      file_path from_getname(sp);
+      r.get_name(curr->self, from_getname);
       I(from_iter == from_getname);
     }
 
@@ -3079,7 +3055,9 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
     {
       node_t n = random_element(r.all_nodes(), rng)->second;
       split_path pth;
-      r.get_name(n->self, pth);
+      file_path fp;
+      r.get_name(n->self, fp);
+      fp.split(pth);
       // L(FL("considering acting on '%s'") % file_path(pth));
 
       switch (rng.uniform(7))
@@ -3122,8 +3100,10 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
         case 4:
           {
             node_t n2 = random_element(r.all_nodes(), rng)->second;
+            file_path fp2;
             split_path pth2;
-            r.get_name(n2->self, pth2);
+            r.get_name(n2->self, fp2);
+            fp2.split(pth2);
 
             if (n == n2)
               continue;
@@ -4886,9 +4866,10 @@ create_random_unification_task(roster_t & left,
         }
 
       split_path pth;
-      left.get_name(left_n->self, pth);
-
-      I(right.has_node(pth));
+      file_path fp;
+      left.get_name(left_n->self, fp);
+      I(right.has_node(fp));
+      fp.split(pth);
 
       if (is_file_t(left_n) || (pth.size() > 1 && rng.flip()))
         // Add a sibling of an existing entry.

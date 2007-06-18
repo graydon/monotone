@@ -218,12 +218,11 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       if (old_roster.is_root(nid))
         continue;
 
-      split_path sp;
-      old_roster.get_name(nid, sp);
-      file_path fp(sp);
-
       if (!mask.includes(old_roster, nid))
         continue;
+
+      file_path fp;
+      old_roster.get_name(nid, fp);
 
       if (is_file_t(node))
         {
@@ -632,11 +631,9 @@ CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   // Clear all attrs (or a specific attr).
   if (args.size() == 1)
@@ -681,11 +678,9 @@ CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   if (args.size() == 1)
     {
@@ -733,11 +728,9 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   attr_key a_key = attr_key(idx(args, 1)());
   attr_value a_value = attr_value(idx(args, 2)());
@@ -784,8 +777,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
   app.require_workspace();
 
   // retrieve the path
-  split_path path;
-  file_path_external(idx(args,0)).split(path);
+  file_path path = file_path_external(idx(args,0));
 
   roster_t base, current;
   parent_map parents;
@@ -906,11 +898,9 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   attr_key a_key = attr_key(idx(args,1)());
   attr_value a_value = attr_value(idx(args,2)());
@@ -952,11 +942,9 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   // Clear all attrs (or a specific attr).
   if (args.size() == 1)

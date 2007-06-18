@@ -296,10 +296,6 @@ go_to_workspace(system_path const & new_workspace);
 
 void mark_std_paths_used(void);
 
-// equivalent to file_path_internal(path).split(sp) but more efficient.
-void
-internal_string_to_split_path(std::string const & path, split_path & sp);
-
 // Local Variables:
 // mode: C++
 // fill-column: 76

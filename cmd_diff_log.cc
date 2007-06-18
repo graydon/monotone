@@ -820,9 +820,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                       print_this = true;
                       if (app.opts.diffs)
                         {
-                          split_path sp;
-                          roster.get_name(*n, sp);
-                          diff_paths.insert(file_path(sp));
+                          file_path fp;
+                          roster.get_name(*n, fp);
+                          diff_paths.insert(fp);
                         }
                     }
                 }

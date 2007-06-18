@@ -721,22 +721,19 @@ CMD_AUTOMATE(inventory, "",
        i != inventory.end(); ++i)
     {
       string path_suffix;
-      split_path sp;
-
-      i->first.split(sp);
 
       // ensure that directory nodes always get a trailing slash even
       // if they're missing from the workspace or have been deleted
       // but skip the root node which do not get this trailing slash appended
-      if (curr.has_node(sp))
+      if (curr.has_node(i->first))
         {
-          node_t n = curr.get_node(sp);
+          node_t n = curr.get_node(i->first);
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
         }
-      else if (base.has_node(sp))
+      else if (base.has_node(i->first))
         {
-          node_t n = base.get_node(sp);
+          node_t n = base.get_node(i->first);
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
         }
@@ -1513,8 +1510,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
     F("no revision %s found in database") % ident);
   app.db.get_roster(ident, new_roster, mm);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1580,8 +1576,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
     F("no revision %s found in database") % old_ident);
   app.db.get_roster(old_ident, old_roster);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1589,11 +1584,10 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   basic_io::printer prt;
   if (old_roster.has_node(node->self))
     {
-      split_path old_path;
+      file_path old_path;
       basic_io::stanza st;
       old_roster.get_name(node->self, old_path);
-      file_path fp = file_path(old_path);
-      st.push_file_pair(basic_io::syms::file, fp);  
+      st.push_file_pair(basic_io::syms::file, old_path);
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());
