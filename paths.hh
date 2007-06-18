@@ -151,7 +151,7 @@ class file_path : public any_path
 public:
   file_path() {}
   // join a file_path out of pieces
-  file_path(split_path const & sp);
+  explicit file_path(split_path const & sp);
 
   // this currently doesn't do any normalization or anything.
   file_path operator /(std::string const & to_append) const;

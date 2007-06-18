@@ -1391,7 +1391,7 @@ cluster_consumer::add_missing_parents(split_path const & sp, cset & cs)
       if (created_dirs.find(tmp) == created_dirs.end())
         {
           safe_insert(created_dirs, tmp);
-          safe_insert(cs.dirs_added, tmp);
+          safe_insert(cs.dirs_added, file_path(tmp));
         }
       tmp.pop_back();
     }
@@ -1435,7 +1435,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           if (e != live_files.end())
             {
               L(FL("deleting entry state '%s' on '%s'") % fid % pth);
-              safe_insert(cs.nodes_deleted, sp);
+              safe_insert(cs.nodes_deleted, pth);
               live_files.erase(i->first);
             }
         }

@@ -544,9 +544,9 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
             {
               file_path_external(idx(args,2)).split(sp);
               dirname_basename(sp, dirname, basename);
-              N(right_roster.has_node(dirname),
+              N(right_roster.has_node(file_path(dirname)),
                 F("Path %s not found in destination tree.") % sp);
-              node_t parent = right_roster.get_node(dirname);
+              node_t parent = right_roster.get_node(file_path(dirname));
               moved_root->parent = parent->self;
               moved_root->name = basename;
               marking_map::iterator 

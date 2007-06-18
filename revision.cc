@@ -1211,42 +1211,40 @@ insert_into_roster(roster_t & child_roster,
                    file_path const & pth,
                    file_id const & fid)
 {
-  split_path sp, dirname;
-  path_component basename;
-  pth.split(sp);
-
-  E(!child_roster.has_node(sp),
-    F("Path %s added to child roster multiple times") % pth);
-
-  dirname_basename(sp, dirname, basename);
+  if (child_roster.has_node(pth))
+    {
+      node_t n = child_roster.get_node(pth);
+      E(is_file_t(n),
+        F("Path %s cannot be added, as there is a directory in the way") % pth);
+      file_t f = downcast_to_file_t(n);
+      E(f->content == fid,
+        F("Path %s added twice with differing content") % pth);
+      return;
+    }
 
   {
+    split_path sp, dirname;
+    path_component basename;
+    pth.split(sp);
+    dirname_basename(sp, dirname, basename);
     split_path tmp_pth;
     for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
          ++i)
       {
         tmp_pth.push_back(*i);
-        if (child_roster.has_node(tmp_pth))
+        if (child_roster.has_node(file_path(tmp_pth)))
           {
-            E(is_dir_t(child_roster.get_node(tmp_pth)),
-              F("Directory for path %s cannot be added, as there is a file in the way") % pth);
+            E(is_dir_t(child_roster.get_node(file_path(tmp_pth))),
+              F("Directory %s for path %s cannot be added, "
+                "as there is a file in the way") % file_path(tmp_pth) % pth);
           }
         else
-          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
+          child_roster.attach_node(child_roster.create_dir_node(nis),
+                                   file_path(tmp_pth));
       }
   }
 
-  if (child_roster.has_node(sp))
-    {
-      node_t n = child_roster.get_node(sp);
-      E(is_file_t(n),
-        F("Path %s cannot be added, as there is a directory in the way") % sp);
-      file_t f = downcast_to_file_t(n);
-      E(f->content == fid,
-        F("Path %s added twice with differing content") % sp);
-    }
-  else
-    child_roster.attach_node(child_roster.create_file_node(fid, nis), sp);
+  child_roster.attach_node(child_roster.create_file_node(fid, nis), pth);
 }
 
 void
@@ -1330,10 +1328,10 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
 
               // See if we can match this node against a child.
               if ((!child_roster.has_node(n))
-                  && child_roster.has_node(sp))
+                  && child_roster.has_node(file_path(sp)))
                 {
                   node_t pn = parent_roster->get_node(n);
-                  node_t cn = child_roster.get_node(sp);
+                  node_t cn = child_roster.get_node(file_path(sp));
                   if (is_file_t(pn) == is_file_t(cn))
                     {
                       child_roster.replace_node_id(cn->self, n);
@@ -1480,11 +1478,8 @@ anc_graph::construct_revisions_from_ancestry()
           temp_node_id_source nis;
 
           // all rosters shall have a root node.
-          {
-            split_path root_pth;
-            file_path().split(root_pth);
-            child_roster.attach_node(child_roster.create_dir_node(nis), root_pth);
-          }
+          child_roster.attach_node(child_roster.create_dir_node(nis),
+                                   file_path_internal(""));
 
           for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
@@ -1512,9 +1507,7 @@ anc_graph::construct_revisions_from_ancestry()
                 for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
-                    split_path sp;
-                    j->first.split(sp);
-                    if (child_roster.has_node(sp))
+                    if (child_roster.has_node(j->first))
                       {
                         map<string, string> const &
                           fattrs = j->second;
@@ -1528,7 +1521,7 @@ anc_graph::construct_revisions_from_ancestry()
                                 // ignore it
                               }
                             else if (key == "execute" || key == "manual_merge")
-                              child_roster.set_attr(sp,
+                              child_roster.set_attr(j->first,
                                                     attr_key("mtn:" + key),
                                                     attr_value(k->second));
                             else
@@ -1536,7 +1529,7 @@ anc_graph::construct_revisions_from_ancestry()
                                          "please contact %s so we can work out the right way to migrate this\n"
                                          "(if you just want it to go away, see the switch --drop-attr, but\n"
                                          "seriously, if you'd like to keep it, we're happy to figure out how)")
-                                % key % file_path(sp) % PACKAGE_BUGREPORT);
+                                % key % j->first % PACKAGE_BUGREPORT);
                           }
                       }
                   }

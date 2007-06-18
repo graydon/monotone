@@ -485,21 +485,17 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
   r = roster_t();
 
   {
-    split_path sp;
-    file_path().split(sp);
-    r.attach_node(r.create_dir_node(nis), sp);
+    r.attach_node(r.create_dir_node(nis), file_path_internal(""));
   }
   {
-    split_path sp;
-    file_path_internal("foo").split(sp);
-    r.attach_node(r.create_dir_node(nis), sp);
-    r.set_attr(sp, attr_key("attr_dir"), attr_value("value_dir"));
+    file_path fp = file_path_internal("foo");
+    r.attach_node(r.create_dir_node(nis), fp);
+    r.set_attr(fp, attr_key("attr_dir"), attr_value("value_dir"));
   }
   {
-    split_path sp;
-    file_path_internal("foo/bar").split(sp);
-    r.attach_node(r.create_file_node(fid, nis), sp);
-    r.set_attr(sp, attr_key("attr_file"), attr_value("value_file"));
+    file_path fp = file_path_internal("foo/bar");
+    r.attach_node(r.create_file_node(fid, nis), fp);
+    r.set_attr(fp, attr_key("attr_file"), attr_value("value_file"));
   }
 }
 
@@ -772,13 +768,6 @@ UNIT_TEST(cset, basic_csets)
   file_path baz = file_path_internal("baz");
   file_path quux = file_path_internal("quux");
 
-  split_path roots, foos, foo_bars, bazs, quuxs;
-  root.split(roots);
-  foo.split(foos);
-  foo_bar.split(foo_bars);
-  baz.split(bazs);
-  quux.split(quuxs);
-
   // some basic tests that should succeed
   {
     L(FL("TEST: cset add file"));
@@ -786,8 +775,8 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.files_added.insert(make_pair(baz, f2));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK(is_file_t(r.get_node(bazs)));
-    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(bazs))->content == f2);
+    UNIT_TEST_CHECK(is_file_t(r.get_node(baz)));
+    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(baz))->content == f2);
     UNIT_TEST_CHECK(r.all_nodes().size() == 4);
   }
 
@@ -797,7 +786,7 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.dirs_added.insert(quux);
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK(is_dir_t(r.get_node(quuxs)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(quux)));
     UNIT_TEST_CHECK(r.all_nodes().size() == 4);
   }
 
@@ -817,23 +806,22 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo_bar, quux));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK(is_file_t(r.get_node(quuxs)));
-    UNIT_TEST_CHECK(is_dir_t(r.get_node(foos)));
-    UNIT_TEST_CHECK(!r.has_node(foo_bars));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(quux)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo)));
+    UNIT_TEST_CHECK(!r.has_node(foo_bar));
     UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
   {
     L(FL("TEST: cset rename dir"));
-    split_path quux_bar;
-    file_path_internal("quux/bar").split(quux_bar);
+    file_path quux_bar = file_path_internal("quux/bar");
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo, quux));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK(is_dir_t(r.get_node(quuxs)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(quux)));
     UNIT_TEST_CHECK(is_file_t(r.get_node(quux_bar)));
-    UNIT_TEST_CHECK(!r.has_node(foos));
+    UNIT_TEST_CHECK(!r.has_node(foo));
     UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
@@ -843,9 +831,9 @@ UNIT_TEST(cset, basic_csets)
     cset cs; MM(cs);
     cs.deltas_applied.insert(make_pair(foo_bar, make_pair(f1, f2)));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK(is_dir_t(r.get_node(foos)));
-    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_bars)));
-    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(foo_bars))->content == f2);
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_bar)));
+    UNIT_TEST_CHECK(downcast_to_file_t(r.get_node(foo_bar))->content == f2);
     UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
 
@@ -857,10 +845,10 @@ UNIT_TEST(cset, basic_csets)
                                   attr_value("klang")));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
 
-    full_attr_map_t attrs = (r.get_node(foo_bars))->attrs;
+    full_attr_map_t attrs = (r.get_node(foo_bar))->attrs;
     UNIT_TEST_CHECK(attrs[attr_key("ping")] == make_pair(true, attr_value("klang")));
 
-    attrs = (r.get_node(foos))->attrs;
+    attrs = (r.get_node(foo))->attrs;
     UNIT_TEST_CHECK(attrs[attr_key("attr_dir")] == make_pair(true, attr_value("value_dir")));
 
     UNIT_TEST_CHECK(r.all_nodes().size() == 3);
@@ -874,7 +862,7 @@ UNIT_TEST(cset, basic_csets)
                                   attr_value("klang")));
     cs.attrs_cleared.insert(make_pair(foo_bar, attr_key("attr_file")));
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
-    UNIT_TEST_CHECK((r.get_node(foo_bars))->attrs[attr_key("attr_file")]
+    UNIT_TEST_CHECK((r.get_node(foo_bar))->attrs[attr_key("attr_file")]
                 == make_pair(false, attr_value("")));
     UNIT_TEST_CHECK(r.all_nodes().size() == 3);
   }
@@ -894,16 +882,6 @@ UNIT_TEST(cset, basic_csets)
     file_path foo_subsub = file_path_internal("foo/subsub");
     file_path foo_subsub_deep = file_path_internal("foo/subsub/deep");
 
-    split_path quux_bars; quux_bar.split(quux_bars);
-    split_path foo_bars; foo_bar.split(foo_bars);
-    split_path quux_subs; quux_sub.split(quux_subs);
-    split_path foo_subs; foo_sub.split(foo_subs);
-    split_path foo_sub_things; foo_sub_thing.split(foo_sub_things);
-    split_path quux_sub_things; quux_sub_thing.split(quux_sub_things);
-    split_path foo_sub_deeps; foo_sub_deep.split(foo_sub_deeps);
-    split_path foo_subsubs; foo_subsub.split(foo_subsubs);
-    split_path foo_subsub_deeps; foo_subsub_deep.split(foo_subsub_deeps);
-    
     { // build a tree
       cset cs; MM(cs);
       cs.dirs_added.insert(quux);
@@ -925,16 +903,16 @@ UNIT_TEST(cset, basic_csets)
 
     UNIT_TEST_CHECK(r.all_nodes().size() == 8);
     // /foo/bar -> /quux/bar
-    UNIT_TEST_CHECK(is_file_t(r.get_node(quux_bars)));
-    UNIT_TEST_CHECK(!(r.has_node(foo_bars)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(quux_bar)));
+    UNIT_TEST_CHECK(!(r.has_node(foo_bar)));
     // /foo/sub/deep -> /foo/subsub/deep
-    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_subsub_deeps)));
-    UNIT_TEST_CHECK(!(r.has_node(foo_sub_deeps)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_subsub_deep)));
+    UNIT_TEST_CHECK(!(r.has_node(foo_sub_deep)));
     // /quux/sub -> /foo/sub
-    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo_subs)));
-    UNIT_TEST_CHECK(!(r.has_node(quux_subs)));
+    UNIT_TEST_CHECK(is_dir_t(r.get_node(foo_sub)));
+    UNIT_TEST_CHECK(!(r.has_node(quux_sub)));
     // /quux/sub/thing -> /foo/sub/thing
-    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_sub_things)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo_sub_thing)));
   }
 
   {
@@ -945,7 +923,7 @@ UNIT_TEST(cset, basic_csets)
     cs.nodes_deleted.insert(foo);
     UNIT_TEST_CHECK_NOT_THROW(cs.apply_to(tree), logic_error);
     UNIT_TEST_CHECK(r.all_nodes().size() == 2);
-    UNIT_TEST_CHECK(is_file_t(r.get_node(foos)));
+    UNIT_TEST_CHECK(is_file_t(r.get_node(foo)));
   }
 }
 
@@ -1129,7 +1107,6 @@ UNIT_TEST(cset, root_dir)
   file_id f1(string("0000000000000000000000000000000000000001"));
 
   file_path root, baz = file_path_internal("baz");
-  split_path roots; root.split(roots);
 
   {
     L(FL("TEST: can rename root"));
@@ -1145,7 +1122,7 @@ UNIT_TEST(cset, root_dir)
     L(FL("TEST: can delete root (but it makes us insane)"));
     // for this test, make sure root has no contents
     r = roster_t();
-    r.attach_node(r.create_dir_node(nis), roots);
+    r.attach_node(r.create_dir_node(nis), root);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(root);
     cs.apply_to(tree);
@@ -1154,7 +1131,7 @@ UNIT_TEST(cset, root_dir)
   {
     L(FL("TEST: can delete and replace root"));
     r = roster_t();
-    r.attach_node(r.create_dir_node(nis), roots);
+    r.attach_node(r.create_dir_node(nis), root);
     cset cs; MM(cs);
     cs.nodes_deleted.insert(root);
     cs.dirs_added.insert(root);
