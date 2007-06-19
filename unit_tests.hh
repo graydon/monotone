@@ -14,6 +14,11 @@
 #define UNIT_TEST_CHECK(expression)             \
   unit_test::do_check(expression, __FILE__, __LINE__, #expression)
 
+// Like UNIT_TEST_CHECK, but you get to specify what is logged.
+// MSG should be an FL("...") % ... construct.
+#define UNIT_TEST_CHECK_MSG(expression, msg)              \
+  unit_test::do_check(expression, __FILE__, __LINE__, (msg).str().c_str())
+
 // Like UNIT_TEST_CHECK, but abort the test immediately on failure
 #define UNIT_TEST_REQUIRE(expression)           \
   unit_test::do_require(expression, __FILE__, __LINE__, #expression)

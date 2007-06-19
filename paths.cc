@@ -315,22 +315,25 @@ normalize_external_path(string const & path, string & normalized)
 
 file_path::file_path(file_path::source_type type, string const & path)
 {
-  string normalized;
-  MM(path);
-  I(utf8_validate(utf8(path)));
-  switch (type)
+  if (type == prevalidated)
+    data = utf8(path);
+  else
     {
-    case internal:
-      data = utf8(path);
-      break;
-    case external:
-      normalize_external_path(path, normalized);
-      data = utf8(normalized);
-      N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
-      break;
+      MM(path);
+      I(utf8_validate(utf8(path)));
+      if (type == external)
+        {
+          string normalized;
+          normalize_external_path(path, normalized);
+          N(!in_bookkeeping_dir(normalized),
+            F("path '%s' is in bookkeeping dir") % data);
+          data = utf8(normalized);
+        }
+      else
+        data = utf8(path);
+      MM(data);
+      I(is_valid_internal(data()));
     }
-  MM(data);
-  I(is_valid_internal(data()));
 }
 
 bookkeeping_path::bookkeeping_path(string const & path)
@@ -432,38 +435,36 @@ file_path::split(split_path & sp) const
     }
 }
 
-template <>
-void dump(split_path const & sp, string & out)
+// this peels off the last component of any path and returns it.
+// the last component of a path with no slashes in it is the complete path.
+// the last component of a path referring to the root directory is an
+// empty string.
+path_component
+any_path::basename() const
 {
-  ostringstream oss;
-  oss << sp << '\n';
-  out = oss.str();
+  string const & s = data();
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return path_component(s);
+  if (sep == s.size())
+    return the_null_component;
+  return path_component(s.substr(sep + 1));
 }
 
-template <>
-void dump(file_path const & p, string & out)
+// this returns all but the last component of a file_path.  it is only
+// defined on file_paths because (a) that avoids problems at the root,
+// and (b) that's the only version that we use.
+// if there is only one component present, the dirname is the root
+// (i.e. the empty string).
+file_path
+file_path::dirname() const
 {
-  ostringstream oss;
-  oss << p << '\n';
-  out = oss.str();
+  string const & s = data();
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return file_path();
+  return file_path(file_path::prevalidated, s.substr(0, sep));
 }
-
-template <>
-void dump(system_path const & p, string & out)
-{
-  ostringstream oss;
-  oss << p << '\n';
-  out = oss.str();
-}
-
-template <>
-void dump(bookkeeping_path const & p, string & out)
-{
-  ostringstream oss;
-  oss << p << '\n';
-  out = oss.str();
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
@@ -503,6 +504,38 @@ operator <<(ostream & o, split_path const & sp)
 {
   file_path tmp(sp);
   return o << tmp;
+}
+
+template <>
+void dump(split_path const & sp, string & out)
+{
+  ostringstream oss;
+  oss << sp << '\n';
+  out = oss.str();
+}
+
+template <>
+void dump(file_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
+
+template <>
+void dump(system_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
+
+template <>
+void dump(bookkeeping_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1152,6 +1185,122 @@ UNIT_TEST(paths, split_join)
     // code as dead...
     UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
   }
+}
+
+UNIT_TEST(paths, basename)
+{
+  struct t
+  {
+    char const * in;
+    char const * out;
+  };
+  // file_paths cannot be absolute, but may be the empty string.
+  struct t const fp_cases[] = {
+    { "",            ""    },
+    { "foo",         "foo" },
+    { "foo/bar",     "bar" },
+    { "foo/bar/baz", "baz" },
+    { 0, 0 }
+  };
+  // bookkeeping_paths cannot be absolute and must start with the
+  // bookkeeping_root_component.
+  struct t const bp_cases[] = {
+    { "_MTN",         "_MTN" },
+    { "_MTN/foo",     "foo"  },
+    { "_MTN/foo/bar", "bar"  },
+    { 0, 0 }
+  };
+
+  // system_paths must be absolute.  this relies on the setting of
+  // initial_abs_path below.  note that most of the cases whose full paths
+  // vary between Unix and Windows will still have the same basenames.
+  struct t const sp_cases[] = {
+    { "/",          ""      },
+    { "//",         ""      },
+    { "foo",        "foo"   },
+    { "/foo",       "foo"   },
+    { "//foo",      "foo"   },
+    { "~/foo",      "foo"   },
+    { "c:/foo",     "foo"   },
+    { "foo/bar",    "bar"   },
+    { "/foo/bar",   "bar"   },
+    { "//foo/bar",  "bar"   },
+    { "~/foo/bar",  "bar"   },
+    { "c:/foo/bar", "bar"   },
+#ifdef WIN32
+    { "c:/",        ""      },
+    { "c:foo",      "foo"   },
+#else
+    { "c:/",        "c:"    },
+    { "c:foo",      "c:foo" },
+#endif
+    { 0, 0 }
+  };
+
+  UNIT_TEST_CHECKPOINT("file_path basenames");
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      file_path fp = file_path_internal(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+  
+  UNIT_TEST_CHECKPOINT("bookkeeping_path basenames");
+  for (struct t const *p = bp_cases; p->in; p++)
+    {
+      bookkeeping_path fp(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+
+
+  UNIT_TEST_CHECKPOINT("system_path basenames");
+
+  initial_abs_path.unset();
+  initial_abs_path.set(system_path("/a/b"), true);
+  
+  for (struct t const *p = sp_cases; p->in; p++)
+    {
+      system_path fp(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+
+
+  initial_abs_path.unset();
+}
+
+
+UNIT_TEST(paths, dirname)
+{
+  struct t
+  {
+    char const * in;
+    char const * out;
+  };
+  // file_paths cannot be absolute, but may be the empty string.
+  struct t const fp_cases[] = {
+    { "",            ""    },
+    { "foo",         "" },
+    { "foo/bar",     "foo" },
+    { "foo/bar/baz", "foo/bar" },
+    { 0, 0 }
+  };
+
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      file_path fp = file_path_internal(p->in);
+      file_path dn = fp.dirname();
+      UNIT_TEST_CHECK_MSG(dn == file_path_internal(p->out),
+                          FL("dirname('%s') = '%s' (expect '%s')")
+                          % p->in % dn % p->out);
+    }
 }
 
 static void check_bk_normalizes_to(char * before, char * after)

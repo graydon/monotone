@@ -701,27 +701,24 @@ roster_t::replace_node_id(node_id from, node_id to)
 node_id
 roster_t::detach_node(file_path const & p)
 {
-  split_path sp;
-  p.split(sp);
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
+  file_path dirname = p.dirname();
+  path_component basename = p.basename();
 
   I(has_root());
-  if (dirname.empty())
+  if (null_name(basename))
     {
       // detaching the root dir
-      I(null_name(basename));
+      I(dirname.empty());
       node_id root_id = root_dir->self;
-      safe_insert(old_locations,
-                  make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
+      safe_insert(old_locations, make_pair(root_id, make_pair(root_dir->parent,
+                                                              root_dir->name)));
       // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
       I(!has_root());
       return root_id;
     }
 
-  dir_t parent = downcast_to_dir_t(get_node(file_path(dirname)));
+  dir_t parent = downcast_to_dir_t(get_node(dirname));
   node_id nid = parent->detach_child(basename)->self;
   safe_insert(old_locations,
               make_pair(nid, make_pair(parent->self, basename)));
@@ -2305,16 +2302,12 @@ editable_roster_for_check::drop_detached_node(node_id nid)
 void
 editable_roster_for_check::attach_node(node_id nid, file_path const & dst)
 {
-  split_path sd;
-  dst.split(sd);
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sd, dirname, basename);
+  file_path parent = dst.dirname();
 
-  if (!dirname.empty() && !r.has_node(file_path(dirname)))
+  if (!r.has_node(parent) && !dst.empty())
     {
       W(F("restriction excludes addition of '%s' but includes addition of '%s'")
-        % dirname % dst);
+        % parent % dst);
       problems++;
     }
   else

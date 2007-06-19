@@ -132,6 +132,8 @@ public:
   { return data(); }
   bool empty() const
   { return data().empty(); }
+  // returns the trailing component of the path
+  path_component basename() const;
 protected:
   utf8 data;
   any_path() {}
@@ -157,6 +159,7 @@ public:
   file_path operator /(std::string const & to_append) const;
 
   void split(split_path & sp) const;
+  file_path dirname() const;
 
   bool operator ==(const file_path & other) const
   { return data == other.data; }
@@ -192,7 +195,7 @@ public:
   void clear() { data = utf8(); }
 
 private:
-  typedef enum { internal, external } source_type;
+  typedef enum { internal, external, prevalidated } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
   // external paths:
@@ -200,9 +203,13 @@ private:
   //   -- normalized
   //   -- assumed to be relative to the user's cwd, and munged
   //      to become relative to root of the workspace instead
-  // both types of paths:
+  // internal and external paths:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in _MTN/
+  // prevalidated paths:
+  //   -- receive no checking
+  //   -- are only for use by other file_path methods which can
+  //      guarantee that the path is already valid
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);

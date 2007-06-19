@@ -966,19 +966,14 @@ simulated_working_tree::attach_node(node_id nid, file_path const & dst)
     }
   else
     {
-      split_path dsts;
-      dst.split(dsts);
+      file_path parent = dst.dirname();
 
-      split_path dirname;
-      path_component basename;
-      dirname_basename(dsts, dirname, basename);
-
-      if (blocked_paths.find(file_path(dirname)) == blocked_paths.end())
+      if (blocked_paths.find(parent) == blocked_paths.end())
         workspace.attach_node(nid, dst);
       else
         {
           W(F("attach node %d blocked by blocked parent '%s'")
-            % nid % file_path(dirname));
+            % nid % parent);
           blocked_paths.insert(dst);
         }
     }
@@ -1026,13 +1021,8 @@ add_parent_dirs(file_path const & dst, roster_t & ros, node_id_source & nis,
   editable_roster_base er(ros, nis);
   addition_builder build(db, lua, ros, er);
 
-  split_path sp, dirname;
-  path_component basename;
-  dst.split(sp);
-  dirname_basename(sp, dirname, basename);
-
   // FIXME: this is a somewhat odd way to use the builder
-  build.visit_dir(file_path(dirname));
+  build.visit_dir(dst.dirname());
 }
 
 inline static bool
@@ -1478,12 +1468,7 @@ workspace::perform_rename(set<file_path> const & srcs,
           N(new_roster.has_node(*i),
             F("source file %s is not versioned") % *i);
 
-          path_component base;
-          split_path s, dir;
-          i->split(s);
-          dirname_basename(s, dir, base);
-
-          file_path d = dst / base();
+          file_path d = dst / i->basename()();
           N(!new_roster.has_node(d),
             F("destination %s already exists in the workspace manifest") % d);
 
@@ -1563,17 +1548,15 @@ workspace::perform_pivot_root(file_path const & new_root,
 
   {
     file_path current_path_to_put_old = (new_root / put_old.as_internal());
-    split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
-    path_component basename;
-    current_path_to_put_old.split(current_path_to_put_old_sp);
-    dirname_basename(current_path_to_put_old_sp,
-                     current_path_to_put_old_parent_sp, basename);
-    N(new_roster.has_node(file_path(current_path_to_put_old_parent_sp)),
+    file_path current_path_to_put_old_parent
+      = current_path_to_put_old.dirname();
+
+    N(new_roster.has_node(current_path_to_put_old_parent),
       F("directory '%s' is not versioned or does not exist")
-      % file_path(current_path_to_put_old_parent_sp));
-    N(is_dir_t(new_roster.get_node(file_path(current_path_to_put_old_parent_sp))),
+      % current_path_to_put_old_parent);
+    N(is_dir_t(new_roster.get_node(current_path_to_put_old_parent)),
       F("'%s' is not a directory")
-      % file_path(current_path_to_put_old_parent_sp));
+      % current_path_to_put_old_parent);
     N(!new_roster.has_node(current_path_to_put_old),
       F("'%s' is in the way") % current_path_to_put_old);
   }
