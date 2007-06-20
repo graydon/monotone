@@ -578,31 +578,36 @@ equal_shapes(roster_t const & a, roster_t const & b)
   return true;
 }
 
+// this logic is common to get_node and has_node.  the return is NULL if the
+// target node does not exist.
+static node_t
+get_node_worker(roster_t const & r, file_path const & p)
+{
+  if (p.empty())
+    return r.root();
+
+  node_t parent = get_node_worker(r, p.dirname());
+  if (!parent || !is_dir_t(parent))
+    return node_t();
+
+  dir_t pd = downcast_to_dir_t(parent);
+  dir_map::const_iterator child = pd->children.find(p.basename());
+  if (child == pd->children.end())
+    return node_t();
+
+  return child->second;
+}
 
 node_t
 roster_t::get_node(file_path const & p) const
 {
-  split_path sp;
-  p.split(sp);
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
-
-  MM(sp);
   MM(*this);
-
+  MM(p);
   I(has_root());
 
-  if (dirname.empty())
-    {
-      I(null_name(basename));
-      return root_dir;
-    }
-
-  dir_t d = root_dir;
-  for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
-    d = downcast_to_dir_t(d->get_child(*i));
-  return d->get_child(basename);
+  node_t n = get_node_worker(*this, p);
+  I(n);
+  return n;
 }
 
 bool
@@ -620,35 +625,10 @@ roster_t::is_root(node_id n) const
 bool
 roster_t::has_node(file_path const & p) const
 {
-  split_path sp;
-  p.split(sp);
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
-
-  if (dirname.empty())
-    {
-      I(null_name(basename));
-      return has_root();
-    }
-
-  // If we have no root, we *definitely* don't have a non-root path
-  if (!has_root())
-    return false;
-
-  dir_t d = root_dir;
-  for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
-    {
-      if (d->children.find(*i) == d->children.end())
-        return false;
-      node_t child = d->get_child(*i);
-      if (!is_dir_t(child))
-        return false;
-      d = downcast_to_dir_t(child);
-    }
-  return d->children.find(basename) != d->children.end();
+  MM(*this);
+  MM(p);
+  return static_cast<bool>(get_node_worker(*this, p));
 }
-
 
 
 node_t
@@ -810,19 +790,12 @@ roster_t::create_file_node(file_id const & content, node_id nid)
 void
 roster_t::attach_node(node_id nid, file_path const & p)
 {
-  split_path sp;
-  p.split(sp);
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
-
-  MM(sp);
-
-  if (dirname.empty())
+  MM(p);
+  if (p.empty())
     // attaching the root node
-    attach_node(nid, the_null_node, basename);
+    attach_node(nid, the_null_node, the_null_component);
   else
-    attach_node(nid, get_node(file_path(dirname))->self, basename);
+    attach_node(nid, get_node(p.dirname())->self, p.basename());
 }
 
 void
@@ -2410,7 +2383,7 @@ roster_t::extract_path_set(set<file_path> & paths) const
       for (dfs_iter i(root_dir, true); !i.finished(); ++i)
         {
           file_path pth = file_path_internal(i.path());
-          if (!workspace_root(pth))
+          if (!pth.empty())
             paths.insert(pth);
         }
     }

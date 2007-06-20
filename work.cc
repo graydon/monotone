@@ -949,7 +949,7 @@ simulated_working_tree::attach_node(node_id nid, file_path const & dst)
   // represent paths that *may* block the checkout. however to represent
   // these we *must* have a root node in the roster which will *always*
   // block us. so here we check for that case and avoid it.
-  if (workspace_root(dst) && workspace.has_root())
+  if (dst.empty() && workspace.has_root())
     return;
 
   if (workspace.has_node(dst))

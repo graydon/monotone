@@ -1205,6 +1205,27 @@ find_new_path_for(map<split_path, split_path> const & renames,
   return find_old_path_for(reversed, old_path);
 }
 
+// Recursive helper function for insert_into_roster.
+static void
+insert_parents_into_roster(roster_t & child_roster,
+                           temp_node_id_source & nis,
+                           file_path const & pth,
+                           file_path const & full)
+{
+  if (child_roster.has_node(pth))
+    {
+      E(is_dir_t(child_roster.get_node(pth)),
+        F("Directory %s for path %s cannot be added, "
+          "as there is a file in the way") % pth % full);
+      return;
+    }
+
+  if (!pth.empty())
+    insert_parents_into_roster(child_roster, nis, pth.dirname(), full);
+
+  child_roster.attach_node(child_roster.create_dir_node(nis), pth);
+}
+
 static void
 insert_into_roster(roster_t & child_roster,
                    temp_node_id_source & nis,
@@ -1222,28 +1243,7 @@ insert_into_roster(roster_t & child_roster,
       return;
     }
 
-  {
-    split_path sp, dirname;
-    path_component basename;
-    pth.split(sp);
-    dirname_basename(sp, dirname, basename);
-    split_path tmp_pth;
-    for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
-         ++i)
-      {
-        tmp_pth.push_back(*i);
-        if (child_roster.has_node(file_path(tmp_pth)))
-          {
-            E(is_dir_t(child_roster.get_node(file_path(tmp_pth))),
-              F("Directory %s for path %s cannot be added, "
-                "as there is a file in the way") % file_path(tmp_pth) % pth);
-          }
-        else
-          child_roster.attach_node(child_roster.create_dir_node(nis),
-                                   file_path(tmp_pth));
-      }
-  }
-
+  insert_parents_into_roster(child_roster, nis, pth.dirname(), pth);
   child_roster.attach_node(child_roster.create_file_node(fid, nis), pth);
 }
 

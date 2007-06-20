@@ -279,15 +279,7 @@ template <> void dump(file_path const & sp, std::string & out);
 template <> void dump(bookkeeping_path const & sp, std::string & out);
 template <> void dump(system_path const & sp, std::string & out);
 
-// utilities
-
-bool
-workspace_root(file_path const & path);
-
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename);
-
+// record the initial path.  must be called before any use of system_path.
 void
 save_initial_path();
 

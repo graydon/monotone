@@ -118,7 +118,7 @@ validate_workspace_paths(set<file_path> const & included_paths,
   for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
     {
-      if (workspace_root(*i)) 
+      if (i->empty()) 
         continue;
 
       // ignored paths are allowed into the restriction but are not
@@ -134,7 +134,7 @@ validate_workspace_paths(set<file_path> const & included_paths,
   for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
     {
-      if (workspace_root(*i)) 
+      if (i->empty()) 
         continue;
 
       if (!path_exists(*i))

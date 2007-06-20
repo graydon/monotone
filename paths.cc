@@ -651,32 +651,6 @@ system_path::system_path(utf8 const & path)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-// utility
-///////////////////////////////////////////////////////////////////////////
-
-bool
-workspace_root(file_path const & path)
-{
-  return path.empty();
-}
-
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename)
-{
-  I(!sp.empty());
-  // L(FL("dirname_basename('%s' [%d components],...)") % file_path(sp) % sp.size());
-  dirname = sp;
-  dirname.pop_back();
-  basename = sp.back();
-  if (dirname.empty())
-    {
-      // L(FL("basename %d vs. null component %d") % basename % the_null_component);
-      I(null_name(basename));
-    }
-}
-
-///////////////////////////////////////////////////////////////////////////
 // workspace (and path root) handling
 ///////////////////////////////////////////////////////////////////////////
 

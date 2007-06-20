@@ -251,7 +251,10 @@ public:
   void parse_from(basic_io::parser & pa,
                   marking_map & mm);
 
-  dir_t const & root() { return root_dir; }
+  dir_t const & root() const
+  {
+    return root_dir;
+  }
 
 private:
   void do_deep_copy_from(roster_t const & other);
