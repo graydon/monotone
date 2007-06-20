@@ -561,12 +561,26 @@ public:
   {}
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
-  void add_node_for(file_path const & path);
+  void add_nodes_for(file_path const & path, file_path const & goal);
 };
 
 void
-addition_builder::add_node_for(file_path const & path)
+addition_builder::add_nodes_for(file_path const & path,
+                                file_path const & goal)
 {
+  // this check suffices to terminate the recursion; our caller guarantees
+  // that the roster has a root node, which will be a directory.
+  if (ros.has_node(path))
+    {
+      N(is_dir_t(ros.get_node(path)),
+        F("cannot add %s, because %s is recorded as a file "
+          "in the workspace manifest") % goal % path);
+      return;
+    }
+
+  add_nodes_for(path.dirname(), goal);
+  P(F("adding %s to workspace manifest") % path);
+
   node_id nid = the_null_node;
   switch (get_path_status(path))
     {
@@ -620,25 +634,7 @@ addition_builder::visit_file(file_path const & path)
     }
   
   I(ros.has_root());
-
-  split_path sp, prefix;
-  path.split(sp);
-  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    {
-      prefix.push_back(*i);
-      if (!ros.has_node(file_path(prefix)))
-        {
-          P(F("adding %s to workspace manifest") % file_path(prefix));
-          add_node_for(file_path(prefix));
-        }
-      if (!is_dir_t(ros.get_node(file_path(prefix))))
-        {
-          N(prefix == sp,
-            F("cannot add %s, because %s is recorded as a file "
-              "in the workspace manifest") % path % file_path(prefix));
-          break;
-        }
-    }
+  add_nodes_for(path, path);
 }
 
 struct editable_working_tree : public editable_tree

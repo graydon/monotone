@@ -842,9 +842,7 @@ struct name_shared_stuff : public virtual base_scalar
   virtual file_path path_for(scalar_val val) = 0;
   path_component pc_for(scalar_val val)
   {
-    split_path sp;
-    path_for(val).split(sp);
-    return idx(sp, sp.size() - 1);
+    return path_for(val).basename();
   }
   virtual node_id parent_for(scalar_val val) = 0;
 
