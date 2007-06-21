@@ -486,7 +486,7 @@ CMD(changed, "changed", "", CMD_REF(list), "",
             new_roster.get_name(*i, p);
           else
             old_roster.get_name(*i, p);
-          print_paths.insert(file_path(p));
+          print_paths.insert(p);
         }
     }
 

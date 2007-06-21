@@ -1076,7 +1076,7 @@ editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
 node_id
 editable_roster_base::detach_node(file_path const & src)
 {
-  // L(FL("detach_node('%s')") % file_path(src));
+  // L(FL("detach_node('%s')") % src);
   return r.detach_node(src);
 }
 
@@ -1108,7 +1108,7 @@ editable_roster_base::create_file_node(file_id const & content)
 void
 editable_roster_base::attach_node(node_id nid, file_path const & dst)
 {
-  // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
+  // L(FL("attach_node(%d, '%s')") % nid % dst);
   MM(dst);
   MM(this->r);
   r.attach_node(nid, dst);
@@ -1119,7 +1119,7 @@ editable_roster_base::apply_delta(file_path const & pth,
                                   file_id const & old_id,
                                   file_id const & new_id)
 {
-  // L(FL("apply_delta('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
+  // L(FL("apply_delta('%s', '%s', '%s')") % pth % old_id % new_id);
   r.apply_delta(pth, old_id, new_id);
 }
 
@@ -1127,7 +1127,7 @@ void
 editable_roster_base::clear_attr(file_path const & pth,
                                  attr_key const & name)
 {
-  // L(FL("clear_attr('%s', '%s')") % file_path(pth) % name);
+  // L(FL("clear_attr('%s', '%s')") % pth % name);
   r.clear_attr(pth, name);
 }
 
@@ -1136,7 +1136,7 @@ editable_roster_base::set_attr(file_path const & pth,
                                attr_key const & name,
                                attr_value const & val)
 {
-  // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
+  // L(FL("set_attr('%s', '%s', '%s')") % pth % name % val);
   r.set_attr(pth, name, val);
 }
 
@@ -3052,7 +3052,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
       node_t n = random_element(r.all_nodes(), rng)->second;
       file_path pth;
       r.get_name(n->self, pth);
-      // L(FL("considering acting on '%s'") % file_path(pth));
+      // L(FL("considering acting on '%s'") % pth);
 
       switch (rng.uniform(7))
         {
@@ -3070,12 +3070,12 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
 
           if (rng.flip())
             {
-              // L(FL("adding dir '%s'") % file_path(pth));
+              // L(FL("adding dir '%s'") % pth);
               safe_insert(c.dirs_added, pth);
             }
           else
             {
-              // L(FL("adding file '%s'") % file_path(pth));
+              // L(FL("adding file '%s'") % pth);
               safe_insert(c.files_added, make_pair(pth, new_ident(rng)));
             }
           break;
@@ -3083,7 +3083,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
         case 3:
           if (is_file_t(n))
             {
-              // L(FL("altering content of file '%s'") % file_path(pth));
+              // L(FL("altering content of file '%s'") % pth);
               safe_insert(c.deltas_applied,
                           make_pair(pth,
                                     make_pair(downcast_to_file_t(n)->content,
@@ -3103,7 +3103,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
             if (is_file_t(n2) || (pth2.depth() > 1 && rng.flip()))
               {
                 // L(FL("renaming to a sibling of an existing entry '%s'")
-                //   % file_path(pth2));
+                //   % pth2);
                 // Move to a sibling of an existing entry.
                 pth2 = pth2.dirname() / new_component(rng);
               }
@@ -3111,15 +3111,14 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
             else
               {
                 // L(FL("renaming to a child of an existing entry '%s'")
-                //   % file_path(pth2));
+                //   % pth2);
                 // Move to a child of an existing entry.
                 pth2 = pth2 / new_component(rng);
               }
 
             if (!parent_of(pth, pth2))
               {
-                // L(FL("renaming '%s' -> '%s")
-                //   % file_path(pth) % file_path(pth2));
+                // L(FL("renaming '%s' -> '%s") % pth % pth2);
                 safe_insert(c.nodes_renamed, make_pair(pth, pth2));
               }
           }
@@ -3130,7 +3129,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
               && (is_file_t(n) || downcast_to_dir_t(n)->children.empty())
               && r.all_nodes().size() > 1) // do not delete the root
             {
-              // L(FL("deleting '%s'") % file_path(pth));
+              // L(FL("deleting '%s'") % pth);
               safe_insert(c.nodes_deleted, pth);
             }
           break;
@@ -3143,27 +3142,26 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
                 {
                   if (rng.flip())
                     {
-                      // L(FL("clearing attr on '%s'") % file_path(pth));
+                      // L(FL("clearing attr on '%s'") % pth);
                       safe_insert(c.attrs_cleared, make_pair(pth, k));
                     }
                   else
                     {
-                      // L(FL("changing attr on '%s'\n") % file_path(pth));
+                      // L(FL("changing attr on '%s'\n") % pth);
                       safe_insert(c.attrs_set,
                                   make_pair(make_pair(pth, k), new_word(rng)));
                     }
                 }
               else
                 {
-                  // L(FL("setting previously set attr on '%s'")
-                  //   % file_path(pth));
+                  // L(FL("setting previously set attr on '%s'") % pth);
                   safe_insert(c.attrs_set,
                               make_pair(make_pair(pth, k), new_word(rng)));
                 }
             }
           else
             {
-              // L(FL("setting attr on '%s'") % file_path(pth));
+              // L(FL("setting attr on '%s'") % pth);
               safe_insert(c.attrs_set,
                           make_pair(make_pair(pth, new_word(rng)),
                                     new_word(rng)));
