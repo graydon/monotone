@@ -45,7 +45,7 @@ std::vector< T > split_into_words(T const & in)
 }
 
 template< class Container >
-typename Container::value_type join_words(Container const & in, std::string const & sep = "")
+typename Container::value_type join_words(Container const & in, std::string const & sep = " ")
 {
   std::string str;
   typename Container::const_iterator iter = in.begin();
