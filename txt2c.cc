@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     }
   if (string(argv[i]) == "--no-static")
     {
-      static_decl = "";
+      static_decl = "extern ";
       i++;
     }
   char const * fname = argv[i++];

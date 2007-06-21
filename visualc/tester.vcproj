@@ -63,7 +63,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\Debug&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -147,7 +147,7 @@
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
 				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\Release&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -261,6 +261,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\testlib.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\vocab.cc"
 				>
 			</File>
@@ -350,17 +370,28 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\tester.lua"
+			RelativePath="..\testlib.lua"
 			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="txt2c testlib.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\testlib.lua&quot; testlib &gt;&quot;$(ProjectDir)\..\testlib.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="testlib.c"
+				/>
+			</FileConfiguration>
 			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="txt2c tester.lua"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\tester.lua tester &gt;$(ProjectDir)\..\tester.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="tester.h"
+					Description="txt2c testlib.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\testlib.lua&quot; testlib &gt;&quot;$(ProjectDir)\..\testlib.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="testlib.c"
 				/>
 			</FileConfiguration>
 		</File>
