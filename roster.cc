@@ -130,14 +130,6 @@ namespace
   //
   // - there is no file_path or path_component corresponding to the_null_node.
   //
-  // - the split_path corresponding to the_null_node is [], the empty vector.
-  //
-  // - the split_path corresponding to the root node is [""], the 1-element
-  //   vector containing an empty path component.  This is the only valid
-  //   one-element split_path.
-  //
-  // - the split_path corresponding to foo/bar is ["", "foo", "bar"].
-  //
   // We do this in order to support the notion of moving the root directory
   // around, or applying attributes to the root directory.  Note that the
   // only supported way to move the root is with the 'pivot_root' operation,
@@ -648,16 +640,40 @@ roster_t::get_node(node_id nid) const
 void
 roster_t::get_name(node_id nid, file_path & p) const
 {
-  split_path sp;
   I(!null_node(nid));
-  while (!null_node(nid))
+
+  stack<path_component> sp;
+  size_t size = 0;
+
+  while (nid != root_dir->self)
     {
       node_t n = get_node(nid);
-      sp.push_back(n->name);
+      sp.push(n->name);
+      size += n->name().length() + 1;
       nid = n->parent;
     }
-  reverse(sp.begin(), sp.end());
-  p = file_path(sp);
+
+  if (size == 0)
+    {
+      p.clear();
+      return;
+    }
+
+  I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8(sp.top()())));
+
+  string tmp;
+  tmp.reserve(size);
+
+  for (;;)
+    {
+      tmp += sp.top()();
+      sp.pop();
+      if (sp.empty())
+        break;
+      tmp += "/";
+    }
+
+  p = file_path(tmp, 0, string::npos);  // short circuit constructor
 }
 
 
@@ -2982,9 +2998,7 @@ file_id new_ident(randomizer & rng)
 
 path_component new_component(randomizer & rng)
 {
-  split_path pieces;
-  file_path_internal(new_word(rng)).split(pieces);
-  return pieces.back();
+  return path_component(new_word(rng));
 }
 
 
@@ -2998,24 +3012,33 @@ attr_key pick_attr(attr_map_t const & attrs, randomizer & rng)
   return random_element(attrs, rng)->first;
 }
 
-bool parent_of(split_path const & p,
-               split_path const & c)
+bool parent_of(file_path const & p,
+               file_path const & c)
 {
   bool is_parent = false;
 
-  if (p.size() <= c.size())
-    {
-      split_path::const_iterator c_anchor =
-        search(c.begin(), c.end(),
-               p.begin(), p.end());
+  // the null path is the parent of all paths.
+  if (p.depth() == 0)
+    is_parent = true;
 
-      is_parent = (c_anchor == c.begin());
+  else if (p.depth() <= c.depth())
+    {
+      string const & ci = c.as_internal();
+      string const & pi = p.as_internal();
+      
+      string::const_iterator c_anchor =
+        search(ci.begin(), ci.end(),
+               pi.begin(), pi.end());
+
+      is_parent = (c_anchor == ci.begin() && (ci.size() == pi.size()
+                                              || *(ci.begin() + pi.size())
+                                              == '/'));
     }
 
   //     L(FL("path '%s' is%s parent of '%s'")
-  //       % file_path(p)
+  //       % p
   //       % (is_parent ? "" : " not")
-  //       % file_path(c));
+  //       % c);
 
   return is_parent;
 }
@@ -3027,10 +3050,8 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
   while (c.empty())
     {
       node_t n = random_element(r.all_nodes(), rng)->second;
-      split_path pth;
-      file_path fp;
-      r.get_name(n->self, fp);
-      fp.split(pth);
+      file_path pth;
+      r.get_name(n->self, pth);
       // L(FL("considering acting on '%s'") % file_path(pth));
 
       switch (rng.uniform(7))
@@ -3039,24 +3060,23 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
         case 0:
         case 1:
         case 2:
-          if (is_file_t(n) || (pth.size() > 1 && rng.flip()))
+          if (is_file_t(n) || (pth.depth() > 1 && rng.flip()))
             // Add a sibling of an existing entry.
-            pth[pth.size() - 1] = new_component(rng);
+            pth = pth.dirname() / new_component(rng);
 
           else
             // Add a child of an existing entry.
-            pth.push_back(new_component(rng));
+            pth = pth / new_component(rng);
 
           if (rng.flip())
             {
               // L(FL("adding dir '%s'") % file_path(pth));
-              safe_insert(c.dirs_added, file_path(pth));
+              safe_insert(c.dirs_added, pth);
             }
           else
             {
               // L(FL("adding file '%s'") % file_path(pth));
-              safe_insert(c.files_added, make_pair(file_path(pth),
-                                                   new_ident(rng)));
+              safe_insert(c.files_added, make_pair(pth, new_ident(rng)));
             }
           break;
 
@@ -3065,30 +3085,27 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
             {
               // L(FL("altering content of file '%s'") % file_path(pth));
               safe_insert(c.deltas_applied,
-                          make_pair
-                          (file_path(pth),
-                           make_pair(downcast_to_file_t(n)->content,
-                                     new_ident(rng))));
+                          make_pair(pth,
+                                    make_pair(downcast_to_file_t(n)->content,
+                                              new_ident(rng))));
             }
           break;
 
         case 4:
           {
             node_t n2 = random_element(r.all_nodes(), rng)->second;
-            file_path fp2;
-            split_path pth2;
-            r.get_name(n2->self, fp2);
-            fp2.split(pth2);
-
             if (n == n2)
               continue;
 
-            if (is_file_t(n2) || (pth2.size() > 1 && rng.flip()))
+            file_path pth2;
+            r.get_name(n2->self, pth2);
+
+            if (is_file_t(n2) || (pth2.depth() > 1 && rng.flip()))
               {
                 // L(FL("renaming to a sibling of an existing entry '%s'")
                 //   % file_path(pth2));
                 // Move to a sibling of an existing entry.
-                pth2[pth2.size() - 1] = new_component(rng);
+                pth2 = pth2.dirname() / new_component(rng);
               }
 
             else
@@ -3096,15 +3113,14 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
                 // L(FL("renaming to a child of an existing entry '%s'")
                 //   % file_path(pth2));
                 // Move to a child of an existing entry.
-                pth2.push_back(new_component(rng));
+                pth2 = pth2 / new_component(rng);
               }
 
             if (!parent_of(pth, pth2))
               {
                 // L(FL("renaming '%s' -> '%s")
                 //   % file_path(pth) % file_path(pth2));
-                safe_insert(c.nodes_renamed, make_pair(file_path(pth),
-                                                       file_path(pth2)));
+                safe_insert(c.nodes_renamed, make_pair(pth, pth2));
               }
           }
           break;
@@ -3115,7 +3131,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
               && r.all_nodes().size() > 1) // do not delete the root
             {
               // L(FL("deleting '%s'") % file_path(pth));
-              safe_insert(c.nodes_deleted, file_path(pth));
+              safe_insert(c.nodes_deleted, pth);
             }
           break;
 
@@ -3128,14 +3144,13 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
                   if (rng.flip())
                     {
                       // L(FL("clearing attr on '%s'") % file_path(pth));
-                      safe_insert(c.attrs_cleared, make_pair(file_path(pth), k));
+                      safe_insert(c.attrs_cleared, make_pair(pth, k));
                     }
                   else
                     {
                       // L(FL("changing attr on '%s'\n") % file_path(pth));
                       safe_insert(c.attrs_set,
-                                  make_pair(make_pair(file_path(pth), k),
-                                            new_word(rng)));
+                                  make_pair(make_pair(pth, k), new_word(rng)));
                     }
                 }
               else
@@ -3143,15 +3158,14 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
                   // L(FL("setting previously set attr on '%s'")
                   //   % file_path(pth));
                   safe_insert(c.attrs_set,
-                              make_pair(make_pair(file_path(pth), k),
-                                        new_word(rng)));
+                              make_pair(make_pair(pth, k), new_word(rng)));
                 }
             }
           else
             {
               // L(FL("setting attr on '%s'") % file_path(pth));
               safe_insert(c.attrs_set,
-                          make_pair(make_pair(file_path(pth), new_word(rng)),
+                          make_pair(make_pair(pth, new_word(rng)),
                                     new_word(rng)));
             }
           break;
@@ -4829,21 +4843,19 @@ create_random_unification_task(roster_t & left,
           right_nid = right_er->create_file_node(fid);
         }
 
-      split_path pth;
-      file_path fp;
-      left.get_name(left_n->self, fp);
-      I(right.has_node(fp));
-      fp.split(pth);
+      file_path pth;
+      left.get_name(left_n->self, pth);
+      I(right.has_node(pth));
 
-      if (is_file_t(left_n) || (pth.size() > 1 && rng.flip()))
+      if (is_file_t(left_n) || (pth.depth() > 1 && rng.flip()))
         // Add a sibling of an existing entry.
-        pth[pth.size() - 1] = new_component(rng);
+        pth = pth.dirname() / new_component(rng);
       else
         // Add a child of an existing entry.
-        pth.push_back(new_component(rng));
+        pth = pth / new_component(rng);
 
-      left_er->attach_node(left_nid, file_path(pth));
-      right_er->attach_node(right_nid, file_path(pth));
+      left_er->attach_node(left_nid, pth);
+      right_er->attach_node(right_nid, pth);
     }
 }
 

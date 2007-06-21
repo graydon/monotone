@@ -405,78 +405,6 @@ bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
 // normalized, relative, paths.
 ///////////////////////////////////////////////////////////////////////////
 
-// This function takes a vector of path components and joins them into a
-// single file_path.  This is the inverse to file_path::split.  It takes a
-// vector of the form:
-//
-//   ["", p[0], p[1], ..., p[n]]
-//
-// and constructs the path:
-//
-//   p[0]/p[1]/.../p[n]
-//
-file_path::file_path(split_path const & sp)
-{
-  split_path::const_iterator i = sp.begin();
-  I(i != sp.end());
-  I(i->empty());
-  string tmp;
-  bool start = true;
-  size_t size = 0;
-  for (++i; i != sp.end(); ++i)
-    {
-      size = size + 1 + (*i)().length();
-    }
-  tmp.reserve(size);
-  i = sp.begin();
-  for (++i; i != sp.end(); ++i)
-    {
-      I(!i->empty());
-      if (!start)
-        tmp += "/";
-      tmp += (*i)();
-      if (start)
-        start = false;
-    }
-  I(!in_bookkeeping_dir(tmp));
-  data = utf8(tmp);
-}
-
-//
-// this takes a path of the form
-//
-//  "p[0]/p[1]/.../p[n-1]/p[n]"
-//
-// and fills in a vector of paths corresponding to p[0] ... p[n].  This is the
-// inverse to the file_path::file_path(split_path) constructor.
-//
-// The first entry in this vector is always the null component, "".  This path
-// is the root of the tree.  So we actually output a vector like:
-//   ["", p[0], p[1], ..., p[n]]
-// with n+1 members.
-void
-file_path::split(split_path & sp) const
-{
-  sp.clear();
-  sp.push_back(path_component());
-  if (empty())
-    return;
-  string::size_type start, stop;
-  start = 0;
-  string const & s = data();
-  while (1)
-    {
-      stop = s.find('/', start);
-      if (stop == string::npos)
-        {
-          sp.push_back(path_component(s, start));
-          break;
-        }
-      sp.push_back(path_component(s, start, stop - start));
-      start = stop + 1;
-    }
-}
-
 // this peels off the last component of any path and returns it.
 // the last component of a path with no slashes in it is the complete path.
 // the last component of a path referring to the root directory is an
@@ -507,7 +435,6 @@ file_path::dirname() const
     return file_path();
   return file_path(s, 0, sep);
 }
-
 
 // count the number of /-separated components of the path.
 unsigned int
@@ -555,21 +482,6 @@ operator <<(ostream & o, any_path const & a)
 {
   o << a.as_internal();
   return o;
-}
-
-ostream &
-operator <<(ostream & o, split_path const & sp)
-{
-  file_path tmp(sp);
-  return o << tmp;
-}
-
-template <>
-void dump(split_path const & sp, string & out)
-{
-  ostringstream oss;
-  oss << sp << '\n';
-  out = oss.str();
 }
 
 template <>
@@ -987,15 +899,6 @@ UNIT_TEST(paths, file_path_internal)
           file_path fp = file_path_internal(*c);
           UNIT_TEST_CHECK(fp.as_internal() == *c);
           UNIT_TEST_CHECK(file_path_internal(fp.as_internal()) == fp);
-          split_path split_test;
-          fp.split(split_test);
-          UNIT_TEST_CHECK(!split_test.empty());
-          file_path fp2(split_test);
-          UNIT_TEST_CHECK(fp == fp2);
-          UNIT_TEST_CHECK(split_test[0].empty());
-          for (split_path::const_iterator
-                 i = split_test.begin() + 1; i != split_test.end(); ++i)
-            UNIT_TEST_CHECK(!i->empty());
         }
     }
 
@@ -1012,15 +915,6 @@ static void check_fp_normalizes_to(char * before, char * after)
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   UNIT_TEST_CHECK(fp.as_external() == after);
-  split_path split_test;
-  fp.split(split_test);
-  UNIT_TEST_CHECK(!split_test.empty());
-  file_path fp2(split_test);
-  UNIT_TEST_CHECK(fp == fp2);
-  UNIT_TEST_CHECK(split_test[0].empty());
-  for (split_path::const_iterator
-         i = split_test.begin() + 1; i != split_test.end(); ++i)
-    UNIT_TEST_CHECK(!i->empty());
 }
 
 UNIT_TEST(paths, file_path_external_null_prefix)
@@ -1182,94 +1076,6 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
 #endif
 
   initial_rel_path.unset();
-}
-
-UNIT_TEST(paths, split_join)
-{
-  file_path fp1 = file_path_internal("foo/bar/baz");
-  file_path fp2 = file_path_internal("bar/baz/foo");
-  split_path split1, split2;
-  fp1.split(split1);
-  fp2.split(split2);
-  UNIT_TEST_CHECK(fp1 == file_path(split1));
-  UNIT_TEST_CHECK(fp2 == file_path(split2));
-  UNIT_TEST_CHECK(!(fp1 == file_path(split2)));
-  UNIT_TEST_CHECK(!(fp2 == file_path(split1)));
-  UNIT_TEST_CHECK(split1.size() == 4);
-  UNIT_TEST_CHECK(split2.size() == 4);
-  UNIT_TEST_CHECK(split1[1] != split1[2]);
-  UNIT_TEST_CHECK(split1[1] != split1[3]);
-  UNIT_TEST_CHECK(split1[2] != split1[3]);
-  UNIT_TEST_CHECK(split1[0].empty()
-              && !split1[1].empty()
-              && !split1[2].empty()
-              && !split1[3].empty());
-  UNIT_TEST_CHECK(split1[1] == split2[3]);
-  UNIT_TEST_CHECK(split1[2] == split2[1]);
-  UNIT_TEST_CHECK(split1[3] == split2[2]);
-
-  file_path fp3 = file_path_internal("");
-  split_path split3;
-  fp3.split(split3);
-  UNIT_TEST_CHECK(split3.size() == 1 && split3[0].empty());
-
-  // empty split_path is invalid
-  split_path split4;
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-  split4.push_back(path_component());
-  UNIT_TEST_CHECK(file_path(split4) == file_path());
-
-  // split_path without null first item is invalid
-  split4.clear();
-  split4.push_back(split1[1]);
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-
-  // split_path with non-first item item null is invalid
-  split4.clear();
-  split4.push_back(path_component());
-  split4.push_back(split1[0]);
-  split4.push_back(path_component());
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-
-  // Make sure that we can't use joining to create a path into the bookkeeping
-  // dir
-  {
-    split_path split_mt1, split_mt2;
-    file_path_internal("foo/_MTN").split(split_mt1);
-    UNIT_TEST_CHECK(split_mt1.size() == 3);
-    I(split_mt1[2] == bookkeeping_root_component);
-    split_mt2.push_back(path_component());
-    split_mt2.push_back(split_mt1[2]);
-    // split_mt2 now contains the component "_MTN"
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-    split_mt2.push_back(split_mt1[1]);
-    // split_mt2 now contains the components "_MTN", "foo" in that order
-    // this comparison tricks the compiler into not completely eliminating this
-    // code as dead...
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-  }
-  // and make sure it fails for the klugy security cases -- see comments on
-  // in_bookkeeping_dir
-  {
-    split_path split_mt1, split_mt2;
-    file_path_internal("foo/_mTn").split(split_mt1);
-    UNIT_TEST_CHECK(split_mt1.size() == 3);
-    split_mt2.push_back(path_component());
-    split_mt2.push_back(split_mt1[2]);
-    // split_mt2 now contains the component "_mTn"
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-    split_mt2.push_back(split_mt1[1]);
-    // split_mt2 now contains the components "_mTn", "foo" in that order
-    // this comparison tricks the compiler into not completely eliminating this
-    // code as dead...
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-  }
 }
 
 UNIT_TEST(paths, basename)
@@ -1563,10 +1369,6 @@ static void test_path_less_than(string const & left, string const & right)
   MM(right);
   file_path left_fp = file_path_internal(left);
   file_path right_fp = file_path_internal(right);
-  split_path left_sp, right_sp;
-  left_fp.split(left_sp);
-  right_fp.split(right_sp);
-  I(left_sp < right_sp);
   I(left_fp < right_fp);
 }
 
@@ -1576,10 +1378,6 @@ static void test_path_equal(string const & left, string const & right)
   MM(right);
   file_path left_fp = file_path_internal(left);
   file_path right_fp = file_path_internal(right);
-  split_path left_sp, right_sp;
-  left_fp.split(left_sp);
-  right_fp.split(right_sp);
-  I(left_sp == right_sp);
   I(left_fp == right_fp);
 }
 

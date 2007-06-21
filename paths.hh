@@ -98,18 +98,18 @@
 
 #include <iosfwd>
 #include <string>
-#include <vector>
 
 #include "vocab.hh"
+
+class any_path;
+class file_path;
+class roster_t;
 
 // A path_component is one component of a path.  It is always utf8, may not
 // contain either kind of slash, and may not be a magic directory entry ("."
 // or "..") It _may_ be the empty string, but you only get that if you ask
 // for the basename of the root directory.  It resembles, but is not, a
 // vocab type.
-
-class any_path;
-class file_path;
 
 class path_component
 {
@@ -147,13 +147,6 @@ private:
 std::ostream & operator<<(std::ostream &, path_component const &);
 template <> void dump(path_component const &, std::string &);
 
-// There is also one "not really a path" type, 'split_path'.  This is a vector
-// of path_component's, and semantically equivalent to a file_path --
-// file_path's can be split into split_path's, and split_path's can be joined
-// into file_path's.
-
-typedef std::vector<path_component> split_path;
-
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
 // much point ATM...
@@ -180,21 +173,14 @@ protected:
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
-std::ostream & operator<<(std::ostream & o, split_path const & s);
-
-template <> void dump(split_path const & sp, std::string & out);
 
 class file_path : public any_path
 {
 public:
   file_path() {}
   // join a file_path out of pieces
-  explicit file_path(split_path const & sp);
-
   file_path operator /(path_component const & to_append) const;
   file_path operator /(file_path const & to_append) const;
-
-  void split(split_path & sp) const;
 
   // these functions could be defined on any_path but are only needed
   // for file_path, and not defining them for system_path gets us out
@@ -269,6 +255,9 @@ private:
   {
     data = utf8(path.substr(start, stop));
   }
+
+  // roster_t::get_name is allowed to use the private substring constructor.
+  friend class roster_t;
 };
 
 // these are the public file_path constructors
