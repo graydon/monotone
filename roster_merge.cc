@@ -305,7 +305,7 @@ namespace
     // make a dir loop.  it can, however, have a name collision.
     if (null_node(parent))
       {
-        I(null_name(name));
+        I(name.empty());
         if (result.roster.has_root())
           {
             // see comments below about name collisions.
@@ -866,7 +866,7 @@ struct name_shared_stuff : public virtual base_scalar
         I(c.left == make_pair(parent_for(left_val), pc_for(left_val)));
         I(c.right == make_pair(parent_for(right_val), pc_for(right_val)));
         I(null_node(result.roster.get_node(thing_nid)->parent));
-        I(null_name(result.roster.get_node(thing_nid)->name));
+        I(result.roster.get_node(thing_nid)->name.empty());
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
         // attach implicitly checks that we were already detached
@@ -1742,12 +1742,12 @@ struct node_name_plus_missing_root : public structural_conflict_helper
   void check_helper(node_name_conflict const & left_c, node_name_conflict const & right_c)
   {
     I(left_c.nid == left_root_nid);
-    I(left_c.left == make_pair(the_null_node, the_null_component));
+    I(left_c.left == make_pair(the_null_node, path_component()));
     I(left_c.right == make_pair(right_root_nid, path_component("left_root")));
 
     I(right_c.nid == right_root_nid);
     I(right_c.left == make_pair(left_root_nid, path_component("right_root")));
-    I(right_c.right == make_pair(the_null_node, the_null_component));
+    I(right_c.right == make_pair(the_null_node, path_component()));
   }
   virtual void check()
   {
@@ -1796,7 +1796,7 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
     rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
     I((c.nid1 == left_root_nid && c.nid2 == right_root_nid)
       || (c.nid1 == right_root_nid && c.nid2 == left_root_nid));
-    I(c.parent_name == make_pair(the_null_node, the_null_component));
+    I(c.parent_name == make_pair(the_null_node, path_component()));
 
     I(result.missing_root_dir);
 

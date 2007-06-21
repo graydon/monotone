@@ -95,12 +95,6 @@
 //           F("my path is %s") % my_path
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
-//
-//
-// There is also one "not really a path" type, 'split_path'.  This is a vector
-// of path_component's, and semantically equivalent to a file_path --
-// file_path's can be split into split_path's, and split_path's can be joined
-// into file_path's.
 
 #include <iosfwd>
 #include <string>
@@ -108,15 +102,57 @@
 
 #include "vocab.hh"
 
-typedef std::vector<path_component> split_path;
+// A path_component is one component of a path.  It is always utf8, may not
+// contain either kind of slash, and may not be a magic directory entry ("."
+// or "..") It _may_ be the empty string, but you only get that if you ask
+// for the basename of the root directory.  It resembles, but is not, a
+// vocab type.
 
-const path_component the_null_component;
+class any_path;
+class file_path;
 
-inline bool
-null_name(path_component pc)
+class path_component
 {
-  return pc == the_null_component;
-}
+public:
+  path_component() : data() {}
+  explicit path_component(utf8 const &);
+  explicit path_component(std::string const &);
+  explicit path_component(char const *);
+
+  std::string const & operator()() const { return data(); }
+  bool empty() const { return data().empty(); }
+  bool operator<(path_component const & other) const
+  { return data() < other(); }
+  bool operator==(path_component const & other) const
+  { return data() == other(); }
+  bool operator!=(path_component const & other) const
+  { return data() != other(); }
+
+  friend std::ostream & operator<<(std::ostream &, path_component const &);
+
+private:
+  utf8 data;
+
+  // constructor for use by trusted any_path and file_path operations.
+  // bypasses validation.
+  path_component(std::string const & path,
+                 std::string::size_type start,
+                 std::string::size_type stop = std::string::npos)
+    : data(path.substr(start, stop))
+  {}
+
+  friend class any_path;
+  friend class file_path;
+};
+std::ostream & operator<<(std::ostream &, path_component const &);
+template <> void dump(path_component const &, std::string &);
+
+// There is also one "not really a path" type, 'split_path'.  This is a vector
+// of path_component's, and semantically equivalent to a file_path --
+// file_path's can be split into split_path's, and split_path's can be joined
+// into file_path's.
+
+typedef std::vector<path_component> split_path;
 
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
@@ -155,8 +191,8 @@ public:
   // join a file_path out of pieces
   explicit file_path(split_path const & sp);
 
-  // this currently doesn't do any normalization or anything.
-  file_path operator /(std::string const & to_append) const;
+  file_path operator /(path_component const & to_append) const;
+  file_path operator /(file_path const & to_append) const;
 
   void split(split_path & sp) const;
   file_path dirname() const;
@@ -168,18 +204,22 @@ public:
   // see the "ordering" unit test in paths.cc.
   bool operator <(const file_path & other) const
   {
-    unsigned char const * p = (unsigned char const *)data().c_str();
-    unsigned char const * q = (unsigned char const *)other.data().c_str();
-    while (*p == *q && *p != '\0')
+    std::string::const_iterator p = data().begin();
+    std::string::const_iterator plim = data().end();
+    std::string::const_iterator q = other.data().begin();
+    std::string::const_iterator qlim = other.data().end();
+
+    while (*p == *q && p != plim && q != qlim)
       p++, q++;
-    if (*p == *q) // equal -> not less
+
+    if (p == plim && q == qlim) // equal -> not less
       return false;
 
-    // must do NUL before everything first, or 'foo' will sort after
-    // 'foo/bar' which is not what we want.
-    if (*p == '\0')
+    // must do end of string before everything else, or 'foo' will sort
+    // after 'foo/bar' which is not what we want.
+    if (p == plim)
       return true;
-    if (*q == '\0')
+    if (q == qlim)
       return false;
 
     // the only special case needed is that / sorts before everything -
@@ -189,13 +229,14 @@ public:
     if (*q == '/')
       return false;
 
-    return *p < *q;
+    // ensure unsigned comparison
+    return static_cast<unsigned char>(*p) < static_cast<unsigned char>(*q);
   }
 
   void clear() { data = utf8(); }
 
 private:
-  typedef enum { internal, external, prevalidated } source_type;
+  typedef enum { internal, external } source_type;
   // input is always in utf8, because everything in our world is always in
   // utf8 (except interface code itself).
   // external paths:
@@ -206,13 +247,18 @@ private:
   // internal and external paths:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in _MTN/
-  // prevalidated paths:
-  //   -- receive no checking
-  //   -- are only for use by other file_path methods which can
-  //      guarantee that the path is already valid
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
+
+  // private substring constructor, does no validation.  used by dirname()
+  // and operator/ with a path_component.
+  file_path(std::string const & path,
+            std::string::size_type start,
+            std::string::size_type stop = std::string::npos)
+  {
+    data = utf8(path.substr(start, stop));
+  }
 };
 
 // these are the public file_path constructors

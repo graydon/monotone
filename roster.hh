@@ -116,7 +116,7 @@ is_file_t(node_t n)
 inline bool
 is_root_dir_t(node_t n)
 {
-  if (is_dir_t(n) && null_name(n->name))
+  if (is_dir_t(n) && n->name.empty())
     {
       I(null_node(n->parent));
       return true;

@@ -767,10 +767,12 @@ editable_working_tree::detach_node(file_path const & src_pth)
       vector<utf8> files, dirs;
       read_directory(src_pth, files, dirs);
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
-        move_file(src_pth / (*i)(), dst_pth / (*i)());
+        move_file(src_pth / path_component(*i),
+                  dst_pth / (*i)());
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
-          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+          move_dir(src_pth / path_component(*i),
+                   dst_pth / (*i)());
       root_dir_attached = false;
     }
   else
@@ -839,12 +841,14 @@ editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
       for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_file(src_pth / (*i)(), dst_pth / (*i)());
+          move_file(src_pth / (*i)(),
+                    dst_pth / path_component(*i));
         }
       for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+          move_dir(src_pth / (*i)(),
+                   dst_pth / path_component(*i));
         }
       delete_dir_shallow(src_pth);
       root_dir_attached = true;
@@ -1365,7 +1369,7 @@ workspace::perform_deletions(set<file_path> const & paths,
                     F("cannot remove %s/, it is not empty") % name);
                   for (dir_map::const_iterator j = d->children.begin();
                        j != d->children.end(); ++j)
-                    todo.push_front(name / j->first());
+                    todo.push_front(name / j->first);
                   continue;
                 }
             }
@@ -1464,7 +1468,7 @@ workspace::perform_rename(set<file_path> const & srcs,
           N(new_roster.has_node(*i),
             F("source file %s is not versioned") % *i);
 
-          file_path d = dst / i->basename()();
+          file_path d = dst / i->basename();
           N(!new_roster.has_node(d),
             F("destination %s already exists in the workspace manifest") % d);
 
@@ -1537,13 +1541,13 @@ workspace::perform_pivot_root(file_path const & new_root,
   N(is_dir_t(new_roster.get_node(new_root)),
     F("proposed new root directory '%s' is not a directory") % new_root);
   {
-    N(!new_roster.has_node(new_root / bookkeeping_root.as_internal()),
+    N(!new_roster.has_node(new_root / bookkeeping_root_component),
       F("proposed new root directory '%s' contains illegal path %s")
       % new_root % bookkeeping_root);
   }
 
   {
-    file_path current_path_to_put_old = (new_root / put_old.as_internal());
+    file_path current_path_to_put_old = (new_root / put_old);
     file_path current_path_to_put_old_parent
       = current_path_to_put_old.dirname();
 

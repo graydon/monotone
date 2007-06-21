@@ -1184,7 +1184,7 @@ find_old_path_for(map<file_path, file_path> const & renames,
     return new_path;
 
   return (find_old_path_for(renames, new_path.dirname())
-          / new_path.basename()());
+          / new_path.basename());
 }
 
 static file_path

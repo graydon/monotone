@@ -573,7 +573,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         {
           dir_t moved_root = left_roster.root();
           moved_root->parent = the_null_node;
-          moved_root->name = the_null_component;
+          moved_root->name = path_component();
         }
 
         // Write new files into the db.

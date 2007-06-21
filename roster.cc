@@ -118,25 +118,32 @@ namespace
   //   it's an id you use for the parent of the root, or of any node which
   //   is detached.
   //
-  // - the_null_component is a path_component. It is the *name* of the root
-  //   node. Its string representation is "", the empty string.
+  // - the root node has a real node id, just like any other directory.
   //
-  // - The split_path corresponding to the_null_node is [], the empty vector.
+  // - the path_component whose string representation is "", the empty
+  //   string, is the *name* of the root node.  write it as
+  //   path_component() and test for it with component.empty().
   //
-  // - The split_path corresponding to the root node is [""], the 1-element
-  //   vector containing the_null_component.
+  // - similarly, the file_path whose string representation is "" also
+  //   names the root node.  write it as file_path() and test for it
+  //   with path.empty().
   //
-  // - The split_path corresponding to foo/bar is ["", "foo", "bar"].
+  // - there is no file_path or path_component corresponding to the_null_node.
   //
-  // - The only legal one-element split_path is [""], referring to the
-  //   root node.
+  // - the split_path corresponding to the_null_node is [], the empty vector.
+  //
+  // - the split_path corresponding to the root node is [""], the 1-element
+  //   vector containing an empty path component.  This is the only valid
+  //   one-element split_path.
+  //
+  // - the split_path corresponding to foo/bar is ["", "foo", "bar"].
   //
   // We do this in order to support the notion of moving the root directory
-  // around, or applying attributes to the root directory (though we will
-  // not support moving the root at this time, since we haven't worked out
-  // all the UI implications yet).
-  //
-
+  // around, or applying attributes to the root directory.  Note that the
+  // only supported way to move the root is with the 'pivot_root' operation,
+  // which atomically turns the root directory into a subdirectory and some
+  // existing subdirectory into the root directory.  This is an UI constraint,
+  // not a constraint at this level.
 
   const node_id first_node = 1;
   const node_id first_temp_node = widen<node_id, int>(1) << (sizeof(node_id) * 8 - 1);
@@ -150,7 +157,7 @@ namespace
 node::node(node_id i)
   : self(i),
     parent(the_null_node),
-    name(the_null_component)
+    name()
 {
 }
 
@@ -158,7 +165,7 @@ node::node(node_id i)
 node::node()
   : self(the_null_node),
     parent(the_null_node),
-    name(the_null_component)
+    name()
 {
 }
 
@@ -192,7 +199,7 @@ void
 dir_node::attach_child(path_component const & pc, node_t child)
 {
   I(null_node(child->parent));
-  I(null_name(child->name));
+  I(child->name.empty());
   safe_insert(children, make_pair(pc, child));
   child->parent = this->self;
   child->name = pc;
@@ -204,7 +211,7 @@ dir_node::detach_child(path_component const & pc)
 {
   node_t n = get_child(pc);
   n->parent = the_null_node;
-  n->name = the_null_component;
+  n->name = path_component();
   safe_erase(children, pc);
   return n;
 }
@@ -685,7 +692,7 @@ roster_t::detach_node(file_path const & p)
   path_component basename = p.basename();
 
   I(has_root());
-  if (null_name(basename))
+  if (basename.empty())
     {
       // detaching the root dir
       I(dirname.empty());
@@ -713,7 +720,7 @@ roster_t::detach_node(node_id nid)
   if (null_node(n->parent))
     {
       // detaching the root dir
-      I(null_name(n->name));
+      I(n->name.empty());
       safe_insert(old_locations,
                   make_pair(nid, make_pair(n->parent, n->name)));
       root_dir.reset();
@@ -735,7 +742,7 @@ roster_t::drop_detached_node(node_id nid)
   // ensure the node is already detached
   node_t n = get_node(nid);
   I(null_node(n->parent));
-  I(null_name(n->name));
+  I(n->name.empty());
   // if it's a dir, make sure it's empty
   if (is_dir_t(n))
     I(downcast_to_dir_t(n)->children.empty());
@@ -793,7 +800,7 @@ roster_t::attach_node(node_id nid, file_path const & p)
   MM(p);
   if (p.empty())
     // attaching the root node
-    attach_node(nid, the_null_node, the_null_component);
+    attach_node(nid, the_null_node, path_component());
   else
     attach_node(nid, get_node(p.dirname())->self, p.basename());
 }
@@ -806,18 +813,18 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
   I(!null_node(n->self));
   // ensure the node is already detached (as best one can)
   I(null_node(n->parent));
-  I(null_name(n->name));
+  I(n->name.empty());
 
   // this iterator might point to old_locations.end(), because old_locations
   // only includes entries for renames, not new nodes
   map<node_id, pair<node_id, path_component> >::iterator
     i = old_locations.find(nid);
 
-  if (null_node(parent) || null_name(name))
+  if (null_node(parent) || name.empty())
     {
-      I(null_node(parent) && null_name(name));
+      I(null_node(parent) && name.empty());
       I(null_node(n->parent));
-      I(null_name(n->name));
+      I(n->name.empty());
       I(!has_root());
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
@@ -966,14 +973,14 @@ roster_t::check_sane(bool temp_nodes_ok) const
       I(n->self == nid);
       if (is_dir_t(n))
         {
-          if (null_name(n->name) || null_node(n->parent))
-            I(null_name(n->name) && null_node(n->parent));
+          if (n->name.empty() || null_node(n->parent))
+            I(n->name.empty() && null_node(n->parent));
           else
-            I(!null_name(n->name) && !null_node(n->parent));
+            I(!n->name.empty() && !null_node(n->parent));
         }
       else
         {
-          I(!null_name(n->name) && !null_node(n->parent));
+          I(!n->name.empty() && !null_node(n->parent));
           I(!null_id(downcast_to_file_t(n)->content));
         }
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
@@ -2262,7 +2269,7 @@ editable_roster_for_check::drop_detached_node(node_id nid)
         {
           W(F("restriction includes deletion of '%s' "
               "but excludes deletion of '%s'")
-            % dir % (dir / (*p)()));
+            % dir % (dir / *p));
           problems++;
         }
     }
@@ -2575,7 +2582,7 @@ roster_t::parse_from(basic_io::parser & pa,
   // Instantiate some lookaside caches to ensure this roster reuses
   // string storage across ATOMIC elements.
   id::symtab id_syms;
-  path_component::symtab path_syms;
+  utf8::symtab path_syms;
   attr_key::symtab attr_key_syms;
   attr_value::symtab attr_value_syms;
 
