@@ -256,8 +256,7 @@ dump_diffs(cset const & cs,
 
       std::string pattern("");
       if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(file_path(i->first),
-                                          pattern);
+        app.lua.hook_get_encloser_pattern(i->first, pattern);
 
       make_diff(i->first.as_internal(),
                 i->first.as_internal(),

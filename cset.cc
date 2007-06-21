@@ -264,7 +264,7 @@ print_cset(basic_io::printer & printer,
        i != cs.nodes_deleted.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::delete_node, file_path(*i));
+      st.push_file_pair(syms::delete_node, *i);
       printer.print_stanza(st);
     }
 
@@ -272,8 +272,8 @@ print_cset(basic_io::printer & printer,
        i != cs.nodes_renamed.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::rename_node, file_path(i->first));
-      st.push_file_pair(syms::to, file_path(i->second));
+      st.push_file_pair(syms::rename_node, i->first);
+      st.push_file_pair(syms::to, i->second);
       printer.print_stanza(st);
     }
 
@@ -281,7 +281,7 @@ print_cset(basic_io::printer & printer,
        i != cs.dirs_added.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::add_dir, file_path(*i));
+      st.push_file_pair(syms::add_dir, *i);
       printer.print_stanza(st);
     }
 
@@ -289,7 +289,7 @@ print_cset(basic_io::printer & printer,
        i != cs.files_added.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::add_file, file_path(i->first));
+      st.push_file_pair(syms::add_file, i->first);
       st.push_hex_pair(syms::content, i->second.inner());
       printer.print_stanza(st);
     }
@@ -298,7 +298,7 @@ print_cset(basic_io::printer & printer,
        i != cs.deltas_applied.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::patch, file_path(i->first));
+      st.push_file_pair(syms::patch, i->first);
       st.push_hex_pair(syms::from, i->second.first.inner());
       st.push_hex_pair(syms::to, i->second.second.inner());
       printer.print_stanza(st);
@@ -308,7 +308,7 @@ print_cset(basic_io::printer & printer,
        i != cs.attrs_cleared.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::clear, file_path(i->first));
+      st.push_file_pair(syms::clear, i->first);
       st.push_str_pair(syms::attr, i->second());
       printer.print_stanza(st);
     }
@@ -317,7 +317,7 @@ print_cset(basic_io::printer & printer,
        i != cs.attrs_set.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_file_pair(syms::set, file_path(i->first.first));
+      st.push_file_pair(syms::set, i->first.first);
       st.push_str_pair(syms::attr, i->first.second());
       st.push_str_pair(syms::value, i->second());
       printer.print_stanza(st);
