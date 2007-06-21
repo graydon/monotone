@@ -237,15 +237,13 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   I(roster.has_node(nid));
 
   file_path fp;
-  split_path sp;
   roster.get_name(nid, fp);
-  fp.split(sp);
 
   if (empty())
     {
       if (depth != -1)
         {
-          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          int path_depth = fp.depth();
           if (path_depth <= depth + 1)
             {
               L(FL("depth includes nid %d path '%s'") % nid % fp);
@@ -321,27 +319,25 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
 bool
 path_restriction::includes(file_path const & pth) const
 {
-  split_path sp;
-  pth.split(sp);
   if (empty())
     {
       if (depth != -1)
         {
-          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          int path_depth = pth.depth();
           if (path_depth <= depth + 1)
             {
-              L(FL("depth includes path '%s'") % file_path(sp));
+              L(FL("depth includes path '%s'") % pth);
               return true;
             }
           else
             {
-              L(FL("depth excludes path '%s'") % file_path(sp));
+              L(FL("depth excludes path '%s'") % pth);
               return false;
             }
         }
       else
         {
-          L(FL("empty include of path '%s'") % file_path(sp));
+          L(FL("empty include of path '%s'") % pth);
           return true;
         }
     }
@@ -353,10 +349,11 @@ path_restriction::includes(file_path const & pth) const
   // children"
 
   int path_depth = 0;
-  while (!sp.empty() && (depth == -1 || path_depth <= depth + 1))
+  file_path fp = pth;
+  while (depth == -1 || path_depth <= depth + 1)
     {
       map<file_path, restricted_path::status>::const_iterator 
-        r = path_map.find(file_path(sp));
+        r = path_map.find(fp);
 
       if (r != path_map.end())
         {
@@ -372,7 +369,9 @@ path_restriction::includes(file_path const & pth) const
             }
         }
 
-      sp.pop_back();
+      if (fp.empty())
+        break;
+      fp = fp.dirname();
       path_depth++;
     }
 

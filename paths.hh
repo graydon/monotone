@@ -195,8 +195,18 @@ public:
   file_path operator /(file_path const & to_append) const;
 
   void split(split_path & sp) const;
-  file_path dirname() const;
 
+  // these functions could be defined on any_path but are only needed
+  // for file_path, and not defining them for system_path gets us out
+  // of nailing down the semantics near the absolute root.
+
+  // returns a path with the last component removed.
+  file_path dirname() const;
+  // returns the number of /-separated components of the path.
+  // The empty path has depth zero.
+  unsigned int depth() const;
+
+  // ordering...
   bool operator ==(const file_path & other) const
   { return data == other.data; }
 

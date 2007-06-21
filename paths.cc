@@ -508,6 +508,22 @@ file_path::dirname() const
   return file_path(s, 0, sep);
 }
 
+
+// count the number of /-separated components of the path.
+unsigned int
+file_path::depth() const
+{
+  if (data().empty())
+    return 0;
+
+  unsigned int components = 1;
+  for (string::const_iterator p = data().begin(); p != data().end(); p++)
+    if (*p == '/')
+      components++;
+
+  return components;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
 // this code must be superfast when there is no conversion needed
@@ -1345,7 +1361,6 @@ UNIT_TEST(paths, basename)
   initial_abs_path.unset();
 }
 
-
 UNIT_TEST(paths, dirname)
 {
   struct t
@@ -1369,6 +1384,18 @@ UNIT_TEST(paths, dirname)
       UNIT_TEST_CHECK_MSG(dn == file_path_internal(p->out),
                           FL("dirname('%s') = '%s' (expect '%s')")
                           % p->in % dn % p->out);
+    }
+}
+
+UNIT_TEST(paths, depth)
+{
+  char const * const cases[] = {"", "foo", "foo/bar", "foo/bar/baz", 0};
+  for (unsigned int i = 0; cases[i]; i++)
+    {
+      file_path fp = file_path_internal(cases[i]);
+      unsigned int d = fp.depth();
+      UNIT_TEST_CHECK_MSG(d == i,
+                          FL("depth('%s') = %d (expect %d)") % fp % d % i);
     }
 }
 
