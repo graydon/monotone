@@ -92,15 +92,15 @@ changes_summary::add_change_set(cset const & c)
 
 static void
 print_indented_set(ostream & os,
-                   path_set const & s,
+                   set<file_path> const & s,
                    size_t max_cols)
 {
   size_t cols = 8;
   os << "       ";
-  for (path_set::const_iterator i = s.begin();
+  for (set<file_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const string str = lexical_cast<string>(file_path(*i));
+      const string str = lexical_cast<string>(*i);
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -125,17 +125,17 @@ changes_summary::print(ostream & os, size_t max_cols) const
   if (! cs.nodes_renamed.empty())
     {
       os << _("Renamed entries:") << '\n';
-      for (map<split_path, split_path>::const_iterator
+      for (map<file_path, file_path>::const_iterator
            i = cs.nodes_renamed.begin();
            i != cs.nodes_renamed.end(); i++)
-        os << "        " << file_path(i->first)
-           << " to " << file_path(i->second) << '\n';
+        os << "        " << i->first
+           << " to " << i->second << '\n';
     }
 
   if (! cs.files_added.empty())
     {
-      path_set tmp;
-      for (map<split_path, file_id>::const_iterator
+      set<file_path> tmp;
+      for (map<file_path, file_id>::const_iterator
              i = cs.files_added.begin();
            i != cs.files_added.end(); ++i)
         tmp.insert(i->first);
@@ -151,8 +151,8 @@ changes_summary::print(ostream & os, size_t max_cols) const
 
   if (! cs.deltas_applied.empty())
     {
-      path_set tmp;
-      for (map<split_path, pair<file_id, file_id> >::const_iterator
+      set<file_path> tmp;
+      for (map<file_path, pair<file_id, file_id> >::const_iterator
              i = cs.deltas_applied.begin();
            i != cs.deltas_applied.end(); ++i)
         tmp.insert(i->first);
@@ -162,13 +162,13 @@ changes_summary::print(ostream & os, size_t max_cols) const
 
   if (! cs.attrs_set.empty() || ! cs.attrs_cleared.empty())
     {
-      path_set tmp;
-      for (set<pair<split_path, attr_key> >::const_iterator
+      set<file_path> tmp;
+      for (set<pair<file_path, attr_key> >::const_iterator
              i = cs.attrs_cleared.begin();
            i != cs.attrs_cleared.end(); ++i)
         tmp.insert(i->first);
 
-      for (map<pair<split_path, attr_key>, attr_value>::const_iterator
+      for (map<pair<file_path, attr_key>, attr_value>::const_iterator
              i = cs.attrs_set.begin();
            i != cs.attrs_set.end(); ++i)
         tmp.insert(i->first.first);
@@ -183,7 +183,7 @@ do_external_diff(cset const & cs,
                  app_state & app,
                  bool new_is_archived)
 {
-  for (map<split_path, pair<file_id, file_id> >::const_iterator
+  for (map<file_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -202,7 +202,7 @@ do_external_diff(cset const & cs,
         }
       else
         {
-          read_data(file_path(delta_entry_path(i)), data_new);
+          read_data(delta_entry_path(i), data_new);
         }
 
       bool is_binary = false;
@@ -210,7 +210,7 @@ do_external_diff(cset const & cs,
           guess_binary(data_new()))
         is_binary = true;
 
-      app.lua.hook_external_diff(file_path(delta_entry_path(i)),
+      app.lua.hook_external_diff(delta_entry_path(i),
                                  data_old,
                                  data_new,
                                  is_binary,
@@ -226,13 +226,13 @@ dump_diffs(cset const & cs,
            app_state & app,
            bool new_is_archived,
            std::ostream & output,
-           set<split_path> const & paths,
+           set<file_path> const & paths,
            bool limit_paths = false)
 {
   // 60 is somewhat arbitrary, but less than 80
   string patch_sep = string(60, '=');
 
-  for (map<split_path, file_id>::const_iterator
+  for (map<file_path, file_id>::const_iterator
          i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
@@ -251,7 +251,7 @@ dump_diffs(cset const & cs,
         }
       else
         {
-          read_data(file_path(i->first), unpacked);
+          read_data(i->first, unpacked);
         }
 
       std::string pattern("");
@@ -259,24 +259,24 @@ dump_diffs(cset const & cs,
         app.lua.hook_get_encloser_pattern(file_path(i->first),
                                           pattern);
 
-      make_diff(file_path(i->first).as_internal(),
-                file_path(i->first).as_internal(),
+      make_diff(i->first.as_internal(),
+                i->first.as_internal(),
                 i->second,
                 i->second,
                 data(), unpacked,
                 output, app.opts.diff_format, pattern);
     }
 
-  map<split_path, split_path> reverse_rename_map;
+  map<file_path, file_path> reverse_rename_map;
 
-  for (map<split_path, split_path>::const_iterator
+  for (map<file_path, file_path>::const_iterator
          i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
       reverse_rename_map.insert(make_pair(i->second, i->first));
     }
 
-  for (map<split_path, pair<file_id, file_id> >::const_iterator
+  for (map<file_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
@@ -299,23 +299,23 @@ dump_diffs(cset const & cs,
         }
       else
         {
-          read_data(file_path(delta_entry_path(i)), data_new);
+          read_data(delta_entry_path(i), data_new);
         }
 
-      split_path dst_path = delta_entry_path(i);
-      split_path src_path = dst_path;
-      map<split_path, split_path>::const_iterator re;
+      file_path dst_path = delta_entry_path(i);
+      file_path src_path = dst_path;
+      map<file_path, file_path>::const_iterator re;
       re = reverse_rename_map.find(dst_path);
       if (re != reverse_rename_map.end())
         src_path = re->second;
 
       std::string pattern("");
       if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(file_path(src_path),
+        app.lua.hook_get_encloser_pattern(src_path,
                                           pattern);
 
-      make_diff(file_path(src_path).as_internal(),
-                file_path(dst_path).as_internal(),
+      make_diff(src_path.as_internal(),
+                dst_path.as_internal(),
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
@@ -329,7 +329,7 @@ dump_diffs(cset const & cs,
            bool new_is_archived,
            std::ostream & output)
 {
-  set<split_path> dummy;
+  set<file_path> dummy;
   dump_diffs(cs, app, new_is_archived, output, dummy);
 }
 
@@ -764,7 +764,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
       revision_id const & rid = frontier.top().second;
 
       bool print_this = mask.empty();
-      set<split_path> diff_paths;
+      set<file_path> diff_paths;
 
       if (null_id(rid) || seen.find(rid) != seen.end())
         {
@@ -820,9 +820,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                       print_this = true;
                       if (app.opts.diffs)
                         {
-                          split_path sp;
-                          roster.get_name(*n, sp);
-                          diff_paths.insert(sp);
+                          file_path fp;
+                          roster.get_name(*n, fp);
+                          diff_paths.insert(fp);
                         }
                     }
                 }

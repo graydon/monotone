@@ -36,8 +36,8 @@ check_normalized(cset const & cs)
 
   // no file appears in both the "added" list and the "patched" list
   {
-    map<split_path, file_id>::const_iterator a = cs.files_added.begin();
-    map<split_path, pair<file_id, file_id> >::const_iterator
+    map<file_path, file_id>::const_iterator a = cs.files_added.begin();
+    map<file_path, pair<file_id, file_id> >::const_iterator
       d = cs.deltas_applied.begin();
     while (a != cs.files_added.end() && d != cs.deltas_applied.end())
       {
@@ -55,8 +55,8 @@ check_normalized(cset const & cs)
 
   // no file+attr pair appears in both the "set" list and the "cleared" list
   {
-    set<pair<split_path, attr_key> >::const_iterator c = cs.attrs_cleared.begin();
-    map<pair<split_path, attr_key>, attr_value>::const_iterator
+    set<pair<file_path, attr_key> >::const_iterator c = cs.attrs_cleared.begin();
+    map<pair<file_path, attr_key>, attr_value>::const_iterator
       s = cs.attrs_set.begin();
     while (c != cs.attrs_cleared.end() && s != cs.attrs_set.end())
       {
@@ -98,28 +98,28 @@ cset::clear()
 struct
 detach
 {
-  detach(split_path const & src)
+  detach(file_path const & src)
     : src_path(src),
       reattach(false)
   {}
 
-  detach(split_path const & src,
-         split_path const & dst)
+  detach(file_path const & src,
+         file_path const & dst)
     : src_path(src),
       reattach(true),
       dst_path(dst)
   {}
 
-  split_path src_path;
+  file_path src_path;
   bool reattach;
-  split_path dst_path;
+  file_path dst_path;
 
   bool operator<(struct detach const & other) const
   {
     // We sort detach operations bottom-up by src path
     // SPEEDUP?: simply sort by path.size() rather than full lexicographical
     // comparison?
-    return src_path > other.src_path;
+    return other.src_path < src_path;
   }
 };
 
@@ -127,12 +127,12 @@ struct
 attach
 {
   attach(node_id n,
-         split_path const & p)
+         file_path const & p)
     : node(n), path(p)
   {}
 
   node_id node;
-  split_path path;
+  file_path path;
 
   bool operator<(struct attach const & other) const
   {
@@ -168,11 +168,11 @@ cset::apply_to(editable_tree & t) const
   // repeatedly from the same place, so they're impossible anyway, but we need
   // to error out if someone tries to add them.
 
-  for (path_set::const_iterator i = dirs_added.begin();
+  for (set<file_path>::const_iterator i = dirs_added.begin();
        i != dirs_added.end(); ++i)
     safe_insert(attaches, attach(t.create_dir_node(), *i));
 
-  for (map<split_path, file_id>::const_iterator i = files_added.begin();
+  for (map<file_path, file_id>::const_iterator i = files_added.begin();
        i != files_added.end(); ++i)
     safe_insert(attaches, attach(t.create_file_node(i->second), i->first));
 
@@ -181,11 +181,11 @@ cset::apply_to(editable_tree & t) const
   // existing paths into the set of pending detaches, to be executed
   // bottom-up.
 
-  for (path_set::const_iterator i = nodes_deleted.begin();
+  for (set<file_path>::const_iterator i = nodes_deleted.begin();
        i != nodes_deleted.end(); ++i)
     safe_insert(detaches, detach(*i));
 
-  for (map<split_path, split_path>::const_iterator i = nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = nodes_renamed.begin();
        i != nodes_renamed.end(); ++i)
     safe_insert(detaches, detach(i->first, i->second));
 
@@ -217,15 +217,15 @@ cset::apply_to(editable_tree & t) const
 
 
   // Execute all the in-place edits
-  for (map<split_path, pair<file_id, file_id> >::const_iterator i = deltas_applied.begin();
+  for (map<file_path, pair<file_id, file_id> >::const_iterator i = deltas_applied.begin();
        i != deltas_applied.end(); ++i)
     t.apply_delta(i->first, i->second.first, i->second.second);
 
-  for (set<pair<split_path, attr_key> >::const_iterator i = attrs_cleared.begin();
+  for (set<pair<file_path, attr_key> >::const_iterator i = attrs_cleared.begin();
        i != attrs_cleared.end(); ++i)
     t.clear_attr(i->first, i->second);
 
-  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = attrs_set.begin();
+  for (map<pair<file_path, attr_key>, attr_value>::const_iterator i = attrs_set.begin();
        i != attrs_set.end(); ++i)
     t.set_attr(i->first.first, i->first.second, i->second);
 
@@ -260,7 +260,7 @@ void
 print_cset(basic_io::printer & printer,
            cset const & cs)
 {
-  for (path_set::const_iterator i = cs.nodes_deleted.begin();
+  for (set<file_path>::const_iterator i = cs.nodes_deleted.begin();
        i != cs.nodes_deleted.end(); ++i)
     {
       basic_io::stanza st;
@@ -268,7 +268,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     {
       basic_io::stanza st;
@@ -277,7 +277,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (path_set::const_iterator i = cs.dirs_added.begin();
+  for (set<file_path>::const_iterator i = cs.dirs_added.begin();
        i != cs.dirs_added.end(); ++i)
     {
       basic_io::stanza st;
@@ -285,7 +285,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+  for (map<file_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     {
       basic_io::stanza st;
@@ -294,7 +294,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+  for (map<file_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     {
       basic_io::stanza st;
@@ -304,7 +304,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+  for (set<pair<file_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     {
       basic_io::stanza st;
@@ -313,7 +313,7 @@ print_cset(basic_io::printer & printer,
       printer.print_stanza(st);
     }
 
-  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+  for (map<pair<file_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     {
       basic_io::stanza st;
@@ -326,11 +326,11 @@ print_cset(basic_io::printer & printer,
 
 
 static inline void
-parse_path(basic_io::parser & parser, split_path & sp)
+parse_path(basic_io::parser & parser, file_path & sp)
 {
   string s;
   parser.str(s);
-  file_path_internal(s).split(sp);
+  sp = file_path_internal(s);
 }
 
 void
@@ -341,23 +341,23 @@ parse_cset(basic_io::parser & parser,
   string t1, t2;
   MM(t1);
   MM(t2);
-  split_path p1, p2;
+  file_path p1, p2;
   MM(p1);
   MM(p2);
 
-  split_path prev_path;
+  file_path prev_path;
   MM(prev_path);
-  pair<split_path, attr_key> prev_pair;
+  pair<file_path, attr_key> prev_pair;
   MM(prev_pair.first);
   MM(prev_pair.second);
 
-  // we make use of the fact that a valid split_path is never empty
+  // we make use of the fact that a valid file_path is never empty
   prev_path.clear();
   while (parser.symp(syms::delete_node))
     {
       parser.sym();
       parse_path(parser, p1);
-      I(prev_path.empty() || p1 > prev_path);
+      I(prev_path.empty() || prev_path < p1);
       prev_path = p1;
       safe_insert(cs.nodes_deleted, p1);
     }
@@ -367,7 +367,7 @@ parse_cset(basic_io::parser & parser,
     {
       parser.sym();
       parse_path(parser, p1);
-      I(prev_path.empty() || p1 > prev_path);
+      I(prev_path.empty() || prev_path < p1);
       prev_path = p1;
       parser.esym(syms::to);
       parse_path(parser, p2);
@@ -379,7 +379,7 @@ parse_cset(basic_io::parser & parser,
     {
       parser.sym();
       parse_path(parser, p1);
-      I(prev_path.empty() || p1 > prev_path);
+      I(prev_path.empty() || prev_path < p1);
       prev_path = p1;
       safe_insert(cs.dirs_added, p1);
     }
@@ -389,7 +389,7 @@ parse_cset(basic_io::parser & parser,
     {
       parser.sym();
       parse_path(parser, p1);
-      I(prev_path.empty() || p1 > prev_path);
+      I(prev_path.empty() || prev_path < p1);
       prev_path = p1;
       parser.esym(syms::content);
       parser.hex(t1);
@@ -401,7 +401,7 @@ parse_cset(basic_io::parser & parser,
     {
       parser.sym();
       parse_path(parser, p1);
-      I(prev_path.empty() || p1 > prev_path);
+      I(prev_path.empty() || prev_path < p1);
       prev_path = p1;
       parser.esym(syms::from);
       parser.hex(t1);
@@ -418,7 +418,7 @@ parse_cset(basic_io::parser & parser,
       parse_path(parser, p1);
       parser.esym(syms::attr);
       parser.str(t1);
-      pair<split_path, attr_key> new_pair(p1, attr_key(t1));
+      pair<file_path, attr_key> new_pair(p1, attr_key(t1));
       I(prev_pair.first.empty() || new_pair > prev_pair);
       prev_pair = new_pair;
       safe_insert(cs.attrs_cleared, new_pair);
@@ -431,7 +431,7 @@ parse_cset(basic_io::parser & parser,
       parse_path(parser, p1);
       parser.esym(syms::attr);
       parser.str(t1);
-      pair<split_path, attr_key> new_pair(p1, attr_key(t1));
+      pair<file_path, attr_key> new_pair(p1, attr_key(t1));
       I(prev_pair.first.empty() || new_pair > prev_pair);
       prev_pair = new_pair;
       parser.esym(syms::value);
@@ -485,21 +485,17 @@ setup_roster(roster_t & r, file_id const & fid, node_id_source & nis)
   r = roster_t();
 
   {
-    split_path sp;
-    file_path().split(sp);
-    r.attach_node(r.create_dir_node(nis), sp);
+    r.attach_node(r.create_dir_node(nis), file_path_internal(""));
   }
   {
-    split_path sp;
-    file_path_internal("foo").split(sp);
-    r.attach_node(r.create_dir_node(nis), sp);
-    r.set_attr(sp, attr_key("attr_dir"), attr_value("value_dir"));
+    file_path fp = file_path_internal("foo");
+    r.attach_node(r.create_dir_node(nis), fp);
+    r.set_attr(fp, attr_key("attr_dir"), attr_value("value_dir"));
   }
   {
-    split_path sp;
-    file_path_internal("foo/bar").split(sp);
-    r.attach_node(r.create_file_node(fid, nis), sp);
-    r.set_attr(sp, attr_key("attr_file"), attr_value("value_file"));
+    file_path fp = file_path_internal("foo/bar");
+    r.attach_node(r.create_file_node(fid, nis), fp);
+    r.set_attr(fp, attr_key("attr_file"), attr_value("value_file"));
   }
 }
 
@@ -691,18 +687,18 @@ UNIT_TEST(cset, cset_written)
   {
     L(FL("TEST: cset writing - normalisation"));
     cset cs; MM(cs);
-    split_path foo, bar, quux, foo_quux, idle, fish, womble, policeman;
     file_id f1(string("1234567800000000000000000000000000000000"));
     file_id f2(string("9876543212394657263900000000000000000000"));
     file_id f3(string("0000000000011111111000000000000000000000"));
-    file_path_internal("foo").split(foo);
-    file_path_internal("foo/quux").split(foo_quux);
-    file_path_internal("bar").split(bar);
-    file_path_internal("quux").split(quux);
-    file_path_internal("idle").split(idle);
-    file_path_internal("fish").split(fish);
-    file_path_internal("womble").split(womble);
-    file_path_internal("policeman").split(policeman);
+
+    file_path foo = file_path_internal("foo");
+    file_path foo_quux = file_path_internal("foo/quux");
+    file_path bar = file_path_internal("bar");
+    file_path quux = file_path_internal("quux");
+    file_path idle = file_path_internal("idle");
+    file_path fish = file_path_internal("fish");
+    file_path womble = file_path_internal("womble");
+    file_path policeman = file_path_internal("policeman");
 
     cs.dirs_added.insert(foo_quux);
     cs.dirs_added.insert(foo);
@@ -766,12 +762,11 @@ UNIT_TEST(cset, basic_csets)
   file_id f1(string("0000000000000000000000000000000000000001"));
   file_id f2(string("0000000000000000000000000000000000000002"));
 
-  split_path root, foo, foo_bar, baz, quux;
-  file_path().split(root);
-  file_path_internal("foo").split(foo);
-  file_path_internal("foo/bar").split(foo_bar);
-  file_path_internal("baz").split(baz);
-  file_path_internal("quux").split(quux);
+  file_path root;
+  file_path foo = file_path_internal("foo");
+  file_path foo_bar = file_path_internal("foo/bar");
+  file_path baz = file_path_internal("baz");
+  file_path quux = file_path_internal("quux");
 
   // some basic tests that should succeed
   {
@@ -819,8 +814,7 @@ UNIT_TEST(cset, basic_csets)
 
   {
     L(FL("TEST: cset rename dir"));
-    split_path quux_bar;
-    file_path_internal("quux/bar").split(quux_bar);
+    file_path quux_bar = file_path_internal("quux/bar");
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
     cs.nodes_renamed.insert(make_pair(foo, quux));
@@ -877,18 +871,16 @@ UNIT_TEST(cset, basic_csets)
   {
     L(FL("TEST: renaming at different levels"));
     setup_roster(r, f1, nis);
-    split_path quux_sub, foo_sub, foo_sub_deep, foo_subsub,
-               foo_subsub_deep, quux_bar, foo_bar,
-               quux_sub_thing, foo_sub_thing;
-    file_path_internal("quux/bar").split(quux_bar);
-    file_path_internal("foo/bar").split(foo_bar);
-    file_path_internal("quux/sub").split(quux_sub);
-    file_path_internal("foo/sub").split(foo_sub);
-    file_path_internal("foo/sub/thing").split(foo_sub_thing);
-    file_path_internal("quux/sub/thing").split(quux_sub_thing);
-    file_path_internal("foo/sub/deep").split(foo_sub_deep);
-    file_path_internal("foo/subsub").split(foo_subsub);
-    file_path_internal("foo/subsub/deep").split(foo_subsub_deep);
+
+    file_path quux_bar = file_path_internal("quux/bar");
+    file_path foo_bar = file_path_internal("foo/bar");
+    file_path quux_sub = file_path_internal("quux/sub");
+    file_path foo_sub = file_path_internal("foo/sub");
+    file_path foo_sub_thing = file_path_internal("foo/sub/thing");
+    file_path quux_sub_thing = file_path_internal("quux/sub/thing");
+    file_path foo_sub_deep = file_path_internal("foo/sub/deep");
+    file_path foo_subsub = file_path_internal("foo/subsub");
+    file_path foo_subsub_deep = file_path_internal("foo/subsub/deep");
 
     { // build a tree
       cset cs; MM(cs);
@@ -945,12 +937,11 @@ UNIT_TEST(cset, invalid_csets)
   file_id f1(string("0000000000000000000000000000000000000001"));
   file_id f2(string("0000000000000000000000000000000000000002"));
 
-  split_path root, foo, foo_bar, baz, quux;
-  file_path().split(root);
-  file_path_internal("foo").split(foo);
-  file_path_internal("foo/bar").split(foo_bar);
-  file_path_internal("baz").split(baz);
-  file_path_internal("quux").split(quux);
+  file_path root;
+  file_path foo = file_path_internal("foo");
+  file_path foo_bar = file_path_internal("foo/bar");
+  file_path baz = file_path_internal("baz");
+  file_path quux = file_path_internal("quux");
 
   {
     L(FL("TEST: can't double-delete"));
@@ -1016,8 +1007,7 @@ UNIT_TEST(cset, invalid_csets)
     L(FL("TEST: can't rename 'a' 'b'; rename 'a/foo' 'b/foo'"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    split_path baz_bar;
-    file_path_internal("baz/bar").split(baz_bar);
+    file_path baz_bar = file_path_internal("baz/bar");
     cs.nodes_renamed.insert(make_pair(foo, baz));
     cs.nodes_renamed.insert(make_pair(foo_bar, baz_bar));
     UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
@@ -1093,8 +1083,7 @@ UNIT_TEST(cset, invalid_csets)
     // for this test, make sure original roster has no contents
     r = roster_t();
     cset cs; MM(cs);
-    split_path sp;
-    file_path_internal("blah/blah/blah").split(sp);
+    file_path sp = file_path_internal("blah/blah/blah");
     cs.dirs_added.insert(sp);
     UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
@@ -1102,8 +1091,7 @@ UNIT_TEST(cset, invalid_csets)
     L(FL("TEST: can't move a directory underneath itself"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    split_path foo_blah;
-    file_path_internal("foo/blah").split(foo_blah);
+    file_path foo_blah = file_path_internal("foo/blah");
     cs.nodes_renamed.insert(make_pair(foo, foo_blah));
     UNIT_TEST_CHECK_THROW(cs.apply_to(tree), logic_error);
   }
@@ -1118,15 +1106,13 @@ UNIT_TEST(cset, root_dir)
 
   file_id f1(string("0000000000000000000000000000000000000001"));
 
-  split_path root, baz;
-  file_path().split(root);
-  file_path_internal("baz").split(baz);
+  file_path root, baz = file_path_internal("baz");
 
   {
     L(FL("TEST: can rename root"));
     setup_roster(r, f1, nis);
     cset cs; MM(cs);
-    split_path sp1, sp2;
+    file_path sp1, sp2;
     cs.dirs_added.insert(root);
     cs.nodes_renamed.insert(make_pair(root, baz));
     cs.apply_to(tree);

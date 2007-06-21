@@ -16,8 +16,6 @@ ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(ace);                  // unknown string in ACE form
 ATOMIC(symbol);               // valid basic io symbol (alphanumeric or _ chars)
 
-ATOMIC(path_component);       // piece of a path (see paths.hh)
-
 ATOMIC_NOVERIFY(id);          // hash of data
 ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas

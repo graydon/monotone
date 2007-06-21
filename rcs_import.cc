@@ -1012,7 +1012,7 @@ cluster_consumer
   app_state & app;
   string const & branchname;
   cvs_branch const & branch;
-  set<split_path> created_dirs;
+  set<file_path> created_dirs;
   map<cvs_path, cvs_version> live_files;
   ticker & n_revisions;
 
@@ -1043,7 +1043,7 @@ cluster_consumer
                    ticker & n_revs);
 
   void consume_cluster(cvs_cluster const & c);
-  void add_missing_parents(split_path const & sp, cset & cs);
+  void add_missing_parents(file_path const & sp, cset & cs);
   void build_cset(cvs_cluster const & c, cset & cs);
   void store_auxiliary_certs(prepared_revision const & p);
   void store_revisions();
@@ -1380,21 +1380,16 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
 }
 
 void
-cluster_consumer::add_missing_parents(split_path const & sp, cset & cs)
+cluster_consumer::add_missing_parents(file_path const & path, cset & cs)
 {
-  split_path tmp(sp);
-  if (tmp.empty())
+  if (created_dirs.find(path) != created_dirs.end())
     return;
-  tmp.pop_back();
-  while (!tmp.empty())
-    {
-      if (created_dirs.find(tmp) == created_dirs.end())
-        {
-          safe_insert(created_dirs, tmp);
-          safe_insert(cs.dirs_added, tmp);
-        }
-      tmp.pop_back();
-    }
+
+  if (!path.empty())
+    add_missing_parents(path.dirname(), cs);
+
+  safe_insert(created_dirs, path);
+  safe_insert(cs.dirs_added, path);
 }
 
 void
@@ -1405,8 +1400,6 @@ cluster_consumer::build_cset(cvs_cluster const & c,
        i != c.entries.end(); ++i)
     {
       file_path pth = file_path_internal(cvs.path_interner.lookup(i->first));
-      split_path sp;
-      pth.split(sp);
 
       file_id fid(cvs.file_version_interner.lookup(i->second.version));
       if (i->second.live)
@@ -1414,9 +1407,9 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           map<cvs_path, cvs_version>::const_iterator e = live_files.find(i->first);
           if (e == live_files.end())
             {
-              add_missing_parents(sp, cs);
+              add_missing_parents(pth.dirname(), cs);
               L(FL("adding entry state '%s' on '%s'") % fid % pth);
-              safe_insert(cs.files_added, make_pair(sp, fid));
+              safe_insert(cs.files_added, make_pair(pth, fid));
               live_files[i->first] = i->second.version;
             }
           else if (e->second != i->second.version)
@@ -1425,7 +1418,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
               L(FL("applying state delta on '%s' : '%s' -> '%s'")
                 % pth % old_fid % fid);
               safe_insert(cs.deltas_applied,
-                          make_pair(sp, make_pair(old_fid, fid)));
+                          make_pair(pth, make_pair(old_fid, fid)));
               live_files[i->first] = i->second.version;
             }
         }
@@ -1435,7 +1428,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           if (e != live_files.end())
             {
               L(FL("deleting entry state '%s' on '%s'") % fid % pth);
-              safe_insert(cs.nodes_deleted, sp);
+              safe_insert(cs.nodes_deleted, pth);
               live_files.erase(i->first);
             }
         }

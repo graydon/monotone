@@ -311,10 +311,8 @@ UNIT_TEST(packet, roundabout)
     // a rdata packet
     revision_t rev;
     rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-    split_path sp;
-    file_path_internal("").split(sp);
     shared_ptr<cset> cs(new cset);
-    cs->dirs_added.insert(sp);
+    cs->dirs_added.insert(file_path_internal(""));
     rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;

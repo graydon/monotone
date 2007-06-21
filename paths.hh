@@ -95,35 +95,64 @@
 //           F("my path is %s") % my_path
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
-//
-//
+
+#include <iosfwd>
+#include <string>
+#include <vector>
+
+#include "vocab.hh"
+
+// A path_component is one component of a path.  It is always utf8, may not
+// contain either kind of slash, and may not be a magic directory entry ("."
+// or "..") It _may_ be the empty string, but you only get that if you ask
+// for the basename of the root directory.  It resembles, but is not, a
+// vocab type.
+
+class any_path;
+class file_path;
+
+class path_component
+{
+public:
+  path_component() : data() {}
+  explicit path_component(utf8 const &);
+  explicit path_component(std::string const &);
+  explicit path_component(char const *);
+
+  std::string const & operator()() const { return data(); }
+  bool empty() const { return data().empty(); }
+  bool operator<(path_component const & other) const
+  { return data() < other(); }
+  bool operator==(path_component const & other) const
+  { return data() == other(); }
+  bool operator!=(path_component const & other) const
+  { return data() != other(); }
+
+  friend std::ostream & operator<<(std::ostream &, path_component const &);
+
+private:
+  utf8 data;
+
+  // constructor for use by trusted any_path and file_path operations.
+  // bypasses validation.
+  path_component(std::string const & path,
+                 std::string::size_type start,
+                 std::string::size_type stop = std::string::npos)
+    : data(path.substr(start, stop))
+  {}
+
+  friend class any_path;
+  friend class file_path;
+};
+std::ostream & operator<<(std::ostream &, path_component const &);
+template <> void dump(path_component const &, std::string &);
+
 // There is also one "not really a path" type, 'split_path'.  This is a vector
 // of path_component's, and semantically equivalent to a file_path --
 // file_path's can be split into split_path's, and split_path's can be joined
 // into file_path's.
 
-
-#include <iosfwd>
-#include <string>
-#include <vector>
-#include <set>
-
-#include "vocab.hh"
-
 typedef std::vector<path_component> split_path;
-
-const path_component the_null_component;
-
-inline bool
-null_name(path_component pc)
-{
-  return pc == the_null_component;
-}
-
-bool
-workspace_root(split_path const & sp);
-
-template <> void dump(split_path const & sp, std::string & out);
 
 // It's possible this will become a proper virtual interface in the future,
 // but since the implementation is exactly the same in all cases, there isn't
@@ -139,6 +168,8 @@ public:
   { return data(); }
   bool empty() const
   { return data().empty(); }
+  // returns the trailing component of the path
+  path_component basename() const;
 protected:
   utf8 data;
   any_path() {}
@@ -151,23 +182,58 @@ protected:
 std::ostream & operator<<(std::ostream & o, any_path const & a);
 std::ostream & operator<<(std::ostream & o, split_path const & s);
 
+template <> void dump(split_path const & sp, std::string & out);
+
 class file_path : public any_path
 {
 public:
   file_path() {}
   // join a file_path out of pieces
-  file_path(split_path const & sp);
+  explicit file_path(split_path const & sp);
 
-  // this currently doesn't do any normalization or anything.
-  file_path operator /(std::string const & to_append) const;
+  file_path operator /(path_component const & to_append) const;
+  file_path operator /(file_path const & to_append) const;
 
   void split(split_path & sp) const;
+  file_path dirname() const;
 
   bool operator ==(const file_path & other) const
   { return data == other.data; }
 
+  // the ordering on file_path is not exactly that of strings.
+  // see the "ordering" unit test in paths.cc.
   bool operator <(const file_path & other) const
-  { return data < other.data; }
+  {
+    std::string::const_iterator p = data().begin();
+    std::string::const_iterator plim = data().end();
+    std::string::const_iterator q = other.data().begin();
+    std::string::const_iterator qlim = other.data().end();
+
+    while (*p == *q && p != plim && q != qlim)
+      p++, q++;
+
+    if (p == plim && q == qlim) // equal -> not less
+      return false;
+
+    // must do end of string before everything else, or 'foo' will sort
+    // after 'foo/bar' which is not what we want.
+    if (p == plim)
+      return true;
+    if (q == qlim)
+      return false;
+
+    // the only special case needed is that / sorts before everything -
+    // this gives the effect of component-by-component comparison.
+    if (*p == '/')
+      return true;
+    if (*q == '/')
+      return false;
+
+    // ensure unsigned comparison
+    return static_cast<unsigned char>(*p) < static_cast<unsigned char>(*q);
+  }
+
+  void clear() { data = utf8(); }
 
 private:
   typedef enum { internal, external } source_type;
@@ -178,12 +244,21 @@ private:
   //   -- normalized
   //   -- assumed to be relative to the user's cwd, and munged
   //      to become relative to root of the workspace instead
-  // both types of paths:
+  // internal and external paths:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in _MTN/
   file_path(source_type type, std::string const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
+
+  // private substring constructor, does no validation.  used by dirname()
+  // and operator/ with a path_component.
+  file_path(std::string const & path,
+            std::string::size_type start,
+            std::string::size_type stop = std::string::npos)
+  {
+    data = utf8(path.substr(start, stop));
+  }
 };
 
 // these are the public file_path constructors
@@ -246,10 +321,11 @@ public:
   system_path operator /(std::string const & to_append) const;
 };
 
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename);
+template <> void dump(file_path const & sp, std::string & out);
+template <> void dump(bookkeeping_path const & sp, std::string & out);
+template <> void dump(system_path const & sp, std::string & out);
 
+// record the initial path.  must be called before any use of system_path.
 void
 save_initial_path();
 
@@ -264,15 +340,6 @@ void
 go_to_workspace(system_path const & new_workspace);
 
 void mark_std_paths_used(void);
-
-typedef std::set<split_path> path_set;
-
-void
-split_paths(std::vector<file_path> const & file_paths, path_set & split_paths);
-
-// equivalent to file_path_internal(path).split(sp) but more efficient.
-void
-internal_string_to_split_path(std::string const & path, split_path & sp);
 
 // Local Variables:
 // mode: C++
