@@ -1,0 +1,12 @@
+function note_netsync_start(session_id, my_role, sync_type, remote_host,
+                            remote_keyname, includes, excludes)
+	if netsync_info == nil then netsync_info = {} end
+	netsync_info[session_id] = remote_host
+end
+
+function note_netsync_end(session_id, status, bytes_in, bytes_out, certs_in,
+                          certs_out, revs_in, revs_out, keys_in, keys_out)
+	if netsync_info[session_id] ~= "localhost:12345" then
+		server_request_sync("push", "localhost:12345", "*", "")
+	end
+end
