@@ -5,7 +5,7 @@
 
 #include "config.h"
 
-#ifnded _FILE_OFFSET_BITS
+#ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
 
