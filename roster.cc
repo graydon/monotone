@@ -585,12 +585,16 @@ get_node_worker(roster_t const & r, file_path const & p)
   if (p.empty())
     return r.root();
 
-  node_t parent = get_node_worker(r, p.dirname());
+  file_path dir;
+  path_component base;
+  p.dirname_basename(dir, base);
+
+  node_t parent = get_node_worker(r, dir);
   if (!parent || !is_dir_t(parent))
     return node_t();
 
   dir_t pd = downcast_to_dir_t(parent);
-  dir_map::const_iterator child = pd->children.find(p.basename());
+  dir_map::const_iterator child = pd->children.find(base);
   if (child == pd->children.end())
     return node_t();
 
@@ -704,8 +708,9 @@ roster_t::replace_node_id(node_id from, node_id to)
 node_id
 roster_t::detach_node(file_path const & p)
 {
-  file_path dirname = p.dirname();
-  path_component basename = p.basename();
+  file_path dirname;
+  path_component basename;
+  p.dirname_basename(dirname, basename);
 
   I(has_root());
   if (basename.empty())
@@ -818,7 +823,12 @@ roster_t::attach_node(node_id nid, file_path const & p)
     // attaching the root node
     attach_node(nid, the_null_node, path_component());
   else
-    attach_node(nid, get_node(p.dirname())->self, p.basename());
+    {
+      file_path dir;
+      path_component base;
+      p.dirname_basename(dir, base);
+      attach_node(nid, get_node(dir)->self, base);
+    }
 }
 
 void

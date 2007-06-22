@@ -188,6 +188,10 @@ public:
 
   // returns a path with the last component removed.
   file_path dirname() const;
+
+  // does dirname() and basename() at the same time, for efficiency
+  void dirname_basename(file_path &, path_component &) const;
+  
   // returns the number of /-separated components of the path.
   // The empty path has depth zero.
   unsigned int depth() const;

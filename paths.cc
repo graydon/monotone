@@ -436,6 +436,25 @@ file_path::dirname() const
   return file_path(s, 0, sep);
 }
 
+// produce dirname and basename at the same time
+void
+file_path::dirname_basename(file_path & dir, path_component & base) const
+{
+  string const & s = data();
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    {
+      dir = file_path();
+      base = path_component(s, 0);
+    }
+  else 
+    {
+      I(sep < s.size() - 1); // last component must have at least one char
+      dir = file_path(s, 0, sep);
+      base = path_component(s, sep + 1);
+    }
+}
+
 // count the number of /-separated components of the path.
 unsigned int
 file_path::depth() const

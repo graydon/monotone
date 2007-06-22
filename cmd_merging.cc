@@ -539,9 +539,10 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
           {
             dir_t moved_root = left_roster.root();
             file_path pth = file_path_external(idx(args, 2));
-            file_path dir = pth.dirname();
-            path_component base = pth.basename();
+            file_path dir;
+            path_component base;
             MM(dir);
+            pth.dirname_basename(dir, base);
 
             N(right_roster.has_node(dir),
               F("Path %s not found in destination tree.") % pth);

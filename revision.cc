@@ -1183,8 +1183,10 @@ find_old_path_for(map<file_path, file_path> const & renames,
   if (new_path.empty())
     return new_path;
 
-  return (find_old_path_for(renames, new_path.dirname())
-          / new_path.basename());
+  file_path dir;
+  path_component base;
+  new_path.dirname_basename(dir, base);
+  return find_old_path_for(renames, dir) / base;
 }
 
 static file_path
