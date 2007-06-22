@@ -5,6 +5,10 @@
 
 #include "config.h"
 
+#ifnded _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
