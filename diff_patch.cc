@@ -651,9 +651,7 @@ content_merger::get_file_encoding(file_path const & path,
                                   roster_t const & ros)
 {
   attr_value v;
-  split_path sp;
-  path.split(sp);
-  if (ros.get_attr(sp, attr_key(constants::encoding_attribute), v))
+  if (ros.get_attr(path, attr_key(constants::encoding_attribute), v))
     return v();
   return constants::default_encoding;
 }
@@ -663,9 +661,7 @@ content_merger::attribute_manual_merge(file_path const & path,
                                        roster_t const & ros)
 {
   attr_value v;
-  split_path sp;
-  path.split(sp);
-  if (ros.get_attr(sp, attr_key(constants::manual_merge_attribute), v)
+  if (ros.get_attr(path, attr_key(constants::manual_merge_attribute), v)
       && v() == "true")
     return true;
   return false; // default: enable auto merge

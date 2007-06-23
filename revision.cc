@@ -1170,39 +1170,56 @@ not_dead_yet(node_id nid, u64 birth_rev,
 }
 
 
-static split_path
-find_old_path_for(map<split_path, split_path> const & renames,
-                  split_path const & new_path)
+static file_path
+find_old_path_for(map<file_path, file_path> const & renames,
+                  file_path const & new_path)
 {
-  split_path leader, trailer;
-  leader = new_path;
-  while (!leader.empty())
-    {
-      if (renames.find(leader) != renames.end())
-        {
-          leader = safe_get(renames, leader);
-          break;
-        }
-      path_component pc = leader.back();
-      leader.pop_back();
-      trailer.insert(trailer.begin(), pc);
-    }
-  split_path result;
-  copy(leader.begin(), leader.end(), back_inserter(result));
-  copy(trailer.begin(), trailer.end(), back_inserter(result));
-  return result;
+  map<file_path, file_path>::const_iterator i = renames.find(new_path);
+  if (i != renames.end())
+    return i->second;
+
+  // ??? root directory rename possible in the old schema?
+  // if not, do this first.
+  if (new_path.empty())
+    return new_path;
+
+  file_path dir;
+  path_component base;
+  new_path.dirname_basename(dir, base);
+  return find_old_path_for(renames, dir) / base;
 }
 
-static split_path
-find_new_path_for(map<split_path, split_path> const & renames,
-                  split_path const & old_path)
+static file_path
+find_new_path_for(map<file_path, file_path> const & renames,
+                  file_path const & old_path)
 {
-  map<split_path, split_path> reversed;
-  for (map<split_path, split_path>::const_iterator i = renames.begin();
+  map<file_path, file_path> reversed;
+  for (map<file_path, file_path>::const_iterator i = renames.begin();
        i != renames.end(); ++i)
     reversed.insert(make_pair(i->second, i->first));
   // this is a hackish kluge.  seems to work, though.
   return find_old_path_for(reversed, old_path);
+}
+
+// Recursive helper function for insert_into_roster.
+static void
+insert_parents_into_roster(roster_t & child_roster,
+                           temp_node_id_source & nis,
+                           file_path const & pth,
+                           file_path const & full)
+{
+  if (child_roster.has_node(pth))
+    {
+      E(is_dir_t(child_roster.get_node(pth)),
+        F("Directory %s for path %s cannot be added, "
+          "as there is a file in the way") % pth % full);
+      return;
+    }
+
+  if (!pth.empty())
+    insert_parents_into_roster(child_roster, nis, pth.dirname(), full);
+
+  child_roster.attach_node(child_roster.create_dir_node(nis), pth);
 }
 
 static void
@@ -1211,42 +1228,19 @@ insert_into_roster(roster_t & child_roster,
                    file_path const & pth,
                    file_id const & fid)
 {
-  split_path sp, dirname;
-  path_component basename;
-  pth.split(sp);
-
-  E(!child_roster.has_node(sp),
-    F("Path %s added to child roster multiple times") % pth);
-
-  dirname_basename(sp, dirname, basename);
-
-  {
-    split_path tmp_pth;
-    for (split_path::const_iterator i = dirname.begin(); i != dirname.end();
-         ++i)
-      {
-        tmp_pth.push_back(*i);
-        if (child_roster.has_node(tmp_pth))
-          {
-            E(is_dir_t(child_roster.get_node(tmp_pth)),
-              F("Directory for path %s cannot be added, as there is a file in the way") % pth);
-          }
-        else
-          child_roster.attach_node(child_roster.create_dir_node(nis), tmp_pth);
-      }
-  }
-
-  if (child_roster.has_node(sp))
+  if (child_roster.has_node(pth))
     {
-      node_t n = child_roster.get_node(sp);
+      node_t n = child_roster.get_node(pth);
       E(is_file_t(n),
-        F("Path %s cannot be added, as there is a directory in the way") % sp);
+        F("Path %s cannot be added, as there is a directory in the way") % pth);
       file_t f = downcast_to_file_t(n);
       E(f->content == fid,
-        F("Path %s added twice with differing content") % sp);
+        F("Path %s added twice with differing content") % pth);
+      return;
     }
-  else
-    child_roster.attach_node(child_roster.create_file_node(fid, nis), sp);
+
+  insert_parents_into_roster(child_roster, nis, pth.dirname(), pth);
+  child_roster.attach_node(child_roster.create_file_node(fid, nis), pth);
 }
 
 void
@@ -1313,8 +1307,8 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
               if (!parent_roster->has_node(n))
                 continue;
 
-              split_path sp;
-              parent_roster->get_name(n, sp);
+              file_path fp;
+              parent_roster->get_name(n, fp);
 
               // Try remapping the name.
               if (node_to_old_rev.find(j->first) != node_to_old_rev.end())
@@ -1323,15 +1317,15 @@ anc_graph::fixup_node_identities(parent_roster_map const & parent_rosters,
                   revision_id parent_rid = safe_get(node_to_old_rev, j->first);
                   rmap = renames.find(parent_rid);
                   if (rmap != renames.end())
-                    sp = find_new_path_for(rmap->second, sp);
+                    fp = find_new_path_for(rmap->second, fp);
                 }
 
               // See if we can match this node against a child.
               if ((!child_roster.has_node(n))
-                  && child_roster.has_node(sp))
+                  && child_roster.has_node(fp))
                 {
                   node_t pn = parent_roster->get_node(n);
-                  node_t cn = child_roster.get_node(sp);
+                  node_t cn = child_roster.get_node(fp);
                   if (is_file_t(pn) == is_file_t(cn))
                     {
                       child_roster.replace_node_id(cn->self, n);
@@ -1478,11 +1472,8 @@ anc_graph::construct_revisions_from_ancestry()
           temp_node_id_source nis;
 
           // all rosters shall have a root node.
-          {
-            split_path root_pth;
-            file_path().split(root_pth);
-            child_roster.attach_node(child_roster.create_dir_node(nis), root_pth);
-          }
+          child_roster.attach_node(child_roster.create_dir_node(nis),
+                                   file_path_internal(""));
 
           for (legacy::manifest_map::const_iterator i = old_child_man.begin();
                i != old_child_man.end(); ++i)
@@ -1510,9 +1501,7 @@ anc_graph::construct_revisions_from_ancestry()
                 for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
                      j != attrs.end(); ++j)
                   {
-                    split_path sp;
-                    j->first.split(sp);
-                    if (child_roster.has_node(sp))
+                    if (child_roster.has_node(j->first))
                       {
                         map<string, string> const &
                           fattrs = j->second;
@@ -1526,7 +1515,7 @@ anc_graph::construct_revisions_from_ancestry()
                                 // ignore it
                               }
                             else if (key == "execute" || key == "manual_merge")
-                              child_roster.set_attr(sp,
+                              child_roster.set_attr(j->first,
                                                     attr_key("mtn:" + key),
                                                     attr_value(k->second));
                             else
@@ -1534,7 +1523,7 @@ anc_graph::construct_revisions_from_ancestry()
                                          "please contact %s so we can work out the right way to migrate this\n"
                                          "(if you just want it to go away, see the switch --drop-attr, but\n"
                                          "seriously, if you'd like to keep it, we're happy to figure out how)")
-                                % key % file_path(sp) % PACKAGE_BUGREPORT);
+                                % key % j->first % PACKAGE_BUGREPORT);
                           }
                       }
                   }
@@ -1945,13 +1934,12 @@ void calculate_ident(revision_t const & cs,
 
 UNIT_TEST(revision, find_old_new_path_for)
 {
-  map<split_path, split_path> renames;
-  split_path foo, foo_bar, foo_baz, quux, quux_baz;
-  file_path_internal("foo").split(foo);
-  file_path_internal("foo/bar").split(foo_bar);
-  file_path_internal("foo/baz").split(foo_baz);
-  file_path_internal("quux").split(quux);
-  file_path_internal("quux/baz").split(quux_baz);
+  map<file_path, file_path> renames;
+  file_path foo = file_path_internal("foo");
+  file_path foo_bar = file_path_internal("foo/bar");
+  file_path foo_baz = file_path_internal("foo/baz");
+  file_path quux = file_path_internal("quux");
+  file_path quux_baz = file_path_internal("quux/baz");
   I(foo == find_old_path_for(renames, foo));
   I(foo == find_new_path_for(renames, foo));
   I(foo_bar == find_old_path_for(renames, foo_bar));
