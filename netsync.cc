@@ -28,6 +28,7 @@
 #include "constants.hh"
 #include "enumerator.hh"
 #include "keys.hh"
+#include "lua.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
 #include "netio.hh"
@@ -249,6 +250,29 @@ using std::vector;
 using boost::shared_ptr;
 using boost::lexical_cast;
 
+struct server_initiated_sync_request
+{
+  string what;
+  string address;
+  string include;
+  string exclude;
+};
+deque<server_initiated_sync_request> server_initiated_sync_requests;
+LUAEXT(server_request_sync, )
+{
+  char const * w = luaL_checkstring(L, 1);
+  char const * a = luaL_checkstring(L, 2);
+  char const * i = luaL_checkstring(L, 3);
+  char const * e = luaL_checkstring(L, 4);
+  server_initiated_sync_request request;
+  request.what = string(w);
+  request.address = string(a);
+  request.include = string(i);
+  request.exclude = string(e);
+  server_initiated_sync_requests.push_back(request);
+  return 0;
+}
+
 static inline void
 require(bool check, string const & context)
 {
@@ -269,8 +293,8 @@ session:
 {
   protocol_role role;
   protocol_voice const voice;
-  globish const & our_include_pattern;
-  globish const & our_exclude_pattern;
+  globish our_include_pattern;
+  globish our_exclude_pattern;
   globish_matcher our_matcher;
   app_state & app;
 
@@ -372,7 +396,8 @@ session:
           globish const & our_exclude_pattern,
           app_state & app,
           string const & peer,
-          shared_ptr<Netxx::StreamBase> sock);
+          shared_ptr<Netxx::StreamBase> sock,
+          bool initiated_by_server = false);
 
   virtual ~session();
 
@@ -477,6 +502,8 @@ session:
   void send_all_data(netcmd_item_type ty, set<id> const & items);
   void begin_service();
   bool process(transaction_guard & guard);
+
+  bool initiated_by_server;
 };
 size_t session::session_count = 0;
 
@@ -486,7 +513,8 @@ session::session(protocol_role role,
                  globish const & our_exclude_pattern,
                  app_state & app,
                  string const & peer,
-                 shared_ptr<Netxx::StreamBase> sock) :
+                 shared_ptr<Netxx::StreamBase> sock,
+                 bool initiated_by_server) :
   role(role),
   voice(voice),
   our_include_pattern(our_include_pattern),
@@ -525,7 +553,8 @@ session::session(protocol_role role,
   key_refiner(key_item, voice, *this),
   cert_refiner(cert_item, voice, *this),
   rev_refiner(revision_item, voice, *this),
-  rev_enumerator(*this, app)
+  rev_enumerator(*this, app),
+  initiated_by_server(initiated_by_server)
 {}
 
 session::~session()
@@ -1313,7 +1342,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
     }
   rebuild_merkle_trees(app, ok_branches);
 
-  setup_client_tickers();
+  if (!initiated_by_server)
+    setup_client_tickers();
 
   if (app.opts.use_transport_auth &&
       app.opts.signing_key() != "")
@@ -2494,7 +2524,8 @@ drop_session_associated_with_fd(map<Netxx::socket_type, shared_ptr<session> > & 
 static void
 arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
                                  map<Netxx::socket_type, shared_ptr<session> > & sessions,
-                                 set<Netxx::socket_type> & armed_sessions)
+                                 set<Netxx::socket_type> & armed_sessions,
+                                 transaction_guard & guard)
 {
   set<Netxx::socket_type> arm_failed;
   for (map<Netxx::socket_type,
@@ -2502,6 +2533,7 @@ arm_sessions_and_calculate_probe(Netxx::PipeCompatibleProbe & probe,
        i != sessions.end(); ++i)
     {
       i->second->maybe_step();
+      i->second->maybe_say_goodbye(guard);
       try
         {
           if (i->second->arm())
@@ -2773,7 +2805,12 @@ serve_connections(protocol_role role,
               else
                 probe.add(server);
 
-              arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+              if (!guard)
+                guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
+
+              I(guard);
+
+              arm_sessions_and_calculate_probe(probe, sessions, armed_sessions, *guard);
 
               L(FL("i/o probe with %d armed") % armed_sessions.size());
               Netxx::socket_type fd;
@@ -2790,11 +2827,6 @@ serve_connections(protocol_role role,
                   how_long = instant;
                   Netxx::Probe::ready_type event = res.second;
                   fd = res.first;
-
-                  if (!guard)
-                    guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
-
-                  I(guard);
 
                   if (fd == -1)
                     {
@@ -2851,6 +2883,42 @@ serve_connections(protocol_role role,
               while (fd != -1);
               process_armed_sessions(sessions, armed_sessions, *guard);
               reap_dead_sessions(sessions, timeout_seconds);
+
+              while (!server_initiated_sync_requests.empty())
+                {
+                  server_initiated_sync_request request
+                    = server_initiated_sync_requests.front();
+                  server_initiated_sync_requests.pop_front();
+
+                  utf8 addr(request.address);
+                  globish inc(request.include);
+                  globish exc(request.exclude);
+
+                  P(F("connecting to %s") % address());
+                  shared_ptr<Netxx::StreamBase> server
+                    = build_stream_to_server(app, inc, exc,
+                                             addr, default_port,
+                                             timeout);
+
+                  // 'false' here means not to revert changes when the SockOpt
+                  // goes out of scope.
+                  Netxx::SockOpt socket_options(server->get_socketfd(), false);
+                  socket_options.set_non_blocking();
+
+                  protocol_role role = source_and_sink_role;
+                  if (request.what == "sync")
+                    role = source_and_sink_role;
+                  else if (request.what == "push")
+                    role = source_role;
+                  else if (request.what == "pull")
+                    role = sink_role;
+
+                  shared_ptr<session> sess(new session(role, client_voice,
+                                                       inc, exc,
+                                                       app, addr(), server, true));
+
+                  sessions.insert(make_pair(server->get_socketfd(), sess));
+                }
 
               if (sessions.empty())
                 {
@@ -2927,7 +2995,7 @@ serve_single_connection(shared_ptr<session> sess,
       probe.clear();
       armed_sessions.clear();
 
-      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions);
+      arm_sessions_and_calculate_probe(probe, sessions, armed_sessions, guard);
 
       L(FL("i/o probe with %d armed") % armed_sessions.size());
       Netxx::Probe::result_type res = probe.ready((armed_sessions.empty() ? timeout
