@@ -133,8 +133,7 @@ public:
 private:
   utf8 data;
 
-  // constructor for use by trusted any_path and file_path operations.
-  // bypasses validation.
+  // constructor for use by trusted operations.  bypasses validation.
   path_component(std::string const & path,
                  std::string::size_type start,
                  std::string::size_type stop = std::string::npos)
@@ -143,6 +142,7 @@ private:
 
   friend class any_path;
   friend class file_path;
+  friend class roster_t;
 };
 std::ostream & operator<<(std::ostream &, path_component const &);
 template <> void dump(path_component const &, std::string &);

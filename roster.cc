@@ -577,40 +577,33 @@ equal_shapes(roster_t const & a, roster_t const & b)
   return true;
 }
 
-// this logic is common to get_node and has_node.  the return is NULL if the
-// target node does not exist.
-static node_t
-get_node_worker(roster_t const & r, file_path const & p)
-{
-  if (p.empty())
-    return r.root();
-
-  file_path dir;
-  path_component base;
-  p.dirname_basename(dir, base);
-
-  node_t parent = get_node_worker(r, dir);
-  if (!parent || !is_dir_t(parent))
-    return node_t();
-
-  dir_t pd = downcast_to_dir_t(parent);
-  dir_map::const_iterator child = pd->children.find(base);
-  if (child == pd->children.end())
-    return node_t();
-
-  return child->second;
-}
-
 node_t
 roster_t::get_node(file_path const & p) const
 {
   MM(*this);
   MM(p);
-  I(has_root());
 
-  node_t n = get_node_worker(*this, p);
-  I(n);
-  return n;
+  I(has_root());
+  if (p.empty())
+    return root_dir;
+
+  dir_t nd = root_dir;
+  string const & pi = p.as_internal();
+  string::size_type start = 0, stop;
+  for (;;)
+    {
+      stop = pi.find('/', start);
+      path_component pc(pi, start, (stop == string::npos
+                                    ? stop : stop - start));
+      dir_map::const_iterator child = nd->children.find(pc);
+
+      I(child != nd->children.end());
+      if (stop == string::npos)
+        return child->second;
+
+      start = stop + 1;
+      nd = downcast_to_dir_t(child->second);
+    }
 }
 
 bool
@@ -630,9 +623,33 @@ roster_t::has_node(file_path const & p) const
 {
   MM(*this);
   MM(p);
-  return static_cast<bool>(get_node_worker(*this, p));
-}
 
+  if (!has_root())
+    return false;
+  if (p.empty())
+    return true;
+  
+  dir_t nd = root_dir;
+  string const & pi = p.as_internal();
+  string::size_type start = 0, stop;
+  for (;;)
+    {
+      stop = pi.find('/', start);
+      path_component pc(pi, start, (stop == string::npos
+                                    ? stop : stop - start));
+      dir_map::const_iterator child = nd->children.find(pc);
+
+      if (child == nd->children.end())
+        return false;
+      if (stop == string::npos)
+        return true;
+      if (!is_dir_t(child->second))
+        return false;
+
+      start = stop + 1;
+      nd = downcast_to_dir_t(child->second);
+    }
+}
 
 node_t
 roster_t::get_node(node_id nid) const
@@ -646,13 +663,13 @@ roster_t::get_name(node_id nid, file_path & p) const
 {
   I(!null_node(nid));
 
-  stack<path_component> sp;
+  stack<node_t> sp;
   size_t size = 0;
 
   while (nid != root_dir->self)
     {
       node_t n = get_node(nid);
-      sp.push(n->name);
+      sp.push(n);
       size += n->name().length() + 1;
       nid = n->parent;
     }
@@ -663,14 +680,14 @@ roster_t::get_name(node_id nid, file_path & p) const
       return;
     }
 
-  I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8(sp.top()())));
+  I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8(sp.top()->name())));
 
   string tmp;
   tmp.reserve(size);
 
   for (;;)
     {
-      tmp += sp.top()();
+      tmp += sp.top()->name();
       sp.pop();
       if (sp.empty())
         break;
