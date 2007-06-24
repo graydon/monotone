@@ -1,0 +1,178 @@
+#! /usr/bin/perl
+
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+use File::Spec::Functions qw(:ALL);
+
+my $VERSION = '0.1';
+
+######################################################################
+# User options
+#
+my $help = 0;
+my $man = 0;
+my $user_config = "/etc/monotone";
+my $quiet = 0;
+my $debug = 0;
+my $monotone = "mtn";
+
+GetOptions('help|?' => \$help,
+	   'man' => \$man,
+	   'config|s=s' => \$user_config,
+	   'quiet' => \$quiet,
+	   'debug' => \$debug,
+	   'monotone=s' => \$monotone) or pod2usage(2);
+
+$SIG{HUP} = \&my_exit;
+$SIG{KILL} = \&my_exit;
+$SIG{TERM} = \&my_exit;
+$SIG{INT} = \&my_exit;
+
+######################################################################
+# Respond to user input
+#
+
+# For starters, output help if requested
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+######################################################################
+# Read the directories "read-permissions.d" and "write-permissions.d"
+# and concatenates all files found there into "read-permissions" and
+# "write-permissions", respectively.
+#
+my @files_to_clean_up = ();
+
+for my $d (("read-permissions", "write-permissions")) {
+    if (opendir D,catdir($user_config,$d.".d")) {
+	if (open OUT_PERM,">".catdir($user_config,$d)) {
+	    foreach my $d2 (readdir D) {
+		open IN_PERM,catfile($user_config,$d.".d",$d2);
+		while (<IN_PERM>) {
+		    print OUT_PERM $_;
+		}
+		print OUT_PERM "\n";
+		close IN_PERM;
+	    }
+	    close OUT_PERM;
+	}
+	closedir D;
+    }
+}
+
+######################################################################
+# Clean up.
+#
+my_exit();
+
+######################################################################
+# Subroutines
+#
+
+# my_log will simply output all it's arguments, prefixed with "Notify: ",
+# unless $quiet is true.
+sub my_log
+{
+    if (!$quiet && $#_ >= 0) {
+	print STDERR "Makepermissions: ", join("\nMakepermissions: ",
+					       split("\n",
+						     join('', @_))), "\n";
+    }
+}
+
+# my_errlog will simply output all it's arguments, prefixed with "Makepermissions: ".
+sub my_errlog
+{
+    if ($#_ >= 0) {
+	print STDERR "Makepermissions: ", join("\nMakepermissions: ",
+					       split("\n",
+						     join('', @_))), "\n";
+    }
+}
+
+# my_error will output all it's arguments, prefixed with "Makepermissions: ", then die.
+sub my_error
+{
+    my $save_syserr = "$!";
+    if ($#_ >= 0) {
+	print STDERR "Makepermissions: ", join("\nMakepermissions: ",
+					       split("\n",
+						     join('', @_))), "\n";
+    }
+    die "$save_syserr";
+}
+
+# debug will simply output all it's arguments, prefixed with "DEBUG: ",
+# when $debug is true.
+sub my_debug
+{
+    if ($debug && $#_ >= 0) {
+	print STDERR "DEBUG: ", join("\nDEBUG: ",
+				     split("\n",
+					   join('', @_))), "\n";
+    }
+}
+
+# my_system does the same thing as system, but will print a bit of debugging
+# output when $debug is true.  It will also die if the subprocess returned
+# an error code.
+sub my_system
+{
+    my $command = shift @_;
+
+    my_debug("'${command}'\n");
+    my $return = system($command);
+    my $exit = $? >> 8;
+    die "'${command}' returned with exit code $exit\n" if ($exit);
+    return $return;
+}
+
+# my_conditional_system does the same thing as system, but will print a bit
+# of debugging output when $debug is true, and will only actually run the
+# command if the condition is true.  It will also die if the subprocess
+# returned an error code.
+sub my_conditional_system
+{
+    my $condition = shift @_;
+    my $command = shift @_;
+    my $return = 0;		# exit code for 'true'
+
+    my_debug("'${command}'\n");
+    if ($condition) {
+	$return = system($command);
+	my $exit = $? >> 8;
+	die "'${command}' returned with exit code $exit\n" if ($exit);
+    } else {
+	my_debug("... not actually executed.\n");
+    }
+    return $return;
+}
+
+# my_exit removes temporary files and then exits.
+sub my_exit
+{
+    my_log("cleaning up.");
+    unlink @files_to_clean_up;
+    my_log("all done.");
+    exit(0);
+}
+
+# my_backtick does the same thing as backtick commands, but will print a bit
+# of debugging output when $debug is true.  It will also die if the subprocess
+# returned an error code.
+sub my_backtick
+{
+    my $command = shift @_;
+
+    my_debug("\`$command\`\n");
+    my @return = `$command`;
+    my $exit = $? >> 8;
+    if ($exit) {
+	my_debug(map { "> ".$_ } @ return);
+	die "'${command}' returned with exit code $exit\n";
+    }
+    return @return;
+}
+
