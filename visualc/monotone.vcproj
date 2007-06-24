@@ -69,7 +69,7 @@
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)\mtn.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Debug&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(outdir)/visualc.pdb"
 				SubSystem="1"
@@ -160,7 +160,7 @@
 				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib libiconv.lib libcharset.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/mtn.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\Release&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				GenerateMapFile="false"
 				SubSystem="1"
@@ -591,6 +591,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\schema.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\schema_migration.cc"
 				>
 			</File>
@@ -615,12 +635,52 @@
 				>
 			</File>
 			<File
+				RelativePath="..\std_hooks.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\string_queue.cc"
 				>
 			</File>
 			<File
 				RelativePath="..\win32\terminal.cc"
 				>
+			</File>
+			<File
+				RelativePath="..\test_hooks.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\transforms.cc"
@@ -637,6 +697,26 @@
 			<File
 				RelativePath="..\uri.cc"
 				>
+			</File>
+			<File
+				RelativePath="..\views.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\vocab.cc"
@@ -1073,10 +1153,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\schema.h from $(ProjectDir)\..\schema.sql"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\schema.sql schema &gt;$(ProjectDir)\..\schema.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="schema.h"
+					Description="Generating $(ProjectDir)\..\schema.c from $(ProjectDir)\..\schema.sql"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\schema.sql&quot; schema &gt;&quot;$(ProjectDir)\..\schema.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="schema.c"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1084,11 +1164,16 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\schema.sql schema &gt;$(ProjectDir)\..\schema.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="schema.h"
+					Description="Generating $(ProjectDir)\..\schema.c from $(ProjectDir)\..\schema.sql"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\schema.sql&quot; schema &gt;&quot;$(ProjectDir)\..\schema.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="schema.c"
 				/>
 			</FileConfiguration>
+		</File>
+		<File
+			RelativePath="..\specialized_lexical_cast.cc"
+			>
 		</File>
 		<File
 			RelativePath="..\std_hooks.lua"
@@ -1098,10 +1183,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\std_hooks.h from $(ProjectDir)\..\std_hooks.lua"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\std_hooks.lua std_hooks &gt;$(ProjectDir)\..\std_hooks.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="std_hooks.h"
+					Description="Generating $(ProjectDir)\..\std_hooks.c from $(ProjectDir)\..\std_hooks.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\std_hooks.lua&quot; std_hooks &gt;&quot;$(ProjectDir)\..\std_hooks.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="std_hooks.c"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1109,9 +1194,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\std_hooks.lua std_hooks &gt;$(ProjectDir)\..\std_hooks.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="std_hooks.h"
+					Description="Generating $(ProjectDir)\..\std_hooks.c from $(ProjectDir)\..\std_hooks.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\std_hooks.lua&quot; std_hooks &gt;&quot;$(ProjectDir)\..\std_hooks.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="std_hooks.c"
 				/>
 			</FileConfiguration>
 		</File>
@@ -1123,10 +1209,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\test_hooks.h from $(ProjectDir)\..\test_hooks.lua"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\test_hooks.lua test_hooks &gt;$(ProjectDir)\..\test_hooks.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="test_hooks.h"
+					Description="Generating $(ProjectDir)\..\test_hooks.c from $(ProjectDir)\..\test_hooks.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\test_hooks.lua&quot; test_hooks &gt;&quot;$(ProjectDir)\..\test_hooks.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="test_hooks.c"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1134,9 +1220,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\test_hooks.lua test_hooks &gt;$(ProjectDir)\..\test_hooks.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="test_hooks.h"
+					Description="Generating $(ProjectDir)\..\test_hooks.c from $(ProjectDir)\..\test_hooks.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\test_hooks.lua&quot; test_hooks &gt;&quot;$(ProjectDir)\..\test_hooks.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="test_hooks.c"
 				/>
 			</FileConfiguration>
 		</File>
@@ -1149,8 +1236,8 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Writing package_full_revision.cc"
-					CommandLine="copy $(ProjectDir)\..\_MTN\revision $(ProjectDir)\..\package_revision.txt&#x0D;&#x0A;$(TargetDir)\txt2c.exe --strip-trailing --no-static $(ProjectDir)\unknown_package.txt package_full_revision &gt;$(ProjectDir)\..\package_full_revision.cc&#x0D;&#x0A;$(TargetDir)\txt2c.exe --strip-trailing --no-static $(ProjectDir)\..\package_revision.txt package_revision &gt;$(ProjectDir)\..\package_revision.cc&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
+					CommandLine="copy &quot;$(ProjectDir)\..\_MTN\revision&quot; &quot;$(ProjectDir)\..\package_revision.txt&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\unknown_package.txt&quot; package_full_revision &gt;&quot;$(ProjectDir)\..\package_full_revision.cc&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\package_revision.txt&quot; package_revision &gt;&quot;$(ProjectDir)\..\package_revision.cc&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
 					Outputs="package_full_revision.cc;package_revision.cc"
 				/>
 			</FileConfiguration>
@@ -1159,7 +1246,8 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="copy $(ProjectDir)\..\MT\revision $(ProjectDir)\..\package_revision.txt&#x0D;&#x0A;$(TargetDir)\txt2c.exe --strip-trailing --no-static $(ProjectDir)\unknown_package.txt package_full_revision &gt;$(ProjectDir)\..\package_full_revision.cc&#x0D;&#x0A;$(TargetDir)\txt2c.exe --strip-trailing --no-static $(ProjectDir)\..\package_revision.txt package_revision &gt;$(ProjectDir)\..\package_revision.cc&#x0D;&#x0A;"
+					Description="Writing package_full_revision.cc"
+					CommandLine="copy &quot;$(ProjectDir)\..\_MTN\revision&quot; &quot;$(ProjectDir)\..\package_revision.txt&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\unknown_package.txt&quot; package_full_revision &gt;&quot;$(ProjectDir)\..\package_full_revision.cc&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\package_revision.txt&quot; package_revision &gt;&quot;$(ProjectDir)\..\package_revision.cc&quot;&#x0D;&#x0A;"
 					AdditionalDependencies="$(TargetDir)\txt2c.exe"
 					Outputs="package_full_revision.cc;package_revision.cc"
 				/>
@@ -1173,10 +1261,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\views.h from $(ProjectDir)\..\views.sql"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\views.sql views &gt;$(ProjectDir)\..\views.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="views.h"
+					Description="Generating $(ProjectDir)\..\views.c from $(ProjectDir)\..\views.sql"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\views.sql&quot; views &gt;&quot;$(ProjectDir)\..\views.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="views.c"
 				/>
 			</FileConfiguration>
 			<FileConfiguration
@@ -1184,9 +1272,10 @@
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\views.sql views &gt;$(ProjectDir)\..\views.h&#x0D;&#x0A;"
+					Description="Generating $(ProjectDir)\..\views.c from $(ProjectDir)\..\views.sql"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\views.sql&quot; views &gt;&quot;$(ProjectDir)\..\views.c&quot;&#x0D;&#x0A;"
 					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="views.h"
+					Outputs="views.c"
 				/>
 			</FileConfiguration>
 		</File>
