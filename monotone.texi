@@ -8907,6 +8907,15 @@ The output table will be:
 Returns true if a match for @var{regexp} is found in @var{str}, return
 false otherwise.
 
+@item server_request_sync(@var{what}, @var{address}, @var{include}, @var{exclude})
+
+Initiate a netsync connection to the server at @var{address}, with the
+given include and exclude patterns, of type @option{sync}, @option{push},
+or @option{pull}, as given by the @var{what} argument.
+
+When called by a monotone instance which is not running the @option{serve}
+command, this function has no effect.
+
 @item sleep(@var{seconds})
 
 Makes the calling process sleep for the specified number of seconds.
