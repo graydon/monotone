@@ -509,10 +509,14 @@ CMD(diff, "diff", "", CMD_REF(informative), N_("[PATH]..."),
     }
   cout << "#\n";
 
-  if (app.opts.diff_format == external_diff) {
-    do_external_diff(included, app, new_is_archived);
-  } else
-    dump_diffs(included, app, new_is_archived, cout);
+  if (app.opts.diff_format == external_diff)
+    {
+      do_external_diff(included, app, new_is_archived);
+    }
+  else
+    {
+      dump_diffs(included, app, new_is_archived, cout);
+    }
 }
 
 
