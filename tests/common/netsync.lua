@@ -26,8 +26,13 @@ end
 
 function netsync.internal.client(srv, oper, pat, n, res)
   if n == nil then n = 2 end
+  if n == 1 then
+  args = {"--rcfile=netsync.lua", "--keydir=keys",
+          "--db=test.db", oper, srv.address}
+  else
   args = {"--rcfile=netsync.lua", "--keydir=keys"..n,
           "--db=test"..n..".db", oper, srv.address}
+  end
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
