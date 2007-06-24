@@ -62,6 +62,9 @@ find_key(utf8 const & addr,
          app_state & app,
          bool needed = true)
 {
+  if (app.opts.signing_key() != "")
+    return;
+
   rsa_keypair_id key;
   if (!app.lua.hook_get_netsync_key(app.opts.bind_address,
                                     include, exclude,
