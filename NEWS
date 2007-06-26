@@ -42,6 +42,11 @@
           directory to keys/ under that directory, unless --keydir is also
           given. This is a bugfix.
 
+        - Fixed a regression in 0.35 that resulted in some databases
+          becoming significantly larger when storing new revisions. Existing
+          databases with this problem can be fixed by pulling into a fresh
+          database using 0.36.
+
         Internal
 
         - Commands are now defined as a tree of commands instead of a
