@@ -241,6 +241,9 @@ refiner::process_done_command(size_t n_items)
     }
 
   done = true;
+  
+  // we can clear up the merkle trie's memory now
+  table.clear();
 }
 
 
