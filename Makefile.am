@@ -7,7 +7,7 @@ CMD_SOURCES =								\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
-	sanity.cc sanity.hh quick_alloc.hh				\
+	sanity.cc sanity.hh quick_alloc.hh base.hh			\
 	simplestring_xform.cc simplestring_xform.hh 			\
 	constants.cc constants.hh numeric_vocab.hh 			\
 	platform.hh numeric_vocab.cc
@@ -345,8 +345,8 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS)
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
@@ -442,7 +442,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
 	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
 	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*)
+	$(wildcard $(srcdir)/debian/*) audit-includes
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -653,6 +653,13 @@ package_full_revision.txt: package_full_revision_raw.txt package_full_revision_d
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
 distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
+
+# the distcheck-hook checks for errors in the use of base.hh
+distcheck-hook:
+	cd $(srcdir) && $(SHELL) audit-includes \
+		$(sort $(mtn_SOURCES) $(unit_tests_SOURCES) $(tester_SOURCES) \
+                       $(UNIX_PLATFORM_SOURCES) $(WIN32_PLATFORM_SOURCES) \
+                       win32/main.cc unix/main.cc)
 
 # automake doesn't build html docs
 

@@ -24,10 +24,10 @@
 // if you want to *read* a patch, you will like unidiff format much better.
 // take a look in diff_patch.(cc|hh) for a nice interface to that.
 
+#include "base.hh"
 #include <algorithm>
 #include <vector>
 #include <set>
-#include <string>
 #include <sstream>
 
 #include <boost/shared_ptr.hpp>

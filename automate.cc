@@ -7,10 +7,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <iterator>
 #include <sstream>
-#include <string>
 #include <unistd.h>
 #include <vector>
 

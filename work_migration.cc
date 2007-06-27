@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "sanity.hh"
 #include "ui.hh"
 #include "simplestring_xform.hh"

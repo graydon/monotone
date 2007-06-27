@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 
+#include "base.hh"
 #include "constants.hh"
 #include "hash_map.hh"
 #include "sanity.hh"

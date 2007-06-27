@@ -1,7 +1,7 @@
 // unit tests for string_queue
 
-#include <string>
 
+#include "base.hh"
 #include "string_queue.hh"
 
 #ifdef BUILD_UNIT_TESTS

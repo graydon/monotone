@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <boost/tokenizer.hpp>
 #include "lexical_cast.hh"
 #include <sqlite3.h>

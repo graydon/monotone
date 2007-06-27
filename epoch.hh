@@ -12,7 +12,6 @@
 
 #include "vocab.hh"
 
-#include <string>
 
 // epochs are pairs (branch name, random data)
 

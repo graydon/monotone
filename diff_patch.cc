@@ -7,12 +7,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h"
 
+#include "base.hh"
 #include <algorithm>
 #include <iterator>
 #include <map>
-#include <string>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>

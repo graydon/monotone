@@ -1,3 +1,4 @@
+#include "base.hh"
 #include "mtn-sanity.hh"
 #include "ui.hh"
 #include "mt_version.hh"

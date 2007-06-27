@@ -23,7 +23,29 @@
         - Two new commands to set and drop attributes over automate:
           `automate set_attribute` and `automate drop_attribute`
 
+        - There is a new function available to the lua hooks,
+          'server_request_sync(what, address, include, exclude)', which will
+          initate a netsync connection to the server at "address", with the
+          given include and exclude patterns, and will sync, push, or pull,
+          as given in the "what" argument. If called from a monotone instance
+          which is not acting as a server, this function will do nothing.
+
+        - There is a new hook available,
+          'get_netsync_key(server, include, exclude)', which is called to
+          determine which key to use for netsync operations. Note that the
+          server calls this once at startup with the address it is listening
+          on, "*", and "" as arguments, rather than for each connection.
+
         Other
+
+        - Giving the --confdir argument will automatically set the key store
+          directory to keys/ under that directory, unless --keydir is also
+          given. This is a bugfix.
+
+        - Fixed a regression in 0.35 that resulted in some databases
+          becoming significantly larger when storing new revisions. Existing
+          databases with this problem can be fixed by pulling into a fresh
+          database using 0.36.
 
         Internal
 

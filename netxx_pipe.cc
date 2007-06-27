@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <netxx_pipe.hh>
 #include "sanity.hh"
 #include "platform.hh"

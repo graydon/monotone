@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h"
 
+#include "base.hh"
 #include <iterator>
 #include <iostream>
 #include <fstream>
@@ -221,7 +221,7 @@ cpp_main(int argc, char ** argv)
                 app.db.set_filename(app.opts.dbname);
             }
 
-          if (app.opts.key_dir_given)
+          if (app.opts.key_dir_given || app.opts.conf_dir_given)
             {
               if (!app.opts.key_dir.empty())
                 app.keys.set_key_dir(app.opts.key_dir);

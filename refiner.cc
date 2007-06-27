@@ -7,9 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <set>
-#include <string>
 #include <utility>
 
 #include <boost/shared_ptr.hpp>
@@ -241,6 +241,9 @@ refiner::process_done_command(size_t n_items)
     }
 
   done = true;
+  
+  // we can clear up the merkle trie's memory now
+  table.clear();
 }
 
 

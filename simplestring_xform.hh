@@ -2,7 +2,6 @@
 #define __SIMPLESTRING_XFORM_HH__
 
 #include <vector>
-#include <string>
 
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);

@@ -4,6 +4,7 @@
 // see the file COPYING for details
 
 #define WIN32_LEAN_AND_MEAN
+#include "base.hh"
 #include <windows.h>
 
 #include "sanity.hh"

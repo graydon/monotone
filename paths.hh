@@ -96,8 +96,6 @@
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
 
-#include <iosfwd>
-#include <string>
 
 #include "vocab.hh"
 

@@ -3,9 +3,9 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "base.hh"
 #include "sanity.hh"
 
-#include <string>
 #include <windows.h>
 
 struct table_entry

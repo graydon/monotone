@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
-#include <string>
 #include <sstream>
 
 #include <boost/dynamic_bitset.hpp>

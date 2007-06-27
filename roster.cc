@@ -7,10 +7,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <stack>
 #include <set>
-#include <string>
 #include <vector>
 #include <sstream>
 
@@ -2790,7 +2790,6 @@ void calculate_ident(roster_t const & ros,
 
 #include "roster_delta.hh"
 
-#include <string>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
 

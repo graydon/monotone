@@ -8,6 +8,7 @@
 // PURPOSE.
 
 
+#include "base.hh"
 #include "lexical_cast.hh"
 
 template<>
