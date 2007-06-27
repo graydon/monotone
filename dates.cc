@@ -7,11 +7,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "dates.hh"
 
 #include <ctime>
 #include <climits>
-#include <string>
 
 using std::string;
 

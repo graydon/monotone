@@ -7,9 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
 #include <set>
-#include <string>
 
 #include "basic_io.hh"
 #include "cset.hh"

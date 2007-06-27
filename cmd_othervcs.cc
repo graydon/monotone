@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "cmd.hh"
 #include "app_state.hh"
 #include "rcs_import.hh"

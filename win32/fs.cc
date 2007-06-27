@@ -3,9 +3,9 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "config.h"
 
 #define WIN32_LEAN_AND_MEAN
+#include "base.hh"
 #include <io.h>
 #include <errno.h>
 #include <windows.h>

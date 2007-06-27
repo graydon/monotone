@@ -3,12 +3,12 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "config.h"
 
 #ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
 #endif
 
+#include "base.hh"
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>

@@ -8,8 +8,8 @@
 // some of its text into this file and am relicensing my derivative work
 // (this file) copyright (C) 2004 graydon hoare, as LGPL also.
 
-#include "config.h"
 
+#include "base.hh"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -14,7 +14,6 @@
 // entirely clear that this matters; it is what rsync and xdelta both do
 // and it seems to work.
 
-#include <string>
 #include "numeric_vocab.hh"
 #include "sanity.hh"
 

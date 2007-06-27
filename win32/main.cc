@@ -28,9 +28,9 @@
 // data structures, so we use the lowest-level API that appears to be
 // available (GetStdHandle()/WriteFile()).
 
-#include "config.h"
 
 #define WIN32_LEAN_AND_MEAN
+#include "base.hh"
 #include <windows.h>
 #include <string.h>
 

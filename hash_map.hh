@@ -1,7 +1,6 @@
 #ifndef __HASHMAP_HH
 #define __HASHMAP_HH
 
-#include "config.h"
 
 #include <functional>
 namespace hashmap {
@@ -84,7 +83,6 @@ namespace hashmap {
 #define HASHMAP_PRESENT
 #include <ext/hash_map>
 #include <ext/hash_set>
-#include <string>
 
 namespace hashmap {
   template<>
@@ -123,7 +121,6 @@ namespace hashmap {
 #define HASHMAP_PRESENT
 #include <hash_map>
 #include <hash_set>
-#include <string>
 
 namespace hashmap {
   template<>

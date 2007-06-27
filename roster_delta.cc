@@ -10,6 +10,7 @@
 // This file contains "diff"/"patch" code that operates directly on rosters
 // (with their associated markings).
 
+#include "base.hh"
 #include <set>
 #include <map>
 

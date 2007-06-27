@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <cctype>
 #include <cstdlib>
 #include <map>
@@ -14,7 +15,6 @@
 #include <set>
 #include <sstream>
 #include <stack>
-#include <string>
 #include <iterator>
 #include <functional>
 #include <list>

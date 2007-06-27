@@ -35,7 +35,6 @@
 // for maps, but it will only work on maps that use the default (std::less)
 // sort order.
 
-#include <string>
 
 #include "lexical_cast.hh"
 

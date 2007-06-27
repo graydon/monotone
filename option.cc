@@ -1,4 +1,5 @@
 
+#include "base.hh"
 #include "file_io.hh"
 #include "option.hh"
 #include "sanity.hh"

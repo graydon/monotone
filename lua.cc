@@ -1,12 +1,11 @@
 
-#include "config.h"
 
+#include "base.hh"
 #include "lua.hh"
 
 #include "globish.hh"
 #include "sanity.hh"
 
-#include <string>
 #include <set>
 #include <vector>
 #include <utility>

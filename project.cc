@@ -1,6 +1,7 @@
 // 2007 Timothy Brownawell <tbrownaw@gmail.com>
 // GNU GPL V2 or later
 
+#include "base.hh"
 #include <vector>
 
 #include "app_state.hh"

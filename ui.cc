@@ -11,8 +11,8 @@
 // interface. the global user_interface object 'ui' owns clog, so no
 // writing to it directly!
 
-#include "config.h"
 
+#include "base.hh"
 #include "platform.hh"
 #include "sanity.hh"
 #include "ui.hh"

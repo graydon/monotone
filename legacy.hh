@@ -13,7 +13,6 @@
 // old code needed for reading legacy data (so we can then convert it)
 
 #include <map>
-#include <string>
 
 #include "paths.hh"
 

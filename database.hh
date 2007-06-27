@@ -18,7 +18,6 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include <vector>
 #include <set>
 #include <map>
-#include <string>
 
 #include "numeric_vocab.hh"
 #include "vocab.hh"

@@ -12,7 +12,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 #include <vector>
 
 #include "numeric_vocab.hh"

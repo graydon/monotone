@@ -13,7 +13,6 @@
 // this file defines a typed C++ interface to the various hooks
 // we expose to the user as lua functions or variables
 
-#include <string>
 #include <set>
 #include <map>
 #include "file_io.hh"

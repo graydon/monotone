@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "randomizer.hh"
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/bernoulli_distribution.hpp>

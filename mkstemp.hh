@@ -1,7 +1,6 @@
 #ifndef __MKSTEMP_HH__
 #define __MKSTEMP_HH__
 
-#include <string>
 
 bool
 monotone_mkstemp(std::string &tmpl);

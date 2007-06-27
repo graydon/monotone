@@ -10,7 +10,7 @@
 // This file holds a registry of different SHA-1 implementations, and lets us
 // benchmark them.
 
-#include <string>
+#include "base.hh"
 #include <map>
 #include <botan/engine.h>
 #include <botan/libstate.h>

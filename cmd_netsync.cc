@@ -1,3 +1,4 @@
+#include "base.hh"
 #include "cmd.hh"
 
 #include "diff_patch.hh"

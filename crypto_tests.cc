@@ -8,9 +8,9 @@
 // PURPOSE.
 
 #ifdef BUILD_UNIT_TESTS
+#include "base.hh"
 #include "unit_tests.hh"
 
-#include <string>
 
 #include "transforms.hh"
 #include "sanity.hh"

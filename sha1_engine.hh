@@ -13,7 +13,6 @@
 // This file defines the interface needed to implement a new SHA-1 engine,
 // which we will hook into Botan.
 
-#include <string>
 #include <botan/base.h>
 
 typedef Botan::HashFunction * sha1_maker();

@@ -11,6 +11,7 @@
 
 #ifdef BUILD_UNIT_TESTS
 
+#include "base.hh"
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "numeric_vocab.hh"
