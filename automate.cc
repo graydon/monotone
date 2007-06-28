@@ -673,25 +673,7 @@ namespace
 // Purpose: Prints a summary of every file or directory found in the
 //   workspace or its associated base manifest.
 
-// Output: basic_io format. For each item, three to six lines are output:
-//
-//        path "<path>"
-//    old_node "<old_node_id>" "file | directory"
-//    new_node "<new_node_id>" "file | directory"
-//     fs_type "file | directory | none"
-//      status "ignored | known | missing | unknown"
-//     changes "content | content attrs | attrs"
-//
-// 'fs_type' gives the state of the item in the workspace filesystem.
-//
-// 'old_node' and 'new_node' give the status of the item in the manifest.
-// The 'old_node' and 'new_node' lines are not output if the corresponding
-// node state is 'none'.
-//
-// 'changes' is not output if there are no changes.
-//
-// FIXME: 'dropped', 'renamed' are not explicitly labeled.
-// FIXME: whether an item needs to be committed is not clear.
+// See monotone.texi for output format description.
 //
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
@@ -796,7 +778,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       else if (item.old_node.exists && item.new_node.exists &&
                (item.old_node.id != item.new_node.id))
         {
-           // check if this is a cyclic rename or a rename 
+           // check if this is a cyclic rename or a rename
            // paired with an add / drop
            if (item.old_path.size() > 0 &&
                item.new_path.size() > 0)
@@ -820,12 +802,6 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         {
           if (item.new_node.exists)
             states.push_back("missing");
-
-          // FIXME: missing 'else'. For examples,
-          // see tests/automate_inventory:
-          // 'original' renamed to 'renamed'
-          // 'dropped' dropped
-          // Original output identified these.
         }
       else // exists on filesystem
         {
@@ -876,7 +852,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
           if (item.new_node.type == path::file && old_roster.has_node(item.new_node.id))
             {
               file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
-              
+
               if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
                 changes.push_back("content");
             }
