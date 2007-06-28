@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 #include <set>
 #include <map>
 
@@ -71,17 +70,18 @@ struct workspace
 {
   void find_missing(roster_t const & new_roster_shape,
                     node_restriction const & mask,
-                    path_set & missing);
+                    std::set<file_path> & missing);
 
   void find_unknown_and_ignored(path_restriction const & mask,
                                 std::vector<file_path> const & roots,
-                                path_set & unknown, path_set & ignored);
+                                std::set<file_path> & unknown,
+                                std::set<file_path> & ignored);
 
-  void perform_additions(path_set const & targets,
+  void perform_additions(std::set<file_path> const & targets,
                          bool recursive = false,
                          bool respect_ignore = true);
 
-  void perform_deletions(path_set const & targets, bool recursive, 
+  void perform_deletions(std::set<file_path> const & targets, bool recursive, 
                          bool bookkeep_only);
 
   void perform_rename(std::set<file_path> const & src_paths,
@@ -126,9 +126,9 @@ struct workspace
   // Inspect the workspace and classify all the paths in it according to
   // what ROS thinks of them.
   void classify_roster_paths(roster_t const & ros,
-                             path_set & unchanged,
-                             path_set & changed,
-                             path_set & missing);
+                             std::set<file_path> & unchanged,
+                             std::set<file_path> & changed,
+                             std::set<file_path> & missing);
 
   // This updates the file-content hashes in ROSTER, which is assumed to be
   // the "current" roster returned by one of the above get_*_roster_shape

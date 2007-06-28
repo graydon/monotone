@@ -6,7 +6,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 
 #include "cert.hh"
 #include "outdated_indicator.hh"

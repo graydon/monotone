@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <sstream>
-#include <string>
 #include <cctype>
 #include <cstdlib>
 

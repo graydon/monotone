@@ -7,7 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
+#include "base.hh"
 #include <sstream>
 
 #include <boost/version.hpp>
@@ -132,13 +132,11 @@ save_initial_path()
 static inline bool
 bad_component(string const & component)
 {
-  static const string dot(".");
-  static const string dotdot("..");
   if (component.empty())
     return true;
-  if (component == dot)
+  if (component == ".")
     return true;
-  if (component == dotdot)
+  if (component == "..")
     return true;
   return false;
 }
@@ -159,12 +157,28 @@ has_bad_chars(string const & path)
   return false;
 }
 
-// fully_normalized_path_split performs very similar function to
-// file_path.split().  if want_split is set, split_path will be filled with
-// the '/' separated components of the path.
+// as above, but disallows / as well.
 static inline bool
-fully_normalized_path_split(string const & path, bool want_split,
-                            split_path & sp)
+has_bad_component_chars(string const & pc)
+{
+  for (string::const_iterator c = pc.begin(); LIKELY(c != pc.end()); c++)
+    {
+      // char is often a signed type; convert to unsigned to ensure that
+      // bytes 0x80-0xff are considered > 0x1f.
+      u8 x = (u8)*c;
+      // 0x2f is '/' and 0x5c is '\\'; we use hex constants to make the
+      // dependency on ASCII encoding explicit.
+      if (UNLIKELY(x <= 0x1f || x == 0x2f || x == 0x5c || x == 0x7f))
+        return true;
+    }
+  return false;
+  
+}
+
+// fully_normalized_path verifies a complete pathname for validity and
+// having been properly normalized (as if by normalize_path, below).
+static inline bool
+fully_normalized_path(string const & path)
 {
   // empty path is fine
   if (path.empty())
@@ -177,43 +191,29 @@ fully_normalized_path_split(string const & path, bool want_split,
   if (has_bad_chars(path))
     return false;
   // now check each component
-  string::size_type start, stop;
-  start = 0;
+  string::size_type start = 0, stop;
   while (1)
     {
       stop = path.find('/', start);
       if (stop == string::npos)
-        {
-          string const & s(path.substr(start));
-          if (bad_component(s))
-            return false;
-          if (want_split)
-            sp.push_back(path_component(s));
-          break;
-        }
+        break;
       string const & s(path.substr(start, stop - start));
       if (bad_component(s))
         return false;
-      if (want_split)
-        sp.push_back(path_component(s));
       start = stop + 1;
     }
-  return true;
-}
 
-static inline bool
-fully_normalized_path(string const & path)
-{
-  split_path sp;
-  return fully_normalized_path_split(path, false, sp);
+  string const & s(path.substr(start));
+  return !bad_component(s);
 }
 
 // This function considers _MTN, _MTn, _MtN, _mtn etc. to all be bookkeeping
 // paths, because on case insensitive filesystems, files put in any of them
 // may end up in _MTN instead.  This allows arbitrary code execution.  A
-// better solution would be to fix this in the working directory writing code
-// -- this prevents all-unix projects from naming things "mt", which is a bit
-// rude -- but as a temporary security kluge it works.
+// better solution would be to fix this in the working directory writing
+// code -- this prevents all-unix projects from naming things "_mtn", which
+// is less rude than when the bookkeeping root was "MT", but still rude --
+// but as a temporary security kluge it works.
 static inline bool
 in_bookkeeping_dir(string const & path)
 {
@@ -238,19 +238,6 @@ is_valid_internal(string const & path)
 {
   return (fully_normalized_path(path)
           && !in_bookkeeping_dir(path));
-}
-
-// equivalent to file_path_internal(path).split(sp), but
-// avoids splitting the string twice
-void
-internal_string_to_split_path(string const & path, split_path & sp)
-{
-  I(utf8_validate(utf8(path)));
-  I(!in_bookkeeping_dir(path));
-  sp.clear();
-  sp.reserve(8);
-  sp.push_back(the_null_component);
-  I(fully_normalized_path_split(path, true, sp));
 }
 
 // path::normalize() is deprecated in Boost 1.34, and also
@@ -326,31 +313,94 @@ normalize_external_path(string const & path, string & normalized)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////
+// single path component handling.
+///////////////////////////////////////////////////////////////////////////
+
+// these constructors confirm that what they are passed is a legitimate
+// component.  note that the empty string is a legitimate component,
+// but is not acceptable to bad_component (above) and therefore we have
+// to open-code most of those checks.
+path_component::path_component(utf8 const & d)
+  : data(d())
+{
+  MM(data);
+  I(!has_bad_component_chars(data) && data != "." && data != "..");
+}
+
+path_component::path_component(string const & d)
+  : data(d)
+{
+  MM(data);
+  I(utf8_validate(utf8(data))
+    && !has_bad_component_chars(data)
+    && data != "." && data != "..");
+}
+
+path_component::path_component(char const * d)
+  : data(d)
+{
+  MM(data);
+  I(utf8_validate(utf8(data))
+    && !has_bad_component_chars(data)
+    && data != "." && data != "..");
+}
+
+std::ostream & operator<<(std::ostream & s, path_component const & pc)
+{
+  return s << pc();
+}
+
+template <> void dump(path_component const & pc, std::string & to)
+{
+  to = pc();
+}
+
+///////////////////////////////////////////////////////////////////////////
+// complete paths to files within a working directory
+///////////////////////////////////////////////////////////////////////////
+
 file_path::file_path(file_path::source_type type, string const & path)
 {
-  string normalized;
   MM(path);
   I(utf8_validate(utf8(path)));
-  switch (type)
+  if (type == external)
     {
-    case internal:
-      data = utf8(path);
-      break;
-    case external:
+      string normalized;
       normalize_external_path(path, normalized);
-      data = utf8(normalized);
-      N(!in_bookkeeping_dir(data()), F("path '%s' is in bookkeeping dir") % data);
-      break;
+      N(!in_bookkeeping_dir(normalized),
+        F("path '%s' is in bookkeeping dir") % normalized);
+      data = normalized;
     }
+  else
+    data = path;
   MM(data);
-  I(is_valid_internal(data()));
+  I(is_valid_internal(data));
+}
+
+file_path::file_path(file_path::source_type type, utf8 const & path)
+{
+  MM(path);
+  I(utf8_validate(path));
+  if (type == external)
+    {
+      string normalized;
+      normalize_external_path(path(), normalized);
+      N(!in_bookkeeping_dir(normalized),
+        F("path '%s' is in bookkeeping dir") % normalized);
+      data = normalized;
+    }
+  else
+    data = path();
+  MM(data);
+  I(is_valid_internal(data));
 }
 
 bookkeeping_path::bookkeeping_path(string const & path)
 {
   I(fully_normalized_path(path));
   I(in_bookkeeping_dir(path));
-  data = utf8(path);
+  data = path;
 }
 
 bool
@@ -373,108 +423,70 @@ bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
 // normalized, relative, paths.
 ///////////////////////////////////////////////////////////////////////////
 
-// This function takes a vector of path components and joins them into a
-// single file_path.  This is the inverse to file_path::split.  It takes a
-// vector of the form:
-//
-//   ["", p[0], p[1], ..., p[n]]
-//
-// and constructs the path:
-//
-//   p[0]/p[1]/.../p[n]
-//
-file_path::file_path(split_path const & sp)
+// this peels off the last component of any path and returns it.
+// the last component of a path with no slashes in it is the complete path.
+// the last component of a path referring to the root directory is an
+// empty string.
+path_component
+any_path::basename() const
 {
-  split_path::const_iterator i = sp.begin();
-  I(i != sp.end());
-  I(null_name(*i));
-  string tmp;
-  bool start = true;
-  size_t size = 0;
-  for (++i; i != sp.end(); ++i)
-    {
-      size = size + 1 + (*i)().length();
-    }
-  tmp.reserve(size);
-  i = sp.begin();
-  for (++i; i != sp.end(); ++i)
-    {
-      I(!null_name(*i));
-      if (!start)
-        tmp += "/";
-      tmp += (*i)();
-      if (start)
-        start = false;
-    }
-  I(!in_bookkeeping_dir(tmp));
-  data = utf8(tmp);
+  string const & s = data;
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return path_component(s, 0);  // force use of short circuit
+  if (sep == s.size())
+    return path_component();
+  return path_component(s, sep + 1);
 }
 
-//
-// this takes a path of the form
-//
-//  "p[0]/p[1]/.../p[n-1]/p[n]"
-//
-// and fills in a vector of paths corresponding to p[0] ... p[n].  This is the
-// inverse to the file_path::file_path(split_path) constructor.
-//
-// The first entry in this vector is always the null component, "".  This path
-// is the root of the tree.  So we actually output a vector like:
-//   ["", p[0], p[1], ..., p[n]]
-// with n+1 members.
+// this returns all but the last component of a file_path.  it is only
+// defined on file_paths because (a) that avoids problems at the root,
+// and (b) that's the only version that we use.
+// if there is only one component present, the dirname is the root
+// (i.e. the empty string).
+file_path
+file_path::dirname() const
+{
+  string const & s = data;
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return file_path();
+  return file_path(s, 0, sep);
+}
+
+// produce dirname and basename at the same time
 void
-file_path::split(split_path & sp) const
+file_path::dirname_basename(file_path & dir, path_component & base) const
 {
-  sp.clear();
-  sp.push_back(the_null_component);
-  if (empty())
-    return;
-  string::size_type start, stop;
-  start = 0;
-  string const & s = data();
-  while (1)
+  string const & s = data;
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
     {
-      stop = s.find('/', start);
-      if (stop == string::npos)
-        {
-          sp.push_back(path_component(s.substr(start)));
-          break;
-        }
-      sp.push_back(path_component(s.substr(start, stop - start)));
-      start = stop + 1;
+      dir = file_path();
+      base = path_component(s, 0);
+    }
+  else 
+    {
+      I(sep < s.size() - 1); // last component must have at least one char
+      dir = file_path(s, 0, sep);
+      base = path_component(s, sep + 1);
     }
 }
 
-void
-split_paths(std::vector<file_path> const & file_paths, path_set & split_paths)
+// count the number of /-separated components of the path.
+unsigned int
+file_path::depth() const
 {
-  for (vector<file_path>::const_iterator i = file_paths.begin();
-       i != file_paths.end(); ++i)
-    {
-      split_path sp;
-      i->split(sp);
-      split_paths.insert(sp);
-    }
+  if (data.empty())
+    return 0;
+
+  unsigned int components = 1;
+  for (string::const_iterator p = data.begin(); p != data.end(); p++)
+    if (*p == '/')
+      components++;
+
+  return components;
 }
-
-template <>
-void dump(split_path const & sp, string & out)
-{
-  ostringstream oss;
-
-  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    {
-      if (null_name(*i))
-        oss << '.';
-      else
-        oss << '/' << *i;
-    }
-
-  oss << '\n';
-
-  out = oss.str();
-}
-
 
 ///////////////////////////////////////////////////////////////////////////
 // localizing file names (externalizing them)
@@ -487,13 +499,13 @@ any_path::as_external() const
 #ifdef __APPLE__
   // on OS X paths for the filesystem/kernel are UTF-8 encoded, regardless of
   // locale.
-  return data();
+  return data;
 #else
   // on normal systems we actually have some work to do, alas.
   // not much, though, because utf8_to_system_string does all the hard work.
   // it is carefully optimized.  do not screw it up.
   external out;
-  utf8_to_system_strict(data, out);
+  utf8_to_system_strict(utf8(data), out);
   return out();
 #endif
 }
@@ -509,11 +521,28 @@ operator <<(ostream & o, any_path const & a)
   return o;
 }
 
-ostream &
-operator <<(ostream & o, split_path const & sp)
+template <>
+void dump(file_path const & p, string & out)
 {
-  file_path tmp(sp);
-  return o << tmp;
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
+
+template <>
+void dump(system_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
+}
+
+template <>
+void dump(bookkeeping_path const & p, string & out)
+{
+  ostringstream oss;
+  oss << p << '\n';
+  out = oss.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -551,22 +580,41 @@ is_absolute_somewhere(string const & path)
   return false;
 }
 
+// relies on its arguments already being validated, except that you may not
+// append the empty path component, and if you are appending to the empty
+// path, you may not create an absolute path or a path into the bookkeeping
+// directory.
 file_path
-file_path::operator /(string const & to_append) const
+file_path::operator /(path_component const & to_append) const
 {
-  I(!is_absolute_somewhere(to_append));
+  I(!to_append.empty());
   if (empty())
-    return file_path_internal(to_append);
+    {
+      string const & s = to_append();
+      I(!is_absolute_somewhere(s) && !in_bookkeeping_dir(s));
+      return file_path(s, 0, string::npos);
+    }
   else
-    return file_path_internal(data() + "/" + to_append);
+    return file_path(data + "/" + to_append(), 0, string::npos);
 }
 
+// similarly, but even less checking is needed.
+file_path
+file_path::operator /(file_path const & to_append) const
+{
+  I(!to_append.empty());
+  if (empty())
+    return to_append;
+  return file_path(data + "/" + to_append.as_internal(), 0, string::npos);
+}
+
+// these take strings and do validation themselves.
 bookkeeping_path
 bookkeeping_path::operator /(string const & to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   I(!empty());
-  return bookkeeping_path(data() + "/" + to_append);
+  return bookkeeping_path(data + "/" + to_append);
 }
 
 system_path
@@ -574,7 +622,7 @@ system_path::operator /(string const & to_append) const
 {
   I(!empty());
   I(!is_absolute_here(to_append));
-  return system_path(data() + "/" + to_append);
+  return system_path(data + "/" + to_append);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -596,7 +644,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
   if (is_absolute_here(other.as_internal()))
     // another system_path.  the normalizing isn't really necessary, but it
     // makes me feel warm and fuzzy.
-    data = utf8(normalize_out_dots(other.as_internal()));
+    data = normalize_out_dots(other.as_internal());
   else
     {
       system_path wr;
@@ -604,7 +652,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
         wr = working_root.get();
       else
         wr = working_root.get_but_unused();
-      data = utf8(normalize_out_dots((wr / other.as_internal()).as_internal()));
+      data = normalize_out_dots((wr / other.as_internal()).as_internal());
     }
 }
 
@@ -620,39 +668,12 @@ static inline string const_system_path(utf8 const & path)
 
 system_path::system_path(string const & path)
 {
-  data = utf8(const_system_path(utf8(path)));
+  data = const_system_path(utf8(path));
 }
 
 system_path::system_path(utf8 const & path)
 {
-  data = utf8(const_system_path(utf8(path)));
-}
-
-///////////////////////////////////////////////////////////////////////////
-// utility
-///////////////////////////////////////////////////////////////////////////
-
-bool
-workspace_root(split_path const & sp)
-{
-  I(null_name(idx(sp,0)));
-  return sp.size() == 1;
-}
-
-void
-dirname_basename(split_path const & sp,
-                 split_path & dirname, path_component & basename)
-{
-  I(!sp.empty());
-  // L(FL("dirname_basename('%s' [%d components],...)") % file_path(sp) % sp.size());
-  dirname = sp;
-  dirname.pop_back();
-  basename = sp.back();
-  if (dirname.empty())
-    {
-      // L(FL("basename %d vs. null component %d") % basename % the_null_component);
-      I(null_name(basename));
-    }
+  data = const_system_path(utf8(path));
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -796,13 +817,48 @@ mark_std_paths_used(void)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
+#include "randomizer.hh"
 
 using std::logic_error;
 
-UNIT_TEST(paths, null_name)
+UNIT_TEST(paths, path_component)
 {
-  UNIT_TEST_CHECK(null_name(the_null_component));
+  char const * baddies[] = {".",
+                            "..",
+                            "/foo",
+                            "\\foo",
+                            "foo/bar",
+                            "foo\\bar",
+                            0 };
+
+  // these would not be okay in a full file_path, but are okay here.
+  char const * goodies[] = {"c:foo",
+                            "_mtn",
+                            "_mtN",
+                            "_mTn",
+                            "_Mtn",
+                            "_MTn",
+                            "_MtN",
+                            "_MTN",
+                            0 };
+
+  
+  for (char const ** c = baddies; *c; ++c)
+    {
+      // the comparison prevents the compiler from eliminating the
+      // expression.
+      UNIT_TEST_CHECK_THROW(path_component(*c)() == *c, logic_error);
+    }
+  for (char const **c = goodies; *c; ++c)
+    {
+      path_component p(*c);
+      UNIT_TEST_CHECK_THROW(file_path() / p, logic_error);
+    }
+
+  UNIT_TEST_CHECK_THROW(file_path_internal("foo") / path_component(),
+                        logic_error);
 }
+                            
 
 UNIT_TEST(paths, file_path_internal)
 {
@@ -880,15 +936,6 @@ UNIT_TEST(paths, file_path_internal)
           file_path fp = file_path_internal(*c);
           UNIT_TEST_CHECK(fp.as_internal() == *c);
           UNIT_TEST_CHECK(file_path_internal(fp.as_internal()) == fp);
-          split_path split_test;
-          fp.split(split_test);
-          UNIT_TEST_CHECK(!split_test.empty());
-          file_path fp2(split_test);
-          UNIT_TEST_CHECK(fp == fp2);
-          UNIT_TEST_CHECK(null_name(split_test[0]));
-          for (split_path::const_iterator
-                 i = split_test.begin() + 1; i != split_test.end(); ++i)
-            UNIT_TEST_CHECK(!null_name(*i));
         }
     }
 
@@ -905,15 +952,6 @@ static void check_fp_normalizes_to(char * before, char * after)
   // we compare after to the external form too, since as far as we know
   // relative normalized posix paths are always good win32 paths too
   UNIT_TEST_CHECK(fp.as_external() == after);
-  split_path split_test;
-  fp.split(split_test);
-  UNIT_TEST_CHECK(!split_test.empty());
-  file_path fp2(split_test);
-  UNIT_TEST_CHECK(fp == fp2);
-  UNIT_TEST_CHECK(null_name(split_test[0]));
-  for (split_path::const_iterator
-         i = split_test.begin() + 1; i != split_test.end(); ++i)
-    UNIT_TEST_CHECK(!null_name(*i));
 }
 
 UNIT_TEST(paths, file_path_external_null_prefix)
@@ -1077,92 +1115,131 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   initial_rel_path.unset();
 }
 
-UNIT_TEST(paths, split_join)
+UNIT_TEST(paths, basename)
 {
-  file_path fp1 = file_path_internal("foo/bar/baz");
-  file_path fp2 = file_path_internal("bar/baz/foo");
-  split_path split1, split2;
-  fp1.split(split1);
-  fp2.split(split2);
-  UNIT_TEST_CHECK(fp1 == file_path(split1));
-  UNIT_TEST_CHECK(fp2 == file_path(split2));
-  UNIT_TEST_CHECK(!(fp1 == file_path(split2)));
-  UNIT_TEST_CHECK(!(fp2 == file_path(split1)));
-  UNIT_TEST_CHECK(split1.size() == 4);
-  UNIT_TEST_CHECK(split2.size() == 4);
-  UNIT_TEST_CHECK(split1[1] != split1[2]);
-  UNIT_TEST_CHECK(split1[1] != split1[3]);
-  UNIT_TEST_CHECK(split1[2] != split1[3]);
-  UNIT_TEST_CHECK(null_name(split1[0])
-              && !null_name(split1[1])
-              && !null_name(split1[2])
-              && !null_name(split1[3]));
-  UNIT_TEST_CHECK(split1[1] == split2[3]);
-  UNIT_TEST_CHECK(split1[2] == split2[1]);
-  UNIT_TEST_CHECK(split1[3] == split2[2]);
-
-  file_path fp3 = file_path_internal("");
-  split_path split3;
-  fp3.split(split3);
-  UNIT_TEST_CHECK(split3.size() == 1 && null_name(split3[0]));
-
-  // empty split_path is invalid
-  split_path split4;
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-  split4.push_back(the_null_component);
-  UNIT_TEST_CHECK(file_path(split4) == file_path());
-
-  // split_path without null first item is invalid
-  split4.clear();
-  split4.push_back(split1[1]);
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-
-  // split_path with non-first item item null is invalid
-  split4.clear();
-  split4.push_back(the_null_component);
-  split4.push_back(split1[0]);
-  split4.push_back(the_null_component);
-  // this comparison tricks the compiler into not completely eliminating this
-  // code as dead...
-  UNIT_TEST_CHECK_THROW(file_path(split4) == file_path(), logic_error);
-
-  // Make sure that we can't use joining to create a path into the bookkeeping
-  // dir
+  struct t
   {
-    split_path split_mt1, split_mt2;
-    file_path_internal("foo/_MTN").split(split_mt1);
-    UNIT_TEST_CHECK(split_mt1.size() == 3);
-    I(split_mt1[2] == bookkeeping_root_component);
-    split_mt2.push_back(the_null_component);
-    split_mt2.push_back(split_mt1[2]);
-    // split_mt2 now contains the component "_MTN"
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-    split_mt2.push_back(split_mt1[1]);
-    // split_mt2 now contains the components "_MTN", "foo" in that order
-    // this comparison tricks the compiler into not completely eliminating this
-    // code as dead...
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-  }
-  // and make sure it fails for the klugy security cases -- see comments on
-  // in_bookkeeping_dir
+    char const * in;
+    char const * out;
+  };
+  // file_paths cannot be absolute, but may be the empty string.
+  struct t const fp_cases[] = {
+    { "",            ""    },
+    { "foo",         "foo" },
+    { "foo/bar",     "bar" },
+    { "foo/bar/baz", "baz" },
+    { 0, 0 }
+  };
+  // bookkeeping_paths cannot be absolute and must start with the
+  // bookkeeping_root_component.
+  struct t const bp_cases[] = {
+    { "_MTN",         "_MTN" },
+    { "_MTN/foo",     "foo"  },
+    { "_MTN/foo/bar", "bar"  },
+    { 0, 0 }
+  };
+
+  // system_paths must be absolute.  this relies on the setting of
+  // initial_abs_path below.  note that most of the cases whose full paths
+  // vary between Unix and Windows will still have the same basenames.
+  struct t const sp_cases[] = {
+    { "/",          ""      },
+    { "//",         ""      },
+    { "foo",        "foo"   },
+    { "/foo",       "foo"   },
+    { "//foo",      "foo"   },
+    { "~/foo",      "foo"   },
+    { "c:/foo",     "foo"   },
+    { "foo/bar",    "bar"   },
+    { "/foo/bar",   "bar"   },
+    { "//foo/bar",  "bar"   },
+    { "~/foo/bar",  "bar"   },
+    { "c:/foo/bar", "bar"   },
+#ifdef WIN32
+    { "c:/",        ""      },
+    { "c:foo",      "foo"   },
+#else
+    { "c:/",        "c:"    },
+    { "c:foo",      "c:foo" },
+#endif
+    { 0, 0 }
+  };
+
+  UNIT_TEST_CHECKPOINT("file_path basenames");
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      file_path fp = file_path_internal(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+  
+  UNIT_TEST_CHECKPOINT("bookkeeping_path basenames");
+  for (struct t const *p = bp_cases; p->in; p++)
+    {
+      bookkeeping_path fp(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+
+
+  UNIT_TEST_CHECKPOINT("system_path basenames");
+
+  initial_abs_path.unset();
+  initial_abs_path.set(system_path("/a/b"), true);
+  
+  for (struct t const *p = sp_cases; p->in; p++)
+    {
+      system_path fp(p->in);
+      path_component pc(fp.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+
+
+  initial_abs_path.unset();
+}
+
+UNIT_TEST(paths, dirname)
+{
+  struct t
   {
-    split_path split_mt1, split_mt2;
-    file_path_internal("foo/_mTn").split(split_mt1);
-    UNIT_TEST_CHECK(split_mt1.size() == 3);
-    split_mt2.push_back(the_null_component);
-    split_mt2.push_back(split_mt1[2]);
-    // split_mt2 now contains the component "_mTn"
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-    split_mt2.push_back(split_mt1[1]);
-    // split_mt2 now contains the components "_mTn", "foo" in that order
-    // this comparison tricks the compiler into not completely eliminating this
-    // code as dead...
-    UNIT_TEST_CHECK_THROW(file_path(split_mt2) == file_path(), logic_error);
-  }
+    char const * in;
+    char const * out;
+  };
+  // file_paths cannot be absolute, but may be the empty string.
+  struct t const fp_cases[] = {
+    { "",            ""    },
+    { "foo",         "" },
+    { "foo/bar",     "foo" },
+    { "foo/bar/baz", "foo/bar" },
+    { 0, 0 }
+  };
+
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      file_path fp = file_path_internal(p->in);
+      file_path dn = fp.dirname();
+      UNIT_TEST_CHECK_MSG(dn == file_path_internal(p->out),
+                          FL("dirname('%s') = '%s' (expect '%s')")
+                          % p->in % dn % p->out);
+    }
+}
+
+UNIT_TEST(paths, depth)
+{
+  char const * const cases[] = {"", "foo", "foo/bar", "foo/bar/baz", 0};
+  for (unsigned int i = 0; cases[i]; i++)
+    {
+      file_path fp = file_path_internal(cases[i]);
+      unsigned int d = fp.depth();
+      UNIT_TEST_CHECK_MSG(d == i,
+                          FL("depth('%s') = %d (expect %d)") % fp % d % i);
+    }
 }
 
 static void check_bk_normalizes_to(char * before, char * after)
@@ -1323,14 +1400,22 @@ UNIT_TEST(paths, access_tracker)
   UNIT_TEST_CHECK_THROW(a.may_not_initialize(), logic_error);
 }
 
-static void test_a_path_ordering(string const & left, string const & right)
+static void test_path_less_than(string const & left, string const & right)
 {
   MM(left);
   MM(right);
-  split_path left_sp, right_sp;
-  file_path_internal(left).split(left_sp);
-  file_path_internal(right).split(right_sp);
-  I(left_sp < right_sp);
+  file_path left_fp = file_path_internal(left);
+  file_path right_fp = file_path_internal(right);
+  I(left_fp < right_fp);
+}
+
+static void test_path_equal(string const & left, string const & right)
+{
+  MM(left);
+  MM(right);
+  file_path left_fp = file_path_internal(left);
+  file_path right_fp = file_path_internal(right);
+  I(left_fp == right_fp);
 }
 
 UNIT_TEST(paths, ordering)
@@ -1341,23 +1426,179 @@ UNIT_TEST(paths, ordering)
   //   -- it is used to determine in what order cset operations can be applied
   //      (in particular, foo must sort before foo/bar, so that we can use it
   //      to do top-down and bottom-up traversals of a set of paths).
-  test_a_path_ordering("a", "b");
-  test_a_path_ordering("a", "c");
-  test_a_path_ordering("ab", "ac");
-  test_a_path_ordering("a", "ab");
-  test_a_path_ordering("", "a");
-  test_a_path_ordering("", ".foo");
-  test_a_path_ordering("foo", "foo/bar");
+  test_path_less_than("a", "b");
+  test_path_less_than("a", "c");
+  test_path_less_than("ab", "ac");
+  test_path_less_than("a", "ab");
+  test_path_less_than("", "a");
+  test_path_less_than("", ".foo");
+  test_path_less_than("foo", "foo/bar");
   // . is before / asciibetically, so sorting by strings will give the wrong
   // answer on this:
-  test_a_path_ordering("foo/bar", "foo.bar");
+  test_path_less_than("foo/bar", "foo.bar");
 
   // path_components used to be interned strings, and we used the default sort
   // order, which meant that in practice path components would sort in the
   // _order they were first used in the program_.  So let's put in a test that
   // would catch this sort of brokenness.
-  test_a_path_ordering("fallanopic_not_otherwise_mentioned", "xyzzy");
-  test_a_path_ordering("fallanoooo_not_otherwise_mentioned_and_smaller", "fallanopic_not_otherwise_mentioned");
+  test_path_less_than("fallanopic_not_otherwise_mentioned", "xyzzy");
+  test_path_less_than("fallanoooo_not_otherwise_mentioned_and_smaller",
+                       "fallanopic_not_otherwise_mentioned");
+}
+
+UNIT_TEST(paths, ordering_random)
+{
+  char x[4] = {0,0,0,0};
+  char y[4] = {0,0,0,0};
+  u8 a, b, c, d;
+  const int ntrials = 1000;
+  int i;
+  randomizer rng;
+
+  // use of numbers is intentional; these strings are defined to be UTF-8.
+
+  UNIT_TEST_CHECKPOINT("a and b");
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      y[0] = b;
+      if (a < b)
+        test_path_less_than(x, y);
+      else if (a > b)
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
+
+  UNIT_TEST_CHECKPOINT("ab and cd");
+  for (i = 0; i < ntrials; i++)
+    {
+      do
+        {
+          do a = rng.uniform(0x7f - 0x20) + 0x20;
+          while (a == 0x5c || a == 0x2f); // '\\', '/'
+
+          do b = rng.uniform(0x7f - 0x20) + 0x20;
+          while (b == 0x5c || b == 0x2f || b == 0x3a); // '\\', '/', ':'
+        }
+      while (a == 0x2e && b == 0x2e);  // ".."
+
+      do
+        {
+          do c = rng.uniform(0x7f - 0x20) + 0x20;
+          while (c == 0x5c || c == 0x2f); // '\\', '/'
+
+          do d = rng.uniform(0x7f - 0x20) + 0x20;
+          while (d == 0x5c || d == 0x2f || d == 0x3a); // '\\', '/', ':'
+        }
+      while (c == 0x2e && d == 0x2e);  // ".."
+
+      x[0] = a;
+      x[1] = b;
+      y[0] = c;
+      y[1] = d;
+
+      if (a < c || (a == c && b < d))
+        test_path_less_than(x, y);
+      else if (a > c || (a == c && b > d))
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
+
+  UNIT_TEST_CHECKPOINT("a and b/c");
+  x[1] = 0;
+  y[1] = '/';
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+      
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      y[0] = b;
+      y[2] = c;
+
+      // only the order of a and b matters.  1 sorts before 1/2.
+      if (a <= b)
+        test_path_less_than(x, y);
+      else
+        test_path_less_than(y, x);
+    }
+
+  UNIT_TEST_CHECKPOINT("ab and c/d");
+  for (i = 0; i < ntrials; i++)
+    {
+      do
+        {
+          do a = rng.uniform(0x7f - 0x20) + 0x20;
+          while (a == 0x5c || a == 0x2f); // '\\', '/'
+
+          do b = rng.uniform(0x7f - 0x20) + 0x20;
+          while (b == 0x5c || b == 0x2f || b == 0x3a); // '\\', '/', ':'
+        }
+      while (a == 0x2e && b == 0x2e);  // ".."
+
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      do d = rng.uniform(0x7f - 0x20) + 0x20;
+      while (d == 0x5c || d == 0x2f || d == 0x2e); // '\\', '/', '.'
+      
+
+      x[0] = a;
+      x[1] = b;
+      y[0] = c;
+      y[2] = d;
+
+      // only the order of a and c matters,
+      // but this time, 12 sorts after 1/2.
+      if (a < c)
+        test_path_less_than(x, y);
+      else
+        test_path_less_than(y, x);
+    }
+
+  
+  UNIT_TEST_CHECKPOINT("a/b and c/d");
+  x[1] = '/';
+  for (i = 0; i < ntrials; i++)
+    {
+      do a = rng.uniform(0x7f - 0x20) + 0x20;
+      while (a == 0x5c || a == 0x2f || a == 0x2e); // '\\', '/', '.'
+
+      do b = rng.uniform(0x7f - 0x20) + 0x20;
+      while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
+      
+      do c = rng.uniform(0x7f - 0x20) + 0x20;
+      while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
+
+      do d = rng.uniform(0x7f - 0x20) + 0x20;
+      while (d == 0x5c || d == 0x2f || d == 0x2e); // '\\', '/', '.'
+
+      x[0] = a;
+      x[2] = b;
+      y[0] = c;
+      y[2] = d;
+
+      if (a < c || (a == c && b < d))
+        test_path_less_than(x, y);
+      else if (a > c || (a == c && b > d))
+        test_path_less_than(y, x);
+      else
+        test_path_equal(x, y);
+    }
 }
 
 UNIT_TEST(paths, test_internal_string_is_bookkeeping_path)

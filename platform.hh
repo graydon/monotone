@@ -13,9 +13,7 @@
 // this describes functions to be found, alternatively, in win32/* or unix/*
 // directories.
 
-#include "config.h"
 
-#include <string>
 #include <stdio.h>
 
 void read_password(std::string const & prompt, char * buf, size_t bufsz);

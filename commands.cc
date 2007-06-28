@@ -8,6 +8,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
 #include <algorithm>
 #include <iostream>
@@ -328,7 +329,7 @@ namespace commands {
 
     I(!prefix().empty());
 
-    for (children_set::iterator iter = children().begin();
+    for (children_set::const_iterator iter = children().begin();
          iter != children().end(); iter++)
       {
         command * child = *iter;

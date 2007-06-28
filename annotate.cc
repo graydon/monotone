@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <set>
-#include <string>
 #include <iostream>
 
 #include <boost/shared_ptr.hpp>

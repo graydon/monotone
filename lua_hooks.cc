@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h"
 
+#include "base.hh"
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
@@ -501,6 +501,29 @@ lua_hooks::hook_use_inodeprints()
     .extract_bool(use)
     .ok();
   return use && exec_ok;
+}
+
+bool
+lua_hooks::hook_get_netsync_key(utf8 const & server_address,
+                                globish const & include,
+                                globish const & exclude,
+                                rsa_keypair_id & k)
+{
+  string key_id;
+  bool exec_ok
+    = Lua(st)
+    .func("get_netsync_key")
+    .push_str(server_address())
+    .push_str(include())
+    .push_str(exclude())
+    .call(3, 1)
+    .extract_str(key_id)
+    .ok();
+
+  if (!exec_ok)
+    key_id = "";
+  k = rsa_keypair_id(key_id);
+  return exec_ok;
 }
 
 static void

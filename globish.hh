@@ -29,7 +29,6 @@
 // it's nice to have some way to say "don't exclude anything", for instance.
 
 #include <set>
-#include <string>
 #include <boost/regex.hpp>
 
 #include "vocab.hh"

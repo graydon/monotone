@@ -11,8 +11,8 @@
 // the only .cc file that depends on the revision/full_revision header files,
 // which change constantly.
 
-#include "config.h"
 
+#include "base.hh"
 #include <iostream>
 #include <sstream>
 

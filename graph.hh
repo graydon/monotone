@@ -17,7 +17,6 @@
 // (e.g., in revision.cc); FIXME it would be good to move them in here as
 // opportunity permits.
 
-#include <string>
 #include <set>
 #include <vector>
 #include <utility>

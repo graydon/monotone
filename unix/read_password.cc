@@ -3,11 +3,11 @@
  * 13-May-2004
  */
 
+#include "base.hh"
 #include <unistd.h>
 #include <string.h>
 #include <termios.h>
 #include <iostream>
-#include <string>
 
 #include "sanity.hh"
 

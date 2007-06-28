@@ -11,7 +11,6 @@
 // PURPOSE.
 
 #include <unistd.h>
-#include <string>
 #include "numeric_vocab.hh"
 #include "vocab.hh"
 

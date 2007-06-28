@@ -2,7 +2,6 @@
 #define __SIMPLESTRING_XFORM_HH__
 
 #include <vector>
-#include <string>
 
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
@@ -44,11 +43,11 @@ std::vector< T > split_into_words(T const & in)
   return out;
 }
 
-template< template< typename > class T1, class T2 >
-T2 join_words(T1< T2 > const & in, std::string const & sep = " ")
+template< class Container >
+typename Container::value_type join_words(Container const & in, std::string const & sep = " ")
 {
   std::string str;
-  typename T1< T2 >::const_iterator iter = in.begin();
+  typename Container::const_iterator iter = in.begin();
   while (iter != in.end())
     {
       str += (*iter)();
@@ -56,7 +55,8 @@ T2 join_words(T1< T2 > const & in, std::string const & sep = " ")
       if (iter != in.end())
         str += sep;
     }
-  return T2(str);
+  typedef typename Container::value_type result_type;
+  return result_type(str);
 }
 
 void prefix_lines_with(std::string const & prefix,

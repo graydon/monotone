@@ -39,6 +39,16 @@ the particular library in all cases.  This makes life easier when a
 developer needs to send our fixes upstream or wants to import new upstream
 versions into monotone.
 
+There is a special header file, base.hh, that should be the very first
+#include in every .cc file, without exception.  It makes a small
+number of inclusions and declarations that we want to be globally
+visible.  Do not include this header in any other header file;
+however, in header files, assume the contents of base.hh are already
+visible.  "make distcheck" will verify that these rules are followed.
+If you modify base.hh, make sure you keep the "audit-includes" script
+consistent with it.  Try not to add things to base.hh; it's intended
+to be a minimal set of declarations that really do need to be visible
+everywhere.
 
 Dialect issues
 --------------
@@ -83,9 +93,18 @@ continued to adhere to the dialect we write in. in particular:
   - if you have a const, put that _after_ the main type, but before
     any * or &.  Example: "set<revision_id> const & foo".
 
-  - put the name of a function in the first column of the line it
-    occurs on. the visibility and return type go on the preceeding
-    line.
+  - if you are declaring a static array, be aware of a quirk of the
+    language: "foo const * arrayname[]" declares a _non-constant_
+    array of pointers to constant foo.  if the array itself will never
+    be modified (true in most cases) you should put a second "const"
+    modifier _after_ the *.  this most often comes up with arrays of
+    string constants: write "char const * const arrayname[]" unless
+    you really mean the array to be modifiable.
+
+  - when defining a function, put a carriage return right before the
+    function name, so that the visibility and return type go on the
+    preceeding line. this makes it possible to grep for "^functionname"
+    to find the function definition without its uses.
 
   - use enums rather than magic constants, if you can.
 
@@ -140,10 +159,6 @@ continued to adhere to the dialect we write in. in particular:
 
   - prefer character constants ('x') to single-character strings ("x") in
     formatted output sequences.
-
-  - return type and function qualifiers should be placed on the line above
-    the function name, so that the function name sits flush with the first
-    column.  this makes grepping for function definitions easier.
 
 Interfacing with Lua
 --------------------

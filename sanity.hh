@@ -10,11 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h" // Required for ENABLE_NLS
-
-#include <iosfwd>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 #include "boost/circular_buffer.hpp"
@@ -23,14 +19,6 @@
 #include "i18n.h"
 #include "mt-stdint.h"
 #include "quick_alloc.hh" // to get the QA() macro
-
-#if defined(__GNUC__)
-#define NORETURN(x) x __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define NORETURN(x) __declspec(noreturn) x
-#else
-#define NORETURN(x) x
-#endif
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten

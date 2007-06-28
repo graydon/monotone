@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <cstdlib>              // for strtoul()
-#include <string>
 #include <vector>
 
 #include "botan/pubkey.h"

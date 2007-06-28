@@ -1,5 +1,5 @@
-#include <string>
 
+#include "base.hh"
 #include "botan/botan.h"
 
 #include "sanity.hh"

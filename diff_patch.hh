@@ -16,7 +16,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include <map>
-#include <string>
 #include <vector>
 
 class app_state;

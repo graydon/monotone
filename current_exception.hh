@@ -10,7 +10,6 @@
 #ifndef CURRENT_EXCEPTION_HH
 #define CURRENT_EXCEPTION_HH
 
-#include "config.h"
 #include <typeinfo>
 
 // Add #ifdeffage here as appropriate for other compiler-specific ways to

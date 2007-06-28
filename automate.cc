@@ -7,10 +7,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <iterator>
 #include <sstream>
-#include <string>
 #include <unistd.h>
 #include <vector>
 
@@ -542,19 +542,19 @@ struct inventory_item
     pre_id(0), post_id(0) {}
 };
 
-typedef map<split_path, inventory_item> inventory_map;
-typedef map<split_path, split_path> rename_map; // this might be good in cset.hh
-typedef map<split_path, file_id> addition_map;  // ditto
+typedef map<file_path, inventory_item> inventory_map;
+typedef map<file_path, file_path> rename_map; // this might be good in cset.hh
+typedef map<file_path, file_id> addition_map;  // ditto
 
 static void
 inventory_pre_state(inventory_map & inventory,
-                    path_set const & paths,
+                    set<file_path> const & paths,
                     inventory_item::pstate pre_state,
                     size_t rename_id)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s") % inventory[*i].pre_state % pre_state % file_path(*i));
+      L(FL("%d %d %s") % inventory[*i].pre_state % pre_state % *i);
       I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].pre_state = pre_state;
       if (rename_id != 0)
@@ -567,14 +567,13 @@ inventory_pre_state(inventory_map & inventory,
 
 static void
 inventory_post_state(inventory_map & inventory,
-                     path_set const & paths,
+                     set<file_path> const & paths,
                      inventory_item::pstate post_state,
                      size_t rename_id)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
-      L(FL("%d %d %s") % inventory[*i].post_state
-        % post_state % file_path(*i));
+      L(FL("%d %d %s") % inventory[*i].post_state % post_state % *i);
       I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
       inventory[*i].post_state = post_state;
       if (rename_id != 0)
@@ -587,13 +586,13 @@ inventory_post_state(inventory_map & inventory,
 
 static void
 inventory_node_state(inventory_map & inventory,
-                     path_set const & paths,
+                     set<file_path> const & paths,
                      inventory_item::nstate node_state)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); i++)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
     {
       L(FL("%d %d %s") % inventory[*i].node_state
-        % node_state % file_path(*i));
+        % node_state % *i);
       I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
       inventory[*i].node_state = node_state;
     }
@@ -603,8 +602,8 @@ static void
 inventory_renames(inventory_map & inventory,
                   rename_map const & renames)
 {
-  path_set old_name;
-  path_set new_name;
+  set<file_path> old_name;
+  set<file_path> new_name;
 
   static size_t rename_id = 1;
 
@@ -627,7 +626,8 @@ inventory_renames(inventory_map & inventory,
 }
 
 static void
-extract_added_file_paths(addition_map const & additions, path_set & paths)
+extract_added_file_paths(addition_map const & additions,
+                         set<file_path> & paths)
 {
   for (addition_map::const_iterator i = additions.begin();
        i != additions.end(); ++i)
@@ -689,7 +689,7 @@ CMD_AUTOMATE(inventory, "",
   revision_t rev;
   inventory_map inventory;
   cset cs; MM(cs);
-  path_set unchanged, changed, missing, unknown, ignored;
+  set<file_path> unchanged, changed, missing, unknown, ignored;
 
   work.get_current_roster_shape(curr, nis);
   work.get_work_rev(rev);
@@ -709,7 +709,7 @@ CMD_AUTOMATE(inventory, "",
   // recorded on the filesystem (because get_..._shape was used to
   // build it).
 
-  path_set nodes_added(cs.dirs_added);
+  set<file_path> nodes_added(cs.dirs_added);
   extract_added_file_paths(cs.files_added, nodes_added);
 
   inventory_pre_state(inventory, cs.nodes_deleted,
@@ -745,7 +745,6 @@ CMD_AUTOMATE(inventory, "",
   for (inventory_map::const_iterator i = inventory.begin();
        i != inventory.end(); ++i)
     {
-
       string path_suffix;
 
       // ensure that directory nodes always get a trailing slash even
@@ -763,7 +762,7 @@ CMD_AUTOMATE(inventory, "",
           if (is_root_dir_t(n)) continue;
           if (is_dir_t(n)) path_suffix = "/";
         }
-      else if (directory_exists(file_path(i->first)))
+      else if (directory_exists(i->first))
         {
           path_suffix = "/";
         }
@@ -1562,8 +1561,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
     F("no revision %s found in database") % ident);
   db.get_roster(ident, new_roster, mm);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1631,8 +1629,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
     F("no revision %s found in database") % old_ident);
   db.get_roster(old_ident, old_roster);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1640,11 +1637,10 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   basic_io::printer prt;
   if (old_roster.has_node(node->self))
     {
-      split_path old_path;
+      file_path old_path;
       basic_io::stanza st;
       old_roster.get_name(node->self, old_path);
-      file_path fp = file_path(old_path);
-      st.push_file_pair(basic_io::syms::file, fp);  
+      st.push_file_pair(basic_io::syms::file, old_path);
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());

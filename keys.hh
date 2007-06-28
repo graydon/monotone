@@ -13,7 +13,6 @@
 #include "vocab.hh"
 #include "botan/rsa.h"
 #include <boost/shared_ptr.hpp>
-#include <string>
 
 using Botan::RSA_PrivateKey;
 using boost::shared_ptr;

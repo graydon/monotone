@@ -1,6 +1,7 @@
 // 2007 Timothy Brownawell <tbrownaw@gmail.com>
 // GNU GPL V2 or later
 
+#include "base.hh"
 #include "outdated_indicator.hh"
 #include "sanity.hh"
 

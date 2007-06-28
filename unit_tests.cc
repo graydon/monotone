@@ -7,9 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
 #include <vector>
-#include <string>
 #include <iostream>
 #include <fstream>
 #include <iomanip>

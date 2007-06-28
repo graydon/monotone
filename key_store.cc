@@ -1,3 +1,4 @@
+#include "base.hh"
 #include <sstream>
 
 #include "key_store.hh"

@@ -12,7 +12,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 
 #include "commands.hh"
 #include "options.hh"

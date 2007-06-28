@@ -1,3 +1,4 @@
+#include "base.hh"
 #include "cmd.hh"
 
 #include "diff_patch.hh"
@@ -56,7 +57,35 @@ extract_address(args_vector const & args,
 }
 
 static void
-find_key_if_needed(utf8 & addr, app_state & app)
+find_key(utf8 const & addr,
+         globish const & include,
+         globish const & exclude,
+         app_state & app,
+         bool needed = true)
+{
+  if (app.opts.signing_key() != "")
+    return;
+
+  rsa_keypair_id key;
+  if (!app.lua.hook_get_netsync_key(app.opts.bind_address,
+                                    include, exclude,
+                                    key)
+      || key() == "")
+    {
+      if (needed)
+        {
+          get_user_key(key, app);
+        }
+    }
+  app.opts.signing_key = key;
+}
+
+static void
+find_key_if_needed(utf8 const & addr,
+                   globish const & include,
+                   globish const & exclude,
+                   app_state & app,
+                   bool needed = true)
 {
       uri u;
       bool transport_requires_auth(true);
@@ -66,9 +95,7 @@ find_key_if_needed(utf8 & addr, app_state & app)
         }
       if (transport_requires_auth)
         {
-          rsa_keypair_id key;
-          get_user_key(key, app.keys);
-          app.opts.signing_key = key;
+          find_key(addr, include, exclude, app, needed);
         }
 }
 
@@ -132,8 +159,8 @@ CMD(push, "push", "", CMD_REF(network),
   arg_type addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
-  find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
+  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
 
   run_netsync_protocol(client_voice, source_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -150,6 +177,7 @@ CMD(pull, "pull", "", CMD_REF(network),
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
+  find_key_if_needed(addr, include_pattern, exclude_pattern, app, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -169,8 +197,8 @@ CMD(sync, "sync", "", CMD_REF(network),
   arg_type addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
-  find_key_if_needed(addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
+  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
 
   run_netsync_protocol(client_voice, source_and_sink_role, addr,
                        include_pattern, exclude_pattern, app);
@@ -259,10 +287,21 @@ CMD(clone, "clone", "", CMD_REF(network),
       app.db.set_var(default_server_key, var_value(addr()));
     }
 
+  globish include_pattern(app.opts.branchname());
+
+  globish exclude_pattern;
+  {
+    vector<globish> excludes;
+    typecast_vocab_container(app.opts.exclude_patterns, excludes);
+    combine_and_check_globish(excludes, exclude_pattern);
+  }
+
+  find_key_if_needed(addr, include_pattern, exclude_pattern,
+                     app, false);
+
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  globish include_pattern(app.opts.branchname());
   if (!app.db.var_exists(default_include_pattern_key)
       || app.opts.set_default)
     {
@@ -270,22 +309,14 @@ CMD(clone, "clone", "", CMD_REF(network),
       app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
     }
   
-  globish exclude_pattern;
   if (app.opts.exclude_given)
     {
-      vector<globish> excludes;
-      typecast_vocab_container(app.opts.exclude_patterns, excludes);
-      combine_and_check_globish(excludes, exclude_pattern);
       if (!app.db.var_exists(default_exclude_pattern_key)
           || app.opts.set_default)
         {
           P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
           app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
-    }
-  else
-    {
-      exclude_pattern = globish();
     }
   
   // make sure we're back in the original dir so that file: URIs work
@@ -404,13 +435,11 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   if (app.opts.use_transport_auth)
     {
-      rsa_keypair_id key;
-      get_user_key(key, app.keys);
-      app.opts.signing_key = key;
+      find_key(app.opts.bind_address, globish("*"), globish(""), app);
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(key, app.keys);
+      require_password(app.opts.signing_key, app.keys);
     }
   else
     {

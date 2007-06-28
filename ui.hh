@@ -16,7 +16,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 
 #include "paths.hh"
 #include "sanity.hh"

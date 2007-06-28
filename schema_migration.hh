@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands

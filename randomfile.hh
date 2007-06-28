@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 #include <vector>
 #include "lexical_cast.hh"
 

@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <set>
 
 #include <boost/shared_ptr.hpp>
@@ -34,9 +35,7 @@ get_file_details(roster_t const & ros, node_id nid,
   I(ros.has_node(nid));
   file_t f = downcast_to_file_t(ros.get_node(nid));
   fid = f->content;
-  split_path sp;
-  ros.get_name(nid, sp);
-  pth = file_path(sp);
+  ros.get_name(nid, pth);
 }
 
 void

@@ -1,4 +1,5 @@
 
+#include "base.hh"
 #include "lua.hh"
 
 #include "basic_io.hh"

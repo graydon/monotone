@@ -52,3 +52,7 @@ licenses.
 
   -- monotone-run-script-post-netsync.lua: run a script after revs or certs
      for a particular branch have arrived via netsync
+
+  -- mtn_makepermissions: creates read-permissions and write-permissions from
+     files in the subdirectories read-permissions.d and write-permissions.d,
+     Debian-style.

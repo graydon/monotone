@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 
+#include "base.hh"
 #include "constants.hh"
 #include "hash_map.hh"
 #include "sanity.hh"
@@ -48,13 +48,6 @@ template <typename T>
 static inline void
 verify_full(T & val)
 { val.ok = true; }
-
-inline void
-verify_full(path_component & val)
-{
-  // FIXME: probably ought to do something here?
-  val.ok = true;
-}
 
 // NOTE: _not_ verify_full; you use verify_full for ATOMICs, verify() for
 // everything else.

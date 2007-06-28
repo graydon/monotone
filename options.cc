@@ -1,4 +1,5 @@
 
+#include "base.hh"
 #include <algorithm>
 
 #include "charset.hh"

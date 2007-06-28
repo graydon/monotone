@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <deque>
 #include <fstream>
@@ -1817,6 +1818,9 @@ database::get_arbitrary_file_delta(file_id const & src_id,
 void
 database::get_revision_ancestry(rev_ancestry_map & graph)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   graph.clear();
   fetch(res, 2, any_rows,
@@ -1954,7 +1958,7 @@ database::deltify_revision(revision_id const & rid)
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
+        for (map<file_path, pair<file_id, file_id> >::const_iterator
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
@@ -2010,7 +2014,7 @@ database::put_revision(revision_id const & new_id,
           return false;
         }
 
-      for (map<split_path, file_id>::const_iterator a
+      for (map<file_path, file_id>::const_iterator a
              = edge_changes(i).files_added.begin();
            a != edge_changes(i).files_added.end(); ++a)
         {
@@ -2022,7 +2026,7 @@ database::put_revision(revision_id const & new_id,
             }
         }
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
+      for (map<file_path, pair<file_id, file_id> >::const_iterator d
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {
@@ -2567,6 +2571,9 @@ outdated_indicator
 database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                                            pair<revision_id, rsa_keypair_id> > > & idx)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   fetch(res, 3, any_rows,
         query("SELECT hash, id, keypair "
