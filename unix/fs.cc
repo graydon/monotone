@@ -126,6 +126,15 @@ rename_clobberingly(string const & from, string const & to)
     F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
 }
 
+// the C90 remove() function is guaranteed to work for both files and
+// directories
+void
+do_remove(string const & path)
+{
+  E(!remove(path.c_str()),
+    F("could not remove '%s': %s") % path % os_strerror(errno));
+}
+
 // Create a temporary file in directory DIR, writing its name to NAME and
 // returning a read-write file descriptor for it.  If unable to create
 // the file, throws an E().

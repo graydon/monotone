@@ -141,6 +141,29 @@ get_path_status(std::string const & path)
     return path::file;
 }
 
+void
+do_remove(std::string const & path)
+{
+  switch (get_path_status(path))
+    {
+    case path::directory:
+      if (RemoveDirectoryA(path.c_str()))
+        return;
+      break;
+    case path::file:
+      if (DeleteFileA(path.c_str()))
+        return;
+      break;
+    case path::nonexistent:
+      // conveniently, GetLastError() will report the error code from
+      // the GetFileAttributes() call in get_path_status() that told us
+      // the path doesn't exist.
+      break;
+    }
+  E(false,
+    F("could not remove '%s': %s") % path % os_strerror(GetLastError()));
+}
+
 static bool
 rename_clobberingly_impl(const char * from, const char * to)
 {
