@@ -322,28 +322,28 @@ normalize_external_path(string const & path, string & normalized)
 // but is not acceptable to bad_component (above) and therefore we have
 // to open-code most of those checks.
 path_component::path_component(utf8 const & d)
-  : data(d)
+  : data(d())
 {
   MM(data);
-  I(!has_bad_component_chars(data()) && data() != "." && data() != "..");
+  I(!has_bad_component_chars(data) && data != "." && data != "..");
 }
 
 path_component::path_component(string const & d)
   : data(d)
 {
   MM(data);
-  I(utf8_validate(data)
-    && !has_bad_component_chars(data())
-    && data() != "." && data() != "..");
+  I(utf8_validate(utf8(data))
+    && !has_bad_component_chars(data)
+    && data != "." && data != "..");
 }
 
 path_component::path_component(char const * d)
   : data(d)
 {
   MM(data);
-  I(utf8_validate(data)
-    && !has_bad_component_chars(data())
-    && data() != "." && data() != "..");
+  I(utf8_validate(utf8(data))
+    && !has_bad_component_chars(data)
+    && data != "." && data != "..");
 }
 
 std::ostream & operator<<(std::ostream & s, path_component const & pc)
@@ -369,20 +369,38 @@ file_path::file_path(file_path::source_type type, string const & path)
       string normalized;
       normalize_external_path(path, normalized);
       N(!in_bookkeeping_dir(normalized),
-        F("path '%s' is in bookkeeping dir") % data);
-      data = utf8(normalized);
+        F("path '%s' is in bookkeeping dir") % normalized);
+      data = normalized;
     }
   else
-    data = utf8(path);
+    data = path;
   MM(data);
-  I(is_valid_internal(data()));
+  I(is_valid_internal(data));
+}
+
+file_path::file_path(file_path::source_type type, utf8 const & path)
+{
+  MM(path);
+  I(utf8_validate(path));
+  if (type == external)
+    {
+      string normalized;
+      normalize_external_path(path(), normalized);
+      N(!in_bookkeeping_dir(normalized),
+        F("path '%s' is in bookkeeping dir") % normalized);
+      data = normalized;
+    }
+  else
+    data = path();
+  MM(data);
+  I(is_valid_internal(data));
 }
 
 bookkeeping_path::bookkeeping_path(string const & path)
 {
   I(fully_normalized_path(path));
   I(in_bookkeeping_dir(path));
-  data = utf8(path);
+  data = path;
 }
 
 bool
@@ -412,7 +430,7 @@ bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
 path_component
 any_path::basename() const
 {
-  string const & s = data();
+  string const & s = data;
   string::size_type sep = s.rfind('/');
   if (sep == string::npos)
     return path_component(s, 0);  // force use of short circuit
@@ -429,7 +447,7 @@ any_path::basename() const
 file_path
 file_path::dirname() const
 {
-  string const & s = data();
+  string const & s = data;
   string::size_type sep = s.rfind('/');
   if (sep == string::npos)
     return file_path();
@@ -440,7 +458,7 @@ file_path::dirname() const
 void
 file_path::dirname_basename(file_path & dir, path_component & base) const
 {
-  string const & s = data();
+  string const & s = data;
   string::size_type sep = s.rfind('/');
   if (sep == string::npos)
     {
@@ -459,11 +477,11 @@ file_path::dirname_basename(file_path & dir, path_component & base) const
 unsigned int
 file_path::depth() const
 {
-  if (data().empty())
+  if (data.empty())
     return 0;
 
   unsigned int components = 1;
-  for (string::const_iterator p = data().begin(); p != data().end(); p++)
+  for (string::const_iterator p = data.begin(); p != data.end(); p++)
     if (*p == '/')
       components++;
 
@@ -481,13 +499,13 @@ any_path::as_external() const
 #ifdef __APPLE__
   // on OS X paths for the filesystem/kernel are UTF-8 encoded, regardless of
   // locale.
-  return data();
+  return data;
 #else
   // on normal systems we actually have some work to do, alas.
   // not much, though, because utf8_to_system_string does all the hard work.
   // it is carefully optimized.  do not screw it up.
   external out;
-  utf8_to_system_strict(data, out);
+  utf8_to_system_strict(utf8(data), out);
   return out();
 #endif
 }
@@ -577,7 +595,7 @@ file_path::operator /(path_component const & to_append) const
       return file_path(s, 0, string::npos);
     }
   else
-    return file_path(data() + "/" + to_append(), 0, string::npos);
+    return file_path(data + "/" + to_append(), 0, string::npos);
 }
 
 // similarly, but even less checking is needed.
@@ -587,7 +605,7 @@ file_path::operator /(file_path const & to_append) const
   I(!to_append.empty());
   if (empty())
     return to_append;
-  return file_path(data() + "/" + to_append.as_internal(), 0, string::npos);
+  return file_path(data + "/" + to_append.as_internal(), 0, string::npos);
 }
 
 // these take strings and do validation themselves.
@@ -596,7 +614,7 @@ bookkeeping_path::operator /(string const & to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   I(!empty());
-  return bookkeeping_path(data() + "/" + to_append);
+  return bookkeeping_path(data + "/" + to_append);
 }
 
 system_path
@@ -604,7 +622,7 @@ system_path::operator /(string const & to_append) const
 {
   I(!empty());
   I(!is_absolute_here(to_append));
-  return system_path(data() + "/" + to_append);
+  return system_path(data + "/" + to_append);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -626,7 +644,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
   if (is_absolute_here(other.as_internal()))
     // another system_path.  the normalizing isn't really necessary, but it
     // makes me feel warm and fuzzy.
-    data = utf8(normalize_out_dots(other.as_internal()));
+    data = normalize_out_dots(other.as_internal());
   else
     {
       system_path wr;
@@ -634,7 +652,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
         wr = working_root.get();
       else
         wr = working_root.get_but_unused();
-      data = utf8(normalize_out_dots((wr / other.as_internal()).as_internal()));
+      data = normalize_out_dots((wr / other.as_internal()).as_internal());
     }
 }
 
@@ -650,12 +668,12 @@ static inline string const_system_path(utf8 const & path)
 
 system_path::system_path(string const & path)
 {
-  data = utf8(const_system_path(utf8(path)));
+  data = const_system_path(utf8(path));
 }
 
 system_path::system_path(utf8 const & path)
 {
-  data = utf8(const_system_path(utf8(path)));
+  data = const_system_path(utf8(path));
 }
 
 ///////////////////////////////////////////////////////////////////////////

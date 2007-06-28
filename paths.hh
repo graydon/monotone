@@ -96,12 +96,10 @@
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
 
-
-#include "vocab.hh"
-
 class any_path;
 class file_path;
 class roster_t;
+class utf8;
 
 // A path_component is one component of a path.  It is always utf8, may not
 // contain either kind of slash, and may not be a magic directory entry ("."
@@ -117,19 +115,19 @@ public:
   explicit path_component(std::string const &);
   explicit path_component(char const *);
 
-  std::string const & operator()() const { return data(); }
-  bool empty() const { return data().empty(); }
+  std::string const & operator()() const { return data; }
+  bool empty() const { return data.empty(); }
   bool operator<(path_component const & other) const
-  { return data() < other(); }
+  { return data < other(); }
   bool operator==(path_component const & other) const
-  { return data() == other(); }
+  { return data == other(); }
   bool operator!=(path_component const & other) const
-  { return data() != other(); }
+  { return data != other(); }
 
   friend std::ostream & operator<<(std::ostream &, path_component const &);
 
 private:
-  utf8 data;
+  std::string data;
 
   // constructor for use by trusted operations.  bypasses validation.
   path_component(std::string const & path,
@@ -156,13 +154,13 @@ public:
   std::string as_external() const;
   // leaves as utf8
   std::string const & as_internal() const
-  { return data(); }
+  { return data; }
   bool empty() const
-  { return data().empty(); }
+  { return data.empty(); }
   // returns the trailing component of the path
   path_component basename() const;
 protected:
-  utf8 data;
+  std::string data;
   any_path() {}
   any_path(any_path const & other)
     : data(other.data) {}
@@ -202,10 +200,10 @@ public:
   // see the "ordering" unit test in paths.cc.
   bool operator <(const file_path & other) const
   {
-    std::string::const_iterator p = data().begin();
-    std::string::const_iterator plim = data().end();
-    std::string::const_iterator q = other.data().begin();
-    std::string::const_iterator qlim = other.data().end();
+    std::string::const_iterator p = data.begin();
+    std::string::const_iterator plim = data.end();
+    std::string::const_iterator q = other.data.begin();
+    std::string::const_iterator qlim = other.data.end();
 
     while (*p == *q && p != plim && q != qlim)
       p++, q++;
@@ -231,7 +229,7 @@ public:
     return static_cast<unsigned char>(*p) < static_cast<unsigned char>(*q);
   }
 
-  void clear() { data = utf8(); }
+  void clear() { data.clear(); }
 
 private:
   typedef enum { internal, external } source_type;
@@ -246,6 +244,7 @@ private:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in _MTN/
   file_path(source_type type, std::string const & path);
+  file_path(source_type type, utf8 const & path);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
 
@@ -255,7 +254,7 @@ private:
             std::string::size_type start,
             std::string::size_type stop = std::string::npos)
   {
-    data = utf8(path.substr(start, stop));
+    data = path.substr(start, stop);
   }
 
   // roster_t::get_name is allowed to use the private substring constructor.
@@ -269,7 +268,7 @@ inline file_path file_path_internal(std::string const & path)
 }
 inline file_path file_path_external(utf8 const & path)
 {
-  return file_path(file_path::external, path());
+  return file_path(file_path::external, path);
 }
 
 class bookkeeping_path : public any_path

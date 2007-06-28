@@ -15,6 +15,7 @@
 #include <map>
 
 #include "paths.hh"
+#include "vocab.hh"
 
 class app_state;
 
