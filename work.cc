@@ -765,15 +765,15 @@ editable_working_tree::detach_node(file_path const & src_pth)
     {
       // root dir detach, so we move contents, rather than the dir itself
       mkdir_p(dst_pth);
-      vector<utf8> files, dirs;
+      vector<path_component> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
-        move_file(src_pth / path_component(*i),
-                  dst_pth / (*i)());
-      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
-        if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
-          move_dir(src_pth / path_component(*i),
-                   dst_pth / (*i)());
+      for (vector<path_component>::const_iterator i = files.begin();
+           i != files.end(); ++i)
+        move_file(src_pth / *i, dst_pth / (*i)());
+      for (vector<path_component>::const_iterator i = dirs.begin();
+           i != dirs.end(); ++i)
+        if (!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())))
+          move_dir(src_pth / *i, dst_pth / (*i)());
       root_dir_attached = false;
     }
   else
@@ -837,19 +837,19 @@ editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
-      vector<utf8> files, dirs;
+      vector<path_component> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (vector<path_component>::const_iterator i = files.begin();
+           i != files.end(); ++i)
         {
-          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_file(src_pth / (*i)(),
-                    dst_pth / path_component(*i));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
+          move_file(src_pth / (*i)(), dst_pth / *i);
         }
-      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+      for (vector<path_component>::const_iterator i = dirs.begin();
+           i != dirs.end(); ++i)
         {
-          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_dir(src_pth / (*i)(),
-                   dst_pth / path_component(*i));
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
+          move_dir(src_pth / (*i)(), dst_pth / *i);
         }
       delete_dir_shallow(src_pth);
       root_dir_attached = true;

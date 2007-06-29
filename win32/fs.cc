@@ -141,6 +141,104 @@ get_path_status(std::string const & path)
     return path::file;
 }
 
+namespace
+{
+  // RAII wrapper for FindFirstFile/FindNextFile
+  struct dirhandle
+  {
+    dirhandle(std::string const & path) : first(true), last(false)
+    {
+      std::string p = path;
+      // Win98 requires this little dance
+      if (p.size() > 0 && p[p.size()-1] != '/' && p[p.size()-1] != '\\')
+        p += "/*";
+      else
+        p += "*";
+
+      h = FindFirstFile(p.c_str(), &firstdata);
+      if (h == INVALID_HANDLE_VALUE)
+        {
+          if (GetLastError() == ERROR_FILE_NOT_FOUND) // zero files in dir
+            last = true;
+          else
+            E(false, F("could not open directory '%s': %s")
+              % path % os_strerror(GetLastError()));
+        }
+    }
+    ~dirhandle()
+    {
+      if (h != INVALID_HANDLE_VALUE)
+        FindClose(h);
+    }
+    bool next(WIN32_FIND_DATA * data)
+    {
+      if (last)
+        return false;
+      if (first)
+        {
+          *data = firstdata;
+          first = false;
+          return true;
+        }
+      if (FindNextFile(h, data))
+        return true;
+      E(GetLastError() == ERROR_NO_MORE_FILES,
+        F("error while reading directory: %s") % os_strerror(errno));
+      last = true;
+      return false;
+    }
+
+  private:
+    bool first;
+    bool last;
+    HANDLE h;
+    WIN32_FIND_DATA firstdata;
+  };
+}
+
+void
+do_read_directory(std::string const & path,
+                  dirent_consumer & files,
+                  dirent_consumer & dirs)
+{
+  dirhandle dir(path);
+  WIN32_FIND_DATA d;
+
+  while (dir.next(&d))
+    {
+      if (!strcmp(d.cFileName, ".") || !strcmp(d.cFileName, ".."))
+        continue;
+
+      if (d.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        dirs.consume(d.cFileName);
+      else
+        files.consume(d.cFileName);
+    }
+}
+
+void
+do_remove(std::string const & path)
+{
+  switch (get_path_status(path))
+    {
+    case path::directory:
+      if (RemoveDirectoryA(path.c_str()))
+        return;
+      break;
+    case path::file:
+      if (DeleteFileA(path.c_str()))
+        return;
+      break;
+    case path::nonexistent:
+      // conveniently, GetLastError() will report the error code from
+      // the GetFileAttributes() call in get_path_status() that told us
+      // the path doesn't exist.
+      break;
+    }
+  E(false,
+    F("could not remove '%s': %s") % path % os_strerror(GetLastError()));
+}
+
 static bool
 rename_clobberingly_impl(const char * from, const char * to)
 {

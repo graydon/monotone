@@ -2295,14 +2295,10 @@ msgstr "ディレクトリ '%s' を作成できませんでした"
 msgid "failed to create directory '%s' for '%s'"
 msgstr "ディレクトリ '%s' ('%s' のための)の作成に失敗しました"
 
-#: file_io.cc:227
+#: unix/fs.cc:135 win32/fs.cc:164
 #, c-format
-msgid ""
-"could not remove '%s'\n"
-"%s"
-msgstr ""
-"'%s' を削除できませんでした\n"
-"%s"
+msgid "could not remove '%s': %s"
+msgstr "'%s' を削除できませんでした: %s"
 
 #: file_io.cc:237
 #, c-format
