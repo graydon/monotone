@@ -118,6 +118,15 @@ namespace path
 };
 path::status get_path_status(std::string const & path);
 
+struct dirent_consumer
+{
+  virtual ~dirent_consumer() {}
+  virtual void consume(const char *) = 0;
+};
+void do_read_directory(std::string const & path,
+                       dirent_consumer & files,
+                       dirent_consumer & dirs);
+
 void rename_clobberingly(std::string const & from, std::string const & to);
 void do_remove(std::string const & path);
 

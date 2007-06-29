@@ -129,15 +129,26 @@ file_exists(any_path const & p)
   return get_path_status(p) == path::file;
 }
 
+namespace
+{
+  struct directory_not_empty_exception {};
+  struct directory_empty_helper : public dirent_consumer
+  {
+    virtual void consume(char const *)
+    { throw directory_not_empty_exception(); }
+  };
+}
+
 bool
 directory_empty(any_path const & path)
 {
-  vector<utf8> files;
-  vector<utf8> subdirs;
-  
-  read_directory(path, files, subdirs);
-  
-  return files.empty() && subdirs.empty();
+  directory_empty_helper h;
+  try {
+    do_read_directory(system_path(path).as_external(), h, h);
+  } catch (directory_not_empty_exception) {
+    return false;
+  }
+  return true;
 }
 
 static bool did_char_is_binary_init;
@@ -315,32 +326,26 @@ read_data(any_path const & p, data & dat)
   dat = data(pipe.read_all_as_string());
 }
 
-void read_directory(any_path const & path,
-                    vector<utf8> & files,
-                    vector<utf8> & dirs)
+namespace
 {
-  files.clear();
-  dirs.clear();
-  fs::directory_iterator ei;
-  fs::path native_path = fs::path(system_path(path).as_external(), fs::native);
-  for (fs::directory_iterator di(native_path);
-       di != ei; ++di)
-    {
-      fs::path entry = *di;
-      if (!fs::exists(entry)
-          || entry.string() == "."
-          || entry.string() == "..")
-        continue;
+  struct fill_pc_vec : public dirent_consumer
+  {
+    fill_pc_vec(vector<path_component> & v) : v(v) { v.clear(); }
+    virtual void consume(char const * s)
+    { v.push_back(path_component(s)); }
 
-      // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
-      // utf8)
-      if (fs::is_directory(entry))
-        dirs.push_back(utf8(entry.leaf()));
-      else
-        files.push_back(utf8(entry.leaf()));
-    }
+  private:
+    vector<path_component> & v;
+  };
 }
 
+void read_directory(any_path const & path,
+                    vector<path_component> & files,
+                    vector<path_component> & dirs)
+{
+  fill_pc_vec ff(files), df(dirs);
+  do_read_directory(system_path(path).as_external(), ff, df);
+}
 
 // This function can only be called once per run.
 void
@@ -443,7 +448,7 @@ walk_tree_recursive(fs::path const & absolute,
                     tree_walker & walker)
 {
   system_path root(absolute.string());
-  vector<utf8> files, dirs;
+  vector<path_component> files, dirs;
 
   read_directory(root, files, dirs);
 
@@ -460,7 +465,8 @@ walk_tree_recursive(fs::path const & absolute,
   // 
   // [1] http://lkml.org/lkml/2006/2/24/215
 
-  for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+  for (vector<path_component>::const_iterator i = files.begin();
+       i != files.end(); ++i)
     {
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
@@ -473,7 +479,8 @@ walk_tree_recursive(fs::path const & absolute,
       walker.visit_file(p);
     }
 
-  for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+  for (vector<path_component>::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i)
     {
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)

@@ -118,7 +118,7 @@ AC_FUNC_LOCALE_WORKS
 AC_FUNC_ICONV_TRANSLIT
 AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
 		__cxa_current_exception_type __cxa_demangle \
-                putenv setenv unsetenv])
+                putenv setenv unsetenv dirfd fstatat])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
