@@ -505,7 +505,7 @@ format_sqlite_error_for_info(informative_failure const & e)
 // string, provided that all four characters are graphic.  (On disk, it's
 // stored in the "user version" field of the database.)
 static string
-format_creator_code(uint32_t code)
+format_creator_code(u32 code)
 {
   char buf[5];
   string result;
@@ -544,12 +544,12 @@ database::info(ostream & out)
   sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
   assert_sqlite3_ok(__sql);
 
-  uint32_t ccode;
+  u32 ccode;
   {
     results res;
     fetch(res, one_col, one_row, query("PRAGMA user_version"));
     I(res.size() == 1);
-    ccode = lexical_cast<uint32_t>(res[0][0]);
+    ccode = lexical_cast<u32>(res[0][0]);
   }
 
   vector<string> counts;

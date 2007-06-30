@@ -12,14 +12,17 @@
 
 #include <cstddef>
 #include <limits>
-
-#include "mt-stdint.h"
 #include <boost/static_assert.hpp>
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+typedef TYPE_U8  u8;
+typedef TYPE_U16 u16;
+typedef TYPE_U32 u32;
+typedef TYPE_U64 u64;
+
+typedef TYPE_S8  s8;
+typedef TYPE_S16 s16;
+typedef TYPE_S32 s32;
+typedef TYPE_S64 s64;
 
 // This is similar to static_cast<T>(v).  The difference is that when T is
 // unsigned, this cast does not sign-extend:

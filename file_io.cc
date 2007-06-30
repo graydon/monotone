@@ -157,7 +157,7 @@ static bool char_is_binary[256];
 static void
 set_char_is_binary(char c, bool is_binary)
 {
-    char_is_binary[static_cast<uint8_t>(c)] = is_binary;
+    char_is_binary[static_cast<u8>(c)] = is_binary;
 }
 
 static void
@@ -187,7 +187,7 @@ bool guess_binary(string const & s)
 
   for (size_t i = 0; i < s.size(); ++i)
     {
-      if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
+      if (char_is_binary[ static_cast<u8>(s[i]) ])
         return true;
     }
   return false;
