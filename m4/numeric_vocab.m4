@@ -111,9 +111,11 @@ then AC_MSG_ERROR([*** no signed 32-bit type found])
 fi
 
 # If we didn't get an s64 type, try long long.
-MTN_CHOOSE_USE_OF_TYPE([long long], [unsigned long long])
-if test "$mtn_s64_type" = unknown
-then AC_MSG_ERROR([*** no signed 64-bit type found])
+if test "$mtn_s64_type" = unknown; then
+ MTN_CHOOSE_USE_OF_TYPE([long long], [unsigned long long])
+ if test "$mtn_s64_type" = unknown
+ then AC_MSG_ERROR([*** no signed 64-bit type found])
+ fi
 fi
 
 AC_DEFINE_UNQUOTED([TYPE_S8],  [$mtn_s8_type],  [Type to use for `s8'.])
