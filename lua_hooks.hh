@@ -13,7 +13,6 @@
 // this file defines a typed C++ interface to the various hooks
 // we expose to the user as lua functions or variables
 
-#include <string>
 #include <set>
 #include <map>
 #include "file_io.hh"
@@ -67,6 +66,10 @@ public:
                                      std::map<rsa_keypair_id, bool> const & new_results);
 
   // network hooks
+  bool hook_get_netsync_key(utf8 const & server_address,
+                            globish const & include,
+                            globish const & exclude,
+                            rsa_keypair_id & k);
   bool hook_get_netsync_connect_command(uri const & u,
                                         globish const & include_pattern,
                                         globish const & exclude_pattern,

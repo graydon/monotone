@@ -1,3 +1,4 @@
+#include "base.hh"
 #include <sstream>
 
 #include "key_store.hh"
@@ -73,7 +74,7 @@ key_store::get_key_dir()
 void
 key_store::read_key_dir()
 {
-  vector<utf8> key_files, dirs;
+  vector<path_component> key_files, dirs;
   if (directory_exists(key_dir))
     {
       L(FL("reading key dir '%s'") % key_dir);
@@ -82,7 +83,7 @@ key_store::read_key_dir()
   else
     L(FL("key dir '%s' does not exist") % key_dir);
   keyreader kr(*this);
-  for (vector<utf8>::const_iterator i = key_files.begin();
+  for (vector<path_component>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
       L(FL("reading keys from file '%s'") % (*i));

@@ -2,7 +2,6 @@
 #define __ASCIIK_HH__
 
 #include <set>
-#include <string>
 #include <vector>
 
 #include "revision.hh"

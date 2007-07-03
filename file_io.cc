@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <iostream>
 #include <fstream>
 #include <boost/filesystem/path.hpp>
@@ -128,15 +129,26 @@ file_exists(any_path const & p)
   return get_path_status(p) == path::file;
 }
 
+namespace
+{
+  struct directory_not_empty_exception {};
+  struct directory_empty_helper : public dirent_consumer
+  {
+    virtual void consume(char const *)
+    { throw directory_not_empty_exception(); }
+  };
+}
+
 bool
 directory_empty(any_path const & path)
 {
-  vector<utf8> files;
-  vector<utf8> subdirs;
-  
-  read_directory(path, files, subdirs);
-  
-  return files.empty() && subdirs.empty();
+  directory_empty_helper h;
+  try {
+    do_read_directory(system_path(path).as_external(), h, h);
+  } catch (directory_not_empty_exception) {
+    return false;
+  }
+  return true;
 }
 
 static bool did_char_is_binary_init;
@@ -145,7 +157,7 @@ static bool char_is_binary[256];
 static void
 set_char_is_binary(char c, bool is_binary)
 {
-    char_is_binary[static_cast<uint8_t>(c)] = is_binary;
+    char_is_binary[static_cast<u8>(c)] = is_binary;
 }
 
 static void
@@ -175,7 +187,7 @@ bool guess_binary(string const & s)
 
   for (size_t i = 0; i < s.size(); ++i)
     {
-      if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
+      if (char_is_binary[ static_cast<u8>(s[i]) ])
         return true;
     }
   return false;
@@ -222,29 +234,13 @@ make_dir_for(any_path const & p)
     }
 }
 
-static void
-do_shallow_deletion_with_sane_error_message(any_path const & p)
-{
-  fs::path fp = mkdir(p);
-  try
-    {
-      fs::remove(fp);
-    }
-  catch (FS_ERROR & err)
-    {
-      E(false, F("could not remove '%s'\n%s")
-        % err.path1().native_directory_string()
-        % os_strerror(err.FS_ERROR_SYSTEM()));
-    }
-}
-
 void
 delete_file(any_path const & p)
 {
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
@@ -253,14 +249,14 @@ delete_dir_shallow(any_path const & p)
   require_path_is_directory(p,
                             F("directory to delete '%s' does not exist") % p,
                             F("directory to delete, '%s', is not a directory but a file") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
 delete_file_or_dir_shallow(any_path const & p)
 {
   N(path_exists(p), F("object to delete, '%s', does not exist") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
@@ -281,8 +277,9 @@ move_file(any_path const & old_path,
                        F("rename source file '%s' is a directory "
                          "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
@@ -290,30 +287,26 @@ move_dir(any_path const & old_path,
          any_path const & new_path)
 {
   require_path_is_directory(old_path,
-                            F("rename source dir '%s' does not exist") % old_path,
+                            F("rename source dir '%s' does not exist")
+                            % old_path,
                             F("rename source dir '%s' is a file "
                               "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
 move_path(any_path const & old_path,
           any_path const & new_path)
 {
-  switch (get_path_status(old_path))
-    {
-    case path::nonexistent:
-      N(false, F("rename source path '%s' does not exist") % old_path);
-      break;
-    case path::file:
-      move_file(old_path, new_path);
-      break;
-    case path::directory:
-      move_dir(old_path, new_path);
-      break;
-    }
+  N(path_exists(old_path),
+    F("rename source path '%s' does not exist") % old_path);
+  require_path_is_nonexistent(new_path,
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
@@ -333,32 +326,26 @@ read_data(any_path const & p, data & dat)
   dat = data(pipe.read_all_as_string());
 }
 
-void read_directory(any_path const & path,
-                    vector<utf8> & files,
-                    vector<utf8> & dirs)
+namespace
 {
-  files.clear();
-  dirs.clear();
-  fs::directory_iterator ei;
-  fs::path native_path = fs::path(system_path(path).as_external(), fs::native);
-  for (fs::directory_iterator di(native_path);
-       di != ei; ++di)
-    {
-      fs::path entry = *di;
-      if (!fs::exists(entry)
-          || entry.string() == "."
-          || entry.string() == "..")
-        continue;
+  struct fill_pc_vec : public dirent_consumer
+  {
+    fill_pc_vec(vector<path_component> & v) : v(v) { v.clear(); }
+    virtual void consume(char const * s)
+    { v.push_back(path_component(s)); }
 
-      // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
-      // utf8)
-      if (fs::is_directory(entry))
-        dirs.push_back(utf8(entry.leaf()));
-      else
-        files.push_back(utf8(entry.leaf()));
-    }
+  private:
+    vector<path_component> & v;
+  };
 }
 
+void read_directory(any_path const & path,
+                    vector<path_component> & files,
+                    vector<path_component> & dirs)
+{
+  fill_pc_vec ff(files), df(dirs);
+  do_read_directory(system_path(path).as_external(), ff, df);
+}
 
 // This function can only be called once per run.
 void
@@ -461,7 +448,7 @@ walk_tree_recursive(fs::path const & absolute,
                     tree_walker & walker)
 {
   system_path root(absolute.string());
-  vector<utf8> files, dirs;
+  vector<path_component> files, dirs;
 
   read_directory(root, files, dirs);
 
@@ -478,7 +465,8 @@ walk_tree_recursive(fs::path const & absolute,
   // 
   // [1] http://lkml.org/lkml/2006/2/24/215
 
-  for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+  for (vector<path_component>::const_iterator i = files.begin();
+       i != files.end(); ++i)
     {
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)
@@ -491,7 +479,8 @@ walk_tree_recursive(fs::path const & absolute,
       walker.visit_file(p);
     }
 
-  for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+  for (vector<path_component>::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i)
     {
       // the fs::native is necessary here, or it will bomb out on any paths
       // that look at it funny.  (E.g., rcs files with "," in the name.)

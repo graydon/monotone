@@ -71,8 +71,8 @@ void move_path(any_path const & old_path,
 void read_data(any_path const & path, data & data);
 
 void read_directory(any_path const & path,
-                    std::vector<utf8> & files,
-                    std::vector<utf8> & dirs);
+                    std::vector<path_component> & files,
+                    std::vector<path_component> & dirs);
 
 void read_data_stdin(data & dat);
 

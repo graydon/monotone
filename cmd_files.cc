@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <iostream>
 
 #include "annotate.hh"
@@ -134,8 +135,6 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     throw usage(execid);
 
   file_path file = file_path_external(idx(args, 0));
-  split_path sp;
-  file.split(sp);
 
   L(FL("annotate file '%s'") % file);
 
@@ -178,9 +177,9 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
 
   // find the version of the file requested
-  N(roster.has_node(sp), 
+  N(roster.has_node(file), 
     F("no such file '%s' in revision '%s'") % file % rid);
-  node_t node = roster.get_node(sp);
+  node_t node = roster.get_node(file);
   N(is_file_t(node), 
     F("'%s' in revision '%s' is not a file") % file % rid);
 
@@ -266,18 +265,15 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
 
   // Paths are interpreted as standard external ones when we're in a
   // workspace, but as project-rooted external ones otherwise.
-  file_path fp;
-  split_path sp;
-  fp = file_path_external(filename);
-  fp.split(sp);
+  file_path fp = file_path_external(filename);
 
   roster_t roster;
   marking_map marks;
   app.db.get_roster(rid, roster, marks);
-  N(roster.has_node(sp), 
+  N(roster.has_node(fp), 
     F("no file '%s' found in revision '%s'") % fp % rid);
   
-  node_t node = roster.get_node(sp);
+  node_t node = roster.get_node(fp);
   N((!null_node(node->self) && is_file_t(node)), 
     F("no file '%s' found in revision '%s'") % fp % rid);
 

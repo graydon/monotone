@@ -3,8 +3,12 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include "config.h"
 
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
+#include "base.hh"
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -14,6 +18,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #include "sanity.hh"
 #include "platform.hh"
@@ -115,11 +120,115 @@ get_path_status(string const & path)
     }
 }
 
+namespace
+{
+  // RAII object for DIRs.
+  struct dirhandle
+  {
+    dirhandle(string const & path) : d(opendir(path.c_str()))
+    {
+      E(d, F("could not open directory '%s': %s") % path % os_strerror(errno));
+    }
+    // technically closedir can fail, but there's nothing we could do about it.
+    ~dirhandle() { closedir(d); }
+
+    // accessors
+    struct dirent * next() { return readdir(d); }
+#ifdef HAVE_DIRFD
+    int fd() { return dirfd(d); }
+#endif
+    private:
+    DIR *d;
+  };
+}
+
+void
+do_read_directory(string const & path,
+                  dirent_consumer & files,
+                  dirent_consumer & dirs)
+{
+  dirhandle dir(path);
+  struct dirent *d;
+  struct stat st;
+  int st_result;
+
+  while ((d = dir.next()) != 0)
+    {
+      if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+        continue;
+#ifdef _DIRENT_HAVE_D_TYPE
+      switch (d->d_type)
+        {
+        case DT_REG: // regular file
+          files.consume(d->d_name);
+          continue;
+        case DT_DIR: // directory
+          dirs.consume(d->d_name);
+          continue;
+          
+        case DT_UNKNOWN: // unknown type
+        case DT_LNK:     // symlink - must find out what's at the other end
+          break;
+
+        default:
+          goto bad_special_file;
+        }          
+#endif
+
+      // the use of stat rather than lstat here is deliberate.
+#if defined HAVE_FSTATAT && defined HAVE_DIRFD
+      {
+        static bool fstatat_works = true;
+        if (fstatat_works)
+          {
+            st_result = fstatat(dir.fd(), d->d_name, &st, 0);
+            if (st_result == -1 && errno == ENOSYS)
+              fstatat_works = false;
+          }
+        if (!fstatat_works)
+          st_result = stat((path + "/" + d->d_name).c_str(), &st);
+      }
+#else
+      st_result = stat((path + "/" + d->d_name).c_str(), &st);
+#endif
+
+      // silently ignore broken symlinks.
+      // ??? that was the historical behavior, but do we really want it?
+      if (st_result < 0 && errno == ENOENT)
+        continue;
+
+      E(st_result == 0,
+        F("error accessing '%s/%s': %s") % path % d->d_name);
+
+      if (S_ISREG(st.st_mode))
+        files.consume(d->d_name);
+      else if (S_ISDIR(st.st_mode))
+        dirs.consume(d->d_name);
+      else
+        goto bad_special_file;
+    }
+  return;
+
+ bad_special_file:
+  E(false,  F("cannot handle special file '%s/%s'") % path % d->d_name);
+}
+  
+                  
+
 void
 rename_clobberingly(string const & from, string const & to)
 {
   E(!rename(from.c_str(), to.c_str()),
     F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
+}
+
+// the C90 remove() function is guaranteed to work for both files and
+// directories
+void
+do_remove(string const & path)
+{
+  E(!remove(path.c_str()),
+    F("could not remove '%s': %s") % path % os_strerror(errno));
 }
 
 // Create a temporary file in directory DIR, writing its name to NAME and

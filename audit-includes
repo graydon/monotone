@@ -1,0 +1,94 @@
+#! /bin/sh
+
+egrep -H "$(printf '^[ \t]*#[ \t]*include\\>')" "$@" |
+  sed -e "$(printf 's/:[ \t]*#[ \t]*include[ \t]*[<\"]/ /')" -e 's/[>"]$//' |
+  {
+    current=""
+    lack_base_hh=""
+    late_base_hh=""
+    shouldnt_base_hh=""
+    shouldnt_config_h=""
+    shouldnt_string=""
+    shouldnt_iosfwd=""
+    found_base_hh=f
+
+    while read file header; do
+      if [ "$file" != "$current" ]; then
+        if [ "$current" != "" ] && [ $found_base_hh = f ]; then
+	  lack_base_hh="$lack_base_hh $current"
+	fi
+	case $file in
+	  (*.hh|*.h) found_base_hh=skip ;;
+	  (*)        found_base_hh=f ;;
+	esac
+      fi	
+
+      case "$header" in
+        # The rules for base.hh are:
+	# No header file should include base.hh.
+	# All source files should include base.hh, as their very first
+	# inclusion.
+        
+        (base.hh)
+	  case "$file" in
+	    (*.hh|*.h) shouldnt_base_hh="$shouldnt_base_hh $file" ;;
+	    ($current) late_base_hh="$late_base_hh $file"
+	               found_base_hh=t ;;
+	    (*)        found_base_hh=t ;;
+	  esac
+	;;
+
+	# The rules for these are simple: nobody should include them
+	# (except base.hh itself).
+	(config.h)
+	  if [ "$file" != "base.hh" ]
+	  then shouldnt_config_h="$shouldnt_config_h $file"
+	  fi;;
+	(string)
+	  if [ "$file" != "base.hh" ]
+	  then shouldnt_string="$shouldnt_string $file"
+	  fi;;
+	(iosfwd)
+	  if [ "$file" != "base.hh" ]
+	  then shouldnt_iosfwd="$shouldnt_iosfwd $file"
+	  fi;;
+      esac
+      current="$file"
+    done
+    if [ $found_base_hh = f ]; then
+      lack_base_hh="$lack_base_hh $current"
+    fi
+
+    status=0
+    if [ -n "$lack_base_hh" ]; then
+      echo "*** Missing #include \"base.hh\":"
+      echo "$lack_base_hh" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    if [ -n "$late_base_hh" ]; then
+      echo "*** Late #include \"base.hh\":"
+      echo "$late_base_hh" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    if [ -n "$shouldnt_base_hh" ]; then
+      echo "*** Unwanted #include \"base.hh\":"
+      echo "$shouldnt_base_hh" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    if [ -n "$shouldnt_config_h" ]; then
+      echo "*** Unwanted #include \"config.h\":"
+      echo "$shouldnt_config_h" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    if [ -n "$shouldnt_string" ]; then
+      echo "*** Unwanted #include <string>:"
+      echo "$shouldnt_string" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    if [ -n "$shouldnt_iosfwd" ]; then
+      echo "*** Unwanted #include <iosfwd>:"
+      echo "$shouldnt_iosfwd" | tr -s ' ' | fmt | sed 's/^/   /'
+      status=1
+    fi
+    exit $status
+  }

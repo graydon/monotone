@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <set>
 
 #include "vocab.hh"
@@ -305,7 +306,7 @@ namespace
     // make a dir loop.  it can, however, have a name collision.
     if (null_node(parent))
       {
-        I(null_name(name));
+        I(name.empty());
         if (result.roster.has_root())
           {
             // see comments below about name collisions.
@@ -313,9 +314,7 @@ namespace
             c.nid1 = nid;
             c.nid2 = result.roster.root()->self;
             c.parent_name = make_pair(parent, name);
-            split_path root_sp;
-            file_path().split(root_sp);
-            result.roster.detach_node(root_sp);
+            result.roster.detach_node(file_path());
             result.rename_target_conflicts.push_back(c);
             return;
           }
@@ -594,18 +593,18 @@ roster_merge(roster_t const & left_parent,
     {
       // we can't have an illegal _MTN dir unless we have a root node in the
       // first place...
-      split_path bookkeeping_root_split;
-      bookkeeping_root_split.push_back(the_null_component);
-      bookkeeping_root_split.push_back(bookkeeping_root_component);
-      if (result.roster.has_node(bookkeeping_root_split))
+      dir_t result_root = result.roster.root();
+
+      if (result_root->has_child(bookkeeping_root_component))
         {
           illegal_name_conflict conflict;
-          node_t n = result.roster.get_node(bookkeeping_root_split);
+          node_t n = result_root->get_child(bookkeeping_root_component);
           conflict.nid = n->self;
           conflict.parent_name.first = n->parent;
           conflict.parent_name.second = n->name;
           I(n->name == bookkeeping_root_component);
-          I(n->self == result.roster.detach_node(bookkeeping_root_split));
+
+          result.roster.detach_node(n->self);
           result.illegal_name_conflicts.push_back(conflict);
         }
     }
@@ -688,14 +687,6 @@ roster_merge(roster_t const & left_parent,
 //   between-node name conflict causes other problems:
 //     between-node name conflict + causes missing root dir
 //        two nodes that both want ""
-
-split_path
-split(string const & s)
-{
-  split_path sp;
-  file_path_internal(s).split(sp);
-  return sp;
-}
 
 typedef enum { scalar_a, scalar_b, scalar_conflict } scalar_val;
 
@@ -790,10 +781,10 @@ struct base_scalar
   {}
 
   void
-  make_dir(string const & name, node_id nid, roster_t & r, marking_map & markings)
+  make_dir(char const * name, node_id nid, roster_t & r, marking_map & markings)
   {
     r.create_dir_node(nid);
-    r.attach_node(nid, split(name));
+    r.attach_node(nid, file_path_internal(name));
     marking_t marking;
     marking.birth_revision = root_rid;
     marking.parent_name.insert(root_rid);
@@ -801,10 +792,10 @@ struct base_scalar
   }
 
   void
-  make_file(string const & name, node_id nid, roster_t & r, marking_map & markings)
+  make_file(char const * name, node_id nid, roster_t & r, marking_map & markings)
   {
     r.create_file_node(arbitrary_file, nid);
-    r.attach_node(nid, split(name));
+    r.attach_node(nid, file_path_internal(name));
     marking_t marking;
     marking.birth_revision = root_rid;
     marking.parent_name.insert(root_rid);
@@ -821,8 +812,8 @@ struct base_scalar
 
 struct file_scalar : public virtual base_scalar
 {
-  split_path thing_name;
-  file_scalar() : thing_name(split("thing"))
+  file_path thing_name;
+  file_scalar() : thing_name(file_path_internal("thing"))
   {}
 
   void
@@ -835,8 +826,8 @@ struct file_scalar : public virtual base_scalar
 
 struct dir_scalar : public virtual base_scalar
 {
-  split_path thing_name;
-  dir_scalar() : thing_name(split("thing"))
+  file_path thing_name;
+  dir_scalar() : thing_name(file_path_internal("thing"))
   {}
 
   void
@@ -849,11 +840,10 @@ struct dir_scalar : public virtual base_scalar
 
 struct name_shared_stuff : public virtual base_scalar
 {
-  virtual split_path path_for(scalar_val val) = 0;
+  virtual file_path path_for(scalar_val val) = 0;
   path_component pc_for(scalar_val val)
   {
-    split_path sp = path_for(val);
-    return idx(sp, sp.size() - 1);
+    return path_for(val).basename();
   }
   virtual node_id parent_for(scalar_val val) = 0;
 
@@ -862,12 +852,14 @@ struct name_shared_stuff : public virtual base_scalar
                // NB result is writeable -- we can scribble on it
                roster_merge_result & result, scalar_val expected_val)
   {
-    split_path name;
     switch (expected_val)
       {
       case scalar_a: case scalar_b:
-        result.roster.get_name(thing_nid, name);
-        I(name == path_for(expected_val));
+        {
+          file_path fp;
+          result.roster.get_name(thing_nid, fp);
+          I(fp == path_for(expected_val));
+        }
         break;
       case scalar_conflict:
         node_name_conflict const & c = idx(result.node_name_conflicts, 0);
@@ -875,11 +867,11 @@ struct name_shared_stuff : public virtual base_scalar
         I(c.left == make_pair(parent_for(left_val), pc_for(left_val)));
         I(c.right == make_pair(parent_for(right_val), pc_for(right_val)));
         I(null_node(result.roster.get_node(thing_nid)->parent));
-        I(null_name(result.roster.get_node(thing_nid)->name));
+        I(result.roster.get_node(thing_nid)->name.empty());
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
         // attach implicitly checks that we were already detached
-        result.roster.attach_node(thing_nid, split("thing"));
+        result.roster.attach_node(thing_nid, file_path_internal("thing"));
         result.node_name_conflicts.pop_back();
         break;
       }
@@ -894,10 +886,10 @@ struct name_shared_stuff : public virtual base_scalar
 template <typename T>
 struct basename_scalar : public name_shared_stuff, public T
 {
-  virtual split_path path_for(scalar_val val)
+  virtual file_path path_for(scalar_val val)
   {
     I(val != scalar_conflict);
-    return split((val == scalar_a) ? "a" : "b");
+    return file_path_internal((val == scalar_a) ? "a" : "b");
   }
   virtual node_id parent_for(scalar_val val)
   {
@@ -925,10 +917,10 @@ struct parent_scalar : public virtual name_shared_stuff, public T
   parent_scalar() : a_dir_nid(nis.next()), b_dir_nid(nis.next())
   {}
 
-  virtual split_path path_for(scalar_val val)
+  virtual file_path path_for(scalar_val val)
   {
     I(val != scalar_conflict);
-    return split((val == scalar_a) ? "a/thing" : "b/thing");
+    return file_path_internal((val == scalar_a) ? "a/thing" : "b/thing");
   }
   virtual node_id parent_for(scalar_val val)
   {
@@ -974,7 +966,6 @@ struct attr_scalar : public virtual base_scalar, public T
                // NB result is writeable -- we can scribble on it
                roster_merge_result & result, scalar_val expected_val)
   {
-    split_path name;
     switch (expected_val)
       {
       case scalar_a: case scalar_b:
@@ -1026,7 +1017,6 @@ struct file_content_scalar : public virtual file_scalar
                // NB result is writeable -- we can scribble on it
                roster_merge_result & result, scalar_val expected_val)
   {
-    split_path name;
     switch (expected_val)
       {
       case scalar_a: case scalar_b:
@@ -1211,7 +1201,7 @@ make_dir(roster_t & r, marking_map & markings,
          string const & name, node_id nid)
 {
   r.create_dir_node(nid);
-  r.attach_node(nid, split(name));
+  r.attach_node(nid, file_path_internal(name));
   marking_t marking;
   marking.birth_revision = birth_rid;
   marking.parent_name.insert(parent_name_rid);
@@ -1226,7 +1216,7 @@ make_file(roster_t & r, marking_map & markings,
           node_id nid)
 {
   r.create_file_node(content, nid);
-  r.attach_node(nid, split(name));
+  r.attach_node(nid, file_path_internal(name));
   marking_t marking;
   marking.birth_revision = birth_rid;
   marking.parent_name.insert(parent_name_rid);
@@ -1432,10 +1422,10 @@ struct simple_rename_target_conflict : public structural_conflict_helper
     rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
     I((c.nid1 == left_nid && c.nid2 == right_nid)
       || (c.nid1 == right_nid && c.nid2 == left_nid));
-    I(c.parent_name == make_pair(root_nid, idx(split("thing"), 1)));
+    I(c.parent_name == make_pair(root_nid, path_component("thing")));
     // this tests that they were detached, implicitly
-    result.roster.attach_node(left_nid, split("left"));
-    result.roster.attach_node(right_nid, split("right"));
+    result.roster.attach_node(left_nid, file_path_internal("left"));
+    result.roster.attach_node(right_nid, file_path_internal("right"));
     result.rename_target_conflicts.pop_back();
     I(result.is_clean());
     result.roster.check_sane();
@@ -1463,10 +1453,10 @@ struct simple_dir_loop_conflict : public structural_conflict_helper
     {
       I(!result.is_clean());
       directory_loop_conflict const & c = idx(result.directory_loop_conflicts, 0);
-      I((c.nid == left_top_nid && c.parent_name == make_pair(right_top_nid, idx(split("bottom"), 1)))
-        || (c.nid == right_top_nid && c.parent_name == make_pair(left_top_nid, idx(split("bottom"), 1))));
+      I((c.nid == left_top_nid && c.parent_name == make_pair(right_top_nid, path_component("bottom")))
+        || (c.nid == right_top_nid && c.parent_name == make_pair(left_top_nid, path_component("bottom"))));
       // this tests it was detached, implicitly
-      result.roster.attach_node(c.nid, split("resolved"));
+      result.roster.attach_node(c.nid, file_path_internal("resolved"));
       result.directory_loop_conflicts.pop_back();
       I(result.is_clean());
       result.roster.check_sane();
@@ -1512,12 +1502,12 @@ struct simple_orphan_conflict : public structural_conflict_helper
           b = idx(result.orphaned_node_conflicts, 0);
         }
       I(a.nid == a_live_child_nid);
-      I(a.parent_name == make_pair(a_dead_parent_nid, idx(split("a_child"), 1)));
+      I(a.parent_name == make_pair(a_dead_parent_nid, path_component("a_child")));
       I(b.nid == b_live_child_nid);
-      I(b.parent_name == make_pair(b_dead_parent_nid, idx(split("b_child"), 1)));
+      I(b.parent_name == make_pair(b_dead_parent_nid, path_component("b_child")));
       // this tests it was detached, implicitly
-      result.roster.attach_node(a.nid, split("resolved_a"));
-      result.roster.attach_node(b.nid, split("resolved_b"));
+      result.roster.attach_node(a.nid, file_path_internal("resolved_a"));
+      result.roster.attach_node(b.nid, file_path_internal("resolved_b"));
       result.orphaned_node_conflicts.pop_back();
       result.orphaned_node_conflicts.pop_back();
       I(result.is_clean());
@@ -1539,7 +1529,7 @@ struct simple_illegal_name_conflict : public structural_conflict_helper
       new_root_nid = nis.next();
       bad_dir_nid = nis.next();
 
-      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      left_roster.drop_detached_node(left_roster.detach_node(file_path()));
       safe_erase(left_markings, root_nid);
       make_dir(left_roster, left_markings, old_rid, left_rid, "", new_root_nid);
 
@@ -1554,7 +1544,7 @@ struct simple_illegal_name_conflict : public structural_conflict_helper
       I(c.nid == bad_dir_nid);
       I(c.parent_name == make_pair(new_root_nid, bookkeeping_root_component));
       // this tests it was detached, implicitly
-      result.roster.attach_node(bad_dir_nid, split("dir_formerly_known_as__MTN"));
+      result.roster.attach_node(bad_dir_nid, file_path_internal("dir_formerly_known_as__MTN"));
       result.illegal_name_conflicts.pop_back();
       I(result.is_clean());
       result.roster.check_sane();
@@ -1573,7 +1563,7 @@ struct simple_missing_root_dir : public structural_conflict_helper
     {
       other_root_nid = nis.next();
 
-      left_roster.drop_detached_node(left_roster.detach_node(split("")));
+      left_roster.drop_detached_node(left_roster.detach_node(file_path()));
       safe_erase(left_markings, root_nid);
       make_dir(left_roster, left_markings, old_rid, old_rid, "", other_root_nid);
     }
@@ -1582,7 +1572,7 @@ struct simple_missing_root_dir : public structural_conflict_helper
     {
       I(!result.is_clean());
       I(result.missing_root_dir);
-      result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
+      result.roster.attach_node(result.roster.create_dir_node(nis), file_path());
       result.missing_root_dir = false;
       I(result.is_clean());
       result.roster.check_sane();
@@ -1618,15 +1608,17 @@ struct node_name_plus_helper : public structural_conflict_helper
   node_id name_conflict_nid;
   node_id left_parent, right_parent;
   path_component left_name, right_name;
-  void make_nn_conflict(string const & left_path, string const & right_path)
+  void make_nn_conflict(string const & left, string const & right)
   {
+    file_path left_path = file_path_internal(left);
+    file_path right_path = file_path_internal(right);
     name_conflict_nid = nis.next();
-    make_dir(left_roster, left_markings, old_rid, left_rid, left_path, name_conflict_nid);
-    left_parent = left_roster.get_node(split(left_path))->parent;
-    left_name = left_roster.get_node(split(left_path))->name;
-    make_dir(right_roster, right_markings, old_rid, right_rid, right_path, name_conflict_nid);
-    right_parent = right_roster.get_node(split(right_path))->parent;
-    right_name = right_roster.get_node(split(right_path))->name;
+    make_dir(left_roster, left_markings, old_rid, left_rid, left, name_conflict_nid);
+    left_parent = left_roster.get_node(left_path)->parent;
+    left_name = left_roster.get_node(left_path)->name;
+    make_dir(right_roster, right_markings, old_rid, right_rid, right, name_conflict_nid);
+    right_parent = right_roster.get_node(right_path)->parent;
+    right_name = right_roster.get_node(right_path)->name;
   }
   void check_nn_conflict()
   {
@@ -1635,7 +1627,7 @@ struct node_name_plus_helper : public structural_conflict_helper
     I(c.nid == name_conflict_nid);
     I(c.left == make_pair(left_parent, left_name));
     I(c.right == make_pair(right_parent, right_name));
-    result.roster.attach_node(name_conflict_nid, split("totally_other_name"));
+    result.roster.attach_node(name_conflict_nid, file_path_internal("totally_other_name"));
     result.node_name_conflicts.pop_back();
     I(result.is_clean());
     result.roster.check_sane();
@@ -1659,8 +1651,8 @@ struct node_name_plus_rename_target : public node_name_plus_helper
   {
     // there should just be a single conflict on name_conflict_nid, and a and
     // b should have landed fine
-    I(result.roster.get_node(split("a"))->self == a_nid);
-    I(result.roster.get_node(split("b"))->self == b_nid);
+    I(result.roster.get_node(file_path_internal("a"))->self == a_nid);
+    I(result.roster.get_node(file_path_internal("b"))->self == b_nid);
     check_nn_conflict();
   }
 };
@@ -1715,7 +1707,7 @@ struct node_name_plus_illegal_name : public node_name_plus_helper
   {
     new_root_nid = nis.next();
     make_dir(left_roster, left_markings, old_rid, old_rid, "new_root", new_root_nid);
-    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    right_roster.drop_detached_node(right_roster.detach_node(file_path()));
     safe_erase(right_markings, root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "", new_root_nid);
     make_nn_conflict("new_root/_MTN", "foo");
@@ -1738,12 +1730,12 @@ struct node_name_plus_missing_root : public structural_conflict_helper
     left_root_nid = nis.next();
     right_root_nid = nis.next();
 
-    left_roster.drop_detached_node(left_roster.detach_node(split("")));
+    left_roster.drop_detached_node(left_roster.detach_node(file_path()));
     safe_erase(left_markings, root_nid);
     make_dir(left_roster, left_markings, old_rid, left_rid, "", left_root_nid);
     make_dir(left_roster, left_markings, old_rid, left_rid, "right_root", right_root_nid);
 
-    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    right_roster.drop_detached_node(right_roster.detach_node(file_path()));
     safe_erase(right_markings, root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "", right_root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "left_root", left_root_nid);
@@ -1751,12 +1743,12 @@ struct node_name_plus_missing_root : public structural_conflict_helper
   void check_helper(node_name_conflict const & left_c, node_name_conflict const & right_c)
   {
     I(left_c.nid == left_root_nid);
-    I(left_c.left == make_pair(the_null_node, the_null_component));
-    I(left_c.right == make_pair(right_root_nid, idx(split("left_root"), 1)));
+    I(left_c.left == make_pair(the_null_node, path_component()));
+    I(left_c.right == make_pair(right_root_nid, path_component("left_root")));
 
     I(right_c.nid == right_root_nid);
-    I(right_c.left == make_pair(left_root_nid, idx(split("right_root"), 1)));
-    I(right_c.right == make_pair(the_null_node, the_null_component));
+    I(right_c.left == make_pair(left_root_nid, path_component("right_root")));
+    I(right_c.right == make_pair(the_null_node, path_component()));
   }
   virtual void check()
   {
@@ -1772,8 +1764,8 @@ struct node_name_plus_missing_root : public structural_conflict_helper
 
     I(result.missing_root_dir);
 
-    result.roster.attach_node(left_root_nid, split(""));
-    result.roster.attach_node(right_root_nid, split("totally_other_name"));
+    result.roster.attach_node(left_root_nid, file_path());
+    result.roster.attach_node(right_root_nid, file_path_internal("totally_other_name"));
     result.node_name_conflicts.pop_back();
     result.node_name_conflicts.pop_back();
     result.missing_root_dir = false;
@@ -1791,11 +1783,11 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
     left_root_nid = nis.next();
     right_root_nid = nis.next();
 
-    left_roster.drop_detached_node(left_roster.detach_node(split("")));
+    left_roster.drop_detached_node(left_roster.detach_node(file_path()));
     safe_erase(left_markings, root_nid);
     make_dir(left_roster, left_markings, left_rid, left_rid, "", left_root_nid);
 
-    right_roster.drop_detached_node(right_roster.detach_node(split("")));
+    right_roster.drop_detached_node(right_roster.detach_node(file_path()));
     safe_erase(right_markings, root_nid);
     make_dir(right_roster, right_markings, right_rid, right_rid, "", right_root_nid);
   }
@@ -1805,15 +1797,15 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
     rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
     I((c.nid1 == left_root_nid && c.nid2 == right_root_nid)
       || (c.nid1 == right_root_nid && c.nid2 == left_root_nid));
-    I(c.parent_name == make_pair(the_null_node, the_null_component));
+    I(c.parent_name == make_pair(the_null_node, path_component()));
 
     I(result.missing_root_dir);
 
     // we can't just attach one of these as the root -- see the massive
     // comment on the old_locations member of roster_t, in roster.hh.
-    result.roster.attach_node(result.roster.create_dir_node(nis), split(""));
-    result.roster.attach_node(left_root_nid, split("totally_left_name"));
-    result.roster.attach_node(right_root_nid, split("totally_right_name"));
+    result.roster.attach_node(result.roster.create_dir_node(nis), file_path());
+    result.roster.attach_node(left_root_nid, file_path_internal("totally_left_name"));
+    result.roster.attach_node(right_root_nid, file_path_internal("totally_right_name"));
     result.rename_target_conflicts.pop_back();
     result.missing_root_dir = false;
     I(result.is_clean());

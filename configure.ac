@@ -53,7 +53,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
 		  sys/socket.h sys/time.h termios.h errno.h],,,
 		 [AC_INCLUDES_DEFAULT()])
 AC_HEADER_STDBOOL
-AX_CREATE_STDINT_H(mt-stdint.h)
+
 # gettext is nominally a library, but its tests don't work in C++ mode.
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
@@ -100,6 +100,7 @@ AC_CXX_SYNC_WITH_STDIO_WORKS
 AC_CXX_TEMPLATE_STATIC_CONST_BUG
 
 # Checks for typedefs and structures.
+MTN_NUMERIC_VOCAB
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_TYPE_PID_T
@@ -118,7 +119,7 @@ AC_FUNC_LOCALE_WORKS
 AC_FUNC_ICONV_TRANSLIT
 AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
 		__cxa_current_exception_type __cxa_demangle \
-                putenv setenv unsetenv])
+                putenv setenv unsetenv dirfd fstatat])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))

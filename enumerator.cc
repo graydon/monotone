@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <deque>
 #include <map>
 #include <set>
@@ -126,7 +127,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
       cset const & cs = edge_changes(i);
 
       // Queue up all the file-adds
-      for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
+      for (map<file_path, file_id>::const_iterator fa = cs.files_added.begin();
            fa != cs.files_added.end(); ++fa)
         {
           file_adds.insert(fa->second);
@@ -134,7 +135,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
         }
 
       // Queue up all the file-deltas
-      for (map<split_path, pair<file_id, file_id> >::const_iterator fd
+      for (map<file_path, pair<file_id, file_id> >::const_iterator fd
              = cs.deltas_applied.begin();
            fd != cs.deltas_applied.end(); ++fd)
         {

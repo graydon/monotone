@@ -1,18 +1,16 @@
 
-#include "config.h"
 
+#include "base.hh"
 #include "lua.hh"
 
 #include "globish.hh"
 #include "sanity.hh"
+#include "platform.hh"
 
-#include <string>
 #include <set>
 #include <vector>
 #include <utility>
 
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/regex.hpp>
 
 using std::pair;
@@ -23,7 +21,6 @@ using std::vector;
 using std::strerror;
 using std::malloc;
 using std::free;
-namespace fs = boost::filesystem;
 
 // adapted from "programming in lua", section 24.2.3
 // http://www.lua.org/pil/24.2.3.html
@@ -543,35 +540,63 @@ run_file(lua_State * st, char const * filename)
     .ok();
 }
 
+namespace
+{
+  struct ignore_directories : public dirent_consumer
+  { virtual void consume(const char *) {} };
+  struct record_if_matches : public dirent_consumer
+  {
+    record_if_matches(string const & b, char const * p,
+                      vector<string> & t)
+      : base(b + "/"), glob(globish(p), globish()), target(t)
+    { target.clear(); }
+
+    virtual void consume(const char * component)
+    {
+      if (glob(component))
+        target.push_back(base + component);
+    }
+  private:
+    string base;
+    globish_matcher glob;
+    vector<string> & target;
+  };
+}
+
+// ??? should maybe deal in system_paths and use read_directory.
 void
 run_directory(lua_State * st, char const * pathstr, char const * pattern)
 {
-  fs::path locpath(pathstr, fs::native);
-  N(fs::exists(locpath), F("Directory '%s' does not exist") % pathstr);
-  N(fs::is_directory(locpath), F("'%s' is not a directory") % pathstr);
+  string path(pathstr);
+  switch (get_path_status(path))
+    {
+    case path::nonexistent:
+      N(false, F("Directory '%s' does not exist") % pathstr);
+    case path::file:
+      N(false, F("'%s' is not a directory") % pathstr);
+    case path::directory:
+      break;
+    }
 
   // directory, iterate over it, skipping subdirs, taking every filename
   // matching the pattern, sorting them and loading in sorted order
-  fs::directory_iterator it(locpath);
-  globish r = globish(pattern);
-  globish_matcher glob(r, globish());
-  vector<fs::path> arr;
-  while (it != fs::directory_iterator())
-    {
-      if (!fs::is_directory(*it) && glob(it->string()))
-        arr.push_back(*it);
-      ++it;
-    }
+  vector<string> arr;
+  {
+    ignore_directories id;
+    record_if_matches rim(path, pattern, arr);
+    do_read_directory(path, rim, id);
+  }
+
   sort(arr.begin(), arr.end());
-  for (vector<fs::path>::iterator i= arr.begin(); i != arr.end(); ++i)
+  for (vector<string>::iterator i= arr.begin(); i != arr.end(); ++i)
     {
-      L(FL("opening rcfile '%s'") % i->string());
+      L(FL("opening rcfile '%s'") % *i);
       bool res = Lua(st)
-        .loadfile(i->string().c_str())
+        .loadfile(i->c_str())
         .call(0,1)
         .ok();
-      N(res, F("lua error while loading rcfile '%s'") % i->string());
-      L(FL("'%s' is ok") % i->string());
+      N(res, F("lua error while loading rcfile '%s'") % *i);
+      L(FL("'%s' is ok") % *i);
     }
 }
 

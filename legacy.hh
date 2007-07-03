@@ -13,9 +13,9 @@
 // old code needed for reading legacy data (so we can then convert it)
 
 #include <map>
-#include <string>
 
 #include "paths.hh"
+#include "vocab.hh"
 
 class app_state;
 
@@ -38,7 +38,7 @@ namespace legacy
   // *partially* read them, however, in order to get the manifest IDs out of
   // the old revisions (before we delete the revs and rebuild them)
 
-  typedef std::map<revision_id, std::map<split_path, split_path> > renames_map;
+  typedef std::map<revision_id, std::map<file_path, file_path> > renames_map;
 
   void
   get_manifest_and_renames_for_rev(app_state & app,

@@ -3,7 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <string>
+#include "base.hh"
+#include <iostream>
 #include <sstream>
 #include <windows.h>
 
@@ -135,6 +136,7 @@ pid_t process_spawn(const char * const argv[])
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
+  std::cout.flush();
   if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)==0)
     {
       os_err_t errnum = GetLastError();

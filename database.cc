@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <deque>
 #include <fstream>
@@ -504,7 +505,7 @@ format_sqlite_error_for_info(informative_failure const & e)
 // string, provided that all four characters are graphic.  (On disk, it's
 // stored in the "user version" field of the database.)
 static string
-format_creator_code(uint32_t code)
+format_creator_code(u32 code)
 {
   char buf[5];
   string result;
@@ -543,12 +544,12 @@ database::info(ostream & out)
   sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
   assert_sqlite3_ok(__sql);
 
-  uint32_t ccode;
+  u32 ccode;
   {
     results res;
     fetch(res, one_col, one_row, query("PRAGMA user_version"));
     I(res.size() == 1);
-    ccode = lexical_cast<uint32_t>(res[0][0]);
+    ccode = lexical_cast<u32>(res[0][0]);
   }
 
   vector<string> counts;
@@ -1816,6 +1817,9 @@ database::get_arbitrary_file_delta(file_id const & src_id,
 void
 database::get_revision_ancestry(rev_ancestry_map & graph)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   graph.clear();
   fetch(res, 2, any_rows,
@@ -1953,7 +1957,7 @@ database::deltify_revision(revision_id const & rid)
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
+        for (map<file_path, pair<file_id, file_id> >::const_iterator
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
@@ -2009,7 +2013,7 @@ database::put_revision(revision_id const & new_id,
           return false;
         }
 
-      for (map<split_path, file_id>::const_iterator a
+      for (map<file_path, file_id>::const_iterator a
              = edge_changes(i).files_added.begin();
            a != edge_changes(i).files_added.end(); ++a)
         {
@@ -2021,7 +2025,7 @@ database::put_revision(revision_id const & new_id,
             }
         }
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
+      for (map<file_path, pair<file_id, file_id> >::const_iterator d
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {
@@ -2566,6 +2570,9 @@ outdated_indicator
 database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                                            pair<revision_id, rsa_keypair_id> > > & idx)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   fetch(res, 3, any_rows,
         query("SELECT hash, id, keypair "

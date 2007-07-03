@@ -7,7 +7,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 
 struct lua_State;
 

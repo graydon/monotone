@@ -7,7 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
+#include "base.hh"
 #include "ssh_agent_platform.hh"
 
 using std::string;

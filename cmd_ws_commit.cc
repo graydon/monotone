@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <iostream>
 #include <map>
 
@@ -53,29 +54,29 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
       if (cs.empty())
         out += F("  no changes").str() += '\n';
 
-      for (path_set::const_iterator i = cs.nodes_deleted.begin();
+      for (set<file_path>::const_iterator i = cs.nodes_deleted.begin();
             i != cs.nodes_deleted.end(); ++i)
         out += (F("  dropped  %s") % *i).str() += '\n';
 
-      for (map<split_path, split_path>::const_iterator
+      for (map<file_path, file_path>::const_iterator
             i = cs.nodes_renamed.begin();
             i != cs.nodes_renamed.end(); ++i)
         out += (F("  renamed  %s\n"
                    "       to  %s") % i->first % i->second).str() += '\n';
 
-      for (path_set::const_iterator i = cs.dirs_added.begin();
+      for (set<file_path>::const_iterator i = cs.dirs_added.begin();
             i != cs.dirs_added.end(); ++i)
         out += (F("  added    %s") % *i).str() += '\n';
 
-      for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+      for (map<file_path, file_id>::const_iterator i = cs.files_added.begin();
             i != cs.files_added.end(); ++i)
         out += (F("  added    %s") % i->first).str() += '\n';
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator
+      for (map<file_path, pair<file_id, file_id> >::const_iterator
               i = cs.deltas_applied.begin(); i != cs.deltas_applied.end(); ++i)
         out += (F("  patched  %s") % (i->first)).str() += '\n';
 
-      for (map<pair<split_path, attr_key>, attr_value >::const_iterator
+      for (map<pair<file_path, attr_key>, attr_value >::const_iterator
              i = cs.attrs_set.begin(); i != cs.attrs_set.end(); ++i)
         out += (F("  attr on  %s\n"
                    "    attr   %s\n"
@@ -83,7 +84,7 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
                  % (i->first.first) % (i->first.second) % (i->second)
                  ).str() += "\n";
 
-      for (set<pair<split_path, attr_key> >::const_iterator
+      for (set<pair<file_path, attr_key> >::const_iterator
              i = cs.attrs_cleared.begin(); i != cs.attrs_cleared.end(); ++i)
         out += (F("  unset on %s\n"
                    "      attr %s")
@@ -178,7 +179,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       // restriction we first find all missing files included by the
       // specified args and then make a restriction that includes only
       // these missing files.
-      path_set missing;
+      set<file_path> missing;
       app.work.find_missing(new_roster, mask, missing);
       if (missing.empty())
         {
@@ -187,11 +188,11 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
         }
 
       std::vector<file_path> missing_files;
-      for (path_set::const_iterator i = missing.begin(); i != missing.end(); i++)
+      for (set<file_path>::const_iterator i = missing.begin();
+           i != missing.end(); i++)
         {
-          file_path fp(*i);
-          L(FL("missing files are '%s'") % fp);
-          missing_files.push_back(fp);
+          L(FL("reverting missing file: %s") % *i);
+          missing_files.push_back(*i);
         }
       // replace the original mask with a more restricted one
       mask = node_restriction(missing_files, std::vector<file_path>(),
@@ -218,12 +219,11 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       if (old_roster.is_root(nid))
         continue;
 
-      split_path sp;
-      old_roster.get_name(nid, sp);
-      file_path fp(sp);
-
       if (!mask.includes(old_roster, nid))
         continue;
+
+      file_path fp;
+      old_roster.get_name(nid, fp);
 
       if (is_file_t(node))
         {
@@ -338,37 +338,29 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
 
   app.require_workspace();
 
-  path_set paths;
-  //spin through args and try to ensure that we won't have any collisions
-  //before doing any real filesystem modification.  we'll also verify paths
-  //against .mtn-ignore here.
-  for (args_vector::const_iterator i = args.begin();
-       i != args.end(); ++i)
+  set<file_path> paths;
+  // spin through args and try to ensure that we won't have any collisions
+  // before doing any real filesystem modification.  we'll also verify paths
+  // against .mtn-ignore here.
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      split_path sp;
-      file_path_external(*i).split(sp);
-      file_path fp(sp);
-
+      file_path fp = file_path_external(*i);
       require_path_is_nonexistent
         (fp, F("directory '%s' already exists") % fp);
 
-      //we'll treat this as a user (fatal) error.  it really
-      //wouldn't make sense to add a dir to .mtn-ignore and then
-      //try to add it to the project with a mkdir statement, but
-      //one never can tell...
+      // we'll treat this as a user (fatal) error.  it really wouldn't make
+      // sense to add a dir to .mtn-ignore and then try to add it to the
+      // project with a mkdir statement, but one never can tell...
       N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
         F("ignoring directory '%s' [see .mtn-ignore]") % fp);
 
-      paths.insert(sp);
+      paths.insert(fp);
     }
 
-  //this time, since we've verified that there should be no collisions,
-  //we'll just go ahead and do the filesystem additions.
-  for (path_set::const_iterator i = paths.begin();
-       i != paths.end(); ++i)
-    {
-      mkdir_p(file_path(*i));
-    }
+  // this time, since we've verified that there should be no collisions,
+  // we'll just go ahead and do the filesystem additions.
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
+    mkdir_p(*i);
 
   app.work.perform_additions(paths, false, !app.opts.no_ignore);
 }
@@ -384,14 +376,15 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  path_set paths;
+  vector<file_path> roots = args_to_paths(args);
+
+  set<file_path> paths;
   bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
-      vector<file_path> roots = args_to_paths(args);
       path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth, app);
-      path_set ignored;
+      set<file_path> ignored;
 
       // if no starting paths have been specified use the workspace root
       if (roots.empty())
@@ -402,7 +395,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
       app.work.perform_additions(ignored, add_recursive, !app.opts.no_ignore);
     }
   else
-    split_paths(args_to_paths(args), paths);
+    paths = set<file_path>(roots.begin(), roots.end());
 
   app.work.perform_additions(paths, add_recursive, !app.opts.no_ignore);
 }
@@ -417,7 +410,7 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  path_set paths;
+  set<file_path> paths;
   if (app.opts.missing)
     {
       temp_node_id_source nis;
@@ -430,7 +423,10 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
-    split_paths(args_to_paths(args), paths);
+    {
+      vector<file_path> roots = args_to_paths(args);
+      paths = set<file_path>(roots.begin(), roots.end());
+    }
 
   app.work.perform_deletions(paths, app.opts.recursive, app.opts.bookkeep_only);
 }
@@ -636,11 +632,9 @@ CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   // Clear all attrs (or a specific attr).
   if (args.size() == 1)
@@ -685,11 +679,9 @@ CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   if (args.size() == 1)
     {
@@ -737,11 +729,9 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args, 0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   attr_key a_key = attr_key(idx(args, 1)());
   attr_value a_value = attr_value(idx(args, 2)());
@@ -788,8 +778,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
   app.require_workspace();
 
   // retrieve the path
-  split_path path;
-  file_path_external(idx(args,0)).split(path);
+  file_path path = file_path_external(idx(args,0));
 
   roster_t base, current;
   parent_map parents;
@@ -910,11 +899,9 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   attr_key a_key = attr_key(idx(args,1)());
   attr_value a_value = attr_value(idx(args,2)());
@@ -956,11 +943,9 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
   app.work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
-  split_path sp;
-  path.split(sp);
 
-  N(new_roster.has_node(sp), F("Unknown path '%s'") % path);
-  node_t node = new_roster.get_node(sp);
+  N(new_roster.has_node(path), F("Unknown path '%s'") % path);
+  node_t node = new_roster.get_node(path);
 
   // Clear all attrs (or a specific attr).
   if (args.size() == 1)
@@ -1120,11 +1105,12 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
             // process file deltas or new files
             cset const & cs = edge_changes(edge);
 
-            for (map<split_path, pair<file_id, file_id> >::const_iterator
+            for (map<file_path, pair<file_id, file_id> >::const_iterator
                    i = cs.deltas_applied.begin();
                  i != cs.deltas_applied.end(); ++i)
               {
-                file_path path(i->first);
+                file_path path = i->first;
+
                 file_id old_content = i->second.first;
                 file_id new_content = i->second.second;
 
@@ -1160,11 +1146,11 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                     % old_content % path);
               }
 
-            for (map<split_path, file_id>::const_iterator
+            for (map<file_path, file_id>::const_iterator
                    i = cs.files_added.begin();
                  i != cs.files_added.end(); ++i)
               {
-                file_path path(i->first);
+                file_path path = i->first;
                 file_id new_content = i->second;
 
                 L(FL("inserting full version %s") % new_content);

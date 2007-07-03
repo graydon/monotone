@@ -1,3 +1,4 @@
+#include "base.hh"
 #include "simplestring_xform.hh"
 #include "sanity.hh"
 #include "constants.hh"

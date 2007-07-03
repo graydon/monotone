@@ -4,12 +4,12 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "base.hh"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 
-#include <string>
 
 #include "platform.hh"
 

@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <vector>
 
 #include <boost/tokenizer.hpp>
@@ -460,7 +461,7 @@ idna
 {
   char *name;
   size_t inlen;
-  uint32_t in[100];
+  u32 in[100];
   char *out;
   int allowunassigned;
   int usestd3asciirules;

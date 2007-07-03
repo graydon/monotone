@@ -7,9 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
 #include <vector>
-#include <string>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -391,7 +391,7 @@ int main(int argc, char * argv[])
                 {
                   unrecognized = true;
                   cerr << argv[0] << ": unrecognized test: "
-                       << group << '\n';
+                       << group << ':' << test << '\n';
                   continue;
                 }
               to_run.push_back(t->second);

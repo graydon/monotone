@@ -10,6 +10,7 @@
 // this file contains magic constants which you could, in theory, tweak.
 // probably best not to tweak them though.
 
+#include "base.hh"
 #include "constants.hh"
 #include "numeric_vocab.hh"
 

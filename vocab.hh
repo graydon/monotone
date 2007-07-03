@@ -10,32 +10,13 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h"
-
 #include <utility>
-#include <string>
-#include <iosfwd>
-
 #include <boost/shared_ptr.hpp>
 
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and
 // generally describe the "vocabulary" (nouns anyways) that modules in this
 // program use.
-
-// this template must be specialized for each type you want to dump.
-// there are a few stock dumpers in appropriate places.
-template <typename T>
-void dump(T const &, std::string &)
-{
-  // the compiler will evaluate this somewhat odd construct (and issue an
-  // error) if and only if this base template is instantiated.  we do not
-  // use BOOST_STATIC_ASSERT mainly to avoid dragging it in everywhere;
-  // also we get better diagnostics this way (the error tells you what is
-  // wrong, not just that there's an assertion failure).
-  enum dummy { d = (sizeof(struct dump_must_be_specialized_for_this_type)
-                    == sizeof(T)) };
-}
 
 // For some reason, shared_ptr copy is about a hundred times faster
 // than string refcopy on my system (g++ 4). This only happens because

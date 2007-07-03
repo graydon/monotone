@@ -7,7 +7,13 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "randomizer.hh"
+#include <boost/random/uniform_int.hpp>
+#include <boost/random/bernoulli_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
+
+typedef boost::mt19937 & rng_t;
 
 bool randomizer::flip(size_t n)
 { 
@@ -15,13 +21,13 @@ bool randomizer::flip(size_t n)
 }
 
 size_t randomizer::uniform(size_t n)
-{        
-  return boost::random_number_generator<boost::mt19937>(rng)(n);
+{
+  typedef boost::uniform_int<size_t> dist_t;
+  return boost::variate_generator<rng_t, dist_t>(rng, dist_t(0, n-1))();
 }  
 
 bool randomizer::bernoulli(double p)
 {
-  typedef boost::mt19937& rng_t;
   typedef boost::bernoulli_distribution<double> dist_t;
   return boost::variate_generator<rng_t, dist_t>(rng, dist_t(p))();
 }  

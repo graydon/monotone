@@ -106,6 +106,7 @@ Loop:
   Having found a layout that works, we draw lines connecting things!  Yay.
 */
 
+#include "base.hh"
 #include <algorithm>
 #include <iostream>
 #include <iterator>
