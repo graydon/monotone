@@ -47,6 +47,10 @@
           databases with this problem can be fixed by pulling into a fresh
           database using 0.36.
 
+        - Monotone can now be built successfully with Boost 1.34. Older
+          versions of monotone would sometimes seem to work depending on
+          the compiler used, but would have bugs in path normalization.
+
         Internal
 
         - Commands are now defined as a tree of commands instead of a
