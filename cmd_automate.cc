@@ -428,7 +428,7 @@ LUAEXT(mtn_automate, )
   
   int n = lua_gettop(L);
   
-  E(n > 1, F("Bad input to mtn_automate() lua extension: command name is missing"));
+  E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
 
   app_p->db.ensure_open();
 
