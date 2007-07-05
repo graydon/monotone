@@ -148,12 +148,15 @@ do
 	    io.stderr:write("note_netsync_end: reading ", MCP_rcfile, "\n")
 	 end
 	 local rcfile = io.open(MCP_rcfile, "r")
-	 if (rcfile == nil) then return false end
+	 if (rcfile == nil) then
+	    io.stderr:write("file ", MCP_rcfile, " cannot be opened\n")
+	    return false
+	 end
 	 local dat = rcfile:read("*a")
 	 io.close(rcfile)
 	 local res = parse_basic_io(dat)
 	 if res == nil then
-	    io.stderr:write("file " .. MCP_rcfile .. " cannot be parsed\n")
+	    io.stderr:write("file ", MCP_rcfile, " cannot be parsed\n")
 	    return false
 	 end
 
