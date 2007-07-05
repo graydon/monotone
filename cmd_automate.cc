@@ -416,6 +416,12 @@ LUAEXT(mtn_automate, )
   app_state* app_p = get_app_state(L);
   I(app_p != NULL);
   I(app_p->lua.check_lua_state(L));
+  E(app_p->mtn_automate_allowed,
+      F("It is illegal to call the mtn_automate() lua extension,\n"
+        "unless from a command function defined by register_command()."));
+
+  // don't allow recursive calls
+  app_p->mtn_automate_allowed = false;
 
   // automate_ostream os(output, app_p->opts.automate_stdio_size);
   std::stringstream & os = output;
@@ -474,6 +480,9 @@ LUAEXT(mtn_automate, )
     }
 
   os.flush();
+
+  // allow further calls
+  app_p->mtn_automate_allowed = true;
 
   lua_pushstring(L, output.str().c_str());  // XXX: what needs to happen here for memory management?  Should I copy this and let lua free it?
   return 1;

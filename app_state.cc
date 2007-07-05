@@ -33,6 +33,7 @@ app_state::app_state()
   : db(system_path()),
     keys(*this), work(db, lua),
     branch_is_sticky(false),
+    mtn_automate_allowed(false),
     project(*this)
 {
   db.set_app(this);

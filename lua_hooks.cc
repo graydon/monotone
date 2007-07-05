@@ -1000,7 +1000,11 @@ void commands::cmd_lua::exec(app_state & app,
   for (args_vector::const_iterator it = args.begin(); it != args.end(); it++)
     ll.push_str((*it)());
 
+  app.mtn_automate_allowed = true;
+
   ll.call(args.size(),0);
+
+  app.mtn_automate_allowed = false;
 
   E(ll.ok(), F("Call to user command %s (lua command: %s) failed.") % primary_name() % f_name);
 }
