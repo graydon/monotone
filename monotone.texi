@@ -8785,6 +8785,11 @@ hook writers.
 
 @ftable @code
 
+@item alias_command(@var{original}, @var{alias})
+
+This function adds a new alias for a monotone command.  A call to this function would
+normally be placed directly in the monotonerc file, rather than in a hook function.
+
 @item existonpath(@var{possible_command})
 
 This function receives a string containing the name of an external
@@ -8882,6 +8887,13 @@ option.  @code{temp_file()} builds on @code{mkstemp()} and creates a
 file in the standard TMP/TEMP directories.
 For the definition of @code{temp_file()}, see @ref{Default hooks}.
 
+@item mtn_automate( ... )
+
+The mtn_automate function calls the the monotone automate command passed in
+its arguments.  The output from the automate command is returned as a string.
+This function is not for use in ordinary hooks, but rather for lua based
+commands as defined by @code{register_command()}.
+
 @item parse_basic_io(@var{data})
 
 Parse the string @var{data}, which should be in basic_io format. It returns nil
@@ -8917,6 +8929,13 @@ The output table will be:
 
 Returns true if a match for @var{regexp} is found in @var{str}, return
 false otherwise.
+
+@item register_command(@var{name}, @var{abstract}, @var{description}, @var{function})
+
+Add a command named @var{name} to the @var{user} command group in monotone.  This function is
+normally called directly from a monotonerc file rather than a hook.  When the user issues the
+registered command, monotone will call the lua @var{function} name supplied.  That function would
+then normally use mtn_automate() calls to service the request.
 
 @item server_request_sync(@var{what}, @var{address}, @var{include}, @var{exclude})
 
