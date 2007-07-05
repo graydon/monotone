@@ -2894,7 +2894,7 @@ serve_connections(protocol_role role,
                   globish inc(request.include);
                   globish exc(request.exclude);
 
-                  P(F("connecting to %s") % address());
+                  P(F("connecting to %s") % addr());
                   shared_ptr<Netxx::StreamBase> server
                     = build_stream_to_server(app, inc, exc,
                                              addr, default_port,
