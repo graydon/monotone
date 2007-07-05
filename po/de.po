@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-28 22:31+0200\n"
+"POT-Creation-Date: 2007-07-04 16:44+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -3065,7 +3065,7 @@ msgstr ""
 "[   rechts] %s\n"
 "[vereinigt] %s"
 
-#: file_io.cc:203 file_io.cc:210
+#: file_io.cc:214 file_io.cc:221
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -3074,7 +3074,7 @@ msgstr ""
 "konnte Verzeichnis '%s' nicht erstellen,\n"
 "da es eine existierende Datei ist"
 
-#: file_io.cc:205
+#: file_io.cc:216
 #, c-format
 msgid ""
 "could not create directory '%s'\n"
@@ -3083,126 +3083,121 @@ msgstr ""
 "konnte Verzeichnis '%s' nicht erstellen\n"
 "%s"
 
-#: file_io.cc:209
+#: file_io.cc:220
 #, c-format
 msgid "could not create directory '%s'"
 msgstr "konnte Verzeichnis '%s' nicht erstellen"
 
-#: file_io.cc:222
+#: file_io.cc:233
 #, c-format
 msgid "failed to create directory '%s' for '%s'"
 msgstr "konnte Verzeichnis '%s' für '%s' nicht erstellen"
 
-#: file_io.cc:235
-#, c-format
-msgid "could not remove '%s': %s"
-msgstr "konnte '%s' nicht entfernen: %s"
-
-#: file_io.cc:246
+#: file_io.cc:241
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "zu löschende Datei '%s' existiert nicht"
 
-#: file_io.cc:247
+#: file_io.cc:242
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "die zu löschende Datei '%s' ist keine Datei, sondern ein Verzeichnis"
 
-#: file_io.cc:255
+#: file_io.cc:250
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "zu löschendes Verzeichnis '%s' existiert nicht"
 
-#: file_io.cc:256
+#: file_io.cc:251
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr ""
 "das zu löschende Verzeichnis '%s' ist kein Verzeichnis, sondern eine Datei"
 
-#: file_io.cc:263
+#: file_io.cc:258
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "zu löschendes Objekt '%s' existiert nicht"
 
-#: file_io.cc:271
+#: file_io.cc:266
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "zu löschendes Verzeichnis '%s' existiert nicht"
 
-#: file_io.cc:272
+#: file_io.cc:267
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "zu löschendes Verzeichnis '%s' ist eine Datei"
 
-#: file_io.cc:281
+#: file_io.cc:276
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "Quelldatei für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:282
+#: file_io.cc:277
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 "Quelldatei für Umbenennung '%s ist ein Verzeichnis -- Fehler in monotone?"
 
-#: file_io.cc:285 file_io.cc:298
+#: file_io.cc:280 file_io.cc:295 file_io.cc:307
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "Zieldatei für Umbenennung '%s' existiert bereits"
 
-#: file_io.cc:294
+#: file_io.cc:290
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "Quellverzeichnis für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:295
+#: file_io.cc:292
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 "Quellverzeichnis für Umbenennung '%s ist eine Datei -- Fehler in monotone?"
 
-#: file_io.cc:309
+#: file_io.cc:305
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "Quellpfad für Umbenennung '%s' existiert nicht"
 
-#: file_io.cc:324
+#: file_io.cc:316
 #, c-format
 msgid "file %s does not exist"
 msgstr "Datei %s existiert nicht"
 
-#: file_io.cc:325
+#: file_io.cc:317
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "Datei %s kann nicht eingelesen werden; sie ist ein Verzeichnis"
 
-#: file_io.cc:329
+#: file_io.cc:321
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "Kann Datei %s nicht zum Lesen öffnen"
 
-#: file_io.cc:369
+#: file_io.cc:355
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Kann nicht mehrmals von der Standardeingabe lesen"
 
-#: file_io.cc:400
+#: file_io.cc:386
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr ""
 "Datei %s kann nicht mit Daten überschrieben werden; sie ist ein Verzeichnis"
 
-#: file_io.cc:453
+#: file_io.cc:439
 #, c-format
 msgid "caught runtime error %s constructing file path for %s"
 msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
-#: file_io.cc:540 work.cc:1290
+#: file_io.cc:528 work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
 
-#: file_io.cc:570
+#: file_io.cc:558
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "erwartete Datei '%s', diese ist jedoch ein Verzeichnis"
@@ -3282,22 +3277,22 @@ msgstr "make_signature: Signatur ist ungültig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
 
-#: lua.cc:468 lua.cc:479 lua.cc:491
+#: lua.cc:466 lua.cc:477 lua.cc:489
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 
-#: lua.cc:549
+#: lua.cc:574
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:550 rcs_import.cc:1229 work.cc:1559
+#: lua.cc:576 rcs_import.cc:1229 work.cc:1559
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: lua.cc:572
+#: lua.cc:598
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
@@ -4223,8 +4218,8 @@ msgstr "erneuere %d Knoten"
 #, c-format
 msgid "Directory %s for path %s cannot be added, as there is a file in the way"
 msgstr ""
-"Das Verzeichnis %s kann für den Pfad %s nicht hinzugefügt werden, da eine Datei im Weg "
-"ist."
+"Das Verzeichnis %s kann für den Pfad %s nicht hinzugefügt werden, da eine "
+"Datei im Weg ist."
 
 #: revision.cc:1235
 #, c-format
@@ -4859,7 +4854,9 @@ msgstr ""
 #: work.cc:1443 work.cc:1467
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
-msgstr "kann Wurzel des Arbeitsbereiches nicht umbenennen (versuchen Sie stattdessen '%s pivot_root')"
+msgstr ""
+"kann Wurzel des Arbeitsbereiches nicht umbenennen (versuchen Sie stattdessen "
+"'%s pivot_root')"
 
 #: work.cc:1446 work.cc:1470
 #, c-format
@@ -4897,8 +4894,8 @@ msgstr ""
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
 msgstr ""
-"%s existiert im Gegensatz zu %s nicht im Arbeitsbereich, übergehe Umbenennung im "
-"Dateisystem"
+"%s existiert im Gegensatz zu %s nicht im Arbeitsbereich, übergehe "
+"Umbenennung im Dateisystem"
 
 #: work.cc:1540
 #, c-format
@@ -5025,57 +5022,78 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
 
-#: unix/fs.cc:32 win32/fs.cc:23
+#: unix/fs.cc:33 win32/fs.cc:23
 #, c-format
 msgid "cannot get working directory: %s"
 msgstr "kann Arbeitsverzeichnis nicht ermitteln: %s"
 
-#: unix/fs.cc:40 win32/fs.cc:34
+#: unix/fs.cc:41 win32/fs.cc:34
 #, c-format
 msgid "cannot change to directory %s: %s"
 msgstr "kann nicht in Verzeichnis %s wechseln: %s"
 
-#: unix/fs.cc:60
+#: unix/fs.cc:61
 #, c-format
 msgid "could not find home directory for uid %d"
 msgstr "konnte Heimatverzeichnis für UID %d nicht finden"
 
-#: unix/fs.cc:93
+#: unix/fs.cc:94
 #, c-format
 msgid "could not find home directory for user %s"
 msgstr "konnte Heimatverzeichnis von Benutzer %s nicht finden"
 
-#: unix/fs.cc:109
+#: unix/fs.cc:110
 #, c-format
 msgid "error accessing file %s: %s"
 msgstr "Fehler beim Zugriff auf die Datei %s: %s"
 
-#: unix/fs.cc:118
+#: unix/fs.cc:119
 #, c-format
 msgid "cannot handle special file %s"
 msgstr "kann nicht mit spezieller Datei %s umgehen"
 
-#: unix/fs.cc:126
+#: unix/fs.cc:130 win32/fs.cc:164
+#, c-format
+msgid "could not open directory '%s': %s"
+msgstr ""
+"konnte Verzeichnis '%s' nicht öffnen: %s"
+
+#: unix/fs.cc:201
+#, c-format
+msgid "error accessing '%s/%s': %s"
+msgstr "Fehler beim Zugriff auf '%s/%s': %s"
+
+#: unix/fs.cc:213
+#, c-format
+msgid "cannot handle special file '%s/%s'"
+msgstr "kann nicht mit spezieller Datei '%s/%s' umgehen"
+
+#: unix/fs.cc:222
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s"
 
-#: unix/fs.cc:190 win32/fs.cc:274
+#: unix/fs.cc:231 win32/fs.cc:239
+#, c-format
+msgid "could not remove '%s': %s"
+msgstr "konnte '%s' nicht entfernen: %s"
+
+#: unix/fs.cc:295 win32/fs.cc:372
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "Kann temporäre Datei %s nicht anlegen: %s"
 
-#: unix/fs.cc:199
+#: unix/fs.cc:304
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr "alle %d möglichen, temporären Dateinamen sind in Benutzung"
 
-#: unix/fs.cc:239 win32/fs.cc:334
+#: unix/fs.cc:344 win32/fs.cc:432
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "Fehler beim Schreiben zur temporären Datei %s: %s"
 
-#: unix/fs.cc:244 win32/fs.cc:341
+#: unix/fs.cc:349 win32/fs.cc:439
 #, c-format
 msgid ""
 "giving up after four zero-length writes to %s (%d byte written, %d left)"
@@ -5143,17 +5161,22 @@ msgstr "kann Konfigurationspfad nicht bestimmen"
 msgid "%s: GetFileAttributes error: %s"
 msgstr "%s: GetFileAttributes-Fehler: %s"
 
-#: win32/fs.cc:213
+#: win32/fs.cc:186
+#, c-format
+msgid "error while reading directory: %s"
+msgstr "Fehler beim Lesen des Verzeichnisses: %s"
+
+#: win32/fs.cc:311
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s (%d)"
 
-#: win32/fs.cc:282
+#: win32/fs.cc:380
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr "kann keine temporäre Datei finden (versuchte %d Möglichkeiten)"
 
-#: win32/fs.cc:309
+#: win32/fs.cc:407
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr "%s wird für alle Benutzer dieses Computers zugänglich sein\n"
