@@ -8061,7 +8061,19 @@ usage of monotone could be monitored for user interface testing.  Note
 that by default, no monitoring occurs.  The arguments to the hook
 function are the arguments to monotone, without the initial
 @command{mtn} command.  They can be accessed through the lua @var{arg}
-variable which contains the variable list of arguments.
+variable as in this example:
+
+@smallexample
+@group
+function note_mtn_startup(...)
+    print("Beginning note_mtn_startup")
+    for i = 1,arg.n do
+        print(arg[i])
+    end
+    print("Ending note_mtn_startup")
+end
+@end group
+@end smallexample
 
 @end ftable
 
