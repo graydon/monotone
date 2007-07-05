@@ -2894,30 +2894,37 @@ serve_connections(protocol_role role,
                   globish inc(request.include);
                   globish exc(request.exclude);
 
-                  P(F("connecting to %s") % addr());
-                  shared_ptr<Netxx::StreamBase> server
-                    = build_stream_to_server(app, inc, exc,
-                                             addr, default_port,
-                                             timeout);
+                  try
+                    {
+                      P(F("connecting to %s") % addr());
+                      shared_ptr<Netxx::StreamBase> server
+                        = build_stream_to_server(app, inc, exc,
+                                                 addr, default_port,
+                                                 timeout);
 
-                  // 'false' here means not to revert changes when the SockOpt
-                  // goes out of scope.
-                  Netxx::SockOpt socket_options(server->get_socketfd(), false);
-                  socket_options.set_non_blocking();
+                      // 'false' here means not to revert changes when
+                      // the SockOpt goes out of scope.
+                      Netxx::SockOpt socket_options(server->get_socketfd(), false);
+                      socket_options.set_non_blocking();
 
-                  protocol_role role = source_and_sink_role;
-                  if (request.what == "sync")
-                    role = source_and_sink_role;
-                  else if (request.what == "push")
-                    role = source_role;
-                  else if (request.what == "pull")
-                    role = sink_role;
+                      protocol_role role = source_and_sink_role;
+                      if (request.what == "sync")
+                        role = source_and_sink_role;
+                      else if (request.what == "push")
+                        role = source_role;
+                      else if (request.what == "pull")
+                        role = sink_role;
 
-                  shared_ptr<session> sess(new session(role, client_voice,
-                                                       inc, exc,
-                                                       app, addr(), server, true));
+                      shared_ptr<session> sess(new session(role, client_voice,
+                                                           inc, exc,
+                                                           app, addr(), server, true));
 
-                  sessions.insert(make_pair(server->get_socketfd(), sess));
+                      sessions.insert(make_pair(server->get_socketfd(), sess));
+                    }
+                  catch (Netxx::NetworkException & e)
+                    {
+                      P(F("Network error: %s") % e.what());
+                    }
                 }
 
               if (sessions.empty())
