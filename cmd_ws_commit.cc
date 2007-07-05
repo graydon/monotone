@@ -1220,6 +1220,14 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   }
 }
 
+CMD_AUTOMATE(commit,
+    N_("[PATH]..."),
+    N_("Commits workspace changes to the database"), "",
+    options::opts::none)
+{
+  commands::commit_cmd.exec(app, execid, args);
+}
+
 CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
     N_("Sets up a new workspace directory"),
     N_("If no directory is specified, uses the current directory."),

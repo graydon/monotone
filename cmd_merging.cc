@@ -280,6 +280,17 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   P(F("updated to base revision %s") % chosen_rid);
 }
 
+CMD_AUTOMATE(update, "",
+    N_("Updates the workspace"),
+    N_("This command modifies your workspace to be based off of a "
+       "different revision, preserving uncommitted changes as it does so.  "
+       "If a revision is given, update the workspace to that revision.  "
+       "If not, update the workspace to the head of the branch."),
+    options::opts::none)
+{
+  commands::update_cmd.exec(app, execid, args);
+}
+
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
 // placing results onto BRANCH.  Note that interactive_merge_and_store may
 // bomb out, and therefore so may this.
@@ -430,6 +441,13 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   
   merge_two(left, right, app.opts.branchname, string("merge"), app);
   P(F("note: your workspaces have not been updated"));
+}
+
+CMD_AUTOMATE(merge, "",
+    N_("Merges unmerged heads of a branch"), "",
+    options::opts::none)
+{
+  commands::merge_cmd.exec(app, execid, args);
 }
 
 CMD(propagate, "propagate", "", CMD_REF(tree),
