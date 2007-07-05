@@ -274,38 +274,6 @@ void commands::automate_ ## C :: exec_from_automate                  \
    app_state & app,                                                  \
    std::ostream & output) const
 
-#define _CMD2(C, name, aliases, parent, hidden, params, abstract, desc, opts) \
-namespace commands {                                                 \
-  class cmd_ ## C : public command                                   \
-  {                                                                  \
-  public:                                                            \
-    cmd_ ## C() : command(name, aliases, parent, hidden, params,     \
-                          abstract, desc, true,                      \
-                          options::options_type() | opts)            \
-    {}                                                               \
-    virtual void exec(app_state & app,                               \
-                      command_id const & execid,                     \
-                      args_vector const & args);                     \
-  };                                                                 \
-  cmd_ ## C C ## _cmd;                                               \
-}                                                                    \
-void commands::cmd_ ## C::exec(app_state & app,                      \
-                               command_id const & execid,            \
-                               args_vector const & args)
-
-#define CMD_ALIAS_AUTOMATE(ORIG, ALIAS, abstract, desc)              \
-namespace commands {                                                 \
-  class automate_ ## ALIAS : public automate                         \
-  {                                                                  \
-      public automate_ ## ALIAS() : automate(#ALIAS,                 \
-                                    commands::#ORIG_cmd.params_,     \
-                                    #abstract, #desc,                \
-                                    options::options_type() |        \
-                                    commands::ORIG##_cmd.opts)       \
-      {}                                                             \
-      
-
-
 CMD_FWD_DECL(__root__);
 
 CMD_FWD_DECL(automation);
