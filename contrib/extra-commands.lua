@@ -11,8 +11,8 @@ function pmup(...)
 end
 
 register_command("pup", "Pull, merge and update a workspace",
-      "This command approximates the update command of a centralised revision control system.\n" ..
-      "It first contacts the server to gather new revisions, then merges multiple local heads\n" ..
+      "This command approximates the update command of a centralised revision control system.  " ..
+      "It first contacts the server to gather new revisions, then merges multiple local heads " ..
       "(if any), and then it updates the workspace.", "pmup")
 
 function cpm(...)
@@ -32,10 +32,10 @@ function cpm(...)
 end
 
 register_command("cpm", "Commit, pull, merge and push a workspace",
-      "This command approximates the commit command of a centralised revision control system.\n" ..
-      "It first commits your work to the local repository, then contacts the server to gather\n" ..
-      "new revisions.  If there is a single head at this point, then the local changes are pushed\n" ..
-      "to the server.  If there are multiple heads then they are merged, and the user is asked\n" ..
+      "This command approximates the commit command of a centralised revision control system.  " ..
+      "It first commits your work to the local repository, then contacts the server to gather " ..
+      "new revisions.  If there is a single head at this point, then the local changes are pushed " ..
+      "to the server.  If there are multiple heads then they are merged, and the user is asked " ..
       "to check things still work before pushing the changes.", "cpm")
 
 
