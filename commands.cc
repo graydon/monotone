@@ -90,6 +90,9 @@ CMD_GROUP(variables, "variables", "", CMD_REF(__root__),
 CMD_GROUP(workspace, "workspace", "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
           "");
+CMD_GROUP(user, "user", "", CMD_REF(__root__),
+          N_("Commands defined by the user"),
+          "");
 
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -218,6 +221,13 @@ namespace commands {
     return m_names;
   }
 
+  void
+  command::add_alias(const utf8 &new_name)
+  {
+    m_names.insert(new_name);
+  }
+
+
   command *
   command::parent(void) const
   {
@@ -299,6 +309,31 @@ namespace commands {
   command::find_command(command_id const & id) const
   {
     command const * cmd;
+
+    if (id.empty())
+      cmd = this;
+    else
+      {
+        utf8 component = *(id.begin());
+        command const * match = find_child_by_name(component);
+
+        if (match != NULL)
+          {
+            command_id remaining(id.begin() + 1, id.end());
+            I(remaining.size() == id.size() - 1);
+            cmd = match->find_command(remaining);
+          }
+        else
+          cmd = NULL;
+      }
+
+    return cmd;
+  }
+
+  command *
+  command::find_command(command_id const & id)
+  {
+    command * cmd;
 
     if (id.empty())
       cmd = this;
