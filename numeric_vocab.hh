@@ -11,6 +11,8 @@
 // PURPOSE.
 
 #include <cstddef>
+#include <climits>              // Some architectures need this for CHAR_BIT
+                                // The lack of this was reported as bug #19984
 #include <limits>
 #include <boost/static_assert.hpp>
 
