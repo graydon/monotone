@@ -56,3 +56,6 @@ licenses.
   -- mtn_makepermissions: creates read-permissions and write-permissions from
      files in the subdirectories read-permissions.d and write-permissions.d,
      Debian-style.
+
+  -- monotone-cluster-push.lua: A simple script to push changes to other
+     servers upon receiving them.  This will only work on a server instance.
