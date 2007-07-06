@@ -119,6 +119,8 @@ namespace path
 path::status get_path_status(std::string const & path);
 
 void rename_clobberingly(std::string const & from, std::string const & to);
+void do_remove(std::string const & path);
+
 void write_data_worker(std::string const & p,
                        std::string const & dat,
                        std::string const & tmpdir,

@@ -223,29 +223,13 @@ make_dir_for(any_path const & p)
     }
 }
 
-static void
-do_shallow_deletion_with_sane_error_message(any_path const & p)
-{
-  fs::path fp = mkdir(p);
-  try
-    {
-      fs::remove(fp);
-    }
-  catch (FS_ERROR & err)
-    {
-      E(false, F("could not remove '%s'\n%s")
-        % err.path1().native_directory_string()
-        % os_strerror(err.FS_ERROR_SYSTEM()));
-    }
-}
-
 void
 delete_file(any_path const & p)
 {
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
@@ -254,14 +238,14 @@ delete_dir_shallow(any_path const & p)
   require_path_is_directory(p,
                             F("directory to delete '%s' does not exist") % p,
                             F("directory to delete, '%s', is not a directory but a file") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
 delete_file_or_dir_shallow(any_path const & p)
 {
   N(path_exists(p), F("object to delete, '%s', does not exist") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
@@ -282,8 +266,9 @@ move_file(any_path const & old_path,
                        F("rename source file '%s' is a directory "
                          "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
@@ -291,30 +276,26 @@ move_dir(any_path const & old_path,
          any_path const & new_path)
 {
   require_path_is_directory(old_path,
-                            F("rename source dir '%s' does not exist") % old_path,
+                            F("rename source dir '%s' does not exist")
+                            % old_path,
                             F("rename source dir '%s' is a file "
                               "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
 move_path(any_path const & old_path,
           any_path const & new_path)
 {
-  switch (get_path_status(old_path))
-    {
-    case path::nonexistent:
-      N(false, F("rename source path '%s' does not exist") % old_path);
-      break;
-    case path::file:
-      move_file(old_path, new_path);
-      break;
-    case path::directory:
-      move_dir(old_path, new_path);
-      break;
-    }
+  N(path_exists(old_path),
+    F("rename source path '%s' does not exist") % old_path);
+  require_path_is_nonexistent(new_path,
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
