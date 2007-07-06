@@ -168,6 +168,10 @@ do
 	 local previous_name = ""
 	 for i, item in pairs(res) do
 	    if item.name == "pattern" then
+	       if debug then
+		  io.stderr:write("note_netsync_end: found ", item.name,
+				  " = \"", item.values[1], "\"\n")
+	       end
 	       if previous_name ~= "pattern" then
 		  if debug then
 		     io.stderr:write("note_netsync_end: clearing matches and patterns because previous_name = \"", previous_name, "\"\n")
@@ -175,38 +179,32 @@ do
 		  matches = false
 		  patterns = {}
 	       end
-	       for j, pattern in pairs(item.values) do
+	       local pattern = item.values[1]
+	       for branch, b in pairs(branches[nonce]) do
 		  if debug then
-		     io.stderr:write("note_netsync_end: found ",
-				     item.name, " = \"", pattern, "\"\n")
+		     io.stderr:write("note_netsync_end: trying to match branch ",
+				     branch, "\n")
 		  end
-		  for branch, b in pairs(branches[nonce]) do
+		  if globish_match(pattern, branch) then
 		     if debug then
-			io.stderr:write("note_netsync_end: trying to match branch ",
+			io.stderr:write("note_netsync_end: it matches branch ",
 					branch, "\n")
 		     end
-		     if globish_match(pattern, branch) then
-			if debug then
-			   io.stderr:write("note_netsync_end: it matches branch ",
-					   branch, "\n")
-			end
-			matches = true
-			patterns[pattern] = true
-		     end
+		     matches = true
+		     patterns[pattern] = true
 		  end
 	       end
 	    elseif matches then
 	       if item.name == "server" then
-		  for j, server in pairs(item.values) do
-		     if debug then
-			io.stderr:write("note_netsync_end: found ",
-					item.name, " = \"", server, "\"\n")
-		     end
-		     for pattern, b in pairs(patterns) do
-			io.stderr:write("pushing pattern \"", pattern,
-					"\" to server ", server, "\n")
-			server_request_sync("push", server, pattern, "")
-		     end
+		  if debug then
+		     io.stderr:write("note_netsync_end: found ", item.name,
+				     " = \"", item.values[1], "\"\n")
+		  end
+		  local server = item.values[1]
+		  for pattern, b in pairs(patterns) do
+		     io.stderr:write("pushing pattern \"", pattern,
+				     "\" to server ", server, "\n")
+		     server_request_sync("push", server, pattern, "")
 		  end
 	       end
 	    end
@@ -245,30 +243,27 @@ do
       local previous_name = ""
       for i, item in pairs(res) do
 	 if item.name == "pattern" then
+	    if debug then
+	       io.stderr:write("note_mtn_startup: found ", item.name, " = \"",
+			       item.values[1], "\"\n")
+	    end
 	    if previous_name ~= "pattern" then
 	       if debug then
 		     io.stderr:write("note_mtn_startup: clearing patterns because previous_name = \"", previous_name, "\"\n")
 	       end
 	       patterns = {}
 	    end
-	    for j, pattern in pairs(item.values) do
-	       if debug then
-		  io.stderr:write("note_mtn_startup: found ",
-				  item.name, " = \"", pattern, "\"\n")
-	       end
-	       patterns[pattern] = true
-	    end
+	    patterns[item.values[1]] = true
 	 elseif item.name == "server" then
-	    for j, server in pairs(item.values) do
-	       if debug then
-		  io.stderr:write("note_mtn_startup: found ",
-				  item.name, " = \"", server, "\"\n")
-	       end
-	       for pattern, b in pairs(patterns) do
-		  io.stderr:write("pushing pattern \"", pattern,
-				  "\" to server ", server, "\n")
-		  server_request_sync("push", server, pattern, "")
-	       end
+	    if debug then
+	       io.stderr:write("note_mtn_startup: found ", item.name, " = \"",
+			       item.values[1], "\"\n")
+	    end
+	    local server = item.values[1]
+	    for pattern, b in pairs(patterns) do
+	       io.stderr:write("pushing pattern \"", pattern, "\" to server ",
+			       server, "\n")
+	       server_request_sync("push", server, pattern, "")
 	    end
 	 end
 	 previous_name = item.name
