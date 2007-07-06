@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-07-06 08:27+0200\n"
-"PO-Revision-Date: 2007-07-06 09:06+0100\n"
+"PO-Revision-Date: 2007-07-06 09:28+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Italiano <it@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -274,9 +274,8 @@ msgid "no such revision '%s'"
 msgstr "la revisione %s non esiste"
 
 #: automate.cc:1072
-#, fuzzy
 msgid "Prints the certs associated with a revision in packet format"
-msgstr "Stampa il certificato associato ad una revisione"
+msgstr ""
 
 #: automate.cc:1102
 #: cmd_files.cc:321
@@ -4705,7 +4704,7 @@ msgid "source file %s is not versioned"
 msgstr "il file sorgente ‘%s’ non è sotto controllo di versione"
 
 #: work.cc:1459
-#, fuzzy, c-format
+#, c-format
 msgid "destination %s is a file, not a directory"
 msgstr "la destinazione ‘%s’ è un file, non una directory"
 
@@ -4731,9 +4730,9 @@ msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr "la destinazione ‘%s’ esiste già nello spazio di lavoro, evito di rinominarla sul filesystem"
 
 #: work.cc:1520
-#, fuzzy, c-format
+#, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
-msgstr "la destinazione ‘%s’ esiste già nello spazio di lavoro, evito di rinominarla sul filesystem"
+msgstr ""
 
 #: work.cc:1540
 #, c-format
@@ -4883,16 +4882,14 @@ msgstr "impossibile gestire il file speciale ‘%s’"
 
 #: unix/fs.cc:130
 #: win32/fs.cc:164
-#, fuzzy, c-format
+#, c-format
 msgid "could not open directory '%s': %s"
-msgstr ""
-"non riesco a creare la directory‘%s’\n"
-"%s"
+msgstr "non riesco ad aprire la directory ‘%s’: %s"
 
 #: unix/fs.cc:201
-#, fuzzy, c-format
+#, c-format
 msgid "error accessing '%s/%s': %s"
-msgstr "errore durante la chiusura del file"
+msgstr ""
 
 # TODO: what about '/' in mingw?
 #: unix/fs.cc:213
