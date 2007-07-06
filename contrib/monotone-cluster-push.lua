@@ -154,6 +154,9 @@ do
 	 end
 	 local dat = rcfile:read("*a")
 	 io.close(rcfile)
+	 if debug then
+	    io.stderr:write("note_netsync_end: got this:\n", dat, "\n")
+	 end	 
 	 local res = parse_basic_io(dat)
 	 if res == nil then
 	    io.stderr:write("file ", MCP_rcfile, " cannot be parsed\n")
@@ -162,42 +165,114 @@ do
 
 	 local matches = false
 	 local patterns = {}
+	 local previous_name = ""
 	 for i, item in pairs(res) do
 	    if item.name == "pattern" then
-	       matches = false
-	       patterns = {}
-	       for j, val in pairs(item.values) do
+	       if previous_name ~= "pattern" then
 		  if debug then
-		     io.stderr:write("note_netsync_end: found pattern ", val,
-				     "\n")
+		     io.stderr:write("note_netsync_end: clearing matches and patterns because previous_name = \"", previous_name, "\"\n")
+		  end
+		  matches = false
+		  patterns = {}
+	       end
+	       for j, pattern in pairs(item.values) do
+		  if debug then
+		     io.stderr:write("note_netsync_end: found ",
+				     item.name, " = \"", pattern, "\"\n")
 		  end
 		  for branch, b in pairs(branches[nonce]) do
 		     if debug then
 			io.stderr:write("note_netsync_end: trying to match branch ",
 					branch, "\n")
 		     end
-		     if globish_match(val, branch) then
+		     if globish_match(pattern, branch) then
 			if debug then
 			   io.stderr:write("note_netsync_end: it matches branch ",
 					   branch, "\n")
 			end
 			matches = true
-			patterns[val] = true
+			patterns[pattern] = true
 		     end
 		  end
 	       end
 	    elseif matches then
 	       if item.name == "server" then
-		  for k, server in pairs(item.values) do
+		  for j, server in pairs(item.values) do
+		     if debug then
+			io.stderr:write("note_netsync_end: found ",
+					item.name, " = \"", server, "\"\n")
+		     end
 		     for pattern, b in pairs(patterns) do
-			io.stderr:write("pushing pattern \"" .. pattern ..
-					"\" to server " .. server .. "\n")
+			io.stderr:write("pushing pattern \"", pattern,
+					"\" to server ", server, "\n")
 			server_request_sync("push", server, pattern, "")
 		     end
 		  end
 	       end
 	    end
+	    previous_name = item.name
 	 end
       end
+   end
+
+   local saved_note_mtn_startup = note_mtn_startup
+   function note_mtn_startup(...)
+      if saved_note_mtn_startup then
+	 saved_note_mtn_startup(unpack(arg))
+      end
+
+      if debug then
+	 io.stderr:write("note_mtn_startup: reading ", MCP_rcfile,
+			 "\n")
+      end
+      local rcfile = io.open(MCP_rcfile, "r")
+      if (rcfile == nil) then
+	 io.stderr:write("file ", MCP_rcfile, " cannot be opened\n")
+	 return false
+      end
+      local dat = rcfile:read("*a")
+      io.close(rcfile)
+      if debug then
+	 io.stderr:write("note_mtn_startup: got this:\n", dat, "\n")
+      end	 
+      local res = parse_basic_io(dat)
+      if res == nil then
+	 io.stderr:write("file ", MCP_rcfile, " cannot be parsed\n")
+	 return false
+      end
+
+      local patterns = {}
+      local previous_name = ""
+      for i, item in pairs(res) do
+	 if item.name == "pattern" then
+	    if previous_name ~= "pattern" then
+	       if debug then
+		     io.stderr:write("note_mtn_startup: clearing patterns because previous_name = \"", previous_name, "\"\n")
+	       end
+	       patterns = {}
+	    end
+	    for j, pattern in pairs(item.values) do
+	       if debug then
+		  io.stderr:write("note_mtn_startup: found ",
+				  item.name, " = \"", pattern, "\"\n")
+	       end
+	       patterns[pattern] = true
+	    end
+	 elseif item.name == "server" then
+	    for j, server in pairs(item.values) do
+	       if debug then
+		  io.stderr:write("note_mtn_startup: found ",
+				  item.name, " = \"", server, "\"\n")
+	       end
+	       for pattern, b in pairs(patterns) do
+		  io.stderr:write("pushing pattern \"", pattern,
+				  "\" to server ", server, "\n")
+		  server_request_sync("push", server, pattern, "")
+	       end
+	    end
+	 end
+	 previous_name = item.name
+      end
+      return nil
    end
 end
