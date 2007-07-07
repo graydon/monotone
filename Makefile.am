@@ -360,8 +360,7 @@ mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
-		      -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
