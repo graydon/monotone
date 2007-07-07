@@ -2925,6 +2925,8 @@ void database::complete(selector_type ty,
                   __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
 
+                L(FL("found %d matching branches") % branch_names.size());
+
               // for each branch name, get the branch heads
               set<revision_id> heads;
               for (set<branch_name>::const_iterator bn = branch_names.begin();

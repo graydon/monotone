@@ -29,7 +29,14 @@ project_t::get_branch_list(std::set<branch_name> & names)
       for (std::vector<std::string>::iterator i = got.begin();
            i != got.end(); ++i)
         {
-          branches.insert(branch_name(*i));
+          // check that the branch has at least one non-suspended head
+          const branch_name branch(*i);
+          std::set<revision_id> heads;
+
+          get_branch_heads(branch, heads);
+          
+          if (!heads.empty())
+            branches.insert(branch);
         }
     }
 
@@ -46,7 +53,14 @@ project_t::get_branch_list(globish const & glob,
   for (std::vector<std::string>::iterator i = got.begin();
        i != got.end(); ++i)
     {
-      names.insert(branch_name(*i));
+      // check that the branch has at least one non-suspended head
+      const branch_name branch(*i);
+      std::set<revision_id> heads;
+
+      get_branch_heads(branch, heads);
+
+      if (!heads.empty())
+        names.insert(branch);
     }
 }
 
@@ -71,6 +85,26 @@ namespace
       return certs.empty();
     }
   };
+
+  struct suspended_in_branch : public is_failure
+  {
+    app_state & app;
+    base64<cert_value > const & branch_encoded;
+    suspended_in_branch(app_state & app,
+                  base64<cert_value> const & branch_encoded)
+      : app(app), branch_encoded(branch_encoded)
+    {}
+    virtual bool operator()(revision_id const & rid)
+    {
+      vector< revision<cert> > certs;
+      app.db.get_revision_certs(rid,
+                                cert_name(suspend_cert_name),
+                                branch_encoded,
+                                certs);
+      erase_bogus_certs(certs, app);
+      return !certs.empty();
+    }
+  };
 }
 
 void
@@ -90,6 +124,12 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
 
       not_in_branch p(app, branch_encoded);
       erase_ancestors_and_failures(branch.second, p, app);
+      
+      suspended_in_branch s(app, branch_encoded);
+      for(std::set<revision_id>::iterator it = branch.second.begin(); it != branch.second.end(); it++)
+        if (s(*it))
+          branch.second.erase(*it);
+      
       L(FL("found heads of branch %s (%s heads)")
         % name % branch.second.size());
     }
@@ -124,6 +164,36 @@ project_t::put_revision_in_branch(revision_id const & id,
                                   branch_name const & branch)
 {
   cert_revision_in_branch(id, branch, app);
+}
+
+bool
+project_t::revision_is_suspended_in_branch(revision_id const & id,
+                                 branch_name const & branch)
+{
+  base64<cert_value> branch_encoded;
+  encode_base64(cert_value(branch()), branch_encoded);
+
+  vector<revision<cert> > certs;
+  app.db.get_revision_certs(id, suspend_cert_name, branch_encoded, certs);
+
+  int num = certs.size();
+
+  erase_bogus_certs(certs, app);
+
+  L(FL("found %d (%d valid) %s suspend certs on revision %s")
+    % num
+    % certs.size()
+    % branch
+    % id);
+
+  return !certs.empty();
+}
+
+void
+project_t::suspend_revision_in_branch(revision_id const & id,
+                                  branch_name const & branch)
+{
+  cert_revision_suspended_in_branch(id, branch, app);
 }
 
 

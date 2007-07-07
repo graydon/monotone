@@ -44,6 +44,10 @@ public:
   void put_revision_in_branch(revision_id const & id,
                               branch_name const & branch);
 
+  bool revision_is_suspended_in_branch(revision_id const & id, branch_name const & branch);
+  void suspend_revision_in_branch(revision_id const & id,
+                              branch_name const & branch);
+
   outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
   outdated_indicator get_revision_certs(revision_id const & id,

@@ -439,7 +439,7 @@ accumulate_strict_ancestors(revision_id const & start,
 }
 
 // this call is equivalent to running:
-//   remove_if(candidates.begin(), candidates.end(), p);
+//   erase(remove_if(candidates.begin(), candidates.end(), p));
 //   erase_ancestors(candidates, app);
 // however, by interleaving the two operations, it can in common cases make
 // many fewer calls to the predicate, which can be a significant speed win.
