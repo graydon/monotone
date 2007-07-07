@@ -10,7 +10,7 @@
 #include "base.hh"
 #include <boost/tokenizer.hpp>
 #include "lexical_cast.hh"
-#include <sqlite3.h>
+#include "sqlite/sqlite3.h"
 #include <string.h>
 
 #include "sanity.hh"

@@ -37,6 +37,9 @@ int sqlite3_expired(sqlite3_stmt *pStmt){
 const void *sqlite3_value_blob(sqlite3_value *pVal){
   Mem *p = (Mem*)pVal;
   if( p->flags & (MEM_Blob|MEM_Str) ){
+    sqlite3VdbeMemExpandBlob(p);
+    p->flags &= ~MEM_Str;
+    p->flags |= MEM_Blob;
     return p->z;
   }else{
     return sqlite3_value_text(pVal);
@@ -147,6 +150,14 @@ void sqlite3_result_text16le(
 #endif /* SQLITE_OMIT_UTF16 */
 void sqlite3_result_value(sqlite3_context *pCtx, sqlite3_value *pValue){
   sqlite3VdbeMemCopy(&pCtx->s, pValue);
+}
+void sqlite3_result_zeroblob(sqlite3_context *pCtx, int n){
+  sqlite3VdbeMemSetZeroBlob(&pCtx->s, n);
+}
+
+/* Force an SQLITE_TOOBIG error. */
+void sqlite3_result_error_toobig(sqlite3_context *pCtx){
+  sqlite3VdbeMemSetZeroBlob(&pCtx->s, SQLITE_MAX_LENGTH+1);
 }
 
 
@@ -443,7 +454,7 @@ static Mem *columnMem(sqlite3_stmt *pStmt, int i){
   Vdbe *pVm = (Vdbe *)pStmt;
   int vals = sqlite3_data_count(pStmt);
   if( i>=vals || i<0 ){
-    static const Mem nullMem = {{0}, 0.0, "", 0, MEM_Null, MEM_Null };
+    static const Mem nullMem = {{0}, 0.0, "", 0, MEM_Null, SQLITE_NULL };
     sqlite3Error(pVm->db, SQLITE_RANGE, 0);
     return (Mem*)&nullMem;
   }
@@ -486,9 +497,12 @@ static void columnMallocFailure(sqlite3_stmt *pStmt)
 */
 const void *sqlite3_column_blob(sqlite3_stmt *pStmt, int i){
   const void *val;
-  sqlite3MallocDisallow();
   val = sqlite3_value_blob( columnMem(pStmt,i) );
-  sqlite3MallocAllow();
+  /* Even though there is no encoding conversion, value_blob() might
+  ** need to call malloc() to expand the result of a zeroblob() 
+  ** expression. 
+  */
+  columnMallocFailure(pStmt);
   return val;
 }
 int sqlite3_column_bytes(sqlite3_stmt *pStmt, int i){
@@ -784,6 +798,15 @@ int sqlite3_bind_value(sqlite3_stmt *pStmt, int i, const sqlite3_value *pValue){
   rc = vdbeUnbind(p, i);
   if( rc==SQLITE_OK ){
     sqlite3VdbeMemCopy(&p->aVar[i-1], pValue);
+  }
+  return rc;
+}
+int sqlite3_bind_zeroblob(sqlite3_stmt *pStmt, int i, int n){
+  int rc;
+  Vdbe *p = (Vdbe *)pStmt;
+  rc = vdbeUnbind(p, i);
+  if( rc==SQLITE_OK ){
+    sqlite3VdbeMemSetZeroBlob(&p->aVar[i-1], n);
   }
   return rc;
 }

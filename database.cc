@@ -22,7 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include "lexical_cast.hh"
 
-#include <sqlite3.h>
+#include "sqlite/sqlite3.h"
 
 #include "app_state.hh"
 #include "cert.hh"

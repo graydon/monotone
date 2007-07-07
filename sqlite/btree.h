@@ -13,7 +13,7 @@
 ** subsystem.  See comments in the source code for a detailed description
 ** of what each interface routine does.
 **
-** @(#) $Id: btree.h,v 1.74 2007/03/30 14:06:34 drh Exp $
+** @(#) $Id: btree.h,v 1.82 2007/05/08 21:45:27 drh Exp $
 */
 #ifndef _BTREE_H_
 #define _BTREE_H_
@@ -30,6 +30,10 @@
 #ifndef SQLITE_DEFAULT_AUTOVACUUM
   #define SQLITE_DEFAULT_AUTOVACUUM 0
 #endif
+
+#define BTREE_AUTOVACUUM_NONE 0        /* Do not do auto-vacuum */
+#define BTREE_AUTOVACUUM_FULL 1        /* Do full auto-vacuum */
+#define BTREE_AUTOVACUUM_INCR 2        /* Incremental vacuum */
 
 /*
 ** Forward declarations of structure
@@ -63,6 +67,7 @@ int sqlite3BtreeSetSafetyLevel(Btree*,int,int);
 int sqlite3BtreeSyncDisabled(Btree*);
 int sqlite3BtreeSetPageSize(Btree*,int,int);
 int sqlite3BtreeGetPageSize(Btree*);
+int sqlite3BtreeMaxPageCount(Btree*,int);
 int sqlite3BtreeGetReserve(Btree*);
 int sqlite3BtreeSetAutoVacuum(Btree *, int);
 int sqlite3BtreeGetAutoVacuum(Btree *);
@@ -87,6 +92,8 @@ const char *sqlite3BtreeGetDirname(Btree *);
 const char *sqlite3BtreeGetJournalname(Btree *);
 int sqlite3BtreeCopyFile(Btree *, Btree *);
 
+int sqlite3BtreeIncrVacuum(Btree *);
+
 /* The flags parameter to sqlite3BtreeCreateTable can be the bitwise OR
 ** of the following flags:
 */
@@ -108,17 +115,12 @@ int sqlite3BtreeCursor(
   BtCursor **ppCursor                  /* Returned cursor */
 );
 
-void sqlite3BtreeSetCompare(
-  BtCursor *,
-  int(*)(void*,int,const void*,int,const void*),
-  void*
-);
-
 int sqlite3BtreeCloseCursor(BtCursor*);
 int sqlite3BtreeMoveto(BtCursor*,const void *pKey,i64 nKey,int bias,int *pRes);
 int sqlite3BtreeDelete(BtCursor*);
 int sqlite3BtreeInsert(BtCursor*, const void *pKey, i64 nKey,
-                                  const void *pData, int nData, int bias);
+                                  const void *pData, int nData,
+                                  int nZero, int bias);
 int sqlite3BtreeFirst(BtCursor*, int *pRes);
 int sqlite3BtreeLast(BtCursor*, int *pRes);
 int sqlite3BtreeNext(BtCursor*, int *pRes);
@@ -135,16 +137,13 @@ int sqlite3BtreeData(BtCursor*, u32 offset, u32 amt, void*);
 char *sqlite3BtreeIntegrityCheck(Btree*, int *aRoot, int nRoot, int, int*);
 struct Pager *sqlite3BtreePager(Btree*);
 
+int sqlite3BtreePutData(BtCursor*, u32 offset, u32 amt, void*);
+void sqlite3BtreeCacheOverflow(BtCursor *);
 
 #ifdef SQLITE_TEST
 int sqlite3BtreeCursorInfo(BtCursor*, int*, int);
 void sqlite3BtreeCursorList(Btree*);
-#endif
-
-#ifdef SQLITE_DEBUG
 int sqlite3BtreePageDump(Btree*, int, int recursive);
-#else
-#define sqlite3BtreePageDump(X,Y,Z) SQLITE_OK
 #endif
 
 #endif /* _BTREE_H_ */
