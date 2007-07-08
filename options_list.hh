@@ -282,6 +282,15 @@ OPTION(include, include, true, "include",
 }
 #endif
 
+GOPT(ignore_suspend_certs, "ignore_suspend_certs", bool, false,
+     gettext_noop("Do not ignore revisions marked as suspended"))
+#ifdef option_bodies
+{
+  ignore_suspend_certs = true;
+}
+#endif
+
+
 OPTVAR(key, rsa_keypair_id, signing_key, )
 OPTION(globals, key, true, "key,k", gettext_noop("set key for signatures"))
 #ifdef option_bodies

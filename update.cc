@@ -185,7 +185,7 @@ calculate_update_set(revision_id const & base,
           break;
         }
     }
-  if (have_non_suspended_rev)
+  if (!app.opts.ignore_suspend_certs && have_non_suspended_rev)
     {
       // remove all suspended revisions
       base64<cert_value> branch_encoded;
