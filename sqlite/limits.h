@@ -52,7 +52,7 @@
 ** The hard limit here is the same as SQLITE_MAX_LENGTH.
 */
 #ifndef SQLITE_MAX_SQL_LENGTH
-# define SQLITE_MAX_SQL_LENGTH 1000000
+# define SQLITE_MAX_SQL_LENGTH SQLITE_MAX_LENGTH
 #endif
 
 /*
