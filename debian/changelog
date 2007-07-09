@@ -1,5 +1,6 @@
 monotone (0.35-0.2) unstable; urgency=low
 
+  [ Zack Weinberg ]
   * Official NMU with permission of maintainer.
   * New upstream release (Closes: #418213, #427845, #429832).
   * Backport post-0.35 upstream fixes for boost 1.34 (Closes: #425907).
@@ -7,7 +8,10 @@ monotone (0.35-0.2) unstable; urgency=low
   * Drop tetex-bin as build-dep alternative.  Add build-deps on all of
     texinfo's suggested packages, to ensure docs build (Closes: #422936).
 
- -- Zack Weinberg <zackw@panix.com>  Tue, 03 Jul 2007 11:19:49 -0700
+  [ Richard Levitte ]
+  * Changed maintainer to the list dedicated for it.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 09 Jul 2007 07:45:46 +0200
 
 monotone (0.35-0.1) unstable; urgency=low
 
