@@ -373,16 +373,16 @@ workspace::get_local_dump_path(bookkeeping_path & d_path)
 
 // inodeprint file
 
-static bool
-in_inodeprints_mode()
+bool
+workspace::in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
 
-static void
-read_inodeprints(data & dat)
+void
+workspace::read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -390,8 +390,8 @@ read_inodeprints(data & dat)
   read_data(ip_path, dat);
 }
 
-static void
-write_inodeprints(data const & dat)
+void
+workspace::write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -1024,22 +1024,6 @@ add_parent_dirs(file_path const & dst, roster_t & ros, node_id_source & nis,
 
   // FIXME: this is a somewhat odd way to use the builder
   build.visit_dir(dst.dirname());
-}
-
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
 }
 
 // updating rosters from the workspace

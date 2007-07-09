@@ -500,7 +500,7 @@ struct node_info
 };
 
 static void
-get_node_info(roster_t const & roster, split_path const & path, node_info & info)
+get_node_info(roster_t const & roster, file_path const & path, node_info & info)
 {
   if (roster.has_node(path))
     {
@@ -524,8 +524,8 @@ struct inventory_item
 {
   node_info old_node;
   node_info new_node;
-  split_path old_path;
-  split_path new_path;
+  file_path old_path;
+  file_path new_path;
 
   path::status fs_type;
   file_id fs_ident;
@@ -722,7 +722,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
             case path::nonexistent: I(false);
             }
 
-          if (item.new_path.size() > 0)
+          if (item.new_path.as_internal().length() > 0)
             st.push_file_pair(syms::new_path, item.new_path);
         }
 
@@ -735,7 +735,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
             case path::nonexistent: I(false);
             }
 
-          if (item.old_path.size() > 0)
+          if (item.old_path.as_internal().length() > 0)
             st.push_file_pair(syms::old_path, item.old_path);
         }
 
@@ -750,7 +750,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
       if (item.old_node.exists && !item.new_node.exists)
         {
-          if (item.new_path.size() > 0)
+          if (item.new_path.as_internal().length() > 0)
             {
               states.push_back("rename_source");
             }
@@ -761,7 +761,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         }
       else if (!item.old_node.exists && item.new_node.exists)
         {
-          if (item.old_path.size() > 0)
+          if (item.old_path.as_internal().length() > 0)
             {
               states.push_back("rename_target");
             }
@@ -775,13 +775,13 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         {
            // check if this is a cyclic rename or a rename
            // paired with an add / drop
-           if (item.old_path.size() > 0 &&
-               item.new_path.size() > 0)
+          if ((item.old_path.as_internal().length() > 0) &&
+              (item.new_path.as_internal().length() > 0))
              {
                states.push_back("rename_source");
                states.push_back("rename_target");
              }
-           else if (item.old_path.size() > 0)
+          else if (item.old_path.as_internal().length() > 0)
              {
                states.push_back("dropped");
                states.push_back("rename_target");
