@@ -7,8 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <boost/tokenizer.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <sqlite3.h>
 #include <string.h>
 
@@ -772,7 +773,7 @@ calculate_schema_id(sqlite3 * db, string & ident)
         }
     }
 
-  uint32_t code = sql::value(db, "PRAGMA user_version");
+  u32 code = sql::value(db, "PRAGMA user_version");
   if (code != 0)
     {
       schema += " PRAGMA user_version = ";
@@ -849,7 +850,7 @@ classify_schema(sqlite3 * db, migration_event const * m = 0)
       // version 0.33, but all previous versions' databases are recognized
       // by their schema hashes.
 
-      uint32_t code = sql::value(db, "PRAGMA user_version");
+      u32 code = sql::value(db, "PRAGMA user_version");
       if (code != mtn_creator_code)
         return SCHEMA_NOT_MONOTONE;
 

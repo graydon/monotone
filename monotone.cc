@@ -7,24 +7,17 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h"
 
+#include "base.hh"
 #include <iterator>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <locale.h>
-
 #include <stdlib.h>
 
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include "botan/botan.h"
-
 #include "i18n.h"
-
 #include "app_state.hh"
 #include "commands.hh"
 #include "sanity.hh"
@@ -39,6 +32,7 @@
 #include "simplestring_xform.hh"
 #include "platform.hh"
 
+
 using std::cout;
 using std::cerr;
 using std::string;
@@ -48,7 +42,6 @@ using std::set;
 using std::string;
 using std::vector;
 using std::ios_base;
-using boost::shared_ptr;
 
 // main option processing and exception handling code
 
@@ -202,12 +195,12 @@ cpp_main(int argc, char ** argv)
       // find base name of executable, convert to utf8, and save it in the
       // global ui object
       {
-        string prog_name = fs::path(argv[0]).leaf();
+        utf8 argv0_u;
+        system_to_utf8(external(argv[0]), argv0_u);
+        string prog_name = system_path(argv0_u).basename()();
         if (prog_name.rfind(".exe") == prog_name.size() - 4)
           prog_name = prog_name.substr(0, prog_name.size() - 4);
-        utf8 prog_name_u;
-        system_to_utf8(external(prog_name), prog_name_u);
-        ui.prog_name = prog_name_u();
+        ui.prog_name = prog_name;
         I(!ui.prog_name.empty());
       }
 
@@ -228,7 +221,7 @@ cpp_main(int argc, char ** argv)
                 app.db.set_filename(app.opts.dbname);
             }
 
-          if (app.opts.key_dir_given)
+          if (app.opts.key_dir_given || app.opts.conf_dir_given)
             {
               if (!app.opts.key_dir.empty())
                 app.keys.set_key_dir(app.opts.key_dir);

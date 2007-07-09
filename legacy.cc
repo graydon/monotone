@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "legacy.hh"
 #include "basic_io.hh"
 #include "app_state.hh"
@@ -102,10 +103,8 @@ namespace legacy
             parser.str(from_str);
             parser.esym(syms::to);
             parser.str(to_str);
-            split_path from, to;
-            file_path_internal(from_str).split(from);
-            file_path_internal(to_str).split(to);
-            renames[old_rev][to] = from;
+            renames[old_rev][file_path_internal(to_str)]
+              = file_path_internal(from_str);
           }
         else if (parser.symp(syms::patch))
           {

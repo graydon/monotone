@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "sanity.hh"
 #include "ui.hh"
 #include "simplestring_xform.hh"
@@ -14,7 +15,7 @@
 #include "file_io.hh"
 #include "work.hh"
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <exception>
 
 using std::string;

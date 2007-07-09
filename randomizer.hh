@@ -15,20 +15,20 @@
 // Our purpose is to create a global randomization utility for unit
 // tests. Nothing fancy.
 
-#include <stdlib.h>
-#include <boost/random.hpp>
+#include <cstddef>
+#include <boost/random/mersenne_twister.hpp>
 
 struct randomizer
 {
   boost::mt19937 rng;
 
   // uniform process in [0,n]
-  size_t uniform(size_t n);
+  std::size_t uniform(std::size_t n);
 
   // boolean process with prob(true) = p, prob(false) = 1-p.
   bool bernoulli(double p); 
 
-  bool flip(size_t n = 2);
+  bool flip(std::size_t n = 2);
 };
 
 #endif

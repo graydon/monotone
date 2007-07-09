@@ -7,12 +7,12 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <cctype>
 #include <functional>
 #include <iterator>
 #include <sstream>
-#include <string>
 #include <vector>
 
 
@@ -278,9 +278,9 @@ UNIT_TEST(transform, enc)
   encode_gzip(d1, gzd1);
   encode_base64(gzd1, bgzd);
   decode_base64(bgzd, gzd2);
-  BOOST_CHECK(gzd2 == gzd1);
+  UNIT_TEST_CHECK(gzd2 == gzd1);
   decode_gzip(gzd2, d2);
-  BOOST_CHECK(d2 == d1);
+  UNIT_TEST_CHECK(d2 == d1);
 }
 
 UNIT_TEST(transform, rdiff)
@@ -292,7 +292,7 @@ UNIT_TEST(transform, rdiff)
 
   data dat3;
   patch(dat1, del, dat3);
-  BOOST_CHECK(dat3 == dat2);
+  UNIT_TEST_CHECK(dat3 == dat2);
 }
 
 UNIT_TEST(transform, calculate_ident)
@@ -301,7 +301,7 @@ UNIT_TEST(transform, calculate_ident)
   hexenc<id> output;
   string ident("86e03bdb3870e2a207dfd0dcbfd4c4f2e3bc97bd");
   calculate_ident(input, output);
-  BOOST_CHECK(output() == ident);
+  UNIT_TEST_CHECK(output() == ident);
 }
 
 UNIT_TEST(transform, corruption_check)
@@ -319,7 +319,7 @@ UNIT_TEST(transform, corruption_check)
 
   gzip<data> gzbad(gzs);
   data output;
-  BOOST_CHECK_THROW(decode_gzip(gzbad, output), informative_failure);
+  UNIT_TEST_CHECK_THROW(decode_gzip(gzbad, output), informative_failure);
 }
 
 #endif // BUILD_UNIT_TESTS

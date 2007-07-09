@@ -10,8 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iosfwd>
-#include <string>
 #include "numeric_vocab.hh"
 
 class rev_height

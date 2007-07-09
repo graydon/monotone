@@ -25,7 +25,7 @@
 #include <boost/filesystem/path.hpp>
 // We have a local version of this to work around a bug in the MSVC debug checking.
 #include <boost/function.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <boost/optional.hpp>
 #include <boost/random.hpp>
 #include <boost/regex.hpp>
@@ -33,8 +33,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/static_assert.hpp>
-#include <boost/test/test_tools.hpp>
-#include <boost/test/unit_test_suite.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/tuple/tuple_comparison.hpp>

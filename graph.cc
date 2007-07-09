@@ -1,3 +1,4 @@
+#include "base.hh"
 #include <map>
 #include <utility>
 #include <list>
@@ -7,6 +8,8 @@
 #include "graph.hh"
 #include "safe_map.hh"
 #include "numeric_vocab.hh"
+#include "hash_map.hh"
+#include "vocab_hash.hh"
 
 using boost::shared_ptr;
 using std::string;
@@ -17,6 +20,8 @@ using std::map;
 using std::multimap;
 using std::make_pair;
 using std::list;
+
+using hashmap::hash_set;
 
 void
 get_reconstruction_path(std::string const & start,
@@ -132,7 +137,7 @@ get_reconstruction_path(std::string const & start,
 #include "unit_tests.hh"
 #include "randomizer.hh"
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 using boost::lexical_cast;
 using std::pair;
@@ -281,36 +286,27 @@ void toposort_rev_ancestry(rev_ancestry_map const & graph,
 typedef std::pair<rev_height, revision_id> height_rev_pair;
 
 static void
-do_step_ancestor(set<height_rev_pair> & this_frontier,
-                 set<revision_id> & this_seen,
-                 set<revision_id> const & other_seen,
-                 set<revision_id> & this_uncommon_ancs,
+advance_frontier(set<height_rev_pair> & frontier,
+                 hash_set<revision_id> & seen,
                  rev_graph const & rg)
 {
-  const height_rev_pair h_node = *this_frontier.rbegin();
+  const height_rev_pair h_node = *frontier.rbegin();
   const revision_id & node(h_node.second);
-  this_frontier.erase(h_node);
-  if (other_seen.find(node) == other_seen.end())
-  {
-    this_uncommon_ancs.insert(node);
-  }
-
-  // extend the frontier with parents
+  frontier.erase(h_node);
   set<revision_id> parents;
   rg.get_parents(node, parents);
   for (set<revision_id>::const_iterator r = parents.begin();
         r != parents.end(); r++)
   {
-    if (this_seen.find(*r) == this_seen.end())
+    if (seen.find(*r) == seen.end())
     {
       rev_height h;
       rg.get_height(*r, h);
-      this_frontier.insert(make_pair(h, *r));
-      this_seen.insert(*r);
+      frontier.insert(make_pair(h, *r));
+      seen.insert(*r);
     }
   }
 }
-
 
 void
 get_uncommon_ancestors(revision_id const & a,
@@ -328,7 +324,7 @@ get_uncommon_ancestors(revision_id const & a,
   // any common ancestor will have been 'seen' by both sides
   // before it is traversed.
 
-  set<height_rev_pair> a_frontier, b_frontier;
+  set<height_rev_pair> a_frontier, b_frontier, common_frontier;
   {
     rev_height h;
     rg.get_height(a, h);
@@ -337,48 +333,58 @@ get_uncommon_ancestors(revision_id const & a,
     b_frontier.insert(make_pair(h, b));
   }
   
-  set<revision_id> a_seen, b_seen;
+  hash_set<revision_id> a_seen, b_seen, common_seen;
   a_seen.insert(a);
   b_seen.insert(b);
   
   while (!a_frontier.empty() || !b_frontier.empty())
   {
-    // We take the leaf-most (ie highest) height entry from either
-    // a_frontier or b_frontier.
-    // If one of them is empty, we take entries from the other.
-    bool step_a;
-    if (a_frontier.empty())
-    {
-      step_a = false;
-    }
-    else
-    {
-      if (!b_frontier.empty())
+    // We take the leaf-most (ie highest) height entry from any frontier.
+    // Note: the default height is the lowest possible.
+    rev_height a_height, b_height, common_height;
+    if (!a_frontier.empty())
+      a_height = a_frontier.rbegin()->first;
+    if (!b_frontier.empty())
+      b_height = b_frontier.rbegin()->first;
+    if (!common_frontier.empty())
+      common_height = common_frontier.rbegin()->first;
+
+    if (a_height > b_height && a_height > common_height)
       {
+        a_uncommon_ancs.insert(a_frontier.rbegin()->second);
+        advance_frontier(a_frontier, a_seen, rg);
+      }
+    else if (b_height > a_height && b_height > common_height)
+      {
+        b_uncommon_ancs.insert(b_frontier.rbegin()->second);
+        advance_frontier(b_frontier, b_seen, rg);
+      }
+    else if (common_height > a_height && common_height > b_height)
+      {
+        advance_frontier(common_frontier, common_seen, rg);
+      }
+    else if (a_height == b_height) // may or may not also == common_height
+      {
+        // if both frontiers are the same, then we can safely say that
+        // we've found all uncommon ancestors. This stopping condition
+        // can result in traversing more nodes than required, but is simple.
         if (a_frontier == b_frontier)
-        {
-          // if both frontiers are the same, then we can safely say that
-          // we've found all uncommon ancestors. This stopping condition
-          // can result in traversing more nodes than required, but is simple.
           break;
-        }
-        step_a = (*a_frontier.rbegin() > *b_frontier.rbegin());
+
+        common_frontier.insert(*a_frontier.rbegin());
+        a_frontier.erase(*a_frontier.rbegin());
+        b_frontier.erase(*b_frontier.rbegin());
       }
-      else
+    else if (a_height == common_height)
       {
-        // b is empty
-        step_a = true;
+        a_frontier.erase(*a_frontier.rbegin());
       }
-    }
-    
-    if (step_a)
-    {
-      do_step_ancestor(a_frontier, a_seen, b_seen, a_uncommon_ancs, rg);
-    }
+    else if (b_height == common_height)
+      {
+        b_frontier.erase(*b_frontier.rbegin());
+      }
     else
-    {
-      do_step_ancestor(b_frontier, b_seen, a_seen, b_uncommon_ancs, rg);
-    }
+      I(false);
   }  
 }
 

@@ -13,6 +13,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
+#include "platform.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
@@ -70,8 +71,8 @@ void move_path(any_path const & old_path,
 void read_data(any_path const & path, data & data);
 
 void read_directory(any_path const & path,
-                    std::vector<utf8> & files,
-                    std::vector<utf8> & dirs);
+                    std::vector<path_component> & files,
+                    std::vector<path_component> & dirs);
 
 void read_data_stdin(data & dat);
 
@@ -116,6 +117,8 @@ void walk_tree(file_path const & path,
 
 
 bool ident_existing_file(file_path const & p, file_id & ident);
+bool ident_existing_file(file_path const & p, file_id & ident, path::status status);
+
 void calculate_ident(file_path const & file,
                      hexenc<id> & ident);
 

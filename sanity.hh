@@ -10,27 +10,15 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "config.h" // Required for ENABLE_NLS
-
-#include <iosfwd>
 #include <stdexcept>
-#include <string>
 #include <vector>
 
 #include "boost/circular_buffer.hpp"
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
-#include "mt-stdint.h"
 #include "quick_alloc.hh" // to get the QA() macro
-
-#if defined(__GNUC__)
-#define NORETURN(x) x __attribute__((noreturn))
-#elif defined(_MSC_VER)
-#define NORETURN(x) __declspec(noreturn) x
-#else
-#define NORETURN(x) x
-#endif
+#include "numeric_vocab.hh"
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
 // but we're only using a small section of it, and have anyways rewritten
@@ -127,14 +115,14 @@ public:
   // class is a lie.
   std::ostream & get_stream() const;
   void flush_stream() const;
-  void put_and_flush_signed(int64_t const & s) const;
-  void put_and_flush_signed(int32_t const & s) const;
-  void put_and_flush_signed(int16_t const & s) const;
-  void put_and_flush_signed(int8_t const & s) const;
-  void put_and_flush_unsigned(uint64_t const & u) const;
-  void put_and_flush_unsigned(uint32_t const & u) const;
-  void put_and_flush_unsigned(uint16_t const & u) const;
-  void put_and_flush_unsigned(uint8_t const & u) const;
+  void put_and_flush_signed(s64 const & s) const;
+  void put_and_flush_signed(s32 const & s) const;
+  void put_and_flush_signed(s16 const & s) const;
+  void put_and_flush_signed(s8  const & s) const;
+  void put_and_flush_unsigned(u64 const & u) const;
+  void put_and_flush_unsigned(u32 const & u) const;
+  void put_and_flush_unsigned(u16 const & u) const;
+  void put_and_flush_unsigned(u8  const & u) const;
   void put_and_flush_float(float const & f) const;
   void put_and_flush_double(double const & d) const;
 
@@ -204,15 +192,15 @@ SPECIALIZED_OP(      fmt_ty, arg_ty, const arg_ty, stem) \
 SPECIALIZED_OP(const fmt_ty, arg_ty,       arg_ty, stem) \
 SPECIALIZED_OP(const fmt_ty, arg_ty, const arg_ty, stem)
 
-ALL_CONST_VARIANTS(plain_format, int64_t, signed)
-ALL_CONST_VARIANTS(plain_format, int32_t, signed)
-ALL_CONST_VARIANTS(plain_format, int16_t, signed)
-ALL_CONST_VARIANTS(plain_format, int8_t, signed)
+ALL_CONST_VARIANTS(plain_format, s64, signed)
+ALL_CONST_VARIANTS(plain_format, s32, signed)
+ALL_CONST_VARIANTS(plain_format, s16, signed)
+ALL_CONST_VARIANTS(plain_format, s8, signed)
 
-ALL_CONST_VARIANTS(plain_format, uint64_t, unsigned)
-ALL_CONST_VARIANTS(plain_format, uint32_t, unsigned)
-ALL_CONST_VARIANTS(plain_format, uint16_t, unsigned)
-ALL_CONST_VARIANTS(plain_format, uint8_t, unsigned)
+ALL_CONST_VARIANTS(plain_format, u64, unsigned)
+ALL_CONST_VARIANTS(plain_format, u32, unsigned)
+ALL_CONST_VARIANTS(plain_format, u16, unsigned)
+ALL_CONST_VARIANTS(plain_format, u8, unsigned)
 
 ALL_CONST_VARIANTS(plain_format, float, float)
 ALL_CONST_VARIANTS(plain_format, double, double)
@@ -259,15 +247,15 @@ operator %(i18n_format & f, T & t)
   return f;
 }
 
-ALL_CONST_VARIANTS(i18n_format, int64_t, signed)
-ALL_CONST_VARIANTS(i18n_format, int32_t, signed)
-ALL_CONST_VARIANTS(i18n_format, int16_t, signed)
-ALL_CONST_VARIANTS(i18n_format, int8_t, signed)
+ALL_CONST_VARIANTS(i18n_format, s64, signed)
+ALL_CONST_VARIANTS(i18n_format, s32, signed)
+ALL_CONST_VARIANTS(i18n_format, s16, signed)
+ALL_CONST_VARIANTS(i18n_format, s8, signed)
 
-ALL_CONST_VARIANTS(i18n_format, uint64_t, unsigned)
-ALL_CONST_VARIANTS(i18n_format, uint32_t, unsigned)
-ALL_CONST_VARIANTS(i18n_format, uint16_t, unsigned)
-ALL_CONST_VARIANTS(i18n_format, uint8_t, unsigned)
+ALL_CONST_VARIANTS(i18n_format, u64, unsigned)
+ALL_CONST_VARIANTS(i18n_format, u32, unsigned)
+ALL_CONST_VARIANTS(i18n_format, u16, unsigned)
+ALL_CONST_VARIANTS(i18n_format, u8, unsigned)
 
 ALL_CONST_VARIANTS(i18n_format, float, float)
 ALL_CONST_VARIANTS(i18n_format, double, double)

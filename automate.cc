@@ -7,10 +7,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <iterator>
 #include <sstream>
-#include <string>
 #include <unistd.h>
 #include <vector>
 
@@ -54,7 +54,6 @@ using std::streamsize;
 using std::string;
 using std::vector;
 
-using boost::lexical_cast;
 
 // Name: heads
 // Arguments:
@@ -534,7 +533,7 @@ struct inventory_item
   inventory_item() : fs_type(path::nonexistent) {}
 };
 
-typedef std::map<split_path, inventory_item> inventory_map;
+typedef std::map<file_path, inventory_item> inventory_map;
 
 static void
 inventory_rosters(roster_t const & old_roster,
@@ -542,18 +541,18 @@ inventory_rosters(roster_t const & old_roster,
                   node_restriction const & mask,
                   inventory_map & inventory)
 {
-  std::map<int, split_path> old_paths;
-  std::map<int, split_path> new_paths;
+  std::map<int, file_path> old_paths;
+  std::map<int, file_path> new_paths;
 
   node_map const & old_nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
       if (mask.includes(old_roster, i->first))
         {
-          split_path sp;
-          old_roster.get_name(i->first, sp);
-          get_node_info(old_roster, sp, inventory[sp].old_node);
-          old_paths[inventory[sp].old_node.id] = sp;
+          file_path fp;
+          old_roster.get_name(i->first, fp);
+          get_node_info(old_roster, fp, inventory[fp].old_node);
+          old_paths[inventory[fp].old_node.id] = fp;
         }
     }
 
@@ -562,22 +561,22 @@ inventory_rosters(roster_t const & old_roster,
     {
       if (mask.includes(new_roster, i->first))
         {
-          split_path sp;
-          new_roster.get_name(i->first, sp);
-          get_node_info(new_roster, sp, inventory[sp].new_node);
-          new_paths[inventory[sp].new_node.id] = sp;
+          file_path fp;
+          new_roster.get_name(i->first, fp);
+          get_node_info(new_roster, fp, inventory[fp].new_node);
+          new_paths[inventory[fp].new_node.id] = fp;
         }
     }
 
-  std::map<int, split_path>::iterator i;
+  std::map<int, file_path>::iterator i;
   for (i = old_paths.begin(); i != old_paths.end(); ++i)
     {
       // there is no new node available, i.e. this is a drop
       if (new_paths.find(i->first) == new_paths.end())
         continue;
 
-      split_path old_path(i->second);
-      split_path new_path(new_paths[i->first]);
+      file_path old_path(i->second);
+      file_path new_path(new_paths[i->first]);
 
       // both paths are identical, no rename
       if (old_path == new_path)
@@ -612,11 +611,9 @@ struct inventory_itemizer : public tree_walker
 bool
 inventory_itemizer::visit_dir(file_path const & path)
 {
-  split_path sp;
-  path.split(sp);
-  if(mask.includes(sp))
+  if(mask.includes(path))
     {
-      inventory[sp].fs_type = path::directory;
+      inventory[path].fs_type = path::directory;
     }
   // always recurse into subdirectories
   return true;
@@ -625,11 +622,9 @@ inventory_itemizer::visit_dir(file_path const & path)
 void
 inventory_itemizer::visit_file(file_path const & path)
 {
-  split_path sp;
-  path.split(sp);
-  if(mask.includes(sp))
+  if(mask.includes(path))
     {
-      inventory_item & item = inventory[sp];
+      inventory_item & item = inventory[path];
 
       item.fs_type = path::file;
 
@@ -1596,8 +1591,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
     F("no revision %s found in database") % ident);
   app.db.get_roster(ident, new_roster, mm);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1663,8 +1657,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
     F("no revision %s found in database") % old_ident);
   app.db.get_roster(old_ident, old_roster);
 
-  split_path path;
-  file_path_external(idx(args,1)).split(path);
+  file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s") % path % ident);
 
@@ -1672,11 +1665,10 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   basic_io::printer prt;
   if (old_roster.has_node(node->self))
     {
-      split_path old_path;
+      file_path old_path;
       basic_io::stanza st;
       old_roster.get_name(node->self, old_path);
-      file_path fp = file_path(old_path);
-      st.push_file_pair(basic_io::syms::file, fp);
+      st.push_file_pair(basic_io::syms::file, old_path);
       prt.print_stanza(st);
     }
   output.write(prt.buf.data(), prt.buf.size());

@@ -7,10 +7,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 
+#include "base.hh"
 #include <boost/regex.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "app_state.hh"
 #include "cset.hh"
@@ -311,10 +311,8 @@ UNIT_TEST(packet, roundabout)
     // a rdata packet
     revision_t rev;
     rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-    split_path sp;
-    file_path_internal("").split(sp);
     shared_ptr<cset> cs(new cset);
-    cs->dirs_added.insert(sp);
+    cs->dirs_added.insert(file_path_internal(""));
     rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;
@@ -359,7 +357,7 @@ UNIT_TEST(packet, roundabout)
       packet_writer pw(oss);
       istringstream iss(tmp);
       read_packets(iss, pw, aaa);
-      BOOST_CHECK(oss.str() == tmp);
+      UNIT_TEST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }
 }

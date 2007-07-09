@@ -7,12 +7,13 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <sstream>
 #include <cstring>
 #include <cerrno>
 #include <queue>
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "work.hh"
 #include "basic_io.hh"
@@ -253,7 +254,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
   any_path * o_path;
   bookkeeping_path ws_o_path;
   system_path sys_o_path;
-  
+
   if (workspace.empty())
     {
       get_options_path(ws_o_path);
@@ -264,7 +265,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
       get_options_path(workspace, sys_o_path);
       o_path = & sys_o_path;
     }
-  
+
   try
     {
       if (path_exists(*o_path))
@@ -303,7 +304,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
     {
       W(F("Failed to read options file %s: %s") % *o_path % e.what());
     }
-  
+
   return false;
 }
 
@@ -372,16 +373,16 @@ workspace::get_local_dump_path(bookkeeping_path & d_path)
 
 // inodeprint file
 
-bool
-workspace::in_inodeprints_mode()
+static bool
+in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
 
-void
-workspace::read_inodeprints(data & dat)
+static void
+read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -389,8 +390,8 @@ workspace::read_inodeprints(data & dat)
   read_data(ip_path, dat);
 }
 
-void
-workspace::write_inodeprints(data const & dat)
+static void
+write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -452,9 +453,8 @@ workspace::maybe_update_inodeprints()
 
       if (all_same)
         {
-          split_path sp;
-          new_roster.get_name(nid, sp);
-          file_path fp(sp);
+          file_path fp;
+          new_roster.get_name(nid, fp);
           hexenc<inodeprint> ip;
           if (inodeprint_file(fp, ip))
             ipm_new.insert(inodeprint_entry(fp, ip));
@@ -472,12 +472,14 @@ struct file_itemizer : public tree_walker
 {
   database & db;
   lua_hooks & lua;
-  path_set & known;
-  path_set & unknown;
-  path_set & ignored;
+  set<file_path> & known;
+  set<file_path> & unknown;
+  set<file_path> & ignored;
   path_restriction const & mask;
   file_itemizer(database & db, lua_hooks & lua,
-                path_set & k, path_set & u, path_set & i, 
+                set<file_path> & k,
+                set<file_path> & u,
+                set<file_path> & i,
                 path_restriction const & r)
     : db(db), lua(lua), known(k), unknown(u), ignored(i), mask(r) {}
   virtual bool visit_dir(file_path const & path);
@@ -489,24 +491,18 @@ bool
 file_itemizer::visit_dir(file_path const & path)
 {
   this->visit_file(path);
-
-  split_path sp;
-  path.split(sp);
-  return known.find(sp) != known.end();
+  return known.find(path) != known.end();
 }
 
 void
 file_itemizer::visit_file(file_path const & path)
 {
-  split_path sp;
-  path.split(sp);
-
-  if (mask.includes(sp) && known.find(sp) == known.end())
+  if (mask.includes(path) && known.find(path) == known.end())
     {
       if (lua.hook_ignore_file(path) || db.is_dbfile(path))
-        ignored.insert(sp);
+        ignored.insert(path);
       else
-        unknown.insert(sp);
+        unknown.insert(path);
     }
 }
 
@@ -514,44 +510,38 @@ file_itemizer::visit_file(file_path const & path)
 struct workspace_itemizer : public tree_walker
 {
   roster_t & roster;
-  path_set const & known;
+  set<file_path> const & known;
   node_id_source & nis;
 
-  workspace_itemizer(roster_t & roster, path_set const & paths, 
+  workspace_itemizer(roster_t & roster, set<file_path> const & paths,
                      node_id_source & nis);
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-workspace_itemizer::workspace_itemizer(roster_t & roster, 
-                                       path_set const & paths, 
+workspace_itemizer::workspace_itemizer(roster_t & roster,
+                                       set<file_path> const & paths,
                                        node_id_source & nis)
     : roster(roster), known(paths), nis(nis)
 {
-  split_path root_path;
-  file_path().split(root_path);
   node_id root_nid = roster.create_dir_node(nis);
-  roster.attach_node(root_nid, root_path);
+  roster.attach_node(root_nid, file_path_internal(""));
 }
 
 bool
 workspace_itemizer::visit_dir(file_path const & path)
 {
-  split_path sp;
-  path.split(sp);
   node_id nid = roster.create_dir_node(nis);
-  roster.attach_node(nid, sp);
-  return known.find(sp) != known.end();
+  roster.attach_node(nid, path);
+  return known.find(path) != known.end();
 }
 
 void
 workspace_itemizer::visit_file(file_path const & path)
 {
-  split_path sp;
-  path.split(sp);
   file_id fid;
   node_id nid = roster.create_file_node(fid, nis);
-  roster.attach_node(nid, sp);
+  roster.attach_node(nid, path);
 }
 
 
@@ -572,13 +562,25 @@ public:
   {}
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
-  void add_node_for(split_path const & sp);
+  void add_nodes_for(file_path const & path, file_path const & goal);
 };
 
 void
-addition_builder::add_node_for(split_path const & sp)
+addition_builder::add_nodes_for(file_path const & path,
+                                file_path const & goal)
 {
-  file_path path(sp);
+  // this check suffices to terminate the recursion; our caller guarantees
+  // that the roster has a root node, which will be a directory.
+  if (ros.has_node(path))
+    {
+      N(is_dir_t(ros.get_node(path)),
+        F("cannot add %s, because %s is recorded as a file "
+          "in the workspace manifest") % goal % path);
+      return;
+    }
+
+  add_nodes_for(path.dirname(), goal);
+  P(F("adding %s to workspace manifest") % path);
 
   node_id nid = the_null_node;
   switch (get_path_status(path))
@@ -598,16 +600,14 @@ addition_builder::add_node_for(split_path const & sp)
     }
 
   I(nid != the_null_node);
-  er.attach_node(nid, sp);
+  er.attach_node(nid, path);
 
   map<string, string> attrs;
   lua.hook_init_attributes(path, attrs);
   if (attrs.size() > 0)
-    {
-      for (map<string, string>::const_iterator i = attrs.begin();
-           i != attrs.end(); ++i)
-        er.set_attr(sp, attr_key(i->first), attr_value(i->second));
-    }
+    for (map<string, string>::const_iterator i = attrs.begin();
+         i != attrs.end(); ++i)
+      er.set_attr(path, attr_key(i->first), attr_value(i->second));
 }
 
 
@@ -627,56 +627,38 @@ addition_builder::visit_file(file_path const & path)
       return;
     }
 
-  split_path sp;
-  path.split(sp);
-  if (ros.has_node(sp))
+  if (ros.has_node(path))
     {
-      if (sp.size() > 1)
+      if (!path.empty())
         P(F("skipping %s, already accounted for in workspace") % path);
       return;
     }
 
-  split_path prefix;
   I(ros.has_root());
-  for (split_path::const_iterator i = sp.begin(); i != sp.end(); ++i)
-    {
-      prefix.push_back(*i);
-      if (!ros.has_node(prefix))
-        {
-          P(F("adding %s to workspace manifest") % file_path(prefix));
-          add_node_for(prefix);
-        }
-      if (!is_dir_t(ros.get_node(prefix)))
-        {
-          N(prefix == sp,
-            F("cannot add %s, because %s is recorded as a file in the workspace manifest")
-            % file_path(sp) % file_path(sp));
-          break;
-        }
-    }
+  add_nodes_for(path, path);
 }
 
 struct editable_working_tree : public editable_tree
 {
   editable_working_tree(lua_hooks & lua, content_merge_adaptor const & source,
-                        bool const messages) 
+                        bool const messages)
     : lua(lua), source(source), next_nid(1), root_dir_attached(true),
       messages(messages)
   {};
 
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
 
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
 
-  virtual void apply_delta(split_path const & pth,
+  virtual void apply_delta(file_path const & pth,
                            file_id const & old_id,
                            file_id const & new_id);
-  virtual void clear_attr(split_path const & pth,
+  virtual void clear_attr(file_path const & pth,
                           attr_key const & name);
-  virtual void set_attr(split_path const & pth,
+  virtual void set_attr(file_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
 
@@ -697,27 +679,27 @@ struct simulated_working_tree : public editable_tree
 {
   roster_t & workspace;
   node_id_source & nis;
-  
-  path_set blocked_paths;
-  map<node_id, split_path> nid_map;
+
+  set<file_path> blocked_paths;
+  map<node_id, file_path> nid_map;
   int conflicts;
 
   simulated_working_tree(roster_t & r, temp_node_id_source & n)
     : workspace(r), nis(n), conflicts(0) {}
 
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
 
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
 
-  virtual void apply_delta(split_path const & pth,
+  virtual void apply_delta(file_path const & pth,
                            file_id const & old_id,
                            file_id const & new_id);
-  virtual void clear_attr(split_path const & pth,
+  virtual void clear_attr(file_path const & pth,
                           attr_key const & name);
-  virtual void set_attr(split_path const & pth,
+  virtual void set_attr(file_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
 
@@ -732,7 +714,7 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
   virtual void get_version(file_id const &, file_data &) const
   { I(false); }
   virtual void record_merge(file_id const &, file_id const &,
-                            file_id const &, 
+                            file_id const &,
                             file_data const &, file_data const &,
                             file_data const &)
   { I(false); }
@@ -773,24 +755,25 @@ path_for_detached_nid(node_id nid)
 // parent.
 
 node_id
-editable_working_tree::detach_node(split_path const & src)
+editable_working_tree::detach_node(file_path const & src_pth)
 {
   I(root_dir_attached);
   node_id nid = next_nid++;
-  file_path src_pth(src);
   bookkeeping_path dst_pth = path_for_detached_nid(nid);
   safe_insert(rename_add_drop_map, make_pair(dst_pth, src_pth));
   if (src_pth == file_path())
     {
       // root dir detach, so we move contents, rather than the dir itself
       mkdir_p(dst_pth);
-      vector<utf8> files, dirs;
+      vector<path_component> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
-        move_file(src_pth / (*i)(), dst_pth / (*i)());
-      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
-        if (!bookkeeping_path::internal_string_is_bookkeeping_path(*i))
-          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+      for (vector<path_component>::const_iterator i = files.begin();
+           i != files.end(); ++i)
+        move_file(src_pth / *i, dst_pth / (*i)());
+      for (vector<path_component>::const_iterator i = dirs.begin();
+           i != dirs.end(); ++i)
+        if (!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())))
+          move_dir(src_pth / *i, dst_pth / (*i)());
       root_dir_attached = false;
     }
   else
@@ -836,10 +819,9 @@ editable_working_tree::create_file_node(file_id const & content)
 }
 
 void
-editable_working_tree::attach_node(node_id nid, split_path const & dst)
+editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
 {
   bookkeeping_path src_pth = path_for_detached_nid(nid);
-  file_path dst_pth(dst);
 
   map<bookkeeping_path, file_path>::const_iterator i
     = rename_add_drop_map.find(src_pth);
@@ -855,17 +837,19 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
   if (dst_pth == file_path())
     {
       // root dir attach, so we move contents, rather than the dir itself
-      vector<utf8> files, dirs;
+      vector<path_component> files, dirs;
       read_directory(src_pth, files, dirs);
-      for (vector<utf8>::const_iterator i = files.begin(); i != files.end(); ++i)
+      for (vector<path_component>::const_iterator i = files.begin();
+           i != files.end(); ++i)
         {
-          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_file(src_pth / (*i)(), dst_pth / (*i)());
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
+          move_file(src_pth / (*i)(), dst_pth / *i);
         }
-      for (vector<utf8>::const_iterator i = dirs.begin(); i != dirs.end(); ++i)
+      for (vector<path_component>::const_iterator i = dirs.begin();
+           i != dirs.end(); ++i)
         {
-          I(!bookkeeping_path::internal_string_is_bookkeeping_path(*i));
-          move_dir(src_pth / (*i)(), dst_pth / (*i)());
+          I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
+          move_dir(src_pth / (*i)(), dst_pth / *i);
         }
       delete_dir_shallow(src_pth);
       root_dir_attached = true;
@@ -876,35 +860,34 @@ editable_working_tree::attach_node(node_id nid, split_path const & dst)
 }
 
 void
-editable_working_tree::apply_delta(split_path const & pth,
+editable_working_tree::apply_delta(file_path const & pth,
                                    file_id const & old_id,
                                    file_id const & new_id)
 {
-  file_path pth_unsplit(pth);
-  require_path_is_file(pth_unsplit,
-                       F("file '%s' does not exist") % pth_unsplit,
-                       F("file '%s' is a directory") % pth_unsplit);
+  require_path_is_file(pth,
+                       F("file '%s' does not exist") % pth,
+                       F("file '%s' is a directory") % pth);
   hexenc<id> curr_id_raw;
-  calculate_ident(pth_unsplit, curr_id_raw);
+  calculate_ident(pth, curr_id_raw);
   file_id curr_id(curr_id_raw);
   E(curr_id == old_id,
-    F("content of file '%s' has changed, not overwriting") % pth_unsplit);
-  P(F("modifying %s") % pth_unsplit);
+    F("content of file '%s' has changed, not overwriting") % pth);
+  P(F("modifying %s") % pth);
 
   file_data dat;
   source.get_version(new_id, dat);
-  write_data(pth_unsplit, dat.inner());
+  write_data(pth, dat.inner());
 }
 
 void
-editable_working_tree::clear_attr(split_path const & pth,
+editable_working_tree::clear_attr(file_path const & pth,
                                   attr_key const & name)
 {
   // FIXME_ROSTERS: call a lua hook
 }
 
 void
-editable_working_tree::set_attr(split_path const & pth,
+editable_working_tree::set_attr(file_path const & pth,
                                 attr_key const & name,
                                 attr_value const & val)
 {
@@ -924,7 +907,7 @@ editable_working_tree::~editable_working_tree()
 
 
 node_id
-simulated_working_tree::detach_node(split_path const & src)
+simulated_working_tree::detach_node(file_path const & src)
 {
   node_id nid = workspace.detach_node(src);
   nid_map.insert(make_pair(nid, src));
@@ -935,15 +918,14 @@ void
 simulated_working_tree::drop_detached_node(node_id nid)
 {
   node_t node = workspace.get_node(nid);
-  if (is_dir_t(node)) 
+  if (is_dir_t(node))
     {
       dir_t dir = downcast_to_dir_t(node);
       if (!dir->children.empty())
         {
-          map<node_id, split_path>::const_iterator i = nid_map.find(nid);
+          map<node_id, file_path>::const_iterator i = nid_map.find(nid);
           I(i != nid_map.end());
-          split_path path = i->second;
-          W(F("cannot drop non-empty directory '%s'") % path);
+          W(F("cannot drop non-empty directory '%s'") % i->second);
           conflicts++;
         }
     }
@@ -962,14 +944,13 @@ simulated_working_tree::create_file_node(file_id const & content)
 }
 
 void
-simulated_working_tree::attach_node(node_id nid, split_path const & dst)
+simulated_working_tree::attach_node(node_id nid, file_path const & dst)
 {
   // this check is needed for checkout because we're using a roster to
   // represent paths that *may* block the checkout. however to represent
   // these we *must* have a root node in the roster which will *always*
   // block us. so here we check for that case and avoid it.
-
-  if (workspace_root(dst) && workspace.has_root())
+  if (dst.empty() && workspace.has_root())
     return;
 
   if (workspace.has_node(dst))
@@ -978,24 +959,29 @@ simulated_working_tree::attach_node(node_id nid, split_path const & dst)
       blocked_paths.insert(dst);
       conflicts++;
     }
+  else if (dst.empty())
+    {
+      // the parent of the workspace root cannot be in the blocked set
+      // this attach would have been caught above if it were a problem
+      workspace.attach_node(nid, dst);
+    }
   else
     {
-      split_path dirname;
-      path_component basename;
-      dirname_basename(dst, dirname, basename);
+      file_path parent = dst.dirname();
 
-      if (blocked_paths.find(dirname) == blocked_paths.end())
+      if (blocked_paths.find(parent) == blocked_paths.end())
         workspace.attach_node(nid, dst);
       else
         {
-          W(F("attach node %d blocked by blocked parent '%s'") % nid % dst);
+          W(F("attach node %d blocked by blocked parent '%s'")
+            % nid % parent);
           blocked_paths.insert(dst);
         }
     }
 }
 
 void
-simulated_working_tree::apply_delta(split_path const & path,
+simulated_working_tree::apply_delta(file_path const & path,
                                     file_id const & old_id,
                                     file_id const & new_id)
 {
@@ -1004,13 +990,13 @@ simulated_working_tree::apply_delta(split_path const & path,
 }
 
 void
-simulated_working_tree::clear_attr(split_path const & pth,
+simulated_working_tree::clear_attr(file_path const & pth,
                                    attr_key const & name)
 {
 }
 
 void
-simulated_working_tree::set_attr(split_path const & pth,
+simulated_working_tree::set_attr(file_path const & pth,
                                  attr_key const & name,
                                  attr_value const & val)
 {
@@ -1030,18 +1016,105 @@ simulated_working_tree::~simulated_working_tree()
 }; // anonymous namespace
 
 static void
-add_parent_dirs(split_path const & dst, roster_t & ros, node_id_source & nis,
+add_parent_dirs(file_path const & dst, roster_t & ros, node_id_source & nis,
                 database & db, lua_hooks & lua)
 {
   editable_roster_base er(ros, nis);
   addition_builder build(db, lua, ros, er);
 
-  split_path dirname;
-  path_component basename;
-  dirname_basename(dst, dirname, basename);
-
   // FIXME: this is a somewhat odd way to use the builder
-  build.visit_dir(dirname);
+  build.visit_dir(dst.dirname());
+}
+
+inline static bool
+inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
+{
+  inodeprint_map::const_iterator old_ip = ipm.find(path);
+  if (old_ip != ipm.end())
+    {
+      hexenc<inodeprint> ip;
+      if (inodeprint_file(path, ip) && ip == old_ip->second)
+          return true; // unchanged
+      else
+          return false; // changed or unavailable
+    }
+  else
+    return false; // unavailable
+}
+
+// updating rosters from the workspace
+
+// TODO: unchanged, changed, missing might be better as set<node_id>
+
+// note that this does not take a restriction because it is used only by
+// automate_inventory which operates on the entire, unrestricted, working
+// directory.
+
+void
+workspace::classify_roster_paths(roster_t const & ros,
+                                 set<file_path> & unchanged,
+                                 set<file_path> & changed,
+                                 set<file_path> & missing)
+{
+  temp_node_id_source nis;
+  inodeprint_map ipm;
+
+  if (in_inodeprints_mode())
+    {
+      data dat;
+      read_inodeprints(dat);
+      read_inodeprint_map(dat, ipm);
+    }
+
+  // this code is speed critical, hence the use of inode fingerprints so be
+  // careful when making changes in here and preferably do some timing tests
+
+  if (!ros.has_root())
+    return;
+
+  node_map const & nodes = ros.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_id nid = i->first;
+      node_t node = i->second;
+
+      file_path fp;
+      ros.get_name(nid, fp);
+
+      // if this node is a file, check the inodeprint cache for changes
+      if (!is_dir_t(node) && inodeprint_unchanged(ipm, fp))
+        {
+          unchanged.insert(fp);
+          continue;
+        }
+
+      // if the node is a directory, check if it exists
+      // directories do not have content changes, thus are inserted in the
+      // unchanged set
+      if (is_dir_t(node))
+        {
+          if (directory_exists(fp))
+              unchanged.insert(fp);
+          else
+              missing.insert(fp);
+          continue;
+        }
+
+      // the node is a file, check if it exists and has been changed
+      file_t file = downcast_to_file_t(node);
+      file_id fid;
+      if (ident_existing_file(fp, fid))
+        {
+          if (file->content == fid)
+            unchanged.insert(fp);
+          else
+            changed.insert(fp);
+        }
+      else
+        {
+          missing.insert(fp);
+        }
+    }
 }
 
 void
@@ -1082,18 +1155,19 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
       if (!mask.includes(ros, nid))
         continue;
 
-      split_path sp;
-      ros.get_name(nid, sp);
-      file_path fp(sp);
+      file_path fp;
+      ros.get_name(nid, fp);
+
+      const path::status status(get_path_status(fp));
 
       if (is_dir_t(node))
         {
-          if (!path_exists(fp))
+          if (status == path::nonexistent)
             {
               W(F("missing directory '%s'") % (fp));
               missing_items++;
             }
-          else if (!directory_exists(fp))
+          else if (status != path::directory)
             {
               W(F("not a directory '%s'") % (fp));
               missing_items++;
@@ -1106,19 +1180,19 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
           if (inodeprint_unchanged(ipm, fp))
             continue;
 
-          if (!path_exists(fp))
+          if (status == path::nonexistent)
             {
               W(F("missing file '%s'") % (fp));
               missing_items++;
             }
-          else if (!file_exists(fp))
+          else if (status != path::file)
             {
               W(F("not a file '%s'") % (fp));
               missing_items++;
             }
 
           file_t file = downcast_to_file_t(node);
-          ident_existing_file(fp, file->content);
+          ident_existing_file(fp, file->content, status);
         }
 
     }
@@ -1138,21 +1212,20 @@ workspace::update_current_roster_from_filesystem(roster_t & ros,
 void
 workspace::find_missing(roster_t const & new_roster_shape,
                         node_restriction const & mask,
-                        path_set & missing)
+                        set<file_path> & missing)
 {
   node_map const & nodes = new_roster_shape.all_nodes();
   for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
     {
       node_id nid = i->first;
 
-      if (!new_roster_shape.is_root(nid) && mask.includes(new_roster_shape, nid))
+      if (!new_roster_shape.is_root(nid)
+          && mask.includes(new_roster_shape, nid))
         {
-          split_path sp;
-          new_roster_shape.get_name(nid, sp);
-          file_path fp(sp);
-
+          file_path fp;
+          new_roster_shape.get_name(nid, fp);
           if (!path_exists(fp))
-            missing.insert(sp);
+            missing.insert(fp);
         }
     }
 }
@@ -1160,18 +1233,18 @@ workspace::find_missing(roster_t const & new_roster_shape,
 void
 workspace::find_unknown_and_ignored(path_restriction const & mask,
                                     vector<file_path> const & roots,
-                                    path_set & unknown, path_set & ignored)
+                                    set<file_path> & unknown,
+                                    set<file_path> & ignored)
 {
-  path_set known;
+  set<file_path> known;
   roster_t new_roster;
   temp_node_id_source nis;
 
   get_current_roster_shape(new_roster, nis);
-
   new_roster.extract_path_set(known);
 
   file_itemizer u(db, lua, known, unknown, ignored, mask);
-  for (vector<file_path>::const_iterator 
+  for (vector<file_path>::const_iterator
          i = roots.begin(); i != roots.end(); ++i)
     {
       walk_tree(*i, u);
@@ -1179,7 +1252,7 @@ workspace::find_unknown_and_ignored(path_restriction const & mask,
 }
 
 void
-workspace::perform_additions(path_set const & paths,
+workspace::perform_additions(set<file_path> const & paths,
                              bool recursive, bool respect_ignore)
 {
   if (paths.empty())
@@ -1194,36 +1267,33 @@ workspace::perform_additions(path_set const & paths,
 
   if (!new_roster.has_root())
     {
-      split_path root;
-      root.push_back(the_null_component);
-      er.attach_node(er.create_dir_node(), root);
+      er.attach_node(er.create_dir_node(), file_path_internal(""));
     }
 
   I(new_roster.has_root());
   addition_builder build(db, lua, new_roster, er, respect_ignore);
 
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       if (recursive)
         {
           // NB.: walk_tree will handle error checking for non-existent paths
-          walk_tree(file_path(*i), build);
+          walk_tree(*i, build);
         }
       else
         {
-          // in the case where we're just handled a set of paths, we use the builder
-          // in this strange way.
-          file_path path(*i);
-          switch (get_path_status(path))
+          // in the case where we're just handed a set of paths, we use the
+          // builder in this strange way.
+          switch (get_path_status(*i))
             {
             case path::nonexistent:
-              N(false, F("no such file or directory: '%s'") % path);
+              N(false, F("no such file or directory: '%s'") % *i);
               break;
             case path::file:
-              build.visit_file(path);
+              build.visit_file(*i);
               break;
             case path::directory:
-              build.visit_dir(path);
+              build.visit_dir(*i);
               break;
             }
         }
@@ -1248,12 +1318,12 @@ in_parent_roster(const parent_map & parents, const node_id & nid)
       if (parent_roster(i).has_node(nid))
         return true;
     }
-  
+
   return false;
 }
 
 void
-workspace::perform_deletions(path_set const & paths, 
+workspace::perform_deletions(set<file_path> const & paths,
                              bool recursive, bool bookkeep_only)
 {
   if (paths.empty())
@@ -1268,30 +1338,29 @@ workspace::perform_deletions(path_set const & paths,
   get_parent_rosters(parents);
 
   // we traverse the the paths backwards, so that we always hit deep paths
-  // before shallow paths (because path_set is lexicographically sorted).
-  // this is important in cases like
+  // before shallow paths (because set<file_path> is lexicographically
+  // sorted).  this is important in cases like
   //    monotone drop foo/bar foo foo/baz
   // where, when processing 'foo', we need to know whether or not it is empty
   // (and thus legal to remove)
 
-  deque<split_path> todo;
-  path_set::const_reverse_iterator i = paths.rbegin();
+  deque<file_path> todo;
+  set<file_path>::const_reverse_iterator i = paths.rbegin();
   todo.push_back(*i);
   ++i;
 
   while (todo.size())
     {
-      split_path &p(todo.front());
-      file_path name(p);
+      file_path const & name(todo.front());
 
       E(!name.empty(),
         F("unable to drop the root directory"));
 
-      if (!new_roster.has_node(p))
+      if (!new_roster.has_node(name))
         P(F("skipping %s, not currently tracked") % name);
       else
         {
-          node_t n = new_roster.get_node(p);
+          node_t n = new_roster.get_node(name);
           if (is_dir_t(n))
             {
               dir_t d = downcast_to_dir_t(n);
@@ -1301,22 +1370,20 @@ workspace::perform_deletions(path_set const & paths,
                     F("cannot remove %s/, it is not empty") % name);
                   for (dir_map::const_iterator j = d->children.begin();
                        j != d->children.end(); ++j)
-                    {
-                      split_path sp = p;
-                      sp.push_back(j->first);
-                      todo.push_front(sp);
-                    }
+                    todo.push_front(name / j->first);
                   continue;
                 }
             }
-          if (!bookkeep_only && path_exists(name) && in_parent_roster(parents, n->self))
+          if (!bookkeep_only && path_exists(name)
+              && in_parent_roster(parents, n->self))
             {
               if (is_dir_t(n))
                 {
                   if (directory_empty(name))
                     delete_file_or_dir_shallow(name);
                   else
-                    W(F("directory %s not empty - it will be dropped but not deleted") % name);
+                    W(F("directory %s not empty - "
+                        "it will be dropped but not deleted") % name);
                 }
               else
                 {
@@ -1326,11 +1393,12 @@ workspace::perform_deletions(path_set const & paths,
                   if (file->content == fid)
                     delete_file_or_dir_shallow(name);
                   else
-                    W(F("file %s changed - it will be dropped but not deleted") % name);
+                    W(F("file %s changed - "
+                        "it will be dropped but not deleted") % name);
                 }
             }
           P(F("dropping %s from workspace manifest") % name);
-          new_roster.drop_detached_node(new_roster.detach_node(p));
+          new_roster.drop_detached_node(new_roster.detach_node(name));
         }
       todo.pop_front();
       if (i != paths.rend())
@@ -1347,89 +1415,75 @@ workspace::perform_deletions(path_set const & paths,
 }
 
 void
-workspace::perform_rename(set<file_path> const & src_paths,
-                          file_path const & dst_path,
+workspace::perform_rename(set<file_path> const & srcs,
+                          file_path const & dst,
                           bool bookkeep_only)
 {
   temp_node_id_source nis;
   roster_t new_roster;
   MM(new_roster);
-  split_path dst;
-  set<split_path> srcs;
-  set< pair<split_path, split_path> > renames;
+  set< pair<file_path, file_path> > renames;
 
-  I(!src_paths.empty());
+  I(!srcs.empty());
 
   get_current_roster_shape(new_roster, nis);
 
-  dst_path.split(dst);
-
-  if (src_paths.size() == 1 && !new_roster.has_node(dst))
+  // validation.  it's okay if the target exists as a file; we just won't
+  // clobber it (in !--bookkeep-only mode).  similarly, it's okay if the
+  // source does not exist as a file.
+  if (srcs.size() == 1 && !new_roster.has_node(dst))
     {
       // "rename SRC DST" case
-      split_path s;
-      src_paths.begin()->split(s);
-      N(new_roster.has_node(s),
-        F("source file %s is not versioned") % s);
-      N(get_path_status(dst_path) != path::directory,
-        F("destination name %s already exists as an unversioned directory") % dst);
-      renames.insert( make_pair(s, dst) );
+      file_path const & src = *srcs.begin();
+
+      N(!directory_exists(dst),
+        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
+
+      N(!src.empty(),
+        F("cannot rename the workspace root (try '%s pivot_root' instead)")
+        % ui.prog_name);
+      N(new_roster.has_node(src),
+        F("source file %s is not versioned") % src);
+
+      renames.insert(make_pair(src, dst));
       add_parent_dirs(dst, new_roster, nis, db, lua);
     }
   else
     {
-      // "rename SRC1 SRC2 DST" case
+      // "rename SRC1 [SRC2 ...] DSTDIR" case
       N(new_roster.has_node(dst),
-        F("destination dir %s/ is not versioned (perhaps add it?)") % dst_path);
+        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
 
       N(is_dir_t(new_roster.get_node(dst)),
-        F("destination %s is an existing file in current revision") % dst_path);
+        (srcs.size() > 1
+        ? F("destination %s is a file, not a directory")
+        : F("destination %s already exists in the workspace manifest"))
+        % dst);
 
-      for (set<file_path>::const_iterator i = src_paths.begin();
-           i != src_paths.end(); i++)
+      for (set<file_path>::const_iterator i = srcs.begin();
+           i != srcs.end(); i++)
         {
-          split_path s;
-          i->split(s);
-          // TODO "rename . foo/" might be valid? Or should it already have been
-          // normalised..., in which case it might be an I().
-          N(!s.empty(),
-            F("empty path %s is not allowed") % *i);
+          N(!i->empty(),
+            F("cannot rename the workspace root (try '%s pivot_root' instead)")
+            % ui.prog_name);
+          N(new_roster.has_node(*i),
+            F("source file %s is not versioned") % *i);
 
-          path_component src_basename = s.back();
-          split_path d(dst);
-          d.push_back(src_basename);
-          renames.insert( make_pair(s, d) );
+          file_path d = dst / i->basename();
+          N(!new_roster.has_node(d),
+            F("destination %s already exists in the workspace manifest") % d);
+
+          renames.insert(make_pair(*i, d));
         }
     }
 
-  // one iteration to check for existing/missing files
-  for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
-       i != renames.end(); i++)
-    {
-      N(new_roster.has_node(i->first),
-        F("%s does not exist in current manifest") % file_path(i->first));
-
-      N(!new_roster.has_node(i->second),
-        F("destination %s already exists in current manifest") % file_path(i->second));
-
-      split_path parent;
-      path_component basename;
-      dirname_basename(i->second, parent, basename);
-      N(new_roster.has_node(parent),
-        F("destination directory %s does not exist in current manifest") % file_path(parent));
-      N(is_dir_t(new_roster.get_node(parent)),
-        F("destination directory %s is not a directory") % file_path(parent));
-    }
-
   // do the attach/detaching
-  for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
+  for (set< pair<file_path, file_path> >::const_iterator i = renames.begin();
        i != renames.end(); i++)
     {
       node_id nid = new_roster.detach_node(i->first);
       new_roster.attach_node(nid, i->second);
-      P(F("renaming %s to %s in workspace manifest")
-        % file_path(i->first)
-        % file_path(i->second));
+      P(F("renaming %s to %s in workspace manifest") % i->first % i->second);
     }
 
   parent_map parents;
@@ -1440,34 +1494,34 @@ workspace::perform_rename(set<file_path> const & src_paths,
   put_work_rev(new_work);
 
   if (!bookkeep_only)
-    {
-      for (set< pair<split_path, split_path> >::const_iterator i = renames.begin();
-           i != renames.end(); i++)
-        {
-          file_path s(i->first);
-          file_path d(i->second);
-          // silently skip files where src doesn't exist or dst does
-          bool have_src = path_exists(s);
-          bool have_dst = path_exists(d);
-          if (have_src && !have_dst)
-            {
-              move_path(s, d);
-            }
-          else if (!have_src && !have_dst)
-            {
-              W(F("%s doesn't exist in workspace, skipping") % s);
-            }
-          else if (have_src && have_dst)
-            {
-              W(F("destination %s already exists in workspace, skipping filesystem rename") % d);
-            }
-          else
-            {
-              W(F("skipping move_path in filesystem %s->%s, source doesn't exist, destination does")
-                % s % d);
-            }
-        }
-    }
+    for (set< pair<file_path, file_path> >::const_iterator i = renames.begin();
+         i != renames.end(); i++)
+      {
+        file_path const & s(i->first);
+        file_path const & d(i->second);
+        // silently skip files where src doesn't exist or dst does
+        bool have_src = path_exists(s);
+        bool have_dst = path_exists(d);
+        if (have_src && !have_dst)
+          {
+            move_path(s, d);
+          }
+        else if (!have_src && !have_dst)
+          {
+            W(F("%s doesn't exist in workspace, skipping") % s);
+          }
+        else if (have_src && have_dst)
+          {
+            W(F("destination %s already exists in workspace, "
+                "skipping filesystem rename") % d);
+          }
+        else
+          {
+            W(F("%s doesn't exist in workspace and %s does, "
+                "skipping filesystem rename") % s % d);
+          }
+      }
+
   update_any_attrs();
 }
 
@@ -1476,47 +1530,41 @@ workspace::perform_pivot_root(file_path const & new_root,
                               file_path const & put_old,
                               bool bookkeep_only)
 {
-  split_path new_root_sp, put_old_sp, root_sp;
-  new_root.split(new_root_sp);
-  put_old.split(put_old_sp);
-  file_path().split(root_sp);
-
   temp_node_id_source nis;
   roster_t new_roster;
   MM(new_roster);
   get_current_roster_shape(new_roster, nis);
 
   I(new_roster.has_root());
-  N(new_roster.has_node(new_root_sp),
-    F("proposed new root directory '%s' is not versioned or does not exist") % new_root);
-  N(is_dir_t(new_roster.get_node(new_root_sp)),
+  N(new_roster.has_node(new_root),
+    F("proposed new root directory '%s' is not versioned or does not exist")
+    % new_root);
+  N(is_dir_t(new_roster.get_node(new_root)),
     F("proposed new root directory '%s' is not a directory") % new_root);
   {
-    split_path new_root__MTN;
-    (new_root / bookkeeping_root.as_internal()).split(new_root__MTN);
-    N(!new_roster.has_node(new_root__MTN),
-      F("proposed new root directory '%s' contains illegal path %s") % new_root % bookkeeping_root);
+    N(!new_roster.has_node(new_root / bookkeeping_root_component),
+      F("proposed new root directory '%s' contains illegal path %s")
+      % new_root % bookkeeping_root);
   }
 
   {
-    file_path current_path_to_put_old = (new_root / put_old.as_internal());
-    split_path current_path_to_put_old_sp, current_path_to_put_old_parent_sp;
-    path_component basename;
-    current_path_to_put_old.split(current_path_to_put_old_sp);
-    dirname_basename(current_path_to_put_old_sp, current_path_to_put_old_parent_sp, basename);
-    N(new_roster.has_node(current_path_to_put_old_parent_sp),
+    file_path current_path_to_put_old = (new_root / put_old);
+    file_path current_path_to_put_old_parent
+      = current_path_to_put_old.dirname();
+
+    N(new_roster.has_node(current_path_to_put_old_parent),
       F("directory '%s' is not versioned or does not exist")
-      % file_path(current_path_to_put_old_parent_sp));
-    N(is_dir_t(new_roster.get_node(current_path_to_put_old_parent_sp)),
+      % current_path_to_put_old_parent);
+    N(is_dir_t(new_roster.get_node(current_path_to_put_old_parent)),
       F("'%s' is not a directory")
-      % file_path(current_path_to_put_old_parent_sp));
-    N(!new_roster.has_node(current_path_to_put_old_sp),
+      % current_path_to_put_old_parent);
+    N(!new_roster.has_node(current_path_to_put_old),
       F("'%s' is in the way") % current_path_to_put_old);
   }
 
   cset cs;
-  safe_insert(cs.nodes_renamed, make_pair(root_sp, put_old_sp));
-  safe_insert(cs.nodes_renamed, make_pair(new_root_sp, root_sp));
+  safe_insert(cs.nodes_renamed, make_pair(file_path_internal(""), put_old));
+  safe_insert(cs.nodes_renamed, make_pair(new_root, file_path_internal("")));
 
   {
     editable_roster_base e(new_roster, nis);
@@ -1546,11 +1594,11 @@ workspace::perform_content_update(cset const & update,
 {
   roster_t roster;
   temp_node_id_source nis;
-  path_set known;
+  set<file_path> known;
   roster_t new_roster;
   bookkeeping_path detached = path_for_detached_nids();
 
-  E(!directory_exists(detached), 
+  E(!directory_exists(detached),
     F("workspace is locked\n"
       "you must clean up and remove the %s directory")
     % detached);
@@ -1582,14 +1630,14 @@ workspace::update_any_attrs()
   for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
-      split_path sp;
-      new_roster.get_name(i->first, sp);
+      file_path fp;
+      new_roster.get_name(i->first, fp);
 
       node_t n = i->second;
       for (full_attr_map_t::const_iterator j = n->attrs.begin();
            j != n->attrs.end(); ++j)
         if (j->second.first)
-          lua.hook_apply_attribute (j->first(), file_path(sp),
+          lua.hook_apply_attribute (j->first(), fp,
                                     j->second.second());
     }
 }

@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <sstream>
-#include <string>
 #include <cctype>
 #include <cstdlib>
 
@@ -68,7 +68,12 @@ basic_io::stanza::stanza() : indent(0)
 
 void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 {
-  entries.push_back(make_pair(k, "[" + v() + "]"));
+  entries.push_back(make_pair(k, ""));
+  string const & s(v());
+  entries.back().second.reserve(s.size()+2);
+  entries.back().second.push_back('[');
+  entries.back().second.append(s);
+  entries.back().second.push_back(']');
   if (k().size() > indent)
     indent = k().size();
 }

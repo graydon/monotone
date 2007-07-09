@@ -8,9 +8,9 @@
 // PURPOSE.
 
 #ifdef BUILD_UNIT_TESTS
+#include "base.hh"
 #include "unit_tests.hh"
 
-#include <string>
 
 #include "transforms.hh"
 #include "sanity.hh"
@@ -1064,7 +1064,7 @@ UNIT_TEST(crypto, calculate_ident)
   //L(FL(" Input: %s") % input);
   //L(FL("Output: %s") % output);
 
-  BOOST_CHECK(output() == ident);
+  UNIT_TEST_CHECK(output() == ident);
   L(FL("SHA Short Message Test:  Passed\n\n"));
 
 
@@ -1114,7 +1114,7 @@ UNIT_TEST(crypto, calculate_ident)
 
       L(FL("  %03d:  %s") % j % output2 );
 
-      BOOST_CHECK(output2() == expected_SHA_MCT[j]);
+      UNIT_TEST_CHECK(output2() == expected_SHA_MCT[j]);
 
       MD[j] = output2();
       Seed  = MD[j];

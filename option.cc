@@ -1,4 +1,5 @@
 
+#include "base.hh"
 #include "file_io.hh"
 #include "option.hh"
 #include "sanity.hh"
@@ -501,12 +502,12 @@ UNIT_TEST(option, concrete_options)
                               "--int", "45", "--", "--bad", "foo", "-b"};
     os.from_command_line(12, cmdline);
   }
-  BOOST_CHECK(!b);
-  BOOST_CHECK(i == 45);
-  BOOST_CHECK(s == "str ing");
-  BOOST_CHECK(v.size() == 4);// pos --bad foo -b
+  UNIT_TEST_CHECK(!b);
+  UNIT_TEST_CHECK(i == 45);
+  UNIT_TEST_CHECK(s == "str ing");
+  UNIT_TEST_CHECK(v.size() == 4);// pos --bad foo -b
   os.reset();
-  BOOST_CHECK(v.empty());
+  UNIT_TEST_CHECK(v.empty());
 
   {
     args_vector cmdline;
@@ -516,36 +517,36 @@ UNIT_TEST(option, concrete_options)
     cmdline.push_back(arg_type("foo"));
     os.from_command_line(cmdline);
   }
-  BOOST_CHECK(b);
-  BOOST_CHECK(s == "-s");
-  BOOST_CHECK(v.size() == 1);
-  BOOST_CHECK(v[0] == "foo");
+  UNIT_TEST_CHECK(b);
+  UNIT_TEST_CHECK(s == "-s");
+  UNIT_TEST_CHECK(v.size() == 1);
+  UNIT_TEST_CHECK(v[0] == "foo");
   os.reset();
-  BOOST_CHECK(!b);
+  UNIT_TEST_CHECK(!b);
 
   {
     char const * cmdline[] = {"progname", "--bad_arg", "x"};
-    BOOST_CHECK_THROW(os.from_command_line(3, cmdline), option::unknown_option);
+    UNIT_TEST_CHECK_THROW(os.from_command_line(3, cmdline), option::unknown_option);
   }
 
   {
     char const * cmdline[] = {"progname", "--bool=x"};
-    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
+    UNIT_TEST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
   }
 
   {
     char const * cmdline[] = {"progname", "-bx"};
-    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
+    UNIT_TEST_CHECK_THROW(os.from_command_line(2, cmdline), option::extra_arg);
   }
 
   {
     char const * cmdline[] = {"progname", "-s"};
-    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::missing_arg);
+    UNIT_TEST_CHECK_THROW(os.from_command_line(2, cmdline), option::missing_arg);
   }
 
   {
     char const * cmdline[] = {"progname", "--int=x"};
-    BOOST_CHECK_THROW(os.from_command_line(2, cmdline), option::bad_arg);
+    UNIT_TEST_CHECK_THROW(os.from_command_line(2, cmdline), option::bad_arg);
   }
 }
 

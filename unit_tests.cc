@@ -7,29 +7,26 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
 #include <vector>
-#include <string>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <cstdlib>
 #include <cstring>
 #include <cerrno>
 
-#include <boost/version.hpp>
 #include <boost/function.hpp>
-#include <boost/test/unit_test_suite.hpp>
-#if BOOST_VERSION >= 103300
-#include <boost/test/parameterized_test.hpp>
-#endif
 
 #include "botan/botan.h"
 #include "option.hh"
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "current_exception.hh"
 
-using std::multimap;
+using std::map;
 using std::pair;
 using std::make_pair;
 using std::vector;
@@ -38,119 +35,180 @@ using std::cout;
 using std::cerr;
 using std::clog;
 using std::exit;
-using std::atexit;
-using boost::unit_test::test_suite;
-typedef boost::unit_test::test_case boost_unit_test_case;
 
-// This must be a pointer.  It is used by the constructor below, which is
-// used to construct file-scope objects in different files; if it were the
-// actual object there would be no way to guarantee that this gets
-// constructed first.  Instead, we initialize it ourselves the first time we
-// use it.
-typedef multimap<string const,
-                 boost_unit_test_case *> unit_test_list_t;
+typedef unit_test::unit_test_case test_t;
+typedef map<string const, test_t> test_list_t;
+typedef map<string const, test_list_t> group_list_t;
 
-static unit_test_list_t * unit_tests;
+// This is used by other global constructors, so initialize on demand.
+static group_list_t & unit_tests()
+{
+  static group_list_t tests;
+  return tests;
+}
 
 unit_test::unit_test_case::unit_test_case(char const * group,
-                                          char const * test,
+                                          char const * name,
                                           void (*func)())
+  : group(group), name(name), func(func)
 {
-  if (unit_tests == NULL)
-    unit_tests = new unit_test_list_t;
-
-  boost_unit_test_case * tcase = BOOST_TEST_CASE(func);
-#if BOOST_VERSION >= 103300
-  tcase->p_name.set(string(test));
-#endif
-  unit_tests->insert(make_pair(string(group), tcase));
+  unit_tests()[group][name] = *this;
 }
 
-// This appears to be the sanest way to get progress notifications on a
-// per-test-group level.
-static void notifier(string const & group)
+unit_test::unit_test_case::unit_test_case()
+{}
+
+// Testsuite state.
+static bool any_test_failed = false;
+static int number_of_failed_tests = 0;
+static int number_of_succeeded_tests = 0;
+static bool log_to_stderr = false;
+
+// Test state.
+static bool this_test_failed;
+
+namespace { struct require_failed {}; }
+
+static void log_state(char const * file, int line,
+                      char const * kind, char const * msg)
 {
-  cerr << group << "...\n";
+  L(FL("%s:%s: %s: %s") % file % line % kind % msg);
 }
 
-// A teebuf implements the basic_streambuf interface and forwards all
-// operations to two 'targets'.  This is used to get progress messages sent
-// to both the log file and the terminal.  Note that it cannot be used for
-// reading (and does not implement the read-side interfaces) nor is it
-// seekable.
-namespace {
-  template <class C, class T = std::char_traits<C> >
-  class basic_teebuf : public std::basic_streambuf<C, T>
-  {
-  public:
-    // grmbl grmbl typedefs not inherited grmbl.
-    typedef C char_type;
-    typedef T traits_type;
-    typedef typename T::int_type int_type;
-    typedef typename T::pos_type pos_type;
-    typedef typename T::off_type off_type;
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is from the std::exception hierarchy.  In this case we
+// can access the exception object.
+static void log_exception(std::exception const & ex)
+{
+  using std::strcmp;
+  using std::strncmp;
+  char const * ex_name = typeid(ex).name();
+  char const * ex_dem  = demangle_typename(ex_name);
+  char const * ex_what = ex.what();
 
-    virtual ~basic_teebuf() {}
-    basic_teebuf(std::basic_streambuf<C,T> * t1,
-                 std::basic_streambuf<C,T> * t2)
-      : std::basic_streambuf<C,T>(), target1(t1), target2(t2) {}
+  if (ex_dem == 0)
+    ex_dem = ex_name;
 
-  protected:
-    std::basic_streambuf<C, T> * target1;
-    std::basic_streambuf<C, T> * target2;
+  // some demanglers stick "class" at the beginning of their output,
+  // which looks dumb in this context
+  if (!strncmp(ex_dem, "class ", 6))
+    ex_dem += 6;
 
-    virtual void imbue(std::locale const & loc)
-    {
-      target1->pubimbue(loc);
-      target2->pubimbue(loc);
-    }
-    virtual basic_teebuf * setbuf(C * p, std::streamsize n)
-    {
-      target1->pubsetbuf(p,n);
-      target2->pubsetbuf(p,n);
-      return this;
-    }
-    virtual int sync()
-    {
-      int r1 = target1->pubsync();
-      int r2 = target2->pubsync();
-      return (r1 == 0 && r2 == 0) ? 0 : -1;
-    }
-
-    // Not overriding the seek, get, or putback functions produces a
-    // streambuf which always fails those operations, thanks to the defaults
-    // in basic_streambuf.
-
-    // As we do no buffering in this object, it would be correct to forward
-    // xsputn to the targets.  However, this could cause a headache in the
-    // case that one target consumed fewer characters than the other.  As
-    // this streambuf is not used for much data (most of the chatter goes to
-    // clog) it is okay to fall back on the dumb-but-reliable default xsputn
-    // in basic_streambuf.
-
-    // You might think that overflow in this object should forward to
-    // overflow in the targets, but that would defeat buffering in those
-    // objects.
-    virtual int_type overflow(int_type c = traits_type::eof())
-    {
-      if (!traits_type::eq_int_type(c,traits_type::eof()))
-        {
-          int_type r1 = target1->sputc(c);
-          int_type r2 = target2->sputc(c);
-          if (r1 == traits_type::eof() || r2 == traits_type::eof())
-            return traits_type::eof();
-          return traits_type::not_eof(c);
-        }
-      else
-        {
-          return sync() ? traits_type::eof() : traits_type::not_eof(c);
-        }
-    }
-  };
-  typedef basic_teebuf<char> teebuf;
+  // only print what() if it's interesting, i.e. nonempty and different
+  // from the name (mangled or otherwise) of the exception type.
+  if (ex_what == 0 || ex_what[0] == 0
+      || !strcmp(ex_what, ex_name)
+      || !strcmp(ex_what, ex_dem))
+    L(FL("UNCAUGHT EXCEPTION: %s") % ex_dem);
+  else
+    L(FL("UNCAUGHT EXCEPTION: %s: %s") % ex_dem % ex_what);
 }
 
-test_suite * init_unit_test_suite(int argc, char * argv[])
+// Report what we can about a fatal exception (caught in the outermost catch
+// handlers) which is of unknown type.  If we have the <cxxabi.h> interfaces,
+// we can at least get the type_info object.
+static void
+log_exception()
+{
+  std::type_info *ex_type = get_current_exception_type();
+  if (ex_type)
+    {
+      char const * ex_name = ex_type->name();
+      char const * ex_dem  = demangle_typename(ex_name);
+      if (ex_dem == 0)
+        ex_dem = ex_name;
+      L(FL("UNCAUGHT EXCEPTION: %s") % ex_dem);
+    }
+  else
+    L(FL("UNCAUGHT EXCEPTION: unknown type"));
+}
+
+void unit_test::do_check(bool checkval, char const * file,
+                         int line, char const * message)
+{
+  if (!checkval)
+    {
+      this_test_failed = true;
+      log_state(file, line, "CHECK FAILED", message);
+    }
+  else
+    log_state(file, line, "CHECK OK", message);
+}
+
+void unit_test::do_require(bool checkval, char const * file,
+                           int line, char const * message)
+{
+  if (!checkval)
+    {
+      this_test_failed = true;
+      log_state(file, line, "REQUIRE FAILED", message);
+      throw require_failed();
+    }
+  else
+    log_state(file, line, "REQUIRE OK", message);
+}
+
+void unit_test::do_checkpoint(char const * file, int line,
+                              char const * message)
+{
+  log_state(file, line, "CHECKPOINT", message);
+}
+
+static void run_test(test_t test)
+{
+  this_test_failed = false;
+
+  L(FL("----------------------------------------\n"
+       "Beginning test %s:%s") % test.group % test.name);
+
+  if (!log_to_stderr)
+    {
+      string groupname = string(test.group) + ':' + test.name;
+      cerr << "    " << std::left << std::setw(46) << groupname;
+      if (groupname.size() >= 46)
+        cerr << " ";
+      // lack of carriage return is intentional
+    }
+    
+  try
+    {
+      test.func();
+    }
+  catch(require_failed &)
+    {
+      // no action required
+    }
+  catch(std::exception & e)
+    {
+      log_exception(e);
+      this_test_failed = true;
+    }
+  catch(...)
+    {
+      log_exception();
+      this_test_failed = true;
+    }
+
+  if (this_test_failed)
+    {
+      ++number_of_failed_tests;
+      L(FL("Test %s:%s failed.\n") % test.group % test.name);
+      if (!log_to_stderr)
+        cerr << "FAIL\n";
+    }
+  else
+    {
+      ++number_of_succeeded_tests;
+      L(FL("Test %s:%s succeeded.\n") % test.group % test.name);
+      if (!log_to_stderr)
+        cerr << "ok\n";
+    }
+
+  if (this_test_failed)
+    any_test_failed = true;
+}
+
+int main(int argc, char * argv[])
 {
   bool help(false);
   bool list_groups(false);
@@ -194,101 +252,31 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
 
   if (list_groups)
     {
-      string last;
-      for (unit_test_list_t::const_iterator i = unit_tests->begin();
-           i != unit_tests->end();
-           i++)
-        if (last != (*i).first)
-          {
-            cout << (*i).first << '\n';
-            last = (*i).first;
-          }
-      exit(0);
+      for (group_list_t::const_iterator i = unit_tests().begin();
+           i != unit_tests().end(); i++)
+        {
+          if (i->first != "")
+            cout << i->first << '\n';
+        }
+      return 0;
     }
 
   if (list_tests)
     {
-      for (unit_test_list_t::const_iterator i = unit_tests->begin();
-           i != unit_tests->end();
-           i++)
-        cout << (*i).first << ':' << (*i).second->p_name.get() << '\n';
-      exit(0);
-    }
-
-  // If we get here, we are really running the test suite.
-  test_suite * suite = BOOST_TEST_SUITE("monotone unit tests");
-
-  if (tests.size() == 0) // run all tests
-    {
-      string last;
-      for (unit_test_list_t::const_iterator i = unit_tests->begin();
-           i != unit_tests->end();
-           i++)
+      for (group_list_t::const_iterator i = unit_tests().begin();
+           i != unit_tests().end(); i++)
         {
-          if (last != (*i).first)
+          if (i->first == "")
+            continue;
+          for (test_list_t::const_iterator j = i->second.begin();
+               j != i->second.end(); ++j)
             {
-              suite->add(BOOST_PARAM_TEST_CASE(notifier,
-                                               &((*i).first),
-                                               &((*i).first)+1));
-              last = (*i).first;
-            }
-          suite->add((*i).second);
-        }
-    }
-  else
-    {
-      bool unrecognized = false;
-
-      for(vector<string>::const_iterator i = tests.begin();
-          i != tests.end();
-          i++)
-        {
-          string group, test;
-          string::size_type sep = (*i).find(":");
-
-          if (sep >= (*i).length()) // it's a group name
-            group = *i;
-          else
-            {
-              group = (*i).substr(0, sep);
-              test = (*i).substr(sep+1, string::npos);
-            }
-            
-          pair<unit_test_list_t::const_iterator,
-            unit_test_list_t::const_iterator>
-            range = unit_tests->equal_range(group);
-
-          if (range.first == range.second)
-            {
-              unrecognized = true;
-              cerr << argv[0] << ": unrecognized test group: "
-                   << group << '\n';
-              continue;
-            }
-
-          suite->add(BOOST_PARAM_TEST_CASE(notifier,
-                                           &(*i), &(*i)+1));
-
-          bool found = false;
-          for (unit_test_list_t::const_iterator j = range.first;
-               j != range.second;
-               j++)
-            if (test == "" || test == (*j).second->p_name.get())
-              {
-                suite->add((*j).second);
-                found = true;
-              }
-          if (!found)
-            {
-              unrecognized = true;
-              cerr << argv[0] << ": unrecognized test: "
-                   << group << ':' << test << '\n';
+              cout << i->first << ":" << j->first << "\n";
             }
         }
-
-      if (unrecognized)
-        exit(1);
+      return 0;
     }
+
 
   // set up some global state before running the tests
   ui.initialize();
@@ -315,12 +303,9 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
           exit(1);
         }
       clog.rdbuf(logbuf);
-
-      // Redirect both cerr and cout to a teebuf which will send their data
-      // to both the logfile and wherever cerr currently goes.
-      teebuf * progress_output = new teebuf(logbuf, cerr.rdbuf());
-      cerr.rdbuf(progress_output);
-      cout.rdbuf(progress_output);
+      // Nobody should be writing to cout, but just in case, send it to
+      // the log.
+      cout.rdbuf(logbuf);
     }
   else
     {
@@ -336,16 +321,157 @@ test_suite * init_unit_test_suite(int argc, char * argv[])
       // stream each one is written to.
       clog.rdbuf(cerr.rdbuf());
       cout.rdbuf(cerr.rdbuf());
+
+      // Suppress double progress messages.
+      log_to_stderr = true;
     }
 
   global_sanity.set_debug();
-  return suite;
+
+  if (tests.size() == 0) // run all tests
+    {
+      if (!log_to_stderr)
+        cerr << "Running unit tests...\n";
+      
+      for (group_list_t::const_iterator i = unit_tests().begin();
+           i != unit_tests().end(); i++)
+        {
+          if (i->first == "")
+            continue;
+          for (test_list_t::const_iterator j = i->second.begin();
+               j != i->second.end(); ++j)
+            {
+              run_test(j->second);
+            }
+        }
+    }
+  else
+    {
+      bool unrecognized = false;
+
+      vector<test_t> to_run;
+
+      for(vector<string>::const_iterator i = tests.begin();
+          i != tests.end();
+          i++)
+        {
+          string group, test;
+          string::size_type sep = (*i).find(":");
+
+          if (sep >= (*i).length()) // it's a group name
+            group = *i;
+          else
+            {
+              group = (*i).substr(0, sep);
+              test = (*i).substr(sep+1, string::npos);
+            }
+            
+          group_list_t::const_iterator g = unit_tests().find(group);
+
+          if (g == unit_tests().end())
+            {
+              unrecognized = true;
+              cerr << argv[0] << ": unrecognized test group: "
+                   << group << '\n';
+              continue;
+            }
+
+          if (test == "") // entire group
+            {
+              for (test_list_t::const_iterator t = g->second.begin();
+                   t != g->second.end(); ++t)
+                {
+                  to_run.push_back(t->second);
+                }
+            }
+          else
+            {
+              test_list_t::const_iterator t = g->second.find(test);
+              if (t == g->second.end())
+                {
+                  unrecognized = true;
+                  cerr << argv[0] << ": unrecognized test: "
+                       << group << ':' << test << '\n';
+                  continue;
+                }
+              to_run.push_back(t->second);
+            }
+        }
+
+      if (unrecognized)
+        {
+          return 1;
+        }
+      else
+        {
+          if (!log_to_stderr)
+            cerr << "Running unit tests...\n";
+          for (vector<test_t>::const_iterator i = to_run.begin();
+               i != to_run.end(); ++i)
+            {
+              run_test(*i);
+            }
+        }
+    }
+
+  if (!log_to_stderr)
+    cerr << "\nOf " << (number_of_failed_tests + number_of_succeeded_tests)
+         << " tests run:\n\t"
+         << number_of_succeeded_tests << " succeeded\n\t"
+         << number_of_failed_tests << " failed\n";
+
+  return any_test_failed?1:0;
 }
 
 // Stub for options.cc's sake.
 void
 localize_monotone()
 {
+}
+
+
+// Obviously, these tests are not run by default.
+// They are also not listed by --list-groups or --list-tests .
+// Use "unit_tests :" to run them; they should all fail.
+#include <stdexcept>
+
+UNIT_TEST(, fail_check)
+{
+  UNIT_TEST_CHECKPOINT("checkpoint");
+  UNIT_TEST_CHECK(false);
+  UNIT_TEST_CHECK(false);
+}
+
+UNIT_TEST(, fail_require)
+{
+  UNIT_TEST_CHECKPOINT("checkpoint");
+  UNIT_TEST_REQUIRE(false);
+  UNIT_TEST_CHECK(false);
+}
+
+UNIT_TEST(, fail_throw)
+{
+  UNIT_TEST_CHECK_THROW(string().size(), int);
+}
+
+UNIT_TEST(, fail_nothrow)
+{
+  UNIT_TEST_CHECK_NOT_THROW(throw int(), int);
+}
+
+UNIT_TEST(, uncaught)
+{
+  throw int();
+}
+
+UNIT_TEST(, uncaught_std)
+{
+  throw std::bad_exception();
+}
+
+UNIT_TEST(, uncaught_std_what)
+{
+  throw std::runtime_error("There is no spoon.");
 }
 
 // Local Variables:

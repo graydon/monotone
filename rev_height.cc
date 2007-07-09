@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <sstream>
 
 #include "sanity.hh"
@@ -127,7 +128,7 @@ UNIT_TEST(rev_height, count_up)
   I(read_at(h(), 0) == 0);
   I(read_at(h(), 1) == 0);
   I(read_at(h(), 2) == 0);
-  BOOST_CHECK_THROW(read_at(h(), 3), std::out_of_range);
+  UNIT_TEST_CHECK_THROW(read_at(h(), 3), std::out_of_range);
 
   for (u32 n = 1; n < 10000; n++)
     {

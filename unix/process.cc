@@ -3,6 +3,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "base.hh"
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
@@ -12,6 +13,7 @@
 #include <errno.h>
 #include <string.h>
 
+#include <iostream>
 #include <sstream>
 
 #include "sanity.hh"
@@ -90,9 +92,9 @@ pid_t process_spawn(const char * const argv[])
         cmdline_ss << "'" << *i << "'";
       }
     L(FL("spawning command: %s\n") % cmdline_ss.str());
-  }       
-  pid_t pid;
-  pid = fork();
+  }
+  std::cout.flush();
+  pid_t pid = fork();
   switch (pid)
     {
     case -1: /* Error */

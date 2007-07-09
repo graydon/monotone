@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <deque>
 #include <fstream>
@@ -19,7 +20,7 @@
 #include <string.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include <sqlite3.h>
 
@@ -44,6 +45,7 @@
 #include "graph.hh"
 #include "roster_delta.hh"
 #include "rev_height.hh"
+#include "vocab_hash.hh"
 
 // defined in schema.c, generated from schema.sql:
 extern char const schema_constant[];
@@ -503,7 +505,7 @@ format_sqlite_error_for_info(informative_failure const & e)
 // string, provided that all four characters are graphic.  (On disk, it's
 // stored in the "user version" field of the database.)
 static string
-format_creator_code(uint32_t code)
+format_creator_code(u32 code)
 {
   char buf[5];
   string result;
@@ -542,12 +544,12 @@ database::info(ostream & out)
   sqlite3_exec(__sql, "SELECT 1 FROM sqlite_master LIMIT 0", 0, 0, 0);
   assert_sqlite3_ok(__sql);
 
-  uint32_t ccode;
+  u32 ccode;
   {
     results res;
     fetch(res, one_col, one_row, query("PRAGMA user_version"));
     I(res.size() == 1);
-    ccode = lexical_cast<uint32_t>(res[0][0]);
+    ccode = lexical_cast<u32>(res[0][0]);
   }
 
   vector<string> counts;
@@ -1435,7 +1437,7 @@ public:
   
   void look_at_roster(roster_t const & roster, marking_map const & mm)
   {
-    map<node_id, marking_t>::const_iterator mmi =
+    marking_map::const_iterator mmi =
       mm.find(nid);
     I(mmi != mm.end());
     markings = mmi->second;
@@ -1735,10 +1737,11 @@ database::put_file_version(file_id const & old_id,
     invert_xdelta(old_data.inner()(), del.inner()(), tmp);
     reverse_delta = file_delta(tmp);
     data old_tmp;
-    hexenc<id> old_tmp_id;
     patch(new_data.inner(), reverse_delta.inner(), old_tmp);
-    calculate_ident(old_tmp, old_tmp_id);
-    I(file_id(old_tmp_id) == old_id);
+    // We already have the real old data, so compare the
+    // reconstruction to that directly instead of hashing
+    // the reconstruction and comparing hashes.
+    I(old_tmp == old_data.inner());
   }
   
   transaction_guard guard(*this);  
@@ -1814,6 +1817,9 @@ database::get_arbitrary_file_delta(file_id const & src_id,
 void
 database::get_revision_ancestry(rev_ancestry_map & graph)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   graph.clear();
   fetch(res, 2, any_rows,
@@ -1951,7 +1957,7 @@ database::deltify_revision(revision_id const & rid)
     for (edge_map::const_iterator i = rev.edges.begin();
          i != rev.edges.end(); ++i)
       {
-        for (map<split_path, pair<file_id, file_id> >::const_iterator
+        for (map<file_path, pair<file_id, file_id> >::const_iterator
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
@@ -2007,7 +2013,7 @@ database::put_revision(revision_id const & new_id,
           return false;
         }
 
-      for (map<split_path, file_id>::const_iterator a
+      for (map<file_path, file_id>::const_iterator a
              = edge_changes(i).files_added.begin();
            a != edge_changes(i).files_added.end(); ++a)
         {
@@ -2019,7 +2025,7 @@ database::put_revision(revision_id const & new_id,
             }
         }
 
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
+      for (map<file_path, pair<file_id, file_id> >::const_iterator d
              = edge_changes(i).deltas_applied.begin();
            d != edge_changes(i).deltas_applied.end(); ++d)
         {
@@ -2564,6 +2570,9 @@ outdated_indicator
 database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
                                            pair<revision_id, rsa_keypair_id> > > & idx)
 {
+  // share some storage
+  id::symtab id_syms;
+  
   results res;
   fetch(res, 3, any_rows,
         query("SELECT hash, id, keypair "
@@ -3265,10 +3274,23 @@ database::put_roster(revision_id const & rev_id,
 // for get_uncommon_ancestors
 struct rev_height_graph : rev_graph
 {
+  typedef hashmap::hash_map<revision_id, set<revision_id> > parent_map;
+  typedef hashmap::hash_map<revision_id, rev_height> height_map;
+  static parent_map parent_cache;
+  static height_map height_cache;
   rev_height_graph(database & db) : db(db) {}
   virtual void get_parents(revision_id const & rev, set<revision_id> & parents) const
   {
-    db.get_revision_parents(rev, parents);
+    parent_map::iterator i = parent_cache.find(rev);
+    if (i == parent_cache.end())
+      {
+        db.get_revision_parents(rev, parents);
+        parent_cache.insert(make_pair(rev, parents));
+      }
+    else
+      {
+        parents = i->second;
+      }
   }
   virtual void get_children(revision_id const & rev, set<revision_id> & parents) const
   {
@@ -3277,11 +3299,22 @@ struct rev_height_graph : rev_graph
   }
   virtual void get_height(revision_id const & rev, rev_height & h) const
   {
-      db.get_rev_height(rev, h);
+    height_map::iterator i = height_cache.find(rev);
+    if (i == height_cache.end())
+      {
+        db.get_rev_height(rev, h);
+        height_cache.insert(make_pair(rev, h));
+      }
+    else
+      {
+        h = i->second;
+      }
   }
   
   database & db;
 };
+rev_height_graph::parent_map rev_height_graph::parent_cache;
+rev_height_graph::height_map rev_height_graph::height_cache;
 
 void
 database::get_uncommon_ancestors(revision_id const & a,

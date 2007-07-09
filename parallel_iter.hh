@@ -35,9 +35,8 @@
 // for maps, but it will only work on maps that use the default (std::less)
 // sort order.
 
-#include <string>
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "sanity.hh"
 

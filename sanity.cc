@@ -7,16 +7,16 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <iterator>
 #include <iostream>
 #include <fstream>
-#include <string>
 #include <vector>
 #include <sstream>
 
 #include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "constants.hh"
 #include "platform.hh"
@@ -474,15 +474,15 @@ format_base::flush_stream() const
   pimpl->oss.str(string());
 }
 
-void format_base::put_and_flush_signed(int64_t const & s) const { pimpl->fmt % s; }
-void format_base::put_and_flush_signed(int32_t const & s) const { pimpl->fmt % s; }
-void format_base::put_and_flush_signed(int16_t const & s) const { pimpl->fmt % s; }
-void format_base::put_and_flush_signed(int8_t const & s) const { pimpl->fmt % s; }
+void format_base::put_and_flush_signed(s64 const & s) const { pimpl->fmt % s; }
+void format_base::put_and_flush_signed(s32 const & s) const { pimpl->fmt % s; }
+void format_base::put_and_flush_signed(s16 const & s) const { pimpl->fmt % s; }
+void format_base::put_and_flush_signed(s8  const & s) const { pimpl->fmt % s; }
 
-void format_base::put_and_flush_unsigned(uint64_t const & u) const { pimpl->fmt % u; }
-void format_base::put_and_flush_unsigned(uint32_t const & u) const { pimpl->fmt % u; }
-void format_base::put_and_flush_unsigned(uint16_t const & u) const { pimpl->fmt % u; }
-void format_base::put_and_flush_unsigned(uint8_t const & u) const { pimpl->fmt % u; }
+void format_base::put_and_flush_unsigned(u64 const & u) const { pimpl->fmt % u; }
+void format_base::put_and_flush_unsigned(u32 const & u) const { pimpl->fmt % u; }
+void format_base::put_and_flush_unsigned(u16 const & u) const { pimpl->fmt % u; }
+void format_base::put_and_flush_unsigned(u8  const & u) const { pimpl->fmt % u; }
 
 void format_base::put_and_flush_float(float const & f) const { pimpl->fmt % f; }
 void format_base::put_and_flush_double(double const & d) const { pimpl->fmt % d; }

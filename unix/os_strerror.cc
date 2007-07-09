@@ -3,6 +3,7 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
+#include "base.hh"
 #include <string.h>
 
 #include "sanity.hh"

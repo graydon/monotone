@@ -8176,7 +8176,19 @@ usage of monotone could be monitored for user interface testing.  Note
 that by default, no monitoring occurs.  The arguments to the hook
 function are the arguments to monotone, without the initial
 @command{mtn} command.  They can be accessed through the lua @var{arg}
-variable which contains the variable list of arguments.
+variable as in this example:
+
+@smallexample
+@group
+function note_mtn_startup(...)
+    print("Beginning note_mtn_startup")
+    for i = 1,arg.n do
+        print(arg[i])
+    end
+    print("Ending note_mtn_startup")
+end
+@end group
+@end smallexample
 
 @end ftable
 
@@ -8197,6 +8209,17 @@ hook function. If you have only one private key in your database, you
 do not need to define this function or provide a
 @option{--key=@var{keyname}} option; monotone will guess that you want
 to use the unique private key.
+
+@item get_netsync_key(@var{server}, @var{include}, @var{exclude})
+
+Returns a string which is the name of the key to use to authenticate
+the given netsync connection. When called by the @command{serve} command,
+@var{server} is the address monotone is listening on, @var{include} is
+@option{"*"}, and @var{exclude} is @option{""}.
+
+There is no default definition of this hook. The command-line option
+@option{--key=@var{keyname}} overrides any value returned from this
+hook function.
 
 @item get_passphrase (@var{keypair_id})
 
@@ -9021,6 +9044,15 @@ The output table will be:
 
 Returns true if a match for @var{regexp} is found in @var{str}, return
 false otherwise.
+
+@item server_request_sync(@var{what}, @var{address}, @var{include}, @var{exclude})
+
+Initiate a netsync connection to the server at @var{address}, with the
+given include and exclude patterns, of type @option{sync}, @option{push},
+or @option{pull}, as given by the @var{what} argument.
+
+When called by a monotone instance which is not running the @option{serve}
+command, this function has no effect.
 
 @item sleep(@var{seconds})
 

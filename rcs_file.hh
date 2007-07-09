@@ -11,7 +11,6 @@
 // PURPOSE.
 
 #include <vector>
-#include <string>
 #include <map>
 #include <boost/shared_ptr.hpp>
 

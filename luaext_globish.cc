@@ -1,3 +1,4 @@
+#include "base.hh"
 #include "lua.hh"
 
 #include "globish.hh"

@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <map>
 #include <utility>
@@ -36,6 +37,7 @@ using std::ostream_iterator;
 using std::pair;
 using std::set;
 using std::sort;
+using std::copy;
 using std::string;
 using std::vector;
 
@@ -368,7 +370,7 @@ CMD(known, "known", "", CMD_REF(list), "",
                         new_roster, app);
 
   // to be printed sorted
-  vector<split_path> print_paths;
+  vector<file_path> print_paths;
 
   node_map const & nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin();
@@ -379,18 +381,15 @@ CMD(known, "known", "", CMD_REF(list), "",
       if (!new_roster.is_root(nid)
           && mask.includes(new_roster, nid))
         {
-          split_path sp;
-          new_roster.get_name(nid, sp);
-          print_paths.push_back(sp);
+          file_path p;
+          new_roster.get_name(nid, p);
+          print_paths.push_back(p);
         }
     }
     
   sort(print_paths.begin(), print_paths.end());
-  for (vector<split_path>::const_iterator sp = print_paths.begin();
-       sp != print_paths.end(); sp++)
-  {
-    cout << *sp << '\n';
-  }
+  copy(print_paths.begin(), print_paths.end(),
+       ostream_iterator<file_path>(cout, "\n"));
 }
 
 CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
@@ -403,7 +402,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
   vector<file_path> roots = args_to_paths(args);
   path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth, app);
-  path_set unknown, ignored;
+  set<file_path> unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
   if (roots.empty())
@@ -413,15 +412,13 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
-    for (path_set::const_iterator i = ignored.begin();
-         i != ignored.end(); ++i)
-      cout << file_path(*i) << '\n';
+    copy(ignored.begin(), ignored.end(),
+         ostream_iterator<file_path>(cout, "\n"));
   else
     {
       I(realname() == "unknown");
-      for (path_set::const_iterator i = unknown.begin();
-           i != unknown.end(); ++i)
-        cout << file_path(*i) << '\n';
+      copy(unknown.begin(), unknown.end(),
+           ostream_iterator<file_path>(cout, "\n"));
     }
 }
 
@@ -438,14 +435,11 @@ CMD(missing, "missing", "", CMD_REF(list), "",
                         app.opts.depth,
                         current_roster_shape, app);
 
-  path_set missing;
+  set<file_path> missing;
   app.work.find_missing(current_roster_shape, mask, missing);
 
-  for (path_set::const_iterator i = missing.begin();
-       i != missing.end(); ++i)
-    {
-      cout << file_path(*i) << '\n';
-    }
+  copy(missing.begin(), missing.end(),
+       ostream_iterator<file_path>(cout, "\n"));
 }
 
 
@@ -474,7 +468,7 @@ CMD(changed, "changed", "", CMD_REF(list), "",
   make_restricted_revision(parents, new_roster, mask, rrev);
 
   // to be printed sorted, with duplicates removed
-  set<split_path> print_paths;
+  set<file_path> print_paths;
 
   for (edge_map::const_iterator i = rrev.edges.begin();
        i != rrev.edges.end(); i++)
@@ -488,21 +482,17 @@ CMD(changed, "changed", "", CMD_REF(list), "",
       for (set<node_id>::const_iterator i = nodes.begin(); i != nodes.end();
            ++i)
         {
-          split_path sp;
-          if (old_roster.has_node(*i))
-            old_roster.get_name(*i, sp);
+          file_path p;
+          if (new_roster.has_node(*i))
+            new_roster.get_name(*i, p);
           else
-            new_roster.get_name(*i, sp);
-          print_paths.insert(sp);
+            old_roster.get_name(*i, p);
+          print_paths.insert(p);
         }
     }
 
-    for (set<split_path>::const_iterator sp = print_paths.begin();
-         sp != print_paths.end(); sp++)
-    {
-      cout << *sp << '\n';
-    }
-
+  copy(print_paths.begin(), print_paths.end(),
+       ostream_iterator<file_path>(cout, "\n"));
 }
 
 namespace

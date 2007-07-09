@@ -7,10 +7,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <set>
 #include <map>
 #include <vector>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "app_state.hh"
 #include "database.hh"

@@ -7,12 +7,12 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "epoch.hh"
 #include "netio.hh"
 #include "constants.hh"
 #include "transforms.hh"
 
-#include <string>
 
 using std::string;
 

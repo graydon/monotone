@@ -11,6 +11,7 @@
 
 #ifdef BUILD_UNIT_TESTS
 
+#include "base.hh"
 #include "unit_tests.hh"
 #include "sanity.hh"
 #include "numeric_vocab.hh"
@@ -29,19 +30,19 @@ UNIT_TEST(widen, widen)
   I((widen<u32,u8>(255) == 255));
   I((widen<u32,u8>(static_cast<u8>(-1)) == 255));
   // unsigned -> signed
-  I((widen<int32_t,u8>(1) == 1));
-  I((widen<int32_t,u8>(255) == 255));
-  I((widen<int32_t,u8>(static_cast<u8>(-1)) == 255));
+  I((widen<s32,u8>(1) == 1));
+  I((widen<s32,u8>(255) == 255));
+  I((widen<s32,u8>(static_cast<u8>(-1)) == 255));
   // signed -> signed
-  I((widen<int32_t,int8_t>(1) == 1));
-  I((widen<int32_t,int8_t>(255) == -1));
-  I((widen<int32_t,int8_t>(-1) == -1));
+  I((widen<s32,s8>(1) == 1));
+  I((widen<s32,s8>(255) == -1));
+  I((widen<s32,s8>(-1) == -1));
   // signed -> unsigned ((critical case!))
-  I((widen<u32,int8_t>(1) == 1));
-  I((widen<u32,int8_t>(255) == 255));
-  I((widen<u32,int8_t>(-1) == 255));
+  I((widen<u32,s8>(1) == 1));
+  I((widen<u32,s8>(255) == 255));
+  I((widen<u32,s8>(-1) == 255));
   // contrasts with:
-  I((static_cast<u32>(int8_t(-1)) == u32(4294967295)));
+  I((static_cast<u32>(s8(-1)) == u32(4294967295)));
 }
 
 #endif // BUILD_UNIT_TESTS

@@ -16,8 +16,6 @@
 
 #include "numeric_vocab.hh"
 #include "sanity.hh"
-#include <string>
-#include <iosfwd>
 
 struct date_t
 {

@@ -1,6 +1,7 @@
 // 2007 Timothy Brownawell <tbrownaw@gmail.com>
 // GNU GPL V2 or later
 
+#include "base.hh"
 #include "outdated_indicator.hh"
 #include "sanity.hh"
 
@@ -92,17 +93,17 @@ UNIT_TEST(outdated_indicator, )
   outdated_indicator indicator;
   {
     outdated_indicator_factory factory;
-    BOOST_CHECK(indicator.outdated());
+    UNIT_TEST_CHECK(indicator.outdated());
     indicator = factory.get_indicator();
-    BOOST_CHECK(!indicator.outdated());
+    UNIT_TEST_CHECK(!indicator.outdated());
     factory.note_change();
-    BOOST_CHECK(indicator.outdated());
+    UNIT_TEST_CHECK(indicator.outdated());
     factory.note_change();
     factory.note_change();
     indicator = factory.get_indicator();
-    BOOST_CHECK(!indicator.outdated());
+    UNIT_TEST_CHECK(!indicator.outdated());
   }
-  BOOST_CHECK(indicator.outdated());
+  UNIT_TEST_CHECK(indicator.outdated());
 }
 
 #endif

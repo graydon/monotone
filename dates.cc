@@ -7,11 +7,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "dates.hh"
 
 #include <ctime>
 #include <climits>
-#include <string>
 
 using std::string;
 
@@ -336,9 +336,9 @@ date_t::from_string(string const & s)
 
 UNIT_TEST(date, from_string)
 {
-#define OK(x,y) BOOST_CHECK(date_t::from_string(x).as_iso_8601_extended() \
+#define OK(x,y) UNIT_TEST_CHECK(date_t::from_string(x).as_iso_8601_extended() \
                             == (y))
-#define NO(x) BOOST_CHECK_THROW(date_t::from_string(x), informative_failure)
+#define NO(x) UNIT_TEST_CHECK_THROW(date_t::from_string(x), informative_failure)
   
   // canonical format
   OK("2007-03-01T18:41:13", "2007-03-01T18:41:13");
@@ -437,7 +437,7 @@ UNIT_TEST(date, from_unix_epoch)
 #define OK(x,y) do {                                                    \
     string s_ = date_t::from_unix_epoch(x).as_iso_8601_extended();      \
     L(FL("from_unix_epoch: %lu -> %s") % (x) % s_);                     \
-    BOOST_CHECK(s_ == (y));                                             \
+    UNIT_TEST_CHECK(s_ == (y));                                             \
   } while (0)
 
   // every month boundary in 1970
@@ -551,7 +551,7 @@ UNIT_TEST(date, from_unix_epoch)
 
   // limit of a (signed) 32-bit year counter
   OK(u64_C(67767976233532799), "2147483647-12-31T23:59:59");
-  BOOST_CHECK_THROW(date_t::from_unix_epoch(u64_C(67768036191676800)),
+  UNIT_TEST_CHECK_THROW(date_t::from_unix_epoch(u64_C(67768036191676800)),
                     std::logic_error);
 
 #undef OK

@@ -122,6 +122,10 @@
 // and will not be given until the config file has been reloaded.
 //
 
+#define NDEBUG
+#define BOOST_DISABLE_THREADS
+#define BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>

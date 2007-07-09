@@ -10,34 +10,75 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <boost/test/test_tools.hpp>
+// Log a success/failure message, and set the test state to 'fail' if needed
+#define UNIT_TEST_CHECK(expression)             \
+  unit_test::do_check(expression, __FILE__, __LINE__, #expression)
 
-// strangely this was left out. perhaps it'll arrive later?
-#ifndef BOOST_CHECK_NOT_THROW
-#define BOOST_CHECK_NOT_THROW(statement, exception)                     \
+// Like UNIT_TEST_CHECK, but you get to specify what is logged.
+// MSG should be an FL("...") % ... construct.
+#define UNIT_TEST_CHECK_MSG(expression, msg)              \
+  unit_test::do_check(expression, __FILE__, __LINE__, (msg).str().c_str())
+
+// Like UNIT_TEST_CHECK, but abort the test immediately on failure
+#define UNIT_TEST_REQUIRE(expression)           \
+  unit_test::do_require(expression, __FILE__, __LINE__, #expression)
+
+#define UNIT_TEST_CHECK_THROW(statement, exception)                     \
   do                                                                    \
     {                                                                   \
+      bool fnord_unit_test_checkval = false;                            \
       try                                                               \
         {                                                               \
           statement;                                                    \
-          BOOST_CHECK_MESSAGE(true, "exception "#exception" did not occur"); \
         }                                                               \
       catch(exception const &)                                          \
         {                                                               \
-          BOOST_ERROR("exception "#exception" occurred");               \
+          fnord_unit_test_checkval = true;                              \
         }                                                               \
+      unit_test::do_check(fnord_unit_test_checkval, __FILE__, __LINE__, \
+                          #statement " throws " #exception);            \
     } while (0)
-#endif
 
-// Declarative mechanism for specifying unit tests, similar to
-// auto_unit_test in boost, but more suited to our needs.
+#define UNIT_TEST_CHECK_NOT_THROW(statement, exception)                 \
+  do                                                                    \
+    {                                                                   \
+      bool fnord_unit_test_checkval = true;                             \
+      try                                                               \
+        {                                                               \
+          statement;                                                    \
+        }                                                               \
+      catch(exception const &)                                          \
+        {                                                               \
+          fnord_unit_test_checkval = false;                             \
+        }                                                               \
+      unit_test::do_check(fnord_unit_test_checkval, __FILE__, __LINE__, \
+                          #statement " does not throw " #exception);    \
+    } while (0)
+
+#define UNIT_TEST_CHECKPOINT(message)           \
+  unit_test::do_checkpoint(__FILE__, __LINE__, message);
+
+
 namespace unit_test {
+  void do_check(bool checkval, char const * file,
+                int line, char const * message);
+
+  void do_require(bool checkval, char const * file,
+                  int line, char const * message);
+
+  void do_checkpoint(char const * file, int line, char const * message);
+
+  // Declarative mechanism for specifying unit tests, similar to
+  // auto_unit_test in boost, but more suited to our needs.
   struct unit_test_case
   {
+    char const *group;
+    char const *name;
+    void (*func)();
     unit_test_case(char const * group,
-                   char const *test,
+                   char const * name,
                    void (*func)());
-                   
+    unit_test_case();
   };
 }
 

@@ -7,7 +7,7 @@ CMD_SOURCES =								\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
-	sanity.cc sanity.hh quick_alloc.hh				\
+	sanity.cc sanity.hh quick_alloc.hh base.hh			\
 	simplestring_xform.cc simplestring_xform.hh 			\
 	constants.cc constants.hh numeric_vocab.hh 			\
 	platform.hh numeric_vocab.cc
@@ -16,7 +16,7 @@ SANITY_CORE_SOURCES =							\
 LUAEXT_SOURCES = 							\
 	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
 	charset.cc charset.hh paths.cc paths.hh				\
-	interner.hh hash_map.hh						\
+	interner.hh hash_map.hh	vocab_hash.hh				\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
 	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
@@ -74,7 +74,7 @@ MOST_SOURCES = 								\
 	asciik.cc asciik.hh						\
 	dates.cc dates.hh						\
 									\
-	lru_writeback_cache.hh						\
+	lru_writeback_cache.hh hybrid_map.hh				\
 									\
 	cleanup.hh unit_tests.hh					\
 	cycle_detector.hh randomfile.hh adler32.hh			\
@@ -83,7 +83,8 @@ MOST_SOURCES = 								\
 	package_revision.c package_revision.h				\
 	package_full_revision.c package_full_revision.h			\
 	option.cc option.hh options.cc options.hh options_list.hh	\
-	i18n.h parallel_iter.hh safe_map.hh pch.hh
+	specialized_lexical_cast.cc lexical_cast.hh			\
+	i18n.h parallel_iter.hh safe_map.hh pch.hh current_exception.hh
 
 NETXX_SOURCES =								\
 	netxx/accept.cxx netxx/accept.h netxx/address.cxx		\
@@ -344,8 +345,8 @@ endif
 SUFFIXES = .gch
 
 AM_CPPFLAGS =
-AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
-AM_CXXFLAGS = $(AM_CPPFLAGS) -DNDEBUG -DBOOST_DISABLE_THREADS -DBOOST_SP_DISABLE_THREADS -DBOOST_MULTI_INDEX_DISABLE_SERIALIZATION
+AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
+AM_CXXFLAGS = $(AM_CPPFLAGS)
 AM_LDFLAGS = 
 
 lib3rdparty_a_CPPFLAGS =
@@ -362,7 +363,7 @@ unit_tests_LDFLAGS =
 unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
 		      -I$(top_srcdir)/sqlite
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
-unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) $(BOOST_UNITTEST) \
+unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
@@ -441,7 +442,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
 	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
 	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*)
+	$(wildcard $(srcdir)/debian/*) audit-includes
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -500,17 +501,10 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 
 # testsuite stuff (could this possibly be more ugly?)
 
-if BUILD_UNIT_TESTS
 
 check_PROGRAMS = unit_tests tester
 TESTS = unit_tests run_tester_tests run_lua_tests
 
-else
-
-check_PROGRAMS = tester
-TESTS = run_tester_tests run_lua_tests
-
-endif
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
@@ -659,6 +653,13 @@ package_full_revision.txt: package_full_revision_raw.txt package_full_revision_d
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
 distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
+
+# the distcheck-hook checks for errors in the use of base.hh
+distcheck-hook:
+	cd $(srcdir) && $(SHELL) audit-includes \
+		$(sort $(mtn_SOURCES) $(unit_tests_SOURCES) $(tester_SOURCES) \
+                       $(UNIX_PLATFORM_SOURCES) $(WIN32_PLATFORM_SOURCES) \
+                       win32/main.cc unix/main.cc)
 
 # automake doesn't build html docs
 

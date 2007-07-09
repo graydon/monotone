@@ -7,6 +7,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <cstring>
 #include <iostream>
 #include <iomanip>
@@ -535,27 +536,26 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                                       left_uncommon_ancestors,
                                       right_uncommon_ancestors);
 
-        {
-          dir_t moved_root = left_roster.root();
-          split_path sp, dirname;
-          path_component basename;
-          MM(dirname);
-          if (!idx(args,2)().empty())
-            {
-              file_path_external(idx(args,2)).split(sp);
-              dirname_basename(sp, dirname, basename);
-              N(right_roster.has_node(dirname),
-                F("Path %s not found in destination tree.") % sp);
-              node_t parent = right_roster.get_node(dirname);
-              moved_root->parent = parent->self;
-              moved_root->name = basename;
-              marking_map::iterator 
-                i = left_marking_map.find(moved_root->self);
-              I(i != left_marking_map.end());
-              i->second.parent_name.clear();
-              i->second.parent_name.insert(left_rid);
-            }
-        }
+        if (!idx(args,2)().empty())
+          {
+            dir_t moved_root = left_roster.root();
+            file_path pth = file_path_external(idx(args, 2));
+            file_path dir;
+            path_component base;
+            MM(dir);
+            pth.dirname_basename(dir, base);
+
+            N(right_roster.has_node(dir),
+              F("Path %s not found in destination tree.") % pth);
+            node_t parent = right_roster.get_node(dir);
+            moved_root->parent = parent->self;
+            moved_root->name = base;
+            marking_map::iterator 
+              i = left_marking_map.find(moved_root->self);
+            I(i != left_marking_map.end());
+            i->second.parent_name.clear();
+            i->second.parent_name.insert(left_rid);
+          }
 
         roster_merge_result result;
         roster_merge(left_roster, 
@@ -575,7 +575,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         {
           dir_t moved_root = left_roster.root();
           moved_root->parent = the_null_node;
-          moved_root->name = the_null_component;
+          moved_root->name = path_component();
         }
 
         // Write new files into the db.
