@@ -439,6 +439,21 @@ any_path::basename() const
   return path_component(s, sep + 1);
 }
 
+// this returns all but the last component of any path.  It has to take
+// care at the root.
+any_path
+any_path::dirname() const
+{
+  string const & s = data;
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return any_path();
+  if (sep == s.size() - 1) // dirname() of the root directory is itself
+    return *this;
+
+  return any_path(s, 0, sep);
+}
+
 // this returns all but the last component of a file_path.  it is only
 // defined on file_paths because (a) that avoids problems at the root,
 // and (b) that's the only version that we use.
@@ -608,9 +623,33 @@ file_path::operator /(file_path const & to_append) const
   return file_path(data + "/" + to_append.as_internal(), 0, string::npos);
 }
 
-// these take strings and do validation themselves.
 bookkeeping_path
-bookkeeping_path::operator /(string const & to_append) const
+bookkeeping_path::operator /(path_component const & to_append) const
+{
+  I(!to_append.empty());
+  I(!empty());
+  return bookkeeping_path(data + "/" + to_append(), 0, string::npos);
+}
+
+system_path
+system_path::operator /(path_component const & to_append) const
+{
+  I(!to_append.empty());
+  I(!empty());
+  return system_path(data + "/" + to_append(), 0, string::npos);
+}
+
+any_path
+any_path::operator /(path_component const & to_append) const
+{
+  I(!to_append.empty());
+  I(!empty());
+  return any_path(data + "/" + to_append(), 0, string::npos);
+}
+
+// these take strings and validate
+bookkeeping_path
+bookkeeping_path::operator /(char const * to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   I(!empty());
@@ -618,7 +657,7 @@ bookkeeping_path::operator /(string const & to_append) const
 }
 
 system_path
-system_path::operator /(string const & to_append) const
+system_path::operator /(char const * to_append) const
 {
   I(!empty());
   I(!is_absolute_here(to_append));
@@ -652,7 +691,7 @@ system_path::system_path(any_path const & other, bool in_true_workspace)
         wr = working_root.get();
       else
         wr = working_root.get_but_unused();
-      data = normalize_out_dots((wr / other.as_internal()).as_internal());
+      data = normalize_out_dots(wr.as_internal() + "/" + other.as_internal());
     }
 }
 
@@ -663,7 +702,8 @@ static inline string const_system_path(utf8 const & path)
   if (is_absolute_here(expanded))
     return normalize_out_dots(expanded);
   else
-    return normalize_out_dots((initial_abs_path.get() / expanded).as_internal());
+    return normalize_out_dots(initial_abs_path.get().as_internal()
+                              + "/" + path());
 }
 
 system_path::system_path(string const & path)
@@ -1274,11 +1314,17 @@ UNIT_TEST(paths, bookkeeping)
   for (char const ** c = baddies; *c; ++c)
     {
       L(FL("test_bookkeeping_path baddie: trying '%s'") % *c);
-            UNIT_TEST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)), logic_error);
-            UNIT_TEST_CHECK_THROW(bookkeeping_root / tmp_path_string.assign(*c), logic_error);
+            UNIT_TEST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)),
+                                  logic_error);
+            UNIT_TEST_CHECK_THROW(bookkeeping_root / *c, logic_error);
     }
-  UNIT_TEST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("foo/bar")), logic_error);
-  UNIT_TEST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign("a")), logic_error);
+
+  // these are legitimate as things to append to bookkeeping_root, but
+  // not as bookkeeping_paths in themselves.
+  UNIT_TEST_CHECK_THROW(bookkeeping_path("a"), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(bookkeeping_root / "a", logic_error);
+  UNIT_TEST_CHECK_THROW(bookkeeping_path("foo/bar"), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(bookkeeping_root / "foo/bar", logic_error);
 
   check_bk_normalizes_to("a", "_MTN/a");
   check_bk_normalizes_to("foo", "_MTN/foo");

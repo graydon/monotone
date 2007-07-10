@@ -130,6 +130,7 @@ void do_read_directory(std::string const & path,
 void rename_clobberingly(std::string const & from, std::string const & to);
 void do_remove(std::string const & path);
 
+void do_mkdir(std::string const & path);
 void write_data_worker(std::string const & p,
                        std::string const & dat,
                        std::string const & tmpdir,

@@ -159,13 +159,28 @@ public:
   { return data.empty(); }
   // returns the trailing component of the path
   path_component basename() const;
-protected:
-  std::string data;
-  any_path() {}
+
+  // a few places need to manipulate any_paths (notably the low-level stuff
+  // in file_io.cc).
+  any_path operator /(path_component const &) const;
+  any_path dirname() const;
+  
   any_path(any_path const & other)
     : data(other.data) {}
   any_path & operator=(any_path const & other)
   { data = other.data; return *this; }
+
+protected:
+  std::string data;
+  any_path() {}
+
+private:
+  any_path(std::string const & path,
+           std::string::size_type start,
+           std::string::size_type stop = std::string::npos)
+  {
+    data = path.substr(start, stop);
+  }
 };
 
 std::ostream & operator<<(std::ostream & o, any_path const & a);
@@ -274,12 +289,14 @@ inline file_path file_path_external(utf8 const & path)
 class bookkeeping_path : public any_path
 {
 public:
-  bookkeeping_path() {};
+  bookkeeping_path() {}
   // path _should_ contain the leading _MTN/
   // and _should_ look like an internal path
   // usually you should just use the / operator as a constructor!
-  bookkeeping_path(std::string const & path);
-  bookkeeping_path operator /(std::string const & to_append) const;
+  bookkeeping_path(std::string const &);
+  bookkeeping_path operator /(char const *) const;
+  bookkeeping_path operator /(path_component const &) const;
+
   // exposed for the use of walk_tree and friends
   static bool internal_string_is_bookkeeping_path(utf8 const & path);
   static bool external_string_is_bookkeeping_path(utf8 const & path);
@@ -288,6 +305,14 @@ public:
 
   bool operator <(const bookkeeping_path & other) const
   { return data < other.data; }
+
+private:
+  bookkeeping_path(std::string const & path,
+                   std::string::size_type start,
+                   std::string::size_type stop = std::string::npos)
+  {
+    data = path.substr(start, stop);
+  }
 };
 
 extern bookkeeping_path const bookkeeping_root;
@@ -318,7 +343,17 @@ public:
   // monotone started in.  it should be in utf8.
   system_path(std::string const & path);
   system_path(utf8 const & path);
-  system_path operator /(std::string const & to_append) const;
+
+  system_path operator /(path_component const & to_append) const;
+  system_path operator /(char const * to_append) const;
+
+private:
+  system_path(std::string const & path,
+              std::string::size_type start,
+              std::string::size_type stop = std::string::npos)
+  {
+    data = path.substr(start, stop);
+  }
 };
 
 template <> void dump(file_path const & sp, std::string & out);
