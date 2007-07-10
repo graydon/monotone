@@ -11,7 +11,7 @@
 *************************************************************************
 ** This file contains code used to implement the ATTACH and DETACH commands.
 **
-** $Id: attach.c,v 1.57 2007/03/27 21:47:07 drh Exp $
+** $Id: attach.c,v 1.60 2007/05/09 20:31:30 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -40,6 +40,10 @@ static int resolveAttachExpr(NameContext *pName, Expr *pExpr)
   if( pExpr ){
     if( pExpr->op!=TK_ID ){
       rc = sqlite3ExprResolveNames(pName, pExpr);
+      if( rc==SQLITE_OK && !sqlite3ExprIsConstant(pExpr) ){
+        sqlite3ErrorMsg(pName->pParse, "invalid name: \"%T\"", &pExpr->span);
+        return SQLITE_ERROR;
+      }
     }else{
       pExpr->op = TK_STRING;
     }
@@ -83,14 +87,16 @@ static void attachFunc(
   **     * Transaction currently open
   **     * Specified database name already being used.
   */
-  if( db->nDb>=MAX_ATTACHED+2 ){
+  if( db->nDb>=SQLITE_MAX_ATTACHED+2 ){
     sqlite3_snprintf(
-      sizeof(zErr), zErr, "too many attached databases - max %d", MAX_ATTACHED
+      sizeof(zErr), zErr, "too many attached databases - max %d", 
+      SQLITE_MAX_ATTACHED
     );
     goto attach_error;
   }
   if( !db->autoCommit ){
-    strcpy(zErr, "cannot ATTACH database within transaction");
+    sqlite3_snprintf(sizeof(zErr), zErr,
+                     "cannot ATTACH database within transaction");
     goto attach_error;
   }
   for(i=0; i<db->nDb; i++){
@@ -124,13 +130,13 @@ static void attachFunc(
   ** it to obtain the database schema. At this point the schema may
   ** or may not be initialised.
   */
-  rc = sqlite3BtreeFactory(db, zFile, 0, MAX_PAGES, &aNew->pBt);
+  rc = sqlite3BtreeFactory(db, zFile, 0, SQLITE_DEFAULT_CACHE_SIZE, &aNew->pBt);
   if( rc==SQLITE_OK ){
     aNew->pSchema = sqlite3SchemaGet(aNew->pBt);
     if( !aNew->pSchema ){
       rc = SQLITE_NOMEM;
     }else if( aNew->pSchema->file_format && aNew->pSchema->enc!=ENC(db) ){
-      strcpy(zErr, 
+      sqlite3_snprintf(sizeof(zErr), zErr, 
         "attached databases must use the same text encoding as main database");
       goto attach_error;
     }
@@ -246,7 +252,8 @@ static void detachFunc(
     goto detach_error;
   }
   if( !db->autoCommit ){
-    strcpy(zErr, "cannot DETACH database within transaction");
+    sqlite3_snprintf(sizeof(zErr), zErr,
+                     "cannot DETACH database within transaction");
     goto detach_error;
   }
   if( sqlite3BtreeIsInReadTrans(pDb->pBt) ){

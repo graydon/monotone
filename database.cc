@@ -22,7 +22,7 @@
 #include <boost/shared_ptr.hpp>
 #include "lexical_cast.hh"
 
-#include <sqlite3.h>
+#include "sqlite/sqlite3.h"
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -428,6 +428,7 @@ database::load(istream & in)
 
   // the page size can only be set before any other commands have been executed
   sqlite3_exec(__sql, "PRAGMA page_size=8192", NULL, NULL, NULL);
+  assert_sqlite3_ok(__sql);
 
   while(in)
     {
@@ -437,6 +438,7 @@ database::load(istream & in)
       if (sqlite3_complete(sql_stmt.c_str()))
         {
           sqlite3_exec(__sql, sql_stmt.c_str(), NULL, NULL, NULL);
+          assert_sqlite3_ok(__sql);
           sql_stmt.clear();
         }
     }
