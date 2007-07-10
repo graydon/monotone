@@ -1,3 +1,11 @@
+monotone (0.36-1) unstable; urgency=low
+
+  [ Zack Weinberg ]
+  * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
+  * Run testsuite during build.
+
+ -- final uploader's name and date here
+
 monotone (0.35-1) unstable; urgency=low
 
   [ Zack Weinberg ]
@@ -10,7 +18,6 @@ monotone (0.35-1) unstable; urgency=low
   * Add build-dep on po-debconf to ensure correct construction of
     monotone-server's templates file.
   * Add a somewhat out-of-date, but better than nothing, manpage.
-  * Run the testsuite during the build.
   * Simplify the rules file a bit.
 
   [ Richard Levitte ]
@@ -18,7 +25,7 @@ monotone (0.35-1) unstable; urgency=low
     with sponsorship by Ludovic Brenta.  Thanks to Shaun for his work
     to date.  (Closes: #431797)
 
- -- Richard Levitte <richard@levitte.org>  Mon, 09 Jul 2007 07:45:46 +0200
+ -- Zack Weinberg <zackw@panix.com>  Tue, 10 Jul 2007 08:23:00 -0700
 
 monotone (0.35-0.1) unstable; urgency=low
 
