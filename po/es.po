@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-07 13:50-0400\n"
-"PO-Revision-Date: 2007-07-07 13:55-0400\n"
+"POT-Creation-Date: 2007-07-11 16:47-0400\n"
+"PO-Revision-Date: 2007-07-11 18:42-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -2818,28 +2818,28 @@ msgstr ""
 "esta es una base de datos muy vieja; necesita ser actualizada\n"
 "por favor lea los detalles en README.changesets"
 
-#: database.cc:489 sanity.cc:232 schema_migration.cc:62
+#: database.cc:491 sanity.cc:232 schema_migration.cc:62
 msgid "error: "
 msgstr "error: "
 
-#: database.cc:490
+#: database.cc:492
 msgid "sqlite error: "
 msgstr "error sqlite: "
 
-#: database.cc:514
+#: database.cc:516
 msgid "not set"
 msgstr "no definido"
 
-#: database.cc:527
+#: database.cc:529
 msgid " (not a monotone database)"
 msgstr " (no es una  base de datos de monotone)"
 
-#: database.cc:575 database.cc:606 database.cc:1065 database.cc:1085
+#: database.cc:577 database.cc:608 database.cc:1067 database.cc:1087
 #, c-format
 msgid "%u"
 msgstr "%u"
 
-#: database.cc:625
+#: database.cc:627
 #, c-format
 msgid ""
 "creator code      : %s\n"
@@ -2892,92 +2892,92 @@ msgstr ""
 "  tamaño de página          : %s\n"
 "  tamaño del cache          : %s"
 
-#: database.cc:670
+#: database.cc:672
 #, c-format
 msgid "database schema version: %s"
 msgstr "versión del esquema de la base de datos: %s"
 
-#: database.cc:755
+#: database.cc:757
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "múltiples statements en el query: %s"
 
-#: database.cc:761
+#: database.cc:763
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "queria %d columnas y obtuvo %d en el query: %s"
 
-#: database.cc:827
+#: database.cc:829
 #, c-format
 msgid "null result in query: %s"
 msgstr "resultado nulo en el query: %s"
 
-#: database.cc:845
+#: database.cc:847
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "queria %d filas y obtuvo %d en el query: %s"
 
-#: database.cc:1723
+#: database.cc:1725
 #, c-format
 msgid "file preimage '%s' missing in db"
 msgstr "preimagen de archivo '%s' faltante en la base de datos"
 
-#: database.cc:1724
+#: database.cc:1726
 #, c-format
 msgid "dropping delta '%s' -> '%s'"
 msgstr "descartando delta '%s' -> '%s'"
 
-#: database.cc:2011
+#: database.cc:2013
 #, c-format
 msgid "missing prerequisite revision '%s'"
 msgstr "falta revisión prerequisito '%s'"
 
-#: database.cc:2012 database.cc:2023 database.cc:2039 database.cc:2047
+#: database.cc:2014 database.cc:2025 database.cc:2041 database.cc:2049
 #, c-format
 msgid "dropping revision '%s'"
 msgstr "descartando revisión '%s'"
 
-#: database.cc:2022
+#: database.cc:2024
 #, c-format
 msgid "missing prerequisite file '%s'"
 msgstr "falta archivo prerequisito '%s'"
 
-#: database.cc:2037
+#: database.cc:2039
 #, c-format
 msgid "missing prerequisite file pre-delta '%s'"
 msgstr "falta pre-delta del archivo prerequisito '%s'"
 
-#: database.cc:2045
+#: database.cc:2047
 #, c-format
 msgid "missing prerequisite file post-delta '%s'"
 msgstr "falta post-delta del archivo prerequisito '%s'"
 
-#: database.cc:2336
+#: database.cc:2338
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database"
 msgstr "llave '%s' no es igual a la llave '%s' en la base de datos"
 
-#: database.cc:2558
+#: database.cc:2560
 #, c-format
 msgid "cert revision '%s' does not exist in db"
 msgstr "el certificado de la revisión '%s' no existe en la base de datos"
 
-#: database.cc:2560
+#: database.cc:2562
 #, c-format
 msgid "dropping cert"
 msgstr "descartando certificado"
 
-#: database.cc:3371
+#: database.cc:3373
 #, c-format
 msgid "no database specified"
 msgstr "no se especificó base de datos"
 
-#: database.cc:3381
+#: database.cc:3383
 #, c-format
 msgid "database %s does not exist"
 msgstr "base de datos %s inexistente"
 
-#: database.cc:3399
+#: database.cc:3401
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -2990,17 +2990,17 @@ msgstr ""
 "Esta es en realidad un área de trabajo.  Ud. quizo decir:\n"
 "%s"
 
-#: database.cc:3404
+#: database.cc:3406
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s es un directorio, no una base de datos"
 
-#: database.cc:3414
+#: database.cc:3416
 #, c-format
 msgid "database %s already exists"
 msgstr "la base de datos %s ya existe"
 
-#: database.cc:3419
+#: database.cc:3421
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -3041,137 +3041,117 @@ msgstr ""
 "[  derecha] %s\n"
 "[fusionada] %s"
 
-#: file_io.cc:214 file_io.cc:221
+#: file_io.cc:185
 #, c-format
-msgid ""
-"could not create directory '%s'\n"
-"it is a file"
-msgstr ""
-"no se pudo crear directorio '%s'\n"
-"es un archivo"
+msgid "could not create directory '%s': it is a file"
+msgstr "no se pudo crear directorio '%s': es un archivo"
 
-#: file_io.cc:216
-#, c-format
-msgid ""
-"could not create directory '%s'\n"
-"%s"
-msgstr ""
-"no se pudo crear directorio '%s'\n"
-"%s"
-
-#: file_io.cc:220
-#, c-format
-msgid "could not create directory '%s'"
-msgstr "no se pudo crear directorio '%s'"
-
-#: file_io.cc:233
-#, c-format
-msgid "failed to create directory '%s' for '%s'"
-msgstr "creación de directorio '%s' para '%s' falló"
-
-#: file_io.cc:241
+#: file_io.cc:202
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "archivo a borrar '%s' no existe"
 
-#: file_io.cc:242
+#: file_io.cc:203
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "archivo a borrar, '%s', no es un archivo sinó un directorio"
 
-#: file_io.cc:250
+#: file_io.cc:211
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "directorio a borrar '%s' no existe"
 
-#: file_io.cc:251
+#: file_io.cc:212
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "directorio a borrar, '%s', no es un directorio sinó un archivo"
 
-#: file_io.cc:258
+#: file_io.cc:219
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "objeto a borrar, '%s', no existe"
 
-#: file_io.cc:266
+#: file_io.cc:275
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "directorio a borrar, '%s', no existe"
 
-#: file_io.cc:267
+#: file_io.cc:276
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "directorio a borrar, '%s', es un archivo"
 
-#: file_io.cc:276
+#: file_io.cc:286
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "archivo fuente a renombrar '%s' no existe"
 
-#: file_io.cc:277
+#: file_io.cc:287
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr "archivo fuente a renombrar '%s' es un directorio -- bug en monotone?"
 
-#: file_io.cc:280 file_io.cc:295 file_io.cc:307
+#: file_io.cc:290 file_io.cc:305 file_io.cc:317
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "destino al renombrar '%s' ya existe"
 
-#: file_io.cc:290
+#: file_io.cc:300
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "directorio fuente a renombrar '%s' no existe"
 
-#: file_io.cc:292
+#: file_io.cc:302
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "directorio fuente a renombrar '%s' es un archivo -- bug en monotone?"
 
-#: file_io.cc:305
+#: file_io.cc:315
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "camino de la fuente a renombrar '%s' no existe"
 
-#: file_io.cc:316
+#: file_io.cc:326
 #, c-format
 msgid "file %s does not exist"
 msgstr "archivo %s no existe"
 
-#: file_io.cc:317
+#: file_io.cc:327
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "archivo %s no puede ser leido como data; es un directorio"
 
-#: file_io.cc:321
+#: file_io.cc:331
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "no se pudo abrir archivo %s para lectura"
 
-#: file_io.cc:355
+#: file_io.cc:352
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "no se pudo leer 'standard input' múltiples veces"
 
-#: file_io.cc:386
+#: file_io.cc:383
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "archivo '%s' no puede ser reescrito como data; es un directorio"
 
-#: file_io.cc:439
+#: file_io.cc:457
 #, c-format
-msgid "caught runtime error %s constructing file path for %s"
-msgstr ""
-"se recibió un error en tiempo de ejecución %s construyendo el camino del "
-"archivo para %s"
+msgid "skipping file '%s' with unsupported name"
+msgstr "saltandose el archivo '%s' con nombre no soportado"
 
-#: file_io.cc:528 work.cc:1290
+#: file_io.cc:461
+#, c-format
+msgid "skipping directory '%s' with unsupported name"
+msgstr "saltandose directorio '%s' con nombre no soportado"
+
+#: file_io.cc:514 work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "no existe el archivo o directorio: '%s'"
 
-#: file_io.cc:558
+#: file_io.cc:542
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "se esperaba archivo '%s', pero es un directorio."
@@ -4799,7 +4779,9 @@ msgstr "directorio de destino %s/ no esta versionado (quizás deba agregarlo)"
 #: work.cc:1443 work.cc:1467
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
-msgstr "no se puede renombrar la raíz del área de trabajo (en su lugar intente '%s pivot_root')"
+msgstr ""
+"no se puede renombrar la raíz del área de trabajo (en su lugar intente '%s "
+"pivot_root')"
 
 #: work.cc:1446 work.cc:1470
 #, c-format
@@ -4989,42 +4971,47 @@ msgstr "no se puede manipular el archivo especial %s"
 msgid "could not open directory '%s': %s"
 msgstr "no se pudo abrir el directorio '%s': %s"
 
-#: unix/fs.cc:201
+#: unix/fs.cc:205
 #, c-format
 msgid "error accessing '%s/%s': %s"
 msgstr "error accediendo '%s/%s': %s"
 
-#: unix/fs.cc:213
+#: unix/fs.cc:217
 #, c-format
 msgid "cannot handle special file '%s/%s'"
 msgstr "no se puede manipular el archivo especial '%s/%s'"
 
-#: unix/fs.cc:222
+#: unix/fs.cc:226
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "renombrado de '%s' a '%s' falló: %s"
 
-#: unix/fs.cc:231 win32/fs.cc:239
+#: unix/fs.cc:235 win32/fs.cc:239
 #, c-format
 msgid "could not remove '%s': %s"
 msgstr "no se pudo remover '%s': %s"
 
-#: unix/fs.cc:295 win32/fs.cc:372
+#: unix/fs.cc:244 win32/fs.cc:246
+#, c-format
+msgid "could not create directory '%s': %s"
+msgstr "no se pudo crear directorio '%s': %s"
+
+#: unix/fs.cc:308 win32/fs.cc:380
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "creación del archivo temporal %s falló: %s"
 
-#: unix/fs.cc:304
+#: unix/fs.cc:317
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr "todos los %d posibles nombres de archivos temporales estan en uso"
 
-#: unix/fs.cc:344 win32/fs.cc:432
+#: unix/fs.cc:357 win32/fs.cc:440
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "error escribiendo el archivo temporal %s: %s"
 
-#: unix/fs.cc:349 win32/fs.cc:439
+#: unix/fs.cc:362 win32/fs.cc:447
 #, c-format
 msgid "giving up after four zero-length writes to %s (%d byte written, %d left)"
 msgid_plural "giving up after four zero-length writes to %s (%d bytes written, %d left)"
@@ -5095,17 +5082,17 @@ msgstr "%s: error en GetFileAttributes: %s"
 msgid "error while reading directory: %s"
 msgstr "error leyendo el directorio: %s"
 
-#: win32/fs.cc:311
+#: win32/fs.cc:319
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "renombrando '%s' a '%s' falló: %s (%d)"
 
-#: win32/fs.cc:380
+#: win32/fs.cc:388
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr "no se pudo encontrar un archivo temporal (se probaron %d posibilidades)"
 
-#: win32/fs.cc:407
+#: win32/fs.cc:415
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr "%s será accesible a todos los usuarios de este computador\n"
