@@ -18,9 +18,7 @@ building and installation process for monotone
 
         on debian: 
 
-           apt-get install libboost-filesystem-dev
            apt-get install libboost-regex-dev
-           apt-get install libboost-test-dev
            apt-get install libboost-dev
            apt-get install g++
 
@@ -162,7 +160,7 @@ building and installation process for monotone
 
         mtn --db=mt.mtn db init
 
-        mtn --db=mt.mtn pull venge.net "net.venge.monotone*"
+        mtn --db=mt.mtn pull monotone.ca "net.venge.monotone*"
 
         mtn --db=mt.mtn --branch=net.venge.monotone checkout monotone-sources
 
