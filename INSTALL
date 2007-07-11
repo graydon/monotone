@@ -20,6 +20,7 @@ building and installation process for monotone
 
            apt-get install libboost-regex-dev
            apt-get install libboost-dev
+           apt-get install libz-dev
            apt-get install g++
 
         on fedora: 
