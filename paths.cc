@@ -9,7 +9,6 @@
 
 #include "base.hh"
 #include <sstream>
-#include <boost/algorithm/string/join.hpp>
 
 #include "paths.hh"
 #include "file_io.hh"
@@ -311,6 +310,7 @@ normalize_path(string const & in)
 
   vector<string> stack;
   string::const_iterator head, tail;
+  string::size_type size_estimate = leader.size();
   for (head = inT.begin(); head != inT.end(); head = tail)
     {
       tail = head;
@@ -330,10 +330,18 @@ normalize_path(string const & in)
           continue;
         }
 
+      size_estimate += elt.size() + 1;
       stack.push_back(elt);
     }
 
-  return leader + boost::algorithm::join(stack, "/");
+  leader.reserve(size_estimate);
+  for (vector<string>::const_iterator i = stack.begin(); i != stack.end(); i++)
+    {
+      if (i != stack.begin())
+        leader += "/";
+      leader += *i;
+    }
+  return leader;
 }
 
 static void
