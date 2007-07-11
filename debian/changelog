@@ -3,6 +3,7 @@ monotone (0.36-1) unstable; urgency=low
   [ Zack Weinberg ]
   * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
   * Run testsuite during build.
+  * Drop libboost-filesystem-dev build-dependency.
 
  -- final uploader's name and date here
 
