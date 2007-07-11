@@ -88,12 +88,9 @@ find_key_if_needed(utf8 const & addr,
                    bool needed = true)
 {
       uri u;
-      bool transport_requires_auth(true);
-      if (parse_uri(addr(), u))
-        {
-          transport_requires_auth = app.lua.hook_use_transport_auth(u);
-        }
-      if (transport_requires_auth)
+      parse_uri(addr(), u);
+
+      if (app.lua.hook_use_transport_auth(u))
         {
           find_key(addr, include, exclude, app, needed);
         }

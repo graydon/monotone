@@ -7,94 +7,145 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-
 #include "base.hh"
-#include <boost/regex.hpp>
-
 #include "sanity.hh"
 #include "uri.hh"
 
 using std::string;
+typedef string::size_type stringpos;
 
-bool
-parse_uri(string const & in, uri & out)
+static void
+parse_authority(string const & in, uri & u)
 {
-  uri u;
+  L(FL("matched URI authority: '%s'") % in);
+
+  stringpos p = 0;
+
+  // First, there might be a user: one or more non-@ characters followed
+  // by an @.
+  stringpos user_end = in.find('@', p);
+  if (user_end != 0 && user_end < in.size())
+    {
+      u.user.assign(in, 0, user_end);
+      p = user_end + 1;
+      L(FL("matched URI user: '%s'") % u.user);
+    }
+
+  // The next thing must either be an ipv6 address, which has the form
+  // \[ [0-9A-Za-z:]+ \] and we discard the square brackets, or some other
+  // sort of hostname, [^:]+.  (A host-part can be terminated by /, ?, or #
+  // as well as :, but our caller has taken care of that.)
+  if (p < in.size() && in.at(p) == '[')
+    {
+      p++;
+      stringpos ipv6_end = in.find(']', p);
+      N(ipv6_end != string::npos,
+        F("IPv6 address in URI has no closing ']'"));
+
+      u.host.assign(in, p, ipv6_end - p);
+      p = ipv6_end + 1;
+      L(FL("matched URI host (IPv6 address): '%s'") % u.host);
+    }
+  else
+    {
+      stringpos host_end = in.find(':', p);
+      u.host.assign(in, p, host_end - p);
+      p = host_end;
+      L(FL("matched URI host: '%s'") % u.host);
+    }
+
+  // Finally, if the host-part was ended by a colon, there is a port number
+  // following, which must consist entirely of digits.
+  if (p < in.size() && in.at(p) == ':')
+    {
+      p++;
+      N(p < in.size(),
+        F("explicit port-number specification in URI has no digits"));
+
+      N(in.find_first_not_of("0123456789", p) == string::npos,
+        F("explicit port-number specification in URI contains nondigits"));
+
+      u.port.assign(in, p, string::npos);
+      L(FL("matched URI port: '%s'") % u.port);
+    }
+}
+
+void
+parse_uri(string const & in, uri & u)
+{
+  u.scheme.clear();
+  u.user.clear();
+  u.host.clear();
+  u.port.clear();
+  u.path.clear();
+  u.query.clear();
+  u.fragment.clear();
+
+  stringpos p = 0;
 
   // This is a simplified URI grammar. It does the basics.
 
-  string scheme_part = "(?:([^:/?#]+):)?";
-  string authority_part = "(?://([^/?#]*))?";
-  string path_part = "([^?#]*)";
-  string query_part = "(?:\\?([^#]*))?";
-  string fragment_part = "(?:#(.*))?";
+  // First there may be a scheme: one or more characters which are not
+  // ":/?#", followed by a colon.
+  stringpos scheme_end = in.find_first_of(":/?#", p);
 
-  string uri_rx = (string("^")
-		   + scheme_part
-		   + authority_part
-		   + path_part
-		   + query_part
-		   + fragment_part
-		   + "$");
-
-  boost::match_results<std::string::const_iterator> uri_matches;
-  if (boost::regex_match(in, uri_matches, boost::regex(uri_rx)))
+  if (scheme_end != 0 && scheme_end < in.size() && in.at(scheme_end) == ':')
     {
-
-      u.scheme = uri_matches.str(1);
-
-      // The "authority" fragment gets a bit more post-processing.
+      u.scheme.assign(in, p, scheme_end - p);
+      p = scheme_end + 1;
       L(FL("matched URI scheme: '%s'") % u.scheme);
-
-      if (uri_matches[2].matched)
-	{
-	  string authority = uri_matches.str(2);
-	  L(FL("matched URI authority: '%s'") % authority);
-
-	  string user_part = "(?:([^@]+)@)?";
-	  string ipv6_host_part = "\\[([^\\]]+)]\\]";
-	  string normal_host_part = "([^:/]+)";
-	  string host_part = "(?:" + ipv6_host_part + "|" + normal_host_part + ")";
-	  string port_part = "(?::([[:digit:]]+))?";
-	  string auth_rx = user_part + host_part + port_part;
-	  boost::match_results<std::string::const_iterator> auth_matches;
-	  
-      N(boost::regex_match(authority, auth_matches, boost::regex(auth_rx)),
-        F("The URI syntax is invalid. Maybe you used an URI in scp-style?"));
-      
-	  u.user = auth_matches.str(1);
-	  u.port = auth_matches.str(4);
-	  if (auth_matches[2].matched)	
-	    u.host = auth_matches.str(2);
-	  else
-	    {
-	      I(auth_matches[3].matched);
-	      u.host = auth_matches.str(3);
-	    }
-	  L(FL("matched URI user: '%s'") % u.user);
-	  L(FL("matched URI host: '%s'") % u.host);
-	  L(FL("matched URI port: '%s'") % u.port);
-
-	}
-
-      u.path = uri_matches.str(3);
-      u.query = uri_matches.str(4);
-      u.fragment = uri_matches.str(5);
-      L(FL("matched URI path: '%s'") % u.path);
-      L(FL("matched URI query: '%s'") % u.query);
-      L(FL("matched URI fragment: '%s'") % u.fragment);
-      out = u;
-      return true;
     }
-  else
-    return false;
+
+  // Next, there may be an authority: "//" followed by zero or more
+  // characters which are not "/?#".
+
+  if (p + 1 < in.size() && in.at(p) == '/' && in.at(p+1) == '/')
+    {
+      p += 2;
+      stringpos authority_end = in.find_first_of("/?#", p);
+      if (authority_end != p)
+        {
+          parse_authority(string(in, p, authority_end - p), u);
+          p = authority_end;
+        }
+      if (p >= in.size())
+        return;
+    }
+
+  // Next, a path: zero or more characters which are not "?#".
+  {
+    stringpos path_end = in.find_first_of("?#", p);
+    u.path.assign(in, p, path_end - p);
+    p = path_end;
+    L(FL("matched URI path: '%s'") % u.path);
+    if (p >= in.size())
+      return;
+  }
+
+  // Next, perhaps a query: "?" followed by zero or more characters
+  // which are not "#".
+  if (in.at(p) == '?')
+    {
+      p++;
+      stringpos query_end = in.find('#', p);
+      u.query.assign(in, p, query_end - p);
+      p = query_end;
+      L(FL("matched URI query: '%s'") % u.query);
+      if (p >= in.size())
+        return;
+    }
+
+  // Finally, if there is a '#', then whatever comes after it in the string
+  // is a fragment identifier.
+  if (in.at(p) == '#')
+    {
+      u.fragment.assign(in, p + 1, string::npos);
+      L(FL("matched URI fragment: '%s'") % u.fragment);
+    }
 }
-
-
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
 
 static void
 test_one_uri(string scheme,
@@ -161,25 +212,48 @@ test_one_uri(string scheme,
 
   L(FL("testing parse of URI '%s'") % built);
   uri u;
-  UNIT_TEST_CHECK(parse_uri(built, u));
+  UNIT_TEST_CHECK_NOT_THROW(parse_uri(built, u), informative_failure);
   UNIT_TEST_CHECK(u.scheme == scheme);
   UNIT_TEST_CHECK(u.user == user);
-  UNIT_TEST_CHECK(u.host == host);
+  if (!normal_host.empty())
+    UNIT_TEST_CHECK(u.host == normal_host);
+  else
+    UNIT_TEST_CHECK(u.host == ipv6_host);
   UNIT_TEST_CHECK(u.port == port);
   UNIT_TEST_CHECK(u.path == path);
   UNIT_TEST_CHECK(u.query == query);
   UNIT_TEST_CHECK(u.fragment == fragment);
 }
 
-UNIT_TEST(uri, uri)
+UNIT_TEST(uri, basic)
 {
   test_one_uri("ssh", "graydon", "", "venge.net", "22", "/tmp/foo.mtn", "", "");
   test_one_uri("ssh", "graydon", "", "venge.net", "",   "/tmp/foo.mtn", "", "");
   test_one_uri("ssh", "",        "", "venge.net", "22", "/tmp/foo.mtn", "", "");
   test_one_uri("ssh", "",        "", "venge.net", "",   "/tmp/foo.mtn", "", "");
+  test_one_uri("ssh", "",        "fe:00:01::04:21", "", "",   "/tmp/foo.mtn", "", "");
   test_one_uri("file", "",       "", "",          "",   "/tmp/foo.mtn", "", "");
   test_one_uri("", "", "", "", "", "/tmp/foo.mtn", "", "");
   test_one_uri("http", "graydon", "", "venge.net", "8080", "/foo.cgi", "branch=foo", "tip");
+  test_one_uri("http", "graydon", "", "192.168.0.104", "8080", "/foo.cgi", "branch=foo", "tip");
+  test_one_uri("http", "graydon", "fe:00:01::04:21", "", "8080", "/foo.cgi", "branch=foo", "tip");
+}
+
+UNIT_TEST(uri, bizarre)
+{
+  test_one_uri("", "graydon", "", "venge.net", "22", "/tmp/foo.mtn", "", "");
+  test_one_uri("", "", "", "", "", "/graydon@venge.net:22/tmp/foo.mtn", "", "");
+  test_one_uri("ssh", "graydon", "", "venge.net", "22", "/tmp/foo.mtn", "", "");
+  test_one_uri("ssh", "", "", "", "", "/graydon@venge.net:22/tmp/foo.mtn", "", "");
+}
+
+UNIT_TEST(uri, invalid)
+{
+  uri u;
+
+  UNIT_TEST_CHECK_THROW(parse_uri("http://[f3:03:21/foo/bar", u), informative_failure);
+  UNIT_TEST_CHECK_THROW(parse_uri("http://example.com:/foo/bar", u), informative_failure);
+  UNIT_TEST_CHECK_THROW(parse_uri("http://example.com:1a4/foo/bar", u), informative_failure);
 }
 
 #endif // BUILD_UNIT_TESTS
