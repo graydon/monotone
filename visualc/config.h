@@ -14,4 +14,28 @@ typedef unsigned int os_err_t;
 #define LOCALEDIR ""
 #endif
 
+/* Type to use for `s16'. */
+#define TYPE_S16 short
+
+/* Type to use for `s32'. */
+#define TYPE_S32 int
+
+/* Type to use for `s64'. */
+#define TYPE_S64 long long
+
+/* Type to use for `s8'. */
+#define TYPE_S8 char
+
+/* Type to use for `u16'. */
+#define TYPE_U16 unsigned short
+
+/* Type to use for `u32'. */
+#define TYPE_U32 unsigned int
+
+/* Type to use for `u64'. */
+#define TYPE_U64 unsigned long long
+
+/* Type to use for `u8'. */
+#define TYPE_U8 unsigned char
+
 #endif /* CONFIG_H */
