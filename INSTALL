@@ -12,12 +12,19 @@ building and installation process for monotone
 
   * software prerequisites:
 
+    - autoconf.
+    - automake.
+    - gettext.
     - a supported C++ compiler: g++ 3.2 or later.
     - an installed copy of boost 1.32.0 or later.
     - zlib 1.1.4 or later.
+    - libiconv if the iconv() function is missing.
 
         on debian: 
 
+           apt-get install autoconf
+           apt-get install automake
+           apt-get install gettext
            apt-get install libboost-regex-dev
            apt-get install libboost-dev
            apt-get install libz-dev
@@ -25,8 +32,16 @@ building and installation process for monotone
 
         on fedora: 
 
+           apt-get install autoconf
+           apt-get install automake
+           apt-get install gettext
            apt-get install boost-devel 
+           apt-get install libz-devel
            apt-get install g++
+
+        on Windows (incomplete):
+
+           libiconv (http://gnuwin32.sourceforge.net/packages/libiconv.htm)
 
         on other systems:
 
