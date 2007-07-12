@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-07-06 08:27+0200\n"
-"PO-Revision-Date: 2007-07-06 09:28+0100\n"
+"PO-Revision-Date: 2007-07-12 10:22+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Italiano <it@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -651,11 +651,11 @@ msgstr "Rigenera le cache immagazzinate nel database"
 
 #: cmd_db.cc:216
 msgid "Clears the branch's epoch"
-msgstr ""
+msgstr "Elimina l'epoca per il ramo"
 
 #: cmd_db.cc:227
 msgid "Sets the branch's epoch"
-msgstr ""
+msgstr "Imposta l'epoca per il ramo"
 
 #: cmd_db.cc:236
 #, c-format
@@ -751,7 +751,7 @@ msgstr "[PERCORSO…]"
 
 #: cmd_diff_log.cc:472
 msgid "Shows current differences"
-msgstr ""
+msgstr "Mostra le differenze attuali"
 
 #: cmd_diff_log.cc:473
 msgid ""
@@ -778,7 +778,7 @@ msgstr "[FILE […]]"
 
 #: cmd_diff_log.cc:534
 msgid "Calculates diffs of files"
-msgstr ""
+msgstr "Calcola le differenze tra file"
 
 #: cmd_diff_log.cc:610
 msgid "[FILE] ..."
@@ -860,7 +860,7 @@ msgstr "PERCORSO"
 
 #: cmd_files.cc:124
 msgid "Prints an annotated copy of a file"
-msgstr ""
+msgstr "Stampa una copia annotata di un file"
 
 #: cmd_files.cc:125
 msgid "Calculates and prints an annotated copy of the given file from the specified REVISION."
@@ -1062,7 +1062,7 @@ msgstr "REVISIONE NOME_ETICHETTA"
 
 #: cmd_key_cert.cc:266
 msgid "Puts a symbolic tag certificate on a revision"
-msgstr ""
+msgstr "Pone un tag simbolico su una revisione"
 
 # questa frase non credo vada tradotta
 #: cmd_key_cert.cc:280
@@ -1071,7 +1071,7 @@ msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:281
 msgid "Notes the results of running a test on a revision"
-msgstr ""
+msgstr "Annota i risultati dell'esecuzione di un test su una revisione"
 
 #: cmd_key_cert.cc:294
 #: cmd_ws_commit.cc:277
@@ -1105,9 +1105,10 @@ msgstr "modifica del commento fallita"
 msgid "empty comment"
 msgstr "commento vuoto"
 
+# TODO: mi piace poco come definizione "oggetti in database" per files e altre cose
 #: cmd_list.cc:45
 msgid "Shows database objects"
-msgstr ""
+msgstr "Mostra oggetti in database"
 
 #: cmd_list.cc:46
 msgid "This command is used to query information from the database.  It shows database objects, or the current workspace manifest, or known, unknown, intentionally ignored, missing, or changed-state files."
@@ -1326,7 +1327,7 @@ msgstr "[unione]   %s"
 
 #: cmd_merging.cc:335
 msgid "Merges unmerged heads of a branch"
-msgstr ""
+msgstr "Esegue il ‘merge’ delle teste di un ramo"
 
 #: cmd_merging.cc:346
 #: cmd_merging.cc:946
@@ -1378,7 +1379,7 @@ msgstr "RAMO-SORG RAMO-DEST"
 
 #: cmd_merging.cc:437
 msgid "Merges from one branch to another asymmetrically"
-msgstr ""
+msgstr "Esegue il ‘merge’ asimmetrico da un ramo ad un altro"
 
 #: cmd_merging.cc:449
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
@@ -1386,7 +1387,7 @@ msgstr "RAMO-SORG RAMO-DEST DIRECTORY"
 
 #: cmd_merging.cc:450
 msgid "Merges one branch into a subdirectory in another branch"
-msgstr ""
+msgstr "Esegue il ‘merge’ di un ramo in una sottodirectory di un altro ramo"
 
 #: cmd_merging.cc:490
 #: cmd_merging.cc:493
@@ -2056,7 +2057,7 @@ msgstr "PATH [ATTR]"
 
 #: cmd_ws_commit.cc:619
 msgid "Removes attributes from a file"
-msgstr ""
+msgstr "Rimuove attributi da un file"
 
 #: cmd_ws_commit.cc:620
 msgid "If no attribute is specified, this command removes all attributes attached to the file given in PATH.  Otherwise only removes the attribute specified in ATTR."
@@ -2286,13 +2287,11 @@ msgstr ""
 
 # TODO: rev-rev argh!
 #: commands.cc:82
-#, fuzzy
 msgid "Commands to review revisions"
-msgstr "Comandi per la revisione delle revisioni"
+msgstr "Comandi per revisionare le revisioni"
 
 # TODO: albero?
 #: commands.cc:85
-#, fuzzy
 msgid "Commands to manipulate the tree"
 msgstr "Comandi per manipolare l'albero"
 
@@ -2327,7 +2326,7 @@ msgstr ""
 #: commands.cc:689
 #, c-format
 msgid "no subcommand specified for '%s'"
-msgstr ""
+msgstr "nessun sottocomando specificato per ‘%s’"
 
 #: commands.cc:692
 #, c-format
@@ -2403,7 +2402,7 @@ msgid "markings"
 msgstr "contrassegni"
 
 #: database_check.cc:312
-#: netsync.cc:3090
+#: netsync.cc:3097
 #: rcs_import.cc:1238
 msgid "revisions"
 msgstr "revisioni"
@@ -2413,7 +2412,7 @@ msgid "ancestry"
 msgstr "ascendenza"
 
 #: database_check.cc:440
-#: netsync.cc:3094
+#: netsync.cc:3101
 msgid "keys"
 msgstr "chiavi"
 
@@ -3546,7 +3545,7 @@ msgid "error: %s"
 msgstr "errore: %s"
 
 #: netsync.cc:2385
-#: netsync.cc:2897
+#: netsync.cc:2899
 #, c-format
 msgid "connecting to %s"
 msgstr "connessione a ‘%s’"
@@ -3660,32 +3659,37 @@ msgstr "Errore di rete con il peer ‘%s’, mi scollego"
 msgid "got OOB from peer %s, disconnecting"
 msgstr "ricevuti dati OOB dal peer ‘%s’, mi scollego"
 
-#: netsync.cc:2972
+#: netsync.cc:2926
+#, c-format
+msgid "Network error: %s"
+msgstr "Errore di rete: %s"
+
+#: netsync.cc:2979
 #, c-format
 msgid "beginning service on %s"
 msgstr "attivo il servizio su %s"
 
 # TODO: peer?
-#: netsync.cc:3035
+#: netsync.cc:3042
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "ricevuti dati OOB su fd %d (peer ‘%s’), mi scollego"
 
-#: netsync.cc:3084
+#: netsync.cc:3091
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "cerco elementi da sincronizzare:"
 
-#: netsync.cc:3092
+#: netsync.cc:3099
 msgid "certificates"
 msgstr "certificati"
 
-#: netsync.cc:3201
+#: netsync.cc:3208
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Non trovo la chiave ‘%s’"
 
-#: netsync.cc:3241
+#: netsync.cc:3248
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3694,7 +3698,7 @@ msgstr ""
 "il criterio di inclusione del ramo contiene un carattere virgolette:\n"
 "‘%s’"
 
-#: netsync.cc:3247
+#: netsync.cc:3254
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3703,8 +3707,8 @@ msgstr ""
 "il criterio di esclusione del ramo contiene un carattere virgolette:\n"
 "‘%s’"
 
-#: netsync.cc:3282
-#: netsync.cc:3286
+#: netsync.cc:3289
+#: netsync.cc:3293
 #, c-format
 msgid "network error: %s"
 msgstr "errore di rete: %s"
