@@ -127,8 +127,6 @@ AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 # check for all things boost-related
 BOOST_VERSION_CHECK
 BOOST_VERSION_SPECIFIC_BUGS
-
-MTN_BOOST_LIB_FILESYSTEM
 MTN_BOOST_LIB_REGEX
 
 # more complex library checks

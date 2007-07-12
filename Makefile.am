@@ -221,7 +221,7 @@ SQLITE_SOURCES =							\
 	sqlite/vdbemem.c sqlite/where.c					\
 	sqlite/prepare.c sqlite/callback.c				\
 	sqlite/analyze.c sqlite/vdbefifo.c				\
-	sqlite/complete.c						\
+	sqlite/complete.c sqlite/malloc.c sqlite/vdbeblob.c		\
 	sqlite/loadext.c sqlite/vtab.c					\
 									\
 	sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
@@ -229,7 +229,7 @@ SQLITE_SOURCES =							\
 	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
 	sqlite/sqliteInt.h						\
 	sqlite/vdbe.h sqlite/vdbeInt.h					\
-	sqlite/pager.h
+	sqlite/pager.h sqlite/btreeInt.h sqlite/limits.h
 
 LUA_SOURCES =								\
 	lua/lapi.cc lua/lapi.h						\
@@ -354,14 +354,13 @@ lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
 lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
 mtn_LDFLAGS = 
-mtn_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+mtn_CPPFLAGS = -I$(top_srcdir)/lua
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
-		      -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)

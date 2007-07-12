@@ -10,10 +10,6 @@
 #include "base.hh"
 #include <iostream>
 #include <fstream>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/exception.hpp>
 
 #include "botan/botan.h"
 
@@ -24,21 +20,6 @@
 #include "platform-wrapped.hh"
 #include "numeric_vocab.hh"
 
-namespace fs = boost::filesystem;
-
-// Parts of boost::filesystem change in 1.34 . One particular
-// difference is that some exceptions are different now.
-
-#include <boost/version.hpp>
-
-#if BOOST_VERSION < 103400
-# define FS_ERROR fs::filesystem_error
-# define FS_ERROR_SYSTEM native_error
-#else
-# define FS_ERROR fs::filesystem_path_error
-# define FS_ERROR_SYSTEM system_error
-#endif
-
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
@@ -46,7 +27,7 @@ using std::cin;
 using std::ifstream;
 using std::ios_base;
 using std::ofstream;
-using std::runtime_error;
+using std::logic_error;
 using std::string;
 using std::vector;
 
@@ -193,45 +174,25 @@ bool guess_binary(string const & s)
   return false;
 }
 
-static fs::path
-mkdir(any_path const & p)
-{
-  return fs::path(p.as_external(), fs::native);
-}
-
 void
 mkdir_p(any_path const & p)
 {
-  try
+  switch (get_path_status(p))
     {
-      fs::create_directories(mkdir(p));
+    case path::directory:
+      return;
+    case path::file:
+      E(false, F("could not create directory '%s': it is a file") % p);
+    case path::nonexistent:
+      mkdir_p(p.dirname());
+      do_mkdir(p.as_external());
     }
-  catch (FS_ERROR & err)
-    {
-      // check for this case first, because in this case, the next line will
-      // print "could not create directory: Success".  Which is unhelpful.
-      E(get_path_status(p) != path::file,
-        F("could not create directory '%s'\nit is a file") % p);
-      E(false,
-        F("could not create directory '%s'\n%s")
-        % err.path1().native_directory_string() % os_strerror(err.FS_ERROR_SYSTEM()));
-    }
-  require_path_is_directory(p,
-                            F("could not create directory '%s'") % p,
-                            F("could not create directory '%s'\nit is a file") % p);
 }
 
 void
 make_dir_for(any_path const & p)
 {
-  fs::path tmp(p.as_external(), fs::native);
-  if (tmp.has_branch_path())
-    {
-      fs::path dir = tmp.branch_path();
-      fs::create_directories(dir);
-      N(fs::exists(dir) && fs::is_directory(dir),
-        F("failed to create directory '%s' for '%s'") % dir.string() % p);
-    }
+  mkdir_p(p.dirname());
 }
 
 void
@@ -259,13 +220,62 @@ delete_file_or_dir_shallow(any_path const & p)
   do_remove(p.as_external());
 }
 
+namespace
+{
+  struct fill_pc_vec : public dirent_consumer
+  {
+    fill_pc_vec(vector<path_component> & v) : v(v) { v.clear(); }
+
+    // FIXME BUG: this treats 's' as being already utf8, but it is actually
+    // in the external character set.  Also, will I() out on invalid
+    // pathnames, when it should N() or perhaps W() and skip.
+    virtual void consume(char const * s)
+    { v.push_back(path_component(s)); }
+
+  private:
+    vector<path_component> & v;
+  };
+
+  struct file_deleter : public dirent_consumer
+  {
+    file_deleter(any_path const & p) : parent(p) {}
+    virtual void consume(char const * f)
+    {
+      // FIXME: same bug as above.
+      do_remove((parent / path_component(f)).as_external());
+    }
+  private:
+    any_path const & parent;
+  };
+}
+
+static void
+do_remove_recursive(any_path const & p)
+{
+  // for the reasons described in walk_tree_recursive, we read the entire
+  // directory before recursing into any subdirs.  however, it is safe to
+  // delete files as we encounter them, and we do so.
+  vector<path_component> subdirs;
+  fill_pc_vec subdir_fill(subdirs);
+  file_deleter delete_files(p);
+
+  do_read_directory(p.as_external(), delete_files, subdir_fill);
+  for (vector<path_component>::const_iterator i = subdirs.begin();
+       i != subdirs.end(); i++)
+    do_remove_recursive(p / *i);
+
+  do_remove(p.as_external());
+}
+
+
 void
 delete_dir_recursive(any_path const & p)
 {
   require_path_is_directory(p,
                             F("directory to delete, '%s', does not exist") % p,
                             F("directory to delete, '%s', is a file") % p);
-  fs::remove_all(mkdir(p));
+
+  do_remove_recursive(p);
 }
 
 void
@@ -326,25 +336,12 @@ read_data(any_path const & p, data & dat)
   dat = data(pipe.read_all_as_string());
 }
 
-namespace
-{
-  struct fill_pc_vec : public dirent_consumer
-  {
-    fill_pc_vec(vector<path_component> & v) : v(v) { v.clear(); }
-    virtual void consume(char const * s)
-    { v.push_back(path_component(s)); }
-
-  private:
-    vector<path_component> & v;
-  };
-}
-
 void read_directory(any_path const & path,
                     vector<path_component> & files,
                     vector<path_component> & dirs)
 {
   fill_pc_vec ff(files), df(dirs);
-  do_read_directory(system_path(path).as_external(), ff, df);
+  do_read_directory(path.as_external(), ff, df);
 }
 
 // This function can only be called once per run.
@@ -422,87 +419,9 @@ write_data_userprivate(system_path const & path,
   write_data_impl(path, data, tmpdir, true);
 }
 
+// recursive directory walking
+
 tree_walker::~tree_walker() {}
-
-static inline bool
-try_file_pathize(fs::path const & p, file_path & fp)
-{
-  try
-    {
-      // FIXME BUG: This has broken charset handling
-      fp = file_path_internal(p.string());
-      return true;
-    }
-  catch (runtime_error const & c)
-    {
-      // This arguably has broken charset handling too...
-      W(F("caught runtime error %s constructing file path for %s")
-        % c.what() % p.string());
-      return false;
-    }
-}
-
-static void
-walk_tree_recursive(fs::path const & absolute,
-                    fs::path const & relative,
-                    tree_walker & walker)
-{
-  system_path root(absolute.string());
-  vector<path_component> files, dirs;
-
-  read_directory(root, files, dirs);
-
-  // At this point, the directory iterator has gone out of scope, and its
-  // memory released.  This is important, because it can allocate rather a
-  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
-  // filesystem's blocksize as a clue how much memory to allocate).  We used
-  // to recurse into subdirectories directly in the loop below; this left
-  // the memory describing _this_ directory pinned on the heap.  Then our
-  // recursive call itself made another recursive call, etc., causing a huge
-  // spike in peak memory.  By splitting the loop in half, we avoid this
-  // problem. By using read_directory instead of a directory_iterator above
-  // we hopefully make this all a bit more clear.
-  // 
-  // [1] http://lkml.org/lkml/2006/2/24/215
-
-  for (vector<path_component>::const_iterator i = files.begin();
-       i != files.end(); ++i)
-    {
-      // the fs::native is necessary here, or it will bomb out on any paths
-      // that look at it funny.  (E.g., rcs files with "," in the name.)
-      fs::path rel_entry = relative / fs::path((*i)(), fs::native);
-      rel_entry.normalize();
-
-      file_path p;
-      if (!try_file_pathize(rel_entry, p))
-        continue;
-      walker.visit_file(p);
-    }
-
-  for (vector<path_component>::const_iterator i = dirs.begin();
-       i != dirs.end(); ++i)
-    {
-      // the fs::native is necessary here, or it will bomb out on any paths
-      // that look at it funny.  (E.g., rcs files with "," in the name.)
-      fs::path entry = absolute / fs::path((*i)(), fs::native);
-      fs::path rel_entry = relative / fs::path((*i)(), fs::native);
-      entry.normalize();
-      rel_entry.normalize();
-
-      // FIXME BUG: this utf8() cast is a total lie
-      if (bookkeeping_path::internal_string_is_bookkeeping_path(utf8(rel_entry.string())))
-        {
-          L(FL("ignoring book keeping entry %s") % rel_entry.string());
-          continue;
-        }
-
-      file_path p;
-      if (!try_file_pathize(rel_entry, p))
-        continue;
-      if (walker.visit_dir(p))
-        walk_tree_recursive(entry, rel_entry, walker);
-    }
-}
 
 bool
 tree_walker::visit_dir(file_path const & path)
@@ -510,15 +429,82 @@ tree_walker::visit_dir(file_path const & path)
   return true;
 }
 
+// subroutine of walk_tree_recursive: if the path composition of PATH and PC
+// is a valid file_path, write it to ENTRY and return true.  otherwise,
+// generate an appropriate diagnostic and return false.  in this context, an
+// invalid path is *not* an invariant failure, because it came from a
+// directory scan.  ??? arguably belongs as a file_path method.
+static bool
+safe_compose(file_path const & path, path_component const & pc, bool isdir,
+             file_path & entry)
+{
+  try
+    {
+      entry = path / pc;
+      return true;
+    }
+  catch (logic_error)
+    {
+      // do what the above operator/ did, by hand, and then figure out what
+      // sort of diagnostic to issue.
+      utf8 badpth;
+      if (path.empty())
+        badpth = utf8(pc());
+      else
+        badpth = utf8(path.as_internal() + "/" + pc());
+
+      if (!isdir)
+        W(F("skipping file '%s' with unsupported name") % badpth);
+      else if (bookkeeping_path::internal_string_is_bookkeeping_path(badpth))
+        L(FL("ignoring bookkeeping directory '%s'") % badpth);
+      else
+        W(F("skipping directory '%s' with unsupported name") % badpth);
+      return false;
+    }
+}
+
+static void
+walk_tree_recursive(file_path const & path,
+                    tree_walker & walker)
+{
+  // Read the directory up front, so that the directory handle is released
+  // before we recurse.  This is important, because it can allocate rather a
+  // bit of memory (especially on ReiserFS, see [1]; opendir uses the
+  // filesystem's blocksize as a clue how much memory to allocate).  We used
+  // to recurse into subdirectories on the fly; this left the memory
+  // describing _this_ directory pinned on the heap.  Then our recursive
+  // call itself made another recursive call, etc., causing a huge spike in
+  // peak memory.  By splitting the loop in half, we avoid this problem.
+  // 
+  // [1] http://lkml.org/lkml/2006/2/24/215
+  vector<path_component> files, dirs;
+  read_directory(path, files, dirs);
+
+  for (vector<path_component>::const_iterator i = files.begin();
+       i != files.end(); ++i)
+    {
+      file_path entry;
+      if (safe_compose(path, *i, false, entry))
+        walker.visit_file(entry);
+    }
+
+  for (vector<path_component>::const_iterator i = dirs.begin();
+       i != dirs.end(); ++i)
+    {
+      file_path entry;
+      if (safe_compose(path, *i, true, entry))
+        if (walker.visit_dir(entry))
+          walk_tree_recursive(entry, walker);
+    }
+}
 
 // from some (safe) sub-entry of cwd
 void
-walk_tree(file_path const & path,
-          tree_walker & walker)
+walk_tree(file_path const & path, tree_walker & walker)
 {
   if (path.empty())
     {
-      walk_tree_recursive(fs::current_path(), fs::path(), walker);
+      walk_tree_recursive(path, walker);
       return;
     }
 
@@ -532,9 +518,7 @@ walk_tree(file_path const & path,
       break;
     case path::directory:
       if (walker.visit_dir(path))
-        walk_tree_recursive(system_path(path).as_external(),
-                            path.as_external(),
-                            walker);
+        walk_tree_recursive(path, walker);
       break;
     }
 }

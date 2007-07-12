@@ -51,6 +51,7 @@
 **
 */
 #include "sqliteInt.h"
+#include <math.h>
 
 /*
 ** Conversion types fall into various categories as defined by the
@@ -453,6 +454,11 @@ static int vxprintf(
         if( xtype==etFLOAT ) realvalue += rounder;
         /* Normalize realvalue to within 10.0 > realvalue >= 1.0 */
         exp = 0;
+        if( isnan(realvalue) ){
+          bufpt = "NaN";
+          length = 3;
+          break;
+        }
         if( realvalue>0.0 ){
           while( realvalue>=1e32 && exp<=350 ){ realvalue *= 1e-32; exp+=32; }
           while( realvalue>=1e8 && exp<=350 ){ realvalue *= 1e-8; exp+=8; }
@@ -460,8 +466,14 @@ static int vxprintf(
           while( realvalue<1e-8 && exp>=-350 ){ realvalue *= 1e8; exp-=8; }
           while( realvalue<1.0 && exp>=-350 ){ realvalue *= 10.0; exp--; }
           if( exp>350 || exp<-350 ){
-            bufpt = "NaN";
-            length = 3;
+            if( prefix=='-' ){
+              bufpt = "-Inf";
+            }else if( prefix=='+' ){
+              bufpt = "+Inf";
+            }else{
+              bufpt = "Inf";
+            }
+            length = strlen(bufpt);
             break;
           }
         }
@@ -717,19 +729,22 @@ static void mout(void *arg, const char *zNewText, int nNewChar){
     if( pM->xRealloc==0 ){
       nNewChar =  pM->nAlloc - pM->nChar - 1;
     }else{
-      pM->nAlloc = pM->nChar + nNewChar*2 + 1;
+      int nAlloc = pM->nChar + nNewChar*2 + 1;
       if( pM->zText==pM->zBase ){
-        pM->zText = pM->xRealloc(0, pM->nAlloc);
+        pM->zText = pM->xRealloc(0, nAlloc);
         if( pM->zText && pM->nChar ){
           memcpy(pM->zText, pM->zBase, pM->nChar);
         }
       }else{
         char *zNew;
-        zNew = pM->xRealloc(pM->zText, pM->nAlloc);
+        zNew = pM->xRealloc(pM->zText, nAlloc);
         if( zNew ){
           pM->zText = zNew;
+        }else{
+          return;
         }
       }
+      pM->nAlloc = nAlloc;
     }
   }
   if( pM->zText ){
@@ -837,13 +852,17 @@ char *sqlite3_snprintf(int n, char *zBuf, const char *zFormat, ...){
   char *z;
   va_list ap;
 
+  if( n<=0 ){
+    return zBuf;
+  }
+  zBuf[0] = 0;
   va_start(ap,zFormat);
   z = base_vprintf(0, 0, zBuf, n, zFormat, ap);
   va_end(ap);
   return z;
 }
 
-#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG)
+#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG) || defined(SQLITE_MEMDEBUG)
 /*
 ** A version of printf() that understands %lld.  Used for debugging.
 ** The printf() built into some versions of windows does not understand %lld

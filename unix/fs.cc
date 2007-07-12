@@ -147,7 +147,11 @@ do_read_directory(string const & path,
                   dirent_consumer & files,
                   dirent_consumer & dirs)
 {
-  dirhandle dir(path);
+  string p(path);
+  if (p == "")
+    p = ".";
+  
+  dirhandle dir(p);
   struct dirent *d;
   struct stat st;
   int st_result;
@@ -231,6 +235,15 @@ do_remove(string const & path)
     F("could not remove '%s': %s") % path % os_strerror(errno));
 }
 
+// Create the directory DIR.  It will be world-accessible modulo umask.
+// Caller is expected to check for the directory already existing.
+void
+do_mkdir(string const & path)
+{
+  E(!mkdir(path.c_str(), 0777),
+    F("could not create directory '%s': %s") % path % os_strerror(errno));
+}
+
 // Create a temporary file in directory DIR, writing its name to NAME and
 // returning a read-write file descriptor for it.  If unable to create
 // the file, throws an E().
@@ -264,8 +277,6 @@ make_temp_file(string const & dir, string & name, mode_t mode)
     {
       u32 v = value;
 
-      tmp.at(tmp.size() - 11) = letters[v % base];
-      v /= base;
       tmp.at(tmp.size() - 10) = letters[v % base];
       v /= base;
       tmp.at(tmp.size() -  9) = letters[v % base];
@@ -275,6 +286,8 @@ make_temp_file(string const & dir, string & name, mode_t mode)
       tmp.at(tmp.size() -  7) = letters[v % base];
       v /= base;
       tmp.at(tmp.size() -  6) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  5) = letters[v % base];
       v /= base;
     
       int fd = open(tmp.c_str(), O_RDWR|O_CREAT|O_EXCL, mode);
