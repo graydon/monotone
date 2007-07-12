@@ -113,6 +113,7 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;SQLITE_OMIT_CURSOR"
 				StringPooling="true"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -223,6 +224,10 @@
 			</File>
 			<File
 				RelativePath="..\sqlite\main.c"
+				>
+			</File>
+			<File
+				RelativePath="..\sqlite\malloc.c"
 				>
 			</File>
 			<File

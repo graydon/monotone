@@ -847,24 +847,25 @@ find_and_go_to_workspace(string const & search_root)
   if (search_root.empty())
     {
 #ifdef WIN32
-      current = get_current_working_dir();
-      if (current[0] == '/' || current[0] == '\\')
+      std::string cur_str = get_current_working_dir();
+      current = cur_str;
+      if (cur_str[0] == '/' || cur_str[0] == '\\')
         {
-          if (current.size() > 1 && (current[1] == '/' || current[1] == '\\'))
+          if (cur_str.size() > 1 && (cur_str[1] == '/' || cur_str[1] == '\\'))
             {
               // UNC name
-              string::size_type uncend = current.find_first_of("\\/", 2);
+              string::size_type uncend = cur_str.find_first_of("\\/", 2);
               if (uncend == string::npos)
-                root = system_path(current + "/");
+                root = system_path(cur_str + "/");
               else
-                root = system_path(current.substr(0, uncend));
+                root = system_path(cur_str.substr(0, uncend));
             }
           else
             root = system_path("/");
         }
-      else if (current.size() > 1 && current[1] == ':')
+      else if (cur_str.size() > 1 && cur_str[1] == ':')
         {
-          root = system_path(current.substr(0,2) + "/");
+          root = system_path(cur_str.substr(0,2) + "/");
         }
       else I(false);
 #else

@@ -112,6 +112,7 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_CONSOLE;NETXX_NO_INET6;NETXX_NO_PTON;NETXX_NO_NTOP"
 				StringPooling="true"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
