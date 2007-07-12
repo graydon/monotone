@@ -92,7 +92,7 @@ time_t get_last_write_time(string const & name)
   E(GetFileTime(h, NULL, NULL, &ft),
     F("GetFileTime(%s) failed: %s") % name % os_strerror(GetLastError()));
 
-  CloseFile(h);
+  CloseHandle(h);
 
   // A FILETIME is a 64-bit quantity (represented as a pair of DWORDs)
   // representing the number of 100-nanosecond intervals elapsed since
