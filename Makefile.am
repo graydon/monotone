@@ -433,7 +433,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	$(srcdir)/tester-tests package.m4 package_revision.txt			\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
 	sqlite/keywordhash.h contrib/README contrib/monoprof.sh			\
-	contrib/monotone-notify.pl contrib/monotone-import.pl			\
+	contrib/monotone-notify.pl						\
 	contrib/ciabot_monotone.py contrib/monotone.el				\
 	contrib/monotone-nav.el contrib/monotone.bash_completion		\
 	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
