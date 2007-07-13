@@ -951,7 +951,7 @@ UNIT_TEST(paths, path_component)
     {
       // the comparison prevents the compiler from eliminating the
       // expression.
-      UNIT_TEST_CHECK_THROW(path_component(*c)() == *c, logic_error);
+      UNIT_TEST_CHECK_THROW((path_component(*c)()) == *c, logic_error);
     }
   for (char const **c = goodies; *c; ++c)
     {
