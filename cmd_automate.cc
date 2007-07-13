@@ -476,7 +476,7 @@ LUAEXT(mtn_automate, )
   // allow further calls
   app_p->mtn_automate_allowed = true;
 
-  lua_pushstring(L, output.str().c_str());  // XXX: what needs to happen here for memory management?  Should I copy this and let lua free it?
+  lua_pushstring(L, output.str().c_str());
   return 1;
 }
 
