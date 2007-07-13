@@ -53,6 +53,8 @@
           versions of monotone would sometimes seem to work depending on
           the compiler used, but would have bugs in path normalization.
 
+        - Monotone now requires Boost 1.33 or later.
+
         Internal
 
         - Commands are now defined as a tree of commands instead of a
