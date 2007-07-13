@@ -1001,7 +1001,7 @@ void commands::cmd_lua::exec(app_state & app,
   Lua ll(st);
   ll.func(f_name);
   
-  for (args_vector::const_iterator it = args.begin(); it != args.end(); it++)
+  for (args_vector::const_iterator it = args.begin(); it != args.end(); ++it)
     ll.push_str((*it)());
 
   app.mtn_automate_allowed = true;
