@@ -2,7 +2,7 @@ Source: monotone
 Section: devel
 Priority: optional
 Maintainer: Debian Maintainers for Monotone <monotone-debian@nongnu.org>
-Uploaders: Richard Levitte <richard@levitte.org>, Zack Weinberg <zackw@panix.com>, Ludovic Brenta <ludovic@ludovic-brenta.org>
+Uploaders: Richard Levitte <richard@levitte.org>, Zack Weinberg <zackw@panix.com>, Ludovic Brenta <lbrenta@debian.org>
 Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.2.0), autotools-dev,
  libboost-regex-dev, libboost-dev, libz-dev
 Build-Depends-Indep: ps2eps, texlive-base, texlive-generic-recommended,
