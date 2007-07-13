@@ -190,10 +190,10 @@ do_read_directory(string const & path,
               fstatat_works = false;
           }
         if (!fstatat_works)
-          st_result = stat((path + "/" + d->d_name).c_str(), &st);
+          st_result = stat((p + "/" + d->d_name).c_str(), &st);
       }
 #else
-      st_result = stat((path + "/" + d->d_name).c_str(), &st);
+      st_result = stat((p + "/" + d->d_name).c_str(), &st);
 #endif
 
       // silently ignore broken symlinks.
@@ -202,7 +202,7 @@ do_read_directory(string const & path,
         continue;
 
       E(st_result == 0,
-        F("error accessing '%s/%s': %s") % path % d->d_name);
+        F("error accessing '%s/%s': %s") % p % d->d_name);
 
       if (S_ISREG(st.st_mode))
         files.consume(d->d_name);
@@ -214,7 +214,7 @@ do_read_directory(string const & path,
   return;
 
  bad_special_file:
-  E(false,  F("cannot handle special file '%s/%s'") % path % d->d_name);
+  E(false,  F("cannot handle special file '%s/%s'") % p % d->d_name);
 }
   
                   
