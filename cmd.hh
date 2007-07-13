@@ -12,6 +12,7 @@
 
 #include <map>
 #include <set>
+#include <iostream>
 
 #include "commands.hh"
 #include "options.hh"
@@ -82,8 +83,9 @@ namespace commands
     bool operator<(command const & cmd) const;
 
     virtual void exec(app_state & app,
-                      command_id const & execid,
-                      args_vector const & args) const = 0;
+              command_id const & execid,
+              args_vector const & args,
+              std::ostream & output = std::cout) const = 0;
 
     bool has_name(utf8 const & name) const;
     command const * find_command(command_id const & id) const;
@@ -115,14 +117,10 @@ namespace commands
              std::string const & desc,
              options::options_type const & opts);
 
-    void exec(app_state & app,
+    virtual void exec(app_state & app,
               command_id const & execid,
               args_vector const & args,
-              std::ostream & output) const;
-
-    void exec(app_state & app,
-              command_id const & execid,
-              args_vector const & args) const;
+              std::ostream & output = std::cout) const;
   };
 };
 
@@ -191,13 +189,15 @@ namespace commands {                                                 \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args) const;               \
+                      args_vector const & args,                      \
+                      std::ostream & output = std::cout) const;      \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args) const
+                               args_vector const & args,             \
+                               std::ostream & output) const
 
 #define CMD(C, name, aliases, parent, params, abstract, desc, opts) \
   _CMD2(C, name, aliases, parent, false, params, abstract, desc, opts)
@@ -216,13 +216,15 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args) const;               \
+                      args_vector const & args,                      \
+                      std::ostream & output = std::cout) const;      \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args) const       \
+                               args_vector const & args,             \
+                               std::ostream & output) const          \
 {                                                                    \
   I(false);                                                          \
 }
@@ -248,13 +250,15 @@ namespace commands {                                                 \
     {}                                                               \
     virtual void exec(app_state & app,                               \
                       command_id const & execid,                     \
-                      args_vector const & args) const;               \
+                      args_vector const & args,                      \
+                      std::ostream & output = std::cout) const;      \
   };                                                                 \
   cmd_ ## C C ## _cmd;                                               \
 }                                                                    \
 void commands::cmd_ ## C::exec(app_state & app,                      \
                                command_id const & execid,            \
-                               args_vector const & args) const
+                               args_vector const & args,             \
+                               std::ostream & output) const
 
 // TODO: 'abstract' and 'desc' should be refactored so that the
 // command definition allows the description of input/output format,

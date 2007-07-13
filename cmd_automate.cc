@@ -51,14 +51,6 @@ namespace commands {
     make_io_binary();
     exec_from_automate(args, execid, app, output);
   }
-
-  void
-  automate::exec(app_state & app,
-                 command_id const & execid,
-                 args_vector const & args) const
-  {
-    exec(app, execid, args, std::cout);
-  }
 }
 
 static string const interface_version = "5.0";
