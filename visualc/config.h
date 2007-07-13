@@ -38,4 +38,18 @@ typedef unsigned int os_err_t;
 /* Type to use for `u8'. */
 #define TYPE_U8 unsigned char
 
+/* MS VC outputs warnings for any function that Microsoft has decided
+   is unsafe, like strcpy, strlen, getenv, open, strdup and so on.
+   They want you to replace any of those calls with calls to the new
+   Microsoft specific "safe" versions, such as sopen_s or dupenv_s.
+   The problem with that is that no other platform has these functions,
+   so if you maintain a multi-platform source base, you're screwed.
+   The only real way around it is to either wrap all these functions
+   into your out OS neutral api, or use #defines to remap the calls.
+   Or, do the following to suppress those warnings, since they aren't
+   likely to get fixed the way Microsoft wants, and there are other
+   functions that are more widely accepted.
+*/
+#define _CRT_SECURE_NO_WARNINGS
+
 #endif /* CONFIG_H */
