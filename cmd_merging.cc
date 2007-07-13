@@ -288,7 +288,7 @@ CMD_AUTOMATE(update, "",
        "If not, update the workspace to the head of the branch."),
     options::opts::none)
 {
-  commands::update_cmd.exec(app, execid, args);
+  commands::update_cmd.exec(app, execid, args, output);
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
@@ -447,7 +447,7 @@ CMD_AUTOMATE(merge, "",
     N_("Merges unmerged heads of a branch"), "",
     options::opts::none)
 {
-  commands::merge_cmd.exec(app, execid, args);
+  commands::merge_cmd.exec(app, execid, args, output);
 }
 
 CMD(propagate, "propagate", "", CMD_REF(tree),

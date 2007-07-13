@@ -1225,7 +1225,7 @@ CMD_AUTOMATE(commit,
     N_("Commits workspace changes to the database"), "",
     options::opts::none)
 {
-  commands::commit_cmd.exec(app, execid, args);
+  commands::commit_cmd.exec(app, execid, args, output);
 }
 
 CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
