@@ -160,7 +160,7 @@ do_read_directory(string const & path,
     {
       if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
         continue;
-#ifdef _DIRENT_HAVE_D_TYPE
+#if defined(_DIRENT_HAVE_D_TYPE) || defined(HAVE_STRUCT_DIRENT_D_TYPE)
       switch (d->d_type)
         {
         case DT_REG: // regular file

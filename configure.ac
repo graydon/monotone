@@ -111,6 +111,7 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 	          struct stat.st_mtimespec.tv_nsec,
 		  struct stat.st_ctimensec,
 		  struct stat.st_mtimensec])
+AC_CHECK_MEMBERS([struct dirent.d_type], , ,[#include <dirent.h>])
 
 # Checks for library functions.
 AC_FUNC_STAT
