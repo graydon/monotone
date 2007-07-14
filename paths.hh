@@ -220,7 +220,7 @@ public:
     std::string::const_iterator q = other.data.begin();
     std::string::const_iterator qlim = other.data.end();
 
-    while (*p == *q && p != plim && q != qlim)
+    while (p != plim && q != qlim && *p == *q)
       p++, q++;
 
     if (p == plim && q == qlim) // equal -> not less
