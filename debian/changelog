@@ -7,6 +7,20 @@ monotone (0.36-1) unstable; urgency=low
 
  -- final uploader's name and date here
 
+monotone (0.35-2) unstable; urgency=low
+
+  * Collapse Build-Depends-Indep into Build-Depends to work around
+    a buildd bug.  (Closes: #432657)
+  * Correct Ludovic Brenta's address in Uploaders.
+  * Enable parallel make on multiprocessors.
+
+  [ Ludovic Brenta ]
+  * monotone-server.postrm: do not blindly erase /var/lib/monotone on
+    purge; instead, delete only the default database (created in the
+    postinst), and only delete the directory if empty.
+
+ -- Zack Weinberg <zackw@panix.com>  Fri, 13 Jul 2007 08:39:58 -0700
+
 monotone (0.35-1) unstable; urgency=low
 
   [ Zack Weinberg ]
