@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-06-29 22:09+0200\n"
-"PO-Revision-Date: 2007-06-29 22:13+0200\n"
+"POT-Creation-Date: 2007-07-14 08:41+0200\n"
+"PO-Revision-Date: 2007-07-14 08:45+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -2549,7 +2549,7 @@ msgstr "listor"
 msgid "markings"
 msgstr "markeringar"
 
-#: database_check.cc:312 netsync.cc:3090 rcs_import.cc:1238
+#: database_check.cc:312 netsync.cc:3097 rcs_import.cc:1238
 msgid "revisions"
 msgstr "revisioner"
 
@@ -2557,7 +2557,7 @@ msgstr "revisioner"
 msgid "ancestry"
 msgstr "föräldraskap"
 
-#: database_check.cc:440 netsync.cc:3094
+#: database_check.cc:440 netsync.cc:3101
 msgid "keys"
 msgstr "nycklar"
 
@@ -2878,28 +2878,28 @@ msgstr ""
 "detta är en väldigt gammal databas; den behöver uppgraderas\n"
 "var god läs README.changesets för detaljer"
 
-#: database.cc:489 sanity.cc:232 schema_migration.cc:62
+#: database.cc:491 sanity.cc:232 schema_migration.cc:62
 msgid "error: "
 msgstr "fel: "
 
-#: database.cc:490
+#: database.cc:492
 msgid "sqlite error: "
 msgstr "sqlite-fel: "
 
-#: database.cc:514
+#: database.cc:516
 msgid "not set"
 msgstr "ej tilldelat "
 
-#: database.cc:527
+#: database.cc:529
 msgid " (not a monotone database)"
 msgstr " (är inte en monotonedatabas)"
 
-#: database.cc:575 database.cc:606 database.cc:1065 database.cc:1085
+#: database.cc:577 database.cc:608 database.cc:1067 database.cc:1087
 #, c-format
 msgid "%u"
 msgstr "%u"
 
-#: database.cc:625
+#: database.cc:627
 #, c-format
 msgid ""
 "creator code      : %s\n"
@@ -2952,92 +2952,92 @@ msgstr ""
 "  sidstorlek          : %s\n"
 "  cachestorlek        : %s"
 
-#: database.cc:670
+#: database.cc:672
 #, c-format
 msgid "database schema version: %s"
 msgstr "databasens schemaversion: %s"
 
-#: database.cc:755
+#: database.cc:757
 #, c-format
 msgid "multiple statements in query: %s"
 msgstr "multipla kommandon i databasfråga: %s"
 
-#: database.cc:761
+#: database.cc:763
 #, c-format
 msgid "wanted %d columns got %d in query: %s"
 msgstr "ville ha %d kolumner, fick %d i databasfråga: %s"
 
-#: database.cc:827
+#: database.cc:829
 #, c-format
 msgid "null result in query: %s"
 msgstr "inget resultat med databasfråga: %s"
 
-#: database.cc:845
+#: database.cc:847
 #, c-format
 msgid "wanted %d rows got %d in query: %s"
 msgstr "ville ha %d rader, fick %d i databasfråga: %s"
 
-#: database.cc:1723
+#: database.cc:1725
 #, c-format
 msgid "file preimage '%s' missing in db"
 msgstr "\"preimage\" för filen '%s' saknas i databasen"
 
-#: database.cc:1724
+#: database.cc:1726
 #, c-format
 msgid "dropping delta '%s' -> '%s'"
 msgstr "slänger deltat '%s' -> '%s'"
 
-#: database.cc:2011
+#: database.cc:2013
 #, c-format
 msgid "missing prerequisite revision '%s'"
 msgstr "saknar nödvändig revision '%s'"
 
-#: database.cc:2012 database.cc:2023 database.cc:2039 database.cc:2047
+#: database.cc:2014 database.cc:2025 database.cc:2041 database.cc:2049
 #, c-format
 msgid "dropping revision '%s'"
 msgstr "slänger revisionen '%s'"
 
-#: database.cc:2022
+#: database.cc:2024
 #, c-format
 msgid "missing prerequisite file '%s'"
 msgstr "saknar nödvändig fil '%s'"
 
-#: database.cc:2037
+#: database.cc:2039
 #, c-format
 msgid "missing prerequisite file pre-delta '%s'"
 msgstr "saknar nödvändigt predelta till fil '%s'"
 
-#: database.cc:2045
+#: database.cc:2047
 #, c-format
 msgid "missing prerequisite file post-delta '%s'"
 msgstr "saknar nödvändigt postdelta till fil '%s'"
 
-#: database.cc:2336
+#: database.cc:2338
 #, c-format
 msgid "key '%s' is not equal to key '%s' in database"
 msgstr "nyckeln '%s' är inte samma som nyckeln '%s' i databasen"
 
-#: database.cc:2558
+#: database.cc:2560
 #, c-format
 msgid "cert revision '%s' does not exist in db"
 msgstr "certrevision '%s' finns inte i databasen"
 
-#: database.cc:2560
+#: database.cc:2562
 #, c-format
 msgid "dropping cert"
 msgstr "slänger cert"
 
-#: database.cc:3371
+#: database.cc:3373
 #, c-format
 msgid "no database specified"
 msgstr "ingen databas angiven"
 
-#: database.cc:3381
+#: database.cc:3383
 #, c-format
 msgid "database %s does not exist"
 msgstr "databasen %s finns inte"
 
-#: database.cc:3399
+#: database.cc:3401
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -3050,17 +3050,17 @@ msgstr ""
 "Det är en arbetskopia.  Du kanske menade: \n"
 "%s"
 
-#: database.cc:3404
+#: database.cc:3406
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s är en katalog, inte en databas"
 
-#: database.cc:3414
+#: database.cc:3416
 #, c-format
 msgid "database %s already exists"
 msgstr "databasen %s finns redan"
 
-#: database.cc:3419
+#: database.cc:3421
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -3101,137 +3101,119 @@ msgstr ""
 "[     höger] %s\n"
 "[ihopslagen] %s"
 
-#: file_io.cc:214 file_io.cc:221
+#: file_io.cc:185
 #, c-format
-msgid ""
-"could not create directory '%s'\n"
-"it is a file"
-msgstr ""
-"kunde inte skapa katalogen '%s'\n"
-"det är en fil"
+msgid "could not create directory '%s': it is a file"
+msgstr "kunde inte skapa katalogen '%s': det är en fil"
 
-#: file_io.cc:216
-#, c-format
-msgid ""
-"could not create directory '%s'\n"
-"%s"
-msgstr ""
-"kunde inte skapa katalogen '%s'\n"
-"%s"
-
-#: file_io.cc:220
-#, c-format
-msgid "could not create directory '%s'"
-msgstr "kunde inte skapa katalogen '%s'"
-
-#: file_io.cc:233
-#, c-format
-msgid "failed to create directory '%s' for '%s'"
-msgstr "misslyckades med att skapa katalogen '%s' för '%s'"
-
-#: file_io.cc:241
+#: file_io.cc:202
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "filen att ta bort, '%s', finns inte"
 
-#: file_io.cc:242
+#: file_io.cc:203
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "filen att ta bort, '%s', är inte en fil, den är en katalog"
 
-#: file_io.cc:250
+#: file_io.cc:211
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:251
+#: file_io.cc:212
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "katalogen att ta bort, '%s', är inte en katalog, det är en fil"
 
-#: file_io.cc:258
+#: file_io.cc:219
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "objektet att ta bort, '%s', finns inte"
 
-#: file_io.cc:266
+#: file_io.cc:275
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:267
+#: file_io.cc:276
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "katalogen att ta bort, '%s', är en fil"
 
-#: file_io.cc:276
+#: file_io.cc:286
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "källfilen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:277
+#: file_io.cc:287
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 "källfilen att ge nytt namn, '%s', är en katalog -- programfel i monotone?"
 
-#: file_io.cc:280 file_io.cc:295 file_io.cc:307
+#: file_io.cc:290 file_io.cc:305 file_io.cc:317
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "målfilen, '%s', finns redan"
 
-#: file_io.cc:290
+#: file_io.cc:300
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "källkatalogen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:292
+#: file_io.cc:302
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 "källkatalogen att ge nytt namn, '%s', är en fil -- programfel i monotone?"
 
-#: file_io.cc:305
+#: file_io.cc:315
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "källsökvägen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:316
+#: file_io.cc:326
 #, c-format
 msgid "file %s does not exist"
 msgstr "filen %s finns inte"
 
-#: file_io.cc:317
+#: file_io.cc:327
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "file %s kan inte läsas som data; den är en katalog"
 
-#: file_io.cc:321
+#: file_io.cc:331
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "kan inte öppna filen %s för läsning"
 
-#: file_io.cc:355
+#: file_io.cc:352
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Kan inte läsa från stdin mer än en gång"
 
-#: file_io.cc:386
+#: file_io.cc:383
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "filen %s kan inte skrivas över som data; den är en katalog"
 
-#: file_io.cc:439
+#: file_io.cc:457
 #, c-format
-msgid "caught runtime error %s constructing file path for %s"
-msgstr "fick felet %s när sökväg för %s byggdes"
+msgid "skipping file '%s' with unsupported name"
+msgstr "hoppar över filen '%s' som har ej stödbart namn"
 
-#: file_io.cc:528 work.cc:1290
+#: file_io.cc:461
+#, c-format
+msgid "skipping directory '%s' with unsupported name"
+msgstr "hoppar över katalogen '%s' som har ej stödbart namn"
+
+#: file_io.cc:514 work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
 
-#: file_io.cc:558
+#: file_io.cc:542
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "förväntade filen '%s', men det är en katalog."
@@ -3311,22 +3293,22 @@ msgstr "make_signature: signaturen är ogiltig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
 
-#: lua.cc:468 lua.cc:479 lua.cc:491
+#: lua.cc:466 lua.cc:477 lua.cc:489
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s anropades med inkorrekt parameter"
 
-#: lua.cc:549
+#: lua.cc:574
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:550 rcs_import.cc:1229 work.cc:1559
+#: lua.cc:576 rcs_import.cc:1229 work.cc:1559
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
 
-#: lua.cc:572
+#: lua.cc:598
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
@@ -3711,7 +3693,7 @@ msgstr "protokollfel vid behandling av %s: '%s'"
 msgid "error: %s"
 msgstr "fel: %s"
 
-#: netsync.cc:2385 netsync.cc:2897
+#: netsync.cc:2385 netsync.cc:2825
 #, c-format
 msgid "connecting to %s"
 msgstr "ansluter till %s"
@@ -3818,41 +3800,46 @@ msgstr ""
 "gränsen för antalet sessioner, %d, är nådd, en del uppkopplingar kommer att "
 "nekas"
 
-#: netsync.cc:2870
+#: netsync.cc:2852
+#, c-format
+msgid "Network error: %s"
+msgstr "Nätverksfel: %s"
+
+#: netsync.cc:2913
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Nätverksfel för %s, kopplar ifrån"
 
-#: netsync.cc:2876
+#: netsync.cc:2919
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "fick OOB-data från %s, kopplar ifrån"
 
-#: netsync.cc:2972
+#: netsync.cc:2979
 #, c-format
 msgid "beginning service on %s"
 msgstr "startar tjänst på %s"
 
-#: netsync.cc:3035
+#: netsync.cc:3042
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "fick OOB-data på fildeskriptor %d (från %s), kopplar ifrån"
 
-#: netsync.cc:3084
+#: netsync.cc:3091
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "letar efter saker att synkronisera:"
 
-#: netsync.cc:3092
+#: netsync.cc:3099
 msgid "certificates"
 msgstr "certifikat"
 
-#: netsync.cc:3201
+#: netsync.cc:3208
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Kan inte hitta nyckeln '%s'"
 
-#: netsync.cc:3241
+#: netsync.cc:3248
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3861,7 +3848,7 @@ msgstr ""
 "grenmönstret givet med --include innehåller ett citattecken:\n"
 "%s"
 
-#: netsync.cc:3247
+#: netsync.cc:3254
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3870,7 +3857,7 @@ msgstr ""
 "grenmönstret givet med --exclude innehåller ett citattecken:\n"
 "%s"
 
-#: netsync.cc:3282 netsync.cc:3286
+#: netsync.cc:3289 netsync.cc:3293
 #, c-format
 msgid "network error: %s"
 msgstr "nätverksfel: %s"
@@ -5053,42 +5040,47 @@ msgstr "kan inte hantera specialfilen %s"
 msgid "could not open directory '%s': %s"
 msgstr "kunde inte öppna katalogen '%s': %s"
 
-#: unix/fs.cc:201
+#: unix/fs.cc:205
 #, c-format
 msgid "error accessing '%s/%s': %s"
 msgstr "fel när jag försökte nå '%s/%s': %s"
 
-#: unix/fs.cc:213
+#: unix/fs.cc:217
 #, c-format
 msgid "cannot handle special file '%s/%s'"
 msgstr "kan inte hantera specialfilen '%s/%s'"
 
-#: unix/fs.cc:222
+#: unix/fs.cc:226
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "byta namn på '%s' till '%s' misslyckades: %s"
 
-#: unix/fs.cc:231 win32/fs.cc:239
+#: unix/fs.cc:235 win32/fs.cc:239
 #, c-format
 msgid "could not remove '%s': %s"
 msgstr "kunde inte ta bort '%s': %s"
 
-#: unix/fs.cc:295 win32/fs.cc:372
+#: unix/fs.cc:244 win32/fs.cc:246
+#, c-format
+msgid "could not create directory '%s': %s"
+msgstr "kunde inte skapa katalogen %s: %s"
+
+#: unix/fs.cc:308 win32/fs.cc:380
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "kan inte skapa tillfällig fil %s: %s"
 
-#: unix/fs.cc:304
+#: unix/fs.cc:317
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr "Alla %d möjliga tillfälliga filnamn används"
 
-#: unix/fs.cc:344 win32/fs.cc:432
+#: unix/fs.cc:357 win32/fs.cc:440
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "fel vid skrivning till tillfällig fil %s: %s"
 
-#: unix/fs.cc:349 win32/fs.cc:439
+#: unix/fs.cc:362 win32/fs.cc:447
 #, c-format
 msgid ""
 "giving up after four zero-length writes to %s (%d byte written, %d left)"
@@ -5157,17 +5149,17 @@ msgstr "%s: fel i GetFileAttributes: %s"
 msgid "error while reading directory: %s"
 msgstr "fel när läste katalog: %s"
 
-#: win32/fs.cc:311
+#: win32/fs.cc:319
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "namnbyte av '%s' till '%s' misslyckades: %s (%d)"
 
-#: win32/fs.cc:380
+#: win32/fs.cc:388
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr "kan inte finna någon tillfällig fil (provade %d möjligheter)"
 
-#: win32/fs.cc:407
+#: win32/fs.cc:415
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr "%s kommer att vara åtkomlig för alla användare på den här datorn\n"
@@ -5181,6 +5173,15 @@ msgstr "%s (nivå %d, rev %d)"
 #, c-format
 msgid "Windows %s (%d.%d, build %d, %s) on %s"
 msgstr "Windows %s (%d.%d build %d, %s) på %s"
+
+#~ msgid "could not create directory '%s'"
+#~ msgstr "kunde inte skapa katalogen '%s'"
+
+#~ msgid "failed to create directory '%s' for '%s'"
+#~ msgstr "misslyckades med att skapa katalogen '%s' för '%s'"
+
+#~ msgid "caught runtime error %s constructing file path for %s"
+#~ msgstr "fick felet %s när sökväg för %s byggdes"
 
 #~ msgid "Path %s added to child roster multiple times"
 #~ msgstr "Sökvägen %s tillagd till listan mer än en gång"
