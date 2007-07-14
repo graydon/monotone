@@ -171,7 +171,8 @@ CMD_AUTOMATE(push,
      N_("Pushes branches to a netsync server"),
      N_("This will push all branches that match the pattern given in PATTERN "
         "to the netsync server at the address ADDRESS."),
-     options::opts::none)
+    options::opts::set_default | options::opts::exclude |
+    options::opts::key_to_push)
 {
   commands::push_cmd.exec(app, execid, args);
 }
@@ -201,7 +202,7 @@ CMD_AUTOMATE(pull,
     N_("Pulls branches from a netsync server"),
     N_("This pulls all branches that match the pattern given in PATTERN "
        "from the netsync server at the address ADDRESS."),
-    options::opts::none)
+    options::opts::set_default | options::opts::exclude)
 {
   commands::pull_cmd.exec(app, execid, args);
 }
@@ -229,7 +230,8 @@ CMD_AUTOMATE(sync,
     N_("Synchronizes branches with a netsync server"),
     N_("This synchronizes branches that match the pattern given in PATTERN "
        "with the netsync server at the address ADDRESS."),
-    options::opts::none)
+    options::opts::set_default | options::opts::exclude |
+    options::opts::key_to_push)
 {
   commands::sync_cmd.exec(app, execid, args);
 }
