@@ -386,7 +386,7 @@ merge_two(revision_id const & left, revision_id const & right,
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
 static void
-commit(app_state & app, commands::command_id const & execid,
+merge(app_state & app, commands::command_id const & execid,
           args_vector const & args, std::ostream & output,
           bool automate)
 {
