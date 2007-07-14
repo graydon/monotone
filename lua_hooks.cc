@@ -980,17 +980,13 @@ namespace commands {
       CMD_REF(user)->children().insert(this);
     }
 
-    void exec(app_state & app,
-          command_id const & execid,
-          args_vector const & args,
-          std::ostream & output) const;
+    void exec(app_state & app, command_id const & execid, args_vector const & args) const;
   };
 }
 
 void commands::cmd_lua::exec(app_state & app,
                                command_id const & execid,
-                               args_vector const & args,
-                               std::ostream & output) const
+                               args_vector const & args) const
 {
   I(st);
   I(app.lua.check_lua_state(st));

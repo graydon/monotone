@@ -1231,7 +1231,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     | options::opts::date | options::opts::author | options::opts::depth
     | options::opts::exclude)
 {
-  commit(app, execid, args, output, false);
+  commit(app, execid, args, std::cout, false);
 }
 
 // outputs the branch followed a newline followed by the new revision id:

@@ -173,7 +173,7 @@ CMD_AUTOMATE(push,
         "to the netsync server at the address ADDRESS."),
      options::opts::none)
 {
-  commands::push_cmd.exec(app, execid, args, output);
+  commands::push_cmd.exec(app, execid, args);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -203,7 +203,7 @@ CMD_AUTOMATE(pull,
        "from the netsync server at the address ADDRESS."),
     options::opts::none)
 {
-  commands::pull_cmd.exec(app, execid, args, output);
+  commands::pull_cmd.exec(app, execid, args);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -231,7 +231,7 @@ CMD_AUTOMATE(sync,
        "with the netsync server at the address ADDRESS."),
     options::opts::none)
 {
-  commands::sync_cmd.exec(app, execid, args, output);
+  commands::sync_cmd.exec(app, execid, args);
 }
 
 class dir_cleanup_helper
