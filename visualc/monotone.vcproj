@@ -66,10 +66,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib "
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlibd.lib"
 				OutputFile="$(outdir)\mtn.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(outdir)/visualc.pdb"
 				SubSystem="1"
@@ -341,6 +342,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\inodeprint.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -361,10 +366,6 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\inodeprint.cc"
-				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
