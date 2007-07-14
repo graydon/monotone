@@ -46,7 +46,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="1"
+				UsePrecompiledHeader="0"
 				PrecompiledHeaderThrough="pch.hh"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -65,13 +65,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib "
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib /VERBOSE:lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlibd.lib"
 				OutputFile="$(outdir)\unit_tests.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(outdir)/visualc.pdb"
+				ProgramDatabaseFile="$(TargetDir)$(TargetName).pdb"
 				SubSystem="1"
 				TargetMachine="1"
 			/>
@@ -80,6 +81,11 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				OutputManifestFile="$(IntDir)\$(TargetFileName).embed.manifest"
+				ManifestResourceFile="$(IntDir)\$(TargetFileName).embed.manifest.res"
+				UseFAT32Workaround="true"
+				AdditionalOptions="/outputresource:&quot;.\Debug\unit_tests.exe;#1&quot;"
+				VerboseOutput="false"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -345,10 +351,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\inodeprint.cc"
-				>
-			</File>
-			<File
 				RelativePath="..\win32\inodeprint.cc"
 				>
 				<FileConfiguration
@@ -369,6 +371,10 @@
 						XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\inodeprint.cc"
+				>
 			</File>
 			<File
 				RelativePath="..\key_store.cc"
