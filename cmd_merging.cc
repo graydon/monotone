@@ -305,7 +305,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
        "If not, update the workspace to the head of the branch."),
     options::opts::branch | options::opts::revision)
 {
-  update(app, execid, args, output, false);
+  update(app, execid, args, std::cout, false);
 }
 
 // output:
@@ -328,7 +328,8 @@ CMD_AUTOMATE(update, "",
 // bomb out, and therefore so may this.
 static void
 merge_two(revision_id const & left, revision_id const & right,
-          branch_name const & branch, string const & caller, app_state & app)
+          branch_name const & branch, string const & caller, app_state & app,
+          std::ostream & output, bool automate)
 {
   // The following mess constructs a neatly formatted log message that looks
   // like this:
@@ -355,8 +356,15 @@ merge_two(revision_id const & left, revision_id const & right,
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
 
   // Now it's time for the real work.
-  P(F("[left]  %s") % left);
-  P(F("[right] %s") % right);
+  if (automate)
+    {
+      output << left << " " << right << " ";
+    }
+  else
+    {
+      P(F("[left]  %s") % left);
+      P(F("[right] %s") % right);
+    }
   
   revision_id merged;
   transaction_guard guard(app.db);
@@ -367,17 +375,20 @@ merge_two(revision_id const & left, revision_id const & right,
                                                     utf8(log.str()));
 
   guard.commit();
-  P(F("[merged] %s") % merged);
+  if (automate)
+    output << merged << "\n";
+  else
+    P(F("[merged] %s") % merged);
 }
 
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 // (Possibility: append the --message/--message-file text to the synthetic
 // log message constructed in merge_two().)
-CMD(merge, "merge", "", CMD_REF(tree), "",
-    N_("Merges unmerged heads of a branch"),
-    "",
-    options::opts::branch | options::opts::date | options::opts::author)
+static void
+commit(app_state & app, commands::command_id const & execid,
+          args_vector const & args, std::ostream & output,
+          bool automate)
 {
   typedef std::pair<revision_id, revision_id> revpair;
   typedef set<revision_id>::const_iterator rid_set_iter;
@@ -394,12 +405,14 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branchname);
   if (heads.size() == 1)
     {
-      P(F("branch '%s' is already merged") % app.opts.branchname);
+      if (!automate)
+        P(F("branch '%s' is already merged") % app.opts.branchname);
       return;
     }
 
-  P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
-    % heads.size() % app.opts.branchname);
+  if (!automate)
+    P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
+      % heads.size() % app.opts.branchname);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -419,8 +432,11 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   // A and B will be merged first, and then the result will be merged with C.
   while (heads.size() > 2)
     {
-      P(F("merge %d / %d:") % pass % todo);
-      P(F("calculating best pair of heads to merge next"));
+      if (!automate)
+        {
+          P(F("merge %d / %d:") % pass % todo);
+          P(F("calculating best pair of heads to merge next"));
+        }
 
       // For every pair of heads, determine their merge ancestor, and
       // remember the ancestor->head mapping. 
@@ -453,7 +469,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
       
-      merge_two(p.first, p.second, app.opts.branchname, string("merge"), app);
+      merge_two(p.first, p.second, app.opts.branchname, string("merge"), app, output, automate);
 
       ancestors.clear();
       heads_for_ancestor.clear();
@@ -463,7 +479,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
   // Last one.
   I(pass == todo);
-  if (todo > 1)
+  if (todo > 1 && !automate)
     P(F("merge %d / %d:") % pass % todo);
 
   rid_set_iter i = heads.begin();
@@ -471,15 +487,24 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   revision_id right = *i++;
   I(i == heads.end());
   
-  merge_two(left, right, app.opts.branchname, string("merge"), app);
-  P(F("note: your workspaces have not been updated"));
+  merge_two(left, right, app.opts.branchname, string("merge"), app, output, automate);
+  if (!automate)
+    P(F("note: your workspaces have not been updated"));
+}
+
+CMD(merge, "merge", "", CMD_REF(tree), "",
+    N_("Merges unmerged heads of a branch"),
+    "",
+    options::opts::branch | options::opts::date | options::opts::author)
+{
+  merge(app, execid, args, std::cout, false);
 }
 
 CMD_AUTOMATE(merge, "",
     N_("Merges unmerged heads of a branch"), "",
-    options::opts::none)
+    options::opts::branch | options::opts::date | options::opts::author)
 {
-  commands::merge_cmd.exec(app, execid, args, output);
+  merge(app, execid, args, output, true);
 }
 
 CMD(propagate, "propagate", "", CMD_REF(tree),
@@ -771,7 +796,7 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   N(!is_ancestor(right, left, app),
     F("%s is already an ancestor of %s") % right % left);
 
-  merge_two(left, right, branch, string("explicit merge"), app);
+  merge_two(left, right, branch, string("explicit merge"), app, std::cout, false);
 }
 
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"), 
