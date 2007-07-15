@@ -239,6 +239,14 @@ do_remove(std::string const & path)
     F("could not remove '%s': %s") % path % os_strerror(GetLastError()));
 }
 
+void
+do_mkdir(std::string const & path)
+{
+  E(CreateDirectoryA(path.c_str(), 0) != 0,
+    F("could not create directory '%s': %s")
+    % path % os_strerror(GetLastError()));
+}
+
 static bool
 rename_clobberingly_impl(const char * from, const char * to)
 {
@@ -340,8 +348,6 @@ make_temp_file(std::string const & dir, std::string & name)
     {
       u64 v = value;
 
-      tmp.at(tmp.size() - 11) = letters[v % base];
-      v /= base;
       tmp.at(tmp.size() - 10) = letters[v % base];
       v /= base;
       tmp.at(tmp.size() -  9) = letters[v % base];
@@ -351,6 +357,8 @@ make_temp_file(std::string const & dir, std::string & name)
       tmp.at(tmp.size() -  7) = letters[v % base];
       v /= base;
       tmp.at(tmp.size() -  6) = letters[v % base];
+      v /= base;
+      tmp.at(tmp.size() -  5) = letters[v % base];
       v /= base;
     
       HANDLE h = CreateFile(tmp.c_str(), GENERIC_READ|GENERIC_WRITE,

@@ -59,7 +59,7 @@ get_ws_format()
     {
       if (directory_exists(bookkeeping_root))
         format = 1;
-      else if (directory_exists(old_bookkeeping_root))
+      else if (directory_exists(file_path() / old_bookkeeping_root_component))
         format = 0;
       else
         N(false, F("workspace required but not found"));

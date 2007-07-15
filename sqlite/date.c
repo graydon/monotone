@@ -16,9 +16,7 @@
 ** sqlite3RegisterDateTimeFunctions() found at the bottom of the file.
 ** All other code has file scope.
 **
-** $Id: date.c,v 1.62 2007/04/06 02:32:34 drh Exp $
-**
-** NOTES:
+** $Id: date.c,v 1.66 2007/05/08 21:56:00 drh Exp $
 **
 ** SQLite processes all times and dates as Julian Day numbers.  The
 ** dates and times are stored as the number of days since noon
@@ -655,12 +653,15 @@ static int parseModifier(const char *zMod, DateTime *p){
 */
 static int isDate(int argc, sqlite3_value **argv, DateTime *p){
   int i;
+  const unsigned char *z;
   if( argc==0 ) return 1;
-  if( SQLITE_NULL==sqlite3_value_type(argv[0]) || 
-      parseDateOrTime((char*)sqlite3_value_text(argv[0]), p) ) return 1;
+  if( (z = sqlite3_value_text(argv[0]))==0 || parseDateOrTime((char*)z, p) ){
+    return 1;
+  }
   for(i=1; i<argc; i++){
-    if( SQLITE_NULL==sqlite3_value_type(argv[i]) || 
-        parseModifier((char*)sqlite3_value_text(argv[i]), p) ) return 1;
+    if( (z = sqlite3_value_text(argv[i]))==0 || parseModifier((char*)z, p) ){
+      return 1;
+    }
   }
   return 0;
 }
@@ -702,8 +703,8 @@ static void datetimeFunc(
   if( isDate(argc, argv, &x)==0 ){
     char zBuf[100];
     computeYMD_HMS(&x);
-    sprintf(zBuf, "%04d-%02d-%02d %02d:%02d:%02d",x.Y, x.M, x.D, x.h, x.m,
-           (int)(x.s));
+    sqlite3_snprintf(sizeof(zBuf), zBuf, "%04d-%02d-%02d %02d:%02d:%02d",
+                     x.Y, x.M, x.D, x.h, x.m, (int)(x.s));
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
@@ -722,7 +723,7 @@ static void timeFunc(
   if( isDate(argc, argv, &x)==0 ){
     char zBuf[100];
     computeHMS(&x);
-    sprintf(zBuf, "%02d:%02d:%02d", x.h, x.m, (int)x.s);
+    sqlite3_snprintf(sizeof(zBuf), zBuf, "%02d:%02d:%02d", x.h, x.m, (int)x.s);
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
@@ -741,7 +742,7 @@ static void dateFunc(
   if( isDate(argc, argv, &x)==0 ){
     char zBuf[100];
     computeYMD(&x);
-    sprintf(zBuf, "%04d-%02d-%02d", x.Y, x.M, x.D);
+    sqlite3_snprintf(sizeof(zBuf), zBuf, "%04d-%02d-%02d", x.Y, x.M, x.D);
     sqlite3_result_text(context, zBuf, -1, SQLITE_TRANSIENT);
   }
 }
@@ -771,7 +772,8 @@ static void strftimeFunc(
   sqlite3_value **argv
 ){
   DateTime x;
-  int n, i, j;
+  u64 n;
+  int i, j;
   char *z;
   const char *zFmt = (const char*)sqlite3_value_text(argv[0]);
   char zBuf[100];
@@ -811,6 +813,9 @@ static void strftimeFunc(
   }
   if( n<sizeof(zBuf) ){
     z = zBuf;
+  }else if( n>SQLITE_MAX_LENGTH ){
+    sqlite3_result_error_toobig(context);
+    return;
   }else{
     z = sqliteMalloc( n );
     if( z==0 ) return;
@@ -823,7 +828,7 @@ static void strftimeFunc(
     }else{
       i++;
       switch( zFmt[i] ){
-        case 'd':  sprintf(&z[j],"%02d",x.D); j+=2; break;
+        case 'd':  sqlite3_snprintf(3, &z[j],"%02d",x.D); j+=2; break;
         case 'f': {
           double s = x.s;
           if( s>59.999 ) s = 59.999;
@@ -831,7 +836,7 @@ static void strftimeFunc(
           j += strlen(&z[j]);
           break;
         }
-        case 'H':  sprintf(&z[j],"%02d",x.h); j+=2; break;
+        case 'H':  sqlite3_snprintf(3, &z[j],"%02d",x.h); j+=2; break;
         case 'W': /* Fall thru */
         case 'j': {
           int nDay;             /* Number of days since 1st day of year */
@@ -844,25 +849,30 @@ static void strftimeFunc(
           if( zFmt[i]=='W' ){
             int wd;   /* 0=Monday, 1=Tuesday, ... 6=Sunday */
             wd = ((int)(x.rJD+0.5)) % 7;
-            sprintf(&z[j],"%02d",(nDay+7-wd)/7);
+            sqlite3_snprintf(3, &z[j],"%02d",(nDay+7-wd)/7);
             j += 2;
           }else{
-            sprintf(&z[j],"%03d",nDay+1);
+            sqlite3_snprintf(4, &z[j],"%03d",nDay+1);
             j += 3;
           }
           break;
         }
-        case 'J':  sprintf(&z[j],"%.16g",x.rJD); j+=strlen(&z[j]); break;
-        case 'm':  sprintf(&z[j],"%02d",x.M); j+=2; break;
-        case 'M':  sprintf(&z[j],"%02d",x.m); j+=2; break;
+        case 'J': {
+          sqlite3_snprintf(20, &z[j],"%.16g",x.rJD);
+          j+=strlen(&z[j]);
+          break;
+        }
+        case 'm':  sqlite3_snprintf(3, &z[j],"%02d",x.M); j+=2; break;
+        case 'M':  sqlite3_snprintf(3, &z[j],"%02d",x.m); j+=2; break;
         case 's': {
-          sprintf(&z[j],"%d",(int)((x.rJD-2440587.5)*86400.0 + 0.5));
+          sqlite3_snprintf(30,&z[j],"%d",
+                           (int)((x.rJD-2440587.5)*86400.0 + 0.5));
           j += strlen(&z[j]);
           break;
         }
-        case 'S':  sprintf(&z[j],"%02d",(int)x.s); j+=2; break;
+        case 'S':  sqlite3_snprintf(3,&z[j],"%02d",(int)x.s); j+=2; break;
         case 'w':  z[j++] = (((int)(x.rJD+1.5)) % 7) + '0'; break;
-        case 'Y':  sprintf(&z[j],"%04d",x.Y); j+=strlen(&z[j]); break;
+        case 'Y':  sqlite3_snprintf(5,&z[j],"%04d",x.Y); j+=strlen(&z[j]);break;
         case '%':  z[j++] = '%'; break;
       }
     }

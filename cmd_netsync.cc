@@ -29,7 +29,7 @@ static const var_key default_include_pattern_key(var_domain("database"),
 static const var_key default_exclude_pattern_key(var_domain("database"),
                                                  var_name("default-exclude-pattern"));
 
-static string const ws_internal_db_file_name("mtn.db");
+static char const ws_internal_db_file_name[] = "mtn.db";
 
 static void
 extract_address(args_vector const & args,

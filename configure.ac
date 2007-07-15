@@ -47,8 +47,8 @@ fi
 
 # Checks for header files.
 AC_HEADER_STDC
-# Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
-# the tests twice.
+dnl Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
+dnl the tests twice.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
 		  sys/socket.h sys/time.h termios.h errno.h],,,
 		 [AC_INCLUDES_DEFAULT()])
@@ -127,8 +127,6 @@ AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 # check for all things boost-related
 BOOST_VERSION_CHECK
 BOOST_VERSION_SPECIFIC_BUGS
-
-MTN_BOOST_LIB_FILESYSTEM
 MTN_BOOST_LIB_REGEX
 
 # more complex library checks

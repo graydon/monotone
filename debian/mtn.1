@@ -1,0 +1,330 @@
+.TH MTN 1 2007-06-09 monotone monotone
+.SH NAME
+mtn \- distributed version control system
+.SH SYNOPSIS
+\fBmtn\fP \fI[options] <command> [parameters]\fP
+.SH WARNING
+.P
+This manpage is not well-maintained; it is a summary of monotone's
+capabilities, and probably contains inaccuracies.  For the complete,
+accurate manual, including tutorial, concepts, and full reference
+documentation, please use \fBinfo monotone\fP or refer to
+\fBhttp://monotone.ca/docs/\fP.  (On Debian systems, a local copy of
+the HTML manual is available in the \fBmonotone-doc\fP package as
+\fB/usr/share/doc/monotone-doc/monotone.html\fP, along with a
+printable PDF copy.)  The developers will gratefully accept patches to
+arrange that this manpage, the \fI--help\fP output, and the main
+manual are kept in sync mechanically.
+.SH DESCRIPTION
+.P
+Monotone is a version control system, which allows you to keep old
+versions of files, as well as special \fImanifest files\fP which
+describe the location of files in a tree. Unlike other systems,
+versions in monotone are \fIidentified\fP by cryptographic hash, and
+operations are authenticated by individual users' evaluating
+cryptographic signatures on meta-data, rather than any central
+authority.
+.P
+Monotone keeps a collection of versions in a single-file relational
+database. It is essentially serverless, using network servers only as
+untrusted communication facilities. A monotone database is a regular
+file, which contains all the information needed to extract previous
+versions of files, verify signatures, merge and modify versions, and
+communicate with network servers.
+.SH COMMANDS
+.TP 
+\fBcomment\fP \fI<id>\fP
+Write a comment cert for a revision.
+.TP
+\fBapprove\fP \fI<id>\fP
+Make a "branch" cert approving of a revision's membership in a branch.
+.TP
+\fBdisapprove\fP \fI<id1>\fP
+Disapprove of a revision, committing the inverse changes as as a
+descendant of the disapproved revision.
+.TP
+\fBtag\fP \fI<id> <tagname>\fP
+Put a symbolic tag cert on a revision.
+.TP
+\fBtestresult\fP \fI<id> (0|1|true|false|yes|no|pass|fail)\fP
+Indicate a passing or failing test result on a revision.
+.TP
+\fBdiff \fI[--revision=<id1> [--revision=<id2>] ] [<pathname>...]\fP
+Show diffs between workspace and database.
+.TP
+\fBstatus \fI[<pathname>...]\fP
+Show status of workspace.
+.TP
+\fBlog\fP \fI[id] \fP
+Show historical log of revisions, starting from workspace
+base revision, or \fI[id]\fP if given.
+.TP
+\fBcert\fP \fI<id> <certname> [certval]\fP
+Create a custom cert for a revision. Reads cert value
+from stdin if no value given on command line.
+.TP
+\fBgenkey\fP \fI<keyid>\fP
+Generate an RSA key-pair and store it in the database.
+.TP
+\chkeypass\fP \fI<keyid>\fP
+Change passphrase of the private half of a key.
+.TP
+\fBlist certs\fP \fI<id>\fP
+List certs associated with revision.
+.TP
+\fBlist keys\fP \fI[partial-id]\fP
+List keys matching glob, or list all keys if no glob given.
+.TP
+\fBlist branches\fP
+List all branches.
+.TP
+\fBlist tags\fP
+List all tags.
+.TP
+\fBlist vars \fI[<domain>]\fP
+List all vars (possibly limited by domain).
+.TP
+\fBlist unknown \fI[<pathname...]\fP
+List files in workspace, but not in revision's manifest or
+work list.
+.TP
+\fBlist ignored \fI[<pathname...]\fP
+List files intentionally ignored due to the ignore_file hook.
+.TP
+\fBlist missing \fI[<pathname...]\fP
+List files in revision's manifest, but not in workspace.
+.TP
+\fBlist changed \fI[<pathname...]\fP
+List files in workspace that have changed compared to the base
+revision.
+.TP
+\fBfdata\fP \fI<id>\fP
+Write file data packet to stdout.
+.TP
+\fBfdelta\fP \fI<oldid> <newid>\fP
+Write file delta packet to stdout.
+.TP
+\fBmdata\fP \fI<id>\fP
+Write manifest data packet to stdout.
+.TP
+\fBmdelta\fP \fI<oldid> <newid>\fP
+Write manifest delta packet to stdout.
+.TP
+\fBcerts\fP \fI<id>\fP
+Write revision cert packets to stdout.
+.TP
+\fBrdata\fP \fI<id>\fP
+Write revision data packet to stdout.
+.TP
+\fBprivkey\fP \fI<id>\fP
+Write private key packet to stdout.
+.TP
+\fBpubkey\fP \fI<id>\fP
+Write public key packet to stdout.
+.TP
+\fBread\fP \fI[<file1> [<file2> [...]]]\fP
+Read packets from files or stdin. 
+.TP
+\fBcvs_import\fP \fI<cvsroot>/<module>\fP
+Import all versions in CVS module. Reconstructs revisions and converts
+metadata to certificates. A private signing key must already exist in
+the database.
+.TP
+\fBrcs_import\fP \fI<rcsfile> ...\fP
+Import all file versions in RCS files. Does not reconstruct revisions
+across the entire tree.  You do not want this command, it is for
+debugging; use cvs_import.
+.TP
+\fBcheckout\fP \fI[--revision=revision-id]\fP \fI[<directory>]\fP
+Check out revision from database.
+.TP
+\fBco\fP \fI[--revision=revision-id]\fP \fI[<directory>]\fP
+Check out revision from database; an alias for \fBcheckout\fP.
+.TP
+\fBcat\fP \fI(file|manifest) <id>\fP
+Write file or manifest from database to stdout.
+.TP
+\fBheads\fP
+Show unmerged heads of branch, or report when branch is merged.
+.TP
+\fBmerge\fP
+Merge unmerged heads of branch.
+.TP
+\fBadd\fP \fI<pathname> [...]\fP
+Add files to workspace. adding a file does not copy it into the database,
+merely adds it to the work list. You must \fBcommit\fP your changes in order
+to copy added files to the database.
+.TP
+\fBdrop\fP \fI<pathname> [...]\fP
+Drop files from workspace. Files are not deleted from workspace, 
+merely noted as removals in the work list.
+.TP
+\fBrename\fP \fI<src> \fI<dst>\fP
+Rename files from \fI<src> \fP to \fI<dst> \fP in workspace.
+.TP
+\fBcommit\fP \fI[(--message=<log message>|--message-file=<file>)] [<pathname>...]\fP
+Commit workspace to database.  Each commit has a changelog message
+associated with it.  If --message is provided on the command line, it
+is used; if --message-file is provided, the content of the
+named file will be used as a commit message. If the filename is '-'
+the commit message will be read from standard input.  Otherwise a log
+message editor will be invoked.  If the file _MTN/log exists
+and is non-empty, its content is used to prefill the editor.  You
+cannot specify both --message and --message-file at the same time, and
+if _MTN/log exists and is non-empty, you can cannot specify either of them
+at all.
+.TP
+\fBupdate\fP  \fI[revision-id]\fP
+Update workspace.
+.TP
+\fBrefresh_inodeprints\fP 
+Turn on inodeprints mode, and force a cache refresh.
+.TP
+\fBpush\fP \fI[<host> [<glob>]]\fP 
+Push contents of \fI<glob>\fP to database on \fI<host>\fP.
+.TP
+\fBpull\fP \fI[<host> [<glob>]]\fP 
+Push contents of \fI<glob>\fP from database on \fI<host>\fP.
+.TP
+\fBsync\fP \fI<host> <glob>\fP 
+Sync contents of \fI<glob>\fP with database on \fI<host>\fP.
+.TP
+\fBserve\fP \fI[--pid-file=<path>] [--bind=[<host>][:<port>]] <glob> [--exclude=<exclude-glob>]\fP 
+Serve contents of \fI<glob>\fP at network address \fI<host>\fP, on the
+port \fI<port>\fP.  If \fI<port>\fP isn't given, 4691 is used. If a
+--pid-file option is provided on the command line, monotone will store
+the process id of the server in the specified file.
+.TP
+\fBset\fP \fI<domain> <name> <value>\fP 
+Set the db var \fI<name>\fP in domain \fI<domain>\fP to value
+\fI<value>\fP. 
+.TP
+\fBunset\fP \fI<domain> <name>\fP 
+Delete any setting for db var \fI<name>\fP in domain \fI<domain>\fP.
+.TP
+\fBautomate\fP \fI(interface_version|heads|ancestors|attributes|parents|descendents|children|graph|erase_ancestors|toposort|ancestry_difference|leaves|inventory|stdio|certs|select)\fP
+Scripting interface.
+.TP
+\fBdb\fP \fI(init|info|version|dump|load|migrate|rebuild|execute|check)\fP
+Manipulate database state.
+.SH OPTIONS
+.P
+Command line options override environment variables and
+settings in lua scripts (such as \fB.monotonerc\fP)
+.TP
+\fB--help\fP
+Print help message.
+.TP
+\fB--debug\fP
+Turn on debugging log on standard error stream. This is very
+verbose. Default is to be silent, unless an error occurs, in which
+case failure log is dumped.
+.TP
+\fB--quiet\fP
+Turn off normal progress messages.
+.TP
+\fB--dump=\fP\fI<file>\fP
+Dump debugging log to \fIfile\fP on failure.
+.TP
+\fB--nostd\fP
+Do not evaluate "standard" lua hooks compiled into \fBmonotone\fP.
+.TP
+\fB--norc\fP
+Do not load lua hooks from user's \fB~/.monotonerc\fP file.
+.TP
+\fB--rcfile=\fP\fI<file>\fP
+Load extra lua hooks from \fIfile\fP (may be given multiple times).
+.TP
+\fB--db=\fP\fI<file>\fP
+Use database in \fIfile\fP.
+.TP
+\fB--key=\fP\fI<keyid>\fP
+Use \fIkeyid\fP for operations which produce RSA signatures. Default
+is inferred from presence of unique private key in database. Can also
+be customized on a per-branch basis with hook function 
+\fBget_branch_key(branchname)\fP.
+.TP
+\fB-k\fP \fI<keyid>\fP
+An alias for \fB--key=\fP\fI<keyid>\fP
+.TP
+\fB--branch=\fP\fI<branchname>\fP
+Use \fIbranchname\fP for operations on a branch. Default is inferred
+in operations on existing branches (commit, update, etc).
+.TP
+\fB-b\fP \fI<branchname>\fP
+An alias for \fB--branch=\fP\fI<branchname>\fP
+.TP
+\fB--ticket=\fP\fIdot|count|none\fP
+Use the given method to print tickers.  The \fBcount\fP method prints
+the count for each ticker on one line, incrementing the numbers in
+place, while the \fBdot\fP method prints a continuous string of
+characters (like some programs provide a progress line of dots).
+\fBnone\fP prints nothing.  The default is \fBcount\fP.
+.TP
+\fB--revision=\fP\fI<id>\fP
+Used to specify one or more revision ids to various commands.
+.TP
+\fB-r\fP \fI<id>\fP
+An alias for \fB--revision=\fP\fI<id>\fP
+.TP
+\fB--message=\fI<log message>\fP
+Use the given message as the changelog when committing a new revision
+rather than invoking the log message editor. Currently this option only
+applies to the commit command but it may also apply to the comment
+command in the future.
+This option is alternative to --message-file
+.TP
+\fB-m \fI<log message>\fP
+An alias for \fB--message=\fI<log message>\fP
+.TP
+\fB--message-file=\fI<message file>\fP
+Use the content of the given file as the changelog when committing a
+new revision rather than invoking the log message editor. If the passed filename is '-' the changelog message will be read from standard input.
+Currently this option only applies to the commit command but it may also apply
+to the comment command in the future.
+This option is alternative to --message.
+.TP
+\fB--author=\fI<author email>\fP
+Use the given author as the value of the "author" cert when committing
+a new revision, rather than the default author.  Useful when
+committing a patch on behalf of someone else, or when importing
+history from another version control system.
+.TP
+\fB--date=\fI<date and time>\fP
+Use the given given date and time as value of the "date" cert when
+committing a new revision, rather than the current time.  Useful when
+importing history from another version control system.
+.TP
+\fB--root=\fI<root dir>\fP
+Stop the search for a workspace (containing the _MTN directory)
+at the specified root directory rather than at the physical root of the
+filesystem.
+.TP
+\fB--xargs=\fI<file>\fP
+Inject the contents of the file in place among the command line
+arguments.  This may be useful in case the command line would
+otherwise become too long for your system.  This option can be used
+more than once if needed.
+.TP
+\fB-@ \fI<file>\fP
+An alias for \fB--xargs=\fI<file>\fP.
+.SH ENVIRONMENT
+.TP
+\fBEDITOR\fP
+Used to edit comments, log messages, etc.
+.TP
+\fBVISUAL\fP
+Used in preference to \fBEDITOR\fP, if set.
+.SH FILES
+.TP
+\fB$HOME/.monotonerc\fP
+A lua script, used as a customization file.
+.SH "SEE ALSO"
+.P
+http://monotone.ca/
+.SH BUGS
+.P
+see http://savannah.nongnu.org/bugs/?group=monotone
+.SH AUTHOR
+.P
+graydon hoare <graydon@pobox.com>

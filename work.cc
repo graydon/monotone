@@ -44,11 +44,11 @@ using boost::lexical_cast;
 
 // workspace / book-keeping file code
 
-static string const inodeprints_file_name("inodeprints");
-static string const local_dump_file_name("debug");
-static string const options_file_name("options");
-static string const user_log_file_name("log");
-static string const revision_file_name("revision");
+static char const inodeprints_file_name[] = "inodeprints";
+static char const local_dump_file_name[] = "debug";
+static char const options_file_name[] = "options";
+static char const user_log_file_name[] = "log";
+static char const revision_file_name[] = "revision";
 
 static void
 get_revision_path(bookkeeping_path & m_path)
@@ -67,7 +67,7 @@ get_options_path(bookkeeping_path & o_path)
 static void
 get_options_path(system_path const & workspace, system_path & o_path)
 {
-  o_path = workspace / bookkeeping_root.as_internal() / options_file_name;
+  o_path = workspace / bookkeeping_root_component / options_file_name;
   L(FL("options path is %s") % o_path);
 }
 
@@ -733,7 +733,7 @@ path_for_detached_nids()
 static inline bookkeeping_path
 path_for_detached_nid(node_id nid)
 {
-  return path_for_detached_nids() / lexical_cast<string>(nid);
+  return path_for_detached_nids() / path_component(lexical_cast<string>(nid));
 }
 
 // Attaching/detaching the root directory:
@@ -769,11 +769,11 @@ editable_working_tree::detach_node(file_path const & src_pth)
       read_directory(src_pth, files, dirs);
       for (vector<path_component>::const_iterator i = files.begin();
            i != files.end(); ++i)
-        move_file(src_pth / *i, dst_pth / (*i)());
+        move_file(src_pth / *i, dst_pth / *i);
       for (vector<path_component>::const_iterator i = dirs.begin();
            i != dirs.end(); ++i)
         if (!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())))
-          move_dir(src_pth / *i, dst_pth / (*i)());
+          move_dir(src_pth / *i, dst_pth / *i);
       root_dir_attached = false;
     }
   else
@@ -843,13 +843,13 @@ editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
            i != files.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
-          move_file(src_pth / (*i)(), dst_pth / *i);
+          move_file(src_pth / *i, dst_pth / *i);
         }
       for (vector<path_component>::const_iterator i = dirs.begin();
            i != dirs.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
-          move_dir(src_pth / (*i)(), dst_pth / *i);
+          move_dir(src_pth / *i, dst_pth / *i);
         }
       delete_dir_shallow(src_pth);
       root_dir_attached = true;

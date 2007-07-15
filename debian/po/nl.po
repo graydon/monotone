@@ -1,0 +1,54 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: monotone\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-03-03 04:32+0100\n"
+"PO-Revision-Date: 2007-03-09 19:23+0100\n"
+"Last-Translator: Bart Cornelis <cobaco@skolelinux.no>\n"
+"Language-Team: debian-l10n-dutch <debian-l10n-dutch@lists.debian.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Dutch\n"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid "Automatically manage monotone database?"
+msgstr "Wilt u dat de monotone-database automatisch beheerd wordt?"
+
+#. Type: boolean
+#. Description
+#: ../monotone-server.templates:1001
+msgid "Select this option to automatically manage the monotone database. If selected, the database will automatically be created. Also when upgrading, the database will be automatically migrated if necessary."
+msgstr "Kies deze optie als u wilt dat de monotone-database automatisch beheerd wordt. Indien u hiervoor kiest wordt de database automatisch aangemaakt, en wordt de database -indien nodig- tijdens opwaarderingen automatisch gemigreerd."
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid "Monotone key id:"
+msgstr "Monotone sleutel-id:"
+
+#. Type: string
+#. Description
+#: ../monotone-server.templates:2001
+msgid "Enter the id of the key your monotone server will use. The key id is typically an email address."
+msgstr "Geef de id aan van de sleutel die uw monotoneserver zal gebruiken. De sleutel-id is meestal een e-mail-adres."
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid "Monotone key passphrase:"
+msgstr "Wachtzin voor de monotone-sleutel:"
+
+#. Type: password
+#. Description
+#: ../monotone-server.templates:3001
+msgid "Please choose a passphrase for your monotone key. If left blank, one will be generated for you."
+msgstr "Gelieve een wachtzin voor uw monotone-sleutel te kiezen. Als u dit leeg laat wordt er één aangemaakt voor u."
+

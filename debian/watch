@@ -1,2 +1,3 @@
 version=3
-http://www.monotone.ca/downloads/([\d\.]+)/ monotone-([\d\.]+)\.tar\.gz debian uupdate
+http://www.monotone.ca/downloads/([\d\.]+)/ \
+	monotone-([\d\.]+)\.tar\.gz debian uupdate

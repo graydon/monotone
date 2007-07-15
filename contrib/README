@@ -21,13 +21,6 @@ licenses.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
 
-  -- monotone-import.pl: a Perl hack to provide an approximate of what
-     what 'cvs import' does.  The difference is that you have to decide
-     yourself what the import branch is called, and you have to propagate
-     the resulting revision to your development branch if you have one.
-     For a manual, do `perl monotone-import.pl --man'.
-     To get a help text, do `perl monotone-import.pl --help'.
-
   -- monoprof.sh: A simple monotone profiling script.
 
   -- Log2Gxl.java: Removed. Now in branch net.venge.monotone.contrib.monotree
@@ -56,3 +49,6 @@ licenses.
   -- mtn_makepermissions: creates read-permissions and write-permissions from
      files in the subdirectories read-permissions.d and write-permissions.d,
      Debian-style.
+
+  -- monotone-cluster-push.lua: A simple script to push changes to other
+     servers upon receiving them.  This will only work on a server instance.

@@ -163,16 +163,6 @@ AC_DEFUN([MTN_NEED_BOOST_LIB],
  AC_SUBST(BOOSTLIBS)
 ])
 
-AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
-[MTN_NEED_BOOST_LIB([filesystem],
-  [AC_LANG_PROGRAM([[
-      #include <boost/filesystem/path.hpp>
-      #include <boost/filesystem/operations.hpp>
-      using namespace boost::filesystem;
-    ]],[[
-      exists(path("/boot"));
-    ]])])])
-
 AC_DEFUN([MTN_BOOST_LIB_REGEX],
 [MTN_NEED_BOOST_LIB([regex],
   [AC_LANG_PROGRAM([[

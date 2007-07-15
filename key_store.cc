@@ -88,7 +88,7 @@ key_store::read_key_dir()
     {
       L(FL("reading keys from file '%s'") % (*i));
       data dat;
-      read_data(key_dir / (*i)(), dat);
+      read_data(key_dir / *i, dat);
       istringstream is(dat());
       read_packets(is, kr, app);
     }
@@ -177,27 +177,18 @@ key_store::get_key_pair(rsa_keypair_id const & ident,
   kp = i->second;
 }
 
-namespace
-{
-  // filename is the keypair id, except that some characters can't be put in
-  // filenames (especially on windows).
-  void
-  get_filename(rsa_keypair_id const & ident, string & filename)
-  {
-    filename = ident();
-    for (unsigned int i = 0; i < filename.size(); ++i)
-      if (string("+").find(filename[i]) != string::npos)
-        filename.at(i) = '_';
-  }
-}
-
 void
 key_store::get_key_file(rsa_keypair_id const & ident,
                  system_path & file)
 {
-  string leaf;
-  get_filename(ident, leaf);
-  file = key_dir /  leaf;
+  // filename is the keypair id, except that some characters can't be put in
+  // filenames (especially on windows).
+  string leaf = ident();
+  for (unsigned int i = 0; i < leaf.size(); ++i)
+    if (leaf.at(i) == '+')
+      leaf.at(i) = '_';
+  
+  file = key_dir / path_component(leaf);
 }
 
 void
