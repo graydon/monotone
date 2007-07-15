@@ -100,7 +100,7 @@ time_t get_last_write_time(string const & name)
   // Unix: seconds since 12:00 AM, January 1, 1970 UTC.  The offset is
   // taken verbatim from MSDN.
   LONGLONG ft64 = ((LONGLONG)ft.dwHighDateTime) << 32 + ft.dwLowDateTime;
-  return (time_t)((ft64/10000000) - 11644473600);
+  return (time_t)((ft64/10000000) - 11644473600LL);
 
 #else
 
