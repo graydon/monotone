@@ -34,10 +34,12 @@ OPT(automate_stdio_size, "automate-stdio-size", size_t, 32768,
 #endif
 
 OPTSET(bind_opts)
-OPTVAR(bind, utf8, bind_address, )
-OPTVAR(bind, utf8, bind_port, )
-OPTVAR(bind, bool, bind_stdio, false)
-OPTVAR(bind, bool, use_transport_auth, true)
+OPTVAR(bind_opts, utf8, bind_address, )
+OPTVAR(bind_opts, utf8, bind_port, )
+OPTVAR(bind_opts, bool, bind_stdio, false)
+OPTVAR(bind_opts, bool, use_transport_auth, true)
+OPTVAR(bind_opts, bool, bind_local_socket, false)
+OPTVAR(bind_opts, system_path, bind_path, )
 
 OPTION(bind_opts, bind, true, "bind",
        gettext_noop("address:port to listen on (default :4691)"))
@@ -72,6 +74,7 @@ OPTION(bind_opts, bind, true, "bind",
         }
     }
   bind_stdio = false;
+  bind_local_socket = false;
   bind_address = utf8(addr_part);
   bind_port = utf8(port_part);
 }
@@ -88,6 +91,15 @@ OPTION(bind_opts, bind_stdio, false, "stdio",
 #ifdef option_bodies
 {
   bind_stdio = true;
+}
+#endif
+
+OPTION(bind_opts, bind_local_socket, true, "bind-local-socket",
+       gettext_noop("bind to a local domain socket"))
+#ifdef option_bodies
+{
+  bind_local_socket = true;
+  bind_path = system_path(arg);
 }
 #endif
 

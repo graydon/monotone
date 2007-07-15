@@ -426,7 +426,8 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
                  N_("Serves the database to connecting clients"),
                  "",
                  options::opts::bind | options::opts::pidfile |
-                 options::opts::bind_stdio | options::opts::no_transport_auth)
+                 options::opts::bind_stdio | options::opts::no_transport_auth |
+                 options::opts::bind_local_socket )
 {
   if (!args.empty())
     throw usage(execid);
@@ -443,7 +444,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
     }
   else
     {
-      E(app.opts.bind_stdio,
+      E(app.opts.bind_stdio || app.opts.bind_local_socket,
 	F("The --no-transport-auth option is only permitted in combination with --stdio"));
     }
 

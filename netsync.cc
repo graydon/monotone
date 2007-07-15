@@ -14,6 +14,7 @@
 #include <list>
 #include <deque>
 #include <stack>
+#include <sstream>
 
 #include <time.h>
 
@@ -2765,7 +2766,14 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (!app.opts.bind_address().empty())
+          if (app.opts.bind_local_socket)
+            {
+              try_again = use_ipv6 = false;
+              std::ostringstream local_url_ss;
+              local_url_ss << "local://" << app.opts.bind_path;
+              addr.add_address(local_url_ss.str().c_str());
+            }
+          else if (!app.opts.bind_address().empty())
             addr.add_address(app.opts.bind_address().c_str(), default_port);
           else
             addr.add_all_addresses (default_port);
