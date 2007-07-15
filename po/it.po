@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-07-15 12:24+0100\n"
+"PO-Revision-Date: 2007-07-15 12:29+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -2246,7 +2246,7 @@ msgstr ""
 
 #: cmd_ws_commit.cc:1351
 msgid "If no directory is given, defaults to the current workspace."
-msgstr ""
+msgstr "Se non è specificata nessuna directory, verrà utilizzato lo spazio di lavoro attuale."
 
 #: cmd_ws_commit.cc:1364
 msgid "Refreshes the inodeprint cache"
@@ -3525,7 +3525,7 @@ msgid "error: %s"
 msgstr "errore: %s"
 
 #: netsync.cc:2385
-#: netsync.cc:2899
+#: netsync.cc:2825
 #, c-format
 msgid "connecting to %s"
 msgstr "connessione a ‘%s’"
@@ -3643,11 +3643,6 @@ msgstr "Errore di rete con il peer ‘%s’, mi scollego"
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "ricevuti dati OOB dal peer ‘%s’, mi scollego"
-
-#: netsync.cc:2926
-#, c-format
-msgid "Network error: %s"
-msgstr "Errore di rete: %s"
 
 #: netsync.cc:2979
 #, c-format
@@ -4967,7 +4962,7 @@ msgstr ""
 #: unix/ssh_agent_platform.cc:103
 #, c-format
 msgid "stream read failed (%i)"
-msgstr ""
+msgstr "fallita lettura da stream (%i)"
 
 #: unix/ssh_agent_platform.cc:111
 #, c-format
