@@ -517,8 +517,18 @@ any_path::dirname() const
   string::size_type sep = s.rfind('/');
   if (sep == string::npos)
     return any_path();
-  if (sep == s.size() - 1) // dirname() of the root directory is itself
+
+  // dirname() of the root directory is itself
+  if (sep == s.size() - 1)
     return *this;
+
+  // dirname() of a direct child of the root is the root
+  if (sep == 0 || (sep == 1 && s[1] == '/')
+#ifdef WIN32
+      || (sep == 2 && s[1] == ':')
+#endif
+      )
+    return any_path(s, 0, sep+1);
 
   return any_path(s, 0, sep);
 }
@@ -540,10 +550,19 @@ system_path::dirname() const
 {
   string const & s = data;
   string::size_type sep = s.rfind('/');
-  if (sep == string::npos)
-    return system_path();
-  if (sep == s.size() - 1) // dirname() of the root directory is itself
+  I(sep != string::npos);
+
+  // dirname() of the root directory is itself
+  if (sep == s.size() - 1)
     return *this;
+
+  // dirname() of a direct child of the root is the root
+  if (sep == 0 || (sep == 1 && s[1] == '/')
+#ifdef WIN32
+      || (sep == 2 && s[1] == ':')
+#endif
+      )
+    return system_path(s, 0, sep+1);
 
   return system_path(s, 0, sep);
 }
@@ -1304,6 +1323,33 @@ UNIT_TEST(paths, basename)
                           % p->in % pc % p->out);
     }
 
+  // any_path::basename() should return exactly the same thing that
+  // the corresponding specialized basename() does, but with type any_path.
+  UNIT_TEST_CHECKPOINT("any_path basenames");
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      any_path ap(file_path_internal(p->in));
+      path_component pc(ap.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+  for (struct t const *p = bp_cases; p->in; p++)
+    {
+      any_path ap(bookkeeping_path(p->in));
+      path_component pc(ap.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
+  for (struct t const *p = sp_cases; p->in; p++)
+    {
+      any_path ap(system_path(p->in));
+      path_component pc(ap.basename());
+      UNIT_TEST_CHECK_MSG(pc == path_component(p->out),
+                          FL("basename('%s') = '%s' (expect '%s')")
+                          % p->in % pc % p->out);
+    }
 
   initial_abs_path.unset();
 }
@@ -1317,13 +1363,45 @@ UNIT_TEST(paths, dirname)
   };
   // file_paths cannot be absolute, but may be the empty string.
   struct t const fp_cases[] = {
-    { "",            ""    },
-    { "foo",         "" },
-    { "foo/bar",     "foo" },
+    { "",            ""        },
+    { "foo",         ""        },
+    { "foo/bar",     "foo"     },
     { "foo/bar/baz", "foo/bar" },
     { 0, 0 }
   };
 
+  // system_paths must be absolute.  this relies on the setting of
+  // initial_abs_path below.
+  struct t const sp_cases[] = {
+    { "/",          "/"           },
+    { "//",         "//"          },
+    { "foo",        "/a/b"        },
+    { "/foo",       "/"           },
+    { "//foo",      "//"          },
+    { "~/foo",      "~"           },
+    { "foo/bar",    "/a/b/foo"    },
+    { "/foo/bar",   "/foo"        },
+    { "//foo/bar",  "//foo"       },
+    { "~/foo/bar",  "~/foo"       },
+#ifdef WIN32
+    { "c:",         "c:"          },
+    { "c:foo",      "c:"          },
+    { "c:/",        "c:/"         },
+    { "c:/foo",     "c:/"         },
+    { "c:/foo/bar", "c:/foo/bar"  },
+#else
+    { "c:",         "/a/b"        },
+    { "c:foo",      "/a/b"        },
+    { "c:/",        "/a/b"        },
+    { "c:/foo",     "/a/b/c:"     },
+    { "c:/foo/bar", "/a/b/c:/foo" },
+#endif
+    { 0, 0 }
+  };
+
+  initial_abs_path.unset();
+  
+  UNIT_TEST_CHECKPOINT("file_path dirnames");
   for (struct t const *p = fp_cases; p->in; p++)
     {
       file_path fp = file_path_internal(p->in);
@@ -1332,6 +1410,43 @@ UNIT_TEST(paths, dirname)
                           FL("dirname('%s') = '%s' (expect '%s')")
                           % p->in % dn % p->out);
     }
+
+
+  initial_abs_path.set(system_path("/a/b"), true);
+  UNIT_TEST_CHECKPOINT("system_path dirnames");
+  for (struct t const *p = sp_cases; p->in; p++)
+    {
+      system_path fp(p->in);
+      system_path dn(fp.dirname());
+
+      UNIT_TEST_CHECK_MSG(dn == system_path(p->out),
+                          FL("dirname('%s') = '%s' (expect '%s')")
+                          % p->in % dn % p->out);
+    }
+
+  // any_path::dirname() should return exactly the same thing that
+  // the corresponding specialized dirname() does, but with type any_path.
+  UNIT_TEST_CHECKPOINT("any_path dirnames");
+  for (struct t const *p = fp_cases; p->in; p++)
+    {
+      any_path ap(file_path_internal(p->in));
+      any_path dn(ap.dirname());
+      any_path rf(file_path_internal(p->out));
+      UNIT_TEST_CHECK_MSG(dn.as_internal() == rf.as_internal(),
+                          FL("dirname('%s') = '%s' (expect '%s')")
+                          % p->in % dn % p->out);
+    }
+  for (struct t const *p = sp_cases; p->in; p++)
+    {
+      any_path ap(system_path(p->in));
+      any_path dn(ap.dirname());
+      any_path rf(system_path(p->out));
+      UNIT_TEST_CHECK_MSG(dn.as_internal() == rf.as_internal(),
+                          FL("dirname('%s') = '%s' (expect '%s')")
+                          % p->in % dn % p->out);
+    }
+
+  initial_abs_path.unset();
 }
 
 UNIT_TEST(paths, depth)

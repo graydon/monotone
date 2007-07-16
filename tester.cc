@@ -242,6 +242,29 @@ string dirname(string const & s)
   return s.substr(0, sep);
 }
 
+char * do_mkdtemp(char const * parent)
+{
+#ifdef WIN32
+#error do_mkdtemp needs to be ported to Windows
+#elif defined HAVE_MKDTEMP
+
+  char * tmpdir = new char[strlen(parent) + sizeof "/mtXXXXXX"];
+
+  strcpy(tmpdir, parent);
+  strcat(tmpdir, "/mtXXXXXX");
+
+  char * result = mkdtemp(tmpdir);
+
+  E(result != 0,
+    F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(errno));
+  I(result == tmpdir);
+  return tmpdir;
+  
+#else
+#error do_mkdtemp needs to be ported to this platform
+#endif
+}
+
 map<string, string> orig_env_vars;
 
 string source_dir;
@@ -549,6 +572,32 @@ LUAEXT(mkdir, )
       return 1;
     }
 }
+
+LUAEXT(make_temp_dir, )
+{
+  try
+    {
+      char const * parent;
+      parent = getenv("TMPDIR");
+      if (parent == 0)
+        parent = getenv("TEMP");
+      if (parent == 0)
+        parent = getenv("TMP");
+      if (parent == 0)
+        parent = "/tmp";
+
+      char * tmpdir = do_mkdtemp(parent);
+      lua_pushstring(L, tmpdir);
+      delete [] tmpdir;
+      return 1;
+    }
+  catch(informative_failure & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
 
 LUAEXT(mtime, )
 {
