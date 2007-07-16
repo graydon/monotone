@@ -14,7 +14,6 @@
 #include <list>
 #include <deque>
 #include <stack>
-#include <sstream>
 
 #include <time.h>
 
@@ -2747,8 +2746,6 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
 
-  if (!app.opts.bind_port().empty())
-    default_port = std::atoi(app.opts.bind_port().c_str());
 #ifdef USE_IPV6
   bool use_ipv6=true;
 #else
@@ -2766,17 +2763,23 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (app.opts.bind_local_socket)
+          if (!address().empty())
             {
-              try_again = use_ipv6 = false;
-              std::ostringstream local_url_ss;
-              local_url_ss << "local://" << app.opts.bind_path;
-              addr.add_address(local_url_ss.str().c_str());
+              size_t l_colon = address().find(':');
+              size_t r_colon = address().rfind(':');
+              
+              if (l_colon == r_colon && l_colon == 0)
+                {
+                  // can't be an IPv6 address as there is only one colon
+                  // must be a : followed by a port
+                  string port_str = address().substr(1);
+                  addr.add_all_addresses(std::atoi(port_str.c_str()));
+                }
+              else
+                addr.add_address(address().c_str(), default_port);
             }
-          else if (!app.opts.bind_address().empty())
-            addr.add_address(app.opts.bind_address().c_str(), default_port);
           else
-            addr.add_all_addresses (default_port);
+            addr.add_all_addresses(default_port);
 
           // If se use IPv6 and the initialisation of server fails, we want
           // to try again with IPv4.  The reason is that someone may have
