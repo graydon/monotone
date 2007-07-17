@@ -450,6 +450,10 @@ accumulate_strict_ancestors(revision_id const & start,
 // removes items from the candidate set to occasionally rescan the candidate
 // set to get a new minimum height (perhaps, whenever we remove the minimum
 // height candidate).
+//
+// Note: The strategy outlined above does only work well for small sets of
+// candidates, because of the overhead induced by fetching heights for all
+// members of the set.
 void
 erase_ancestors_and_failures(std::set<revision_id> & candidates,
                              is_failure & p,
