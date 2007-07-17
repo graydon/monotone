@@ -9,16 +9,20 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <cerrno>
 #include <map>
 #include <utility>
 #include <vector>
+
+/* for mkdir() */
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN // we don't need the GUI interfaces
 #include <windows.h>
 #else
 #include <unistd.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
 #endif
@@ -242,12 +246,44 @@ string dirname(string const & s)
   return s.substr(0, sep);
 }
 
+#if !defined(HAVE_MKDTEMP)
+static char * _impl_mkdtemp(char * templ)
+{
+  char * tmpdir = new char[strlen(templ) + 1];
+  char * result = 0;
+
+  /* There's a possibility that the name returned by mktemp() will already
+     be created by someone else, a typical race condition.  However, since
+     mkdir() will not clobber an already existing file or directory, we
+     can simply loop until we find a suitable name.  There IS a very small
+     risk that we loop endlessly, but that's under extreme conditions, and
+     the problem is likely to really be elsewhere... */
+  do
+    {
+      strcpy(tmpdir, templ);
+      result = mktemp(tmpdir);
+      if (result && mkdir(tmpdir, 0700) != 0)
+        {
+          result = 0;
+        }
+    }
+  while(!result && errno == EEXIST);
+
+  if (result)
+    {
+      strcpy(templ, result);
+      result = templ;
+    }
+
+  delete [] tmpdir;
+  return result;
+}
+
+#define mkdtemp _impl_mkdtemp
+#endif
+
 char * do_mkdtemp(char const * parent)
 {
-#ifdef WIN32
-#error do_mkdtemp needs to be ported to Windows
-#elif defined HAVE_MKDTEMP
-
   char * tmpdir = new char[strlen(parent) + sizeof "/mtXXXXXX"];
 
   strcpy(tmpdir, parent);
@@ -259,11 +295,11 @@ char * do_mkdtemp(char const * parent)
     F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(errno));
   I(result == tmpdir);
   return tmpdir;
-  
-#else
-#error do_mkdtemp needs to be ported to this platform
-#endif
 }
+
+#if !defined(HAVE_MKDTEMP)
+#undef mkdtemp
+#endif
 
 map<string, string> orig_env_vars;
 
