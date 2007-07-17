@@ -19,6 +19,15 @@
 #include <sys/types.h>
 
 #ifdef WIN32
+/* For _mktemp() */
+#include <io.h>
+#define mktemp(t) _mktemp(t)
+/* For _mkdir() */
+#include <direct.h>
+#define mkdir(d) _mkdir(d)
+#endif
+
+#ifdef WIN32
 #define WIN32_LEAN_AND_MEAN // we don't need the GUI interfaces
 #include <windows.h>
 #else
