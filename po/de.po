@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-16 09:05-0700\n"
+"POT-Creation-Date: 2007-07-12 01:13+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -3066,9 +3066,9 @@ msgstr ""
 "[vereinigt] %s"
 
 #: file_io.cc:185
-#, fuzzy, c-format
+#, c-format
 msgid "could not create directory '%s': it is a file"
-msgstr "konnte Verzeichnis '%s' nicht erstellen: %s"
+msgstr "konnte Verzeichnis '%s' nicht erstellen: es gibt eine Datei mit diesem Namen"
 
 #: file_io.cc:202
 #, c-format
