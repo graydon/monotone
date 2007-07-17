@@ -24,7 +24,7 @@
 #define mktemp(t) _mktemp(t)
 /* For _mkdir() */
 #include <direct.h>
-#define mkdir(d,m) _mkdir(d,m)
+#define mkdir(d,m) _mkdir(d)
 #endif
 
 #ifdef WIN32
