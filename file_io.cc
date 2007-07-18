@@ -184,7 +184,12 @@ mkdir_p(any_path const & p)
     case path::file:
       E(false, F("could not create directory '%s': it is a file") % p);
     case path::nonexistent:
-      mkdir_p(p.dirname());
+      std::string const current = p.as_external();
+      any_path const parent = p.dirname();
+      if (current != parent.as_external())
+        {
+          mkdir_p(p.dirname());
+        }
       do_mkdir(p.as_external());
     }
 }
