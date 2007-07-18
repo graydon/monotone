@@ -188,9 +188,9 @@ mkdir_p(any_path const & p)
       any_path const parent = p.dirname();
       if (current != parent.as_external())
         {
-          mkdir_p(p.dirname());
+          mkdir_p(parent);
         }
-      do_mkdir(p.as_external());
+      do_mkdir(current);
     }
 }
 
