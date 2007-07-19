@@ -501,6 +501,10 @@ any_path::basename() const
 {
   string const & s = data;
   string::size_type sep = s.rfind('/');
+#ifdef WIN32
+  if (sep == string::npos && s[1] == ':')
+    sep = 1;
+#endif
   if (sep == string::npos)
     return path_component(s, 0);  // force use of short circuit
   if (sep == s.size())
