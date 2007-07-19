@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-07-15 12:29+0100\n"
+"PO-Revision-Date: 2007-07-19 10:32+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -106,7 +106,7 @@ msgstr "Stampa gli antenati di una data reivisione"
 #: automate.cc:392
 #: automate.cc:1183
 #: cmd_list.cc:658
-#: revision.cc:1769
+#: revision.cc:1773
 #, c-format
 msgid "No such revision %s"
 msgstr "La revisione %s non esiste"
@@ -171,7 +171,7 @@ msgstr "Elenca le radici del grafo delle revisioni"
 #: automate.cc:355
 #: automate.cc:383
 #: cmd_list.cc:645
-#: revision.cc:1761
+#: revision.cc:1765
 msgid "REV"
 msgstr "REV"
 
@@ -183,9 +183,10 @@ msgstr "Stampa i genitori di una revisione"
 msgid "Prints the children of a revision"
 msgstr "Stampa i figli di una revisione"
 
+# TODO: ancestry-parentele?
 #: automate.cc:422
 msgid "Prints the complete ancestry graph"
-msgstr ""
+msgstr "Stampa il grafo completo delle parentele"
 
 #: automate.cc:468
 msgid "Lists the revisions that match a selector"
@@ -783,9 +784,10 @@ msgstr "Calcola le differenze tra file"
 msgid "[FILE] ..."
 msgstr "[FILE…]"
 
+# TODO: storia?
 #: cmd_diff_log.cc:611
 msgid "Prints history in reverse order"
-msgstr ""
+msgstr "Stampa la storia in ordine inverso"
 
 #: cmd_diff_log.cc:612
 msgid "This command prints history in reverse order, filtering it by FILE if given.  If one or more revisions are given, uses them as a starting point."
@@ -1115,7 +1117,7 @@ msgstr ""
 
 #: cmd_list.cc:52
 msgid "Lists certificates attached to an identifier"
-msgstr ""
+msgstr "Elenca i certificati relativi ad un identificatore"
 
 #: cmd_list.cc:79
 #: cmd_list.cc:675
@@ -1170,11 +1172,11 @@ msgstr "nessuna chiave corrispondente a ‘%s’ trovata"
 
 #: cmd_list.cc:249
 msgid "Lists branches in the database that match a pattern"
-msgstr ""
+msgstr "Elenca i rami presenti in database che corrispondono ad un pattern"
 
 #: cmd_list.cc:277
 msgid "Lists the current epoch of branches that match a pattern"
-msgstr ""
+msgstr "Elenca l'epoca dei rami che corrispondono ad un pattern"
 
 #: cmd_list.cc:300
 #, c-format
@@ -1183,35 +1185,36 @@ msgstr "nessuna epoca trovata per il ramo ‘%s’"
 
 #: cmd_list.cc:307
 msgid "Lists all tags in the database"
-msgstr ""
+msgstr "Elenca tutti i tag presenti in database"
 
 #: cmd_list.cc:323
 msgid "Lists variables in the whole database or a domain"
-msgstr ""
+msgstr "Elenca le variabili presenti in un intero database o un dominio"
 
 #: cmd_list.cc:357
 msgid "Lists workspace files that belong to the current branch"
-msgstr ""
+msgstr "Elenca i file dello spazio di lavoro presenti nel ramo attuale"
 
 #: cmd_list.cc:396
 msgid "Lists workspace files that do not belong to the current branch"
-msgstr ""
+msgstr "Elenca i file dello spazio di lavoro non presenti nel ramo attuale"
 
 #: cmd_list.cc:426
 msgid "Lists files that belong to the branch but are not in the workspace"
-msgstr ""
+msgstr "Elenca i file presenti nel ramo attuale ma assenti dallo spazio di lavoro"
 
 #: cmd_list.cc:447
 msgid "Lists files that have changed with respect to the current revision"
-msgstr ""
+msgstr "Elenca i file che sono cambiati rispetto alla revisione attuale"
 
+# TODO: keystore
 #: cmd_list.cc:551
 msgid "Lists all keys in the keystore"
-msgstr ""
+msgstr "Elenca tutte le chiavi di un portachiavi"
 
 #: cmd_list.cc:646
 msgid "Prints all certificates attached to a revision"
-msgstr ""
+msgstr "Stampa tutti i certificati relativi ad una revisione"
 
 #: cmd_merging.cc:103
 #, c-format
@@ -2951,115 +2954,115 @@ msgstr ""
 msgid "could not create directory '%s': it is a file"
 msgstr "non riesco a creare la directory ‘%s’: è un file"
 
-#: file_io.cc:202
+#: file_io.cc:207
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "il file da cancellare ‘%s’ non esiste"
 
-#: file_io.cc:203
+#: file_io.cc:208
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "il file da cancellare ‘%s’ non è un file ma una directory"
 
-#: file_io.cc:211
+#: file_io.cc:216
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "la directory da cancellare ‘%s’ non esiste"
 
-#: file_io.cc:212
+#: file_io.cc:217
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "la directory da cancellare ‘%s’ non è una directory ma un file"
 
-#: file_io.cc:219
+#: file_io.cc:224
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "l'oggetto da cancellare ‘%s’ non esiste"
 
-#: file_io.cc:275
+#: file_io.cc:280
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "la directory da cancellare ‘%s’ non esiste"
 
-#: file_io.cc:276
+#: file_io.cc:281
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "la directory da cancellare ‘%s’ è un file"
 
-#: file_io.cc:286
+#: file_io.cc:291
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "il file da rinominare ‘%s’ non esiste"
 
-#: file_io.cc:287
+#: file_io.cc:292
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr "il file sorgente da rinominare ‘%s’ è una directory -- bug in monotone?"
 
-#: file_io.cc:290
-#: file_io.cc:305
-#: file_io.cc:317
+#: file_io.cc:295
+#: file_io.cc:310
+#: file_io.cc:322
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "esiste già un'altra chiave con nome ‘%s’"
 
-#: file_io.cc:300
+#: file_io.cc:305
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "la directory da rinominare ‘%s’ non esiste"
 
-#: file_io.cc:302
+#: file_io.cc:307
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr "la directory sorgente da rinominare ‘%s’ è un file -- bug in monotone?"
 
-#: file_io.cc:315
+#: file_io.cc:320
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "il percorso da rinominare ‘%s’ non esiste"
 
-#: file_io.cc:326
+#: file_io.cc:331
 #, c-format
 msgid "file %s does not exist"
 msgstr "il file ‘%s’ non esiste"
 
-#: file_io.cc:327
+#: file_io.cc:332
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "il file ‘%s’ non può essere letto: è una directory"
 
-#: file_io.cc:331
+#: file_io.cc:336
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "non riesco ad aprire file ‘%s’ in lettura"
 
-#: file_io.cc:352
+#: file_io.cc:357
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Non posso leggere stdin più volte"
 
-#: file_io.cc:383
+#: file_io.cc:388
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "il file ‘%s’ non può essere sovrascritto: è una directory"
 
-#: file_io.cc:457
+#: file_io.cc:462
 #, c-format
 msgid "skipping file '%s' with unsupported name"
 msgstr ""
 
-#: file_io.cc:461
+#: file_io.cc:466
 #, c-format
 msgid "skipping directory '%s' with unsupported name"
 msgstr "salto la directory ‘%s’: ha un nome non supportato"
 
-#: file_io.cc:514
+#: file_io.cc:519
 #: work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "nessun file o directory con nome ‘%s’"
 
-#: file_io.cc:542
+#: file_io.cc:547
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "mi aspettavo il file ‘%s’, invece è una cartella."
@@ -4031,47 +4034,47 @@ msgid_plural "%d unknown paths"
 msgstr[0] "%d percorso sconosciuto"
 msgstr[1] "%d percorsi sconosciuti"
 
-#: revision.cc:736
+#: revision.cc:740
 #, c-format
 msgid "the command '%s %s' cannot be restricted in a two-parent workspace"
 msgstr "il comando ‘%s %s’ non può essere ristretto in spazio di lavoro di due-genitori"
 
-#: revision.cc:952
+#: revision.cc:956
 #, c-format
 msgid "scanning for bogus merge edges"
 msgstr "scansione in corso per falsi archi di fusione"
 
-#: revision.cc:994
+#: revision.cc:998
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
 msgstr "elimino l'arco ridondante %d → %d"
 
-#: revision.cc:1003
+#: revision.cc:1007
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
 msgstr "fallita eliminazione di parentela %d -> %d"
 
-#: revision.cc:1014
+#: revision.cc:1018
 #, c-format
 msgid "rebuilding %d nodes"
 msgstr "ricostruisco %d nodi"
 
-#: revision.cc:1214
+#: revision.cc:1218
 #, c-format
 msgid "Directory %s for path %s cannot be added, as there is a file in the way"
 msgstr ""
 
-#: revision.cc:1235
+#: revision.cc:1239
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
 msgstr "Il percorso ‘%s’ non può essere aggiunto, dato che c'è già una directory con lo stesso nome"
 
-#: revision.cc:1238
+#: revision.cc:1242
 #, c-format
 msgid "Path %s added twice with differing content"
 msgstr "Percorso ‘%s’ aggiunto due volte con contenuti diversi"
 
-#: revision.cc:1522
+#: revision.cc:1526
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -4084,40 +4087,40 @@ msgstr ""
 "(se vuoi invece semplicemente scartare l'attributo, vedi lo switch --drop-attr, ma\n"
 "se sei interessato a tenerlo, saremo lieti di fornirti una soluzione)"
 
-#: revision.cc:1628
+#: revision.cc:1632
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
 msgstr "converto il grafo esistente delle revisioni al nuovo formato con roster"
 
-#: revision.cc:1683
+#: revision.cc:1687
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
 msgstr "ricostruisco il grafo delle revisioni dai certificati di manifesto"
 
-#: revision.cc:1730
+#: revision.cc:1734
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "rigenera la cache dei roster e delle altezze"
 
-#: revision.cc:1742
+#: revision.cc:1746
 msgid "regenerated"
 msgstr "rigenerato"
 
-#: revision.cc:1758
+#: revision.cc:1762
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "rigenerazione della cache dei roster e delle altezze completata"
 
-#: revision.cc:1762
+#: revision.cc:1766
 msgid "Shows a revision's height"
 msgstr "Mostra l'altezza di una revisione"
 
-#: revision.cc:1772
+#: revision.cc:1776
 #, c-format
 msgid "cached height: %s"
 msgstr "altezza in cache: %s"
 
-#: revision.cc:1855
+#: revision.cc:1859
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -4987,7 +4990,7 @@ msgstr "errore durante la lettura della directory: %s"
 #: win32/fs.cc:319
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
-msgstr ""
+msgstr "problemi nel rinominare ‘%s’ in ‘%s’: %s (%d)"
 
 #: win32/fs.cc:388
 #, c-format
