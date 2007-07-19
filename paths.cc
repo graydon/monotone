@@ -515,6 +515,10 @@ any_path::dirname() const
 {
   string const & s = data;
   string::size_type sep = s.rfind('/');
+#ifdef WIN32
+  if (sep == string::npos && s[1] == ':')
+    sep = 1;
+#endif
   if (sep == string::npos)
     return any_path();
 
@@ -525,7 +529,7 @@ any_path::dirname() const
   // dirname() of a direct child of the root is the root
   if (sep == 0 || (sep == 1 && s[1] == '/')
 #ifdef WIN32
-      || (sep == 2 && s[1] == ':')
+      || (sep == 1 || sep == 2 && s[1] == ':')
 #endif
       )
     return any_path(s, 0, sep+1);
@@ -550,6 +554,10 @@ system_path::dirname() const
 {
   string const & s = data;
   string::size_type sep = s.rfind('/');
+#ifdef WIN32
+  if (sep == string::npos && s[1] == ':')
+    sep = 1;
+#endif
   I(sep != string::npos);
 
   // dirname() of the root directory is itself
@@ -559,7 +567,7 @@ system_path::dirname() const
   // dirname() of a direct child of the root is the root
   if (sep == 0 || (sep == 1 && s[1] == '/')
 #ifdef WIN32
-      || (sep == 2 && s[1] == ':')
+      || (sep == 1 || sep == 2 && s[1] == ':')
 #endif
       )
     return system_path(s, 0, sep+1);
@@ -1388,7 +1396,7 @@ UNIT_TEST(paths, dirname)
     { "c:foo",      "c:"          },
     { "c:/",        "c:/"         },
     { "c:/foo",     "c:/"         },
-    { "c:/foo/bar", "c:/foo/bar"  },
+    { "c:/foo/bar", "c:/foo"      },
 #else
     { "c:",         "/a/b"        },
     { "c:foo",      "/a/b"        },
