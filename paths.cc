@@ -318,7 +318,7 @@ normalize_path(string const & in)
         tail++;
 
       string elt(head, tail);
-      if (tail != inT.end())
+      while (tail != inT.end() && *tail == '/')
         tail++;
 
       if (elt == ".")
