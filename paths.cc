@@ -1446,7 +1446,7 @@ UNIT_TEST(paths, dirname)
       any_path rf(file_path_internal(p->out));
       UNIT_TEST_CHECK_MSG(dn.as_internal() == rf.as_internal(),
                           FL("dirname('%s') = '%s' (expect '%s')")
-                          % p->in % dn % p->out);
+                          % p->in % dn % rf);
     }
   for (struct t const *p = sp_cases; p->in; p++)
     {
@@ -1455,7 +1455,7 @@ UNIT_TEST(paths, dirname)
       any_path rf(system_path(p->out));
       UNIT_TEST_CHECK_MSG(dn.as_internal() == rf.as_internal(),
                           FL("dirname('%s') = '%s' (expect '%s')")
-                          % p->in % dn % p->out);
+                          % p->in % dn % rf);
     }
 
   initial_abs_path.unset();
