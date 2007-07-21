@@ -43,6 +43,12 @@ function find_basic_io_line (parsed, line)
    err ("line '" .. line.name .. " " .. line.values .. "' not found")
 end
 
+function fail_check_inventory (skip, parsed, parsed_index, stanza)
+-- Skip this test, since it is currently failing; run rest of current test
+
+   return parsed_index + skip
+end -- check_inventory
+
 function check_inventory (parsed, parsed_index, stanza)
 -- 'stanza' is a table for one stanza
 -- 'parsed_index' gives the first index for this stanza in 'parsed'

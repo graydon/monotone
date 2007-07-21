@@ -6252,8 +6252,9 @@ marker.
 @table @strong
 @item Arguments:
 
-A file path (optional).
-@c FIXME: what does this mean?
+A file path (optional). If present, only show inventory for the given
+file. If it is a directory, show inventory for that directory and
+sub-directories.
 
 @item Added in:
 

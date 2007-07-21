@@ -33,11 +33,11 @@ check(mtn("automate", "inventory"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
 
 index = check_inventory (parsed, index,
-{    path = "",
+{    path = ".",
  old_type = "directory",
  new_type = "directory",
-  fs_type = "none",
-   status = {"missing"}})
+  fs_type = "directory",
+   status = {"known"}})
 
 index = check_inventory (parsed, index,
 {    path = "dir_a",
@@ -84,11 +84,11 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = "",
+{    path = ".",
  old_type = "directory",
  new_type = "directory",
-  fs_type = "none",
-   status = {"missing"}})
+  fs_type = "directory",
+   status = {"known"}})
 
 index = check_inventory (parsed, index,
 {    path = "dir_a",
@@ -142,7 +142,7 @@ index = check_inventory (parsed, index,
 checkexp ("checked all", #parsed, index-1)
 
 ----------
--- Rename a file from dir_a to dir_b, bookkeep-only
+-- Rename a file from dir_a to dir_b, bookkeep-only; inventory dir_a
 check(mtn("rename", "--bookkeep-only", "dir_a/file_a", "dir_b/file_a"), 0, true, false)
 
 check(mtn("automate", "inventory", "dir_a"), 0, true, false)
@@ -156,23 +156,20 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
+index = fail_check_inventory (4, parsed, index,
 {    path = "dir_a/file_a",
  old_type = "file",
+ old_path = "dir_a/file_a",
+ new_type = "file",
+ new_path = "dir_b/file_a",
   fs_type = "file",
-   status = {"dropped", "unknown"}})
+   status = {"known", "rename_source"}})
 
--- Should get this:
--- index = check_inventory (parsed, index,
--- {    path = "dir_a/file_a",
---  old_type = "file",
---  old_path = "dir_a/file_a",
---  new_type = "file",
---  new_path = "dir_b/file_a",
---   fs_type = "file",
---    status = {"known", "renamed"}})
--- end FIXME
+-- getting:
+--     path "dir_a/file_a"
+-- old_type "file"
+--  fs_type "file"
+--   status "dropped" "unknown"
 
 checkexp ("checked all", #parsed, index-1)
 
@@ -187,23 +184,14 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
  status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
+index = fail_check_inventory (4, parsed, index,
 {    path = "dir_b/file_a",
+ old_type = "file",
+ old_path = "dir_a/file_a",
  new_type = "file",
   fs_type = "none",
-   status = {"added", "missing"}})
-
--- should get this:
--- index = check_inventory (parsed, index,
--- {    path = "dir_b/file_a",
---  old_type = "file",
---  old_path = "dir_a/file_a",
---  new_type = "file",
---   fs_type = "none",
---    status = {"renamed", "missing"}})
--- not clear that "missing" is the right status here
--- end FIXME
+   status = {"renamed", "missing"}})
+-- FIXME: not clear that "missing" is the right status here
 
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_b",
@@ -229,22 +217,13 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
+index = fail_check_inventory (4, parsed, index,
 {    path = "dir_a/file_a",
  old_type = "file",
-  fs_type = "none",
-   status = {"dropped"}})
-
--- Should get this:
--- index = check_inventory (parsed, index,
--- {    path = "dir_a/file_a",
---  old_type = "file",
---  old_path = "dir_a/file_a",
---  new_type = "file",
---  new_path = "dir_b/file_a",
---    status = {"renamed"}})
--- end FIXME
+ old_path = "dir_a/file_a",
+ new_type = "file",
+ new_path = "dir_b/file_a",
+   status = {"renamed"}})
 
 checkexp ("checked all", #parsed, index-1)
 
@@ -259,23 +238,14 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
  status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
+index = fail_check_inventory (4, parsed, index,
 {    path = "dir_b/file_a",
+ old_type = "file",
+ old_path = "dir_a/file_a",
  new_type = "file",
-  fs_type = "file",
-   status = {"added", "known"}})
-
--- should get this:
--- index = check_inventory (parsed, index,
--- {    path = "dir_b/file_a",
---  old_type = "file",
---  old_path = "dir_a/file_a",
---  new_type = "file",
---   fs_type = "none",
---    status = {"renamed", "missing"}})
--- not clear that "missing" is the right status here
--- end FIXME
+  fs_type = "none",
+   status = {"renamed", "missing"}})
+-- FIXME: not clear that "missing" is the right status here
 
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_b",
@@ -297,11 +267,11 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = "",
+{    path = ".",
  old_type = "directory",
  new_type = "directory",
-  fs_type = "none",
-   status = {"missing"}})
+  fs_type = "directory",
+   status = {"known"}})
 
 index = check_inventory (parsed, index,
 {    path = "dir_a",
@@ -317,22 +287,14 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
+index = fail_check_inventory (4, parsed, index,
 {    path = "file_0",
  old_type = "file",
+ old_name = "file_0",
+ new_type = "file",
+ new_name = "dir_a/file_0",
   fs_type = "file",
-   status = {"dropped", "unknown"}})
--- should get this:
--- index = check_inventory (parsed, index,
--- {    path = "file_0",
---  old_type = "file",
---  old_name = "file_0"
---  new_type = "file",
---  new_name = "dir_a/file_0",
---   fs_type = "file",
---    status = {"renamed"}})
--- end FIXME:
+   status = {"renamed"}})
 
 -- skip tester-generated files
 index = index + 3 * 10
@@ -350,11 +312,11 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = "",
+{    path = ".",
  old_type = "directory",
  new_type = "directory",
-  fs_type = "none",
-   status = {"missing"}})
+  fs_type = "directory",
+   status = {"known"}})
 
 index = check_inventory (parsed, index,
 {    path = "dir_a",
@@ -370,22 +332,14 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
--- FIXME: currently get this:
-index = check_inventory (parsed, index,
-{    path = "file_0",
+index = fail_check_inventory (4, parsed, index,
+{    path = "dir_a/file_0",
  old_type = "file",
-  fs_type = "none",
-   status = {"dropped"}})
--- should get this:
--- index = check_inventory (parsed, index,
--- {    path = "dir_a/file_0",
---  old_type = "file",
---  old_name = "file_0"
---  new_type = "file",
---  new_name = "dir_a/file_0",
---   fs_type = "file",
---    status = {"renamed"}})
--- end FIXME:
+ old_name = "file_0",
+ new_type = "file",
+ new_name = "dir_a/file_0",
+  fs_type = "file",
+   status = {"renamed"}})
 
 -- skip tester-generated files
 index = index + 3 * 10

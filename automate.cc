@@ -1,4 +1,4 @@
-// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -710,7 +710,24 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
     {
       basic_io::stanza st;
       inventory_item const & item = i->second;
+      std::vector<std::string> states;
 
+      if (i->first.as_internal() == "")
+        {
+          // This is the workspace root directory. The default algorithm
+          // displays it wrong, so we treat is as a special case.
+
+          st.push_str_pair(syms::path, ".");
+          st.push_str_pair(syms::old_type, "directory");
+          st.push_str_pair(syms::new_type, "directory");
+          st.push_str_pair(syms::fs_type, "directory");
+          states.push_back("known");
+          st.push_str_multi(syms::status, states);
+          pr.print_stanza(st);
+          continue;
+        }
+
+      //  Not the root directory
       st.push_file_pair(syms::path, i->first);
 
       if (item.old_node.exists)
@@ -745,8 +762,6 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::directory: st.push_str_pair(syms::fs_type, "directory"); break;
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
-
-      std::vector<std::string> states;
 
       if (item.old_node.exists && !item.new_node.exists)
         {
