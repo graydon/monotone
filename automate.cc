@@ -491,6 +491,9 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
 struct node_info
 {
   bool exists;
+  // true if node_id is present in corresponding roster with the inventory map file_path
+  // false if not present, or present with a different file_path
+  // rest of data in this struct is invalid if false.
   node_id id;
   path::status type;
   file_id ident;
@@ -500,28 +503,27 @@ struct node_info
 };
 
 static void
-get_node_info(roster_t const & roster, file_path const & path, node_info & info)
+get_node_info(node_t const & node, node_info & info)
 {
-  if (roster.has_node(path))
+  info.exists = true;
+  info.id = node->self;
+  info.attrs = node->attrs;
+  if (is_file_t(node))
     {
-      node_t node = roster.get_node(path);
-      info.exists = true;
-      info.id = node->self;
-      info.attrs = node->attrs;
-      if (is_file_t(node))
-        {
-          info.type = path::file;
-          info.ident = downcast_to_file_t(node)->content;
-        }
-      else if (is_dir_t(node))
-        info.type = path::directory;
-      else
-        I(false);
+      info.type = path::file;
+      info.ident = downcast_to_file_t(node)->content;
     }
+  else if (is_dir_t(node))
+    info.type = path::directory;
+  else
+    I(false);
 }
 
 struct inventory_item
 {
+  // Records information about a pair of nodes with the same node_id in the
+  // old roster and new roster, and the corresponding path in the
+  // filesystem.
   node_info old_node;
   node_info new_node;
   file_path old_path;
@@ -534,6 +536,10 @@ struct inventory_item
 };
 
 typedef std::map<file_path, inventory_item> inventory_map;
+// file_path will typically be an existing filesystem file, but in the case
+// of a dropped or rename_source file it is only in the old roster, and in
+// the case of a file added --bookkeep_only or rename_target
+// --bookkeep_only, it is only in the new roster.
 
 static void
 inventory_rosters(roster_t const & old_roster,
@@ -551,7 +557,7 @@ inventory_rosters(roster_t const & old_roster,
         {
           file_path fp;
           old_roster.get_name(i->first, fp);
-          get_node_info(old_roster, fp, inventory[fp].old_node);
+          get_node_info(old_roster.get_node(i->first), inventory[fp].old_node);
           old_paths[inventory[fp].old_node.id] = fp;
         }
     }
@@ -563,7 +569,7 @@ inventory_rosters(roster_t const & old_roster,
         {
           file_path fp;
           new_roster.get_name(i->first, fp);
-          get_node_info(new_roster, fp, inventory[fp].new_node);
+          get_node_info(new_roster.get_node(i->first), inventory[fp].new_node);
           new_paths[inventory[fp].new_node.id] = fp;
         }
     }
@@ -571,9 +577,21 @@ inventory_rosters(roster_t const & old_roster,
   std::map<int, file_path>::iterator i;
   for (i = old_paths.begin(); i != old_paths.end(); ++i)
     {
-      // there is no new node available, i.e. this is a drop
       if (new_paths.find(i->first) == new_paths.end())
-        continue;
+        {
+          // There is no new node available; this is either a drop or a
+          // rename to outside the current path restriction.
+
+          if (new_roster.has_node (i->first))
+            {
+              // record rename outside restriction
+              new_roster.get_name (i->first, inventory[i->second].new_path);
+              continue;
+            }
+          else
+            // drop; no new path
+            continue;
+        }
 
       file_path old_path(i->second);
       file_path new_path(new_paths[i->first]);
@@ -582,6 +600,7 @@ inventory_rosters(roster_t const & old_roster,
       if (old_path == new_path)
         continue;
 
+      // record rename
       inventory[new_path].old_path = old_path;
       inventory[old_path].new_path = new_path;
     }
@@ -740,6 +759,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
             }
 
           if (item.new_path.as_internal().length() > 0)
+            // new_path is only present if different from either inventory map path or old_path
             st.push_file_pair(syms::new_path, item.new_path);
         }
 
@@ -801,7 +821,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
                states.push_back("dropped");
                states.push_back("rename_target");
              }
-           else
+          else
              {
                states.push_back("rename_source");
                states.push_back("added");

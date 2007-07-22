@@ -134,7 +134,7 @@ index = find_basic_io_line (parsed, {name = "path", values = "original"})
 -- of the file are different between the filesystem and the new
 -- manifest (they are the same as the old manifest).
 --
--- If the user commits now, they probablyl get something other than
+-- If the user commits now, they probably get something other than
 -- what they wanted; '--bookkeep-only' is dangerous.
 --
 -- The 'changes' flag indicates that this was bookkeep-only.

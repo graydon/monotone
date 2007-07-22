@@ -156,20 +156,13 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
+index = check_inventory (parsed, index,
 {    path = "dir_a/file_a",
  old_type = "file",
- old_path = "dir_a/file_a",
- new_type = "file",
  new_path = "dir_b/file_a",
   fs_type = "file",
-   status = {"known", "rename_source"}})
-
--- getting:
---     path "dir_a/file_a"
--- old_type "file"
---  fs_type "file"
---   status "dropped" "unknown"
+   status = {"rename_source", "unknown"}})
+-- "unknown" because of --bookkeep-only
 
 checkexp ("checked all", #parsed, index-1)
 
@@ -184,14 +177,13 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
  status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
+index = check_inventory (parsed, index,
 {    path = "dir_b/file_a",
- old_type = "file",
- old_path = "dir_a/file_a",
  new_type = "file",
   fs_type = "none",
-   status = {"renamed", "missing"}})
--- FIXME: not clear that "missing" is the right status here
+   status = {"added", "missing"}})
+-- _not_ "rename_target" because rename_source is outside restriction.
+-- "missing" because of --bookkeep-only
 
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_b",
@@ -217,13 +209,12 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
+index = check_inventory (parsed, index,
 {    path = "dir_a/file_a",
  old_type = "file",
- old_path = "dir_a/file_a",
- new_type = "file",
  new_path = "dir_b/file_a",
-   status = {"renamed"}})
+  fs_type = "none",
+   status = {"rename_source"}})
 
 checkexp ("checked all", #parsed, index-1)
 
@@ -238,14 +229,11 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
  status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
+index = check_inventory (parsed, index,
 {    path = "dir_b/file_a",
- old_type = "file",
- old_path = "dir_a/file_a",
  new_type = "file",
-  fs_type = "none",
-   status = {"renamed", "missing"}})
--- FIXME: not clear that "missing" is the right status here
+  fs_type = "file",
+   status = {"added", "known"}})
 
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_b",
@@ -287,14 +275,13 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
+index = check_inventory (parsed, index,
 {    path = "file_0",
  old_type = "file",
- old_name = "file_0",
- new_type = "file",
- new_name = "dir_a/file_0",
+ new_path = "dir_a/file_0",
   fs_type = "file",
-   status = {"renamed"}})
+   status = {"rename_source", "unknown"}})
+-- unknown because of --bookkeep-only
 
 -- skip tester-generated files
 index = index + 3 * 10
@@ -332,14 +319,12 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
    status = {"known"}})
 
-index = fail_check_inventory (4, parsed, index,
-{    path = "dir_a/file_0",
+index = check_inventory (parsed, index,
+{    path = "file_0",
  old_type = "file",
- old_name = "file_0",
- new_type = "file",
- new_name = "dir_a/file_0",
-  fs_type = "file",
-   status = {"renamed"}})
+ new_path = "dir_a/file_0",
+  fs_type = "none",
+   status = {"rename_source"}})
 
 -- skip tester-generated files
 index = index + 3 * 10
