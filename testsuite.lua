@@ -188,6 +188,12 @@ function addfile(filename, contents, mt)
   check(mt("add", filename), 0, false, false)
 end
 
+function adddir(dirname, mt)
+  if not isdir(dirname) then mkdir(dirname) end
+  if mt == nil then mt = mtn end
+  check(mt("add", dirname), 0, false, false)
+end
+
 function revert_to(rev, branch, mt)
   if type(branch) == "function" then
     mt = branch
