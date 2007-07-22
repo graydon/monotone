@@ -41,13 +41,12 @@ check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, fal
 
 parsed = parse_basic_io(readfile("stdout"))
 
---  FIXME: null path is root directory. need to keep for 'pivot_root'; test that
 index = check_inventory (parsed, index,
-{path = "",
+{path = ".",
  old_type = "directory",
  new_type = "directory",
- fs_type = "none",
- status = {"missing"}})
+ fs_type = "directory",
+ status = {"known"}})
 
 index = check_inventory (parsed, index,
 {path = "added",
@@ -474,6 +473,8 @@ old_type = "directory",
  fs_type = "none",
   status = {"dropped"}})
 
--- TODO: tests for renaming directories
+-- FIXME: tests for renaming directories
+
+--  FIXME: add test for 'pivot_root'
 
 -- end of file
