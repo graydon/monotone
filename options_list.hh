@@ -34,7 +34,7 @@ OPT(automate_stdio_size, "automate-stdio-size", size_t, 32768,
 #endif
 
 OPTSET(bind_opts)
-OPTVAR(bind_opts, utf8, bind_uri, )
+OPTVAR(bind_opts, std::list<utf8>, bind_uris, )
 OPTVAR(bind_opts, bool, bind_stdio, false)
 OPTVAR(bind_opts, bool, use_transport_auth, true)
 
@@ -42,7 +42,7 @@ OPTION(bind_opts, bind, true, "bind",
        gettext_noop("address:port to listen on (default :4691)"))
 #ifdef option_bodies
 {
-  bind_uri = utf8(arg);
+  bind_uris.push_back(utf8(arg));
   bind_stdio = false;
 }
 #endif

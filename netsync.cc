@@ -2371,12 +2371,14 @@ call_server(protocol_role role,
             globish const & include_pattern,
             globish const & exclude_pattern,
             app_state & app,
-            utf8 const & address,
+            std::list<utf8> const & addresses,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
   Netxx::PipeCompatibleProbe probe;
   transaction_guard guard(app.db);
+  I(addresses.size() == 1);
+  utf8 address(*addresses.begin());
 
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
@@ -2734,7 +2736,7 @@ serve_connections(protocol_role role,
                   globish const & include_pattern,
                   globish const & exclude_pattern,
                   app_state & app,
-                  utf8 const & address,
+                  std::list<utf8> const & addresses,
                   Netxx::port_type default_port,
                   unsigned long timeout_seconds,
                   unsigned long session_limit)
@@ -2763,23 +2765,30 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (!address().empty())
-            {
-              size_t l_colon = address().find(':');
-              size_t r_colon = address().rfind(':');
-              
-              if (l_colon == r_colon && l_colon == 0)
-                {
-                  // can't be an IPv6 address as there is only one colon
-                  // must be a : followed by a port
-                  string port_str = address().substr(1);
-                  addr.add_all_addresses(std::atoi(port_str.c_str()));
-                }
-              else
-                addr.add_address(address().c_str(), default_port);
-            }
-          else
+          if (addresses.empty())
             addr.add_all_addresses(default_port);
+          else
+            {
+              for (std::list<utf8>::const_iterator it = addresses.begin(); it != addresses.end(); ++it)
+                {
+                  const utf8 & address = *it;
+                  if (!address().empty())
+                    {
+                      size_t l_colon = address().find(':');
+                      size_t r_colon = address().rfind(':');
+              
+                      if (l_colon == r_colon && l_colon == 0)
+                        {
+                          // can't be an IPv6 address as there is only one colon
+                          // must be a : followed by a port
+                          string port_str = address().substr(1);
+                          addr.add_all_addresses(std::atoi(port_str.c_str()));
+                        }
+                      else
+                        addr.add_address(address().c_str(), default_port);
+                    }
+                }
+            }
 
           // If se use IPv6 and the initialisation of server fails, we want
           // to try again with IPv4.  The reason is that someone may have
@@ -3249,7 +3258,7 @@ session::rebuild_merkle_trees(app_state & app,
 void
 run_netsync_protocol(protocol_voice voice,
                      protocol_role role,
-                     utf8 const & addr,
+                     std::list<utf8> const & addrs,
                      globish const & include_pattern,
                      globish const & exclude_pattern,
                      app_state & app)
@@ -3283,7 +3292,7 @@ run_netsync_protocol(protocol_voice voice,
             }
           else
             serve_connections(role, include_pattern, exclude_pattern, app,
-                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                              addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                               static_cast<unsigned long>(constants::netsync_timeout_seconds),
                               static_cast<unsigned long>(constants::netsync_connection_limit));
         }
@@ -3291,7 +3300,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           call_server(role, include_pattern, exclude_pattern, app,
-                      addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                      addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
         }
     }

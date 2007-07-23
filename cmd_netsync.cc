@@ -33,7 +33,7 @@ static char const ws_internal_db_file_name[] = "mtn.db";
 
 static void
 extract_address(args_vector const & args,
-                arg_type & addr,
+                utf8 & addr,
                 app_state & app)
 {
   if (args.size() >= 1)
@@ -51,7 +51,7 @@ extract_address(args_vector const & args,
         F("no server given and no default server set"));
       var_value addr_value;
       app.db.get_var(default_server_key, addr_value);
-      addr = arg_type(addr_value());
+      addr = utf8(addr_value());
       L(FL("using default server address: %s") % addr());
     }
 }
@@ -160,13 +160,16 @@ CMD(push, "push", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  arg_type addr;
+  utf8 addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
   find_key_if_needed(addr, include_pattern, exclude_pattern, app);
 
-  run_netsync_protocol(client_voice, source_role, addr,
+  std::list<utf8> uris;
+  uris.push_back(addr);
+
+  run_netsync_protocol(client_voice, source_role, uris,
                        include_pattern, exclude_pattern, app);
 }
 
@@ -177,7 +180,7 @@ CMD(pull, "pull", "", CMD_REF(network),
        "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
-  arg_type addr;
+  utf8 addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
@@ -186,7 +189,10 @@ CMD(pull, "pull", "", CMD_REF(network),
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  run_netsync_protocol(client_voice, sink_role, addr,
+  std::list<utf8> uris;
+  uris.push_back(addr);
+
+  run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern, app);
 }
 
@@ -198,13 +204,16 @@ CMD(sync, "sync", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  arg_type addr;
+  utf8 addr;
   globish include_pattern, exclude_pattern;
   extract_address(args, addr, app);
   extract_patterns(args, include_pattern, exclude_pattern, app);
   find_key_if_needed(addr, include_pattern, exclude_pattern, app);
 
-  run_netsync_protocol(client_voice, source_and_sink_role, addr,
+  std::list<utf8> uris;
+  uris.push_back(addr);
+
+  run_netsync_protocol(client_voice, source_and_sink_role, uris,
                        include_pattern, exclude_pattern, app);
 }
 
@@ -326,7 +335,10 @@ CMD(clone, "clone", "", CMD_REF(network),
   // make sure we're back in the original dir so that file: URIs work
   change_current_working_dir(start_dir);
   
-  run_netsync_protocol(client_voice, sink_role, addr,
+  std::list<utf8> uris;
+  uris.push_back(addr);
+
+  run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern, app);
 
   change_current_working_dir(workspace_dir);
@@ -439,7 +451,10 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   if (app.opts.use_transport_auth)
     {
-      find_key(app.opts.bind_uri, globish("*"), globish(""), app);
+      if (!app.opts.bind_uris.empty())
+        find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""), app);
+      else
+        find_key(utf8(), globish("*"), globish(""), app);
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
@@ -450,7 +465,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   app.db.ensure_open();
 
-  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uri,
+  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
                        globish("*"), globish(""), app);
 }
 
