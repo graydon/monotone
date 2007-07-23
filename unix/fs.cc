@@ -145,7 +145,8 @@ namespace
 void
 do_read_directory(string const & path,
                   dirent_consumer & files,
-                  dirent_consumer & dirs)
+                  dirent_consumer & dirs,
+                  dirent_consumer & specials)
 {
   string p(path);
   if (p == "")
@@ -172,10 +173,8 @@ do_read_directory(string const & path,
           
         case DT_UNKNOWN: // unknown type
         case DT_LNK:     // symlink - must find out what's at the other end
-          break;
-
         default:
-          goto bad_special_file;
+          break;
         }          
 #endif
 
@@ -209,12 +208,9 @@ do_read_directory(string const & path,
       else if (S_ISDIR(st.st_mode))
         dirs.consume(d->d_name);
       else
-        goto bad_special_file;
+        specials.consume(d->d_name);
     }
   return;
-
- bad_special_file:
-  E(false,  F("cannot handle special file '%s/%s'") % p % d->d_name);
 }
   
                   

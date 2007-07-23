@@ -383,7 +383,7 @@ void do_remove_recursive(string const & p)
         struct fill_vec get_subdirs(subdirs);
         struct file_deleter del_files(p);
 
-        do_read_directory(p, del_files, get_subdirs);
+        do_read_directory(p, del_files, get_subdirs, del_files);
         for(vector<string>::const_iterator i = subdirs.begin();
             i != subdirs.end(); i++)
           do_remove_recursive(p + "/" + *i);
@@ -412,7 +412,7 @@ void do_make_tree_accessible(string const & p)
         struct fill_vec get_subdirs(subdirs);
         struct file_accessible_maker access_files(p);
 
-        do_read_directory(p, access_files, get_subdirs);
+        do_read_directory(p, access_files, get_subdirs, access_files);
         for(vector<string>::const_iterator i = subdirs.begin();
             i != subdirs.end(); i++)
           do_make_tree_accessible(p + "/" + *i);
@@ -455,11 +455,12 @@ void do_copy_recursive(string const & from, string to)
 
   if (fromstat == path::directory)
     {
-      vector<string> subdirs;
-      struct fill_vec get_subdirs(subdirs);
+      vector<string> subdirs, specials;
+      struct fill_vec get_subdirs(subdirs), get_specials(specials);
       struct file_copier copy_files(from, to);
 
-      do_read_directory(from, copy_files, get_subdirs);
+      do_read_directory(from, copy_files, get_subdirs, get_specials);
+      E(specials.empty(), F("cannot copy special files in '%s'") % from);
       for (vector<string>::const_iterator i = subdirs.begin();
            i != subdirs.end(); i++)
         do_copy_recursive(from + "/" + *i, to + "/" + *i);
@@ -730,7 +731,7 @@ LUAEXT(read_directory, )
       string path(luaL_checkstring(L, -1));
       build_table tbl(L);
 
-      do_read_directory(path, tbl, tbl);
+      do_read_directory(path, tbl, tbl, tbl);
     }
   catch(informative_failure &)
     {
