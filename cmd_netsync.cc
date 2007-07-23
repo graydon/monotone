@@ -67,7 +67,11 @@ find_key(utf8 const & addr,
     return;
 
   rsa_keypair_id key;
-  if (!app.lua.hook_get_netsync_key(app.opts.bind_address,
+  uri u;
+  utf8 host(addr);
+  if (parse_uri(addr(), u))
+    host = utf8(u.host);
+  if (!app.lua.hook_get_netsync_key(host,
                                     include, exclude,
                                     key)
       || key() == "")
@@ -426,7 +430,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
                  N_("Serves the database to connecting clients"),
                  "",
                  options::opts::bind | options::opts::pidfile |
-                 options::opts::bind_stdio | options::opts::no_transport_auth)
+                 options::opts::bind_stdio | options::opts::no_transport_auth )
 {
   if (!args.empty())
     throw usage(execid);
@@ -435,21 +439,18 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   if (app.opts.use_transport_auth)
     {
-      find_key(app.opts.bind_address, globish("*"), globish(""), app);
+      find_key(app.opts.bind_uri, globish("*"), globish(""), app);
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
       require_password(app.opts.signing_key, app);
     }
-  else
-    {
-      E(app.opts.bind_stdio,
-	F("The --no-transport-auth option is only permitted in combination with --stdio"));
-    }
+  else if (!app.opts.bind_stdio)
+    W(F("The --no-transport-auth option is usually only used in combination with --stdio"));
 
   app.db.ensure_open();
 
-  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_address,
+  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uri,
                        globish("*"), globish(""), app);
 }
 
