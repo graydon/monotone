@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-07-19 10:32+0100\n"
+"PO-Revision-Date: 2007-07-23 08:01+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -2213,7 +2213,7 @@ msgstr "Imposta un nuovo spazio di lavoro in una directory"
 
 #: cmd_ws_commit.cc:1225
 msgid "If no directory is specified, uses the current directory."
-msgstr ""
+msgstr "Se non è specificata alcuna directory, usa la directory attuale."
 
 #: cmd_ws_commit.cc:1231
 #, c-format
@@ -2243,9 +2243,10 @@ msgstr "la directory di importazione ‘%s’ non esiste"
 msgid "import directory '%s' is a file"
 msgstr "la directory di importazione ‘%s’ è un file"
 
+# TODO: migra?
 #: cmd_ws_commit.cc:1350
 msgid "Migrates a workspace directory's metadata to the latest format"
-msgstr ""
+msgstr "Aggiorna i metadati di uno spazio di lavoro al formato più recente"
 
 #: cmd_ws_commit.cc:1351
 msgid "If no directory is given, defaults to the current workspace."
@@ -2257,7 +2258,7 @@ msgstr "Aggiorna la cache degli inodeprint"
 
 #: commands.cc:58
 msgid "Commands that aid in scripted execution"
-msgstr ""
+msgstr "Comandi di aiuto per l'esecuzione da script"
 
 #: commands.cc:61
 msgid "Commands that manipulate the database"
@@ -2265,7 +2266,7 @@ msgstr "Comandi che manipolano il database"
 
 #: commands.cc:64
 msgid "Commands that aid in program debugging"
-msgstr ""
+msgstr "Comandi di aiuto per il debug"
 
 #: commands.cc:67
 msgid "Commands for information retrieval"
@@ -2273,19 +2274,19 @@ msgstr "Comandi per il recupero delle informazioni"
 
 #: commands.cc:70
 msgid "Commands to manage keys and certificates"
-msgstr ""
+msgstr "Comandi per la gestione di chiavi e certificati"
 
 #: commands.cc:73
 msgid "Commands that access the network"
-msgstr ""
+msgstr "Comandi che accedono alla rete"
 
 #: commands.cc:76
 msgid "Commands for packet reading and writing"
-msgstr ""
+msgstr "Comandi per lettura e scrittura pacchetti"
 
 #: commands.cc:79
 msgid "Commands for interaction with RCS and CVS"
-msgstr ""
+msgstr "Comandi per l'interazione con RCS e CVS"
 
 # TODO: rev-rev argh!
 #: commands.cc:82
@@ -2299,11 +2300,12 @@ msgstr "Comandi per manipolare l'albero"
 
 #: commands.cc:88
 msgid "Commands to manage persistent variables"
-msgstr ""
+msgstr "Comandi per la gestione delle variabili persistenti"
 
+# TODO: deal?
 #: commands.cc:91
 msgid "Commands that deal with the workspace"
-msgstr ""
+msgstr "Comandi che riguardano lo spazio di lavoro"
 
 #: commands.cc:498
 #, c-format
@@ -2313,7 +2315,7 @@ msgstr "comando ‘%s’ sconosciuto"
 #: commands.cc:508
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
-msgstr ""
+msgstr "‘%s’ è ambiguo; può essere completato come:"
 
 #: commands.cc:642
 #, c-format
@@ -3036,33 +3038,38 @@ msgstr "il file ‘%s’ non può essere letto: è una directory"
 msgid "cannot open file %s for reading"
 msgstr "non riesco ad aprire file ‘%s’ in lettura"
 
-#: file_io.cc:357
+#: file_io.cc:351
+#, c-format
+msgid "cannot handle special files in dir '%s'"
+msgstr "impossibile gestire i file speciali nella directory ‘%s’"
+
+#: file_io.cc:359
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Non posso leggere stdin più volte"
 
-#: file_io.cc:388
+#: file_io.cc:390
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "il file ‘%s’ non può essere sovrascritto: è una directory"
 
-#: file_io.cc:462
+#: file_io.cc:464
 #, c-format
 msgid "skipping file '%s' with unsupported name"
 msgstr ""
 
-#: file_io.cc:466
+#: file_io.cc:468
 #, c-format
 msgid "skipping directory '%s' with unsupported name"
 msgstr "salto la directory ‘%s’: ha un nome non supportato"
 
-#: file_io.cc:519
+#: file_io.cc:521
 #: work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "nessun file o directory con nome ‘%s’"
 
-#: file_io.cc:547
+#: file_io.cc:549
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "mi aspettavo il file ‘%s’, invece è una cartella."
@@ -4873,53 +4880,47 @@ msgstr "impossibile gestire il file speciale ‘%s’"
 msgid "could not open directory '%s': %s"
 msgstr "non riesco ad aprire la directory ‘%s’: %s"
 
-#: unix/fs.cc:205
+#: unix/fs.cc:204
 #, c-format
 msgid "error accessing '%s/%s': %s"
 msgstr ""
 
-# TODO: what about '/' in mingw?
-#: unix/fs.cc:217
-#, c-format
-msgid "cannot handle special file '%s/%s'"
-msgstr "non posso gestire il file speciale ‘%s/%s’"
-
-#: unix/fs.cc:226
+#: unix/fs.cc:222
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "non è stato possibile rinominare ‘%s’ in ‘%s’: %s"
 
-#: unix/fs.cc:235
-#: win32/fs.cc:239
+#: unix/fs.cc:231
+#: win32/fs.cc:240
 #, c-format
 msgid "could not remove '%s': %s"
 msgstr "non posso cancellare ‘%s’: %s"
 
-#: unix/fs.cc:244
-#: win32/fs.cc:246
+#: unix/fs.cc:240
+#: win32/fs.cc:247
 #, c-format
 msgid "could not create directory '%s': %s"
 msgstr "non riesco a creare la directory‘%s’: %s"
 
-#: unix/fs.cc:308
-#: win32/fs.cc:380
+#: unix/fs.cc:304
+#: win32/fs.cc:381
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "impossibile creare il file temporaneo ‘%s’: %s"
 
-#: unix/fs.cc:317
+#: unix/fs.cc:313
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr ""
 
-#: unix/fs.cc:357
-#: win32/fs.cc:440
+#: unix/fs.cc:353
+#: win32/fs.cc:441
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "impossibile scrivere sul file temporaneo ‘%s’: %s"
 
-#: unix/fs.cc:362
-#: win32/fs.cc:447
+#: unix/fs.cc:358
+#: win32/fs.cc:448
 #, c-format
 msgid "giving up after four zero-length writes to %s (%d byte written, %d left)"
 msgid_plural "giving up after four zero-length writes to %s (%d bytes written, %d left)"
@@ -4987,17 +4988,17 @@ msgstr ""
 msgid "error while reading directory: %s"
 msgstr "errore durante la lettura della directory: %s"
 
-#: win32/fs.cc:319
+#: win32/fs.cc:320
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "problemi nel rinominare ‘%s’ in ‘%s’: %s (%d)"
 
-#: win32/fs.cc:388
+#: win32/fs.cc:389
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr ""
 
-#: win32/fs.cc:415
+#: win32/fs.cc:416
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr ""
