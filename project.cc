@@ -4,8 +4,8 @@
 #include "base.hh"
 #include <vector>
 
-#include "app_state.hh"
 #include "cert.hh"
+#include "database.hh"
 #include "project.hh"
 #include "revision.hh"
 #include "transforms.hh"
@@ -14,8 +14,8 @@ using std::string;
 using std::set;
 using std::vector;
 
-project_t::project_t(app_state & app)
-  : app(app)
+project_t::project_t(database & db)
+  : db(db)
 {}
 
 void
@@ -24,7 +24,7 @@ project_t::get_branch_list(std::set<branch_name> & names)
   if (indicator.outdated())
     {
       std::vector<std::string> got;
-      indicator = app.db.get_branches(got);
+      indicator = db.get_branches(got);
       branches.clear();
       for (std::vector<std::string>::iterator i = got.begin();
            i != got.end(); ++i)
@@ -41,7 +41,7 @@ project_t::get_branch_list(globish const & glob,
                            std::set<branch_name> & names)
 {
   std::vector<std::string> got;
-  app.db.get_branches(glob(), got);
+  db.get_branches(glob(), got);
   names.clear();
   for (std::vector<std::string>::iterator i = got.begin();
        i != got.end(); ++i)
@@ -54,20 +54,20 @@ namespace
 {
   struct not_in_branch : public is_failure
   {
-    app_state & app;
+    database & db;
     base64<cert_value > const & branch_encoded;
-    not_in_branch(app_state & app,
+    not_in_branch(database & db,
                   base64<cert_value> const & branch_encoded)
-      : app(app), branch_encoded(branch_encoded)
+      : db(db), branch_encoded(branch_encoded)
     {}
     virtual bool operator()(revision_id const & rid)
     {
       vector< revision<cert> > certs;
-      app.db.get_revision_certs(rid,
-                                cert_name(branch_cert_name),
-                                branch_encoded,
-                                certs);
-      erase_bogus_certs(certs, app);
+      db.get_revision_certs(rid,
+                            cert_name(branch_cert_name),
+                            branch_encoded,
+                            certs);
+      erase_bogus_certs(certs, db);
       return certs.empty();
     }
   };
@@ -84,12 +84,12 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
       encode_base64(cert_value(name()), branch_encoded);
 
       outdated_indicator stamp;
-      branch.first = app.db.get_revisions_with_cert(cert_name(branch_cert_name),
+      branch.first = db.get_revisions_with_cert(cert_name(branch_cert_name),
                                                     branch_encoded,
                                                     branch.second);
 
-      not_in_branch p(app, branch_encoded);
-      erase_ancestors_and_failures(branch.second, p, app);
+      not_in_branch p(db, branch_encoded);
+      erase_ancestors_and_failures(branch.second, p, db);
       L(FL("found heads of branch %s (%s heads)")
         % name % branch.second.size());
     }
@@ -104,11 +104,11 @@ project_t::revision_is_in_branch(revision_id const & id,
   encode_base64(cert_value(branch()), branch_encoded);
 
   vector<revision<cert> > certs;
-  app.db.get_revision_certs(id, branch_cert_name, branch_encoded, certs);
+  db.get_revision_certs(id, branch_cert_name, branch_encoded, certs);
 
   int num = certs.size();
 
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, db);
 
   L(FL("found %d (%d valid) %s branch certs on revision %s")
     % num
@@ -123,7 +123,7 @@ void
 project_t::put_revision_in_branch(revision_id const & id,
                                   branch_name const & branch)
 {
-  cert_revision_in_branch(id, branch, app);
+  cert_revision_in_branch(id, branch, db);
 }
 
 
@@ -131,14 +131,14 @@ outdated_indicator
 project_t::get_revision_cert_hashes(revision_id const & rid,
                                     std::vector<hexenc<id> > & hashes)
 {
-  return app.db.get_revision_certs(rid, hashes);
+  return db.get_revision_certs(rid, hashes);
 }
 
 outdated_indicator
 project_t::get_revision_certs(revision_id const & id,
                               std::vector<revision<cert> > & certs)
 {
-  return app.db.get_revision_certs(id, certs);
+  return db.get_revision_certs(id, certs);
 }
 
 outdated_indicator
@@ -146,8 +146,8 @@ project_t::get_revision_certs_by_name(revision_id const & id,
                                       cert_name const & name,
                                       std::vector<revision<cert> > & certs)
 {
-  outdated_indicator i = app.db.get_revision_certs(id, name, certs);
-  erase_bogus_certs(certs, app);
+  outdated_indicator i = db.get_revision_certs(id, name, certs);
+  erase_bogus_certs(certs, db);
   return i;
 }
 
@@ -175,7 +175,7 @@ project_t::get_branch_certs(branch_name const & branch,
   base64<cert_value> branch_encoded;
   encode_base64(cert_value(branch()), branch_encoded);
 
-  return app.db.get_revision_certs(branch_cert_name, branch_encoded, certs);
+  return db.get_revision_certs(branch_cert_name, branch_encoded, certs);
 }
 
 tag_t::tag_t(revision_id const & ident,
@@ -206,8 +206,8 @@ outdated_indicator
 project_t::get_tags(set<tag_t> & tags)
 {
   std::vector<revision<cert> > certs;
-  outdated_indicator i = app.db.get_revision_certs(tag_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  outdated_indicator i = db.get_revision_certs(tag_cert_name, certs);
+  erase_bogus_certs(certs, db);
   tags.clear();
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -223,7 +223,7 @@ void
 project_t::put_tag(revision_id const & id,
                    string const & name)
 {
-  cert_revision_tag(id, name, app);
+  cert_revision_tag(id, name, db);
 }
 
 
@@ -234,13 +234,13 @@ project_t::put_standard_certs(revision_id const & id,
                               date_t const & time,
                               utf8 const & author)
 {
-  cert_revision_in_branch(id, branch, app);
-  cert_revision_changelog(id, changelog, app);
-  cert_revision_date_time(id, time, app);
+  cert_revision_in_branch(id, branch, db);
+  cert_revision_changelog(id, changelog, db);
+  cert_revision_date_time(id, time, db);
   if (!author().empty())
-    cert_revision_author(id, author(), app);
+    cert_revision_author(id, author(), db);
   else
-    cert_revision_author_default(id, app);
+    cert_revision_author_default(id, db);
 }
 
 void
@@ -251,15 +251,15 @@ project_t::put_standard_certs_from_options(revision_id const & id,
   put_standard_certs(id,
                      branch,
                      changelog,
-                     app.opts.date_given ? app.opts.date : date_t::now(),
-                     app.opts.author);
+                     db.get_opt_date_or_cur_date(),
+                     db.get_opt_author());
 }
 void
 project_t::put_cert(revision_id const & id,
                     cert_name const & name,
                     cert_value const & value)
 {
-  put_simple_revision_cert(id, name, value, app);
+  put_simple_revision_cert(id, name, value, db);
 }
 
 
