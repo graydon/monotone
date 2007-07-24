@@ -338,9 +338,23 @@ function prepare_to_run_tests ()
 
    writefile_q("in", nil)
    prepare_redirect("in", "out", "err")
-   execute(monotone_path, "--full-version")
-   logfile:write(readfile_q("out"))
+
+   local status = execute(monotone_path, "version", "--full")
+   local out = readfile_q("out")
+   local err = readfile_q("err")
+
+   if status == 0 and err == "" and out ~= "" then
+      logfile:write(out)
+   else
+      P(string.format("mtn version --full: exit %d\nstdout:\n", status))
+      P(out)
+      P("stderr:\n")
+      P(err)
+      return 1
+   end
+
    unlogged_remove("in")
    unlogged_remove("out")
    unlogged_remove("err")
+   return 0
 end

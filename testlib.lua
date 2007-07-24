@@ -41,12 +41,14 @@ test.log = nil -- logfile for this test
 -- hook to be overridden by the main testsuite file, if necessary;
 -- called after determining the set of tests to run
 function prepare_to_run_tests()
+   return 0
 end
 
 -- hook to be overridden by the main testsuite file, if necessary;
 -- called after opening the master logfile, but _before_ parsing
 -- arguments or determining the set of tests to run.
 function prepare_to_enumerate_tests()
+   return 0
 end
 
 function P(...)
@@ -801,7 +803,13 @@ function run_tests(args)
   -- tester.cc has set 'logfile' to an appropriate file name
   logfile = io.open(logfile, "w")
 
-  prepare_to_enumerate_tests()
+  do
+     local s = prepare_to_enumerate_tests()
+     if s ~= 0 then
+	P("Enumeration of tests failed.\n")
+	return s
+     end
+  end
 
   -- any directory in testdir with a __driver__.lua inside is a test case
   local tests = {}
@@ -855,9 +863,13 @@ function run_tests(args)
 
   if not list_only then
     logfile:write("Running on ", get_ostype(), "\n\n")
+    local s = prepare_to_run_tests()
+    if s ~= 0 then
+       P("Test suite preparation failed.\n")
+       return s 
+    end
     P("Running tests...\n")
   end
-  prepare_to_run_tests()
 
   local counts = {}
   counts.success = 0
