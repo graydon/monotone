@@ -207,18 +207,36 @@ do_read_directory(string const & path,
       st_result = stat((p + "/" + d->d_name).c_str(), &st);
 #endif
 
-      // silently ignore broken symlinks.
-      // ??? that was the historical behavior, but do we really want it?
+      // if we get no entry it might be a broken symlink
+      // try again with lstat
       if (st_result < 0 && errno == ENOENT)
-        continue;
+        {
+#if defined HAVE_FSTATAT && defined HAVE_DIRFD
+          static bool fstatat_works = true;
+          if (fstatat_works)
+            {
+              st_result = fstatat(dir.fd(), d->d_name, &st, AT_SYMLNK_NOFOLLOW);
+              if (st_result == -1 && errno == ENOSYS)
+                fstatat_works = false;
+            }
+          if (!fstatat_works)
+            st_result = lstat((p + "/" + d->d_name).c_str(), &st);
+#else
+          st_result = lstat((p + "/" + d->d_name).c_str(), &st);
+#endif
+        }
+
+      int err = errno;
 
       E(st_result == 0,
-        F("error accessing '%s/%s': %s") % p % d->d_name);
+        F("error accessing '%s/%s': %s") % p % d->d_name % os_strerror(err));
 
       if (S_ISREG(st.st_mode))
         files.consume(d->d_name);
       else if (S_ISDIR(st.st_mode))
         dirs.consume(d->d_name);
+      else if (S_ISLNK(st.st_mode))
+        files.consume(d->d_name); // treat broken links as files
       else
         specials.consume(d->d_name);
     }
