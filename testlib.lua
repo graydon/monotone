@@ -20,6 +20,9 @@ failed_testlogs = {}
 -- for this (at least on Windows).
 files = {stdout = nil, stdin = nil, stderr = nil}
 
+-- for convenience, this is the first word of what get_ostype() returns.
+ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
+
 -- table of per-test values
 test = {}
 -- misc per-test values
@@ -104,22 +107,22 @@ function err(what, level)
 end
 
 do -- replace some builtings with logged versions
-  old_mtime = mtime
+  unlogged_mtime = mtime
   mtime = function(name)
-    local x = old_mtime(name)
+    local x = unlogged_mtime(name)
     L(locheader(), "mtime(", name, ") = ", tostring(x), "\n")
     return x
   end
 
-  old_mkdir = mkdir
+  unlogged_mkdir = mkdir
   mkdir = function(name)
     L(locheader(), "mkdir ", name, "\n")
-    old_mkdir(name)
+    unlogged_mkdir(name)
   end
 
-  old_existsonpath = existsonpath
+  unlogged_existsonpath = existsonpath
   existsonpath = function(name)
-    local r = (old_existsonpath(name) == 0)
+    local r = (unlogged_existsonpath(name) == 0)
     local what
     if r then
       what = "exists"
@@ -278,6 +281,45 @@ end
 
 function trim(str)
   return string.gsub(str, "^%s*(.-)%s*$", "%1")
+end
+
+function getpathof(exe, ext)
+  local function gotit(now)
+    if test.log == nil then
+      logfile:write(exe, " found at ", now, "\n")
+    else
+      test.log:write(exe, " found at ", now, "\n")
+    end
+    return now
+  end
+  local path = os.getenv("PATH")
+  local char
+  if ostype == "Windows" then
+    char = ';'
+  else
+    char = ':'
+  end
+  if ostype == "Windows" then
+    if ext == nil then ext = ".exe" end
+  else
+    if ext == nil then ext = "" end
+  end
+  local now = initial_dir.."/"..exe..ext
+  if exists(now) then return gotit(now) end
+  for x in string.gmatch(path, "[^"..char.."]*"..char) do
+    local dir = string.sub(x, 0, -2)
+    if string.find(dir, "[\\/]$") then
+      dir = string.sub(dir, 0, -2)
+    end
+    local now = dir.."/"..exe..ext
+    if exists(now) then return gotit(now) end
+  end
+  if test.log == nil then
+    logfile:write("Cannot find ", exe, "\n")
+  else
+    test.log:write("Cannot find ", exe, "\n")
+  end
+  return nil
 end
 
 function prepare_redirect(fin, fout, ferr)

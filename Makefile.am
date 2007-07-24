@@ -296,8 +296,8 @@ EXTRA_PROGRAMS = usher
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
 usher_SOURCES = contrib/usher.cc
-unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
-nodist_unit_tests_SOURCES = std_hooks.c test_hooks.c schema.c
+unit_tester_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
+nodist_unit_tester_SOURCES = std_hooks.c test_hooks.c schema.c
 tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
 nodist_tester_SOURCES = testlib.c
 
@@ -359,10 +359,10 @@ mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
-unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
-unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
-unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
+unit_tester_LDFLAGS = 
+unit_tester_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
+unit_tester_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
+unit_tester_LDADD = lib3rdparty.a $(BOOSTLIBS) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
@@ -374,7 +374,7 @@ if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
-  unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
@@ -501,16 +501,17 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 # testsuite stuff (could this possibly be more ugly?)
 
 
-check_PROGRAMS = unit_tests tester
-TESTS = unit_tests run_tester_tests run_lua_tests
+check_PROGRAMS = unit_tester tester
+TESTS = run_unit_tests run_tester_tests run_lua_tests
 
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf tester_dir package_full_revision.txt
+	rm -rf tester_dir unit-tests package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests unit_tests.log
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep \
+	run_tester_tests run_lua_tests run_unit_tests
 
 # distcheck stuff
 
@@ -543,6 +544,12 @@ run_tester_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
 	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
+
+run_unit_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/unit-testsuite.lua "$$@"' >> $@ ; \
 	chmod 755 $@
 
 # we generate some source files to copy data into the executable 

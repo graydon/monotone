@@ -1,45 +1,5 @@
 #!./tester
 
--- maybe this should go in tester.lua instead?
-function getpathof(exe, ext)
-  local function gotit(now)
-    if test.log == nil then
-      logfile:write(exe, " found at ", now, "\n")
-    else
-      test.log:write(exe, " found at ", now, "\n")
-    end
-    return now
-  end
-  local path = os.getenv("PATH")
-  local char
-  if ostype == "Windows" then
-    char = ';'
-  else
-    char = ':'
-  end
-  if ostype == "Windows" then
-    if ext == nil then ext = ".exe" end
-  else
-    if ext == nil then ext = "" end
-  end
-  local now = initial_dir.."/"..exe..ext
-  if exists(now) then return gotit(now) end
-  for x in string.gmatch(path, "[^"..char.."]*"..char) do
-    local dir = string.sub(x, 0, -2)
-    if string.find(dir, "[\\/]$") then
-      dir = string.sub(dir, 0, -2)
-    end
-    local now = dir.."/"..exe..ext
-    if exists(now) then return gotit(now) end
-  end
-  if test.log == nil then
-    logfile:write("Cannot find ", exe, "\n")
-  else
-    test.log:write("Cannot find ", exe, "\n")
-  end
-  return nil
-end
-
 function safe_mtn(...)
   return {monotone_path, "--norc", "--root=" .. test.root,
           "--confdir="..test.root, unpack(arg)}
@@ -330,8 +290,6 @@ function prepare_to_run_tests ()
    -- test error handling behavior).
    require_not_root()
 
-   ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
-
    monotone_path = getpathof("mtn")
    if monotone_path == nil then monotone_path = "mtn" end
    set_env("mtn", monotone_path)
@@ -350,11 +308,12 @@ function prepare_to_run_tests ()
       P(out)
       P("stderr:\n")
       P(err)
-      return 1
+
+      if status == 0 then status = 1 end
    end
 
    unlogged_remove("in")
    unlogged_remove("out")
    unlogged_remove("err")
-   return 0
+   return status
 end
