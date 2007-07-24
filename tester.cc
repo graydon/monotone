@@ -78,16 +78,23 @@ void make_accessible(string const &name)
 #else
 
   struct stat st;
-  E(stat(name.c_str(), &st) == 0,
-    F("stat(%s) failed: %s") % name % os_strerror(errno));
+  if (stat(name.c_str(), &st) != 0)
+    {
+      const int err = errno;
+      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
+    }
 
   mode_t new_mode = st.st_mode;
   if (S_ISDIR(st.st_mode))
     new_mode |= S_IEXEC;
   new_mode |= S_IREAD | S_IWRITE;
 
-  E(chmod(name.c_str(), new_mode) == 0,
-    F("chmod(%s) failed: %s") % name % os_strerror(errno));
+  if (chmod(name.c_str(), new_mode) != 0)
+    {
+      const int err = errno;
+      E(false, F("chmod(%s) failed: %s") % name % os_strerror(err));
+      
+    }
 
 #endif
 }
@@ -118,8 +125,11 @@ time_t get_last_write_time(string const & name)
 #else
 
   struct stat st;
-  E(stat(name.c_str(), &st) == 0,
-    F("stat(%s) failed: %s") % name % os_strerror(errno));
+  if (stat(name.c_str(), &st) != 0)
+    {
+      const int err = errno;
+      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
+    }
 
   return st.st_mtime;
 
@@ -137,15 +147,17 @@ void do_copy_file(string const & from, string const & to)
   char buf[32768];
   int ifd, ofd;
   ifd = open(from.c_str(), O_RDONLY);
-  E(ifd >= 0, F("open %s: %s") % from % os_strerror(errno));
+  const int err = errno;
+  E(ifd >= 0, F("open %s: %s") % from % os_strerror(err));
   struct stat st;
   st.st_mode = 0666;  // sane default if fstat fails
   fstat(ifd, &st);
   ofd = open(to.c_str(), O_WRONLY|O_CREAT|O_EXCL, st.st_mode);
   if (ofd < 0)
     {
+      const int err = errno;
       close(ifd);
-      E(false, F("open %s: %s") % to % os_strerror(errno));
+      E(false, F("open %s: %s") % to % os_strerror(err));
     }
 
   ssize_t nread, nwrite;
@@ -299,9 +311,10 @@ char * do_mkdtemp(char const * parent)
   strcat(tmpdir, "/mtXXXXXX");
 
   char * result = mkdtemp(tmpdir);
+  const int err = errno;
 
   E(result != 0,
-    F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(errno));
+    F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(err));
   I(result == tmpdir);
   return tmpdir;
 }
