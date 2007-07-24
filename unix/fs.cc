@@ -25,6 +25,13 @@
 
 using std::string;
 
+/* On Linux, AT_SYMLNK_NOFOLLOW is spellt AT_SYMLINK_NOFOLLOW.
+   Hoooray for compatibility! */
+#if defined AT_SYMLINK_NOFOLLOW && !defined AT_SYMLNK_NOFOLLOW
+#define AT_SYMLNK_NOFOLLOW AT_SYMLINK_NOFOLLOW
+#endif
+
+
 string
 get_current_working_dir()
 {
