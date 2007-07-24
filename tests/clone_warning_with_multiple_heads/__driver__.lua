@@ -16,8 +16,8 @@ REV3=base_revision()
 
 testURI="file:" .. test.root .. "/test.db"
 
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir1"),
+check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dirA"),
          1, false, true)
-xfail_if(ostype == "Windows", not exists("test_dir1"))
 check(qgrep(REV2, "stderr"))
 check(qgrep(REV3, "stderr"))
+xfail_if(ostype == "Windows", not exists("test_dirA"))
