@@ -47,8 +47,11 @@ class Pooling_Allocator : public Allocator
             void free(void*, u32bit) throw();
 
             bool operator<(const void*) const;
+            bool operator>(const void*) const;
             bool operator<(const Memory_Block& other) const
                { return (buffer < other.buffer); }
+            bool operator>(const Memory_Block& other) const
+               { return (buffer > other.buffer); }
          private:
             typedef u64bit bitmap_type;
             static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);
@@ -62,7 +65,7 @@ struct diff_less : public std::binary_function<_first,_second,bool>
 {
   bool operator()(const _first& __x, const _second& __y) const { return __x < __y; }
 #if defined(_MSC_VER) && defined(_DEBUG)
-  bool operator()(const _second& __y, const _first& __x) const { return __x < __y; }
+  bool operator()(const _second& __y, const _first& __x) const { return __x > __y; }
   bool operator()(const _first& __x, const _first& __y) const { return __x < __y; }
 #endif
 };

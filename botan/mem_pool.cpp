@@ -59,6 +59,13 @@ inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
    return (buffer < other);
    }
 
+inline bool Pooling_Allocator::Memory_Block::operator>(const void* other) const
+   {
+   if(buffer <= other && other < buffer_end)
+      return false;
+   return (buffer > other);
+   }
+
 /*************************************************
 * See if ptr is contained by this block          *
 *************************************************/
