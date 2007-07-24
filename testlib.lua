@@ -1,18 +1,16 @@
-tests = {} -- list of all tests, not visible when running tests
-test = {} -- table of per-test values
-
 -- misc global values
-
 -- where the main testsuite file is
 srcdir = get_source_dir()
 -- where the individual test dirs are
 -- most paths will be testdir.."/something"
+-- normally reset by the main testsuite file
 testdir = srcdir
 -- was the -d switch given?
 debugging = false
 
--- combined logfile
-logfile = io.open("tester.log", "w")
+-- combined logfile; tester.cc will reset this to a filename, which is
+-- then opened in run_tests
+logfile = nil
 -- logfiles of failed tests; append these to the main logfile
 failed_testlogs = {}
 
@@ -22,7 +20,8 @@ failed_testlogs = {}
 -- for this (at least on Windows).
 files = {stdout = nil, stdin = nil, stderr = nil}
 
-
+-- table of per-test values
+test = {}
 -- misc per-test values
 test.root = nil
 test.name = nil
@@ -39,6 +38,16 @@ test.bglist = {}
 
 test.log = nil -- logfile for this test
 
+-- hook to be overridden by the main testsuite file, if necessary;
+-- called after determining the set of tests to run
+function prepare_to_run_tests()
+end
+
+-- hook to be overridden by the main testsuite file, if necessary;
+-- called after opening the master logfile, but _before_ parsing
+-- arguments or determining the set of tests to run.
+function prepare_to_enumerate_tests()
+end
 
 function P(...)
   io.write(unpack(arg))
@@ -766,6 +775,46 @@ function run_tests(args)
   local torun = {}
   local run_all = true
   local list_only = false
+
+  -- NLS nuisances.
+  for _,name in pairs({  "LANG",
+			 "LANGUAGE",
+			 "LC_ADDRESS",
+			 "LC_ALL",
+			 "LC_COLLATE",
+			 "LC_CTYPE",
+			 "LC_IDENTIFICATION",
+			 "LC_MEASUREMENT",
+			 "LC_MESSAGES",
+			 "LC_MONETARY",
+			 "LC_NAME",
+			 "LC_NUMERIC",
+			 "LC_PAPER",
+			 "LC_TELEPHONE",
+			 "LC_TIME"  }) do
+     set_env(name,"C")
+  end
+
+  -- no test suite should touch the user's ssh agent
+  unset_env("SSH_AUTH_SOCK")
+
+  -- tester.cc has set 'logfile' to an appropriate file name
+  logfile = io.open(logfile, "w")
+
+  prepare_to_enumerate_tests()
+
+  -- any directory in testdir with a __driver__.lua inside is a test case
+  local tests = {}
+  for _,candidate in ipairs(read_directory(testdir)) do
+     -- n.b. it is not necessary to throw out directories before doing
+     -- this check, because exists(nondirectory/__driver__.lua) will
+     -- never be true.
+     if exists(testdir .. "/" .. candidate .. "/__driver__.lua") then
+	table.insert(tests, candidate)
+     end
+  end
+  table.sort(tests)
+
   for i,a in pairs(args) do
     local _1,_2,l,r = string.find(a, "^(-?%d+)%.%.(-?%d+)$")
     if _1 then
@@ -803,10 +852,13 @@ function run_tests(args)
       end
     end
   end
+
   if not list_only then
     logfile:write("Running on ", get_ostype(), "\n\n")
     P("Running tests...\n")
   end
+  prepare_to_run_tests()
+
   local counts = {}
   counts.success = 0
   counts.skip = 0

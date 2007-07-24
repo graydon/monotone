@@ -1,12 +1,5 @@
 #!./tester
 
--- We have a bunch of tests that depend on being able to create files or
--- directories that we cannot read or write (mostly to test error handling
--- behavior).
-require_not_root()
-
-ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
-
 -- maybe this should go in tester.lua instead?
 function getpathof(exe, ext)
   local function gotit(now)
@@ -46,39 +39,6 @@ function getpathof(exe, ext)
   end
   return nil
 end
-
-monotone_path = getpathof("mtn")
-if monotone_path == nil then monotone_path = "mtn" end
-set_env("mtn", monotone_path)
-
-writefile_q("in", nil)
-prepare_redirect("in", "out", "err")
-execute(monotone_path, "--full-version")
-logfile:write(readfile_q("out"))
-unlogged_remove("in")
-unlogged_remove("out")
-unlogged_remove("err")
-
--- NLS nuisances.
-for _,name in pairs({  "LANG",
-                       "LANGUAGE",
-                       "LC_ADDRESS",
-                       "LC_ALL",
-                       "LC_COLLATE",
-                       "LC_CTYPE",
-                       "LC_IDENTIFICATION",
-                       "LC_MEASUREMENT",
-                       "LC_MESSAGES",
-                       "LC_MONETARY",
-                       "LC_NAME",
-                       "LC_NUMERIC",
-                       "LC_PAPER",
-                       "LC_TELEPHONE",
-                       "LC_TIME"  }) do
-   set_env(name,"C")
-end
-unset_env("SSH_AUTH_SOCK")
-       
 
 function safe_mtn(...)
   return {monotone_path, "--norc", "--root=" .. test.root,
@@ -364,15 +324,23 @@ end
 ------------------------------------------------------------------------
 testdir = srcdir.."/tests"
 
--- any directory in testdir with a __driver__.lua inside is a test case
--- perhaps this should be in tester.lua?
+function prepare_to_run_tests ()
+   -- We have a bunch of tests that depend on being able to create
+   -- files or directories that we cannot read or write (mostly to
+   -- test error handling behavior).
+   require_not_root()
 
-for _,candidate in ipairs(read_directory(testdir)) do
-   -- n.b. it is not necessary to throw out directories before doing
-   -- this check, because exists(nondirectory/__driver__.lua) will
-   -- never be true.
-   if exists(testdir .. "/" .. candidate .. "/__driver__.lua") then
-      table.insert(tests, candidate)
-   end
+   ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
+
+   monotone_path = getpathof("mtn")
+   if monotone_path == nil then monotone_path = "mtn" end
+   set_env("mtn", monotone_path)
+
+   writefile_q("in", nil)
+   prepare_redirect("in", "out", "err")
+   execute(monotone_path, "--full-version")
+   logfile:write(readfile_q("out"))
+   unlogged_remove("in")
+   unlogged_remove("out")
+   unlogged_remove("err")
 end
-table.sort(tests)

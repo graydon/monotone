@@ -831,53 +831,81 @@ int main(int argc, char **argv)
 {
   int retcode = 2;
   lua_State *st = 0;
-  try{
-//  global_sanity.set_debug();
-  string testfile;
-  string firstdir;
-  bool needhelp = false;
-  for (int i = 1; i < argc; ++i)
-    if (string(argv[i]) == "--help" || string(argv[i]) == "-h")
-      needhelp = true;
-  if (argc > 1 && !needhelp)
-    {
-      firstdir = get_current_working_dir();
-      run_dir = firstdir + "/tester_dir";
-      do_remove_recursive(run_dir);
-      do_mkdir(run_dir);
-
-      testfile = argv[1];
-      change_current_working_dir(dirname(testfile));
-      source_dir = get_current_working_dir();
-      testfile = source_dir + "/" + basename(testfile);
-
-      change_current_working_dir(run_dir);
-    }
-  else
-    {
-      P(F("Usage: %s test-file [arguments]\n") % argv[0]);
-      P(F("\t-h         print this message\n"));
-      P(F("\t-l         print test names only; don't run them\n"));
-      P(F("\t-d         don't clean the scratch directories\n"));
-      P(F("\tnum        run a specific test\n"));
-      P(F("\tnum..num   run tests in a range\n"));
-      P(F("\t           if num is negative, count back from the end\n"));
-      P(F("\tregex      run tests with matching names\n"));
-      return 1;
-    }
-  st = luaL_newstate();
-  lua_atpanic (st, &panic_thrower);
-  luaL_openlibs(st);
-  add_functions(st);
-  
-  lua_pushstring(st, "initial_dir");
-  lua_pushstring(st, firstdir.c_str());
-  lua_settable(st, LUA_GLOBALSINDEX);
-
   try
     {
+      string testfile;
+      string firstdir;
+      bool needhelp = false;
+      for (int i = 1; i < argc; ++i)
+        if (string(argv[i]) == "--help" || string(argv[i]) == "-h")
+          needhelp = true;
+      if (argc > 1 && !needhelp)
+        {
+          firstdir = get_current_working_dir();
+          run_dir = firstdir + "/tester_dir";
+          switch (get_path_status(run_dir))
+            {
+            case path::directory: break;
+            case path::file:
+              P(F("cannot create directory '%s': it is a file") % run_dir);
+              return 1;
+            case path::nonexistent:
+              do_mkdir(run_dir);
+            }
+
+          testfile = argv[1];
+          change_current_working_dir(dirname(testfile));
+          source_dir = get_current_working_dir();
+          testfile = source_dir + "/" + basename(testfile);
+
+          change_current_working_dir(run_dir);
+        }
+      else
+        {
+          P(F("Usage: %s test-file [arguments]\n") % argv[0]);
+          P(F("\t-h         print this message\n"));
+          P(F("\t-l         print test names only; don't run them\n"));
+          P(F("\t-d         don't clean the scratch directories\n"));
+          P(F("\tnum        run a specific test\n"));
+          P(F("\tnum..num   run tests in a range\n"));
+          P(F("\t           if num is negative, count back from the end\n"));
+          P(F("\tregex      run tests with matching names\n"));
+          return needhelp ? 0 : 1;
+        }
+      st = luaL_newstate();
+      lua_atpanic (st, &panic_thrower);
+      luaL_openlibs(st);
+      add_functions(st);
+  
+      lua_pushstring(st, firstdir.c_str());
+      lua_setglobal(st, "initial_dir");
+
       run_string(st, testlib_constant, "tester builtin functions");
       run_file(st, testfile.c_str());
+
+      // arrange for isolation between different test suites running in the
+      // same build directory.
+      {
+        lua_getglobal(st, "testdir");
+        const char *testdir = lua_tostring(st, 1);
+        I(testdir);
+        string testdir_base = basename(testdir);
+        run_dir = run_dir + "/" + testdir_base;
+        string logfile = run_dir + ".log";
+        switch (get_path_status(run_dir))
+          {
+          case path::directory: break;
+          case path::file:
+            P(F("cannot create directory '%s': it is a file") % run_dir);
+            return 1;
+          case path::nonexistent:
+            do_mkdir(run_dir);
+          }
+
+        lua_pushstring(st, logfile.c_str());
+        lua_setglobal(st, "logfile");
+      }
+
       Lua ll(st);
       ll.func("run_tests");
       ll.push_table();
@@ -890,17 +918,27 @@ int main(int argc, char **argv)
       ll.call(1,1)
         .extract_int(retcode);
     }
-  catch (std::exception &e)
+  catch (informative_failure & e)
     {
-      P(F("Error: %s") % e.what());
+      P(F("%s\n") % e.what());
+      retcode = 1;
     }
-  } catch (informative_failure & e) {
-    P(F("Error: %s\n") % e.what());
-    retcode = 1;
-  } catch (std::logic_error & e) {
-    P(F("Invariant failure: %s\n") % e.what());
-    retcode = 3;
-  }
+  catch (std::logic_error & e)
+    {
+      P(F("Invariant failure: %s\n") % e.what());
+      retcode = 3;
+    }
+  catch (std::exception & e)
+    {
+      P(F("Uncaught exception: %s") % e.what());
+      retcode = 3;
+    }
+  catch (...)
+    {
+      P(F("Uncaught exception of unknown type"));
+      retcode = 3;
+    }
+
   if (st)
     lua_close(st);
   return retcode;
