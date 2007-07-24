@@ -211,7 +211,7 @@ do_read_directory(string const & path,
       // try again with lstat
       if (st_result < 0 && errno == ENOENT)
         {
-#if defined HAVE_FSTATAT && defined HAVE_DIRFD
+#if defined HAVE_FSTATAT && defined HAVE_DIRFD && defined AT_SYMLNK_NOFOLLOW
           static bool fstatat_works = true;
           if (fstatat_works)
             {
