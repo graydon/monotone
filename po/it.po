@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-07-23 08:01+0100\n"
+"PO-Revision-Date: 2007-07-25 00:11+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -635,7 +635,7 @@ msgstr "Esegue dei controlli di integrità sul database"
 
 #: cmd_db.cc:172
 msgid "Ensures that the database is consistent by issuing multiple checks."
-msgstr ""
+msgstr "Verifica la consistenza del database eseguendo molteplici controlli."
 
 #: cmd_db.cc:183
 msgid "Converts the database to the changeset format"
@@ -668,7 +668,7 @@ msgstr ""
 
 #: cmd_db.cc:260
 msgid "Unsets a database variable"
-msgstr ""
+msgstr "Cancella una variabile dal database"
 
 #: cmd_db.cc:261
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
@@ -1603,7 +1603,7 @@ msgstr ""
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
-msgstr ""
+msgstr "Se non viene specificato un ID_REV, viene utilizzato lo spazio di lavoro."
 
 #: cmd_netsync.cc:44
 #: cmd_netsync.cc:286
@@ -3056,7 +3056,7 @@ msgstr "il file ‘%s’ non può essere sovrascritto: è una directory"
 #: file_io.cc:464
 #, c-format
 msgid "skipping file '%s' with unsupported name"
-msgstr ""
+msgstr "salto il file con nome non valido ‘%s’"
 
 #: file_io.cc:468
 #, c-format
@@ -4968,10 +4968,11 @@ msgstr ""
 msgid "stream read failed (%i)"
 msgstr "fallita lettura da stream (%i)"
 
+# TODO: in più/di troppo?
 #: unix/ssh_agent_platform.cc:111
 #, c-format
 msgid "%u extra bytes from ssh-agent"
-msgstr ""
+msgstr "ricevuti da ssh-agent %u bytes in più"
 
 #: win32/fs.cc:51
 #, c-format
