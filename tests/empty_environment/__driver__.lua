@@ -8,10 +8,8 @@ end
 
 if ostype == "Windows" then
   local iconv = getpathof("libiconv-2", ".dll")
-  local intl = getpathof("libintl-8", ".dll")
   local zlib = getpathof("zlib1", ".dll")
   copy(iconv, "libiconv-2.dll")
-  copy(intl, "libintl-8.dll")
   copy(zlib, "zlib1.dll")
 elseif string.sub(ostype, 1, 6) == "CYGWIN" then
   local cygwin = getpathof("cygwin1", ".dll")
