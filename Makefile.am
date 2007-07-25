@@ -338,7 +338,7 @@ unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 tester_SOURCES = tester.cc
 nodist_tester_SOURCES = testlib.c
 tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
-		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES))))
+		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) option.cc)))
 
 txt2c_SOURCES = txt2c.cc
 

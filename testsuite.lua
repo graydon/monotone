@@ -1,6 +1,14 @@
 #!./tester
 
+monotone_path = nil
+
 function safe_mtn(...)
+  if monotone_path == nil then
+    monotone_path = os.getenv("mtn")
+    if monotone_path == nil then
+      err("'mtn' environment variable not set")
+    end
+  end
   return {monotone_path, "--norc", "--root=" .. test.root,
           "--confdir="..test.root, unpack(arg)}
 end

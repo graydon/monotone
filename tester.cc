@@ -6,6 +6,7 @@
 #include "lua.hh"
 #include "platform.hh"
 #include "sanity.hh"
+#include "option.hh"
 
 #include <cstdlib>
 #include <ctime>
@@ -34,6 +35,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#endif
+
+#ifdef WIN32
+#define NULL_DEVICE "NUL:"
+#else
+#define NULL_DEVICE "/dev/null"
 #endif
 
 // defined in testlib.c, generated from testlib.lua
@@ -312,8 +319,11 @@ char * do_mkdtemp(char const * parent)
 
 map<string, string> orig_env_vars;
 
-string source_dir;
-string run_dir;
+static string argv0;
+static string firstdir;
+static string source_dir;
+static string run_dir;
+static string testfile;
 
 static int panic_thrower(lua_State * st)
 {
@@ -484,26 +494,6 @@ LUAEXT(posix_umask, )
 #endif
 }
 
-LUAEXT(go_to_test_dir, )
-{
-  try
-    {
-      string tname = basename(luaL_checkstring(L, -1));
-      string testdir = run_dir + "/" + tname;
-      do_remove_recursive(testdir);
-      do_mkdir(testdir);
-      change_current_working_dir(testdir);
-      lua_pushstring(L, testdir.c_str());
-      lua_pushstring(L, tname.c_str());
-      return 2;
-    }
-  catch(informative_failure & e)
-    {
-      lua_pushnil(L);
-      return 1;
-    }
-}
-
 LUAEXT(chdir, )
 {
   try
@@ -511,24 +501,6 @@ LUAEXT(chdir, )
       string from = get_current_working_dir();
       change_current_working_dir(luaL_checkstring(L, -1));
       lua_pushstring(L, from.c_str());
-      return 1;
-    }
-  catch(informative_failure & e)
-    {
-      lua_pushnil(L);
-      return 1;
-    }
-}
-
-LUAEXT(clean_test_dir, )
-{
-  try
-    {
-      string tname = basename(luaL_checkstring(L, -1));
-      string testdir = run_dir + "/" + tname;
-      change_current_working_dir(run_dir);
-      do_remove_recursive(testdir);
-      lua_pushboolean(L, true);
       return 1;
     }
   catch(informative_failure & e)
@@ -585,21 +557,6 @@ LUAEXT(copy_recursive, )
       lua_pushboolean(L, false);
       lua_pushstring(L, e.what());
       return 2;
-    }
-}
-
-LUAEXT(leave_test_dir, )
-{
-  try
-    {
-      change_current_working_dir(run_dir);
-      lua_pushboolean(L, true);
-      return 1;
-    }
-  catch(informative_failure & e)
-    {
-      lua_pushnil(L);
-      return 1;
     }
 }
 
@@ -824,6 +781,78 @@ LUAEXT(require_not_root, )
           "Please try again with a normal user account.\n"));
       exit(1);
     }
+  return 0;  
+}
+
+// run_tests_in_children (to_run, reporter)
+
+// Run all of the tests in TO_RUN, each in its own isolated directory and
+// child process.  As each exits, call REPORTER with the test number and
+// name, and the exit status.  If REPORTER returns true, delete the test
+// directory, otherwise leave it alone. The point of this exercise is to
+// isolate in one C function all the black art involved with safe creation
+// and destruction of child processes and their context.
+LUAEXT(run_tests_in_children, )
+{
+  // lua arguments
+  const int to_run = 1;
+  const int reporter = 2;
+
+  if (lua_gettop(L) != 2)
+    return luaL_error(L, "wrong number of arguments");
+
+  luaL_argcheck(L, lua_istable(L, 1), 1, "expected a table");
+  luaL_argcheck(L, lua_isfunction(L, 2), 2, "expected a function");
+
+  // iterate over to_run...
+  char const * argv[6];
+  lua_pushnil(L);
+  while (lua_next(L, to_run) != 0)
+    {
+      luaL_checkinteger(L, -2);
+      string testname = luaL_checkstring(L, -1);
+      string testdir = run_dir + "/" + testname;
+      int status;
+
+      argv[0] = argv0.c_str();
+      argv[1] = "-r";
+      argv[2] = testfile.c_str();
+      argv[3] = firstdir.c_str();
+      argv[4] = testname.c_str();
+      argv[5] = 0;
+
+      do_remove_recursive(testdir);
+      do_mkdir(testdir);
+
+      {
+        change_current_working_dir(testdir);
+        pid_t child = process_spawn_redirected(NULL_DEVICE,
+                                               "tester.log",
+                                               "tester.log",
+                                               argv);
+        change_current_working_dir(run_dir);
+        process_wait(child, &status);
+      }
+
+      // Set up a call to REPORTER with the appropriate arguments ...
+      lua_pushvalue(L, reporter); // t_r r tno tna r
+      lua_insert(L, -2);          // t_r r tno r tna
+      lua_pushvalue(L, -3);       // t_r r tno r tna tno
+      lua_insert(L, -2);          // t_r r tno r tno tna
+      lua_pushinteger(L, status); // t_r r tno r tno tna st
+
+      // ... call it ...
+      lua_call(L, 3, 1);
+
+      // ... and if it returns true, delete testdir.
+      I(lua_isboolean(L, -1));
+      if (lua_toboolean(L, -1))
+        do_remove_recursive(testdir);
+
+      // pop return value, leaving to_run reporter testno, as expected by
+      // lua_next.
+      lua_remove(L, -1);
+    }
   return 0;
 }
 
@@ -831,18 +860,113 @@ int main(int argc, char **argv)
 {
   int retcode = 2;
   lua_State *st = 0;
+
   try
     {
-      string testfile;
-      string firstdir;
-      bool needhelp = false;
-      for (int i = 1; i < argc; ++i)
-        if (string(argv[i]) == "--help" || string(argv[i]) == "-h")
-          needhelp = true;
-      if (argc > 1 && !needhelp)
+      vector<string> tests_to_run;
+      bool want_help = false;
+      bool need_help = false;
+      bool debugging = false;
+      bool list_only = false;
+      bool run_one   = false;
+
+      option::concrete_option_set os;
+      os("help,h", "display help message", option::setter(want_help))
+        ("debug,d", "don't erase per-test directories for successful tests",
+         option::setter(debugging))
+        ("list,l", "list tests that would be run, but don't run them",
+         option::setter(list_only))
+        ("run-one,r", "", // internal use only!
+         option::setter(run_one))
+        ("--", "", option::setter(tests_to_run));
+
+      try
+        {
+          os.from_command_line(argc, argv);
+        }
+      catch (option::option_error & e)
+        {
+          P(F("%s: %s\n") % argv[0] % e.what());
+          need_help = true;
+        }
+
+      if (tests_to_run.size() == 0)
+        {
+          P(F("%s: no test suite specified"));
+          need_help = true;
+        }
+
+      if (run_one && (want_help || debugging || list_only
+                      || tests_to_run.size() != 3))
+        {
+          P(F("%s: incorrect self-invocation") % argv[0]);
+          need_help = true;
+        }
+
+      if (want_help || need_help)
+        {
+          P(F("Usage: %s test-file testsuite [options] [tests]\n") % argv[0]);
+          P(F("Testsuite: a Lua script defining the test suite to run.\n"));
+          P(F("Options:\n%s\n") % os.get_usage_str());
+          P(F("Tests may be specified as:\n"
+              "  nothing - run all tests.\n"
+              "  numbers - run the tests with those numbers\n"
+              "            negative numbers count back from the end\n"
+              "            ranges may be specified as A..B (inclusive)\n"
+              "  regexes - run the tests whose names match (unanchored)\n"));
+
+          return want_help ? 0 : 2;
+        }
+
+      st = luaL_newstate();
+      lua_atpanic (st, &panic_thrower);
+      luaL_openlibs(st);
+      add_functions(st);
+
+      if (run_one)
+        {
+          // This is a self-invocation, requesting that we actually run a
+          // single named test.  Contra the help above, the command line
+          // arguments are the absolute pathname of the testsuite definition,
+          // the original working directory, and the name of the test, in
+          // that order.  No other options are valid in combination with -r.
+          // We have been invoked inside the directory where we should run
+          // the test.  Stdout and stderr have been redirected to a per-test
+          // logfile.
+
+          lua_pushstring(st, tests_to_run[1].c_str());
+          lua_setglobal(st, "initial_dir");
+
+          source_dir = dirname(tests_to_run[0]);
+
+          run_string(st, testlib_constant, "testlib.lua");
+          run_file(st, tests_to_run[0].c_str());
+
+          Lua ll(st);
+          ll.func("run_one_test");
+          ll.push_str(tests_to_run[2]);
+          ll.call(1,1)
+            .extract_int(retcode);
+        }
+      else
         {
           firstdir = get_current_working_dir();
           run_dir = firstdir + "/tester_dir";
+          testfile = tests_to_run.front();
+
+          if (argv[0][0] == '/'
+#ifdef WIN32
+              || argv[0][0] != '\0' && argv[0][1] == ':'
+#endif
+              )
+            argv0 = argv[0];
+          else
+            argv0 = firstdir + "/" + argv[0];
+
+          change_current_working_dir(dirname(testfile));
+          source_dir = get_current_working_dir();
+          testfile = source_dir + "/" + basename(testfile);
+
           switch (get_path_status(run_dir))
             {
             case path::directory: break;
@@ -853,70 +977,47 @@ int main(int argc, char **argv)
               do_mkdir(run_dir);
             }
 
-          testfile = argv[1];
-          change_current_working_dir(dirname(testfile));
-          source_dir = get_current_working_dir();
-          testfile = source_dir + "/" + basename(testfile);
-
           change_current_working_dir(run_dir);
+
+          run_string(st, testlib_constant, "testlib.lua");
+          lua_pushstring(st, firstdir.c_str());
+          lua_setglobal(st, "initial_dir");
+          run_file(st, testfile.c_str());
+
+          // arrange for isolation between different test suites running in
+          // the same build directory.
+          lua_getglobal(st, "testdir");
+          const char *testdir = lua_tostring(st, 1);
+          I(testdir);
+          string testdir_base = basename(testdir);
+          run_dir = run_dir + "/" + testdir_base;
+          string logfile = run_dir + ".log";
+          switch (get_path_status(run_dir))
+            {
+            case path::directory: break;
+            case path::file:
+              P(F("cannot create directory '%s': it is a file") % run_dir);
+              return 1;
+            case path::nonexistent:
+              do_mkdir(run_dir);
+            }
+
+          Lua ll(st);
+          ll.func("run_tests");
+          ll.push_bool(debugging);
+          ll.push_bool(list_only);
+          ll.push_str(run_dir);
+          ll.push_str(logfile);
+          ll.push_table();
+          for (int i = 2; i < argc; ++i)
+            {
+              ll.push_int(i-1);
+              ll.push_str(argv[i]);
+              ll.set_table();
+            }
+          ll.call(5,1)
+            .extract_int(retcode);
         }
-      else
-        {
-          P(F("Usage: %s test-file [arguments]\n") % argv[0]);
-          P(F("\t-h         print this message\n"));
-          P(F("\t-l         print test names only; don't run them\n"));
-          P(F("\t-d         don't clean the scratch directories\n"));
-          P(F("\tnum        run a specific test\n"));
-          P(F("\tnum..num   run tests in a range\n"));
-          P(F("\t           if num is negative, count back from the end\n"));
-          P(F("\tregex      run tests with matching names\n"));
-          return needhelp ? 0 : 1;
-        }
-      st = luaL_newstate();
-      lua_atpanic (st, &panic_thrower);
-      luaL_openlibs(st);
-      add_functions(st);
-  
-      lua_pushstring(st, firstdir.c_str());
-      lua_setglobal(st, "initial_dir");
-
-      run_string(st, testlib_constant, "tester builtin functions");
-      run_file(st, testfile.c_str());
-
-      // arrange for isolation between different test suites running in the
-      // same build directory.
-      {
-        lua_getglobal(st, "testdir");
-        const char *testdir = lua_tostring(st, 1);
-        I(testdir);
-        string testdir_base = basename(testdir);
-        run_dir = run_dir + "/" + testdir_base;
-        string logfile = run_dir + ".log";
-        switch (get_path_status(run_dir))
-          {
-          case path::directory: break;
-          case path::file:
-            P(F("cannot create directory '%s': it is a file") % run_dir);
-            return 1;
-          case path::nonexistent:
-            do_mkdir(run_dir);
-          }
-
-        lua_pushstring(st, logfile.c_str());
-        lua_setglobal(st, "logfile");
-      }
-
-      Lua ll(st);
-      ll.func("run_tests");
-      ll.push_table();
-      for (int i = 2; i < argc; ++i)
-        {
-          ll.push_int(i-1);
-          ll.push_str(argv[i]);
-          ll.set_table();
-        }
-      ll.call(1,1)
-        .extract_int(retcode);
     }
   catch (informative_failure & e)
     {
@@ -943,6 +1044,137 @@ int main(int argc, char **argv)
     lua_close(st);
   return retcode;
 }
+
+// The functions below are used by option.cc, and cloned from ui.cc and
+// simplestring_xform.cc, which we cannot use here.  They do not cover
+// several possibilities handled by the real versions.
+
+unsigned int
+guess_terminal_width()
+{
+  unsigned int w = terminal_width();
+  if (!w)
+    w = 80; // can't use constants:: here
+  return w;
+}
+
+static void
+split_into_lines(string const & in, vector<string> & out)
+{
+  out.clear();
+  string::size_type begin = 0;
+  string::size_type end = in.find_first_of("\r\n", begin);
+  while (end != string::npos && end >= begin)
+    {
+      out.push_back(in.substr(begin, end-begin));
+      if (in.at(end) == '\r'
+          && in.size() > end+1
+          && in.at(end+1) == '\n')
+        begin = end + 2;
+      else
+        begin = end + 1;
+      if (begin >= in.size())
+        break;
+      end = in.find_first_of("\r\n", begin);
+    }
+  if (begin < in.size())
+    out.push_back(in.substr(begin, in.size() - begin));
+}
+
+static vector<string> split_into_words(string const & in)
+{
+  vector<string> out;
+
+  string::size_type begin = 0;
+  string::size_type end = in.find_first_of(" ", begin);
+
+  while (end != string::npos && end >= begin)
+    {
+      out.push_back(in.substr(begin, end-begin));
+      begin = end + 1;
+      if (begin >= in.size())
+        break;
+      end = in.find_first_of(" ", begin);
+    }
+  if (begin < in.size())
+    out.push_back(in.substr(begin, in.size() - begin));
+
+  return out;
+}
+
+// See description for format_text below for more details.
+static string
+format_paragraph(string const & text, size_t const col, size_t curcol)
+{
+  I(text.find('\n') == string::npos);
+
+  string formatted;
+  if (curcol < col)
+    {
+      formatted = string(col - curcol, ' ');
+      curcol = col;
+    }
+
+  const size_t maxcol = guess_terminal_width();
+
+  vector< string > words = split_into_words(text);
+  for (vector< string >::const_iterator iter = words.begin();
+       iter != words.end(); iter++)
+    {
+      string const & word = *iter;
+
+      if (iter != words.begin() &&
+          curcol + word.size() + 1 > maxcol)
+        {
+          formatted += '\n' + string(col, ' ');
+          curcol = col;
+        }
+      else if (iter != words.begin())
+        {
+          formatted += ' ';
+          curcol++;
+        }
+
+      formatted += word;
+      curcol += word.size();
+    }
+
+  return formatted;
+}
+
+// Reformats the given text so that it fits in the current screen with no
+// wrapping.
+//
+// The input text is a series of words and sentences.  Paragraphs may be
+// separated with a '\n' character, which is taken into account to do the
+// proper formatting.  The text should not finish in '\n'.
+//
+// 'col' specifies the column where the text will start and 'curcol'
+// specifies the current position of the cursor.
+string
+format_text(string const & text, size_t const col, size_t curcol)
+{
+  I(curcol <= col);
+
+  string formatted;
+
+  vector< string > lines;
+  split_into_lines(text, lines);
+  for (vector< string >::const_iterator iter = lines.begin();
+       iter != lines.end(); iter++)
+    {
+      string const & line = *iter;
+
+      formatted += format_paragraph(line, col, curcol);
+      if (iter + 1 != lines.end())
+        formatted += "\n\n";
+      curcol = 0;
+    }
+
+  return formatted;
+}
+
+
 
 // Local Variables:
 // mode: C++
