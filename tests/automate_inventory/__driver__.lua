@@ -52,7 +52,8 @@ index = check_inventory (parsed, index,
 {path = "added",
  new_type = "file",
  fs_type = "file",
- status = {"added", "known"}})
+ status = {"added", "known"},
+changes = {"content"}})
 
 index = check_inventory (parsed, index,
 {path = "dropped",
@@ -488,8 +489,6 @@ addfile("still-a-dir--soon-a-file", "bla")
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
 
--- FIXME: The next two tests fail, mainly because the status "dropped" is 
--- wrongly reported as "rename_source"
 index = find_basic_io_line (parsed, {name = "path", values = "still-a-file--soon-a-dir"})
 check_inventory (parsed, index,
 {   path = "still-a-file--soon-a-dir",
@@ -514,20 +513,13 @@ check(mtn("attr", "set", "file-with-attributes", "foo", "bar"), 0, false, false)
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
-
--- FIXME: This test fails as well, because the "changes" stanza is completly
--- omitted. While it was obvious in the old format that added files always had
--- a P(atch) and it seemed natural to just omit this information here, we now
--- also track attribute additions for files here which are not at all mandatory
--- for new files and therefor this is an information which actually _should not_
--- be ommitted
 index = find_basic_io_line (parsed, {name = "path", values = "file-with-attributes"})
 check_inventory (parsed, index,
 {   path = "file-with-attributes",
 new_type = "file",
  fs_type = "file",
   status = {"added", "known"},
-changes = {"content", "attributes"}})
+changes = {"content", "attrs"}})
 
 commit()
 
@@ -554,9 +546,13 @@ new_type = "file",
   status = {"known"},
  changes = {"attrs"}})
 
+-- FIXME: Check if changes "content" is properly applied in several states
+-- (there is at least one known wrong state where it is applied: when a
+-- rename_target item is missing...)
+
 -- FIXME: tests for renaming directories 
---  also test that iff foo/ is renamed to bar/, any previous foo/node is
---  now listed as bar/node
+-- also test that iff foo/ is renamed to bar/, any previous foo/node is
+-- now listed as bar/node
 
 -- FIXME: add test for 'pivot_root'
 

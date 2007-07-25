@@ -679,6 +679,122 @@ namespace
   }
 }
 
+static void
+inventory_print_states(app_state & app, file_path const & fs_path,
+                       inventory_item const & item, roster_t const & old_roster,
+                       roster_t const & new_roster, basic_io::stanza & st)
+{
+  std::vector<std::string> states;
+  
+  // if both nodes exist, the only interesting case is 
+  // when the node ids aren't equal (so we have different nodes
+  // with one and the same path in the old and the new roster)
+  if (item.old_node.exists && 
+      item.new_node.exists &&
+      item.old_node.id != item.new_node.id)
+    {
+        if (new_roster.has_node(item.old_node.id))
+          states.push_back("rename_source");
+        else
+          states.push_back("dropped");
+        
+        if (old_roster.has_node(item.new_node.id))
+          states.push_back("rename_target");
+        else
+          states.push_back("added");
+    }
+  // this can be either a drop or a renamed item
+  else if (item.old_node.exists &&
+          !item.new_node.exists)
+    {
+      if (new_roster.has_node(item.old_node.id))
+        states.push_back("rename_source");
+      else
+        states.push_back("dropped");
+    }
+  // this can be either an add or a renamed item
+  else if (!item.old_node.exists &&
+            item.new_node.exists)
+    {
+      if (old_roster.has_node(item.new_node.id))
+        states.push_back("rename_target");
+      else
+        states.push_back("added");
+    }
+
+  // check the state of the file system item
+  if (item.fs_type == path::nonexistent)
+    {
+      if (item.new_node.exists)
+        states.push_back("missing");
+    }
+  else // exists on filesystem
+    {
+      if (!item.new_node.exists)
+        {
+          if (app.lua.hook_ignore_file(fs_path))
+            states.push_back("ignored");
+          else
+            states.push_back("unknown");
+        }
+      else if (item.new_node.type != item.fs_type)
+        states.push_back("invalid");
+      else
+        states.push_back("known");
+    }
+
+  st.push_str_multi(syms::status, states);
+}
+
+static void
+inventory_print_changes(inventory_item const & item, roster_t const & old_roster, 
+                        basic_io::stanza & st)
+{
+  // old nodes do not have any recorded content changes and attributes,
+  // so we can't print anything for them here
+  if (!item.new_node.exists) return;
+
+  std::vector<string> changes;
+
+  // this is an existing item
+  if (old_roster.has_node(item.new_node.id))
+    {
+      // check if the content has changed - this makes only sense
+      // for existing files, not for directories or missing files
+      if (item.new_node.type == path::file && item.fs_type != path::nonexistent)
+        {
+          file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
+
+          // set a content changed marker whenever we saw that the file's
+          // hash changed or the previous type (most likely a directory) had
+          // no content id to compare with
+          if (item.old_node.type != path::file || 
+              item.fs_ident != old_file->content)
+            changes.push_back("content");
+        }
+
+      // now look for changed attributes
+      node_t old_node = old_roster.get_node(item.new_node.id);
+      if (old_node->attrs != item.new_node.attrs)
+        changes.push_back("attrs");
+    }
+  else
+    {
+      // FIXME: paranoia: shall we I(new_roster.has_node(item.new_node.id)) here?
+      
+      // this is apparently a new item, if it is a file it gets at least 
+      // the "content" marker and we also check for recorded attributes
+      if (item.new_node.type == path::file)
+        changes.push_back("content");
+      
+      if (item.new_node.attrs.size() > 0)
+        changes.push_back("attrs");
+    }
+
+  if (!changes.empty())
+    st.push_str_multi(syms::changes, changes);
+}
+
 // Name: inventory
 // Arguments: [PATH]...
 // Added in: 1.0
@@ -729,19 +845,46 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
     {
       basic_io::stanza st;
       inventory_item const & item = i->second;
-      std::vector<std::string> states;
-
+      
       if (i->first.as_internal() == "")
         {
           // This is the workspace root directory. The default algorithm
           // displays it wrong, so we treat is as a special case.
-
+          //
+          // FIXME: Consider a just setup'ed workspace where there hasn't been 
+          // any version committed yet, this code produces:
+          //
+          //      path "."
+          //  old_type "directory"
+          //  new_type "directory"
+          //   fs_type "directory"
+          //    status "added" "missing"
+          //
+          // which is purely wrong, because there is no "old_type". It gets
+          // slightly better if we comment this special treating out:
+          //
+          //      path ""
+          //  new_type "directory"
+          //   fs_type "none"
+          //    status "added" "missing"
+          //
+          // which is still not completly correct, but at least "added" 
+          // complements no wrong "old_type" node. The idea / correct output 
+          // for this example should be:
+          //
+          //      path "."
+          //  new_type "directory"
+          //   fs_type "directory"
+          //    status "added"
+          //
           st.push_str_pair(syms::path, ".");
           st.push_str_pair(syms::old_type, "directory");
           st.push_str_pair(syms::new_type, "directory");
           st.push_str_pair(syms::fs_type, "directory");
-          states.push_back("known");
-          st.push_str_multi(syms::status, states);
+      
+          inventory_print_states(app, i->first, item, old_roster, new_roster, st);
+          inventory_print_changes(item, old_roster, st);
+          
           pr.print_stanza(st);
           continue;
         }
@@ -783,121 +926,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      if (item.old_node.exists && !item.new_node.exists)
-        {
-          if (item.new_path.as_internal().length() > 0)
-            {
-              states.push_back("rename_source");
-            }
-          else
-            {
-              states.push_back("dropped");
-            }
-        }
-      else if (!item.old_node.exists && item.new_node.exists)
-        {
-          if (item.old_path.as_internal().length() > 0)
-            {
-              states.push_back("rename_target");
-            }
-          else
-            {
-              states.push_back("added");
-            }
-        }
-      else if (item.old_node.exists && item.new_node.exists &&
-               (item.old_node.id != item.new_node.id))
-        {
-           // check if this is a cyclic rename or a rename
-           // paired with an add / drop
-          if ((item.old_path.as_internal().length() > 0) &&
-              (item.new_path.as_internal().length() > 0))
-             {
-               states.push_back("rename_source");
-               states.push_back("rename_target");
-             }
-          else if (item.old_path.as_internal().length() > 0)
-             {
-               states.push_back("dropped");
-               states.push_back("rename_target");
-             }
-          else
-             {
-               states.push_back("rename_source");
-               states.push_back("added");
-             }
-        }
-
-      if (item.fs_type == path::nonexistent)
-        {
-          if (item.new_node.exists)
-            states.push_back("missing");
-        }
-      else // exists on filesystem
-        {
-          if (!item.new_node.exists)
-            {
-              if (app.lua.hook_ignore_file(i->first))
-                states.push_back("ignored");
-              else
-                states.push_back("unknown");
-            }
-          else if (item.new_node.type != item.fs_type)
-            states.push_back("invalid");
-          else
-            states.push_back("known");
-        }
-
-      st.push_str_multi(syms::status, states);
-
-      // note that we have three sources of information here
-      //
-      // the old roster
-      // the new roster
-      // the filesystem
-      //
-      // the new roster is synthesised from the old roster and the contents of
-      // _MTN/work and has *not* been updated with content hashes from the
-      // filesystem.
-      //
-      // one path can represent different nodes in the old and new rosters and
-      // the two different nodes can potentially be different types (file vs dir).
-      //
-      // we're interested in comparing the content and attributes of the current
-      // path in the new roster against their corresponding values in the old
-      // roster.
-      //
-      // the new content hash comes from the filesystem since the new roster has
-      // not been updated. the new attributes can come directly from the new
-      // roster.
-      //
-      // the old content hash and attributes both come from the old roster but
-      // we must use the node id of the path in the new roster to get the node
-      // from the old roster to compare against.
-
-      if (item.new_node.exists)
-        {
-          std::vector<string> changes;
-
-          if (item.new_node.type == path::file && old_roster.has_node(item.new_node.id))
-            {
-              file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
-
-              if (item.fs_type == path::file && !(item.fs_ident == old_file->content))
-                changes.push_back("content");
-            }
-
-          if (old_roster.has_node(item.new_node.id))
-            {
-              node_t old_node = old_roster.get_node(item.new_node.id);
-              if (old_node->attrs != item.new_node.attrs)
-                changes.push_back("attrs");
-            }
-
-          if (!changes.empty())
-            st.push_str_multi(syms::changes, changes);
-        }
-
+      inventory_print_states(app, i->first, item, old_roster, new_roster, st);
+      inventory_print_changes(item, old_roster, st);
+      
       pr.print_stanza(st);
     }
 
