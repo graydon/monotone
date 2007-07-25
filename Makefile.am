@@ -12,7 +12,6 @@ SANITY_CORE_SOURCES =							\
 	constants.cc constants.hh numeric_vocab.hh 			\
 	platform.hh numeric_vocab.cc
 
-
 LUAEXT_SOURCES = 							\
 	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
 	charset.cc charset.hh paths.cc paths.hh				\
@@ -287,6 +286,41 @@ WIN32_PLATFORM_SOURCES =						\
 	win32/cputime.cc win32/ssh_agent_platform.cc \
 	win32/ssh_agent_platform.hh
 
+# these files contain unit tests
+UNIT_TEST_SOURCES =							\
+	basic_io.cc charset.cc commands.cc crypto_tests.cc cset.cc	\
+	dates.cc diff_patch.cc globish.cc graph.cc keys.cc netcmd.cc	\
+	netxx_pipe.cc numeric_vocab.cc option.cc outdated_indicator.cc	\
+	packet.cc paths.cc refiner.cc restrictions.cc rev_height.cc	\
+	revision.cc roster.cc roster_merge.cc simplestring_xform.cc	\
+	string_queue.cc transforms.cc unit_tests.cc uri.cc vocab.cc	\
+	xdelta.cc
+
+# these files do not contain unit tests, but are required for unit testing
+# and must be recompiled for that purpose
+UNIT_TEST_SRC_SUPPORT =							\
+	lua_hooks.cc roster_delta.cc
+
+# these files do not contain unit tests; they are required for unit
+# testing, but can be used "as is" from the main build.  (many of
+# these _should_ have unit tests, but they haven't been written yet.)
+UNIT_TEST_OBJ_SUPPORT =							\
+	mtn-app_state.$(OBJEXT) mtn-cert.$(OBJEXT)			\
+	mtn-constants.$(OBJEXT) mtn-database.$(OBJEXT)			\
+	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-hmac.$(OBJEXT)	\
+	mtn-inodeprint.$(OBJEXT) mtn-key_store.$(OBJEXT)		\
+	mtn-lcs.$(OBJEXT) mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT)	\
+	mtn-merkle_tree.$(OBJEXT) mtn-mt_version.$(OBJEXT)		\
+	mtn-mtn-sanity.$(OBJEXT) mtn-options.$(OBJEXT)			\
+	mtn-package_full_revision.$(OBJEXT)				\
+	mtn-package_revision.$(OBJEXT) mtn-project.$(OBJEXT)		\
+	mtn-randomizer.$(OBJEXT) mtn-sanity.$(OBJEXT)			\
+	mtn-schema.$(OBJEXT) mtn-schema_migration.$(OBJEXT)		\
+	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
+	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
+	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
+	mtn-work_migration.$(OBJEXT)
+
 # primaries
 
 bin_PROGRAMS = mtn
@@ -295,11 +329,16 @@ EXTRA_PROGRAMS = usher
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
+
 usher_SOURCES = contrib/usher.cc
-unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
-nodist_unit_tests_SOURCES = std_hooks.c test_hooks.c schema.c
-tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
+unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
+nodist_unit_tester_SOURCES = test_hooks.c
+unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
+
+tester_SOURCES = tester.cc
 nodist_tester_SOURCES = testlib.c
+tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
+		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) option.cc)))
 
 txt2c_SOURCES = txt2c.cc
 
@@ -357,24 +396,24 @@ mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
-mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
+mtn_LDADD = libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
-unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
-unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
-unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-		   libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tester_LDFLAGS = 
+unit_tester_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
+unit_tester_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
+unit_tester_LDADD += libplatform.a lib3rdparty.a \
+		     $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
 tester_LDFLAGS = 
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
-tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD += libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
-  unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
@@ -501,16 +540,17 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 # testsuite stuff (could this possibly be more ugly?)
 
 
-check_PROGRAMS = unit_tests tester
-TESTS = unit_tests run_tester_tests run_lua_tests
+check_PROGRAMS = unit_tester tester
+TESTS = run_unit_tests run_tester_tests run_lua_tests
 
 
 TESTS_ENVIRONMENT=AUTOTEST_PATH="."
 
 mostlyclean-local:
-	rm -rf tester_dir package_full_revision.txt
+	rm -rf tester_dir unit-tests package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests unit_tests.log
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep \
+	run_tester_tests run_lua_tests run_unit_tests
 
 # distcheck stuff
 
@@ -543,6 +583,12 @@ run_tester_tests: Makefile
 	echo '#!/bin/sh' > $@ ; \
 	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
 	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
+	chmod 755 $@
+
+run_unit_tests: Makefile
+	echo '#!/bin/sh' > $@ ; \
+	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
+	echo 'exec $(top_builddir)/tester $(srcdir)/unit-testsuite.lua "$$@"' >> $@ ; \
 	chmod 755 $@
 
 # we generate some source files to copy data into the executable 

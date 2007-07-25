@@ -2,7 +2,7 @@
 -- functions can be redefined
 foo = "bar"
 old_L = L
-L = function () old_mkdir("xxx") end
+L = function () unlogged_mkdir("xxx") end
 mkdir("bar") -- calls L()
 L = old_L
 check(exists("xxx"))
