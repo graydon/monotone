@@ -28,12 +28,12 @@ if %fail_count%=="0" set fail_count=1
 if %fail_count%=="0" goto end
 
 @rem return an error code
-@echo "==============================="
-@echo %fail_count of 3 tests failed.
-@echo "==============================="
+@echo ===============================
+@echo %fail_count% of 3 tests failed.
+@echo ===============================
 exit /B 1
 
 :end
-@echo "==============================="
+@echo ===============================
 @echo All tests succeeded!
-@echo "==============================="
+@echo ===============================
