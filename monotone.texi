@@ -6275,6 +6275,7 @@ All basic status cases:
 new_type "file"
  fs_type "file"
   status "added" "known"
+ changes "content"
 
     path "dropped"
 old_type "file"
