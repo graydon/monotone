@@ -11,7 +11,7 @@ mtn_setup()
 
 check(getstd("inventory_hooks.lua"))
 
-include ("test_utils_inventory.lua")
+include ("common/test_utils_inventory.lua")
 
 ----------
 --  main process

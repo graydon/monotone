@@ -8,13 +8,30 @@ mtn_setup()
 
 check(getstd("inventory_hooks.lua"))
 
-include ("test_utils_inventory.lua")
+include ("common/test_utils_inventory.lua")
 
 ----------
 --  main process
 
--- create a basic file history; add some files, then operate on each
--- of them in some way.
+-- First test inventory in a totally empty workspace, with no commits
+
+check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
+
+parsed = parse_basic_io(readfile("stdout"))
+
+index = check_inventory (parsed, index,
+{path = ".",
+ fs_type = "directory",
+ status = {"unknown"}})
+-- FIXME: The correct output for this example should be:
+--      path "."
+--  new_type "directory"
+--   fs_type "directory"
+--    status "added"
+
+----------
+-- Now create a basic file history; add some files, then operate on
+-- each of them in some way.
 
 addfile("missing", "missing")
 addfile("dropped", "dropped")
@@ -35,11 +52,13 @@ writefile("patched", "something has changed")
 check(mtn("rename", "--bookkeep-only", "original", "renamed"), 0, false, false)
 check(mtn("drop", "--bookkeep-only", "dropped"), 0, false, false)
 
--- Now see what 'automate inventory' has to say
+----------
+-- see what 'automate inventory' has to say
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))
+index = 1
 
 index = check_inventory (parsed, index,
 {path = ".",
@@ -550,7 +569,7 @@ new_type = "file",
 -- (there is at least one known wrong state where it is applied: when a
 -- rename_target item is missing...)
 
--- FIXME: tests for renaming directories 
+-- FIXME: tests for renaming directories
 -- also test that iff foo/ is renamed to bar/, any previous foo/node is
 -- now listed as bar/node
 

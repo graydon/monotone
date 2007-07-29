@@ -891,49 +891,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
       if (i->first.as_internal() == "")
         {
-          // This is the workspace root directory. The default algorithm
-          // displays it wrong, so we treat is as a special case.
-          //
-          // FIXME: Consider a just setup'ed workspace where there hasn't been
-          // any version committed yet, this code produces:
-          //
-          //      path "."
-          //  old_type "directory"
-          //  new_type "directory"
-          //   fs_type "directory"
-          //    status "added" "missing"
-          //
-          // which is purely wrong, because there is no "old_type". It gets
-          // slightly better if we comment this special treating out:
-          //
-          //      path ""
-          //  new_type "directory"
-          //   fs_type "none"
-          //    status "added" "missing"
-          //
-          // which is still not completly correct, but at least "added"
-          // complements no wrong "old_type" node. The idea / correct output
-          // for this example should be:
-          //
-          //      path "."
-          //  new_type "directory"
-          //   fs_type "directory"
-          //    status "added"
-          //
+          // This is the workspace root directory; print a nicer name.
           st.push_str_pair(syms::path, ".");
-          st.push_str_pair(syms::old_type, "directory");
-          st.push_str_pair(syms::new_type, "directory");
-          st.push_str_pair(syms::fs_type, "directory");
-
-          inventory_print_states(app, i->first, item, old_roster, new_roster, st);
-          inventory_print_changes(item, old_roster, st);
-
-          pr.print_stanza(st);
-          continue;
         }
-
-      //  Not the root directory
-      st.push_file_pair(syms::path, i->first);
+      else
+        {
+          //  Not the root directory
+          st.push_file_pair(syms::path, i->first);
+        }
 
       if (item.old_node.exists)
         {
