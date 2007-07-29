@@ -147,8 +147,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-14 08:41+0200\n"
-"PO-Revision-Date: 2007-07-14 08:45+0200\n"
+"POT-Creation-Date: 2007-07-23 07:39+0200\n"
+"PO-Revision-Date: 2007-07-23 07:53+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -210,7 +210,7 @@ msgstr "Skriver ut den givna revisionens förfäder"
 
 #: automate.cc:104 automate.cc:154 automate.cc:201 automate.cc:228
 #: automate.cc:267 automate.cc:271 automate.cc:364 automate.cc:392
-#: automate.cc:1183 cmd_list.cc:658 revision.cc:1769
+#: automate.cc:1183 cmd_list.cc:658 revision.cc:1773
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -258,7 +258,7 @@ msgstr "inga argument behövs"
 msgid "Lists the roots of the revision graph"
 msgstr "Visar revisionsgrafens rötter"
 
-#: automate.cc:355 automate.cc:383 cmd_list.cc:645 revision.cc:1761
+#: automate.cc:355 automate.cc:383 cmd_list.cc:645 revision.cc:1765
 msgid "REV"
 msgstr "REV"
 
@@ -3106,114 +3106,119 @@ msgstr ""
 msgid "could not create directory '%s': it is a file"
 msgstr "kunde inte skapa katalogen '%s': det är en fil"
 
-#: file_io.cc:202
+#: file_io.cc:207
 #, c-format
 msgid "file to delete '%s' does not exist"
 msgstr "filen att ta bort, '%s', finns inte"
 
-#: file_io.cc:203
+#: file_io.cc:208
 #, c-format
 msgid "file to delete, '%s', is not a file but a directory"
 msgstr "filen att ta bort, '%s', är inte en fil, den är en katalog"
 
-#: file_io.cc:211
+#: file_io.cc:216
 #, c-format
 msgid "directory to delete '%s' does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:212
+#: file_io.cc:217
 #, c-format
 msgid "directory to delete, '%s', is not a directory but a file"
 msgstr "katalogen att ta bort, '%s', är inte en katalog, det är en fil"
 
-#: file_io.cc:219
+#: file_io.cc:224
 #, c-format
 msgid "object to delete, '%s', does not exist"
 msgstr "objektet att ta bort, '%s', finns inte"
 
-#: file_io.cc:275
+#: file_io.cc:280
 #, c-format
 msgid "directory to delete, '%s', does not exist"
 msgstr "katalogen att ta bort, '%s', finns inte"
 
-#: file_io.cc:276
+#: file_io.cc:281
 #, c-format
 msgid "directory to delete, '%s', is a file"
 msgstr "katalogen att ta bort, '%s', är en fil"
 
-#: file_io.cc:286
+#: file_io.cc:291
 #, c-format
 msgid "rename source file '%s' does not exist"
 msgstr "källfilen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:287
+#: file_io.cc:292
 #, c-format
 msgid "rename source file '%s' is a directory -- bug in monotone?"
 msgstr ""
 "källfilen att ge nytt namn, '%s', är en katalog -- programfel i monotone?"
 
-#: file_io.cc:290 file_io.cc:305 file_io.cc:317
+#: file_io.cc:295 file_io.cc:310 file_io.cc:322
 #, c-format
 msgid "rename target '%s' already exists"
 msgstr "målfilen, '%s', finns redan"
 
-#: file_io.cc:300
+#: file_io.cc:305
 #, c-format
 msgid "rename source dir '%s' does not exist"
 msgstr "källkatalogen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:302
+#: file_io.cc:307
 #, c-format
 msgid "rename source dir '%s' is a file -- bug in monotone?"
 msgstr ""
 "källkatalogen att ge nytt namn, '%s', är en fil -- programfel i monotone?"
 
-#: file_io.cc:315
+#: file_io.cc:320
 #, c-format
 msgid "rename source path '%s' does not exist"
 msgstr "källsökvägen att ge nytt namn, '%s', finns inte"
 
-#: file_io.cc:326
+#: file_io.cc:331
 #, c-format
 msgid "file %s does not exist"
 msgstr "filen %s finns inte"
 
-#: file_io.cc:327
+#: file_io.cc:332
 #, c-format
 msgid "file %s cannot be read as data; it is a directory"
 msgstr "file %s kan inte läsas som data; den är en katalog"
 
-#: file_io.cc:331
+#: file_io.cc:336
 #, c-format
 msgid "cannot open file %s for reading"
 msgstr "kan inte öppna filen %s för läsning"
 
-#: file_io.cc:352
+#: file_io.cc:351
+#, c-format
+msgid "cannot handle special files in dir '%s'"
+msgstr "kan inte hantera specialfilerna i katalogen '%s'"
+
+#: file_io.cc:359
 #, c-format
 msgid "Cannot read standard input multiple times"
 msgstr "Kan inte läsa från stdin mer än en gång"
 
-#: file_io.cc:383
+#: file_io.cc:390
 #, c-format
 msgid "file '%s' cannot be overwritten as data; it is a directory"
 msgstr "filen %s kan inte skrivas över som data; den är en katalog"
 
-#: file_io.cc:457
+#: file_io.cc:464
 #, c-format
 msgid "skipping file '%s' with unsupported name"
 msgstr "hoppar över filen '%s' som har ej stödbart namn"
 
-#: file_io.cc:461
+#: file_io.cc:468
 #, c-format
 msgid "skipping directory '%s' with unsupported name"
 msgstr "hoppar över katalogen '%s' som har ej stödbart namn"
 
-#: file_io.cc:514 work.cc:1290
+#: file_io.cc:521 work.cc:1290
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
 
-#: file_io.cc:542
+#: file_io.cc:549
 #, c-format
 msgid "expected file '%s', but it is a directory."
 msgstr "förväntade filen '%s', men det är en katalog."
@@ -4197,50 +4202,50 @@ msgid_plural "%d unknown paths"
 msgstr[0] "%d okänd sökväg"
 msgstr[1] "%d okända sökvägar"
 
-#: revision.cc:736
+#: revision.cc:740
 #, c-format
 msgid "the command '%s %s' cannot be restricted in a two-parent workspace"
 msgstr ""
 "kommandot '%s %s' kan inte begränsas i en arbetskopia med två föräldrar"
 
-#: revision.cc:952
+#: revision.cc:956
 #, c-format
 msgid "scanning for bogus merge edges"
 msgstr "letar efter felaktiga ihopslagningsbågar"
 
-#: revision.cc:994
+#: revision.cc:998
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
 msgstr "optimerar bort onödig båge %d -> %d"
 
-#: revision.cc:1003
+#: revision.cc:1007
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
 msgstr "misslyckades med att ta bort bågen %d -> %d"
 
-#: revision.cc:1014
+#: revision.cc:1018
 #, c-format
 msgid "rebuilding %d nodes"
 msgstr "bygger om %d noder"
 
-#: revision.cc:1214
+#: revision.cc:1218
 #, c-format
 msgid "Directory %s for path %s cannot be added, as there is a file in the way"
 msgstr ""
 "Katalogen %s för vägen %s kan inte läggas till, eftersom det finns en fil i "
 "vägen"
 
-#: revision.cc:1235
+#: revision.cc:1239
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
 msgstr "Filen %s kan inte läggas till, det finns en katalog i vägen"
 
-#: revision.cc:1238
+#: revision.cc:1242
 #, c-format
 msgid "Path %s added twice with differing content"
 msgstr "Sökvägen %s tillagd två gånger med olika innehåll"
 
-#: revision.cc:1522
+#: revision.cc:1526
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -4255,40 +4260,40 @@ msgstr ""
 "attributet hjälper vi gärna till att klura ut ett bra sätt att hantera\n"
 "det på)"
 
-#: revision.cc:1628
+#: revision.cc:1632
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
 msgstr "konverterar existerande revisionsgraf till nya revisioner i liststil"
 
-#: revision.cc:1683
+#: revision.cc:1687
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
 msgstr "bygger om revisionsgrafen från manifestcert"
 
-#: revision.cc:1730
+#: revision.cc:1734
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "återskapar cachade listor och höjder"
 
-#: revision.cc:1742
+#: revision.cc:1746
 msgid "regenerated"
 msgstr "omgjorda"
 
-#: revision.cc:1758
+#: revision.cc:1762
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "färdig med återskapandet av cachade listor och höjder"
 
-#: revision.cc:1762
+#: revision.cc:1766
 msgid "Shows a revision's height"
 msgstr "Visar en revisions höjd"
 
-#: revision.cc:1772
+#: revision.cc:1776
 #, c-format
 msgid "cached height: %s"
 msgstr "cachade höjder: %s"
 
-#: revision.cc:1855
+#: revision.cc:1859
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -5040,47 +5045,42 @@ msgstr "kan inte hantera specialfilen %s"
 msgid "could not open directory '%s': %s"
 msgstr "kunde inte öppna katalogen '%s': %s"
 
-#: unix/fs.cc:205
+#: unix/fs.cc:204
 #, c-format
 msgid "error accessing '%s/%s': %s"
 msgstr "fel när jag försökte nå '%s/%s': %s"
 
-#: unix/fs.cc:217
-#, c-format
-msgid "cannot handle special file '%s/%s'"
-msgstr "kan inte hantera specialfilen '%s/%s'"
-
-#: unix/fs.cc:226
+#: unix/fs.cc:222
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s"
 msgstr "byta namn på '%s' till '%s' misslyckades: %s"
 
-#: unix/fs.cc:235 win32/fs.cc:239
+#: unix/fs.cc:231 win32/fs.cc:240
 #, c-format
 msgid "could not remove '%s': %s"
 msgstr "kunde inte ta bort '%s': %s"
 
-#: unix/fs.cc:244 win32/fs.cc:246
+#: unix/fs.cc:240 win32/fs.cc:247
 #, c-format
 msgid "could not create directory '%s': %s"
 msgstr "kunde inte skapa katalogen %s: %s"
 
-#: unix/fs.cc:308 win32/fs.cc:380
+#: unix/fs.cc:304 win32/fs.cc:381
 #, c-format
 msgid "cannot create temp file %s: %s"
 msgstr "kan inte skapa tillfällig fil %s: %s"
 
-#: unix/fs.cc:317
+#: unix/fs.cc:313
 #, c-format
 msgid "all %d possible temporary file names are in use"
 msgstr "Alla %d möjliga tillfälliga filnamn används"
 
-#: unix/fs.cc:357 win32/fs.cc:440
+#: unix/fs.cc:353 win32/fs.cc:441
 #, c-format
 msgid "error writing to temp file %s: %s"
 msgstr "fel vid skrivning till tillfällig fil %s: %s"
 
-#: unix/fs.cc:362 win32/fs.cc:447
+#: unix/fs.cc:358 win32/fs.cc:448
 #, c-format
 msgid ""
 "giving up after four zero-length writes to %s (%d byte written, %d left)"
@@ -5149,17 +5149,17 @@ msgstr "%s: fel i GetFileAttributes: %s"
 msgid "error while reading directory: %s"
 msgstr "fel när läste katalog: %s"
 
-#: win32/fs.cc:319
+#: win32/fs.cc:320
 #, c-format
 msgid "renaming '%s' to '%s' failed: %s (%d)"
 msgstr "namnbyte av '%s' till '%s' misslyckades: %s (%d)"
 
-#: win32/fs.cc:388
+#: win32/fs.cc:389
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
 msgstr "kan inte finna någon tillfällig fil (provade %d möjligheter)"
 
-#: win32/fs.cc:415
+#: win32/fs.cc:416
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
 msgstr "%s kommer att vara åtkomlig för alla användare på den här datorn\n"
@@ -5173,6 +5173,9 @@ msgstr "%s (nivå %d, rev %d)"
 #, c-format
 msgid "Windows %s (%d.%d, build %d, %s) on %s"
 msgstr "Windows %s (%d.%d build %d, %s) på %s"
+
+#~ msgid "cannot handle special file '%s/%s'"
+#~ msgstr "kan inte hantera specialfilen '%s/%s'"
 
 #~ msgid "could not create directory '%s'"
 #~ msgstr "kunde inte skapa katalogen '%s'"
