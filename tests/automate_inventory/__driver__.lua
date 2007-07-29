@@ -1,6 +1,6 @@
 -- Test 'automate inventory', with no path or depth restrictions
 --
--- path and depth restrictions are tested in ../automate_inventory_path
+-- path and depth restrictions are tested in ../automate_inventory_restricted
 
 local index = 1
 
@@ -11,26 +11,7 @@ check(getstd("inventory_hooks.lua"))
 include ("common/test_utils_inventory.lua")
 
 ----------
---  main process
-
--- First test inventory in a totally empty workspace, with no commits
-
-check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
-
-parsed = parse_basic_io(readfile("stdout"))
-
-index = check_inventory (parsed, index,
-{path = ".",
- fs_type = "directory",
- status = {"unknown"}})
--- FIXME: The correct output for this example should be:
---      path "."
---  new_type "directory"
---   fs_type "directory"
---    status "added"
-
-----------
--- Now create a basic file history; add some files, then operate on
+-- create a basic file history; add some files, then operate on
 -- each of them in some way.
 
 addfile("missing", "missing")

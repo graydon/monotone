@@ -662,7 +662,7 @@ inventory_itemizer::visit_dir(file_path const & path)
 void
 inventory_itemizer::visit_file(file_path const & path)
 {
-  if(mask.includes(path))
+  if (mask.includes(path))
     {
       inventory_item & item = inventory[path];
 
@@ -686,7 +686,7 @@ inventory_filesystem(path_restriction const & mask, inventory_map & inventory, a
   // The constructor file_path() returns ""; the root directory. walk_tree
   // does not visit that node, so set fs_type now, if it meets the
   // restriction.
-  if(mask.includes(root))
+  if (mask.includes(root))
     {
       inventory[root].fs_type = path::directory;
     }
@@ -796,12 +796,8 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
 
           switch (item.old_node.type)
             {
-            case path::file :
-              if (item.fs_ident != old_file->content)
-                changes.push_back("content");
-              break;
-
-            case path::nonexistent :
+            case path::file:
+            case path::nonexistent:
               // A file can be nonexistent due to mtn drop, user delete, mtn
               // rename, or user rename. If it was drop or delete, it would
               // not be in the new roster, and we would not get here. So
@@ -811,7 +807,7 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
                 changes.push_back("content");
               break;
 
-            case path::directory :
+            case path::directory:
               break;
             }
         }
