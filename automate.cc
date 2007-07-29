@@ -584,7 +584,7 @@ inventory_rosters(roster_t const & old_roster,
 
           if (new_roster.has_node (i->first))
             {
-              // record rename outside restriction
+              // record rename to outside restriction
               new_roster.get_name (i->first, inventory[i->second].new_path);
               continue;
             }
@@ -603,6 +603,27 @@ inventory_rosters(roster_t const & old_roster,
       // record rename
       inventory[new_path].old_path = old_path;
       inventory[old_path].new_path = new_path;
+    }
+
+  // Now look for new_paths that are renames from outside the current
+  // restriction, and thus are not in old_paths.
+  // FIXME: only need this if restriction is not null
+  for (i = new_paths.begin(); i != new_paths.end(); ++i)
+    {
+      if (old_paths.find(i->first) == old_paths.end())
+        {
+          // There is no old node available; this is either added or a
+          // rename from outside the current path restriction.
+
+          if (old_roster.has_node (i->first))
+            {
+              // record rename from outside restriction
+              old_roster.get_name (i->first, inventory[i->second].old_path);
+            }
+          else
+            // added; no old path
+            continue;
+        }
     }
 }
 
@@ -661,7 +682,15 @@ static void
 inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
 {
   inventory_itemizer itemizer(mask, inventory, app);
-  walk_tree(file_path(), itemizer);
+  file_path const root;
+  // The constructor file_path() returns ""; the root directory. walk_tree
+  // does not visit that node, so set fs_type now, if it meets the
+  // restriction.
+  if(mask.includes(root))
+    {
+      inventory[root].fs_type = path::directory;
+    }
+  walk_tree(root, itemizer);
 }
 
 namespace
@@ -685,11 +714,11 @@ inventory_print_states(app_state & app, file_path const & fs_path,
                        roster_t const & new_roster, basic_io::stanza & st)
 {
   std::vector<std::string> states;
-  
-  // if both nodes exist, the only interesting case is 
+
+  // if both nodes exist, the only interesting case is
   // when the node ids aren't equal (so we have different nodes
   // with one and the same path in the old and the new roster)
-  if (item.old_node.exists && 
+  if (item.old_node.exists &&
       item.new_node.exists &&
       item.old_node.id != item.new_node.id)
     {
@@ -697,7 +726,7 @@ inventory_print_states(app_state & app, file_path const & fs_path,
           states.push_back("rename_source");
         else
           states.push_back("dropped");
-        
+
         if (old_roster.has_node(item.new_node.id))
           states.push_back("rename_target");
         else
@@ -747,7 +776,7 @@ inventory_print_states(app_state & app, file_path const & fs_path,
 }
 
 static void
-inventory_print_changes(inventory_item const & item, roster_t const & old_roster, 
+inventory_print_changes(inventory_item const & item, roster_t const & old_roster,
                         basic_io::stanza & st)
 {
   // old nodes do not have any recorded content changes and attributes,
@@ -759,18 +788,32 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
   // this is an existing item
   if (old_roster.has_node(item.new_node.id))
     {
-      // check if the content has changed - this makes only sense
-      // for existing files, not for directories or missing files
+      // check if the content has changed - this makes only sense for files
+      // for which we can get the content id of both new and old nodes.
       if (item.new_node.type == path::file && item.fs_type != path::nonexistent)
         {
           file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
 
-          // set a content changed marker whenever we saw that the file's
-          // hash changed or the previous type (most likely a directory) had
-          // no content id to compare with
-          if (item.old_node.type != path::file || 
-              item.fs_ident != old_file->content)
-            changes.push_back("content");
+          switch (item.old_node.type)
+            {
+            case path::file :
+              if (item.fs_ident != old_file->content)
+                changes.push_back("content");
+              break;
+
+            case path::nonexistent :
+              // A file can be nonexistent due to mtn drop, user delete, mtn
+              // rename, or user rename. If it was drop or delete, it would
+              // not be in the new roster, and we would not get here. So
+              // it's a rename, and we can get the content. This lets us
+              // check if a user has edited a file after renaming it.
+              if (item.fs_ident != old_file->content)
+                changes.push_back("content");
+              break;
+
+            case path::directory :
+              break;
+            }
         }
 
       // now look for changed attributes
@@ -781,12 +824,12 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
   else
     {
       // FIXME: paranoia: shall we I(new_roster.has_node(item.new_node.id)) here?
-      
-      // this is apparently a new item, if it is a file it gets at least 
+
+      // this is apparently a new item, if it is a file it gets at least
       // the "content" marker and we also check for recorded attributes
       if (item.new_node.type == path::file)
         changes.push_back("content");
-      
+
       if (item.new_node.attrs.size() > 0)
         changes.push_back("attrs");
     }
@@ -845,13 +888,13 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
     {
       basic_io::stanza st;
       inventory_item const & item = i->second;
-      
+
       if (i->first.as_internal() == "")
         {
           // This is the workspace root directory. The default algorithm
           // displays it wrong, so we treat is as a special case.
           //
-          // FIXME: Consider a just setup'ed workspace where there hasn't been 
+          // FIXME: Consider a just setup'ed workspace where there hasn't been
           // any version committed yet, this code produces:
           //
           //      path "."
@@ -868,8 +911,8 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
           //   fs_type "none"
           //    status "added" "missing"
           //
-          // which is still not completly correct, but at least "added" 
-          // complements no wrong "old_type" node. The idea / correct output 
+          // which is still not completly correct, but at least "added"
+          // complements no wrong "old_type" node. The idea / correct output
           // for this example should be:
           //
           //      path "."
@@ -881,10 +924,10 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
           st.push_str_pair(syms::old_type, "directory");
           st.push_str_pair(syms::new_type, "directory");
           st.push_str_pair(syms::fs_type, "directory");
-      
+
           inventory_print_states(app, i->first, item, old_roster, new_roster, st);
           inventory_print_changes(item, old_roster, st);
-          
+
           pr.print_stanza(st);
           continue;
         }
@@ -928,7 +971,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
       inventory_print_states(app, i->first, item, old_roster, new_roster, st);
       inventory_print_changes(item, old_roster, st);
-      
+
       pr.print_stanza(st);
     }
 

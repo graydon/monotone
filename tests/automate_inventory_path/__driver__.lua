@@ -76,6 +76,7 @@ index = check_inventory (parsed, index,
 
 -- skip the test files in root
 
+----------
 -- Test that 'automate inventory --depth=0' shows only the files in root
 
 check(mtn("automate", "inventory", "--depth=0"), 0, true, false)
@@ -176,20 +177,15 @@ index = check_inventory (parsed, index,
  new_type = "directory",
   fs_type = "directory",
  status = {"known"}})
---[[
+
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_a",
  new_type = "file",
  old_path = "dir_a/file_a",
   fs_type = "none",
    status = {"rename_target", "missing"}})
--- _not_ "rename_target" because rename_source is outside restriction.
----- why not rename_target? just because we restricted the inventory doesn't
----- mean that a renamed item mutates to an added item. What we _should_
----- have here though is an old_path entry which is currently the actual bug!
 -- "missing" because of --bookkeep-only
-]]
-index = index + 4
+
 index = check_inventory (parsed, index,
 {    path = "dir_b/file_b",
  old_type = "file",
