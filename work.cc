@@ -1435,9 +1435,7 @@ workspace::perform_rename(set<file_path> const & srcs,
     {
       // "rename SRC DST" case
       file_path const & src = *srcs.begin();
-
-      N(!directory_exists(dst),
-        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
+      file_path dpath = dst;
 
       N(!src.empty(),
         F("cannot rename the workspace root (try '%s pivot_root' instead)")
@@ -1445,20 +1443,30 @@ workspace::perform_rename(set<file_path> const & srcs,
       N(new_roster.has_node(src),
         F("source file %s is not versioned") % src);
 
-      renames.insert(make_pair(src, dst));
-      add_parent_dirs(dst, new_roster, nis, db, lua);
+      //this allows the 'magic add' of a non-versioned directory to happen in
+      //all cases.  previously, mtn mv fileA dir/ woudl fail if dir/ wasn't
+      //versioned whereas mtn mv fileA dir/fileA would add dir/ if necessary
+      //and then reparent fileA.
+      if (get_path_status(dst) == path::directory)
+        dpath = dst / src.basename();
+      else
+        {
+          //this handles the case where:
+          // touch foo
+          // mtn mv foo bar/foo where bar doesn't exist
+          file_path parent = dst.dirname();
+	        N(get_path_status(parent) == path::directory,
+	          F("destination path's parent directory %s/ doesn't exist") % parent);
+        }
+
+      renames.insert(make_pair(src, dpath));
+      add_parent_dirs(dpath, new_roster, nis, db, lua);
     }
   else
     {
       // "rename SRC1 [SRC2 ...] DSTDIR" case
-      N(new_roster.has_node(dst),
-        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
-
-      N(is_dir_t(new_roster.get_node(dst)),
-        (srcs.size() > 1
-        ? F("destination %s is a file, not a directory")
-        : F("destination %s already exists in the workspace manifest"))
-        % dst);
+      N(get_path_status(dst) == path::directory,
+        F("destination %s/ is not a directory") % dst);
 
       for (set<file_path>::const_iterator i = srcs.begin();
            i != srcs.end(); i++)
@@ -1474,6 +1482,8 @@ workspace::perform_rename(set<file_path> const & srcs,
             F("destination %s already exists in the workspace manifest") % d);
 
           renames.insert(make_pair(*i, d));
+
+          add_parent_dirs(d, new_roster, nis, db, lua);
         }
     }
 
