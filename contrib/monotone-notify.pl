@@ -573,7 +573,7 @@ sub generate_diff
 	if ($really_show_diffs) {
 	    print OUTPUT my_backtick("$monotone$db diff --revision=$ancestor --revision=$revision");
 	} else {
-	    print OUTPUT "monotone --db={your.database} diff --revision=$ancestor --revision=$revision\n";
+	    print OUTPUT "mtn --db={your.database} diff --revision=$ancestor --revision=$revision\n";
 	}
     }
     close OUTPUT;
