@@ -797,6 +797,94 @@ LUAEXT(require_not_root, )
   return 0;  
 }
 
+// Subroutine of run_tests_in_children.  Spawn a child to run the single
+// test TESTNAME.  On Unix, can just fork and call back to Lua in the child.
+// On Windows, must re-exec this process.
+pid_t
+run_one_test_in_child(lua_State * st, string const & testname,
+                      string const & testdir)
+{
+#ifdef WIN32
+  // The bulk of the work is done in main(), -r case, and we don't have any
+  // grief about stdio.
+  char const * argv[6];
+  argv[0] = argv0.c_str();
+  argv[1] = "-r";
+  argv[2] = testfile.c_str();
+  argv[3] = firstdir.c_str();
+  argv[4] = testname.c_str();
+  argv[5] = 0;
+
+  change_current_working_dir(testdir);
+  pid_t child = process_spawn_redirected(NULL_DEVICE,
+                                         "tester.log",
+                                         "tester.log",
+                                         argv);
+  change_current_working_dir(run_dir);
+  return child;
+
+#else
+  // Make sure there is no pending buffered output before forking, or it
+  // may be doubled.
+  fflush(0);
+
+  pid_t child = fork();
+  if (child != 0)
+    return child;
+
+  // From this point on we are in the child process.
+  // Until we have entered the test directory and re-opened fds 0-2 it is
+  // not safe to throw exceptions or call any of the diagnostic routines.
+  // Hence we use bare OS primitives and call _exit() if any of them fail.
+  // It is safe to assume that close() will not fail.
+  if (chdir(testdir.c_str()) != 0) _exit(127);
+  
+  close(0);
+  if (open("/dev/null", O_RDONLY) != 0) _exit(126);
+
+  close(1);
+  if (open("tester.log", O_WRONLY|O_CREAT|O_EXCL, 0666) != 1) _exit(125);
+  if (dup2(1, 2) == -1) _exit(124);
+
+  // We can now safely use stdio, exceptions, and the normal diagnostic
+  // routines.
+
+  int retcode;
+  try
+    {
+      Lua ll(st);
+      ll.func("run_one_test");
+      ll.push_str(testname);
+      ll.call(1,1)
+        .extract_int(retcode);
+    }
+  catch (informative_failure & e)
+    {
+      P(F("%s\n") % e.what());
+      retcode = 1;
+    }
+  catch (std::logic_error & e)
+    {
+      P(F("Invariant failure: %s\n") % e.what());
+      retcode = 3;
+    }
+  catch (std::exception & e)
+    {
+      P(F("Uncaught exception: %s") % e.what());
+      retcode = 3;
+    }
+  catch (...)
+    {
+      P(F("Uncaught exception of unknown type"));
+      retcode = 3;
+    }
+
+  lua_close(st);
+  exit(retcode);
+
+#endif
+}
+
 // run_tests_in_children (to_run, reporter)
 
 // Run all of the tests in TO_RUN, each in its own isolated directory and
@@ -818,35 +906,25 @@ LUAEXT(run_tests_in_children, )
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "expected a function");
 
   // iterate over to_run...
-  char const * argv[6];
   lua_pushnil(L);
   while (lua_next(L, to_run) != 0)
     {
       luaL_checkinteger(L, -2);
       string testname = luaL_checkstring(L, -1);
-      string testdir = run_dir + "/" + testname;
       int status;
 
-      argv[0] = argv0.c_str();
-      argv[1] = "-r";
-      argv[2] = testfile.c_str();
-      argv[3] = firstdir.c_str();
-      argv[4] = testname.c_str();
-      argv[5] = 0;
+      string testdir = run_dir + "/" + testname;
 
       do_remove_recursive(testdir);
       do_mkdir(testdir);
 
-      {
-        change_current_working_dir(testdir);
-        pid_t child = process_spawn_redirected(NULL_DEVICE,
-                                               "tester.log",
-                                               "tester.log",
-                                               argv);
-        change_current_working_dir(run_dir);
-        process_wait(child, &status);
-      }
+      pid_t child = run_one_test_in_child(L, testname, testdir);
 
+      if (child == -1)
+        status = 127; // spawn failure
+      else
+        process_wait(child, &status);
+ 
       // Set up a call to REPORTER with the appropriate arguments ...
       lua_pushvalue(L, reporter); // t_r r tno tna r
       lua_insert(L, -2);          // t_r r tno r tna
@@ -905,14 +983,14 @@ int main(int argc, char **argv)
 
       if (tests_to_run.size() == 0)
         {
-          P(F("%s: no test suite specified"));
+          P(F("%s: no test suite specified\n"));
           need_help = true;
         }
 
       if (run_one && (want_help || debugging || list_only
                       || tests_to_run.size() != 3))
         {
-          P(F("%s: incorrect self-invocation") % argv[0]);
+          P(F("%s: incorrect self-invocation\n") % argv[0]);
           need_help = true;
         }
 
@@ -938,6 +1016,7 @@ int main(int argc, char **argv)
 
       if (run_one)
         {
+#ifdef WIN32
           // This is a self-invocation, requesting that we actually run a
           // single named test.  Contra the help above, the command line
           // arguments are the absolute pathname of the testsuite definition,
@@ -960,6 +1039,10 @@ int main(int argc, char **argv)
           ll.push_str(tests_to_run[2]);
           ll.call(1,1)
             .extract_int(retcode);
+#else
+          P(F("%s: self-invocation should not be used on Unix\n") % argv[0]);
+          retcode = 2;
+#endif
         }
       else
         {
