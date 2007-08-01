@@ -276,15 +276,15 @@ UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
 	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
-	unix/cputime.cc unix/ssh_agent_platform.cc	\
-	unix/ssh_agent_platform.hh
+	unix/cputime.cc unix/ssh_agent_platform.cc			\
+	unix/ssh_agent_platform.hh unix/tester-plaf.cc
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
-	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc        \
-	win32/cputime.cc win32/ssh_agent_platform.cc \
-	win32/ssh_agent_platform.hh
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc	\
+	win32/cputime.cc win32/ssh_agent_platform.cc			\
+	win32/ssh_agent_platform.hh win32/tester-plaf.cc
 
 # these files contain unit tests
 UNIT_TEST_SOURCES =							\
@@ -343,7 +343,7 @@ tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
 txt2c_SOURCES = txt2c.cc
 
 noinst_LIBRARIES = libplatform.a lib3rdparty.a 
-libplatform_a_SOURCES = platform.hh
+libplatform_a_SOURCES = platform.hh tester-plaf.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
@@ -537,20 +537,83 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 		"$@" -format UDZO -scrub -imagekey zlib-level=9 \
 		-volname monotone-$(PACKAGE_VERSION)
 
-# testsuite stuff (could this possibly be more ugly?)
+# testsuite stuff (could this possibly be more ugly?)  To get
+# parallelism, we cannot use Automake's TESTS feature at all.  The
+# shell script embedded in the 'check-local' rule is partially
+# borrowed from automake 1.9's check.am
 
+check-local: tester_tests.status unit_tests.status lua_tests.status
+	@all=0; failed=0; error=0;					       \
+	for f in $^; do							       \
+	  all=`expr $$all + 1`;						       \
+	  if test -f $$f; then						       \
+	    s=`cat $$f`;						       \
+	    if test "$$s" = 0; then					       \
+	      :;							       \
+	    elif test "$$s" = 1; then					       \
+	      failed=`expr $$failed + 1`;				       \
+	    else							       \
+	      error=`expr $$error + 1`;					       \
+	    fi;								       \
+	  else								       \
+	    error=`expr $$error + 1`;					       \
+	  fi;								       \
+	done;								       \
+	if test "$$failed" = 0 && test "$$error" = 0; then		       \
+	  exit=0;							       \
+	  report="";							       \
+	  banner="All $$all tests passed";				       \
+	else								       \
+	  exit=1;							       \
+	  report="Please report to $(PACKAGE_BUGREPORT)";		       \
+	  if test "$$error" = 0; then					       \
+	    banner="$$failed of $$all tests failed";			       \
+	  elif test "$$failed" = 0; then				       \
+	    banner="$$error of $$all tests malfunctioned";		       \
+	  else								       \
+	    banner="$$failed of $$all tests failed and $$error malfunctioned"; \
+	  fi;								       \
+	fi;								       \
+	rl=`echo $$report | wc -c`;					       \
+	bl=`echo $$banner | wc -c`;					       \
+	if test $$rl -gt $$bl; then					       \
+	  dashes=`echo "$$report" | sed s/./=/g`;			       \
+	else								       \
+	  dashes=`echo "$$banner" | sed s/./=/g`;			       \
+	fi;								       \
+	echo $$dashes;							       \
+	echo $$banner;							       \
+	test -z "$$report" || echo "$$report";				       \
+	exit $$exit
 
+run_%_tests: Makefile
+	{ echo '#!/bin/sh';						  \
+	  echo 'PATH=$(top_builddir):$$PATH';				  \
+	  echo '$(top_builddir)/tester $(srcdir)/$*-testsuite.lua "$$@"'; \
+	  echo 'echo $$? > $*_tests.status';				  \
+	  echo 'exit 0'; } > $@
+	chmod 755 $@
+
+%_tests.status: run_%_tests %-testsuite.lua tester FORCE
+	./run_$*_tests
+
+unit_tests.status : unit_tester
+lua_tests.status : mtn
 check_PROGRAMS = unit_tester tester
-TESTS = run_unit_tests run_tester_tests run_lua_tests
 
-
-TESTS_ENVIRONMENT=AUTOTEST_PATH="."
+# We want the tests re-run even if the .status files already exist.
+# .PHONY does not work for that (bad interaction with pattern rules),
+# but the FORCE hack does.
+.PHONY: check-local FORCE
+FORCE:
 
 mostlyclean-local:
 	rm -rf tester_dir unit-tests package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep \
-	run_tester_tests run_lua_tests run_unit_tests
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
+	run_tester_tests run_unit_tests run_unit_tests		\
+	report_tester_tests report_unit_tests report_lua_tests	\
+	tester-tests.status unit_tests.status lua_tests.status
 
 # distcheck stuff
 
@@ -572,24 +635,6 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_STRING],    [@PACKAGE_STRING@])'; \
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
-
-run_lua_tests: Makefile
-	echo '#!/bin/sh' > $@ ; \
-	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
-	chmod 755 $@
-
-run_tester_tests: Makefile
-	echo '#!/bin/sh' > $@ ; \
-	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
-	chmod 755 $@
-
-run_unit_tests: Makefile
-	echo '#!/bin/sh' > $@ ; \
-	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/unit-testsuite.lua "$$@"' >> $@ ; \
-	chmod 755 $@
 
 # we generate some source files to copy data into the executable 
 # note that the only things that should go in BUILT_SOURCES are things

@@ -1,59 +1,16 @@
 #include "base.hh"
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-
 #include "lua.hh"
 #include "platform.hh"
+#include "tester-plaf.hh"
 #include "sanity.hh"
 #include "option.hh"
 
-#include <cstdlib>
-#include <ctime>
-#include <cerrno>
-#include <map>
-#include <utility>
-#include <vector>
-
-/* for mkdir() */
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#ifdef WIN32
-/* For _mktemp() */
-#include <io.h>
-#define mktemp(t) _mktemp(t)
-/* For _mkdir() */
-#include <direct.h>
-#define mkdir(d,m) _mkdir(d)
-#endif
-
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN // we don't need the GUI interfaces
-#include <windows.h>
-#else
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#endif
-
-#ifdef WIN32
-#define NULL_DEVICE "NUL:"
-#else
-#define NULL_DEVICE "/dev/null"
-#endif
+using std::string;
+using std::map;
+using std::vector;
 
 // defined in testlib.c, generated from testlib.lua
 extern char const testlib_constant[];
-
-using std::string;
-using std::map;
-using std::memcpy;
-using std::getenv;
-using std::exit;
-using std::make_pair;
-using std::vector;
-using std::time_t;
 
 // Lua uses the c i/o functions, so we need to too.
 struct tester_sanity : public sanity
@@ -69,189 +26,6 @@ struct tester_sanity : public sanity
 };
 tester_sanity real_sanity;
 sanity & global_sanity = real_sanity;
-
-
-void make_accessible(string const &name)
-{
-#ifdef WIN32
-
-  DWORD attrs = GetFileAttributes(name.c_str());
-  E(attrs != INVALID_FILE_ATTRIBUTES,
-    F("GetFileAttributes(%s) failed: %s") % name % os_strerror(GetLastError()));
-
-  E(SetFileAttributes(name.c_str(), attrs & ~FILE_ATTRIBUTE_READONLY),
-    F("SetFileAttributes(%s) failed: %s") % name % os_strerror(GetLastError()));
-
-#else
-
-  struct stat st;
-  if (stat(name.c_str(), &st) != 0)
-    {
-      const int err = errno;
-      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
-    }
-
-  mode_t new_mode = st.st_mode;
-  if (S_ISDIR(st.st_mode))
-    new_mode |= S_IEXEC;
-  new_mode |= S_IREAD | S_IWRITE;
-
-  if (chmod(name.c_str(), new_mode) != 0)
-    {
-      const int err = errno;
-      E(false, F("chmod(%s) failed: %s") % name % os_strerror(err));
-      
-    }
-
-#endif
-}
-
-time_t get_last_write_time(string const & name)
-{
-#ifdef WIN32
-
-  HANDLE h = CreateFile(name.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
-                        OPEN_EXISTING, 0, NULL);
-  E(h != INVALID_HANDLE_VALUE,
-    F("CreateFile(%s) failed: %s") % name % os_strerror(GetLastError()));
-
-  FILETIME ft;
-  E(GetFileTime(h, NULL, NULL, &ft),
-    F("GetFileTime(%s) failed: %s") % name % os_strerror(GetLastError()));
-
-  CloseHandle(h);
-
-  // A FILETIME is a 64-bit quantity (represented as a pair of DWORDs)
-  // representing the number of 100-nanosecond intervals elapsed since
-  // 12:00 AM, January 1, 1601 UTC.  A time_t is the same as it is for
-  // Unix: seconds since 12:00 AM, January 1, 1970 UTC.  The offset is
-  // taken verbatim from MSDN.
-  LONGLONG ft64 = ((LONGLONG)ft.dwHighDateTime) << 32 + ft.dwLowDateTime;
-  return (time_t)((ft64/10000000) - 11644473600LL);
-
-#else
-
-  struct stat st;
-  if (stat(name.c_str(), &st) != 0)
-    {
-      const int err = errno;
-      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
-    }
-
-  return st.st_mtime;
-
-#endif
-}
-
-void do_copy_file(string const & from, string const & to)
-{
-#ifdef WIN32
-  // For once something is easier with Windows.
-  E(CopyFile(from.c_str(), to.c_str(), true),
-    F("copy %s to %s: %s") % from % to % os_strerror(GetLastError()));
-
-#else
-  char buf[32768];
-  int ifd, ofd;
-  ifd = open(from.c_str(), O_RDONLY);
-  const int err = errno;
-  E(ifd >= 0, F("open %s: %s") % from % os_strerror(err));
-  struct stat st;
-  st.st_mode = 0666;  // sane default if fstat fails
-  fstat(ifd, &st);
-  ofd = open(to.c_str(), O_WRONLY|O_CREAT|O_EXCL, st.st_mode);
-  if (ofd < 0)
-    {
-      const int err = errno;
-      close(ifd);
-      E(false, F("open %s: %s") % to % os_strerror(err));
-    }
-
-  ssize_t nread, nwrite;
-  int ndead;
-  for (;;)
-    {
-      nread = read(ifd, buf, 32768);
-      if (nread < 0)
-        goto read_error;
-      if (nread == 0)
-        break;
-
-      nwrite = 0;
-      ndead = 0;
-      do
-        {
-          ssize_t nw = write(ofd, buf + nwrite, nread - nwrite);
-          if (nw < 0)
-            goto write_error;
-          if (nw == 0)
-            ndead++;
-          if (ndead == 4)
-            goto spinning;
-          nwrite += nw;
-        }
-      while (nwrite < nread);
-    }
-  close(ifd);
-  close(ofd);
-  return;
-
- read_error:
-  {
-    int err = errno;
-    close(ifd);
-    close(ofd);
-    E(false, F("read error copying %s to %s: %s")
-      % from % to % os_strerror(err));
-  }
- write_error:
-  {
-    int err = errno;
-    close(ifd);
-    close(ofd);
-    E(false, F("write error copying %s to %s: %s")
-      % from % to % os_strerror(err));
-  }
- spinning:
-  {
-    close(ifd);
-    close(ofd);
-    E(false, F("abandoning copy of %s to %s after four zero-length writes")
-      % from % to);
-  }
-
-#endif
-}
-
-
-void set_env(char const * var, char const * val)
-{
-#if defined(WIN32)
-  SetEnvironmentVariable(var, val);
-#elif defined(HAVE_SETENV)
-  setenv(var, val, 1);
-#elif defined(HAVE_PUTENV)
-  // note: this leaks memory, but the tester is short lived so it probably
-  // doesn't matter much.
-  string * tempstr = new string(var);
-  tempstr->append("=");
-  tempstr->append(val);
-  putenv(const_cast<char *>(tempstr->c_str()));
-#else
-#error set_env needs to be ported to this platform
-#endif
-}
-
-void unset_env(char const * var)
-{
-#if defined(WIN32)
-  SetEnvironmentVariable(var, 0);
-#elif defined(HAVE_UNSETENV)
-  unsetenv(var);
-#else
-#error unset_env needs to be ported to this platform
-#endif
-}
 
 string basename(string const & s)
 {
@@ -273,62 +47,6 @@ string dirname(string const & s)
 
   return s.substr(0, sep);
 }
-
-#if !defined(HAVE_MKDTEMP)
-static char * _impl_mkdtemp(char * templ)
-{
-  char * tmpdir = new char[strlen(templ) + 1];
-  char * result = 0;
-
-  /* There's a possibility that the name returned by mktemp() will already
-     be created by someone else, a typical race condition.  However, since
-     mkdir() will not clobber an already existing file or directory, we
-     can simply loop until we find a suitable name.  There IS a very small
-     risk that we loop endlessly, but that's under extreme conditions, and
-     the problem is likely to really be elsewhere... */
-  do
-    {
-      strcpy(tmpdir, templ);
-      result = mktemp(tmpdir);
-      if (result && mkdir(tmpdir, 0700) != 0)
-        {
-          result = 0;
-        }
-    }
-  while(!result && errno == EEXIST);
-
-  if (result)
-    {
-      strcpy(templ, result);
-      result = templ;
-    }
-
-  delete [] tmpdir;
-  return result;
-}
-
-#define mkdtemp _impl_mkdtemp
-#endif
-
-char * do_mkdtemp(char const * parent)
-{
-  char * tmpdir = new char[strlen(parent) + sizeof "/mtXXXXXX"];
-
-  strcpy(tmpdir, parent);
-  strcat(tmpdir, "/mtXXXXXX");
-
-  char * result = mkdtemp(tmpdir);
-  const int err = errno;
-
-  E(result != 0,
-    F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(err));
-  I(result == tmpdir);
-  return tmpdir;
-}
-
-#if !defined(HAVE_MKDTEMP)
-#undef mkdtemp
-#endif
 
 map<string, string> orig_env_vars;
 
@@ -492,19 +210,41 @@ void do_copy_recursive(string const & from, string to)
     do_copy_file(from, to);
 }
 
+// For convenience in calling from Lua (which has no syntax for writing
+// octal numbers) this function takes a three-digit *decimal* number and
+// treats each digit as octal.  For example, 777 (decimal) is converted to
+// 0777 (octal) for the system call.  Note that the system always forces the
+// high three bits of the supplied mode to zero; i.e. it is impossible to
+// have the setuid, setgid, or sticky bits on in the process umask.
+// Therefore, there is no point accepting arguments higher than 777.
 LUAEXT(posix_umask, )
 {
-#ifdef WIN32
-  lua_pushnil(L);
-  return 1;
-#else
-  unsigned int from = (unsigned int)luaL_checknumber(L, -1);
-  mode_t mask = 64*((from / 100) % 10) + 8*((from / 10) % 10) + (from % 10);
-  mode_t oldmask = umask(mask);
-  int res = 100*(oldmask/64) + 10*((oldmask/8) % 8) + (oldmask % 8);
-  lua_pushnumber(L, res);
-  return 1;
-#endif
+  unsigned int decmask = (unsigned int)luaL_checknumber(L, -1);
+  E(decmask <= 777,
+    F("invalid argument %d to umask") % decmask);
+
+  unsigned int a = decmask / 100  % 10;
+  unsigned int b = decmask / 10   % 10;
+  unsigned int c = decmask / 1    % 10;
+
+  E(a <= 7 && b <= 7 && c <= 7,
+    F("invalid octal number %d in umask") % decmask);
+
+  int oldmask = do_umask((a*8 + b)*8 + c);
+  if (oldmask == -1)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+  else
+    {
+      a = ((unsigned int)oldmask) / 64 % 8;
+      b = ((unsigned int)oldmask) / 8  % 8;
+      c = ((unsigned int)oldmask) / 1  % 8;
+
+      lua_pushinteger(L, (a*10 + b)*10 + c);
+      return 1;
+    }
 }
 
 LUAEXT(chdir, )
@@ -593,16 +333,8 @@ LUAEXT(make_temp_dir, )
 {
   try
     {
-      char const * parent;
-      parent = getenv("TMPDIR");
-      if (parent == 0)
-        parent = getenv("TEMP");
-      if (parent == 0)
-        parent = getenv("TMP");
-      if (parent == 0)
-        parent = "/tmp";
+      char * tmpdir = make_temp_dir();
 
-      char * tmpdir = do_mkdtemp(parent);
       lua_pushstring(L, tmpdir);
       delete [] tmpdir;
       return 1;
@@ -781,108 +513,15 @@ LUAEXT(timed_wait, )
 
 LUAEXT(require_not_root, )
 {
-#ifdef WIN32
-  bool running_as_root = false;
-#else
-  bool running_as_root = !geteuid();
-#endif
   // E() doesn't work here, I just get "warning: " in the
   // output.  Why?
-  if (running_as_root)
+  if (running_as_root())
     {
       P(F("This test suite cannot be run as the root user.\n"
           "Please try again with a normal user account.\n"));
       exit(1);
     }
   return 0;  
-}
-
-// Subroutine of run_tests_in_children.  Spawn a child to run the single
-// test TESTNAME.  On Unix, can just fork and call back to Lua in the child.
-// On Windows, must re-exec this process.
-pid_t
-run_one_test_in_child(lua_State * st, string const & testname,
-                      string const & testdir)
-{
-#ifdef WIN32
-  // The bulk of the work is done in main(), -r case, and we don't have any
-  // grief about stdio.
-  char const * argv[6];
-  argv[0] = argv0.c_str();
-  argv[1] = "-r";
-  argv[2] = testfile.c_str();
-  argv[3] = firstdir.c_str();
-  argv[4] = testname.c_str();
-  argv[5] = 0;
-
-  change_current_working_dir(testdir);
-  pid_t child = process_spawn_redirected(NULL_DEVICE,
-                                         "tester.log",
-                                         "tester.log",
-                                         argv);
-  change_current_working_dir(run_dir);
-  return child;
-
-#else
-  // Make sure there is no pending buffered output before forking, or it
-  // may be doubled.
-  fflush(0);
-
-  pid_t child = fork();
-  if (child != 0)
-    return child;
-
-  // From this point on we are in the child process.
-  // Until we have entered the test directory and re-opened fds 0-2 it is
-  // not safe to throw exceptions or call any of the diagnostic routines.
-  // Hence we use bare OS primitives and call _exit() if any of them fail.
-  // It is safe to assume that close() will not fail.
-  if (chdir(testdir.c_str()) != 0) _exit(127);
-  
-  close(0);
-  if (open("/dev/null", O_RDONLY) != 0) _exit(126);
-
-  close(1);
-  if (open("tester.log", O_WRONLY|O_CREAT|O_EXCL, 0666) != 1) _exit(125);
-  if (dup2(1, 2) == -1) _exit(124);
-
-  // We can now safely use stdio, exceptions, and the normal diagnostic
-  // routines.
-
-  int retcode;
-  try
-    {
-      Lua ll(st);
-      ll.func("run_one_test");
-      ll.push_str(testname);
-      ll.call(1,1)
-        .extract_int(retcode);
-    }
-  catch (informative_failure & e)
-    {
-      P(F("%s\n") % e.what());
-      retcode = 1;
-    }
-  catch (std::logic_error & e)
-    {
-      P(F("Invariant failure: %s\n") % e.what());
-      retcode = 3;
-    }
-  catch (std::exception & e)
-    {
-      P(F("Uncaught exception: %s") % e.what());
-      retcode = 3;
-    }
-  catch (...)
-    {
-      P(F("Uncaught exception of unknown type"));
-      retcode = 3;
-    }
-
-  lua_close(st);
-  exit(retcode);
-
-#endif
 }
 
 // run_tests_in_children (to_run, reporter)
@@ -918,7 +557,8 @@ LUAEXT(run_tests_in_children, )
       do_remove_recursive(testdir);
       do_mkdir(testdir);
 
-      pid_t child = run_one_test_in_child(L, testname, testdir);
+      pid_t child = run_one_test_in_child(testname, testdir,
+                                          L, argv0, testfile, firstdir);
 
       if (child == -1)
         status = 127; // spawn failure
