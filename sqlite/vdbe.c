@@ -4283,8 +4283,7 @@ case OP_IntegrityCk: {
   pnErr = &p->aMem[j];
   assert( (pnErr->flags & MEM_Int)!=0 );
   for(j=0; j<nRoot; j++){
-    Mem *pMem = &pTos[-j];
-    aRoot[j] = pMem->u.i;
+    aRoot[j] = (pTos-j)->u.i;
   }
   aRoot[j] = 0;
   popStack(&pTos, nRoot);
