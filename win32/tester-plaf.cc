@@ -103,30 +103,62 @@ bool running_as_root()
   return false;
 }
 
+// General note: the magic numbers in this function are meaningful to
+// testlib.lua.  They indicate a number of failure scenarios in which
+// more detailed diagnostics are not possible.
+// The bulk of the work is done in main(), -r case, q.v.
 
-pid_t run_one_test_in_child(string const & testname,
-                            string const & testdir,
-                            lua_State * /* st */,
-                            string const & argv0,
-                            string const & testfile,
-                            string const & firstdir)
+void run_tests_in_children(test_enumerator const & next_test,
+                           test_invoker const & /*invoke*/,
+                           test_cleaner const & cleanup,
+                           std::string const & run_dir,
+                           std::string const & runner,
+                           std::string const & testfile,
+                           std::string const & firstdir)
 {
-  // The bulk of the work is done in main(), -r case, q.v.
   char const * argv[6];
   argv[0] = argv0.c_str();
   argv[1] = "-r";
   argv[2] = testfile.c_str();
   argv[3] = firstdir.c_str();
-  argv[4] = testname.c_str();
+  argv[4] = 0;
   argv[5] = 0;
 
-  change_current_working_dir(testdir);
-  pid_t child = process_spawn_redirected("NUL:",
-                                         "tester.log",
-                                         "tester.log",
-                                         argv);
-  change_current_working_dir(run_dir);
-  return child;
+  test_to_run t;
+  string testdir;
+  while (next_test(t))
+    {
+      // This must be done before we try to redirect stdout/err to a
+      // file within testdir.
+      try
+        {
+          testdir = run_dir + "/" + t.name;
+          do_remove_recursive(testdir);
+          do_mkdir(testdir);
+        }
+      catch (...)
+        {
+          cleanup(t, 121);
+          continue;
+        }
+      
+      change_current_working_dir(testdir);
+      argv[4] = t.name.c_str();
+      pid_t child = process_spawn_redirected("NUL:",
+                                             "tester.log",
+                                             "tester.log",
+                                             argv);
+      change_current_working_dir(run_dir);
+
+      int status;
+      if (child == -1)
+        status = 122;
+      else
+        process_wait(child, &status);
+
+      if (cleanup(t, status))
+        do_remove_recursive(testdir);
+    }
 }
 
 

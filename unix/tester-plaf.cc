@@ -223,82 +223,78 @@ bool running_as_root()
   return !geteuid();
 }
 
-#include "lua/lua.h"
-#include "lua/lualib.h"
-#include "lua/lauxlib.h"
+// General note: the magic numbers in this function are meaningful to
+// testlib.lua.  They indicate a number of failure scenarios in which
+// more detailed diagnostics are not possible.
 
-// Spawn a child to run the single test TESTNAME.  Some args are not used on
-// this platform.
-pid_t
-run_one_test_in_child(string const & testname,
-                      string const & testdir,
-                      lua_State * st,
-                      string const & /* argv0 */,
-                      string const & /* testfile */,
-                      string const & /* firstdir */)
+void run_tests_in_children(test_enumerator const & next_test,
+                           test_invoker const & invoke,
+                           test_cleaner const & cleanup,
+                           std::string const & run_dir,
+                           std::string const & /*runner*/,
+                           std::string const & /*testfile*/,
+                           std::string const & /*firstdir*/)
 {
-  // Make sure there is no pending buffered output before forking, or it
-  // may be doubled.
-  fflush(0);
-
-  pid_t child = fork();
-  if (child != 0)
-    return child;
-
-  // From this point on we are in the child process.
-  // Until we have entered the test directory and re-opened fds 0-2 it is
-  // not safe to throw exceptions or call any of the diagnostic routines.
-  // Hence we use bare OS primitives and call _exit() if any of them fail.
-  // It is safe to assume that close() will not fail.
-  if (chdir(testdir.c_str()) != 0) _exit(127);
-  
-  close(0);
-  if (open("/dev/null", O_RDONLY) != 0) _exit(126);
-
-  close(1);
-  if (open("tester.log", O_WRONLY|O_CREAT|O_EXCL, 0666) != 1) _exit(125);
-  if (dup2(1, 2) == -1) _exit(124);
-
-  // We can now safely use stdio, exceptions, and the normal diagnostic
-  // routines.  However, as caller is not expecting it, we must not leave
-  // this function by any means save exit(), hence we duplicate all the
-  // outermost catch clauses from main().
-
-  int retcode;
-  try
+  test_to_run t;
+  string testdir;
+  while (next_test(t))
     {
-      lua_getglobal(st, "run_one_test");
-      I(lua_isfunction(st, -1));
+      // This must be done before we try to redirect stdout/err to a file
+      // within testdir.  If we did it in the child, we would have to do it
+      // before it was safe to issue diagnostics.
+      try
+        {
+          testdir = run_dir + "/" + t.name;
+          do_remove_recursive(testdir);
+          do_mkdir(testdir);
+        }
+      catch (...)
+        {
+          cleanup(t, 121);
+          continue;
+        }
 
-      lua_pushstring(st, testname.c_str());
-      lua_call(st, 1, 1);
-      I(lua_isnumber(st, -1));
+      // Make sure there is no pending buffered output before forking, or it
+      // may be doubled.
+      fflush(0);
+      pid_t child = fork();
 
-      retcode = lua_tointeger(st, -1);
-    }
-  catch (informative_failure & e)
-    {
-      P(F("%s\n") % e.what());
-      retcode = 1;
-    }
-  catch (std::logic_error & e)
-    {
-      P(F("Invariant failure: %s\n") % e.what());
-      retcode = 3;
-    }
-  catch (std::exception & e)
-    {
-      P(F("Uncaught exception: %s") % e.what());
-      retcode = 3;
-    }
-  catch (...)
-    {
-      P(F("Uncaught exception of unknown type"));
-      retcode = 3;
-    }
+      if (child != 0) // parent
+        {
+          int status;
+          if (child == -1)
+            status = 122; // spawn failure
+          else
+            process_wait(child, &status);
 
-  lua_close(st);
-  exit(retcode);
+          if (cleanup(t, status))
+            do_remove_recursive(testdir);
+        }
+      else // child
+        {
+          // From this point on we are in the child process.  Until we have
+          // entered the test directory and re-opened fds 0-2 it is not safe
+          // to throw exceptions or call any of the diagnostic routines.
+          // Hence we use bare OS primitives and call _exit(), if any of them
+          // fail.  It is safe to assume that close() will not fail.
+          if (chdir(testdir.c_str()) != 0)
+            _exit(123);
+
+          close(0);
+          if (open("/dev/null", O_RDONLY) != 0)
+            _exit(124);
+
+          close(1);
+          if (open("tester.log", O_WRONLY|O_CREAT|O_EXCL, 0666) != 1)
+            _exit(125);
+          if (dup2(1, 2) == -1)
+            _exit(126);
+
+          invoke(t.name);
+          // If invoke() returns something has gone terribly wrong.
+          _exit(127);
+        }
+    }
 }
 
 // Local Variables:

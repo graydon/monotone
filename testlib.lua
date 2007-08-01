@@ -928,8 +928,20 @@ function run_tests(debugging, list_only, run_dir, logname, args)
   local of_interest = {}
   local failed_testlogs = {}
 
+  -- exit codes which indicate failure at a point in the process-spawning
+  -- code where it is impossible to give more detailed diagnostics
+  local magic_exit_codes = {
+     [121] = "error creating test directory",
+     [122] = "error spawning test process",
+     [123] = "error entering test directory",
+     [124] = "error redirecting stdin",
+     [125] = "error redirecting stdout",
+     [126] = "error redirecting stderr",
+     [127] = "test did not exit as expected"
+  }
+
   -- callback closure passed to run_tests_in_children
-  function report_one_test(tno, tname, status)
+  local function report_one_test(tno, tname, status)
      local tdir = run_dir .. "/" .. tname
      local test_header = string.format("%3d %-45s ", tno, tname)
      local what
@@ -939,44 +951,47 @@ function run_tests(debugging, list_only, run_dir, logname, args)
      if status ~= 0 then
 	if status < 0 then
 	   what = string.format("FAIL (signal %d)", -status)
+	elseif magic_exit_codes[status] ~= nil then
+	   what = string.format("FAIL (%s)", magic_exit_codes[status])
 	else
 	   what = string.format("FAIL (exit %d)", status)
 	end
+     else
+	local wfile, err = io.open(tdir .. "/STATUS", "r")
+	if wfile ~= nil then
+	   what = wfile:read()
+	   wfile:close()
+	else
+	   what = string.format("FAIL (status file: %s)", err)
+	end
+     end
+     if what == "unexpected success" then
+	counts.noxfail = counts.noxfail + 1
+	counts.of_interest = counts.of_interest + 1
+	table.insert(of_interest, test_header .. "unexpected success")
+	can_delete = false
+     elseif what == "partial skip" or what == "ok" then
+	counts.success = counts.success + 1
+	can_delete = true
+     elseif string.find(what, "skipped ") == 1 then
+	counts.skip = counts.skip + 1
+	can_delete = true
+     elseif string.find(what, "expected failure ") == 1 then
+	counts.xfail = counts.xfail + 1
+	can_delete = false
+     elseif string.find(what, "FAIL ") == 1 then
 	counts.fail = counts.fail + 1
 	table.insert(of_interest, test_header .. what)
 	table.insert(failed_testlogs, tdir .. "/tester.log")
 	can_delete = false
      else
-	local wfile = io.open(tdir .. "/STATUS", "r")
-	what = wfile:read()
-	wfile:close()
-	if what == "unexpected success" then
-	   counts.noxfail = counts.noxfail + 1
-	   counts.of_interest = counts.of_interest + 1
-	   table.insert(of_interest, test_header .. "unexpected success")
-	   can_delete = false
-	elseif what == "partial skip" or what == "ok" then
-	   counts.success = counts.success + 1
-	   can_delete = true
-	elseif string.find(what, "skipped ") == 1 then
-	   counts.skip = counts.skip + 1
-	   can_delete = true
-	elseif string.find(what, "expected failure ") == 1 then
-	   counts.xfail = counts.xfail + 1
-	   can_delete = false
-	elseif string.find(what, "FAIL ") == 1 then
-	   counts.fail = counts.fail + 1
-	   table.insert(of_interest, test_header .. what)
-	   table.insert(failed_testlogs, tdir .. "/tester.log")
-	   can_delete = false
-	else
-	   counts.fail = counts.fail + 1
-	   what = "FAIL (gobbledygook: " .. what .. ")"
-	   table.insert(of_interest, test_header .. what)
-	   table.insert(failed_testlogs, tdir .. "/tester.log")
-	   can_delete = false
-	end
+	counts.fail = counts.fail + 1
+	what = "FAIL (gobbledygook: " .. what .. ")"
+	table.insert(of_interest, test_header .. what)
+	table.insert(failed_testlogs, tdir .. "/tester.log")
+	can_delete = false
      end
+
      counts.total = counts.total + 1
      P(string.format("%s%s\n", test_header, what))
      if debugging then 

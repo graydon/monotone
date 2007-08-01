@@ -525,67 +525,133 @@ LUAEXT(require_not_root, )
 }
 
 // run_tests_in_children (to_run, reporter)
-
+//
 // Run all of the tests in TO_RUN, each in its own isolated directory and
 // child process.  As each exits, call REPORTER with the test number and
 // name, and the exit status.  If REPORTER returns true, delete the test
-// directory, otherwise leave it alone. The point of this exercise is to
-// isolate in one C function all the black art involved with safe creation
-// and destruction of child processes and their context.
+// directory, otherwise leave it alone.
+//
+// The meat of the work done by this function is so system-specific that it
+// gets shoved off into tester-plaf.cc.  However, all interaction with the
+// Lua layer needs to remain in this file, so we have a mess of callback
+// "closures" (or as close as C++ lets you get, anyway).
+
+// Iterate over the Lua table containing all the tests to run.
+bool test_enumerator::operator()(test_to_run & next_test) const
+{
+  int top = lua_gettop(st);
+  luaL_checkstack(st, 2, "preparing to retrieve next test");
+
+  lua_rawgeti(st, LUA_REGISTRYINDEX, table_ref);
+  if (iteration_begun)
+    lua_pushinteger(st, last_index);
+  else
+    lua_pushnil(st);
+
+  if (lua_next(st, -2) == 0)
+    {
+      lua_settop(st, top);
+      return false;
+    }
+  else
+    {
+      iteration_begun = true;
+      next_test.number = last_index = luaL_checkinteger(st, -2);
+      next_test.name = luaL_checkstring(st, -1);
+      lua_settop(st, top);
+      return true;
+    }
+}
+
+// Invoke one test case in the child.  This may be called by
+// run_tests_in_children, or by main, because Windows doesn't have fork.
+
+void test_invoker::operator()(std::string const & testname) const
+{
+  int retcode;
+  try
+    {
+      luaL_checkstack(st, 2, "preparing call to run_one_test");
+      lua_getglobal(st, "run_one_test");
+      I(lua_isfunction(st, -1));
+
+      lua_pushstring(st, testname.c_str());
+      lua_call(st, 1, 1);
+
+      retcode = luaL_checkinteger(st, -1);
+      lua_remove(st, -1);
+    }
+  catch (informative_failure & e)
+    {
+      P(F("%s\n") % e.what());
+      retcode = 1;
+    }
+  catch (std::logic_error & e)
+    {
+      P(F("Invariant failure: %s\n") % e.what());
+      retcode = 3;
+    }
+  catch (std::exception & e)
+    {
+      P(F("Uncaught exception: %s") % e.what());
+      retcode = 3;
+    }
+  catch (...)
+    {
+      P(F("Uncaught exception of unknown type"));
+      retcode = 3;
+    }
+
+  // This does not properly clean up global state, but none of it is
+  // process-external, so it's ok to let the OS obliterate it; and
+  // leaving this function any other way is not safe.
+  exit(retcode);
+}
+
+
+// Clean up after one child process.
+
+bool test_cleaner::operator()(test_to_run const & test,
+                              int status) const
+{
+  // call reporter(testno, testname, status)
+  luaL_checkstack(st, 4, "preparing call to reporter");
+
+  lua_rawgeti(st, LUA_REGISTRYINDEX, reporter_ref);
+  lua_pushinteger(st, test.number);
+  lua_pushstring(st, test.name.c_str());
+  lua_pushinteger(st, status);
+  lua_call(st, 3, 1);
+
+  // return is a boolean.  There is, for no apparent reason, no
+  // luaL_checkboolean().
+  I(lua_isboolean(st, -1));
+  bool ret = lua_toboolean(st, -1);
+  lua_remove(st, -1);
+  return ret;
+}
+
 LUAEXT(run_tests_in_children, )
 {
-  // lua arguments
-  const int to_run = 1;
-  const int reporter = 2;
-
   if (lua_gettop(L) != 2)
     return luaL_error(L, "wrong number of arguments");
 
   luaL_argcheck(L, lua_istable(L, 1), 1, "expected a table");
   luaL_argcheck(L, lua_isfunction(L, 2), 2, "expected a function");
 
-  // iterate over to_run...
-  lua_pushnil(L);
-  while (lua_next(L, to_run) != 0)
-    {
-      luaL_checkinteger(L, -2);
-      string testname = luaL_checkstring(L, -1);
-      int status;
+  int reporter_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+  int table_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
-      string testdir = run_dir + "/" + testname;
+  run_tests_in_children(test_enumerator(L, table_ref),
+                        test_invoker(L),
+                        test_cleaner(L, reporter_ref),
+                        run_dir, argv0, testfile, firstdir);
 
-      do_remove_recursive(testdir);
-      do_mkdir(testdir);
-
-      pid_t child = run_one_test_in_child(testname, testdir,
-                                          L, argv0, testfile, firstdir);
-
-      if (child == -1)
-        status = 127; // spawn failure
-      else
-        process_wait(child, &status);
- 
-      // Set up a call to REPORTER with the appropriate arguments ...
-      lua_pushvalue(L, reporter); // t_r r tno tna r
-      lua_insert(L, -2);          // t_r r tno r tna
-      lua_pushvalue(L, -3);       // t_r r tno r tna tno
-      lua_insert(L, -2);          // t_r r tno r tno tna
-      lua_pushinteger(L, status); // t_r r tno r tno tna st
-
-      // ... call it ...
-      lua_call(L, 3, 1);
-
-      // ... and if it returns true, delete testdir.
-      I(lua_isboolean(L, -1));
-      if (lua_toboolean(L, -1))
-        do_remove_recursive(testdir);
-
-      // pop return value, leaving to_run reporter testno, as expected by
-      // lua_next.
-      lua_remove(L, -1);
-    }
+  luaL_unref(L, LUA_REGISTRYINDEX, table_ref);
+  luaL_unref(L, LUA_REGISTRYINDEX, reporter_ref);
   return 0;
 }
+
 
 int main(int argc, char **argv)
 {
