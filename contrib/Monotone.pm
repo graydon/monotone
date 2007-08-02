@@ -24,13 +24,17 @@ sub new {
 
 sub open ($$) {
     my ( $self, $db, $workspace ) = @_;
+    local (*READ, *WRITE);
     if (defined($db) && defined($workspace)) {
-        local (*READ, *WRITE);
         $self->{PID} = open2(\*READ, \*WRITE, "mtn --db=$db --root=$workspace automate stdio" );
-        $self->{In} = *READ;
-        $self->{Out} = *WRITE;
-        $self->{CmdNum} = 0;
+    } elsif (defined($workspace)) {
+        $self->{PID} = open2(\*READ, \*WRITE, "mtn --root=$workspace automate stdio" );
+    } else {
+        $self->{PID} = open2(\*READ, \*WRITE, "mtn automate stdio" );
     }
+    $self->{In} = *READ;
+    $self->{Out} = *WRITE;
+    $self->{CmdNum} = 0;
 }
 
 sub call {
