@@ -53,7 +53,7 @@ sub call {
     }
     print $write "e";
     my $count=0;
-    my @ret;
+    my @ret = ("", "");
     my $last;
     
     do {
@@ -78,10 +78,14 @@ sub call {
             $input = $input . getc($read);
             $numString--;
         }
-        if ($err ne '0') {
-            die("Got error: " . $err);
+        # print "Got input: " . $input;
+        if ($err eq '1') {
+            die("Syntax error in Monotone stdio");
+        } elsif ($err eq '2') {
+            $ret[1] = $ret[1] . $input;
+        } elsif ($err eq '0') {
+            $ret[0] = $ret[0] . $input;
         }
-        push @ret, $input;
     } while ($last eq 'm');
     
     die("Parser confused.") if ($last ne 'l');
@@ -107,23 +111,15 @@ sub close {
 # $test->open("/Users/willu/src/monotone/mt.db","/Users/willu/src/monotone/monotone-source");
 # 
 # my @revs = $test->call("get_base_revision_id");
-# my $rev;
+# print "got revisions: " . $revs[0] . "\n";
 # 
-# foreach $rev (@revs) {
-#     print "got revision: " . $rev . "\n";
-# }
-# 
-# $rev = $revs[0];
-# chomp $rev; # remove the trailing \n that monotone leaves there... tsk tsk.
+# my $rev = $revs[0];
+# chomp $rev; # remove the trailing \n that monotone leaves there.
 # 
 # my @certs = $test->call("certs", $rev);
-# my $cert;
+# my $cert = $certs[0];
 # 
-# print "Got " . @certs . " certs:\n\n";
-# 
-# foreach $cert (@certs) {
-#     print "Next cert:\n" . $cert . "\n";
-# }
+# print "Got certs:\n" . $cert . "\n";
 # 
 # $test->close();
 # 
