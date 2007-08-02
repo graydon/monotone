@@ -167,6 +167,10 @@ building and installation process for monotone
     confirm monotone's functionality on your system.
     Do not run "make check" as root (Unix)!  Doing so will cause the
     failure of some of the tests!
+    Also, make sure your testing process has enough memory.  Experience
+    has shown that some tests may fail "mysteriously" when there is too
+    little memory.  A possible hint is that 128MB was too little on
+    FreeBSD 6 on x86 while 256MB was enough.
 
     You might also like to try fetching monotone's sources from our
     monotone server. this process will transfer the complete development
