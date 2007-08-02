@@ -7,6 +7,18 @@ monotone (0.36-1) unstable; urgency=low
   * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
   * Run testsuite during build.
   * Drop libboost-filesystem-dev build-dependency.
+  * monotone-server.postinst, monotone-server.postrm: Do not assume
+    full pathnames of ucf or adduser.  Use ucfr as well as ucf.
+    At purge time:
+     - do not assume ucf, adduser, or debconf are available (closes: #434604).
+     - if not asked to manage the database, do not delete it.
+     - if deleting the database and there is a hot journal, delete that too.
+     - delete editor backups of ucf-managed conffiles.
+     - expunge the auto-generated key's passphrase from 
+       /etc/monotone/passphrases and if that leaves the file empty,
+       delete it.
+     - do not delete the monotone user or group if leaving /var/lib/monotone
+       on the filesystem.
 
  -- Richard Levitte <richard@levitte.org>  Thu, 02 Aug 2007 21:56:21 +0200
 
