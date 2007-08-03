@@ -20,7 +20,7 @@ monotone (0.36-1) unstable; urgency=low
      - do not delete the monotone user or group if leaving /var/lib/monotone
        on the filesystem.
 
- -- Richard Levitte <richard@levitte.org>  Thu, 02 Aug 2007 21:56:21 +0200
+ -- Richard Levitte <richard@levitte.org>  Fri, 03 Aug 2007 08:08:36 +0200
 
 monotone (0.35-2) unstable; urgency=low
 
