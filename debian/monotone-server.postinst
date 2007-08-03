@@ -112,15 +112,19 @@ case "$1" in
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 	       
-       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
-       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
-       /usr/bin/ucf --debconf-ok /usr/share/doc/monotone/contrib/get_passphrase_from_file.lua /etc/monotone/hooks.lua
+       ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
+       ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
+       ucf --debconf-ok /usr/share/doc/monotone/contrib/get_passphrase_from_file.lua /etc/monotone/hooks.lua
+
+       ucfr monotone-server /etc/monotone/write-permissions
+       ucfr monotone-server /etc/monotone/read-permissions
+       ucfr monotone-server /etc/monotone/hooks.lua
        
        # if this is our first install give config files correct permissions
        if [ -z "$2" ]; then
            # create monotone user and fix permissions of files
            if [ -z "`id -u monotone 2>/dev/null`" ]; then
-	       /usr/sbin/adduser --system --group --home $MTN_HOME \
+	       adduser --system --group --home $MTN_HOME \
 	       --no-create-home --disabled-password --quiet        \
 	       --gecos "Monotone" monotone
 	       

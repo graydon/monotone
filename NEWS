@@ -1,4 +1,4 @@
-??? ??? ?? ??:??:?? ??? ????
+Fri Aug  3 06:08:36 UTC 2007
 
         0.36 release.
 
@@ -60,6 +60,9 @@
         - contrib/mtn_makepermissions, a simple script to create
           read-permissions and write-permissions from files in the directories
           read-permissions.d and write-permissions.d, Debian style.
+
+        - contrib/Monotone.pm, a first attempt to write a Perl module to
+          interface with 'monotone automate stdio'.
 
         - contrib/monotone-import.pl has been removed since monotone now has
           an internal import command.
