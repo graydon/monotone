@@ -502,7 +502,7 @@ any_path::basename() const
   string const & s = data;
   string::size_type sep = s.rfind('/');
 #ifdef WIN32
-  if (sep == string::npos && s[1] == ':')
+  if (sep == string::npos && s.size()>= 2 && s[1] == ':')
     sep = 1;
 #endif
   if (sep == string::npos)
@@ -520,7 +520,7 @@ any_path::dirname() const
   string const & s = data;
   string::size_type sep = s.rfind('/');
 #ifdef WIN32
-  if (sep == string::npos && s[1] == ':')
+  if (sep == string::npos && s.size()>= 2 && s[1] == ':')
     sep = 1;
 #endif
   if (sep == string::npos)
@@ -559,7 +559,7 @@ system_path::dirname() const
   string const & s = data;
   string::size_type sep = s.rfind('/');
 #ifdef WIN32
-  if (sep == string::npos && s[1] == ':')
+  if (sep == string::npos && s.size()>= 2 && s[1] == ':')
     sep = 1;
 #endif
   I(sep != string::npos);
@@ -1580,7 +1580,7 @@ UNIT_TEST(paths, system)
 #ifdef WIN32
   UNIT_TEST_CHECK(system_path("~this_user_does_not_exist_anywhere")
                   .as_external()
-                  == "~this_user_does_not_exist_anywhere");
+                  == "/a/b/~this_user_does_not_exist_anywhere");
 #else
   UNIT_TEST_CHECK_THROW(system_path("~this_user_does_not_exist_anywhere"),
                         informative_failure);

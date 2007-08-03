@@ -21,6 +21,8 @@ licenses.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
 
+  -- Monotone.pm: A Perl module to access a 'mtn automate stdio' subprocess.
+
   -- monoprof.sh: A simple monotone profiling script.
 
   -- Log2Gxl.java: Removed. Now in branch net.venge.monotone.contrib.monotree
