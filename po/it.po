@@ -635,7 +635,7 @@ msgstr "Esegue dei controlli di integrità sul database"
 
 #: cmd_db.cc:172
 msgid "Ensures that the database is consistent by issuing multiple checks."
-msgstr ""
+msgstr "Verifica la consistenza del database eseguendo molteplici controlli."
 
 #: cmd_db.cc:183
 msgid "Converts the database to the changeset format"
@@ -668,7 +668,7 @@ msgstr ""
 
 #: cmd_db.cc:260
 msgid "Unsets a database variable"
-msgstr ""
+msgstr "Cancella una variabile dal database"
 
 #: cmd_db.cc:261
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
@@ -1603,7 +1603,7 @@ msgstr "Stampa il roster associato ad un dato identificatore"
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
-msgstr ""
+msgstr "Se non viene specificato un ID_REV, viene utilizzato lo spazio di lavoro."
 
 #: cmd_netsync.cc:44
 #: cmd_netsync.cc:286
@@ -2213,7 +2213,7 @@ msgstr "Imposta un nuovo spazio di lavoro in una directory"
 
 #: cmd_ws_commit.cc:1225
 msgid "If no directory is specified, uses the current directory."
-msgstr ""
+msgstr "Se non è specificata alcuna directory, usa la directory attuale."
 
 #: cmd_ws_commit.cc:1231
 #, c-format
@@ -2243,9 +2243,10 @@ msgstr "la directory di importazione ‘%s’ non esiste"
 msgid "import directory '%s' is a file"
 msgstr "la directory di importazione ‘%s’ è un file"
 
+# TODO: migra?
 #: cmd_ws_commit.cc:1350
 msgid "Migrates a workspace directory's metadata to the latest format"
-msgstr ""
+msgstr "Aggiorna i metadati di uno spazio di lavoro al formato più recente"
 
 #: cmd_ws_commit.cc:1351
 msgid "If no directory is given, defaults to the current workspace."
@@ -2257,7 +2258,7 @@ msgstr "Aggiorna la cache degli inodeprint"
 
 #: commands.cc:58
 msgid "Commands that aid in scripted execution"
-msgstr ""
+msgstr "Comandi di aiuto per l'esecuzione da script"
 
 #: commands.cc:61
 msgid "Commands that manipulate the database"
@@ -2265,7 +2266,7 @@ msgstr "Comandi che manipolano il database"
 
 #: commands.cc:64
 msgid "Commands that aid in program debugging"
-msgstr ""
+msgstr "Comandi di aiuto per il debug"
 
 #: commands.cc:67
 msgid "Commands for information retrieval"
@@ -2273,19 +2274,19 @@ msgstr "Comandi per il recupero delle informazioni"
 
 #: commands.cc:70
 msgid "Commands to manage keys and certificates"
-msgstr ""
+msgstr "Comandi per la gestione di chiavi e certificati"
 
 #: commands.cc:73
 msgid "Commands that access the network"
-msgstr ""
+msgstr "Comandi che accedono alla rete"
 
 #: commands.cc:76
 msgid "Commands for packet reading and writing"
-msgstr ""
+msgstr "Comandi per lettura e scrittura pacchetti"
 
 #: commands.cc:79
 msgid "Commands for interaction with RCS and CVS"
-msgstr ""
+msgstr "Comandi per l'interazione con RCS e CVS"
 
 # TODO: rev-rev argh!
 #: commands.cc:82
@@ -2299,11 +2300,12 @@ msgstr "Comandi per manipolare l'albero"
 
 #: commands.cc:88
 msgid "Commands to manage persistent variables"
-msgstr ""
+msgstr "Comandi per la gestione delle variabili persistenti"
 
+# TODO: deal?
 #: commands.cc:91
 msgid "Commands that deal with the workspace"
-msgstr ""
+msgstr "Comandi che riguardano lo spazio di lavoro"
 
 #: commands.cc:498
 #, c-format
@@ -2313,7 +2315,7 @@ msgstr "comando ‘%s’ sconosciuto"
 #: commands.cc:508
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
-msgstr ""
+msgstr "‘%s’ è ambiguo; può essere completato come:"
 
 #: commands.cc:642
 #, c-format
@@ -3054,7 +3056,7 @@ msgstr "il file ‘%s’ non può essere sovrascritto: è una directory"
 #: file_io.cc:464
 #, c-format
 msgid "skipping file '%s' with unsupported name"
-msgstr ""
+msgstr "salto il file con nome non valido ‘%s’"
 
 #: file_io.cc:468
 #, c-format
@@ -4966,10 +4968,11 @@ msgstr ""
 msgid "stream read failed (%i)"
 msgstr "fallita lettura da stream (%i)"
 
+# TODO: in più/di troppo?
 #: unix/ssh_agent_platform.cc:111
 #, c-format
 msgid "%u extra bytes from ssh-agent"
-msgstr ""
+msgstr "ricevuti da ssh-agent %u bytes in più"
 
 #: win32/fs.cc:51
 #, c-format
