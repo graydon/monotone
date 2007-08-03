@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-07-29 21:24+0200\n"
+"POT-Creation-Date: 2007-08-03 17:51+0200\n"
 "PO-Revision-Date: 2007-03-06 15:11+0100\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -2423,10 +2423,64 @@ msgstr "unbekanntes Kommando '%s'"
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' ist mehrdeutig; mögliche Vervollständigungen sind:"
 
+#: commands.cc:593
+#, c-format
+msgid "Commands in group '%s':"
+msgstr "Kommandos in der Gruppe '%s':"
+
+#: commands.cc:599
+#, c-format
+msgid "Subcommands of '%s %s':"
+msgstr "Unterkommandos von '%s %s':"
+
+#: commands.cc:603
+#, c-format
+msgid "Syntax specific to '%s %s':"
+msgstr "Spezifische Syntax für '%s %s':"
+
+#: commands.cc:628
+#, c-format
+msgid "Purpose of group '%s':"
+msgstr "Verwendungszweck der Gruppe '%s':"
+
+#: commands.cc:632
+#, c-format
+msgid "Description for '%s %s':"
+msgstr "Beschreibung für '%s %s':"
+
 #: commands.cc:642
 #, c-format
 msgid "Aliases: %s."
 msgstr "Aliasse: %s."
+
+#: commands.cc:659
+#, c-format
+msgid "Command groups:"
+msgstr "Kommandogruppen:"
+
+#: commands.cc:662
+#, c-format
+msgid ""
+"For information on a specific command, type 'mtn help <command_name> "
+"[subcommand_name ...]'."
+msgstr "Für Informationen zu einem spezifischen Kommando geben Sie bitte "
+"'mtn help KOMMANDO_NAME [UNTERKOMMANDO_NAME]' ein."
+
+#: commands.cc:665
+#, c-format
+msgid ""
+"To see the commands available within a group, type 'mtn help <group_name>'."
+msgstr "Um alle verfügbaren Kommandos innerhalb einer Gruppe zu sehen, "
+"nutzen Sie bitte 'mtn help GRUPPEN_NAME'."
+
+#: commands.cc:668
+#, c-format
+msgid ""
+"Note that you can always abbreviate a command name as long as it does not "
+"conflict with other names."
+msgstr "Beachten Sie, dass Sie jederzeit auch eine Abkürzung eines Kommandonamens "
+"zum Aufruf der Funktion nutzen können, solange diese Abkürzung nicht mit anderen "
+"Kommandonamen im Konflikt steht."
 
 #: commands.cc:686
 #, c-format
