@@ -69,12 +69,19 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  if (args.size() ==1 ) {
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+  app.work.get_ws_options(database_option, branch_option,
+                          key_option, keydir_option);
+
+  if (args.size() == 1 ) {
     // branchname was explicitly given, use that
-    app.opts.branchname = branch_name(idx(args, 0)());
+    branch_option = branch_name(idx(args, 0)());
   }
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(branch_option, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << '\n';
 }

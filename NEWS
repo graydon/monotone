@@ -1,3 +1,13 @@
+??? ???  ? ??:??:?? UTC 2007
+
+        0.37 release.
+
+        Bugs fixed
+
+        - mtn automate heads called without a branch argument now properly
+          returns the head revisions of the workspace's branch if called
+          over mtn automate stdio
+
 Fri Aug  3 06:08:36 UTC 2007
 
         0.36 release.
