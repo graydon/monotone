@@ -441,7 +441,8 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
 	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
 	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*) audit-includes
+	$(wildcard $(srcdir)/debian/*) mac/monotone-pkg-logo.gif \
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes 
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -479,7 +480,8 @@ monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
 	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
 		< monotone-xml.pmproj.in > monotone-xml.pmproj
 	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
-		$(srcdir)/COPYING.txt .
+		$(srcdir)/COPYING .
+	mv COPYING COPYING.txt
 	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
 	sudo chown -R root:wheel $(PKG_INST_ROOT)/usr
 	sudo chown -R root:admin $(PKG_INST_ROOT)/Developer
