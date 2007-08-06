@@ -3491,27 +3491,27 @@ msgstr "Überprüfung von '%s' schlug fehl"
 
 #: netsync.cc:759
 msgid "bytes in"
-msgstr "Bytes rein"
+msgstr "Bytes gelesen"
 
 #: netsync.cc:761
 msgid "bytes out"
-msgstr "Bytes raus"
+msgstr "Bytes geschrieben"
 
 #: netsync.cc:765
 msgid "certs in"
-msgstr "Zertifikate rein"
+msgstr "Zertifikate gelesen"
 
 #: netsync.cc:767 netsync.cc:780
 msgid "revs in"
-msgstr "Revisionen rein"
+msgstr "Revisionen gelesen"
 
 #: netsync.cc:772
 msgid "certs out"
-msgstr "Zertifikate raus"
+msgstr "Zertifikate geschrieben"
 
 #: netsync.cc:774 netsync.cc:782
 msgid "revs out"
-msgstr "Revisionen raus"
+msgstr "Revisionen geschrieben"
 
 #: netsync.cc:888
 #, c-format
@@ -3521,7 +3521,7 @@ msgstr "Unterlauf bei Zählung von %s Elementen zum Empfangen"
 #: netsync.cc:1259 netsync.cc:1267
 #, c-format
 msgid "received network error: %s"
-msgstr "erhielt Netzwerk-Fehler: %s"
+msgstr "Netzwerk-Fehler: %s"
 
 #: netsync.cc:1295
 #, c-format
@@ -3538,11 +3538,11 @@ msgstr ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 "@ WARNUNG: SERVERIDENTIFIKATION HAT SICH GEÄNDERT         @\n"
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-"ES IST MÖGLICH DAS JEMAND ETWAS BÖSES MACHT\n"
+"ES IST MÖGLICH, DASS JEMAND ETWAS BÖSES MACHT\n"
 "Es ist auch möglich, dass sich einfach nur der Server-Schlüssel geändert "
 "hat.\n"
 "Der entfernte Rechner hat den Schlüssel %s gesendet,\n"
-"ich habe %s erwartet\n"
+"es wurde %s erwartet\n"
 "'%s unset %s %s' übergeht diese Prüfung."
 
 #: netsync.cc:1305
@@ -3558,7 +3558,7 @@ msgid ""
 "their key's fingerprint: %s"
 msgstr ""
 "Das ist das erste Mal, dass Sie sich mit dem Server %s verbinden.\n"
-"Ich nehme an, dass Sie die Serveridentität verifiziert haben.\n"
+"Es wird angenommen, dass Sie die Serveridentität verifiziert haben.\n"
 "Sie können jedoch nochmal den Fingerprint des Schlüssels prüfen: %s"
 
 #: netsync.cc:1316
@@ -4337,10 +4337,10 @@ msgid ""
 "I only know how to understand the version '1' format\n"
 "a newer version of monotone is required to complete this operation"
 msgstr ""
-"Ich bin auf eine Revision mit einem mir unbekannten Format gestoßen ('%s').\n"
-"Ich kann lediglich das Format der Version '1' verstehen.\n"
-"Eine neuere Version von monotone wird benötigt, um diese Operation "
-"durchzuführen."
+"Es wurde eine Revision mit unbekannten Format gefunden ('%s').\n"
+"Diese Version von monotone kann lediglich das Format der Version '1' verstehen.\n"
+"Eine neuere Version von monotone wird benötigt, um die Operation "
+"vollständig durchzuführen."
 
 #: roster.cc:2313
 #, c-format
@@ -4889,7 +4889,7 @@ msgstr ""
 #: work.cc:1400
 #, c-format
 msgid "dropping %s from workspace manifest"
-msgstr "entferne %s vom Arbeitsbereich-Manifest"
+msgstr "entferne %s aus dem Arbeitsbereich-Manifest"
 
 #: work.cc:1440 work.cc:1455
 #, c-format
