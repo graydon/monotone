@@ -34,7 +34,7 @@ msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-08-03 17:51+0200\n"
-"PO-Revision-Date: 2007-03-06 15:11+0100\n"
+"PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
 "MIME-Version: 1.0\n"
@@ -553,7 +553,7 @@ msgstr ""
 
 #: cmd_db.cc:100
 msgid "Loads the contents of the database"
-msgstr "Läd die Inhalte einer Datenbank"
+msgstr "Lädt die Inhalte einer Datenbank"
 
 #: cmd_db.cc:101
 msgid ""
@@ -769,7 +769,7 @@ msgstr "[DATEI [...]]"
 
 #: cmd_diff_log.cc:534
 msgid "Calculates diffs of files"
-msgstr "Berechtnet die Unterschiede in Dateien"
+msgstr "Berechnet die Unterschiede in Dateien"
 
 #: cmd_diff_log.cc:610
 msgid "[FILE] ..."
@@ -943,7 +943,7 @@ msgstr "Gibt die Inhalte einer Datei aus (anhand einer gegebenen ID)"
 
 #: cmd_files.cc:348
 msgid "Prints the contents of a file (given a name)"
-msgstr "Gibt die Inhalte einer Datei aus (anhand eines gegebenen Names)"
+msgstr "Gibt die Inhalte einer Datei aus (anhand eines gegebenen Namens)"
 
 #: cmd.hh:129
 #, c-format
@@ -1460,8 +1460,7 @@ msgstr "ANDERE-REVISION"
 
 #: cmd_merging.cc:607
 msgid "Merges a revision into the current workspace's base revision"
-msgstr ""
-"Überführt die Änderungen einer revision in den derzeitigen Arbeitsbereich"
+msgstr "Überführt die Änderungen einer Revision in den derzeitigen Arbeitsbereich"
 
 #: cmd_merging.cc:608
 msgid ""
@@ -1643,7 +1642,7 @@ msgstr "Änderungen auf Arbeitsbereich angewendet"
 
 #: cmd_merging.cc:937
 msgid "Shows unmerged head revisions of a branch"
-msgstr "Zeigz nicht-vereinigte Köpfe (Revisionen) eines Zweiges"
+msgstr "Zeigt nicht-vereinigte Köpfe (Revisionen) eines Zweiges"
 
 #: cmd_merging.cc:953
 #, c-format
@@ -2451,7 +2450,7 @@ msgstr "Beschreibung für '%s %s':"
 #: commands.cc:642
 #, c-format
 msgid "Aliases: %s."
-msgstr "Aliasse: %s."
+msgstr "Aliase: %s."
 
 #: commands.cc:659
 #, c-format
@@ -2485,7 +2484,7 @@ msgstr "Beachten Sie, dass Sie jederzeit auch eine Abkürzung eines Kommandoname
 #: commands.cc:686
 #, c-format
 msgid "command '%s' is invalid; it is a group"
-msgstr "Das Kommando '%s' ist ungütig, da es eine Gruppe bezeichnet"
+msgstr "Das Kommando '%s' ist ungültig, da es eine Gruppe bezeichnet"
 
 #: commands.cc:689
 #, c-format
@@ -3648,7 +3647,7 @@ msgstr "ungültige Client-Signatur"
 #: netsync.cc:1645
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
-msgstr "Unerwartetes 'refine'-Kommando auf nicht verfeinerbaren Elementtyp"
+msgstr "Unerwartetes 'refine'-Kommando auf nicht verfeinerbarem Elementtyp"
 
 #: netsync.cc:1742
 #, c-format
@@ -3658,7 +3657,7 @@ msgstr "unbekannte 'bye phase' %d erhalten"
 #: netsync.cc:1757
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
-msgstr "Unerwartetes 'done'-Kommando auf nicht verfeinerbaren Elementtyp"
+msgstr "Unerwartetes 'done'-Kommando auf nicht verfeinerbarem Elementtyp"
 
 #: netsync.cc:1829
 #, c-format
@@ -3927,7 +3926,7 @@ msgstr "gebe eine Kurzversion der normalen Ausgabe aus"
 
 #: options_list.hh:112
 msgid "set location of configuration directory"
-msgstr "setze Verzeichnis des Konfigurationsverzeichnisses"
+msgstr "setze Konfigurationsverzeichnis"
 
 #: options_list.hh:122
 msgid "override date/time for commit"
@@ -4009,7 +4008,7 @@ msgstr ""
 
 #: options_list.hh:262
 msgid "print detailed version number"
-msgstr "zeigt detailierte Versionsinformationen an"
+msgstr "zeigt detaillierte Versionsinformationen an"
 
 #: options_list.hh:269
 msgid "display help message"
@@ -4122,7 +4121,7 @@ msgstr "setzte 'Ticker'-Stil (count|dot|none)"
 #: options_list.hh:494
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
-msgstr "Parameter muß 'none', 'dot' oder 'count' sein"
+msgstr "Parameter muss 'none', 'dot' oder 'count' sein"
 
 #: options_list.hh:498
 msgid "revision(s) to start logging at"
@@ -4659,7 +4658,7 @@ msgstr ""
 #: update.cc:72
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'"
-msgstr "konnte boolschen Zertifikatswert '%s' nicht dekodieren"
+msgstr "konnte booleschen Zertifikatswert '%s' nicht dekodieren"
 
 #: update.cc:161
 #, c-format
@@ -4875,9 +4874,7 @@ msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 #: work.cc:1385
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
-msgstr ""
-"Das Verzeichis %s ist nicht leer - es wird von monotone entfernt, aber nicht "
-"gelöscht"
+msgstr "Das Verzeichnis %s ist nicht leer - es wird von monotone entfernt, aber nicht gelöscht"
 
 #: work.cc:1396
 #, c-format
@@ -5170,7 +5167,7 @@ msgstr "Fehler beim Öffnen der Datei %s: %s"
 #: unix/process.cc:91
 #, c-format
 msgid "error closing file %s: %s"
-msgstr "Fehler beim Schliessen der Datei %s: %s"
+msgstr "Fehler beim Schließen der Datei %s: %s"
 
 #: unix/ssh_agent_platform.cc:49
 #, c-format
