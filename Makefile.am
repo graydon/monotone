@@ -601,6 +601,9 @@ package_revision.txt: package_revision_raw.txt
 	if [ -f $< ]; then \
 	  cp $< $@; \
 	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
+	fi
 	[ -f $@ ] || echo "unknown" > $@
 
 # To avoid a dependency loop here, what we do is:
@@ -632,6 +635,9 @@ package_full_revision_dist.txt: package_full_revision_raw.txt
 	  && (echo ''; \
 	      echo '  Generated from data cached in the distribution;'; \
 	      echo '  further changes may have been made.') >> $@; \
+	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
 	fi
 	[ -f $@ ] || echo "unknown" > $@
 # The raw file may not exist, but the dist file definitely does; we
