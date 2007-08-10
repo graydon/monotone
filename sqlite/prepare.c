@@ -13,7 +13,7 @@
 ** interface, and routines that contribute to loading the database schema
 ** from disk.
 **
-** $Id: prepare.c,v 1.46 2007/04/19 11:09:01 danielk1977 Exp $
+** $Id: prepare.c,v 1.50 2007/05/08 20:37:39 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -261,7 +261,7 @@ static int sqlite3InitOne(sqlite3 *db, int iDb, char **pzErrMsg){
   pDb->pSchema->enc = ENC(db);
 
   size = meta[2];
-  if( size==0 ){ size = MAX_PAGES; }
+  if( size==0 ){ size = SQLITE_DEFAULT_CACHE_SIZE; }
   pDb->pSchema->cache_size = size;
   sqlite3BtreeSetCacheSize(pDb->pBt, pDb->pSchema->cache_size);
 
@@ -490,10 +490,16 @@ int sqlite3Prepare(
   memset(&sParse, 0, sizeof(sParse));
   sParse.db = db;
   if( nBytes>=0 && zSql[nBytes]!=0 ){
-    char *zSqlCopy = sqlite3StrNDup(zSql, nBytes);
-    sqlite3RunParser(&sParse, zSqlCopy, &zErrMsg);
-    sParse.zTail += zSql - zSqlCopy;
-    sqliteFree(zSqlCopy);
+    char *zSqlCopy;
+    if( nBytes>SQLITE_MAX_SQL_LENGTH ){
+      return SQLITE_TOOBIG;
+    }
+    zSqlCopy = sqlite3StrNDup(zSql, nBytes);
+    if( zSqlCopy ){
+      sqlite3RunParser(&sParse, zSqlCopy, &zErrMsg);
+      sqliteFree(zSqlCopy);
+    }
+    sParse.zTail = &zSql[nBytes];
   }else{
     sqlite3RunParser(&sParse, zSql, &zErrMsg);
   }
@@ -643,7 +649,7 @@ static int sqlite3Prepare16(
   if( sqlite3SafetyCheck(db) ){
     return SQLITE_MISUSE;
   }
-  zSql8 = sqlite3utf16to8(zSql, nBytes);
+  zSql8 = sqlite3Utf16to8(zSql, nBytes);
   if( zSql8 ){
     rc = sqlite3Prepare(db, zSql8, -1, saveSqlFlag, ppStmt, &zTail8);
   }
@@ -654,8 +660,8 @@ static int sqlite3Prepare16(
     ** characters between zSql8 and zTail8, and then returning a pointer
     ** the same number of characters into the UTF-16 string.
     */
-    int chars_parsed = sqlite3utf8CharLen(zSql8, zTail8-zSql8);
-    *pzTail = (u8 *)zSql + sqlite3utf16ByteLen(zSql, chars_parsed);
+    int chars_parsed = sqlite3Utf8CharLen(zSql8, zTail8-zSql8);
+    *pzTail = (u8 *)zSql + sqlite3Utf16ByteLen(zSql, chars_parsed);
   }
   sqliteFree(zSql8); 
   return sqlite3ApiExit(db, rc);

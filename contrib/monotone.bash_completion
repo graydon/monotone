@@ -215,7 +215,7 @@ _monotone() {
 		    COMPREPLY=( $(compgen -W 'revision manifest file key' -- $cur) )
 		    ;;
 		cat )
-		    COMPREPLY=( $(compgen -W 'file manifest revision' -- $cur) )
+		    _filedir
 		    ;;
 		push | pull | serve | sync )
 		    COMPREPLY=( $(compgen -A hostname -- $cur) )
@@ -238,9 +238,6 @@ _monotone() {
 				;;
 			    co | checkout | rename | mv | annotate )
 				_filedir
-				;;
-			    cat )
-				_monotone_complete "$prev"
 				;;
 			    attr )
 				_filedir

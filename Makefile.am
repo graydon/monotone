@@ -221,7 +221,7 @@ SQLITE_SOURCES =							\
 	sqlite/vdbemem.c sqlite/where.c					\
 	sqlite/prepare.c sqlite/callback.c				\
 	sqlite/analyze.c sqlite/vdbefifo.c				\
-	sqlite/complete.c						\
+	sqlite/complete.c sqlite/malloc.c sqlite/vdbeblob.c		\
 	sqlite/loadext.c sqlite/vtab.c					\
 									\
 	sqlite/btree.h sqlite/hash.h sqlite/opcodes.h sqlite/os.h	\
@@ -229,7 +229,7 @@ SQLITE_SOURCES =							\
 	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
 	sqlite/sqliteInt.h						\
 	sqlite/vdbe.h sqlite/vdbeInt.h					\
-	sqlite/pager.h
+	sqlite/pager.h sqlite/btreeInt.h sqlite/limits.h
 
 LUA_SOURCES =								\
 	lua/lapi.cc lua/lapi.h						\
@@ -354,14 +354,13 @@ lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
 lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
 mtn_LDFLAGS = 
-mtn_CPPFLAGS = -I$(top_srcdir)/lua -I$(top_srcdir)/sqlite
+mtn_CPPFLAGS = -I$(top_srcdir)/lua
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
 
 unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua \
-		      -I$(top_srcdir)/sqlite
+unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
 unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
 		   libplatform.a $(LIBICONV) $(LIBINTL)
@@ -434,15 +433,17 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
 	$(srcdir)/tester-tests package.m4 package_revision.txt			\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
 	sqlite/keywordhash.h contrib/README contrib/monoprof.sh			\
-	contrib/monotone-notify.pl contrib/monotone-import.pl			\
+	contrib/monotone-notify.pl						\
 	contrib/ciabot_monotone.py contrib/monotone.el				\
 	contrib/monotone-nav.el contrib/monotone.bash_completion		\
 	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
 	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf		\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
+	contrib/Monotone.pm							\
 	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
 	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*) audit-includes
+	$(wildcard $(srcdir)/debian/*) mac/monotone-pkg-logo.gif \
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes 
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -480,7 +481,8 @@ monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
 	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
 		< monotone-xml.pmproj.in > monotone-xml.pmproj
 	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
-		$(srcdir)/COPYING.txt .
+		$(srcdir)/COPYING .
+	mv COPYING COPYING.txt
 	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
 	sudo chown -R root:wheel $(PKG_INST_ROOT)/usr
 	sudo chown -R root:admin $(PKG_INST_ROOT)/Developer
@@ -600,6 +602,9 @@ package_revision.txt: package_revision_raw.txt
 	if [ -f $< ]; then \
 	  cp $< $@; \
 	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
+	fi
 	[ -f $@ ] || echo "unknown" > $@
 
 # To avoid a dependency loop here, what we do is:
@@ -631,6 +636,9 @@ package_full_revision_dist.txt: package_full_revision_raw.txt
 	  && (echo ''; \
 	      echo '  Generated from data cached in the distribution;'; \
 	      echo '  further changes may have been made.') >> $@; \
+	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
 	fi
 	[ -f $@ ] || echo "unknown" > $@
 # The raw file may not exist, but the dist file definitely does; we

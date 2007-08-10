@@ -7,24 +7,37 @@
 #include "platform.hh"
 #include "sanity.hh"
 
-#include <stdlib.h>
-
-#include <exception>
-
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/exception.hpp>
-
-#include <boost/version.hpp>
-
+#include <cstdlib>
+#include <ctime>
+#include <cerrno>
 #include <map>
 #include <utility>
+#include <vector>
+
+/* for mkdir() */
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#ifdef WIN32
+/* For _mktemp() */
+#include <io.h>
+#define mktemp(t) _mktemp(t)
+/* For _mkdir() */
+#include <direct.h>
+#define mkdir(d,m) _mkdir(d)
+#endif
+
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN // we don't need the GUI interfaces
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#endif
 
 // defined in testlib.c, generated from testlib.lua
 extern char const testlib_constant[];
-
-namespace fs = boost::filesystem;
 
 using std::string;
 using std::map;
@@ -32,6 +45,8 @@ using std::memcpy;
 using std::getenv;
 using std::exit;
 using std::make_pair;
+using std::vector;
+using std::time_t;
 
 // Lua uses the c i/o functions, so we need to too.
 struct tester_sanity : public sanity
@@ -49,35 +64,158 @@ tester_sanity real_sanity;
 sanity & global_sanity = real_sanity;
 
 
+void make_accessible(string const &name)
+{
 #ifdef WIN32
-#include <windows.h>
-bool make_accessible(string const &name)
-{
+
   DWORD attrs = GetFileAttributes(name.c_str());
-  if (attrs == INVALID_FILE_ATTRIBUTES)
-    return false;
-  bool ok = SetFileAttributes(name.c_str(), attrs & ~FILE_ATTRIBUTE_READONLY);
-  return ok;
-}
+  E(attrs != INVALID_FILE_ATTRIBUTES,
+    F("GetFileAttributes(%s) failed: %s") % name % os_strerror(GetLastError()));
+
+  E(SetFileAttributes(name.c_str(), attrs & ~FILE_ATTRIBUTE_READONLY),
+    F("SetFileAttributes(%s) failed: %s") % name % os_strerror(GetLastError()));
+
 #else
-#include <unistd.h>
-#include <sys/stat.h>
-bool make_accessible(string const &name)
-{
+
   struct stat st;
-  bool ok = (stat(name.c_str(), &st) == 0);
-  if (!ok)
-    return false;
+  if (stat(name.c_str(), &st) != 0)
+    {
+      const int err = errno;
+      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
+    }
+
   mode_t new_mode = st.st_mode;
   if (S_ISDIR(st.st_mode))
     new_mode |= S_IEXEC;
   new_mode |= S_IREAD | S_IWRITE;
-  return (chmod(name.c_str(), new_mode) == 0);
-}
+
+  if (chmod(name.c_str(), new_mode) != 0)
+    {
+      const int err = errno;
+      E(false, F("chmod(%s) failed: %s") % name % os_strerror(err));
+      
+    }
+
 #endif
+}
 
+time_t get_last_write_time(string const & name)
+{
+#ifdef WIN32
 
-#include <cstdlib>
+  HANDLE h = CreateFile(name.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, 0, NULL);
+  E(h != INVALID_HANDLE_VALUE,
+    F("CreateFile(%s) failed: %s") % name % os_strerror(GetLastError()));
+
+  FILETIME ft;
+  E(GetFileTime(h, NULL, NULL, &ft),
+    F("GetFileTime(%s) failed: %s") % name % os_strerror(GetLastError()));
+
+  CloseHandle(h);
+
+  // A FILETIME is a 64-bit quantity (represented as a pair of DWORDs)
+  // representing the number of 100-nanosecond intervals elapsed since
+  // 12:00 AM, January 1, 1601 UTC.  A time_t is the same as it is for
+  // Unix: seconds since 12:00 AM, January 1, 1970 UTC.  The offset is
+  // taken verbatim from MSDN.
+  LONGLONG ft64 = ((LONGLONG)ft.dwHighDateTime) << 32 + ft.dwLowDateTime;
+  return (time_t)((ft64/10000000) - 11644473600LL);
+
+#else
+
+  struct stat st;
+  if (stat(name.c_str(), &st) != 0)
+    {
+      const int err = errno;
+      E(false, F("stat(%s) failed: %s") % name % os_strerror(err));
+    }
+
+  return st.st_mtime;
+
+#endif
+}
+
+void do_copy_file(string const & from, string const & to)
+{
+#ifdef WIN32
+  // For once something is easier with Windows.
+  E(CopyFile(from.c_str(), to.c_str(), true),
+    F("copy %s to %s: %s") % from % to % os_strerror(GetLastError()));
+
+#else
+  char buf[32768];
+  int ifd, ofd;
+  ifd = open(from.c_str(), O_RDONLY);
+  const int err = errno;
+  E(ifd >= 0, F("open %s: %s") % from % os_strerror(err));
+  struct stat st;
+  st.st_mode = 0666;  // sane default if fstat fails
+  fstat(ifd, &st);
+  ofd = open(to.c_str(), O_WRONLY|O_CREAT|O_EXCL, st.st_mode);
+  if (ofd < 0)
+    {
+      const int err = errno;
+      close(ifd);
+      E(false, F("open %s: %s") % to % os_strerror(err));
+    }
+
+  ssize_t nread, nwrite;
+  int ndead;
+  for (;;)
+    {
+      nread = read(ifd, buf, 32768);
+      if (nread < 0)
+        goto read_error;
+      if (nread == 0)
+        break;
+
+      nwrite = 0;
+      ndead = 0;
+      do
+        {
+          ssize_t nw = write(ofd, buf + nwrite, nread - nwrite);
+          if (nw < 0)
+            goto write_error;
+          if (nw == 0)
+            ndead++;
+          if (ndead == 4)
+            goto spinning;
+          nwrite += nw;
+        }
+      while (nwrite < nread);
+    }
+  close(ifd);
+  close(ofd);
+  return;
+
+ read_error:
+  {
+    int err = errno;
+    close(ifd);
+    close(ofd);
+    E(false, F("read error copying %s to %s: %s")
+      % from % to % os_strerror(err));
+  }
+ write_error:
+  {
+    int err = errno;
+    close(ifd);
+    close(ofd);
+    E(false, F("write error copying %s to %s: %s")
+      % from % to % os_strerror(err));
+  }
+ spinning:
+  {
+    close(ifd);
+    close(ofd);
+    E(false, F("abandoning copy of %s to %s after four zero-length writes")
+      % from % to);
+  }
+
+#endif
+}
+
 
 void set_env(char const * var, char const * val)
 {
@@ -108,67 +246,240 @@ void unset_env(char const * var)
 #endif
 }
 
+string basename(string const & s)
+{
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return s;  // force use of short circuit
+  if (sep == s.size())
+    return "";
+  return s.substr(sep + 1);
+}
+
+string dirname(string const & s)
+{
+  string::size_type sep = s.rfind('/');
+  if (sep == string::npos)
+    return ".";
+  if (sep == s.size() - 1) // dirname() of the root directory is itself
+    return s;
+
+  return s.substr(0, sep);
+}
+
+#if !defined(HAVE_MKDTEMP)
+static char * _impl_mkdtemp(char * templ)
+{
+  char * tmpdir = new char[strlen(templ) + 1];
+  char * result = 0;
+
+  /* There's a possibility that the name returned by mktemp() will already
+     be created by someone else, a typical race condition.  However, since
+     mkdir() will not clobber an already existing file or directory, we
+     can simply loop until we find a suitable name.  There IS a very small
+     risk that we loop endlessly, but that's under extreme conditions, and
+     the problem is likely to really be elsewhere... */
+  do
+    {
+      strcpy(tmpdir, templ);
+      result = mktemp(tmpdir);
+      if (result && mkdir(tmpdir, 0700) != 0)
+        {
+          result = 0;
+        }
+    }
+  while(!result && errno == EEXIST);
+
+  if (result)
+    {
+      strcpy(templ, result);
+      result = templ;
+    }
+
+  delete [] tmpdir;
+  return result;
+}
+
+#define mkdtemp _impl_mkdtemp
+#endif
+
+char * do_mkdtemp(char const * parent)
+{
+  char * tmpdir = new char[strlen(parent) + sizeof "/mtXXXXXX"];
+
+  strcpy(tmpdir, parent);
+  strcat(tmpdir, "/mtXXXXXX");
+
+  char * result = mkdtemp(tmpdir);
+  const int err = errno;
+
+  E(result != 0,
+    F("mkdtemp(%s) failed: %s") % tmpdir % os_strerror(err));
+  I(result == tmpdir);
+  return tmpdir;
+}
+
+#if !defined(HAVE_MKDTEMP)
+#undef mkdtemp
+#endif
+
 map<string, string> orig_env_vars;
 
-
-fs::path source_dir;
-fs::path run_dir;
+string source_dir;
+string run_dir;
 
 static int panic_thrower(lua_State * st)
 {
   throw oops("lua error");
 }
 
-void do_remove_recursive(fs::path const &rem)
+// N.B. some of this code is copied from file_io.cc
+
+namespace
 {
-  if (!fs::exists(rem))
-    return;
-  make_accessible(rem.native_file_string());
-  if (fs::is_directory(rem))
+  struct fill_vec : public dirent_consumer
+  {
+    fill_vec(vector<string> & v) : v(v) { v.clear(); }
+    virtual void consume(char const * s)
+    { v.push_back(s); }
+
+  private:
+    vector<string> & v;
+  };
+
+  struct file_deleter : public dirent_consumer
+  {
+    file_deleter(string const & p) : parent(p) {}
+    virtual void consume(char const * f)
     {
-      for (fs::directory_iterator i(rem); i != fs::directory_iterator(); ++i)
-        do_remove_recursive(*i);
+      string e(parent + "/" + f);
+      make_accessible(e);
+      do_remove(e);
     }
-  fs::remove(rem);
+
+  private:
+    string const & parent;
+  };
+
+  struct file_accessible_maker : public dirent_consumer
+  {
+    file_accessible_maker(string const & p) : parent(p) {}
+    virtual void consume(char const * f)
+    { make_accessible(parent + "/" + f); }
+
+  private:
+    string const & parent;
+  };
+
+  struct file_copier : public dirent_consumer
+  {
+    file_copier(string const & f, string const & t) : from(f), to(t) {}
+    virtual void consume(char const * f)
+    {
+      do_copy_file(from + "/" + f, to + "/" + f);
+    }
+
+  private:
+    string const & from;
+    string const & to;
+  };
 }
 
-void do_make_tree_accessible(fs::path const &f)
+void do_remove_recursive(string const & p)
 {
-  if (!fs::exists(f))
-    return;
-  make_accessible(f.native_file_string());
-  if (fs::is_directory(f))
+  switch (get_path_status(p))
     {
-      for (fs::directory_iterator i(f); i != fs::directory_iterator(); ++i)
-        do_make_tree_accessible(*i);
+    case path::directory:
+      {
+        make_accessible(p);
+        vector<string> subdirs;
+        struct fill_vec get_subdirs(subdirs);
+        struct file_deleter del_files(p);
+
+        do_read_directory(p, del_files, get_subdirs, del_files);
+        for(vector<string>::const_iterator i = subdirs.begin();
+            i != subdirs.end(); i++)
+          do_remove_recursive(p + "/" + *i);
+        do_remove(p);
+      }
+      return;
+
+    case path::file:
+      make_accessible(p);
+      do_remove(p);
+      return;
+
+    case path::nonexistent:
+      return;
     }
 }
 
-void do_copy_recursive(fs::path const &from, fs::path to)
+void do_make_tree_accessible(string const & p)
 {
-  if (!fs::exists(from))
+  switch (get_path_status(p))
     {
-#if BOOST_VERSION < 103400
-      throw fs::filesystem_error("Source for copy does not exist", from, 0);
-#else
-      throw fs::filesystem_path_error("Source for copy does not exist", from, 0);
-#endif
+    case path::directory:
+      {
+        make_accessible(p);
+        vector<string> subdirs;
+        struct fill_vec get_subdirs(subdirs);
+        struct file_accessible_maker access_files(p);
+
+        do_read_directory(p, access_files, get_subdirs, access_files);
+        for(vector<string>::const_iterator i = subdirs.begin();
+            i != subdirs.end(); i++)
+          do_make_tree_accessible(p + "/" + *i);
+      }
+      return;
+
+    case path::file:
+      make_accessible(p);
+      return;
+
+    case path::nonexistent:
+      return;
     }
-  if (fs::exists(to))
+}
+
+void do_copy_recursive(string const & from, string to)
+{
+  path::status fromstat = get_path_status(from);
+  
+  E(fromstat != path::nonexistent,
+    F("Source '%s' for copy does not exist") % from);
+
+  switch (get_path_status(to))
     {
-      if (fs::is_directory(to))
-        to = to / from.leaf();
-      else
-        do_remove_recursive(to);
+    case path::nonexistent:
+      if (fromstat == path::directory)
+        do_mkdir(to);
+      break;
+
+    case path::file:
+      do_remove(to);
+      if (fromstat == path::directory)
+        do_mkdir(to);
+      break;
+
+    case path::directory:
+      to = to + "/" + basename(from);
+      break;
     }
-  if (fs::is_directory(from))
+
+  if (fromstat == path::directory)
     {
-      fs::create_directory(to);
-      for (fs::directory_iterator i(from); i != fs::directory_iterator(); ++i)
-        do_copy_recursive(*i, to / i->leaf());
+      vector<string> subdirs, specials;
+      struct fill_vec get_subdirs(subdirs), get_specials(specials);
+      struct file_copier copy_files(from, to);
+
+      do_read_directory(from, copy_files, get_subdirs, get_specials);
+      E(specials.empty(), F("cannot copy special files in '%s'") % from);
+      for (vector<string>::const_iterator i = subdirs.begin();
+           i != subdirs.end(); i++)
+        do_copy_recursive(from + "/" + *i, to + "/" + *i);
     }
   else
-    fs::copy_file(from, to);
+    do_copy_file(from, to);
 }
 
 LUAEXT(posix_umask, )
@@ -190,18 +501,16 @@ LUAEXT(go_to_test_dir, )
 {
   try
     {
-      char const * testname = luaL_checkstring(L, -1);
-      fs::path tname(testname);
-      fs::path testdir = run_dir / tname.leaf();
-      if (fs::exists(testdir))
-        do_remove_recursive(testdir);
-      fs::create_directory(testdir);
-      change_current_working_dir(testdir.native_file_string());
-      lua_pushstring(L, testdir.native_file_string().c_str());
-      lua_pushstring(L, tname.leaf().c_str());
+      string tname = basename(luaL_checkstring(L, -1));
+      string testdir = run_dir + "/" + tname;
+      do_remove_recursive(testdir);
+      do_mkdir(testdir);
+      change_current_working_dir(testdir);
+      lua_pushstring(L, testdir.c_str());
+      lua_pushstring(L, tname.c_str());
       return 2;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
@@ -212,20 +521,12 @@ LUAEXT(chdir, )
 {
   try
     {
-      fs::path dir(luaL_checkstring(L, -1), fs::native);
-      string from = fs::current_path().native_file_string();
-      if (!dir.is_complete())
-        dir = fs::current_path() / dir;
-      if (!fs::exists(dir) || !fs::is_directory(dir))
-        {
-          lua_pushnil(L);
-          return 1;
-        }
-      change_current_working_dir(dir.native_file_string());
+      string from = get_current_working_dir();
+      change_current_working_dir(luaL_checkstring(L, -1));
       lua_pushstring(L, from.c_str());
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
@@ -236,15 +537,14 @@ LUAEXT(clean_test_dir, )
 {
   try
     {
-      char const * testname = luaL_checkstring(L, -1);
-      fs::path tname(testname, fs::native);
-      fs::path testdir = run_dir / tname.leaf();
-      change_current_working_dir(run_dir.native_file_string());
+      string tname = basename(luaL_checkstring(L, -1));
+      string testdir = run_dir + "/" + tname;
+      change_current_working_dir(run_dir);
       do_remove_recursive(testdir);
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
@@ -255,12 +555,11 @@ LUAEXT(remove_recursive, )
 {
   try
     {
-      fs::path dir(luaL_checkstring(L, -1));
-      do_remove_recursive(dir);
+      do_remove_recursive(luaL_checkstring(L, -1));
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushboolean(L, false);
       lua_pushstring(L, e.what());
@@ -272,12 +571,11 @@ LUAEXT(make_tree_accessible, )
 {
   try
     {
-      fs::path dir(luaL_checkstring(L, -1));
-      do_make_tree_accessible(dir);
+      do_make_tree_accessible(luaL_checkstring(L, -1));
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushboolean(L, false);
       lua_pushstring(L, e.what());
@@ -289,13 +587,13 @@ LUAEXT(copy_recursive, )
 {
   try
     {
-      fs::path from(luaL_checkstring(L, -2));
-      fs::path to(luaL_checkstring(L, -1));
+      string from(luaL_checkstring(L, -2));
+      string to(luaL_checkstring(L, -1));
       do_copy_recursive(from, to);
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushboolean(L, false);
       lua_pushstring(L, e.what());
@@ -307,11 +605,11 @@ LUAEXT(leave_test_dir, )
 {
   try
     {
-      change_current_working_dir(run_dir.native_file_string());
+      change_current_working_dir(run_dir);
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
@@ -323,32 +621,57 @@ LUAEXT(mkdir, )
   try
     {
       char const * dirname = luaL_checkstring(L, -1);
-      fs::path dir(dirname, fs::native);
-      fs::create_directory(dir);
+      do_mkdir(dirname);
       lua_pushboolean(L, true);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
     }
 }
 
+LUAEXT(make_temp_dir, )
+{
+  try
+    {
+      char const * parent;
+      parent = getenv("TMPDIR");
+      if (parent == 0)
+        parent = getenv("TEMP");
+      if (parent == 0)
+        parent = getenv("TMP");
+      if (parent == 0)
+        parent = "/tmp";
+
+      char * tmpdir = do_mkdtemp(parent);
+      lua_pushstring(L, tmpdir);
+      delete [] tmpdir;
+      return 1;
+    }
+  catch(informative_failure & e)
+    {
+      lua_pushnil(L);
+      return 1;
+    }
+}
+
+
 LUAEXT(mtime, )
 {
   try
     {
       char const * file = luaL_checkstring(L, -1);
-      fs::path fn(file);
-      std::time_t t = fs::last_write_time(file);
-      if (t == std::time_t(-1))
+
+      time_t t = get_last_write_time(file);
+      if (t == time_t(-1))
         lua_pushnil(L);
       else
         lua_pushnumber(L, t);
       return 1;
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
       return 1;
@@ -360,10 +683,14 @@ LUAEXT(exists, )
   try
     {
       char const * name = luaL_checkstring(L, -1);
-      fs::path p(name, fs::native);
-      lua_pushboolean(L, fs::exists(p));
+      switch (get_path_status(name))
+        {
+        case path::nonexistent:  lua_pushboolean(L, false); break;
+        case path::file:
+        case path::directory:    lua_pushboolean(L, true); break;
+        }
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
     }
@@ -375,41 +702,67 @@ LUAEXT(isdir, )
   try
     {
       char const * name = luaL_checkstring(L, -1);
-      fs::path p;
-      p = fs::path(name, fs::native);
-      lua_pushboolean(L, fs::exists(p) && fs::is_directory(p));
+      switch (get_path_status(name))
+        {
+        case path::nonexistent:
+        case path::file:         lua_pushboolean(L, false); break;
+        case path::directory:    lua_pushboolean(L, true); break;
+        }
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure & e)
     {
       lua_pushnil(L);
     }
   return 1;
 }
 
+namespace
+{
+  struct build_table : public dirent_consumer
+  {
+    build_table(lua_State * st) : st(st), n(1)
+    {
+      lua_newtable(st);
+    }
+    virtual void consume(const char *s)
+    {
+      lua_pushstring(st, s);
+      lua_rawseti(st, -2, n);
+      n++;
+    }
+  private:
+    lua_State * st;
+    unsigned int n;
+  };
+}
+
 LUAEXT(read_directory, )
 {
+  int top = lua_gettop(L);
   try
     {
-      fs::path dir(luaL_checkstring(L, -1), fs::native);
-      unsigned int n = 1;
+      string path(luaL_checkstring(L, -1));
+      build_table tbl(L);
 
-      lua_newtable(L);
-      for (fs::directory_iterator i(dir); i != fs::directory_iterator(); ++i, ++n)
-        {
-          lua_pushstring(L, i->leaf().c_str());
-          lua_rawseti(L, -2, n);
-        }
+      do_read_directory(path, tbl, tbl, tbl);
     }
-  catch(fs::filesystem_error & e)
+  catch(informative_failure &)
     {
+      // discard the table and any pending path element
+      lua_settop(L, top);
       lua_pushnil(L);
+    }
+  catch (...)
+    {
+      lua_settop(L, top);
+      throw;
     }
   return 1;
 }
 
 LUAEXT(get_source_dir, )
 {
-  lua_pushstring(L, source_dir.native_file_string().c_str());
+  lua_pushstring(L, source_dir.c_str());
   return 1;
 }
 
@@ -501,23 +854,17 @@ int main(int argc, char **argv)
       needhelp = true;
   if (argc > 1 && !needhelp)
     {
-      fs::initial_path();
-      fs::path::default_name_check(fs::native);
-      try
-        {
-          std::string name = argv[1];
-          fs::path file = fs::complete(fs::path(name, fs::native));
-          testfile = file.native_file_string();
-          source_dir = file.branch_path();
-        }
-      catch(fs::filesystem_error & e)
-        {
-          E(false, F("Error during initialization: %s") % e.what());
-        }
-      firstdir = fs::initial_path().native_file_string();
-      run_dir = fs::initial_path() / "tester_dir";
-      fs::create_directory(run_dir);
-      change_current_working_dir(run_dir.native_file_string());
+      firstdir = get_current_working_dir();
+      run_dir = firstdir + "/tester_dir";
+      do_remove_recursive(run_dir);
+      do_mkdir(run_dir);
+
+      testfile = argv[1];
+      change_current_working_dir(dirname(testfile));
+      source_dir = get_current_working_dir();
+      testfile = source_dir + "/" + basename(testfile);
+
+      change_current_working_dir(run_dir);
     }
   else
     {

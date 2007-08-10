@@ -13,7 +13,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
-#include "platform.hh"
+#include "platform-wrapped.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.

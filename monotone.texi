@@ -4393,7 +4393,11 @@ explicit pathname changes you wish to commit at some future time, such
 as addition, removal, or renaming of files.  This command also moves any
 attributes on @var{src} to @var{dst}; see @ref{File Attributes} for more
 details, and, unless the @option{--bookkeep-only} option is supplied, it
-will rename the files immediately in the filesystem.
+will rename the files immediately in the filesystem.  In the case where
+@var{dst} must be a directory (multiple @var{src} items), exists
+physically in the filesystem as a directory or is specified as a
+directory by convention (a trailing /), it will be automatically added
+to the workspace if it is not already versioned.
 
 @item mtn commit
 @item mtn ci

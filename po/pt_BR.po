@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Monotone 0.35\n"
+"Project-Id-Version: Monotone 0.36\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-06-23 19:30-0300\n"
-"PO-Revision-Date: 2007-06-23 20:03-0300\n"
+"PO-Revision-Date: 2007-07-17 11:14-0300\n"
 "Last-Translator: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "Language-Team: Alex Sandro Queiroz e Silva <alex@ventonegro.org>\n"
 "MIME-Version: 1.0\n"
@@ -594,9 +594,8 @@ msgid ""
 msgstr ""
 
 #: cmd_db.cc:259
-#, fuzzy
 msgid "Unsets a database variable"
-msgstr "configura nome do banco de dados"
+msgstr "Remove uma variável do banco de dados"
 
 #: cmd_db.cc:260
 msgid ""
@@ -614,9 +613,8 @@ msgid "(revision|file|key) PARTIAL-ID"
 msgstr "(revision|file|key) ID-PARCIAL"
 
 #: cmd_db.cc:279
-#, fuzzy
 msgid "Completes a partial identifier"
-msgstr "id parcial completo"
+msgstr "Completa um identificador parcial"
 
 #: cmd_db.cc:289
 #, c-format
@@ -725,13 +723,12 @@ msgid "Prints history in reverse order"
 msgstr ""
 
 #: cmd_diff_log.cc:608
-#, fuzzy
 msgid ""
 "This command prints history in reverse order, filtering it by FILE if "
 "given.  If one or more revisions are given, uses them as a starting point."
 msgstr ""
-"imprime histórico em ordem inversa (filtrado por 'ARQUIVO'). Se uma ou mais\n"
-"versões forem dadas, usa-as como ponto de partida."
+"Este comando imprime o histórico em ordem inversa, filtrado por ARQUIVO,\n"
+"se dado. Se uma ou mais versões forem dadas, usa-as como ponto de partida."
 
 #: cmd_diff_log.cc:624
 #, c-format
@@ -744,18 +741,16 @@ msgid "(Revision: %s)"
 msgstr "(Versão: %s)"
 
 #: cmd_files.cc:30
-#, fuzzy
 msgid "Loads a file's contents into the database"
-msgstr "carrega o conteúdo do arquivo no banco de dados"
+msgstr "Carrega o conteúdo de um arquivo no banco de dados"
 
 #: cmd_files.cc:47
 msgid "<parent> <left> <right>"
 msgstr "<pai> <esquerda> <direita>"
 
 #: cmd_files.cc:48
-#, fuzzy
 msgid "Merges 3 files and outputs the result"
-msgstr "combina 3 arquivos e retorna o resultado"
+msgstr "Combina 3 arquivos e retorna o resultado"
 
 #: cmd_files.cc:63
 #, c-format
@@ -782,9 +777,8 @@ msgid "SRCNAME DESTNAME SRCID DESTID"
 msgstr "NOME_ORIGEM NOME_DESTINO ID_ORIGEM ID_DESTINO"
 
 #: cmd_files.cc:86
-#, fuzzy
 msgid "Differences 2 files and outputs the result"
-msgstr "exibe as diferenças entre dois arquivos"
+msgstr "Exibe as diferenças entre dois arquivos"
 
 #: cmd_files.cc:104
 #, c-format
@@ -801,16 +795,14 @@ msgid "PATH"
 msgstr "CAMINHO"
 
 #: cmd_files.cc:123
-#, fuzzy
 msgid "Prints an annotated copy of a file"
-msgstr "imprime cópia anotada do arquivo da VERSÃO"
+msgstr "Exibe uma cópia anotada do arquivo"
 
 #: cmd_files.cc:124
-#, fuzzy
 msgid ""
 "Calculates and prints an annotated copy of the given file from the specified "
 "REVISION."
-msgstr "imprime cópia anotada do arquivo da VERSÃO"
+msgstr "Calcula e exibe uma cópia anotada do arquivo dado da VERSÃO especificada"
 
 #: cmd_files.cc:159
 #, c-format
@@ -841,9 +833,8 @@ msgid "[PATH]"
 msgstr "[CAMINHO]"
 
 #: cmd_files.cc:193
-#, fuzzy
 msgid "Calculates the identity of a file or stdin"
-msgstr "calcula identidade do CAMINHO ou stdin"
+msgstr "Calcula a identidade de um arquivo ou da entrada padrão"
 
 #: cmd_files.cc:194
 msgid ""
@@ -870,9 +861,8 @@ msgid "FILENAME"
 msgstr "ARQUIVO"
 
 #: cmd_files.cc:290
-#, fuzzy
 msgid "Prints a file from the database"
-msgstr "escreve arquivo do banco de dados em stdout"
+msgstr "Exibe um arquivo do banco de dados"
 
 #: cmd_files.cc:291
 msgid ""
@@ -903,14 +893,12 @@ msgid "KEYID"
 msgstr "CHAVEID"
 
 #: cmd_key_cert.cc:33
-#, fuzzy
 msgid "Generates an RSA key-pair"
-msgstr "gera um par de chaves RSA"
+msgstr "Gera um par de chaves RSA"
 
 #: cmd_key_cert.cc:61
-#, fuzzy
 msgid "Drops a public and/or private key"
-msgstr "remove chaves pública e privada"
+msgstr "Remove chaves pública e/ou privada"
 
 #: cmd_key_cert.cc:77
 #, c-format
@@ -938,9 +926,8 @@ msgstr ""
 "foi especificado"
 
 #: cmd_key_cert.cc:103
-#, fuzzy
 msgid "Changes the passphrase of a private RSA key"
-msgstr "muda frase secreta de uma chave RSA privada"
+msgstr "Muda a frase secreta de uma chave RSA privada"
 
 #: cmd_key_cert.cc:114
 #, c-format
@@ -957,9 +944,8 @@ msgid "[FILENAME]"
 msgstr "[ARQUIVO]"
 
 #: cmd_key_cert.cc:126
-#, fuzzy
 msgid "Exports a private key for use with ssh-agent"
-msgstr "exporta sua chave do monotone para ser usada com ssh-agent"
+msgstr "Exporta uma chave privada para ser usada com ssh-agent"
 
 #: cmd_key_cert.cc:136 cmd_key_cert.cc:176
 #, c-format
@@ -967,29 +953,24 @@ msgid "the key you specified cannot be found"
 msgstr "a chave especificada não pode ser salva"
 
 #: cmd_key_cert.cc:166
-#, fuzzy
 msgid "Adds a private key to ssh-agent"
-msgstr "Adiciona a sua chave do monotone ao ssh-agent"
+msgstr "Adiciona uma chave privada ao ssh-agent"
 
 #: cmd_key_cert.cc:183
 msgid "REVISION CERTNAME [CERTVAL]"
 msgstr "VERSÃO NOME-CERTIFICADO [VALOR-CERTIFICADO]"
 
 #: cmd_key_cert.cc:184
-#, fuzzy
 msgid "Creates a certificate for a revision"
-msgstr "cria um certificado para uma versão"
+msgstr "Cria um certificado para uma versão"
 
 #: cmd_key_cert.cc:217
 msgid "REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"
 msgstr "VERSÃO NOME VALOR ASSINANTE1 [ASSINANTE2 [...]]"
 
 #: cmd_key_cert.cc:218
-#, fuzzy
 msgid "Tests whether a hypothetical certificate would be trusted"
-msgstr ""
-"verifica se um certificado hipotético teria confiança\n"
-"baseado nos parâmetros atuais"
+msgstr "Verifica se um certificado hipotético seria confiável"
 
 #: cmd_key_cert.cc:219
 msgid "The current settings are used to run the test."
@@ -1023,27 +1004,24 @@ msgid "REVISION TAGNAME"
 msgstr "VERSÃO ETIQUETA"
 
 #: cmd_key_cert.cc:265
-#, fuzzy
 msgid "Puts a symbolic tag certificate on a revision"
-msgstr "põe um certificado de etiqueta simbólica em uma versão"
+msgstr "Põe um certificado de etiqueta simbólica em uma versão"
 
 #: cmd_key_cert.cc:279
 msgid "ID (pass|fail|true|false|yes|no|1|0)"
 msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 
 #: cmd_key_cert.cc:280
-#, fuzzy
 msgid "Notes the results of running a test on a revision"
-msgstr "anota os resultados de executar um teste sobre uma versão"
+msgstr "Anota os resultados de executar um teste sobre uma versão"
 
 #: cmd_key_cert.cc:293 cmd_ws_commit.cc:277
 msgid "REVISION"
 msgstr "VERSÂO"
 
 #: cmd_key_cert.cc:294
-#, fuzzy
 msgid "Approves a particular revision"
-msgstr "aprova a versão especificada"
+msgstr "Aprova uma versão em particular"
 
 #: cmd_key_cert.cc:304
 #, c-format
@@ -1055,9 +1033,8 @@ msgid "REVISION [COMMENT]"
 msgstr "VERSÃO [COMENTÁRIO]"
 
 #: cmd_key_cert.cc:309
-#, fuzzy
 msgid "Comments on a particular revision"
-msgstr "comenta a versão especificada"
+msgstr "Comenta sobre versão uma particular"
 
 #: cmd_key_cert.cc:323
 #, c-format
@@ -1070,20 +1047,19 @@ msgid "empty comment"
 msgstr "comentário vazio"
 
 #: cmd_list.cc:43
-#, fuzzy
 msgid "Shows database objects"
-msgstr "nenhum banco de dados especificado"
+msgstr "Exibe objetos do banco de dados"
 
 #: cmd_list.cc:44
-#, fuzzy
 msgid ""
 "This command is used to query information from the database.  It shows "
 "database objects, or the current workspace manifest, or known, unknown, "
 "intentionally ignored, missing, or changed-state files."
 msgstr ""
+"Este comando é usando para extrair informações do banco de dados. Ele\n"
 "exibe objetos do banco de dados, ou a listagem da área de trabalho atual,\n"
-"ou arquivos conhecidos, desconhecidos, intencionalmente ignorados,\n"
-"faltando ou que mudaram de estado"
+"ou arquivos conhecidos, desconhecidos, intencionalmente ignorados, com o\n"
+"estado modificado."
 
 #: cmd_list.cc:50
 msgid "Lists certificates attached to an identifier"
@@ -1152,9 +1128,8 @@ msgid "no epoch for branch %s"
 msgstr "nenhuma era para ramo %s"
 
 #: cmd_list.cc:305
-#, fuzzy
 msgid "Lists all tags in the database"
-msgstr "versão %s já está no banco de dados"
+msgstr "Lista todas as etiquetas no banco de dados."
 
 #: cmd_list.cc:321
 msgid "Lists variables in the whole database or a domain"
@@ -1169,18 +1144,16 @@ msgid "Lists workspace files that do not belong to the current branch"
 msgstr ""
 
 #: cmd_list.cc:429
-#, fuzzy
 msgid "Lists files that belong to the branch but are not in the workspace"
-msgstr "arquivo '%s' é desconhecido para a área de trabalho atual"
+msgstr "Lista arquivos que pertecem ao ramo mas que não estão na área de trabalho."
 
 #: cmd_list.cc:453
 msgid "Lists files that have changed with respect to the current revision"
 msgstr ""
 
 #: cmd_list.cc:561
-#, fuzzy
 msgid "Lists all keys in the keystore"
-msgstr "chave '%s' não existe na coleção"
+msgstr "Lista todas as chaves no repositório de chaves"
 
 #: cmd_list.cc:656
 msgid "Prints all certificates attached to a revision"
@@ -1212,9 +1185,8 @@ msgstr ""
 "a próxima gravação usará ramo %s"
 
 #: cmd_merging.cc:131
-#, fuzzy
 msgid "Updates the workspace"
-msgstr "adiciona arquivos à área de trabalho"
+msgstr "Atualiza a área de trabalho"
 
 #: cmd_merging.cc:132
 #, fuzzy
@@ -1307,9 +1279,8 @@ msgid "[merged] %s"
 msgstr "[combinado] %s"
 
 #: cmd_merging.cc:334
-#, fuzzy
 msgid "Merges unmerged heads of a branch"
-msgstr "combina diferentes frentes do ramo"
+msgstr "Combina diferentes frentes do ramo"
 
 #: cmd_merging.cc:345 cmd_merging.cc:946
 #, c-format
@@ -1354,18 +1325,16 @@ msgid "SOURCE-BRANCH DEST-BRANCH"
 msgstr "RAMO-FONTE RAMO-DESTINO"
 
 #: cmd_merging.cc:436
-#, fuzzy
 msgid "Merges from one branch to another asymmetrically"
-msgstr "combina dois ramos de forma assimétrica"
+msgstr "Combina dois ramos de forma assimétrica"
 
 #: cmd_merging.cc:448
 msgid "SOURCE-BRANCH DEST-BRANCH DIR"
 msgstr "RAMO-FONTE RAMO-DESTINO DIRETÓRIO"
 
 #: cmd_merging.cc:449
-#, fuzzy
 msgid "Merges one branch into a subdirectory in another branch"
-msgstr "combina um ramo com um sibdiretório de outro ramo"
+msgstr "Combina um ramo com um sibdiretório de outro ramo"
 
 #: cmd_merging.cc:489 cmd_merging.cc:492
 #, c-format
@@ -1412,9 +1381,8 @@ msgid "OTHER-REVISION"
 msgstr "OUTRA-VERSÂO"
 
 #: cmd_merging.cc:607
-#, fuzzy
 msgid "Merges a revision into the current workspace's base revision"
-msgstr "arquivo '%s' é desconhecido para a área de trabalho atual"
+msgstr "Combina uma versão com a versão-base da área de trabalho atual"
 
 #: cmd_merging.cc:608
 #, fuzzy
@@ -1457,10 +1425,8 @@ msgid "LEFT-REVISION RIGHT-REVISION DEST-BRANCH"
 msgstr "VERSÃO-ESQUERDA VERSÃO-DIREITA RAMO-DESTINO"
 
 #: cmd_merging.cc:702
-#, fuzzy
 msgid "Merges two explicitly given revisions"
-msgstr ""
-"combina duas versões dadas explicitamente colocando o resuldado no ramo dado"
+msgstr "Combina duas versões dadas explicitamente"
 
 #: cmd_merging.cc:703
 msgid ""
@@ -1482,11 +1448,8 @@ msgid "REV REV"
 msgstr "VERSÂO VERSÂO"
 
 #: cmd_merging.cc:728
-#, fuzzy
 msgid "Shows what conflicts need resolution between two revisions"
-msgstr ""
-"Mostra que conflitos precisariam ser resolvidos para combinar as\n"
-"duas versões."
+msgstr "Mostra que conflitos precisam ser resolvidos entre as duas versões"
 
 #: cmd_merging.cc:729
 msgid ""
@@ -1594,9 +1557,8 @@ msgid "applied changes to workspace"
 msgstr "mudanças aplicadas à área de trabalho"
 
 #: cmd_merging.cc:937
-#, fuzzy
 msgid "Shows unmerged head revisions of a branch"
-msgstr "mostra frentes não combinadas do ramo"
+msgstr "Mostra as frentes não combinadas do ramo"
 
 #: cmd_merging.cc:953
 #, c-format
@@ -1609,11 +1571,8 @@ msgid "branch '%s' is currently unmerged:"
 msgstr "ramo '%s' não está combinado atualmente:"
 
 #: cmd_merging.cc:963
-#, fuzzy
 msgid "Dumps the roster associated with a given identifier"
-msgstr ""
-"exibe conteúdo do roster associado com ID-DA-VERSÃO, ou com a área de "
-"trabalho se nenhum ID-DA-VERSÃO for dado"
+msgstr "Exibe o conteúdo do inventório associado com o identificador dado"
 
 #: cmd_merging.cc:964
 msgid "If no REVID is given, the workspace is used."
@@ -1654,9 +1613,8 @@ msgid "[ADDRESS[:PORTNUMBER] [PATTERN ...]]"
 msgstr "[ENDEREÇO[:PORTA] [PADRÃO ...]]"
 
 #: cmd_netsync.cc:126
-#, fuzzy
 msgid "Pushes branches to a netsync server"
-msgstr "envia ramos que combinam com PADRÃO para servidor netsync em ENDEREÇO"
+msgstr "Envia ramos para um servidor netsync"
 
 #: cmd_netsync.cc:127
 #, fuzzy
@@ -1666,9 +1624,8 @@ msgid ""
 msgstr "envia ramos que combinam com PADRÃO para servidor netsync em ENDEREÇO"
 
 #: cmd_netsync.cc:144
-#, fuzzy
 msgid "Pulls branches from a netsync server"
-msgstr "recebe ramos que combinam com PADRÃO do servidor netsync em ENDEREÇO"
+msgstr "Recebe ramos de um servidor netsync"
 
 #: cmd_netsync.cc:145
 #, fuzzy
@@ -1685,10 +1642,8 @@ msgstr ""
 "autenticação"
 
 #: cmd_netsync.cc:163
-#, fuzzy
 msgid "Synchronizes branches with a netsync server"
-msgstr ""
-"sincroniza ramos que combinam com PADRÃO com o servidor netsync em ENDEREÇO"
+msgstr "Sincroniza ramos com um servidor netsync"
 
 #: cmd_netsync.cc:164
 #, fuzzy
@@ -1765,9 +1720,8 @@ msgid "failed to create pid file '%s'"
 msgstr "erro criando arquivo de PID '%s'"
 
 #: cmd_netsync.cc:395
-#, fuzzy
 msgid "Serves the database to connecting clients"
-msgstr "serve o banco de dados para clientes conectados"
+msgstr "Serve o banco de dados para clientes conectados"
 
 #: cmd_netsync.cc:412
 #, c-format
@@ -1788,9 +1742,8 @@ msgid "RCSFILE..."
 msgstr "ARQUIVO-RCS"
 
 #: cmd_othervcs.cc:17
-#, fuzzy
 msgid "Parses versions in RCS files"
-msgstr "lendo arquivo RCS %s"
+msgstr "Lê versões de arquivos RCS"
 
 #: cmd_othervcs.cc:18
 #, fuzzy

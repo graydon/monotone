@@ -28,14 +28,14 @@ while(<INPUT>) {
 while(<INPUT>) {
     chomp;
     last if (/^\s*\@section\s+Additional\s+Lua\s+Functions\s*$/);
-    if (/^\s*\@item\s+(\w+)\s*\((\@var\{\w+\}(,\s*\@var\{\w+\})*)?\)\s*$/) {
+    if (/^\s*\@item\s+(\w+)\s*\((\@var\{(\w+|\.\.\.)\}(,\s*\@var\{(\w+|\.\.\.)\})*)?\)\s*$/) {
 	my $name = $1;
 	my $arglist = "";
 	if (defined $2) {
 	    $arglist = join(", ",
 			    map {
 				my $x = $_;
-				$x =~ s/^\s*\@var\{(\w+)\}\s*$/$1/;
+				$x =~ s/^\s*\@var\{(\w+|\.\.\.)\}\s*$/$1/;
 				$x;
 			    } split(/,\s*/, $2));
 	}

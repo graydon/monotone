@@ -1,13 +1,61 @@
-monotone (0.35-0.2) unstable; urgency=low
+monotone (0.36-1) unstable; urgency=low
 
-  * Official NMU with permission of maintainer.
-  * New upstream release (Closes: #418213, #427845, #429832).
-  * Backport post-0.35 upstream fixes for boost 1.34 (Closes: #425907).
-  * Rebuild against new boost (Closes: #427687).
+  [ Richard Levitte ]
+  * New upstream release.
+
+  [ Zack Weinberg ]
+  * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
+  * Run testsuite during build.
+  * Drop libboost-filesystem-dev build-dependency.
+  * monotone-server.postinst, monotone-server.postrm: Do not assume
+    full pathnames of ucf or adduser.  Use ucfr as well as ucf.
+    At purge time:
+     - do not assume ucf, adduser, or debconf are available (closes: #434604).
+     - if not asked to manage the database, do not delete it.
+     - if deleting the database and there is a hot journal, delete that too.
+     - delete editor backups of ucf-managed conffiles.
+     - expunge the auto-generated key's passphrase from 
+       /etc/monotone/passphrases and if that leaves the file empty,
+       delete it.
+     - do not delete the monotone user or group if leaving /var/lib/monotone
+       on the filesystem.
+
+ -- Richard Levitte <richard@levitte.org>  Fri, 03 Aug 2007 08:08:36 +0200
+
+monotone (0.35-2) unstable; urgency=low
+
+  * Collapse Build-Depends-Indep into Build-Depends to work around
+    a buildd bug.  (Closes: #432657)
+  * Correct Ludovic Brenta's address in Uploaders.
+  * Enable parallel make on multiprocessors.
+
+  [ Ludovic Brenta ]
+  * monotone-server.postrm: do not blindly erase /var/lib/monotone on
+    purge; instead, delete only the default database (created in the
+    postinst), and only delete the directory if empty.
+
+ -- Zack Weinberg <zackw@panix.com>  Fri, 13 Jul 2007 08:39:58 -0700
+
+monotone (0.35-1) unstable; urgency=low
+
+  [ Zack Weinberg ]
+  * New upstream release. (Closes: #418213, #427845, #429832)
+  * Backport post-0.35 upstream fixes for boost 1.34. (Closes: #425907)
+  * Rebuild against new boost. (Closes: #427687)
   * Drop tetex-bin as build-dep alternative.  Add build-deps on all of
-    texinfo's suggested packages, to ensure docs build (Closes: #422936).
+    texinfo's suggested packages, to ensure docs build. (Closes: #422936)
+  * New Dutch template translation (Closes: #415496).
+  * Add build-dep on po-debconf to ensure correct construction of
+    monotone-server's templates file.
+  * Add a somewhat out-of-date, but better than nothing, manpage.
+  * Simplify the rules file a bit.
 
- -- Zack Weinberg <zackw@panix.com>  Tue, 03 Jul 2007 11:19:49 -0700
+  [ Richard Levitte ]
+  * Package adopted by a team, presently Richard Levitte and Zack Weinberg,
+    with sponsorship by Ludovic Brenta.  Thanks to Shaun for his work
+    to date.  (Closes: #431797)
+
+ -- Zack Weinberg <zackw@panix.com>  Tue, 10 Jul 2007 08:23:00 -0700
 
 monotone (0.35-0.1) unstable; urgency=low
 
@@ -26,6 +74,19 @@ monotone (0.33-90.1) unstable; urgency=low
   * schema upgrade => monotone-server.postinst upgrade
 
  -- Richard Levitte <richard@levitte.org>  Sun, 25 Mar 2007 22:16:54 +0200
+
+monotone (0.33-3) unstable; urgency=low
+
+  * Include the Japanese and Portuguese translations from 0.31-7
+    and 0.31-8, which were accidentally omitted in 0.33-2.
+
+ -- Shaun Jackman <sjackman@debian.org>  Sat,  7 Jul 2007 11:09:04 -0600
+
+monotone (0.33-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Shaun Jackman <sjackman@debian.org>  Thu,  5 Jul 2007 16:58:22 -0600
 
 monotone (0.33-1) experimental; urgency=low
 
@@ -168,7 +229,7 @@ monotone (0.28-1) unstable; urgency=low
   * New maintainer.
   * Add watch file.
   * Update policy to version 3.7.2.1. No changes necessary.
-  * Update the FSF address. 
+  * Update the FSF address.
 
  -- Shaun Jackman <sjackman@debian.org>  Mon, 24 Jul 2006 10:44:56 -0600
 
