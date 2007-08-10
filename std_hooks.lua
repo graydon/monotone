@@ -27,6 +27,15 @@ function execute(path, ...)
    return ret
 end
 
+function execute_redirected(stdin, stdout, stderr, path, ...)
+   local pid
+   local ret = -1
+   io.flush();
+   pid = spawn_redirected(stdin, stdout, stderr, path, unpack(arg))
+   if (pid ~= -1) then ret, pid = wait(pid) end
+   return ret
+end
+
 -- Wrapper around execute to let user confirm in the case where a subprocess
 -- returns immediately
 -- This is needed to work around some brokenness with some merge tools
@@ -356,6 +365,13 @@ end
 --             NOTE: wanted is only used when the user has NOT defined the
 --             `merger' variable or the MTN_MERGE environment variable.
 mergers = {}
+
+-- This merger is designed to fail if there are any conflicts without trying to resolve them
+mergers.fail = {
+   cmd = function (tbl) return false end,
+   available = function () return true end,
+   wanted = function () return true end
+}
 
 mergers.meld = {
    cmd = function (tbl)
