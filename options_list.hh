@@ -282,7 +282,7 @@ OPTION(include, include, true, "include",
 }
 #endif
 
-GOPT(ignore_suspend_certs, "ignore_suspend_certs", bool, false,
+GOPT(ignore_suspend_certs, "ignore-suspend-certs", bool, false,
      gettext_noop("Do not ignore revisions marked as suspended"))
 #ifdef option_bodies
 {
