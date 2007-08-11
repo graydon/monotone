@@ -52,7 +52,7 @@ store_roster_merge_result(roster_t const & left_roster,
                           revision_id const & left_rid,
                           revision_id const & right_rid,
                           revision_id & merged_rid,
-                          app_state & app);
+                          database & db);
 
 // Local Variables:
 // mode: C++
