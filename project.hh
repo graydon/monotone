@@ -35,7 +35,8 @@ public:
 
   void get_branch_list(std::set<branch_name> & names);
   void get_branch_list(globish const & glob, std::set<branch_name> & names);
-  void get_branch_heads(branch_name const & name, std::set<revision_id> & heads);
+  void get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
+                        std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
   void put_tag(revision_id const & id, std::string const & name);
