@@ -457,17 +457,21 @@ accumulate_strict_ancestors(revision_id const & start,
 void
 erase_ancestors_and_failures(std::set<revision_id> & candidates,
                              is_failure & p,
-                             app_state & app)
+                             app_state & app,
+                             multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
   // Load up the ancestry graph
   multimap<revision_id, revision_id> inverse_graph;
   
+  if (inverse_graph_cache_ptr == NULL)
+    inverse_graph_cache_ptr = &inverse_graph;
+  if (inverse_graph_cache_ptr->empty())
   {
     multimap<revision_id, revision_id> graph;
     app.db.get_revision_ancestry(graph);
     for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
          i != graph.end(); ++i)
-      inverse_graph.insert(make_pair(i->second, i->first));
+      inverse_graph_cache_ptr->insert(make_pair(i->second, i->first));
   }
 
   // Keep a set of all ancestors that we've traversed -- to avoid
@@ -494,7 +498,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
         }
       // okay, it is good enough that all its ancestors should be
       // eliminated
-      accumulate_strict_ancestors(rid, all_ancestors, inverse_graph);
+      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr);
     }
 
   // now go and eliminate the ancestors
