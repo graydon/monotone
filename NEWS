@@ -8,6 +8,14 @@
           returns the head revisions of the workspace's branch if called
           over mtn automate stdio
 
+        Internal
+
+        - Update SQLite to 3.4.1.
+
+        - Update Lua to 5.1.2 plus latest bug fixes.
+
+
+
 Fri Aug  3 06:08:36 UTC 2007
 
         0.36 release.
