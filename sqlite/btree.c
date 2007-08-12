@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.388 2007/05/24 09:20:16 danielk1977 Exp $
+** $Id: btree.c,v 1.392 2007/06/26 01:04:49 drh Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** See the header comment on "btreeInt.h" for additional information.
@@ -422,9 +422,8 @@ static int ptrmapGet(BtShared *pBt, Pgno key, u8 *pEType, Pgno *pPgno){
 #define findCell(pPage, iCell) \
   ((pPage)->aData + get2byte(&(pPage)->aData[(pPage)->cellOffset+2*(iCell)]))
 u8 *sqlite3BtreeFindCell(MemPage *pPage, int iCell){
-  u8 *data = pPage->aData;
   assert( iCell>=0 );
-  assert( iCell<get2byte(&data[pPage->hdrOffset+3]) );
+  assert( iCell<get2byte(&pPage->aData[pPage->hdrOffset+3]) );
   return findCell(pPage, iCell);
 }
 
@@ -1139,6 +1138,7 @@ int sqlite3BtreeOpen(
     pBt->pageSizeFixed = 1;
 #ifndef SQLITE_OMIT_AUTOVACUUM
     pBt->autoVacuum = (get4byte(&zDbHeader[36 + 4*4])?1:0);
+    pBt->incrVacuum = (get4byte(&zDbHeader[36 + 7*4])?1:0);
 #endif
   }
   pBt->usableSize = pBt->pageSize - nReserve;
@@ -1362,12 +1362,10 @@ int sqlite3BtreeSetAutoVacuum(Btree *p, int autoVacuum){
 #else
   BtShared *pBt = p->pBt;
   int av = (autoVacuum?1:0);
-  int iv = (autoVacuum==BTREE_AUTOVACUUM_INCR?1:0);
   if( pBt->pageSizeFixed && av!=pBt->autoVacuum ){
     return SQLITE_READONLY;
   }
   pBt->autoVacuum = av;
-  pBt->incrVacuum = iv;
   return SQLITE_OK;
 #endif
 }
@@ -1436,6 +1434,7 @@ static int lockBtree(BtShared *pBt){
     pBt->minLeafFrac = page1[23];
 #ifndef SQLITE_OMIT_AUTOVACUUM
     pBt->autoVacuum = (get4byte(&page1[36 + 4*4])?1:0);
+    pBt->incrVacuum = (get4byte(&page1[36 + 7*4])?1:0);
 #endif
   }
 
@@ -1544,7 +1543,9 @@ static int newDatabase(BtShared *pBt){
   pBt->pageSizeFixed = 1;
 #ifndef SQLITE_OMIT_AUTOVACUUM
   assert( pBt->autoVacuum==1 || pBt->autoVacuum==0 );
+  assert( pBt->incrVacuum==1 || pBt->incrVacuum==0 );
   put4byte(&data[36 + 4*4], pBt->autoVacuum);
+  put4byte(&data[36 + 7*4], pBt->incrVacuum);
 #endif
   return SQLITE_OK;
 }
@@ -2465,13 +2466,19 @@ void sqlite3BtreeReleaseTempCursor(BtCursor *pCur){
 }
 
 /*
-** The GET_CELL_INFO() macro. Takes one argument, a pointer to a valid
-** btree cursor (type BtCursor*).  This macro makes sure the BtCursor.info
-** field of the given cursor is valid.  If it is not already valid, call
+** Make sure the BtCursor* given in the argument has a valid
+** BtCursor.info structure.  If it is not already valid, call
 ** sqlite3BtreeParseCell() to fill it in.
 **
 ** BtCursor.info is a cache of the information in the current cell.
 ** Using this cache reduces the number of calls to sqlite3BtreeParseCell().
+**
+** 2007-06-25:  There is a bug in some versions of MSVC that cause the
+** compiler to crash when getCellInfo() is implemented as a macro.
+** But there is a measureable speed advantage to using the macro on gcc
+** (when less compiler optimizations like -Os or -O0 are used and the
+** compiler is not doing agressive inlining.)  So we use a real function
+** for MSVC and a macro for everything else.  Ticket #2457.
 */
 #ifndef NDEBUG
   static void assertCellInfo(BtCursor *pCur){
@@ -2483,13 +2490,24 @@ void sqlite3BtreeReleaseTempCursor(BtCursor *pCur){
 #else
   #define assertCellInfo(x)
 #endif
-
-#define GET_CELL_INFO(pCur)                                             \
-  if( pCur->info.nSize==0 )                                             \
+#ifdef _MSC_VER
+  /* Use a real function in MSVC to work around bugs in that compiler. */
+  static void getCellInfo(BtCursor *pCur){
+    if( pCur->info.nSize==0 ){
+      sqlite3BtreeParseCell(pCur->pPage, pCur->idx, &pCur->info);
+    }else{
+      assertCellInfo(pCur);
+    }
+  }
+#else /* if not _MSC_VER */
+  /* Use a macro in all other compilers so that the function is inlined */
+#define getCellInfo(pCur)                                               \
+  if( pCur->info.nSize==0 ){                                            \
     sqlite3BtreeParseCell(pCur->pPage, pCur->idx, &pCur->info);         \
-  else                                                                  \
-    assertCellInfo(pCur);
-   
+  }else{                                                                \
+    assertCellInfo(pCur);                                               \
+  }
+#endif /* _MSC_VER */
 
 /*
 ** Set *pSize to the size of the buffer needed to hold the value of
@@ -2506,7 +2524,7 @@ int sqlite3BtreeKeySize(BtCursor *pCur, i64 *pSize){
     if( pCur->eState==CURSOR_INVALID ){
       *pSize = 0;
     }else{
-      GET_CELL_INFO(pCur);
+      getCellInfo(pCur);
       *pSize = pCur->info.nKey;
     }
   }
@@ -2528,7 +2546,7 @@ int sqlite3BtreeDataSize(BtCursor *pCur, u32 *pSize){
       /* Not pointing at a valid entry - set *pSize to 0. */
       *pSize = 0;
     }else{
-      GET_CELL_INFO(pCur);
+      getCellInfo(pCur);
       *pSize = pCur->info.nData;
     }
   }
@@ -2701,7 +2719,7 @@ static int accessPayload(
   assert( pCur->idx>=0 && pCur->idx<pPage->nCell );
   assert( offset>=0 );
 
-  GET_CELL_INFO(pCur);
+  getCellInfo(pCur);
   aPayload = pCur->info.pCell + pCur->info.nHeader;
   nKey = (pPage->intKey ? 0 : pCur->info.nKey);
 
@@ -2890,7 +2908,7 @@ static const unsigned char *fetchPayload(
   assert( pCur->eState==CURSOR_VALID );
   pPage = pCur->pPage;
   assert( pCur->idx>=0 && pCur->idx<pPage->nCell );
-  GET_CELL_INFO(pCur);
+  getCellInfo(pCur);
   aPayload = pCur->info.pCell;
   aPayload += pCur->info.nHeader;
   if( pPage->intKey ){
@@ -5677,6 +5695,11 @@ int sqlite3BtreeUpdateMeta(Btree *p, int idx, u32 iMeta){
   rc = sqlite3PagerWrite(pBt->pPage1->pDbPage);
   if( rc ) return rc;
   put4byte(&pP1[36 + idx*4], iMeta);
+  if( idx==7 ){
+    assert( pBt->autoVacuum || iMeta==0 );
+    assert( iMeta==0 || iMeta==1 );
+    pBt->incrVacuum = iMeta;
+  }
   return SQLITE_OK;
 }
 

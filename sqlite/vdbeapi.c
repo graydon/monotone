@@ -275,6 +275,7 @@ end_of_step:
   if( p->zSql && (rc&0xff)<SQLITE_ROW ){
     /* This behavior occurs if sqlite3_prepare_v2() was used to build
     ** the prepared statement.  Return error codes directly */
+    sqlite3Error(p->db, p->rc, 0);
     return p->rc;
   }else{
     /* This is for legacy sqlite3_prepare() builds and when the code
@@ -453,7 +454,7 @@ int sqlite3_data_count(sqlite3_stmt *pStmt){
 static Mem *columnMem(sqlite3_stmt *pStmt, int i){
   Vdbe *pVm = (Vdbe *)pStmt;
   int vals = sqlite3_data_count(pStmt);
-  if( i>=vals || i<0 ){
+  if( pVm==0 || pVm->resOnStack==0 || i>=pVm->nResColumn || i<0 ){
     static const Mem nullMem = {{0}, 0.0, "", 0, MEM_Null, SQLITE_NULL };
     sqlite3Error(pVm->db, SQLITE_RANGE, 0);
     return (Mem*)&nullMem;

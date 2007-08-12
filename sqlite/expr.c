@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.298 2007/06/15 16:37:29 danielk1977 Exp $
+** $Id: expr.c,v 1.300 2007/06/25 16:29:34 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -71,8 +71,10 @@ Expr *sqlite3ExprSetColl(Parse *pParse, Expr *pExpr, Token *pName){
 CollSeq *sqlite3ExprCollSeq(Parse *pParse, Expr *pExpr){
   CollSeq *pColl = 0;
   if( pExpr ){
+    int op;
     pColl = pExpr->pColl;
-    if( pExpr->op==TK_CAST && !pColl ){
+    op = pExpr->op;
+    if( (op==TK_CAST || op==TK_UPLUS) && !pColl ){
       return sqlite3ExprCollSeq(pParse, pExpr->pLeft);
     }
   }
@@ -1152,6 +1154,7 @@ static int lookupName(
           memcpy(pExpr, pDup, sizeof(*pExpr));
           sqliteFree(pDup);
           cnt = 1;
+          pMatch = 0;
           assert( zTab==0 && zDb==0 );
           goto lookupname_end_2;
         }
