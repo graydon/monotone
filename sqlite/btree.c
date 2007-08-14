@@ -9,7 +9,7 @@
 **    May you share freely, never taking more than you give.
 **
 *************************************************************************
-** $Id: btree.c,v 1.392 2007/06/26 01:04:49 drh Exp $
+** $Id: btree.c,v 1.396 2007/08/13 14:56:44 drh Exp $
 **
 ** This file implements a external (disk-based) database using BTrees.
 ** See the header comment on "btreeInt.h" for additional information.
@@ -421,11 +421,13 @@ static int ptrmapGet(BtShared *pBt, Pgno key, u8 *pEType, Pgno *pPgno){
 */
 #define findCell(pPage, iCell) \
   ((pPage)->aData + get2byte(&(pPage)->aData[(pPage)->cellOffset+2*(iCell)]))
+#ifdef SQLITE_TEST
 u8 *sqlite3BtreeFindCell(MemPage *pPage, int iCell){
   assert( iCell>=0 );
   assert( iCell<get2byte(&pPage->aData[pPage->hdrOffset+3]) );
   return findCell(pPage, iCell);
 }
+#endif
 
 /*
 ** This a more complex version of sqlite3BtreeFindCell() that works for
@@ -2009,7 +2011,7 @@ static int autoVacuumCommit(BtShared *pBt, Pgno *pnTrunc){
       assert(nFin==0 || pBt->nTrunc==0 || nFin<=pBt->nTrunc);
       rc = SQLITE_OK;
       if( pBt->nTrunc ){
-        sqlite3PagerWrite(pBt->pPage1->pDbPage);
+        rc = sqlite3PagerWrite(pBt->pPage1->pDbPage);
         put4byte(&pBt->pPage1->aData[32], 0);
         put4byte(&pBt->pPage1->aData[36], 0);
         pBt->nTrunc = nFin;
@@ -2791,8 +2793,8 @@ static int accessPayload(
       if( offset>=ovflSize ){
         /* The only reason to read this page is to obtain the page
         ** number for the next page in the overflow chain. The page
-	** data is not required. So first try to lookup the overflow
-	** page-list cache, if any, then fall back to the getOverflowPage()
+        ** data is not required. So first try to lookup the overflow
+        ** page-list cache, if any, then fall back to the getOverflowPage()
         ** function.
         */
 #ifndef SQLITE_OMIT_INCRBLOB
@@ -4771,7 +4773,7 @@ static int balance_nonroot(MemPage *pPage){
         memcpy(&pNew->aData[8], pCell, 4);
         pTemp = 0;
       }else if( leafData ){
-	/* If the tree is a leaf-data tree, and the siblings are leaves, 
+        /* If the tree is a leaf-data tree, and the siblings are leaves, 
         ** then there is no divider cell in apCell[]. Instead, the divider 
         ** cell consists of the integer key for the right-most cell of 
         ** the sibling-page assembled above only.
@@ -4963,7 +4965,6 @@ static int balance_shallower(MemPage *pPage){
       }
     }
 #endif
-    if( rc!=SQLITE_OK ) goto end_shallow_balance;
     releasePage(pChild);
   }
 end_shallow_balance:

@@ -11,7 +11,7 @@
 *************************************************************************
 ** Internal interface definitions for SQLite.
 **
-** @(#) $Id: sqliteInt.h,v 1.578 2007/06/26 10:38:55 danielk1977 Exp $
+** @(#) $Id: sqliteInt.h,v 1.585 2007/08/08 12:11:21 drh Exp $
 */
 #ifndef _SQLITEINT_H_
 #define _SQLITEINT_H_
@@ -256,15 +256,15 @@ extern int sqlite3_iLine;            /* Line number for debug info */
 
 #endif
 
-/* Variable sqlite3_mallocHasFailed is set to true after a malloc() 
+/* Variable sqlite3MallocHasFailed is set to true after a malloc() 
 ** failure occurs. 
 **
 ** The sqlite3MallocFailed() macro returns true if a malloc has failed
 ** in this thread since the last call to sqlite3ApiExit(), or false 
 ** otherwise.
 */
-extern int sqlite3_mallocHasFailed;
-#define sqlite3MallocFailed() (sqlite3_mallocHasFailed && sqlite3OsInMutex(1))
+extern int sqlite3MallocHasFailed;
+#define sqlite3MallocFailed() (sqlite3MallocHasFailed && sqlite3OsInMutex(1))
 
 #define sqliteFree(x)          sqlite3FreeX(x)
 #define sqliteAllocSize(x)     sqlite3AllocSize(x)
@@ -1477,11 +1477,11 @@ struct TriggerStep {
   Trigger *pTrig;      /* The trigger that this step is a part of */
 
   Select *pSelect;     /* Valid for SELECT and sometimes 
-			  INSERT steps (when pExprList == 0) */
+                          INSERT steps (when pExprList == 0) */
   Token target;        /* Valid for DELETE, UPDATE, INSERT steps */
   Expr *pWhere;        /* Valid for DELETE, UPDATE steps */
   ExprList *pExprList; /* Valid for UPDATE statements and sometimes 
-			   INSERT steps (when pSelect == 0)         */
+                           INSERT steps (when pSelect == 0)         */
   IdList *pIdList;     /* Valid for INSERT statements only */
   TriggerStep *pNext;  /* Next in the link-list */
   TriggerStep *pLast;  /* Last element in link-list. Valid for 1st elem only */
@@ -1549,68 +1549,14 @@ typedef struct {
 } InitData;
 
 /*
- * This global flag is set for performance testing of triggers. When it is set
- * SQLite will perform the overhead of building new and old trigger references 
- * even when no triggers exist
- */
-extern int sqlite3_always_code_trigger_setup;
-
-/*
-** A lookup table used by the SQLITE_READ_UTF8 macro.  The definition
-** is in utf.c.
+** Assuming zIn points to the first byte of a UTF-8 character,
+** advance zIn to point to the first byte of the next UTF-8 character.
 */
-extern const unsigned char sqlite3UtfTrans1[];
-
-/*
-** Macros for reading UTF8 characters.
-**
-** SQLITE_READ_UTF8(x,c) reads a single UTF8 value out of x and writes
-** that value into c.  The type of x must be unsigned char*.  The type
-** of c must be unsigned int.
-**
-** SQLITE_SKIP_UTF8(x) advances x forward by one character.  The type of
-** x must be unsigned char*.
-**
-** Notes On Invalid UTF-8:
-**
-**  *  These macros never allow a 7-bit character (0x00 through 0x7f) to
-**     be encoded as a multi-byte character.  Any multi-byte character that
-**     attempts to encode a value between 0x00 and 0x7f is rendered as 0xfffd.
-**
-**  *  These macros never allow a UTF16 surrogate value to be encoded.
-**     If a multi-byte character attempts to encode a value between
-**     0xd800 and 0xe000 then it is rendered as 0xfffd.
-**
-**  *  Bytes in the range of 0x80 through 0xbf which occur as the first
-**     byte of a character are interpreted as single-byte characters
-**     and rendered as themselves even though they are technically
-**     invalid characters.
-**
-**  *  These routines accept an infinite number of different UTF8 encodings
-**     for unicode values 0x80 and greater.  They do not change over-length
-**     encodings to 0xfffd as some systems recommend.
-** 
-*/
-#define SQLITE_READ_UTF8(zIn, c) {                     \
-  c = *(zIn++);                                        \
-  if( c>=0xc0 ){                                       \
-    c = sqlite3UtfTrans1[c-0xc0];                      \
-    while( (*zIn & 0xc0)==0x80 ){                      \
-      c = (c<<6) + (0x3f & *(zIn++));                  \
-    }                                                  \
-    if( c<0x80                                         \
-        || (c&0xFFFFF800)==0xD800                      \
-        || (c&0xFFFFFFFE)==0xFFFE ){  c = 0xFFFD; }    \
-  }                                                    \
-}
 #define SQLITE_SKIP_UTF8(zIn) {                        \
   if( (*(zIn++))>=0xc0 ){                              \
     while( (*zIn & 0xc0)==0x80 ){ zIn++; }             \
   }                                                    \
 }
-
-
-
 
 /*
 ** The SQLITE_CORRUPT_BKPT macro can be either a constant (for production
@@ -1830,7 +1776,7 @@ int sqlite3GetInt32(const char *, int*);
 int sqlite3FitsIn64Bits(const char *);
 int sqlite3Utf16ByteLen(const void *pData, int nChar);
 int sqlite3Utf8CharLen(const char *pData, int nByte);
-u32 sqlite3ReadUtf8(const unsigned char *);
+int sqlite3Utf8Read(const u8*, const u8*, const u8**);
 int sqlite3PutVarint(unsigned char *, u64);
 int sqlite3GetVarint(const unsigned char *, u64 *);
 int sqlite3GetVarint32(const unsigned char *, u32 *);
@@ -1853,7 +1799,6 @@ Expr *sqlite3ExprSetColl(Parse *pParse, Expr *, Token *);
 int sqlite3CheckCollSeq(Parse *, CollSeq *);
 int sqlite3CheckObjectName(Parse *, const char *);
 void sqlite3VdbeSetChanges(sqlite3 *, int);
-void sqlite3Utf16Substr(sqlite3_context *,int,sqlite3_value **);
 
 const void *sqlite3ValueText(sqlite3_value*, u8);
 int sqlite3ValueBytes(sqlite3_value*, u8);
@@ -1901,6 +1846,13 @@ int sqlite3ApiExit(sqlite3 *db, int);
 void sqlite3FailedMalloc(void);
 void sqlite3AbortOtherActiveVdbes(sqlite3 *, Vdbe *);
 int sqlite3OpenTempDatabase(Parse *);
+
+/*
+** The interface to the LEMON-generated parser
+*/
+void *sqlite3ParserAlloc(void*(*)(size_t));
+void sqlite3ParserFree(void*, void(*)(void*));
+void sqlite3Parser(void*, int, Token, Parse*);
 
 #ifndef SQLITE_OMIT_LOAD_EXTENSION
   void sqlite3CloseExtensions(sqlite3*);
@@ -1963,7 +1915,7 @@ FuncDef *sqlite3VtabOverloadFunction(FuncDef*, int nArg, Expr*);
 void sqlite3InvalidFunction(sqlite3_context*,int,sqlite3_value**);
 int sqlite3Reprepare(Vdbe*);
 void sqlite3ExprListCheckLength(Parse*, ExprList*, int, const char*);
-CollSeq* sqlite3BinaryCompareCollSeq(Parse *, Expr *, Expr *);
+CollSeq *sqlite3BinaryCompareCollSeq(Parse *, Expr *, Expr *);
 
 #if SQLITE_MAX_EXPR_DEPTH>0
   void sqlite3ExprSetHeight(Expr *);
@@ -1972,9 +1924,7 @@ CollSeq* sqlite3BinaryCompareCollSeq(Parse *, Expr *, Expr *);
   #define sqlite3ExprSetHeight(x)
 #endif
 
-u32 sqlite3Get2byte(const u8*);
 u32 sqlite3Get4byte(const u8*);
-void sqlite3Put2byte(u8*, u32);
 void sqlite3Put4byte(u8*, u32);
 
 #ifdef SQLITE_SSE
@@ -1997,6 +1947,6 @@ void sqlite3Put4byte(u8*, u32);
 # define IOTRACE(A)
 # define sqlite3VdbeIOTraceSql(X)
 #endif
-extern void (*sqlite3_io_trace)(const char*,...);
+SQLITE_EXTERN void (*sqlite3_io_trace)(const char*,...);
 
 #endif

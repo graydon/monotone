@@ -793,8 +793,9 @@ void sqlite3VdbeIOTraceSql(Vdbe *p){
   if( nOp<1 ) return;
   pOp = &p->aOp[nOp-1];
   if( pOp->opcode==OP_Noop && pOp->p3!=0 ){
-    char *z = sqlite3StrDup(pOp->p3);
     int i, j;
+    char z[1000];
+    sqlite3_snprintf(sizeof(z), z, "%s", pOp->p3);
     for(i=0; isspace((unsigned char)z[i]); i++){}
     for(j=0; z[i]; i++){
       if( isspace((unsigned char)z[i]) ){
@@ -807,7 +808,6 @@ void sqlite3VdbeIOTraceSql(Vdbe *p){
     }
     z[j] = 0;
     sqlite3_io_trace("SQL %s\n", z);
-    sqliteFree(z);
   }
 }
 #endif /* !SQLITE_OMIT_TRACE && SQLITE_ENABLE_IOTRACE */
@@ -1435,7 +1435,7 @@ int sqlite3VdbeHalt(Vdbe *p){
     */
     if( db->autoCommit && db->activeVdbeCnt==1 ){
       if( p->rc==SQLITE_OK || (p->errorAction==OE_Fail && !isSpecialError) ){
-	/* The auto-commit flag is true, and the vdbe program was 
+        /* The auto-commit flag is true, and the vdbe program was 
         ** successful or hit an 'OR FAIL' constraint. This means a commit 
         ** is required.
         */
@@ -1600,9 +1600,6 @@ int sqlite3VdbeReset(Vdbe *p){
 #endif
   p->magic = VDBE_MAGIC_INIT;
   p->aborted = 0;
-  if( p->rc==SQLITE_SCHEMA ){
-    sqlite3ResetInternalSchema(db, 0);
-  }
   return p->rc & db->errMask;
 }
  
