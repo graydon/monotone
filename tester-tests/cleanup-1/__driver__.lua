@@ -1,6 +1,10 @@
+-- no state whatsoever is inherited across tests
+-- (see cleanup-2 for the other half of this test)
 
 function cleanup()
-  -- stuff under test isn't cleaned between tests;
-  -- only predefined vars get reset
-  test.cleanup_ran = true
+   cleanup_ran = true
+   test.cleanup_ran = true
 end
+
+t_ran = true
+test.t_ran = true
