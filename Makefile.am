@@ -229,7 +229,7 @@ SQLITE_SOURCES =							\
 	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
 	sqlite/sqliteInt.h						\
 	sqlite/vdbe.h sqlite/vdbeInt.h					\
-	sqlite/pager.h sqlite/btreeInt.h sqlite/limits.h
+	sqlite/pager.h sqlite/btreeInt.h sqlite/sqliteLimit.h
 
 LUA_SOURCES =								\
 	lua/lapi.cc lua/lapi.h						\
