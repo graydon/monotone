@@ -10,7 +10,7 @@
 #include "base.hh"
 #include <set>
 #include <map>
-#include <vector>
+#include "vector.hh"
 #include "lexical_cast.hh"
 
 #include "app_state.hh"

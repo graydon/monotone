@@ -12,7 +12,7 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include "vector.hh"
 #include <sstream>
 
 #include <boost/format.hpp>

@@ -433,7 +433,7 @@ GOPT(quiet, "quiet", bool, false,
 {
   quiet = true;
   global_sanity.set_quiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -451,7 +451,7 @@ gettext_noop("suppress warning, verbose, informational and progress messages"))
 {
   reallyquiet = true;
   global_sanity.set_reallyquiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -494,11 +494,11 @@ GOPT(ticker, "ticker", std::string, ,
 {
   ticker = arg;
   if (ticker == "none" || global_sanity.quiet_p())
-    ui.set_tick_writer(new tick_write_nothing);
+    ui.set_tick_write_nothing();
   else if (ticker == "dot")
-    ui.set_tick_writer(new tick_write_dot);
+    ui.set_tick_write_dot();
   else if (ticker == "count")
-    ui.set_tick_writer(new tick_write_count);
+    ui.set_tick_write_count();
   else
     throw bad_arg_internal(F("argument must be 'none', 'dot', or 'count'").str());
 }

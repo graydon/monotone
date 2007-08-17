@@ -11,13 +11,11 @@
 // PURPOSE.
 
 #include <stdexcept>
-#include <vector>
 #include <ostream>
 
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
-#include "quick_alloc.hh" // to get the QA() macro
 #include "numeric_vocab.hh"
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
@@ -335,71 +333,6 @@ do { \
     global_sanity.error_failure("E("#e")", (explain), __FILE__, __LINE__); \
   } \
 } while(0)
-
-
-// we're interested in trapping index overflows early and precisely,
-// because they usually represent *very significant* logic errors.  we use
-// an inline template function because the idx(...) needs to be used as an
-// expression, not as a statement.
-
-template <typename T>
-inline T & checked_index(std::vector<T> & v,
-                         typename std::vector<T>::size_type i,
-                         char const * vec,
-                         char const * index,
-                         char const * file,
-                         int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-template <typename T>
-inline T const & checked_index(std::vector<T> const & v,
-                               typename std::vector<T>::size_type i,
-                               char const * vec,
-                               char const * index,
-                               char const * file,
-                               int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-#ifdef QA_SUPPORTED
-template <typename T>
-inline T & checked_index(std::vector<T, QA(T)> & v,
-                         typename std::vector<T>::size_type i,
-                         char const * vec,
-                         char const * index,
-                         char const * file,
-                         int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-template <typename T>
-inline T const & checked_index(std::vector<T, QA(T)> const & v,
-                               typename std::vector<T>::size_type i,
-                               char const * vec,
-                               char const * index,
-                               char const * file,
-                               int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-#endif // QA_SUPPORTED
-
-
-#define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
-
-
 
 // Last gasp dumps
 

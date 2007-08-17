@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include "restrictions.hh"
 #include "revision.hh"

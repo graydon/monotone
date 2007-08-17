@@ -13,7 +13,7 @@
 #include <functional>
 #include <iterator>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 
 #include <boost/tokenizer.hpp>
