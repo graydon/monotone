@@ -14,11 +14,8 @@
 // interface. the global user_interface object 'ui' owns cerr, so
 // no writing to it directly!
 
-#include <map>
-#include <set>
-
-#include "paths.hh"
-#include "sanity.hh"
+struct i18n_format;
+struct system_path;
 
 struct ticker
 {
@@ -71,15 +68,11 @@ public:
   std::string prog_name;
 
 private:
-  std::set<std::string> issued_warnings;
-
-  bool some_tick_is_dirty;    // At least one tick needs being printed
-  bool last_write_was_a_tick;
-  std::map<std::string,ticker *> tickers;
-  tick_writer * t_writer;
   void finish_ticking();
   void write_ticks();
-  std::string tick_trailer;
+
+  struct impl;
+  impl * imp;
 
   friend struct ticker;
   friend struct tick_write_count;

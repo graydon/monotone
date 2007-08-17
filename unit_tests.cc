@@ -158,6 +158,10 @@ int main(int argc, char * argv[])
   bool help(false);
   string test_to_run;
 
+  ui.initialize();
+  ui.prog_name = argv[0];
+  global_sanity.initialize(argc, argv, "C");  // we didn't call setlocale
+
   try
     {
       option::concrete_option_set os;
@@ -194,9 +198,6 @@ int main(int argc, char * argv[])
 
 
   // set up some global state before running the tests
-  ui.initialize();
-  ui.prog_name = argv[0];
-  global_sanity.initialize(argc, argv, "C");  // we didn't call setlocale
   Botan::LibraryInitializer::initialize();
 
   // Make clog and cout use the same streambuf as cerr; this ensures
