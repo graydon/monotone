@@ -405,23 +405,16 @@ function runcmd(cmd, prefix, bgnd)
 end
 
 function samefile(left, right)
-  local ldat = nil
-  local rdat = nil
-  if left == "-" then
-    ldat = io.input:read("*a")
-    rdat = readfile(right)
-  elseif right == "-" then
-    rdat = io.input:read("*a")
-    ldat = readfile(left)
-  else
-    if fsize(left) ~= fsize(right) then
-      return false
-    else
-      ldat = readfile(left)
-      rdat = readfile(right)
-    end
+  if left == "-" or right == "-" then 
+    err("tests may not rely on standard input") 
   end
-  return ldat == rdat
+  if fsize(left) ~= fsize(right) then
+    return false
+  else
+    local ldat = readfile(left)
+    local rdat = readfile(right)
+    return ldat == rdat
+ end
 end
 
 function samelines(f, t)
@@ -808,13 +801,12 @@ function log_error(e)
   end
 end
 
-function run_tests(debugging, list_only, run_dir, logname, args)
+function run_tests(debugging, list_only, run_dir, logname, args, progress)
   local torun = {}
   local run_all = true
 
   local function P(...)
-     io.write(unpack(arg))
-     io.flush()
+     progress(unpack(arg))
      logfile:write(unpack(arg))
   end
 
@@ -934,10 +926,7 @@ function run_tests(debugging, list_only, run_dir, logname, args)
      [121] = "error creating test directory",
      [122] = "error spawning test process",
      [123] = "error entering test directory",
-     [124] = "error redirecting stdin",
-     [125] = "error redirecting stdout",
-     [126] = "error redirecting stderr",
-     [127] = "test did not exit as expected"
+     [124] = "unhandled exception in child process"
   }
 
   -- callback closure passed to run_tests_in_children
@@ -959,7 +948,7 @@ function run_tests(debugging, list_only, run_dir, logname, args)
      else
 	local wfile, err = io.open(tdir .. "/STATUS", "r")
 	if wfile ~= nil then
-	   what = wfile:read()
+	   what = string.gsub(wfile:read("*a"), "\n$", "")
 	   wfile:close()
 	else
 	   what = string.format("FAIL (status file: %s)", err)
@@ -994,12 +983,7 @@ function run_tests(debugging, list_only, run_dir, logname, args)
 
      counts.total = counts.total + 1
      P(string.format("%s%s\n", test_header, what))
-     if debugging then 
-	return false 
-     else
-	unlogged_remove(tdir .. "/STATUS")
-	return can_delete
-     end
+     return (can_delete and not debugging)
   end
 
   run_tests_in_children(torun, report_one_test)
@@ -1050,7 +1034,7 @@ function run_one_test(tname)
    test.errfile = ""
    test.errline = -1
    test.bglist = {}
-   test.log = io.output()
+   test.log = io.open("tester.log", "w")
 
    L("Test ", test.name, "\n")
 

@@ -3,11 +3,13 @@
 #include "platform.hh"
 #include "tester-plaf.hh"
 #include "sanity.hh"
-#include "option.hh"
+#include <boost/lexical_cast.hpp>
 
 using std::string;
 using std::map;
 using std::vector;
+using boost::lexical_cast;
+using boost::bad_lexical_cast;
 
 // defined in testlib.c, generated from testlib.lua
 extern char const testlib_constant[];
@@ -58,7 +60,7 @@ static string testfile;
 
 static int panic_thrower(lua_State * st)
 {
-  throw oops("lua error");
+  throw oops((FL("lua error: %s\n") % luaL_checkstring(st, -1)).str().c_str());
 }
 
 // N.B. some of this code is copied from file_io.cc
@@ -172,7 +174,7 @@ void do_make_tree_accessible(string const & p)
 void do_copy_recursive(string const & from, string to)
 {
   path::status fromstat = get_path_status(from);
-  
+
   E(fromstat != path::nonexistent,
     F("Source '%s' for copy does not exist") % from);
 
@@ -521,7 +523,7 @@ LUAEXT(require_not_root, )
           "Please try again with a normal user account.\n"));
       exit(1);
     }
-  return 0;  
+  return 0;
 }
 
 // run_tests_in_children (to_run, reporter)
@@ -565,8 +567,10 @@ bool test_enumerator::operator()(test_to_run & next_test) const
 
 // Invoke one test case in the child.  This may be called by
 // run_tests_in_children, or by main, because Windows doesn't have fork.
+// It is not allowed to write to standard output or standard error under
+// any circumstances whatsoever.  Not calling lua_close is deliberate.
 
-void test_invoker::operator()(std::string const & testname) const
+int test_invoker::operator()(std::string const & testname) const
 {
   int retcode;
   try
@@ -581,31 +585,11 @@ void test_invoker::operator()(std::string const & testname) const
       retcode = luaL_checkinteger(st, -1);
       lua_remove(st, -1);
     }
-  catch (informative_failure & e)
-    {
-      P(F("%s\n") % e.what());
-      retcode = 1;
-    }
-  catch (std::logic_error & e)
-    {
-      P(F("Invariant failure: %s\n") % e.what());
-      retcode = 3;
-    }
-  catch (std::exception & e)
-    {
-      P(F("Uncaught exception: %s") % e.what());
-      retcode = 3;
-    }
   catch (...)
     {
-      P(F("Uncaught exception of unknown type"));
-      retcode = 3;
+      retcode = 124;
     }
-
-  // This does not properly clean up global state, but none of it is
-  // process-external, so it's ok to let the OS obliterate it; and
-  // leaving this function any other way is not safe.
-  exit(retcode);
+  return retcode;
 }
 
 
@@ -652,60 +636,367 @@ LUAEXT(run_tests_in_children, )
   return 0;
 }
 
+// Write all arguments to standard output.  This is not a normal LUAEXT
+// because it is only made available to run_tests as an argument, not
+// established as globally visible.  (Only a very limited number of places
+// at the Lua level are allowed to talk to standard output.)
+int run_tests_progress(lua_State *st)
+{
+  int n = lua_gettop(st);
+  for (int i = 1; i <= n; i++)
+    fputs(luaL_checkstring(st, i), stdout);
+  return 0;
+}
+
+// RAII wrapper around a Lua state structure; also takes care of doing the
+// initialization as we want it.  Of note is that we do not want any
+// Lua-level code getting its grubby fingers on stdin/out/err, so we have to
+// take just about everything out of the io table, and we do not trust
+// testlib.lua to do this for us.
+
+namespace {
+  struct lua_lib
+  {
+    lua_lib(string const & initial_dir, string const & suite);
+    ~lua_lib() { lua_close(st); }
+    lua_State * operator()() { return st; }
+  private:
+    lua_State * st;
+  };
+  lua_lib::lua_lib(string const & initial_dir, string const & suite)
+      : st(luaL_newstate())
+    {
+      static char const * const allowed_io_funcs[] = {
+        "open", "lines", "type", "tmpfile"
+      };
+
+      lua_atpanic (st, &panic_thrower);
+      luaL_openlibs(st);
+      add_functions(st);
+
+      lua_getglobal(st, "io");
+      lua_newtable(st);
+
+      for (unsigned int i = 0;
+           i < sizeof allowed_io_funcs / sizeof allowed_io_funcs[0]; i++)
+        {
+          // this looks like it's a no-op, but the trick is that stack element
+          // -2 is the original "io" table in the getfield operation, but the
+          // new table we are constructing in the setfield operation (because
+          // getfield leaves its value at top of stack, and setfield pops it).
+          lua_getfield(st, -2, allowed_io_funcs[i]);
+          lua_setfield(st, -2, allowed_io_funcs[i]);
+        }
+
+      lua_remove(st, -2); // oldtable newtable -- newtable
+
+      // establish our new table as the value of
+      // package.loaded["io"].
+      lua_getglobal(st, "package");         // -- newtable package
+      lua_getfield(st, -1, "loaded");       // -- newtable package loaded
+      lua_remove(st, -2);                   // -- newtable loaded
+      lua_pushvalue(st, -2);                // -- newtable loaded newtable
+      lua_setfield(st, -2, "io");           // -- newtable loaded
+      lua_remove(st, -1);                   // -- newtable
+
+      // also establish it as the value of the global "io" variable.
+      lua_setglobal(st, "io");              // --
+
+      // we can now load testlib.lua.
+      run_string(st, testlib_constant, "testlib.lua");
+
+      // the suite definition may know the initial working directory.
+      lua_pushstring(st, initial_dir.c_str());
+      lua_setglobal(st, "initial_dir");
+
+      run_file(st, suite.c_str());
+    }
+}
+
+// This function is cloned from simplestring_xform.cc, which we cannot use
+// here.  It does not cover several possibilities handled by the real
+// version but of no interest here.
+
+static vector<string> split_into_words(string const & in)
+{
+  vector<string> out;
+
+  string::size_type begin = 0;
+  string::size_type end = in.find_first_of(" ", begin);
+
+  while (end != string::npos && end >= begin)
+    {
+      out.push_back(in.substr(begin, end-begin));
+      begin = end + 1;
+      if (begin >= in.size())
+        break;
+      end = in.find_first_of(" ", begin);
+    }
+  if (begin < in.size())
+    out.push_back(in.substr(begin, in.size() - begin));
+
+  return out;
+}
+
+
+// Parse a boolean command line option: if ARG is either SHORTOPT or
+// LONGOPT, return true, else false.
+static bool
+bool_option(char const * arg, char const * shortopt, char const * longopt)
+{
+  return ((shortopt && !strcmp(arg, shortopt))
+          || (longopt && !strcmp(arg, longopt)));
+}
+
+// Parse an integer-valued command line option: if ARG is either SHORTOPT
+// or LONGOPT and a decimal integer follows, write that integer to VAL and
+// return true, else leave VAL untouched and return false.
+static bool
+int_option(char const * arg, char const * shortopt, char const * longopt,
+           int & val)
+{
+  if (shortopt && !strncmp(arg, shortopt, strlen(shortopt)))
+    {
+      char *end;
+      int v = strtoul(arg + strlen(shortopt), &end, 10);
+      if (end != arg + strlen(shortopt) && *end == '\0')
+        {
+          val = v;
+          return true;
+        }
+    }
+
+  if (longopt && !strncmp(arg, longopt, strlen(longopt)))
+    {
+      char *end;
+      int v = strtoul(arg + strlen(longopt), &end, 10);
+      if (end != arg + strlen(longopt) && *end == '\0')
+        {
+          val = v;
+          return true;
+        }
+    }
+
+  return false;
+}
+
+// Parse a two-integer-valued command line option: if ARG begins with OPT
+// and continues with a pair of decimal integers separated by a comma, write
+// the integers to VAL1 and VAL2 and return true; else leave VAL1 and VAL2
+// untouched and return false.
+static bool
+int_int_option(char const * arg, char const * opt, int & val1, int & val2)
+{
+  if (strncmp(arg, opt, strlen(opt)))
+    return false;
+
+  char *end1, *end2, *p;
+  int v1, v2;
+
+  p = const_cast<char *>(arg + strlen(opt));
+
+  v1 = strtoul(p, &end1, 10);
+
+  if (end1 == p || *end1 != ',')
+    return false;
+
+  v2 = strtoul(end1 + 1, &end2, 10);
+
+  if (end1 == end2 || *end2 != '\0')
+    return false;
+
+  val1 = v1;
+  val2 = v2;
+  return true;
+}
+
+// Extract parallelization-related options from MFLAGS.  We can rely on
+// Make to pass these arguments in a particular form:
+// -j [N]   no more than N parallel jobs (absent = no limit)
+// -l [N]   no more jobs if the system load average rises above N
+//          (absent = no limit) (not supported except with no N)
+// --jobserver-fds=M,N  talk to a job server on fds M and N to limit
+//                      concurrency
+// Anything else in MFLAGS is ignored.
+// The first word in MFLAGS should have a dash prepended to it unless it
+// already has one.
+
+static void
+parse_makeflags(char const * mflags,
+                int & jobs,
+                int & jread,
+                int & jwrite)
+{
+  if (mflags == 0)
+    return;
+
+  while (*mflags == ' ') mflags++;
+
+  vector<string> mf(split_into_words(mflags));
+
+  if (mf.size() == 0 || (mf.size() == 1 && mf[0] == ""))
+    return;
+
+  if (mf[0][0] != '-')
+    mf[0] = string("-") + mf[0];
+
+  int jxx = 0;
+  for (vector<string>::const_iterator i = mf.begin(); i != mf.end(); i++)
+    {
+      if (*i == "-j")
+        {
+          jxx = -1;
+          i++;
+          if (i == mf.end())
+            break;
+          try
+            {
+              jxx = lexical_cast<int>(*i);
+              if (jxx <= 0)
+                {
+                  W(F("-j %d makes no sense, option ignored") % jxx);
+                  jxx = 0;
+                }
+            }
+          catch (bad_lexical_cast &)
+            {
+              i--;
+            }
+        }
+      else if (*i == "-l")
+        {
+          i++;
+          if (i == mf.end())
+            break;
+          try
+            {
+              double dummy = lexical_cast<double>(*i);
+              W(F("no support for -l %f: forcing -j1") % dummy);
+              jxx = 1;
+            }
+          catch (bad_lexical_cast &)
+            {
+              i--;
+            }
+        }
+      else if (int_int_option(i->c_str(), "--jobserver-fds=", jread, jwrite))
+        ;
+    }
+
+  // do not permit -j in MAKEFLAGS to override -j on the command line.
+  if (jxx != 0 && jobs == 0)
+    jobs = jxx;
+}
+
+static void
+parse_command_line(int argc, char const * const * argv,
+                   bool & want_help, bool & need_help,
+                   bool & debugging, bool & list_only,
+                   bool & run_one, int & jobs,
+                   vector<string> & tests_to_run)
+{
+  int i;
+  int jxx = 0;
+
+  for (i = 1; i < argc; i++)
+    {
+      if (string(argv[i]) == "--")
+        break;
+
+      if (bool_option(argv[i], "-h", "--help"))
+        want_help = true;
+      else if (bool_option(argv[i], "-d", "--debug"))
+        debugging = true;
+      else if (bool_option(argv[i], "-l", "--list-only"))
+        list_only = true;
+      else if (bool_option(argv[i], "-r", 0))
+        run_one = true;
+      else if (bool_option(argv[i], "-j", "--jobs"))
+        {
+          // if there turns out not to be a number, this is -j infinity.
+          jxx = -1;
+
+          if (i+1 < argc)
+            try
+              {
+                jxx = lexical_cast<int>(argv[i]);
+                if (jxx <= 0)
+                  {
+                    W(F("-j %d makes no sense, option ignored") % jxx);
+                    jxx = 0;
+                  }
+                i++;
+              }
+            catch (bad_lexical_cast &)
+              {
+                // it wasn't a number.
+              }
+        }
+      else if (int_option(argv[i], "-j", "--jobs=", jobs))
+        /* no action required */;
+      else if (argv[i][1] == '-')
+        {
+          P(F("unrecognized option '%s'") % argv[i]);
+          need_help = true;
+        }
+      else
+        tests_to_run.push_back(argv[i]);
+    }
+
+  // all argv elements from i+1 to argc go into tests_to_run without further
+  // interpretation.
+  if (i < argc)
+    for (i++; i < argc; i++)
+      tests_to_run.push_back(argv[i]);
+
+  if (jxx != 0)
+    jobs = jxx;
+
+  E(!run_one || (!want_help && !debugging && !list_only
+                 && tests_to_run.size() == 3 && jobs == 0),
+    F("incorrect self-invocation"));
+
+  if (tests_to_run.size() == 0)
+    {
+      P(F("%s: no test suite specified\n"));
+      need_help = true;
+    }
+}
 
 int main(int argc, char **argv)
 {
   int retcode = 2;
-  lua_State *st = 0;
+
+  vector<string> tests_to_run;
+  bool want_help = false;
+  bool need_help = false;
+  bool debugging = false;
+  bool list_only = false;
+  bool run_one   = false;
+  int  jobs      = 0;
+  int  jread     = -1;
+  int  jwrite    = -1;
 
   try
     {
-      vector<string> tests_to_run;
-      bool want_help = false;
-      bool need_help = false;
-      bool debugging = false;
-      bool list_only = false;
-      bool run_one   = false;
+      parse_command_line(argc, argv,
+                         want_help, need_help, debugging, list_only,
+                         run_one, jobs, tests_to_run);
 
-      option::concrete_option_set os;
-      os("help,h", "display help message", option::setter(want_help))
-        ("debug,d", "don't erase per-test directories for successful tests",
-         option::setter(debugging))
-        ("list,l", "list tests that would be run, but don't run them",
-         option::setter(list_only))
-        ("run-one,r", "", // internal use only!
-         option::setter(run_one))
-        ("--", "", option::setter(tests_to_run));
-
-      try
-        {
-          os.from_command_line(argc, argv);
-        }
-      catch (option::option_error & e)
-        {
-          P(F("%s: %s\n") % argv[0] % e.what());
-          need_help = true;
-        }
-
-      if (tests_to_run.size() == 0)
-        {
-          P(F("%s: no test suite specified\n"));
-          need_help = true;
-        }
-
-      if (run_one && (want_help || debugging || list_only
-                      || tests_to_run.size() != 3))
-        {
-          P(F("%s: incorrect self-invocation\n") % argv[0]);
-          need_help = true;
-        }
+      parse_makeflags(getenv("MAKEFLAGS"), jobs, jread, jwrite);
 
       if (want_help || need_help)
         {
           P(F("Usage: %s test-file testsuite [options] [tests]\n") % argv[0]);
-          P(F("Testsuite: a Lua script defining the test suite to run.\n"));
-          P(F("Options:\n%s\n") % os.get_usage_str());
-          P(F("Tests may be specified as:\n"
+          P(F("Testsuite: a Lua script defining the test suite to run.\n"
+              "Options:\n"
+              "  -l, --list     just list tests that would be run"
+              "  -d, --debug    don't erase working dirs of successful tests"
+              "  -j N, --jobs=N run N test cases in parallel"
+              "                 (note: unlike make, the N is not optional)"
+              "  -h, --help     display this help message\n"
+              // -r is deliberately not mentioned.
+              "Tests may be specified as:\n"
               "  nothing - run all tests.\n"
               "  numbers - run the tests with those numbers\n"
               "            negative numbers count back from the end\n"
@@ -715,10 +1006,8 @@ int main(int argc, char **argv)
           return want_help ? 0 : 2;
         }
 
-      st = luaL_newstate();
-      lua_atpanic (st, &panic_thrower);
-      luaL_openlibs(st);
-      add_functions(st);
+      if (jobs == 0) // no setting from command line or MAKEFLAGS
+        jobs = 1;
 
       if (run_one)
         {
@@ -731,23 +1020,11 @@ int main(int argc, char **argv)
           // We have been invoked inside the directory where we should run
           // the test.  Stdout and stderr have been redirected to a per-test
           // logfile.
-
-          lua_pushstring(st, tests_to_run[1].c_str());
-          lua_setglobal(st, "initial_dir");
-
           source_dir = dirname(tests_to_run[0]);
-
-          run_string(st, testlib_constant, "testlib.lua");
-          run_file(st, tests_to_run[0].c_str());
-
-          Lua ll(st);
-          ll.func("run_one_test");
-          ll.push_str(tests_to_run[2]);
-          ll.call(1,1)
-            .extract_int(retcode);
+          lua_lib st(tests_to_run[1], tests_to_run[0]);
+          return test_invoker(st)(tests_to_run[2]);
 #else
-          P(F("%s: self-invocation should not be used on Unix\n") % argv[0]);
-          retcode = 2;
+          E(false, F("self-invocation should not be used on Unix\n"));
 #endif
         }
       else
@@ -781,15 +1058,12 @@ int main(int argc, char **argv)
 
           change_current_working_dir(run_dir);
 
-          run_string(st, testlib_constant, "testlib.lua");
-          lua_pushstring(st, firstdir.c_str());
-          lua_setglobal(st, "initial_dir");
-          run_file(st, testfile.c_str());
+          lua_lib st(firstdir, testfile);
 
           // arrange for isolation between different test suites running in
           // the same build directory.
-          lua_getglobal(st, "testdir");
-          const char *testdir = lua_tostring(st, 1);
+          lua_getglobal(st(), "testdir");
+          const char *testdir = lua_tostring(st(), 1);
           I(testdir);
           string testdir_base = basename(testdir);
           run_dir = run_dir + "/" + testdir_base;
@@ -804,20 +1078,29 @@ int main(int argc, char **argv)
               do_mkdir(run_dir);
             }
 
-          Lua ll(st);
+          prepare_for_parallel_testcases(jobs, jread, jwrite);
+
+          Lua ll(st());
           ll.func("run_tests");
           ll.push_bool(debugging);
           ll.push_bool(list_only);
           ll.push_str(run_dir);
           ll.push_str(logfile);
           ll.push_table();
-          for (int i = 2; i < argc; ++i)
+          // i = 1 skips the first element of tests_to_run, which is the
+          // testsuite definition.
+          for (unsigned int i = 1; i < tests_to_run.size(); i++)
             {
-              ll.push_int(i-1);
-              ll.push_str(argv[i]);
+              ll.push_int(i);
+              ll.push_str(tests_to_run.at(i).c_str());
               ll.set_table();
             }
-          ll.call(5,1)
+
+          // the Lua object doesn't wrap this
+          if (ll.ok())
+            lua_pushcfunction(st(), run_tests_progress);
+
+          ll.call(6,1)
             .extract_int(retcode);
         }
     }
@@ -842,141 +1125,8 @@ int main(int argc, char **argv)
       retcode = 3;
     }
 
-  if (st)
-    lua_close(st);
   return retcode;
 }
-
-// The functions below are used by option.cc, and cloned from ui.cc and
-// simplestring_xform.cc, which we cannot use here.  They do not cover
-// several possibilities handled by the real versions.
-
-unsigned int
-guess_terminal_width()
-{
-  unsigned int w = terminal_width();
-  if (!w)
-    w = 80; // can't use constants:: here
-  return w;
-}
-
-static void
-split_into_lines(string const & in, vector<string> & out)
-{
-  out.clear();
-  string::size_type begin = 0;
-  string::size_type end = in.find_first_of("\r\n", begin);
-  while (end != string::npos && end >= begin)
-    {
-      out.push_back(in.substr(begin, end-begin));
-      if (in.at(end) == '\r'
-          && in.size() > end+1
-          && in.at(end+1) == '\n')
-        begin = end + 2;
-      else
-        begin = end + 1;
-      if (begin >= in.size())
-        break;
-      end = in.find_first_of("\r\n", begin);
-    }
-  if (begin < in.size())
-    out.push_back(in.substr(begin, in.size() - begin));
-}
-
-static vector<string> split_into_words(string const & in)
-{
-  vector<string> out;
-
-  string::size_type begin = 0;
-  string::size_type end = in.find_first_of(" ", begin);
-
-  while (end != string::npos && end >= begin)
-    {
-      out.push_back(in.substr(begin, end-begin));
-      begin = end + 1;
-      if (begin >= in.size())
-        break;
-      end = in.find_first_of(" ", begin);
-    }
-  if (begin < in.size())
-    out.push_back(in.substr(begin, in.size() - begin));
-
-  return out;
-}
-
-// See description for format_text below for more details.
-static string
-format_paragraph(string const & text, size_t const col, size_t curcol)
-{
-  I(text.find('\n') == string::npos);
-
-  string formatted;
-  if (curcol < col)
-    {
-      formatted = string(col - curcol, ' ');
-      curcol = col;
-    }
-
-  const size_t maxcol = guess_terminal_width();
-
-  vector< string > words = split_into_words(text);
-  for (vector< string >::const_iterator iter = words.begin();
-       iter != words.end(); iter++)
-    {
-      string const & word = *iter;
-
-      if (iter != words.begin() &&
-          curcol + word.size() + 1 > maxcol)
-        {
-          formatted += '\n' + string(col, ' ');
-          curcol = col;
-        }
-      else if (iter != words.begin())
-        {
-          formatted += ' ';
-          curcol++;
-        }
-
-      formatted += word;
-      curcol += word.size();
-    }
-
-  return formatted;
-}
-
-// Reformats the given text so that it fits in the current screen with no
-// wrapping.
-//
-// The input text is a series of words and sentences.  Paragraphs may be
-// separated with a '\n' character, which is taken into account to do the
-// proper formatting.  The text should not finish in '\n'.
-//
-// 'col' specifies the column where the text will start and 'curcol'
-// specifies the current position of the cursor.
-string
-format_text(string const & text, size_t const col, size_t curcol)
-{
-  I(curcol <= col);
-
-  string formatted;
-
-  vector< string > lines;
-  split_into_lines(text, lines);
-  for (vector< string >::const_iterator iter = lines.begin();
-       iter != lines.end(); iter++)
-    {
-      string const & line = *iter;
-
-      formatted += format_paragraph(line, col, curcol);
-      if (iter + 1 != lines.end())
-        formatted += "\n\n";
-      curcol = 0;
-    }
-
-  return formatted;
-}
-
-
 
 // Local Variables:
 // mode: C++

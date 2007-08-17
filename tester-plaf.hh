@@ -37,9 +37,9 @@ bool running_as_root();
 // process, *or* the program named in 'runner' is spawned with argument
 // vector [runner, '-r', testfile, firstdir, test-name].  Either way, the
 // child process is running in a just-created, empty directory which is
-// exclusive to that test; its standard input is the null device; and its
-// standard output and error are a logfile.  If invoke() is called, it is
-// expected not to return.
+// exclusive to that test.  Standard I/O is not touched; the child is
+// expected not to use stdin, stdout, or stderr.  If invoke() is called,
+// its return value is the process exit code.
 //
 // After each per-test child process completes, cleanup() is called for that
 // test.  If cleanup() returns true, the per-test directory is deleted.
@@ -67,7 +67,7 @@ struct test_invoker
 {
   lua_State * st;
   test_invoker(lua_State *st) : st(st) {}
-  void operator()(std::string const & testname) const;
+  int operator()(std::string const & testname) const;
 };
 
 struct test_cleaner
@@ -85,6 +85,7 @@ void run_tests_in_children(test_enumerator const & next_test,
                            std::string const & runner,
                            std::string const & testfile,
                            std::string const & firstdir);
+void prepare_for_parallel_testcases(int, int, int);
 
 // These functions are actually in tester.cc but are used by tester-plaf.cc.
 void do_remove_recursive(std::string const & dir);

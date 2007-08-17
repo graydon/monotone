@@ -338,7 +338,7 @@ unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 tester_SOURCES = tester.cc
 nodist_tester_SOURCES = testlib.c
 tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
-		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) option.cc)))
+		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES))))
 
 txt2c_SOURCES = txt2c.cc
 
@@ -597,8 +597,10 @@ run_%_tests: Makefile
 	  echo 'exit 0'; } > $@
 	chmod 755 $@
 
+# The leading + causes Make to treat this as a recursive invocation,
+# allowing it to participate in the jobserver protocol.
 %_tests.status: run_%_tests %-testsuite.lua tester FORCE
-	./run_$*_tests
+	+./run_$*_tests
 
 unit_tests.status : unit_tester
 lua_tests.status : mtn

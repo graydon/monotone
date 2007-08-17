@@ -6,11 +6,16 @@
 #include "tester-plaf.hh"
 
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <signal.h>
+#include <map>
 
 using std::string;
+using std::map;
+using std::make_pair;
 
 void make_accessible(string const & name)
 {
@@ -223,9 +228,195 @@ bool running_as_root()
   return !geteuid();
 }
 
-// General note: the magic numbers in this function are meaningful to
-// testlib.lua.  They indicate a number of failure scenarios in which
-// more detailed diagnostics are not possible.
+// Parallel test case support.
+//
+// GNU Make's job server algorithm is described in detail at
+// <http://make.paulandlesley.org/jobserver.html>.  This program
+// implements only part of the general algorithm: specifically, if
+// this program is invoked as if it were a recursive make, it will
+// participate in the job server algorithm when parallelizing its own
+// subcomponents.  None of those subcomponents are themselves
+// recursive make operations.  Therefore, what we do is:
+//
+// 1. The invoking make has created a pipe, and written N tokens into it.
+//    We are entitled to run one job at any time, plus as many of the N
+//    as we can get tokens for.
+//
+//    * A token is just a one-byte character.  (Empirically, GNU make
+//      uses plus signs (ASCII 0x2B) for this.)
+//    * All tokens are identical.
+//
+// 2. We know that this is the case because we observe, in the MAKEFLAGS
+//    environment variable, a construct similar to:
+//
+//       --jobserver-fds=R,W -j
+//
+//    where R and W are integers specifying the read and write ends of
+//    the jobserver communication pipe.  If we do not observe any such
+//    construct, we run in serial mode (this is actually implemented
+//    by creating a pipe ourselves, not writing anything to it, and
+//    proceeding as described below).
+//
+// 2a. If the file descriptors specified in the above construct are not
+//     open, this means the invoking Makefile did not properly mark the
+//     command running this program as a recursive make.  We print a
+//     diagnostic and run in serial mode.
+//
+// 3. We have a queue of jobs to be run, and a set of currently
+//    running jobs (initially none).  Before beginning the main loop,
+//    we install a handler for SIGCHLD.  The only thing this handler
+//    does is close the duplicate jobserver read end (see below).
+//
+//    The main loop proceeds as follows:
+//
+//    a. Remove the next job to be run from the queue.
+//
+//    b. Create a duplicate of the read side of the jobserver pipe, if
+//       we don't already have one.
+//
+//    c. Call wait() in nonblocking mode until it doesn't report any
+//       more dead children.  For each reported child, write a token
+//       back to the jobserver pipe, unless it is the last running
+//       child.
+//
+//    d. If the set of currently running jobs is nonempty, read one
+//       byte in blocking mode from the duplicate fd.  If this returns
+//       1, proceed to step e.  If it returns -1 and errno is either
+//       EINTR or EBADF, go back to step b.  Abort on any other return
+//       and/or errno value.
+//
+//    e. We have a token! Fork.  In the child, close both sides of the
+//       jobserver pipe, and the duplicate, and then invoke the job.
+//
+// 4. Once the queue of jobs is exhausted, the main loop terminates.
+//    Subsequent code repeats step 3c until there are no more children,
+//    doing so in *blocking* mode.
+//
+// The jiggery-pokery with duplicate read fds in 3b-3d is necessary to
+// close a race window.  If we didn't do that and a SIGCHLD arrived
+// betwen steps c and d, a token could get lost and we could end up
+// hanging forever in the read().  See the above webpage for further
+// discussion.
+
+// Sadly, there is no getting around global variables for these.  However,
+// the information in question really is process-global (file descriptors,
+// signal handlers) so it's not like we could be reentrant here anyway.
+
+static int jobsvr_read = -1;
+static int jobsvr_write = -1;
+static volatile int jobsvr_read_dup = -1;
+static int tokens_held = 0;
+
+static void sigchld(int)
+{
+  if (jobsvr_read_dup != -1)
+    {
+      close(jobsvr_read_dup);
+      jobsvr_read_dup = -1;
+    }
+}
+
+// Encapsulation of token acquisition and release.  We get one token for free.
+// Note: returns true if we need to go reap children again, not if we have
+// successfully acquired a token.
+static bool acquire_token()
+{
+  if (tokens_held == 0)
+    {
+      tokens_held++;
+      return false;
+    }
+
+  char dummy;
+  int n = read(jobsvr_read_dup, &dummy, 1);
+  if (n == 1)
+    {
+      tokens_held++;
+      return false;
+    }
+  else
+    {
+      I(n == -1 && (errno == EINTR || errno == EBADF));
+      return true;
+    }
+}
+
+static void release_token()
+{
+  if (tokens_held > 1)
+    write(jobsvr_write, "+", 1);
+  I(tokens_held > 0);
+  tokens_held--;
+}
+
+// Set up the above static variables appropriately, given the arguments
+// to -j and/or --jobserver-fd on the command line and MAKEFLAGS.
+// Diagnostics generated here are exactly the same as GNU Make's.
+void prepare_for_parallel_testcases(int jobs, int jread, int jwrite)
+{
+  if ((jread != -1 || jwrite != -1)
+      && (fcntl(jread, F_GETFD) == -1 || fcntl(jwrite, F_GETFD) == -1))
+    {
+      W(F("jobserver unavailable: using -j1.  Add `+' to parent make rule."));
+      close(jread);
+      close(jwrite);
+      jread = jwrite = -1;
+    }
+
+  if (jread != -1 && jwrite != -1 && jobs >= 2)
+    {
+      W(F("-jN forced in submake: disabling jobserver mode."));
+      close(jread);
+      close(jwrite);
+      jread = jwrite = -1;
+    }
+
+  if (jread == -1 && jwrite == -1)
+    {
+      int jp[2];
+      E(pipe(jp) == 0,
+        F("creating jobs pipe: %s") % os_strerror(errno));
+      jread = jp[0];
+      jwrite = jp[1];
+
+      if (jobs == -1)
+        jobs = 11;  // infinity goes to 11, but no higher.
+
+      // can ignore errors; the worst case is we don't parallelize as much
+      // as was requested.
+      for (int i = 0; i < jobs-1; i++)
+        write(jwrite, "+", 1);
+    }
+
+  I(jread != -1 && jwrite != -1);
+  jobsvr_read = jread;
+  jobsvr_write = jwrite;
+}
+
+// Child side of the fork.  The magic numbers in this function and
+// run_tests_in_children are meaningful to testlib.lua.  They indicate a
+// number of failure scenarios in which more detailed diagnostics are not
+// possible.
+
+// gcc 4.1 doesn't like attributes on the function definition
+static NORETURN(void child(test_invoker const &,
+                           string const &, string const &));
+
+// Note: to avoid horrible headaches, we do not touch fds 0-2 nor the stdio
+// streams.  Child operations are expected to be coded not to do *anything*
+// with those streams.  The use of _exit is intentional.
+static void child(test_invoker const & invoke, string const & tdir,
+                  string const & tname)
+{
+  close(jobsvr_read);
+  close(jobsvr_write);
+  close(jobsvr_read_dup);
+
+  if (chdir(tdir.c_str()) != 0)
+    _exit(123);
+
+  _exit(invoke(tname));
+}
 
 void run_tests_in_children(test_enumerator const & next_test,
                            test_invoker const & invoke,
@@ -237,8 +428,55 @@ void run_tests_in_children(test_enumerator const & next_test,
 {
   test_to_run t;
   string testdir;
+  map<pid_t, test_to_run> children;
+
+  if (jobsvr_read_dup != -1)
+    {
+      close(jobsvr_read_dup);
+      jobsvr_read_dup = -1;
+    }
+
+  struct sigaction sa, osa;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_handler = sigchld;
+  sa.sa_flags = SA_NOCLDSTOP; // deliberate non-use of SA_RESTART
+
+  E(sigaction(SIGCHLD, &sa, &osa) == 0,
+    F("setting SIGCHLD handler: %s") % os_strerror(errno));
+  
   while (next_test(t))
     {
+      do
+        {
+          if (jobsvr_read_dup == -1)
+            jobsvr_read_dup = dup(jobsvr_read);
+
+          for (;;)
+            {
+              int status;
+              pid_t pid = waitpid(-1, &status, WNOHANG);
+              if (pid == 0)
+                break;
+              if (pid == -1)
+                {
+                  if (errno == ECHILD)
+                    break;
+                  if (errno == EINTR)
+                    continue;
+                  E(false, F("waitpid failed: %s") % os_strerror(errno));
+                }
+
+              map<pid_t, test_to_run>::iterator tfin = children.find(pid);
+              I(tfin != children.end());
+              if (cleanup(tfin->second, status))
+                do_remove_recursive(run_dir + "/" + tfin->second.name);
+              children.erase(tfin);
+              release_token();
+            }
+        }
+      while (acquire_token());
+
+      
       // This must be done before we try to redirect stdout/err to a file
       // within testdir.  If we did it in the child, we would have to do it
       // before it was safe to issue diagnostics.
@@ -251,50 +489,55 @@ void run_tests_in_children(test_enumerator const & next_test,
       catch (...)
         {
           cleanup(t, 121);
+          release_token();
           continue;
         }
 
       // Make sure there is no pending buffered output before forking, or it
       // may be doubled.
       fflush(0);
-      pid_t child = fork();
-
-      if (child != 0) // parent
+      pid_t pid = fork();
+      if (pid == 0)
+        child(invoke, testdir, t.name);
+      else if (pid == -1)
         {
-          int status;
-          if (child == -1)
-            status = 122; // spawn failure
-          else
-            process_wait(child, &status);
-
-          if (cleanup(t, status))
+          if (cleanup(t, 122))
             do_remove_recursive(testdir);
+          release_token();
         }
-      else // child
-        {
-          // From this point on we are in the child process.  Until we have
-          // entered the test directory and re-opened fds 0-2 it is not safe
-          // to throw exceptions or call any of the diagnostic routines.
-          // Hence we use bare OS primitives and call _exit(), if any of them
-          // fail.  It is safe to assume that close() will not fail.
-          if (chdir(testdir.c_str()) != 0)
-            _exit(123);
-
-          close(0);
-          if (open("/dev/null", O_RDONLY) != 0)
-            _exit(124);
-
-          close(1);
-          if (open("tester.log", O_WRONLY|O_CREAT|O_EXCL, 0666) != 1)
-            _exit(125);
-          if (dup2(1, 2) == -1)
-            _exit(126);
-
-          invoke(t.name);
-          // If invoke() returns something has gone terribly wrong.
-          _exit(127);
-        }
+      else
+        children.insert(make_pair(pid, t));
     }
+
+  // Now wait for any unfinished children.
+  for (;;)
+    {
+      int status;
+      pid_t pid = waitpid(-1, &status, 0);
+      if (pid == 0)
+        break;
+      if (pid == -1)
+        {
+          if (errno == ECHILD)
+            break;
+          if (errno == EINTR)
+            continue;
+          E(false, F("waitpid failed: %s") % os_strerror(errno));
+        }
+
+      map<pid_t, test_to_run>::iterator tfin = children.find(pid);
+      I(tfin != children.end());
+      if (cleanup(tfin->second, status))
+        do_remove_recursive(run_dir + "/" + tfin->second.name);
+      children.erase(tfin);
+      release_token();
+    }
+
+  I(tokens_held == 0);
+  I(children.size() == 0);
+  close(jobsvr_read_dup);
+  jobsvr_read_dup = -1;
+  sigaction(SIGCHLD, &osa, 0);
 }
 
 // Local Variables:

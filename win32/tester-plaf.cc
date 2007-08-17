@@ -103,6 +103,23 @@ bool running_as_root()
   return false;
 }
 
+// FIXME: I don't know any intrinsic reason why parallel test cases and the
+// jobserver protocol could not be supported on Windows (see the lengthy
+// explanation of the protocol in unix/tester-plaf.cc) but someone with a
+// deep understanding of Win32 would have to implement it to ensure its
+// race-free-ness.  (Before bothering, confirm that GNU Make supports the
+// jobserver protocol on Windows.)
+//
+// NOTE TO POTENTIAL FIXERS: If you code this with the fake POSIX layer in
+// the C runtime instead of with WaitForMultipleObjects and other kernel
+// primitives, you will suffer the curse of the vengeful ghost of Dave Cutler.
+
+void prepare_for_parallel_testcases(int jobs, int, int)
+{
+  if (jobs != 1)
+    W(F("parallel execution of test cases is not supported on Windows."));
+}
+
 // General note: the magic numbers in this function are meaningful to
 // testlib.lua.  They indicate a number of failure scenarios in which
 // more detailed diagnostics are not possible.
@@ -144,10 +161,7 @@ void run_tests_in_children(test_enumerator const & next_test,
       
       change_current_working_dir(testdir);
       argv[4] = t.name.c_str();
-      pid_t child = process_spawn_redirected("NUL:",
-                                             "tester.log",
-                                             "tester.log",
-                                             argv);
+      pid_t child = process_spawn(argv);
       change_current_working_dir(run_dir);
 
       int status;
@@ -160,7 +174,6 @@ void run_tests_in_children(test_enumerator const & next_test,
         do_remove_recursive(testdir);
     }
 }
-
 
 // Local Variables:
 // mode: C++
