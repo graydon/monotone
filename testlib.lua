@@ -838,7 +838,7 @@ function run_tests(debugging, list_only, run_dir, logname, args, progress)
   chdir(run_dir);
 
   do
-     local s = prepare_to_enumerate_tests()
+     local s = prepare_to_enumerate_tests(P)
      if s ~= 0 then
 	P("Enumeration of tests failed.\n")
 	return s
