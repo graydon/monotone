@@ -1904,20 +1904,33 @@ void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
 {
+  typedef std::map<revision_id, rev_height> height_map;
+  static height_map height_cache;
+
   if (null_id(id))
     {
       height = rev_height::root_height();
       return;
     }
 
-  results res;
-  fetch(res, one_col, one_row,
-        query("SELECT height FROM heights WHERE revision = ?")
-        % text(id.inner()()));
+  height_map::const_iterator i = height_cache.find(id);
+  if (i == height_cache.end())
+    {
+      results res;
+      fetch(res, one_col, one_row,
+            query("SELECT height FROM heights WHERE revision = ?")
+            % text(id.inner()()));
 
-  I(res.size() == 1);
-  
-  height = rev_height(res[0][0]);
+      I(res.size() == 1);
+
+      height = rev_height(res[0][0]);
+      height_cache.insert(make_pair(id, height));
+    }
+  else
+    {
+      height = i->second;
+    }
+
   I(height.valid());
 }
 
