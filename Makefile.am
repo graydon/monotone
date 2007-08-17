@@ -450,39 +450,40 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 
 # extra files
 
-PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
-	figures/difference-between-versions.pdf					\
-	figures/file-id-manifest-id.pdf figures/fork.pdf			\
-	figures/general-workflow.pdf figures/linear-history.pdf			\
-	figures/local-workflow.pdf figures/manifest.pdf figures/merge.pdf	\
-	figures/network-workflow.pdf figures/parent-child-hashes.pdf		\
-	figures/parent-child-names-hashes.pdf figures/parent-child.pdf		\
-	figures/revision-chaining.pdf figures/revision.pdf			\
-	figures/statement.pdf figures/three-versions.pdf			\
+PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf			\
+	figures/difference-between-versions.pdf				\
+	figures/file-id-manifest-id.pdf figures/fork.pdf		\
+	figures/general-workflow.pdf figures/linear-history.pdf		\
+	figures/local-workflow.pdf figures/manifest.pdf			\
+	figures/merge.pdf figures/network-workflow.pdf			\
+	figures/parent-child-hashes.pdf					\
+	figures/parent-child-names-hashes.pdf figures/parent-child.pdf	\
+	figures/revision-chaining.pdf figures/revision.pdf		\
+	figures/statement.pdf figures/three-versions.pdf		\
 	figures/two-branches.pdf
 
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
 
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
-	README.changesets UPGRADE monotone.spec monotone.html			\
-	texinfo.css schema.sql std_hooks.lua test_hooks.lua testlib.lua		\
-	testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
-	$(srcdir)/tester-tests package.m4 package_revision.txt			\
-	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
-	sqlite/keywordhash.h contrib/README contrib/monoprof.sh			\
-	contrib/monotone-notify.pl						\
-	contrib/ciabot_monotone.py contrib/monotone.el				\
-	contrib/monotone-nav.el contrib/monotone.bash_completion		\
-	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
-	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf		\
-	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
-	contrib/Monotone.pm							\
-	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
-	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*) mac/monotone-pkg-logo.gif \
-	mac/monotone.pmproj mac/package-intro.rtf audit-includes 
+EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
+	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
+	std_hooks.lua test_hooks.lua testlib.lua lua-testsuite.lua	\
+	$(srcdir)/tests tester-testsuite.lua $(srcdir)/tester-tests	\
+	unit-testsuite.lua package.m4 package_revision.txt		\
+	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
+	sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
+	contrib/monotone-notify.pl contrib/ciabot_monotone.py		\
+	contrib/monotone.el contrib/monotone-nav.el			\
+	contrib/monotone.bash_completion				\
+	contrib/monotone.zsh_completion contrib/mtbrowse.sh		\
+	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
+	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
+	contrib/Monotone.pm $(wildcard $(srcdir)/contrib/*.lua)		\
+	contrib/usher.cc $(wildcard $(srcdir)/examples/*)		\
+	win32/monotone.iss win32/modpath.iss $(wildcard			\
+	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
@@ -611,14 +612,15 @@ check_PROGRAMS = unit_tester tester
 # but the FORCE hack does.
 .PHONY: check-local FORCE
 FORCE:
+.PRECIOUS: run_tester_tests run_unit_tests run_lua_tests
 
 mostlyclean-local:
 	rm -rf tester_dir unit-tests package_full_revision.txt
 
 DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
-	run_tester_tests run_unit_tests run_unit_tests		\
+	run_tester_tests run_unit_tests run_lua_tests		\
 	report_tester_tests report_unit_tests report_lua_tests	\
-	tester-tests.status unit_tests.status lua_tests.status
+	tester_tests.status unit_tests.status lua_tests.status
 
 # distcheck stuff
 

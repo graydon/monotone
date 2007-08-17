@@ -4,7 +4,7 @@
 
 testdir = initial_dir .. "/unit-tests"
 
-function prepare_to_enumerate_tests ()
+function prepare_to_enumerate_tests (P)
    local unit_test_path = getpathof("unit_tester")
    if unit_test_path == nil then return 1 end
 
@@ -42,7 +42,7 @@ end
 -- Cloned from testsuite.lua; just dumps information about the monotone
 -- build into the master logfile.
 
-function prepare_to_run_tests ()
+function prepare_to_run_tests (P)
    local monotone_path = getpathof("mtn")
    if monotone_path == nil then monotone_path = "mtn" end
 
