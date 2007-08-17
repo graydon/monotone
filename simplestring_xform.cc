@@ -5,6 +5,7 @@
 
 #include <set>
 #include <sstream>
+#include <iterator>
 
 using std::set;
 using std::string;
