@@ -315,10 +315,15 @@ private:
   }
 };
 
-extern bookkeeping_path const bookkeeping_root;
-extern path_component const bookkeeping_root_component;
+// these are #defines so that they will be constructed lazily, when
+// used.  this is necessary for correct behavior; the path constructors
+// use sanity.hh assertions and therefore must not run before
+// sanity::initialize is called.
+
+#define bookkeeping_root (bookkeeping_path("_MTN"))
+#define bookkeeping_root_component (path_component("_MTN"))
 // for migration
-extern path_component const old_bookkeeping_root_component;
+#define old_bookkeeping_root_component (path_component("MT"))
 
 // this will always be an absolute path
 class system_path : public any_path

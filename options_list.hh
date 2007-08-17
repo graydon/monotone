@@ -229,7 +229,7 @@ OPTION(globals, dump, true, "dump",
         gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies
 {
-  global_sanity.filename = system_path(arg).as_external();
+  global_sanity.set_dump_path(system_path(arg).as_external());
 }
 #endif
 
@@ -493,7 +493,7 @@ GOPT(ticker, "ticker", std::string, ,
 #ifdef option_bodies
 {
   ticker = arg;
-  if (ticker == "none" || global_sanity.quiet)
+  if (ticker == "none" || global_sanity.quiet_p())
     ui.set_tick_writer(new tick_write_nothing);
   else if (ticker == "dot")
     ui.set_tick_writer(new tick_write_dot);

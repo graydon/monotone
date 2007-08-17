@@ -979,6 +979,7 @@ int main(int argc, char **argv)
 
   try
     {
+      global_sanity.initialize(argc, argv, "C");
       parse_command_line(argc, argv,
                          want_help, need_help, debugging, list_only,
                          run_one, jobs, tests_to_run);
