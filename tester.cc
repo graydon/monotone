@@ -50,6 +50,20 @@ string dirname(string const & s)
   return s.substr(0, sep);
 }
 
+// Ensure the existence of DIR before proceeding.
+static void ensure_dir(string const & dir)
+{
+  try
+    {
+      do_mkdir(dir);
+    }
+  catch (informative_failure &)
+    {
+      if (get_path_status(dir) != path::directory)
+        throw;
+    }
+}
+
 map<string, string> orig_env_vars;
 
 static string argv0;
@@ -1046,16 +1060,7 @@ int main(int argc, char **argv)
           source_dir = get_current_working_dir();
           testfile = source_dir + "/" + basename(testfile);
 
-          switch (get_path_status(run_dir))
-            {
-            case path::directory: break;
-            case path::file:
-              P(F("cannot create directory '%s': it is a file") % run_dir);
-              return 1;
-            case path::nonexistent:
-              do_mkdir(run_dir);
-            }
-
+          ensure_dir(run_dir);
           change_current_working_dir(run_dir);
 
           lua_lib st(firstdir, testfile);
@@ -1068,15 +1073,8 @@ int main(int argc, char **argv)
           string testdir_base = basename(testdir);
           run_dir = run_dir + "/" + testdir_base;
           string logfile = run_dir + ".log";
-          switch (get_path_status(run_dir))
-            {
-            case path::directory: break;
-            case path::file:
-              P(F("cannot create directory '%s': it is a file") % run_dir);
-              return 1;
-            case path::nonexistent:
-              do_mkdir(run_dir);
-            }
+
+          ensure_dir(run_dir);
 
           prepare_for_parallel_testcases(jobs, jread, jwrite);
 
