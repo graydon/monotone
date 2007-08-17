@@ -292,7 +292,7 @@ end
 ------------------------------------------------------------------------
 testdir = srcdir.."/tests"
 
-function prepare_to_run_tests ()
+function prepare_to_run_tests (P)
    -- We have a bunch of tests that depend on being able to create
    -- files or directories that we cannot read or write (mostly to
    -- test error handling behavior).

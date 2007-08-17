@@ -40,15 +40,17 @@ test.bglist = {}
 test.log = nil -- logfile for this test
 
 -- hook to be overridden by the main testsuite file, if necessary;
--- called after determining the set of tests to run
-function prepare_to_run_tests()
+-- called after determining the set of tests to run.
+-- P may be used to write messages to the user's tty.
+function prepare_to_run_tests(P)
    return 0
 end
 
 -- hook to be overridden by the main testsuite file, if necessary;
 -- called after opening the master logfile, but _before_ parsing
 -- arguments or determining the set of tests to run.
-function prepare_to_enumerate_tests()
+-- P may be used to write messages to the user's tty.
+function prepare_to_enumerate_tests(P)
    return 0
 end
 
@@ -902,7 +904,7 @@ function run_tests(debugging, list_only, run_dir, logname, args, progress)
   end
 
   logfile:write("Running on ", get_ostype(), "\n\n")
-  local s = prepare_to_run_tests()
+  local s = prepare_to_run_tests(P)
   if s ~= 0 then
     P("Test suite preparation failed.\n")
     return s 
