@@ -99,6 +99,47 @@ ticker::operator+=(size_t t)
     }
 }
 
+// We would like to put these in an anonymous namespace but we can't because
+// struct user_interface needs to make them friends.
+struct tick_writer
+{
+public:
+  tick_writer() {}
+  virtual ~tick_writer() {}
+  virtual void write_ticks() = 0;
+  virtual void clear_line() = 0;
+};
+
+struct tick_write_count : virtual public tick_writer
+{
+public:
+  tick_write_count();
+  ~tick_write_count();
+  void write_ticks();
+  void clear_line();
+private:
+  std::vector<size_t> last_tick_widths;
+  size_t last_tick_len;
+};
+
+struct tick_write_dot : virtual public tick_writer
+{
+public:
+  tick_write_dot();
+  ~tick_write_dot();
+  void write_ticks();
+  void clear_line();
+private:
+  std::map<std::string,size_t> last_ticks;
+  unsigned int chars_on_line;
+};
+
+struct tick_write_nothing : virtual public tick_writer
+{
+public:
+  void write_ticks() {}
+  void clear_line() {}
+};
 
 tick_write_count::tick_write_count() : last_tick_len(0)
 {
@@ -382,9 +423,9 @@ void user_interface::initialize()
 #endif
   clog.unsetf(ios_base::unitbuf);
   if (have_smart_terminal())
-    set_tick_writer(new tick_write_count);
+    set_tick_write_count();
   else
-    set_tick_writer(new tick_write_dot);
+    set_tick_write_dot();
 }
 
 user_interface::~user_interface()
@@ -414,12 +455,29 @@ user_interface::set_tick_trailer(string const & t)
 }
 
 void
-user_interface::set_tick_writer(tick_writer * t)
+user_interface::set_tick_write_dot()
 {
   if (t_writer != 0)
     delete t_writer;
-  t_writer = t;
+  t_writer = new tick_write_dot;
 }
+
+void
+user_interface::set_tick_write_count()
+{
+  if (t_writer != 0)
+    delete t_writer;
+  t_writer = new tick_write_count;
+}
+
+void
+user_interface::set_tick_write_nothing()
+{
+  if (t_writer != 0)
+    delete t_writer;
+  t_writer = new tick_write_nothing;
+}
+
 
 void
 user_interface::write_ticks()

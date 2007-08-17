@@ -12,7 +12,7 @@
 #include <iterator>
 #include <sstream>
 #include <unistd.h>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>

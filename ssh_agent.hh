@@ -15,7 +15,7 @@
 #include "botan/rsa.h"
 #include "botan/bigint.h"
 #include <boost/shared_ptr.hpp>
-#include <vector>
+#include "vector.hh"
 #include "platform.hh"
 
 class ssh_agent : ssh_agent_platform

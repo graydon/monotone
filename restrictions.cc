@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include "restrictions.hh"
 #include "revision.hh"
@@ -306,7 +306,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
     }
   else
     {
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
       {
         // printing this slows down "log <file>".
         L(FL("(debug) default exclude of nid %d path '%s'") 

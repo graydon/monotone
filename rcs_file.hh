@@ -10,7 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <vector>
+#include "vector.hh"
 #include <map>
 #include <boost/shared_ptr.hpp>
 
