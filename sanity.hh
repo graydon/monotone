@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <vector>
+#include <ostream>
 
 #include "boost/current_function.hpp"
 
