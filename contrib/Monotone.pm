@@ -15,7 +15,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw( );
  
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 #constructor
 sub new {
@@ -41,6 +41,24 @@ sub open ($$) {
     } else {
         $self->{PID} = open2(\*READ, \*WRITE, "mtn automate stdio" );
     }
+    die("Unable to start mtn automate stdio session") if (!(defined($self->{PID}) && $self->{PID}));
+    $self->{In} = *READ;
+    $self->{Out} = *WRITE;
+    $self->{CmdNum} = 0;
+
+    # my ($out, $err) = $self->call("interface_version");
+    # die("Wrong monotone interface version: $out") if ($out != 5.0 || $err ne "");
+}
+
+sub open_args ($) {
+    my $self=shift;
+    local (*READ, *WRITE);
+    die("Monotone automate session already running!") if (defined($self->{PID}) && $self->{PID});
+    my $cmd = "mtn automate stdio";
+    while (my $arg=shift) {
+        $cmd = $cmd." $arg";
+    }
+    $self->{PID} = open2(\*READ, \*WRITE, $cmd );
     die("Unable to start mtn automate stdio session") if (!(defined($self->{PID}) && $self->{PID}));
     $self->{In} = *READ;
     $self->{Out} = *WRITE;
