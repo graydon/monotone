@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-08-07 19:46-0400\n"
-"PO-Revision-Date: 2007-08-07 21:54-0400\n"
+"POT-Creation-Date: 2007-08-13 02:43-0400\n"
+"PO-Revision-Date: 2007-08-13 03:31-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -133,7 +133,7 @@ msgstr "Imprime los ancestros de las revisiones dadas"
 
 #: automate.cc:111 automate.cc:161 automate.cc:208 automate.cc:235
 #: automate.cc:274 automate.cc:278 automate.cc:371 automate.cc:399
-#: automate.cc:1190 cmd_list.cc:658 revision.cc:1773
+#: automate.cc:1190 cmd_list.cc:658 revision.cc:1777
 #, c-format
 msgid "No such revision %s"
 msgstr "La revisión %s no existe"
@@ -181,7 +181,7 @@ msgstr "no se requieren argumentos"
 msgid "Lists the roots of the revision graph"
 msgstr "Lista las raices del grafo de revisiones"
 
-#: automate.cc:362 automate.cc:390 cmd_list.cc:645 revision.cc:1765
+#: automate.cc:362 automate.cc:390 cmd_list.cc:645 revision.cc:1769
 msgid "REV"
 msgstr "REV"
 
@@ -1099,7 +1099,7 @@ msgstr "ID (pass|fail|true|false|yes|no|1|0)"
 msgid "Notes the results of running a test on a revision"
 msgstr "Anota los resultados de correr un test en una revisión"
 
-#: cmd_key_cert.cc:294 cmd_ws_commit.cc:277
+#: cmd_key_cert.cc:294 cmd_key_cert.cc:309 cmd_ws_commit.cc:277
 msgid "REVISION"
 msgstr "REVISIÓN"
 
@@ -1112,20 +1112,29 @@ msgstr "Aprueba una revisión particular"
 msgid "need --branch argument for approval"
 msgstr "necesita el argumento '--branch'para aprobar"
 
-#: cmd_key_cert.cc:309
+#: cmd_key_cert.cc:310
+msgid "Suspends a particular revision"
+msgstr "Suspende una revisión en particular"
+
+#: cmd_key_cert.cc:320
+#, c-format
+msgid "need --branch argument to suspend"
+msgstr "necesita el argumento '--branch' para suspender"
+
+#: cmd_key_cert.cc:324
 msgid "REVISION [COMMENT]"
 msgstr "REVISIÓN [COMENTARIO]"
 
-#: cmd_key_cert.cc:310
+#: cmd_key_cert.cc:325
 msgid "Comments on a particular revision"
 msgstr "Comentarios sobre una revisión particular"
 
-#: cmd_key_cert.cc:324
+#: cmd_key_cert.cc:339
 #, c-format
 msgid "edit comment failed"
 msgstr "falló la edición del comentario"
 
-#: cmd_key_cert.cc:329
+#: cmd_key_cert.cc:344
 #, c-format
 msgid "empty comment"
 msgstr "comentario vacio"
@@ -2445,13 +2454,15 @@ msgid ""
 "For information on a specific command, type 'mtn help <command_name> "
 "[subcommand_name ...]'."
 msgstr ""
-"Para información sobre un comando específico, escriba 'mtn help <nombre_comando> "
-"[nomber_subcomando ...]'."
+"Para información sobre un comando específico, escriba 'mtn help "
+"<nombre_comando> [nomber_subcomando ...]'."
 
 #: commands.cc:665
 #, c-format
 msgid "To see the commands available within a group, type 'mtn help <group_name>'."
-msgstr "Para ver los comandos disponibles en un grupo, escriba 'mtn help <nombre_grupo>'."
+msgstr ""
+"Para ver los comandos disponibles en un grupo, escriba 'mtn help "
+"<nombre_grupo>'."
 
 #: commands.cc:668
 #, c-format
@@ -2459,8 +2470,8 @@ msgid ""
 "Note that you can always abbreviate a command name as long as it does not "
 "conflict with other names."
 msgstr ""
-"Tenga en cuenta que Ud. siempre puede abreviar el nombre del comando "
-"siempre y cuando no entre en conflicto con otros nombres."
+"Tenga en cuenta que Ud. siempre puede abreviar el nombre del comando siempre "
+"y cuando no entre en conflicto con otros nombres."
 
 #: commands.cc:686
 #, c-format
@@ -3026,17 +3037,17 @@ msgstr "el certificado de la revisión '%s' no existe en la base de datos"
 msgid "dropping cert"
 msgstr "descartando certificado"
 
-#: database.cc:3373
+#: database.cc:3375
 #, c-format
 msgid "no database specified"
 msgstr "no se especificó base de datos"
 
-#: database.cc:3383
+#: database.cc:3385
 #, c-format
 msgid "database %s does not exist"
 msgstr "base de datos %s inexistente"
 
-#: database.cc:3401
+#: database.cc:3403
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -3049,17 +3060,17 @@ msgstr ""
 "Esta es en realidad un área de trabajo.  Ud. quizo decir:\n"
 "%s"
 
-#: database.cc:3406
+#: database.cc:3408
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s es un directorio, no una base de datos"
 
-#: database.cc:3416
+#: database.cc:3418
 #, c-format
 msgid "database %s already exists"
 msgstr "la base de datos %s ya existe"
 
-#: database.cc:3421
+#: database.cc:3423
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -3865,7 +3876,7 @@ msgstr "forzado autor del 'commit'"
 msgid "block size in bytes for \"automate stdio\" output"
 msgstr "tamaño de bloque en bytes para salida de \"automate stdio\""
 
-#: options_list.hh:32 options_list.hh:318 options_list.hh:361
+#: options_list.hh:32 options_list.hh:327 options_list.hh:370
 #, c-format
 msgid "cannot be zero or negative"
 msgstr "no puede cero o negativo"
@@ -3984,128 +3995,132 @@ msgid "include anything described by its argument"
 msgstr "incluye tod lo descrito por este argumento"
 
 #: options_list.hh:286
+msgid "Do not ignore revisions marked as suspended"
+msgstr "No ignora revisiones marcadas como suspendidas"
+
+#: options_list.hh:295
 msgid "set key for signatures"
 msgstr "configura la clave a usar para las firmas"
 
-#: options_list.hh:294
+#: options_list.hh:303
 msgid "set location of key store"
 msgstr "configura la ubicación del llavero"
 
-#: options_list.hh:303
+#: options_list.hh:312
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "envia la llave especificada incluso si no ha firmado nada"
 
-#: options_list.hh:313
+#: options_list.hh:322
 msgid "limit log output to the last number of entries"
 msgstr "limita la salida dd registro al último número de entradas"
 
-#: options_list.hh:322
+#: options_list.hh:331
 msgid "file to write the log to"
 msgstr "archivo al que escribir el registro"
 
 # TODO: "'changelog' del 'commit'". Mejor 'commit' suicidio.... pero que usar?
-#: options_list.hh:333
+#: options_list.hh:342
 msgid "set commit changelog message"
 msgstr "configura el mensaje de 'changelog' del 'commit'"
 
-#: options_list.hh:340
+#: options_list.hh:349
 msgid "set filename containing commit changelog message"
 msgstr "configura el archivo que contiene el mensaje de 'changelog' del 'commit'"
 
-#: options_list.hh:348
+#: options_list.hh:357
 msgid "perform the operations for files missing from workspace"
 msgstr "realiza las operaciones para archivos faltantes en el área de trabajo"
 
-#: options_list.hh:356
+#: options_list.hh:365
 msgid "limit log output to the next number of entries"
 msgstr "limita la salida de registro al siguiente número de entradas"
 
-#: options_list.hh:366
+#: options_list.hh:375
 msgid "exclude files when printing logs"
 msgstr "excluye archivos al imprimir los registros"
 
-#: options_list.hh:374
+#: options_list.hh:383
 msgid "do not use ASCII graph to display ancestry"
 msgstr "no use grafo ASCII para mostrar ascendencia"
 
-#: options_list.hh:382
+#: options_list.hh:391
 msgid "do not ignore any files"
 msgstr "no ignorar ningún archivo"
 
-#: options_list.hh:390
+#: options_list.hh:399
 msgid "exclude merges when printing logs"
 msgstr "excluir 'merges' al imprimir los registros"
 
-#: options_list.hh:398
+#: options_list.hh:407
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "no cargar los archivos lua ~/.monotone/monotonerc o _MTN/monotonerc"
 
-#: options_list.hh:406
+#: options_list.hh:415
 msgid "do not load standard lua hooks"
 msgstr "no cargar los hooks lua standard"
 
-#: options_list.hh:414
+#: options_list.hh:423
 msgid "record process id of server"
 msgstr "registrar el identificador de proceso del servidor"
 
-#: options_list.hh:422
+#: options_list.hh:431
 msgid "suppress verbose, informational and progress messages"
 msgstr "suprime mensajes adicionales, informacionales y de progreso"
 
-#: options_list.hh:432
+#: options_list.hh:441
 msgid "load extra rc file"
 msgstr "cargar archivo rc extra"
 
-#: options_list.hh:440
+#: options_list.hh:449
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "suprime mensajes adicionales, de advertencia, informacionales y de progreso"
 
-#: options_list.hh:450
+#: options_list.hh:459
 msgid "also operate on the contents of any listed directories"
 msgstr "tambien operar en los contenidos de cualquier directorio listado"
 
-#: options_list.hh:459
+#: options_list.hh:468
 msgid "select revision id for operation"
 msgstr "selecciona el identificador de revisión para operación"
 
-#: options_list.hh:467
+#: options_list.hh:476
 msgid "limit search for workspace to specified root"
 msgstr "limita la busqueda de área de trabajo a la raiz especificada"
 
-#: options_list.hh:475
+#: options_list.hh:484
 msgid "use the current arguments as the future default"
 msgstr "utiliza los argumentos actuales por omisión en el futuro"
 
-#: options_list.hh:483
+#: options_list.hh:492
 msgid "set ticker style (count|dot|none)"
 msgstr "selecciona el estilo del contador (count|dot|none)"
 
-#: options_list.hh:494
+#: options_list.hh:503
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "argumento debe ser 'none', 'dot' o 'count'"
 
-#: options_list.hh:498
+#: options_list.hh:507
 msgid "revision(s) to start logging at"
 msgstr "revisión(es) a la cual se comienza a registrar"
 
-#: options_list.hh:505
+#: options_list.hh:514
 msgid "revision(s) to stop logging at"
 msgstr "revisión(es) a la cual se deja de registrar"
 
-#: options_list.hh:513
+#: options_list.hh:522
 msgid "perform the operations for unknown files from workspace"
 msgstr "realiza las operaciones para archivos desconocidos del área de trabajo"
 
-#: options_list.hh:522
+#: options_list.hh:531
 msgid "verbose completion output"
 msgstr "salida de completación detallada"
 
-#: options_list.hh:530
+#: options_list.hh:539
 msgid "print version number, then exit"
 msgstr "imprime el número de versión, luego termina"
 
-#: options_list.hh:538
+#: options_list.hh:547
 msgid "insert command line arguments taken from the given file"
 msgstr ""
 "inserta los argumentos a la línea de comandos tomados del archivo "
@@ -4196,51 +4211,51 @@ msgid_plural "%d unknown paths"
 msgstr[0] "%d camino desconocido"
 msgstr[1] "%d caminos desconocidos"
 
-#: revision.cc:740
+#: revision.cc:744
 #, c-format
 msgid "the command '%s %s' cannot be restricted in a two-parent workspace"
 msgstr ""
 "el comando '%s %s' no puede ser restringido en un área de trabajo con dos "
 "padres"
 
-#: revision.cc:956
+#: revision.cc:960
 #, c-format
 msgid "scanning for bogus merge edges"
 msgstr "buscando aristas de 'merge' incorrectos"
 
-#: revision.cc:998
+#: revision.cc:1002
 #, c-format
 msgid "optimizing out redundant edge %d -> %d"
 msgstr "removiendo aristas redundantes %d -> %d"
 
-#: revision.cc:1007
+#: revision.cc:1011
 #, c-format
 msgid "failed to eliminate edge %d -> %d"
 msgstr "falla en la eliminación de arista %d -> %d"
 
-#: revision.cc:1018
+#: revision.cc:1022
 #, c-format
 msgid "rebuilding %d nodes"
 msgstr "reconstruyendo %d nodos"
 
-#: revision.cc:1218
+#: revision.cc:1222
 #, c-format
 msgid "Directory %s for path %s cannot be added, as there is a file in the way"
 msgstr ""
 "Directorio %s para el camino %s no puede ser agregado, hay un archivo en el "
 "camino"
 
-#: revision.cc:1239
+#: revision.cc:1243
 #, c-format
 msgid "Path %s cannot be added, as there is a directory in the way"
 msgstr "Camino %s no puede ser agregado, hay un directorio en el camino"
 
-#: revision.cc:1242
+#: revision.cc:1246
 #, c-format
 msgid "Path %s added twice with differing content"
 msgstr "Camino %s agregado dos veces con contenido diferente"
 
-#: revision.cc:1526
+#: revision.cc:1530
 #, c-format
 msgid ""
 "unknown attribute '%s' on path '%s'\n"
@@ -4253,45 +4268,45 @@ msgstr ""
 "(si solamente quiere eliminarlo, use el argumento '--drop-attr', pero\n"
 "si realmente quiere mantener el atributo, lo podemos ayudar)"
 
-#: revision.cc:1632
+#: revision.cc:1636
 #, c-format
 msgid "converting existing revision graph to new roster-style revisions"
 msgstr ""
 "convirtiendo el grafo de revisiones existentes a las nuevas revisiones con "
 "rosters"
 
-#: revision.cc:1687
+#: revision.cc:1691
 #, c-format
 msgid "rebuilding revision graph from manifest certs"
 msgstr ""
 "reconstruyendo el grafo de revisiones a partir de los certificados de "
 "manifiestos"
 
-#: revision.cc:1734
+#: revision.cc:1738
 #, c-format
 msgid "regenerating cached rosters and heights"
 msgstr "regenerando rosters y alturas en cache"
 
-#: revision.cc:1746
+#: revision.cc:1750
 msgid "regenerated"
 msgstr "regenerado"
 
-#: revision.cc:1762
+#: revision.cc:1766
 #, c-format
 msgid "finished regenerating cached rosters and heights"
 msgstr "finalizada la regeneración de rosters y alturas en cache"
 
-#: revision.cc:1766
+#: revision.cc:1770
 msgid "Shows a revision's height"
 msgstr "Muestra la altura de una revisión"
 
-#: revision.cc:1776
+#: revision.cc:1780
 #, c-format
 msgid "cached height: %s"
 msgstr "altura en cache: %s"
 
 # TODO: Use a variable here instead of hardwire "version '1'"
-#: revision.cc:1859
+#: revision.cc:1863
 #, c-format
 msgid ""
 "encountered a revision with unknown format, version '%s'\n"
@@ -4532,11 +4547,11 @@ msgstr "esquema %s está al día"
 msgid "successful migration to schema %s"
 msgstr "migración exitosa al esquema %s"
 
-#: std_hooks.lua:39
+#: std_hooks.lua:48
 msgid "Press enter"
 msgstr "Presione Entrar"
 
-#: std_hooks.lua:41
+#: std_hooks.lua:50
 msgid "Press enter when the subprocess has completed"
 msgstr "Presione Entrar cuando el subproceso haya terminado"
 
@@ -4607,12 +4622,12 @@ msgstr "no se pudo abrir el archivo de registro '%s'"
 msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 msgstr "La sintaxis URI es inválida. Uso ud. un URI estilo 'scp'?"
 
-#: update.cc:72
+#: update.cc:73
 #, c-format
 msgid "failed to decode boolean testresult cert value '%s'"
 msgstr "no se pudo decodificar el valor del certificado 'testresult' booleano '%s'"
 
-#: update.cc:161
+#: update.cc:206
 #, c-format
 msgid "cannot determine branch for update"
 msgstr "no se pudo determinar rama para hacer actualización"

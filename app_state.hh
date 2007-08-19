@@ -14,7 +14,7 @@ class app_state;
 class lua_hooks;
 
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 

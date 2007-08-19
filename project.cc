@@ -2,7 +2,7 @@
 // GNU GPL V2 or later
 
 #include "base.hh"
-#include <vector>
+#include "vector.hh"
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -13,6 +13,8 @@
 using std::string;
 using std::set;
 using std::vector;
+using std::multimap;
+using std::make_pair;
 
 project_t::project_t(app_state & app)
   : app(app)
@@ -26,6 +28,8 @@ project_t::get_branch_list(std::set<branch_name> & names)
       std::vector<std::string> got;
       indicator = app.db.get_branches(got);
       branches.clear();
+      multimap<revision_id, revision_id> inverse_graph_cache;
+  
       for (std::vector<std::string>::iterator i = got.begin();
            i != got.end(); ++i)
         {
@@ -33,7 +37,7 @@ project_t::get_branch_list(std::set<branch_name> & names)
           const branch_name branch(*i);
           std::set<revision_id> heads;
 
-          get_branch_heads(branch, heads);
+          get_branch_heads(branch, heads, &inverse_graph_cache);
           
           if (!heads.empty())
             branches.insert(branch);
@@ -50,6 +54,8 @@ project_t::get_branch_list(globish const & glob,
   std::vector<std::string> got;
   app.db.get_branches(glob(), got);
   names.clear();
+  multimap<revision_id, revision_id> inverse_graph_cache;
+  
   for (std::vector<std::string>::iterator i = got.begin();
        i != got.end(); ++i)
     {
@@ -57,7 +63,7 @@ project_t::get_branch_list(globish const & glob,
       const branch_name branch(*i);
       std::set<revision_id> heads;
 
-      get_branch_heads(branch, heads);
+      get_branch_heads(branch, heads, &inverse_graph_cache);
 
       if (!heads.empty())
         names.insert(branch);
@@ -108,7 +114,8 @@ namespace
 }
 
 void
-project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads)
+project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
+                            multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
   std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[name];
   if (branch.first.outdated())
@@ -123,7 +130,7 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
                                                     branch.second);
 
       not_in_branch p(app, branch_encoded);
-      erase_ancestors_and_failures(branch.second, p, app);
+      erase_ancestors_and_failures(branch.second, p, app, inverse_graph_cache_ptr);
       
       if (!app.opts.ignore_suspend_certs)
         {

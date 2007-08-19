@@ -12,7 +12,7 @@
 ** This file contains routines used for analyzing expressions and
 ** for generating VDBE code that evaluates expressions in SQLite.
 **
-** $Id: expr.c,v 1.298 2007/06/15 16:37:29 danielk1977 Exp $
+** $Id: expr.c,v 1.303 2007/08/07 17:13:04 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -71,8 +71,10 @@ Expr *sqlite3ExprSetColl(Parse *pParse, Expr *pExpr, Token *pName){
 CollSeq *sqlite3ExprCollSeq(Parse *pParse, Expr *pExpr){
   CollSeq *pColl = 0;
   if( pExpr ){
+    int op;
     pColl = pExpr->pColl;
-    if( pExpr->op==TK_CAST && !pColl ){
+    op = pExpr->op;
+    if( (op==TK_CAST || op==TK_UPLUS) && !pColl ){
       return sqlite3ExprCollSeq(pParse, pExpr->pLeft);
     }
   }
@@ -175,7 +177,7 @@ static int binaryCompareP1(Expr *pExpr1, Expr *pExpr2, int jumpIfNull){
 ** Argument pRight (but not pLeft) may be a null pointer. In this case,
 ** it is not considered.
 */
-CollSeq* sqlite3BinaryCompareCollSeq(
+CollSeq *sqlite3BinaryCompareCollSeq(
   Parse *pParse, 
   Expr *pLeft, 
   Expr *pRight
@@ -1138,11 +1140,17 @@ static int lookupName(
       for(j=0; j<pEList->nExpr; j++){
         char *zAs = pEList->a[j].zName;
         if( zAs!=0 && sqlite3StrICmp(zAs, zCol)==0 ){
-          Expr *pDup;
+          Expr *pDup, *pOrig;
           assert( pExpr->pLeft==0 && pExpr->pRight==0 );
           assert( pExpr->pList==0 );
           assert( pExpr->pSelect==0 );
-          pDup = sqlite3ExprDup(pEList->a[j].pExpr);
+          pOrig = pEList->a[j].pExpr;
+          if( !pNC->allowAgg && ExprHasProperty(pOrig, EP_Agg) ){
+            sqlite3ErrorMsg(pParse, "misuse of aliased aggregate %s", zAs);
+            sqliteFree(zCol);
+            return 2;
+          }
+          pDup = sqlite3ExprDup(pOrig);
           if( pExpr->flags & EP_ExpCollate ){
             pDup->pColl = pExpr->pColl;
             pDup->flags |= EP_ExpCollate;
@@ -1152,6 +1160,7 @@ static int lookupName(
           memcpy(pExpr, pDup, sizeof(*pExpr));
           sqliteFree(pDup);
           cnt = 1;
+          pMatch = 0;
           assert( zTab==0 && zDb==0 );
           goto lookupname_end_2;
         }
@@ -1569,7 +1578,7 @@ void sqlite3CodeSubselect(Parse *pParse, Expr *pExpr){
       }else if( pExpr->pList ){
         /* Case 2:     expr IN (exprlist)
         **
-	** For each expression, build an index key from the evaluation and
+        ** For each expression, build an index key from the evaluation and
         ** store it in the temporary table. If <expr> is a column, then use
         ** that columns affinity when building index keys. If <expr> is not
         ** a column, use numeric affinity.
@@ -2049,7 +2058,7 @@ void sqlite3ExprCode(Parse *pParse, Expr *pExpr){
       if( !pParse->trigStack ){
         sqlite3ErrorMsg(pParse,
                        "RAISE() may only be used within a trigger-program");
-	return;
+        return;
       }
       if( pExpr->iColumn!=OE_Ignore ){
          assert( pExpr->iColumn==OE_Rollback ||

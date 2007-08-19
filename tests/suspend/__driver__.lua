@@ -18,7 +18,7 @@ selmap("h:testbranch", {})
 check(mtn("automate", "heads"), 0, true, false)
 check(samelines("stdout", {}))
 
-check(mtn("automate", "heads", "--ignore_suspend_certs"), 0, true, false)
+check(mtn("automate", "heads", "--ignore-suspend-certs"), 0, true, false)
 check(samelines("stdout", {REV2}))
 
 -- but still allows children to be committed
@@ -78,7 +78,7 @@ check(base_revision() == OREV2b)
 -- Check that update complains in that case if we're ignoring suspend certs
 
 check(mtn("up", "-r", OREV1, "-b", "otherbranch"), 0, false, false)
-check(mtn("up", "--ignore_suspend_certs"), 1, false, false)
+check(mtn("up", "--ignore-suspend-certs"), 1, false, false)
 check(base_revision() == OREV1)
 
 -- Check that update complains about multiple heads when all candidates are suspended
@@ -93,6 +93,6 @@ check(base_revision() == OREV1)
 check(mtn("ls", "branches"), 0, true, true)
 check(samelines("stdout", {"testbranch"}))
 
-check(mtn("ls", "branches", "--ignore_suspend_certs"), 0, true, true)
+check(mtn("ls", "branches", "--ignore-suspend-certs"), 0, true, true)
 check(samelines("stdout", {"otherbranch", "testbranch"}))
 

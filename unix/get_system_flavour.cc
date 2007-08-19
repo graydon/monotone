@@ -6,6 +6,7 @@
 #include "base.hh"
 #include <sys/utsname.h>
 #include "sanity.hh"
+#include <ostream> // for operator<<
 
 void get_system_flavour(std::string & ident)
 {

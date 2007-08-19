@@ -12,6 +12,7 @@
 #include "sanity.hh"
 #include "platform.hh"
 #include <netxx/streamserver.h>
+#include <ostream> // for operator<<
 
 #ifdef WIN32
 #include <windows.h>

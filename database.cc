@@ -15,7 +15,7 @@
 #include <list>
 #include <set>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <string.h>
 
@@ -770,13 +770,13 @@ database::fetch(results & res,
   I(params == int(query.args.size()));
 
   // profiling finds this logging to be quite expensive
-  if (global_sanity.debug)
+  if (global_sanity.debug_p())
     L(FL("binding %d parameters for %s") % params % query.sql_cmd);
 
   for (int param = 1; param <= params; param++)
     {
       // profiling finds this logging to be quite expensive
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
         {
           string log;
           switch (query.args[param-1].type)
@@ -1900,6 +1900,9 @@ database::get_revision(revision_id const & id,
   dat = revision_data(rdat);
 }
 
+typedef std::map<revision_id, rev_height> height_map;
+static height_map height_cache;
+
 void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
@@ -1910,14 +1913,24 @@ database::get_rev_height(revision_id const & id,
       return;
     }
 
-  results res;
-  fetch(res, one_col, one_row,
-        query("SELECT height FROM heights WHERE revision = ?")
-        % text(id.inner()()));
+  height_map::const_iterator i = height_cache.find(id);
+  if (i == height_cache.end())
+    {
+      results res;
+      fetch(res, one_col, one_row,
+            query("SELECT height FROM heights WHERE revision = ?")
+            % text(id.inner()()));
 
-  I(res.size() == 1);
-  
-  height = rev_height(res[0][0]);
+      I(res.size() == 1);
+
+      height = rev_height(res[0][0]);
+      height_cache.insert(make_pair(id, height));
+    }
+  else
+    {
+      height = i->second;
+    }
+
   I(height.valid());
 }
 
@@ -1928,6 +1941,8 @@ database::put_rev_height(revision_id const & id,
   I(!null_id(id));
   I(revision_exists(id));
   I(height.valid());
+  
+  height_cache.erase(id);
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())

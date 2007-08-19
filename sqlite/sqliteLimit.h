@@ -12,7 +12,7 @@
 ** 
 ** This file defines various limits of what SQLite can process.
 **
-** @(#) $Id: limits.h,v 1.9 2007/06/09 09:53:51 drh Exp $
+** @(#) $Id: sqliteLimit.h,v 1.1 2007/06/19 15:23:48 drh Exp $
 */
 
 /*

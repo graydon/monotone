@@ -35,12 +35,12 @@ AC_CACHE_CHECK([size of $1], [AS_TR_SH([ac_cv_sizeof_$1])],
 AC_DEFUN([MTN_CHOOSE_USE_OF_TYPE], [
 MTN_COMPUTE_SIZEOF([$1])
 case $AS_TR_SH([ac_cv_sizeof_$1]) in
-  (2) mtn_s16_type='$1'
-      mtn_u16_type='$2' ;;
-  (4) mtn_s32_type='$1'
-      mtn_u32_type='$2' ;;
-  (8) mtn_s64_type='$1'
-      mtn_u64_type='$2' ;;
+  2) mtn_s16_type='$1'
+     mtn_u16_type='$2' ;;
+  4) mtn_s32_type='$1'
+     mtn_u32_type='$2' ;;
+  8) mtn_s64_type='$1'
+     mtn_u64_type='$2' ;;
 esac])
 
 dnl AC_LANG_BOOL_COMPILE_TRY is not documented, but is very helpful.

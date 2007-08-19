@@ -30,7 +30,7 @@
 ** the version number) and changes its name to "sqlite3.h" as
 ** part of the build process.
 **
-** @(#) $Id: sqlite.h.in,v 1.212 2007/06/14 20:57:19 drh Exp $
+** @(#) $Id: sqlite.h.in,v 1.219 2007/08/08 12:11:21 drh Exp $
 */
 #ifndef _SQLITE3_H_
 #define _SQLITE3_H_
@@ -41,6 +41,13 @@
 */
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+/*
+** Add the ability to override 'extern'
+*/
+#ifndef SQLITE_EXTERN
+# define SQLITE_EXTERN extern
 #endif
 
 /*
@@ -81,8 +88,8 @@ extern "C" {
 **
 ** See also: [sqlite3_libversion()] and [sqlite3_libversion_number()].
 */
-#define SQLITE_VERSION         "3.4.0"
-#define SQLITE_VERSION_NUMBER 3004000
+#define SQLITE_VERSION         "3.4.2"
+#define SQLITE_VERSION_NUMBER 3004002
 
 /*
 ** CAPI3REF: Run-Time Library Version Numbers
@@ -100,7 +107,7 @@ extern "C" {
 ** is provided for DLL users who can only access functions and not
 ** constants within the DLL.
 */
-extern const char sqlite3_version[];
+SQLITE_EXTERN const char sqlite3_version[];
 const char *sqlite3_libversion(void);
 int sqlite3_libversion_number(void);
 
@@ -369,7 +376,7 @@ sqlite_int64 sqlite3_last_insert_rowid(sqlite3*);
 **
 ** SQLite implements the command "DELETE FROM table" without a WHERE clause
 ** by dropping and recreating the table.  (This is much faster than going
-** through and deleting individual elements form the table.)  Because of
+** through and deleting individual elements from the table.)  Because of
 ** this optimization, the change count for "DELETE FROM table" will be
 ** zero regardless of the number of elements that were originally in the
 ** table. To get an accurate count of the number of rows deleted, use
@@ -963,10 +970,14 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 ** The second argument "zSql" is the statement to be compiled, encoded
 ** as either UTF-8 or UTF-16.  The sqlite3_prepare() and sqlite3_prepare_v2()
 ** interfaces uses UTF-8 and sqlite3_prepare16() and sqlite3_prepare16_v2()
-** use UTF-16. If the next argument, "nBytes", is less
+** use UTF-16.
+**
+** If the nByte argument is less
 ** than zero, then zSql is read up to the first zero terminator.  If
-** "nBytes" is not less than zero, then it is the length of the string zSql
-** in bytes (not characters).
+** nByte is non-negative, then it is the maximum number of 
+** bytes read from zSql.  When nByte is non-negative, the
+** zSql string ends at either the first '\000' character or 
+** until the nByte-th byte, whichever comes first.
 **
 ** *pzTail is made to point to the first byte past the end of the first
 ** SQL statement in zSql.  This routine only compiles the first statement
@@ -1019,28 +1030,28 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 int sqlite3_prepare(
   sqlite3 *db,            /* Database handle */
   const char *zSql,       /* SQL statement, UTF-8 encoded */
-  int nBytes,             /* Length of zSql in bytes. */
+  int nByte,              /* Maximum length of zSql in bytes. */
   sqlite3_stmt **ppStmt,  /* OUT: Statement handle */
   const char **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 int sqlite3_prepare_v2(
   sqlite3 *db,            /* Database handle */
   const char *zSql,       /* SQL statement, UTF-8 encoded */
-  int nBytes,             /* Length of zSql in bytes. */
+  int nByte,              /* Maximum length of zSql in bytes. */
   sqlite3_stmt **ppStmt,  /* OUT: Statement handle */
   const char **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 int sqlite3_prepare16(
   sqlite3 *db,            /* Database handle */
   const void *zSql,       /* SQL statement, UTF-16 encoded */
-  int nBytes,             /* Length of zSql in bytes. */
+  int nByte,              /* Maximum length of zSql in bytes. */
   sqlite3_stmt **ppStmt,  /* OUT: Statement handle */
   const void **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
 int sqlite3_prepare16_v2(
   sqlite3 *db,            /* Database handle */
   const void *zSql,       /* SQL statement, UTF-16 encoded */
-  int nBytes,             /* Length of zSql in bytes. */
+  int nByte,              /* Maximum length of zSql in bytes. */
   sqlite3_stmt **ppStmt,  /* OUT: Statement handle */
   const void **pzTail     /* OUT: Pointer to unused portion of zSql */
 );
@@ -1237,10 +1248,16 @@ const void *sqlite3_column_name16(sqlite3_stmt*, int N);
 ** These routines provide a means to determine what column of what
 ** table in which database a result of a SELECT statement comes from.
 ** The name of the database or table or column can be returned as
-** either a UTF8 or UTF16 string.  The returned string is valid until
+** either a UTF8 or UTF16 string.  The _database_ routines return
+** the database name, the _table_ routines return the table name, and
+** the origin_ routines return the column name.
+** The returned string is valid until
 ** the [sqlite3_stmt | prepared statement] is destroyed using
 ** [sqlite3_finalize()] or until the same information is requested
-** again about the same column.
+** again in a different encoding.
+**
+** The names returned are the original un-aliased names of the
+** database, table, and column.
 **
 ** The first argument to the following calls is a 
 ** [sqlite3_stmt | compiled SQL statement].
@@ -1439,8 +1456,6 @@ int sqlite3_data_count(sqlite3_stmt *pStmt);
 ** the value returned by sqlite3_column_type() is undefined.  Future
 ** versions of SQLite may change the behavior of sqlite3_column_type()
 ** following a type conversion.
-**
-*** The sqlite3_column_nm
 **
 ** If the result is a BLOB or UTF-8 string then the sqlite3_column_bytes() 
 ** routine returns the number of bytes in that BLOB or string.
@@ -1988,7 +2003,7 @@ int sqlite3_rekey(
 /*
 ** CAPI3REF:  Suspend Execution For A Short Time
 **
-** This function causes the current thread to suspect execution
+** This function causes the current thread to suspend execution
 ** a number of milliseconds specified in its parameter.
 **
 ** If the operating system does not support sleep requests with 
@@ -2012,7 +2027,7 @@ int sqlite3_sleep(int);
 ** it is not safe to invoke this routine after [sqlite3_open()] has
 ** been called.
 */
-extern char *sqlite3_temp_directory;
+SQLITE_EXTERN char *sqlite3_temp_directory;
 
 /*
 ** CAPI3REF:  Test To See If The Databse Is In Auto-Commit Mode
@@ -2399,6 +2414,8 @@ struct sqlite3_module {
   int (*xFindFunction)(sqlite3_vtab *pVtab, int nArg, const char *zName,
                        void (**pxFunc)(sqlite3_context*,int,sqlite3_value**),
                        void **ppArg);
+
+  int (*xRename)(sqlite3_vtab *pVtab, const char *zNew);
 };
 
 /*
@@ -2491,6 +2508,19 @@ int sqlite3_create_module(
   const char *zName,         /* Name of the module */
   const sqlite3_module *,    /* Methods for the module */
   void *                     /* Client data for xCreate/xConnect */
+);
+
+/*
+** This routine is identical to the sqlite3_create_module() method above,
+** except that it allows a destructor function to be specified. It is
+** even more experimental than the rest of the virtual tables API.
+*/
+int sqlite3_create_module_v2(
+  sqlite3 *db,               /* SQLite connection to register module with */
+  const char *zName,         /* Name of the module */
+  const sqlite3_module *,    /* Methods for the module */
+  void *,                    /* Client data for xCreate/xConnect */
+  void(*xDestroy)(void*)     /* Module destructor function */
 );
 
 /*
