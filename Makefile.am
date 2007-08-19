@@ -325,12 +325,11 @@ UNIT_TEST_OBJ_SUPPORT =							\
 
 bin_PROGRAMS = mtn
 noinst_PROGRAMS = txt2c
-EXTRA_PROGRAMS = usher
+EXTRA_PROGRAMS = 
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
 
-usher_SOURCES = contrib/usher.cc
 unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
 nodist_unit_tester_SOURCES = test_hooks.c
 unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
@@ -480,7 +479,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
 	contrib/Monotone.pm $(wildcard $(srcdir)/contrib/*.lua)		\
-	contrib/usher.cc $(wildcard $(srcdir)/examples/*)		\
+	$(wildcard $(srcdir)/examples/*)				\
 	win32/monotone.iss win32/modpath.iss $(wildcard			\
 	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
 	mac/monotone.pmproj mac/package-intro.rtf audit-includes
