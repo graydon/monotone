@@ -1,4 +1,22 @@
-??? ??? ?? ??:??:?? ??? ????
+??? ???  ? ??:??:?? UTC 2007
+
+        0.37 release.
+
+        Bugs fixed
+
+        - mtn automate heads called without a branch argument now properly
+          returns the head revisions of the workspace's branch if called
+          over mtn automate stdio
+
+        Internal
+
+        - Update SQLite to 3.4.1.
+
+        - Update Lua to 5.1.2 plus latest bug fixes.
+
+
+
+Fri Aug  3 06:08:36 UTC 2007
 
         0.36 release.
 
@@ -47,11 +65,25 @@
           databases with this problem can be fixed by pulling into a fresh
           database using 0.36.
 
-	- The Boost filesystem library is no longer required.
+        - contrib/lua-mode.el, a Lua mode for GNU emacs.
 
-        - Monotone can now be built successfully with Boost 1.34. Older
-          versions of monotone would sometimes seem to work depending on
-          the compiler used, but would have bugs in path normalization.
+        - contrib/monotone-buildbot-notification.lua, a netsync hook to have a
+          server notify a buildbot when new changes have arrived.  Useful for
+          anyone who uses a buildbot with monotone as source.
+
+        - contrib/monotone-cluster-push.lua, a netsync hook script to have
+          arriving changes be forwarded to other servers automatically.  It
+          uses the new internal lua function 'server_request_sync'.
+
+        - contrib/mtn_makepermissions, a simple script to create
+          read-permissions and write-permissions from files in the directories
+          read-permissions.d and write-permissions.d, Debian style.
+
+        - contrib/Monotone.pm, a first attempt to write a Perl module to
+          interface with 'monotone automate stdio'.
+
+        - contrib/monotone-import.pl has been removed since monotone now has
+          an internal import command.
 
         Internal
 
@@ -61,6 +93,27 @@
 
         - The command class, the automate class and all the associated
           macros have been cleaned up.
+
+        - All C++ files now depend on base.hh, which includes the few things
+          that are used virtually everywhere.  'make distcheck' will check for
+          the presence of base.hh in all source files and will protest if
+          it's not there.  This is explained further in HACKING.
+
+        - Update the internal SQLite to version 3.4.0.
+
+        - Updated Visual C building system, which now also builds the test
+          programs.  The script visualc/runtests.bat can be used to run the
+          tests.
+
+        - Monotone can now be built successfully with Boost 1.34. Older
+          versions of monotone would sometimes seem to work depending on
+          the compiler used, but would have bugs in path normalization.
+
+        - Monotone now requires Boost 1.33 or later.
+
+        - The Boost filesystem library is no longer required.
+
+        - The Boost unit test system is no longer required.
 
 
 

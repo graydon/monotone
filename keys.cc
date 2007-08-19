@@ -715,6 +715,7 @@ UNIT_TEST(key, arc4)
 UNIT_TEST(key, signature_round_trip)
 {
   app_state app;
+  app.set_key_dir(system_path(get_current_working_dir()) / ".monotone_tmp" / "keys");
   app.lua.add_std_hooks();
   app.lua.add_test_hooks();
 

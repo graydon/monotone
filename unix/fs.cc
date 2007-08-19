@@ -25,20 +25,33 @@
 
 using std::string;
 
+/* On Linux, AT_SYMLNK_NOFOLLOW is spellt AT_SYMLINK_NOFOLLOW.
+   Hoooray for compatibility! */
+#if defined AT_SYMLINK_NOFOLLOW && !defined AT_SYMLNK_NOFOLLOW
+#define AT_SYMLNK_NOFOLLOW AT_SYMLINK_NOFOLLOW
+#endif
+
+
 string
 get_current_working_dir()
 {
   char buffer[4096];
-  E(getcwd(buffer, 4096),
-    F("cannot get working directory: %s") % os_strerror(errno));
+  if (!getcwd(buffer, 4096))
+    {
+      const int err = errno;
+      E(false, F("cannot get working directory: %s") % os_strerror(err));
+    }
   return string(buffer);
 }
 
 void
 change_current_working_dir(string const & to)
 {
-  E(!chdir(to.c_str()),
-    F("cannot change to directory %s: %s") % to % os_strerror(errno));
+  if (chdir(to.c_str()))
+    {
+      const int err = errno;
+      E(false, F("cannot change to directory %s: %s") % to % os_strerror(err));
+    }
 }
 
 string
@@ -104,10 +117,11 @@ get_path_status(string const & path)
   res = stat(path.c_str(), &buf);
   if (res < 0)
     {
-      if (errno == ENOENT)
+      const int err = errno;
+      if (err == ENOENT)
         return path::nonexistent;
       else
-        E(false, F("error accessing file %s: %s") % path % os_strerror(errno));
+        E(false, F("error accessing file %s: %s") % path % os_strerror(err));
     }
   if (S_ISREG(buf.st_mode))
     return path::file;
@@ -125,9 +139,14 @@ namespace
   // RAII object for DIRs.
   struct dirhandle
   {
-    dirhandle(string const & path) : d(opendir(path.c_str()))
+    dirhandle(string const & path)
     {
-      E(d, F("could not open directory '%s': %s") % path % os_strerror(errno));
+      d = opendir(path.c_str());
+      if (!d)
+        {
+          const int err = errno;
+          E(false, F("could not open directory '%s': %s") % path % os_strerror(err));
+        }
     }
     // technically closedir can fail, but there's nothing we could do about it.
     ~dirhandle() { closedir(d); }
@@ -145,7 +164,8 @@ namespace
 void
 do_read_directory(string const & path,
                   dirent_consumer & files,
-                  dirent_consumer & dirs)
+                  dirent_consumer & dirs,
+                  dirent_consumer & specials)
 {
   string p(path);
   if (p == "")
@@ -160,7 +180,7 @@ do_read_directory(string const & path,
     {
       if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
         continue;
-#ifdef _DIRENT_HAVE_D_TYPE
+#if defined(_DIRENT_HAVE_D_TYPE) || defined(HAVE_STRUCT_DIRENT_D_TYPE)
       switch (d->d_type)
         {
         case DT_REG: // regular file
@@ -172,10 +192,8 @@ do_read_directory(string const & path,
           
         case DT_UNKNOWN: // unknown type
         case DT_LNK:     // symlink - must find out what's at the other end
-          break;
-
         default:
-          goto bad_special_file;
+          break;
         }          
 #endif
 
@@ -190,31 +208,46 @@ do_read_directory(string const & path,
               fstatat_works = false;
           }
         if (!fstatat_works)
-          st_result = stat((path + "/" + d->d_name).c_str(), &st);
+          st_result = stat((p + "/" + d->d_name).c_str(), &st);
       }
 #else
-      st_result = stat((path + "/" + d->d_name).c_str(), &st);
+      st_result = stat((p + "/" + d->d_name).c_str(), &st);
 #endif
 
-      // silently ignore broken symlinks.
-      // ??? that was the historical behavior, but do we really want it?
+      // if we get no entry it might be a broken symlink
+      // try again with lstat
       if (st_result < 0 && errno == ENOENT)
-        continue;
+        {
+#if defined HAVE_FSTATAT && defined HAVE_DIRFD && defined AT_SYMLNK_NOFOLLOW
+          static bool fstatat_works = true;
+          if (fstatat_works)
+            {
+              st_result = fstatat(dir.fd(), d->d_name, &st, AT_SYMLNK_NOFOLLOW);
+              if (st_result == -1 && errno == ENOSYS)
+                fstatat_works = false;
+            }
+          if (!fstatat_works)
+            st_result = lstat((p + "/" + d->d_name).c_str(), &st);
+#else
+          st_result = lstat((p + "/" + d->d_name).c_str(), &st);
+#endif
+        }
+
+      int err = errno;
 
       E(st_result == 0,
-        F("error accessing '%s/%s': %s") % path % d->d_name);
+        F("error accessing '%s/%s': %s") % p % d->d_name % os_strerror(err));
 
       if (S_ISREG(st.st_mode))
         files.consume(d->d_name);
       else if (S_ISDIR(st.st_mode))
         dirs.consume(d->d_name);
+      else if (S_ISLNK(st.st_mode))
+        files.consume(d->d_name); // treat broken links as files
       else
-        goto bad_special_file;
+        specials.consume(d->d_name);
     }
   return;
-
- bad_special_file:
-  E(false,  F("cannot handle special file '%s/%s'") % path % d->d_name);
 }
   
                   
@@ -222,8 +255,11 @@ do_read_directory(string const & path,
 void
 rename_clobberingly(string const & from, string const & to)
 {
-  E(!rename(from.c_str(), to.c_str()),
-    F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(errno));
+  if (rename(from.c_str(), to.c_str()))
+    {
+      const int err = errno;
+      E(false, F("renaming '%s' to '%s' failed: %s") % from % to % os_strerror(err));
+    }
 }
 
 // the C90 remove() function is guaranteed to work for both files and
@@ -231,8 +267,11 @@ rename_clobberingly(string const & from, string const & to)
 void
 do_remove(string const & path)
 {
-  E(!remove(path.c_str()),
-    F("could not remove '%s': %s") % path % os_strerror(errno));
+  if (remove(path.c_str()))
+    {
+      const int err = errno;
+      E(false, F("could not remove '%s': %s") % path % os_strerror(err));
+    }
 }
 
 // Create the directory DIR.  It will be world-accessible modulo umask.
@@ -240,8 +279,11 @@ do_remove(string const & path)
 void
 do_mkdir(string const & path)
 {
-  E(!mkdir(path.c_str(), 0777),
-    F("could not create directory '%s': %s") % path % os_strerror(errno));
+  if (mkdir(path.c_str(), 0777))
+    {
+      const int err = errno;
+      E(false, F("could not create directory '%s': %s") % path % os_strerror(err));
+    }
 }
 
 // Create a temporary file in directory DIR, writing its name to NAME and
@@ -291,6 +333,7 @@ make_temp_file(string const & dir, string & name, mode_t mode)
       v /= base;
     
       int fd = open(tmp.c_str(), O_RDWR|O_CREAT|O_EXCL, mode);
+      int err = errno;
 
       if (fd >= 0)
         {
@@ -304,8 +347,8 @@ make_temp_file(string const & dir, string & name, mode_t mode)
       // fact a directory to which we can write - but we get better
       // diagnostics from this E() than we would from an I().)
 
-      E(errno == EEXIST,
-        F("cannot create temp file %s: %s") % tmp % os_strerror(errno));
+      E(err == EEXIST,
+        F("cannot create temp file %s: %s") % tmp % os_strerror(err));
 
       // This increment is relatively prime to 'limit', therefore 'value'
       // will visit every number in its range.
@@ -353,8 +396,9 @@ write_data_worker(string const & fname,
     do
       {
         ssize_t written = write(fd, ptr, remaining);
+        const int err = errno;
         E(written >= 0,
-          F("error writing to temp file %s: %s") % tmp % os_strerror(errno));
+          F("error writing to temp file %s: %s") % tmp % os_strerror(err));
         if (written == 0)
           {
             deadcycles++;

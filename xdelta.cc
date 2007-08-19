@@ -26,7 +26,7 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <vector>
+#include "vector.hh"
 #include <set>
 #include <sstream>
 

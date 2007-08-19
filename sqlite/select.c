@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.351 2007/06/15 15:31:50 drh Exp $
+** $Id: select.c,v 1.354 2007/07/18 18:17:12 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -183,6 +183,20 @@ static void setToken(Token *p, const char *z){
   p->z = (u8*)z;
   p->n = z ? strlen(z) : 0;
   p->dyn = 0;
+}
+
+/*
+** Set the token to the double-quoted and escaped version of the string pointed
+** to by z. For example;
+**
+**    {a"bc}  ->  {"a""bc"}
+*/
+static void setQuotedToken(Token *p, const char *z){
+  p->z = (u8 *)sqlite3MPrintf("\"%w\"", z);
+  p->dyn = 1;
+  if( p->z ){
+    p->n = strlen((char *)p->z);
+  }
 }
 
 /*
@@ -1320,6 +1334,15 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             Expr *pExpr, *pRight;
             char *zName = pTab->aCol[j].zName;
 
+            /* If a column is marked as 'hidden' (currently only possible
+            ** for virtual tables), do not include it in the expanded
+            ** result-set list.
+            */
+            if( IsHiddenColumn(&pTab->aCol[j]) ){
+              assert(IsVirtual(pTab));
+              continue;
+            }
+
             if( i>0 ){
               struct SrcList_item *pLeft = &pTabList->a[i-1];
               if( (pLeft[1].jointype & JT_NATURAL)!=0 &&
@@ -1336,12 +1359,12 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             }
             pRight = sqlite3Expr(TK_ID, 0, 0, 0);
             if( pRight==0 ) break;
-            setToken(&pRight->token, zName);
+            setQuotedToken(&pRight->token, zName);
             if( zTabName && (longNames || pTabList->nSrc>1) ){
               Expr *pLeft = sqlite3Expr(TK_ID, 0, 0, 0);
               pExpr = sqlite3Expr(TK_DOT, pLeft, pRight, 0);
               if( pExpr==0 ) break;
-              setToken(&pLeft->token, zTabName);
+              setQuotedToken(&pLeft->token, zTabName);
               setToken(&pExpr->span, sqlite3MPrintf("%s.%s", zTabName, zName));
               pExpr->span.dyn = 1;
               pExpr->token.z = 0;
@@ -1350,6 +1373,7 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             }else{
               pExpr = pRight;
               pExpr->span = pExpr->token;
+              pExpr->span.dyn = 0;
             }
             if( longNames ){
               pNew = sqlite3ExprListAppend(pNew, pExpr, &pExpr->span);
@@ -1375,6 +1399,9 @@ static int prepSelectStmt(Parse *pParse, Select *p){
   if( p->pEList && p->pEList->nExpr>SQLITE_MAX_COLUMN ){
     sqlite3ErrorMsg(pParse, "too many columns in result set");
     rc = SQLITE_ERROR;
+  }
+  if( sqlite3MallocFailed() ){
+    rc = SQLITE_NOMEM;
   }
   return rc;
 }
@@ -2486,6 +2513,16 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
       sqlite3VdbeAddOp(v, OP_Null, 0, 0);
       sqlite3VdbeAddOp(v, OP_MakeRecord, 1, 0);
       seekOp = OP_MoveGt;
+    }
+    if( pIdx->aSortOrder[0]==SQLITE_SO_DESC ){
+      /* Ticket #2514: invert the seek operator if we are using
+      ** a descending index. */
+      if( seekOp==OP_Last ){
+        seekOp = OP_Rewind;
+      }else{
+        assert( seekOp==OP_MoveGt );
+        seekOp = OP_MoveLt;
+      }
     }
     sqlite3VdbeAddOp(v, seekOp, iIdx, 0);
     sqlite3VdbeAddOp(v, OP_IdxRowid, iIdx, 0);

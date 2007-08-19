@@ -27,6 +27,15 @@ function execute(path, ...)
    return ret
 end
 
+function execute_redirected(stdin, stdout, stderr, path, ...)
+   local pid
+   local ret = -1
+   io.flush();
+   pid = spawn_redirected(stdin, stdout, stderr, path, unpack(arg))
+   if (pid ~= -1) then ret, pid = wait(pid) end
+   return ret
+end
+
 -- Wrapper around execute to let user confirm in the case where a subprocess
 -- returns immediately
 -- This is needed to work around some brokenness with some merge tools
@@ -356,6 +365,13 @@ end
 --             NOTE: wanted is only used when the user has NOT defined the
 --             `merger' variable or the MTN_MERGE environment variable.
 mergers = {}
+
+-- This merger is designed to fail if there are any conflicts without trying to resolve them
+mergers.fail = {
+   cmd = function (tbl) return false end,
+   available = function () return true end,
+   wanted = function () return true end
+}
 
 mergers.meld = {
    cmd = function (tbl)
@@ -946,28 +962,56 @@ function get_netsync_connect_command(uri, args)
                 argv = { }
         end
 
-        if argv then
+        if uri["scheme"] == "ssh+ux" 
+                and uri["host"] 
+                and uri["path"] then
 
-                table.insert(argv, get_mtn_command(uri["host"]))
-
-                if args["debug"] then
-                        table.insert(argv, "--debug")
-                else
-                        table.insert(argv, "--quiet")
+                argv = { "ssh" }
+                if uri["user"] then
+                        table.insert(argv, "-l")
+                        table.insert(argv, uri["user"])
+                end
+                if uri["port"] then
+                        table.insert(argv, "-p")
+                        table.insert(argv, uri["port"])
                 end
 
-                table.insert(argv, "--db")
-                table.insert(argv, uri["path"])
-                table.insert(argv, "serve")
-                table.insert(argv, "--stdio")
-                table.insert(argv, "--no-transport-auth")
+                -- ssh://host/~/dir/file.mtn or 
+                -- ssh://host/~user/dir/file.mtn should be home-relative
+                if string.find(uri["path"], "^/~") then
+                        uri["path"] = string.sub(uri["path"], 2)
+                end
 
+                table.insert(argv, uri["host"])
+                table.insert(argv, get_remote_unix_socket_command(uri["host"]))
+                table.insert(argv, "-")
+                table.insert(argv, "UNIX-CONNECT:" .. uri["path"])
+        else
+            -- start remote monotone process
+            if argv then
+
+                    table.insert(argv, get_mtn_command(uri["host"]))
+
+                    if args["debug"] then
+                            table.insert(argv, "--debug")
+                    else
+                            table.insert(argv, "--quiet")
+                    end
+
+                    table.insert(argv, "--db")
+                    table.insert(argv, uri["path"])
+                    table.insert(argv, "serve")
+                    table.insert(argv, "--stdio")
+                    table.insert(argv, "--no-transport-auth")
+
+            end
         end
         return argv
 end
 
 function use_transport_auth(uri)
         if uri["scheme"] == "ssh" 
+        or uri["scheme"] == "ssh+ux"
         or uri["scheme"] == "file" then
                 return false
         else
@@ -978,3 +1022,8 @@ end
 function get_mtn_command(host)
         return "mtn"
 end
+
+function get_remote_unix_socket_command(host)
+    return "socat"
+end
+

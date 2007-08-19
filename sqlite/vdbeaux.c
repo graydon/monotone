@@ -299,18 +299,23 @@ static void resolveP2Values(Vdbe *p, int *pMaxFuncArgs, int *pMaxStack){
 #endif
     ){
       if( pOp->p2>nMaxArgs ) nMaxArgs = pOp->p2;
-    }else if( opcode==OP_Halt ){
+    }
+    if( opcode==OP_Halt ){
       if( pOp->p1==SQLITE_CONSTRAINT && pOp->p2==OE_Abort ){
         doesStatementRollback = 1;
       }
     }else if( opcode==OP_Statement ){
       hasStatementBegin = 1;
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+    }else if( opcode==OP_VUpdate || opcode==OP_VRename ){
+      doesStatementRollback = 1;
     }else if( opcode==OP_VFilter ){
       int n;
       assert( p->nOp - i >= 3 );
       assert( pOp[-2].opcode==OP_Integer );
       n = pOp[-2].p1;
       if( n>nMaxArgs ) nMaxArgs = n;
+#endif
     }
     if( opcodeNoPush(opcode) ){
       nMaxStack--;
@@ -788,8 +793,9 @@ void sqlite3VdbeIOTraceSql(Vdbe *p){
   if( nOp<1 ) return;
   pOp = &p->aOp[nOp-1];
   if( pOp->opcode==OP_Noop && pOp->p3!=0 ){
-    char *z = sqlite3StrDup(pOp->p3);
     int i, j;
+    char z[1000];
+    sqlite3_snprintf(sizeof(z), z, "%s", pOp->p3);
     for(i=0; isspace((unsigned char)z[i]); i++){}
     for(j=0; z[i]; i++){
       if( isspace((unsigned char)z[i]) ){
@@ -802,7 +808,6 @@ void sqlite3VdbeIOTraceSql(Vdbe *p){
     }
     z[j] = 0;
     sqlite3_io_trace("SQL %s\n", z);
-    sqliteFree(z);
   }
 }
 #endif /* !SQLITE_OMIT_TRACE && SQLITE_ENABLE_IOTRACE */
@@ -898,6 +903,7 @@ void sqlite3VdbeMakeReady(
   p->nChange = 0;
   p->cacheCtr = 1;
   p->minWriteFileFormat = 255;
+  p->openedStatement = 0;
 #ifdef VDBE_PROFILE
   {
     int i;
@@ -980,6 +986,7 @@ static void Cleanup(Vdbe *p){
   p->contextStackTop = 0;
   sqliteFree(p->zErrMsg);
   p->zErrMsg = 0;
+  p->resOnStack = 0;
 }
 
 /*
@@ -1428,7 +1435,7 @@ int sqlite3VdbeHalt(Vdbe *p){
     */
     if( db->autoCommit && db->activeVdbeCnt==1 ){
       if( p->rc==SQLITE_OK || (p->errorAction==OE_Fail && !isSpecialError) ){
-	/* The auto-commit flag is true, and the vdbe program was 
+        /* The auto-commit flag is true, and the vdbe program was 
         ** successful or hit an 'OR FAIL' constraint. This means a commit 
         ** is required.
         */
@@ -1446,7 +1453,9 @@ int sqlite3VdbeHalt(Vdbe *p){
       }
     }else if( !xFunc ){
       if( p->rc==SQLITE_OK || p->errorAction==OE_Fail ){
-        xFunc = sqlite3BtreeCommitStmt;
+        if( p->openedStatement ){
+          xFunc = sqlite3BtreeCommitStmt;
+        } 
       }else if( p->errorAction==OE_Abort ){
         xFunc = sqlite3BtreeRollbackStmt;
       }else{
@@ -1591,9 +1600,6 @@ int sqlite3VdbeReset(Vdbe *p){
 #endif
   p->magic = VDBE_MAGIC_INIT;
   p->aborted = 0;
-  if( p->rc==SQLITE_SCHEMA ){
-    sqlite3ResetInternalSchema(db, 0);
-  }
   return p->rc & db->errMask;
 }
  

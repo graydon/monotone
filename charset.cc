@@ -8,7 +8,7 @@
 // PURPOSE.
 
 #include "base.hh"
-#include <vector>
+#include "vector.hh"
 
 #include <boost/tokenizer.hpp>
 

@@ -1,11 +1,40 @@
 monotone (0.36-1) unstable; urgency=low
 
+  [ Richard Levitte ]
+  * New upstream release.
+
   [ Zack Weinberg ]
   * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
   * Run testsuite during build.
   * Drop libboost-filesystem-dev build-dependency.
+  * monotone-server.postinst, monotone-server.postrm: Do not assume
+    full pathnames of ucf or adduser.  Use ucfr as well as ucf.
+    At purge time:
+     - do not assume ucf, adduser, or debconf are available (closes: #434604).
+     - if not asked to manage the database, do not delete it.
+     - if deleting the database and there is a hot journal, delete that too.
+     - delete editor backups of ucf-managed conffiles.
+     - expunge the auto-generated key's passphrase from 
+       /etc/monotone/passphrases and if that leaves the file empty,
+       delete it.
+     - do not delete the monotone user or group if leaving /var/lib/monotone
+       on the filesystem.
 
- -- final uploader's name and date here
+ -- Richard Levitte <richard@levitte.org>  Fri, 03 Aug 2007 08:08:36 +0200
+
+monotone (0.35-2) unstable; urgency=low
+
+  * Collapse Build-Depends-Indep into Build-Depends to work around
+    a buildd bug.  (Closes: #432657)
+  * Correct Ludovic Brenta's address in Uploaders.
+  * Enable parallel make on multiprocessors.
+
+  [ Ludovic Brenta ]
+  * monotone-server.postrm: do not blindly erase /var/lib/monotone on
+    purge; instead, delete only the default database (created in the
+    postinst), and only delete the directory if empty.
+
+ -- Zack Weinberg <zackw@panix.com>  Fri, 13 Jul 2007 08:39:58 -0700
 
 monotone (0.35-1) unstable; urgency=low
 

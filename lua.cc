@@ -8,7 +8,7 @@
 #include "platform.hh"
 
 #include <set>
-#include <vector>
+#include "vector.hh"
 #include <utility>
 
 #include <boost/regex.hpp>
@@ -584,7 +584,7 @@ run_directory(lua_State * st, char const * pathstr, char const * pattern)
   {
     ignore_directories id;
     record_if_matches rim(path, pattern, arr);
-    do_read_directory(path, rim, id);
+    do_read_directory(path, rim, id, id);
   }
 
   sort(arr.begin(), arr.end());

@@ -15,7 +15,7 @@ struct sqlite3_stmt;
 struct cert;
 int sqlite3_finalize(sqlite3_stmt *);
 
-#include <vector>
+#include "vector.hh"
 #include <set>
 #include <map>
 

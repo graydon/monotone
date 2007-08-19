@@ -11,7 +11,7 @@
 // PURPOSE.
 
 
-#include <vector>
+#include "vector.hh"
 #include <map>
 
 #include "paths.hh"

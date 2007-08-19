@@ -125,7 +125,8 @@ struct dirent_consumer
 };
 void do_read_directory(std::string const & path,
                        dirent_consumer & files,
-                       dirent_consumer & dirs);
+                       dirent_consumer & dirs,
+                       dirent_consumer & other_files);
 
 void rename_clobberingly(std::string const & from, std::string const & to);
 void do_remove(std::string const & path);

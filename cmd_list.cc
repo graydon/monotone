@@ -261,7 +261,7 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
   combine_and_check_globish(excludes, exc);
   globish_matcher match(inc, exc);
   set<branch_name> names;
-  app.get_project().get_branch_list(names);
+  app.get_project().get_branch_list(inc, names);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)

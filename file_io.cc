@@ -125,7 +125,7 @@ directory_empty(any_path const & path)
 {
   directory_empty_helper h;
   try {
-    do_read_directory(system_path(path).as_external(), h, h);
+    do_read_directory(system_path(path).as_external(), h, h, h);
   } catch (directory_not_empty_exception) {
     return false;
   }
@@ -184,8 +184,13 @@ mkdir_p(any_path const & p)
     case path::file:
       E(false, F("could not create directory '%s': it is a file") % p);
     case path::nonexistent:
-      mkdir_p(p.dirname());
-      do_mkdir(p.as_external());
+      std::string const current = p.as_external();
+      any_path const parent = p.dirname();
+      if (current != parent.as_external())
+        {
+          mkdir_p(parent);
+        }
+      do_mkdir(current);
     }
 }
 
@@ -259,7 +264,7 @@ do_remove_recursive(any_path const & p)
   fill_pc_vec subdir_fill(subdirs);
   file_deleter delete_files(p);
 
-  do_read_directory(p.as_external(), delete_files, subdir_fill);
+  do_read_directory(p.as_external(), delete_files, subdir_fill, delete_files);
   for (vector<path_component>::const_iterator i = subdirs.begin();
        i != subdirs.end(); i++)
     do_remove_recursive(p / *i);
@@ -340,8 +345,10 @@ void read_directory(any_path const & path,
                     vector<path_component> & files,
                     vector<path_component> & dirs)
 {
-  fill_pc_vec ff(files), df(dirs);
-  do_read_directory(path.as_external(), ff, df);
+  vector<path_component> special_files;
+  fill_pc_vec ff(files), df(dirs), sf(special_files);
+  do_read_directory(path.as_external(), ff, df, sf);
+  E(special_files.empty(), F("cannot handle special files in dir '%s'") % path);
 }
 
 // This function can only be called once per run.

@@ -18,7 +18,7 @@
 // opportunity permits.
 
 #include <set>
-#include <vector>
+#include "vector.hh"
 #include <utility>
 
 #include "vocab.hh"
