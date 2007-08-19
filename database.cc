@@ -15,7 +15,7 @@
 #include <list>
 #include <set>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <string.h>
 
@@ -770,13 +770,13 @@ database::fetch(results & res,
   I(params == int(query.args.size()));
 
   // profiling finds this logging to be quite expensive
-  if (global_sanity.debug)
+  if (global_sanity.debug_p())
     L(FL("binding %d parameters for %s") % params % query.sql_cmd);
 
   for (int param = 1; param <= params; param++)
     {
       // profiling finds this logging to be quite expensive
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
         {
           string log;
           switch (query.args[param-1].type)
@@ -1900,13 +1900,13 @@ database::get_revision(revision_id const & id,
   dat = revision_data(rdat);
 }
 
+typedef std::map<revision_id, rev_height> height_map;
+static height_map height_cache;
+
 void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
 {
-  typedef std::map<revision_id, rev_height> height_map;
-  static height_map height_cache;
-
   if (null_id(id))
     {
       height = rev_height::root_height();
@@ -1941,6 +1941,8 @@ database::put_rev_height(revision_id const & id,
   I(!null_id(id));
   I(revision_exists(id));
   I(height.valid());
+  
+  height_cache.erase(id);
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())

@@ -12,7 +12,7 @@
 
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "vocab.hh"
 #include "dates.hh"

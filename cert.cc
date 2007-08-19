@@ -10,7 +10,7 @@
 #include "base.hh"
 #include <limits>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>

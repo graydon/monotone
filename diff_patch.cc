@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>

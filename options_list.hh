@@ -199,7 +199,7 @@ OPTION(globals, dump, true, "dump",
         gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies
 {
-  global_sanity.filename = system_path(arg).as_external();
+  global_sanity.set_dump_path(system_path(arg).as_external());
 }
 #endif
 
@@ -403,7 +403,7 @@ GOPT(quiet, "quiet", bool, false,
 {
   quiet = true;
   global_sanity.set_quiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -421,7 +421,7 @@ gettext_noop("suppress warning, verbose, informational and progress messages"))
 {
   reallyquiet = true;
   global_sanity.set_reallyquiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -463,12 +463,12 @@ GOPT(ticker, "ticker", std::string, ,
 #ifdef option_bodies
 {
   ticker = arg;
-  if (ticker == "none" || global_sanity.quiet)
-    ui.set_tick_writer(new tick_write_nothing);
+  if (ticker == "none" || global_sanity.quiet_p())
+    ui.set_tick_write_nothing();
   else if (ticker == "dot")
-    ui.set_tick_writer(new tick_write_dot);
+    ui.set_tick_write_dot();
   else if (ticker == "count")
-    ui.set_tick_writer(new tick_write_count);
+    ui.set_tick_write_count();
   else
     throw bad_arg_internal(F("argument must be 'none', 'dot', or 'count'").str());
 }

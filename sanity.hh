@@ -11,13 +11,11 @@
 // PURPOSE.
 
 #include <stdexcept>
-#include <vector>
+#include <ostream>
 
-#include "boost/circular_buffer.hpp"
 #include "boost/current_function.hpp"
 
 #include "i18n.h"
-#include "quick_alloc.hh" // to get the QA() macro
 #include "numeric_vocab.hh"
 
 // our assertion / sanity / error logging system *was* based on GNU Nana,
@@ -43,22 +41,23 @@ struct plain_format;
 struct i18n_format;
 
 struct sanity {
-  sanity();
   virtual ~sanity();
   virtual void initialize(int, char **, char const *);
   void dump_buffer();
   void set_debug();
   void set_quiet();
   void set_reallyquiet();
+  // This takes a bare std::string because we don't want to expose vocab.hh
+  // or paths.hh here.
+  void set_dump_path(std::string const & path);
 
-  bool debug;
-  bool quiet;
-  bool reallyquiet;
-  boost::circular_buffer<char> logbuf;
-  std::string filename;
-  std::string gasp_dump;
-  bool already_dumping;
-  std::vector<MusingI const *> musings;
+  // A couple of places need to look at the debug flag to avoid doing
+  // expensive logging if it's off.
+  bool debug_p();
+
+  // ??? --quiet overrides any --ticker= setting if both are on the
+  // command line (and needs to look at this to do so).
+  bool quiet_p();
 
   void log(plain_format const & fmt,
            char const * file, int line);
@@ -78,6 +77,8 @@ struct sanity {
                      unsigned long idx,
                      char const * file, int line));
   void gasp();
+  void push_musing(MusingI const *musing);
+  void pop_musing(MusingI const *musing);
 
 private:
   std::string do_format(format_base const & fmt,
@@ -86,6 +87,9 @@ private:
   virtual void inform_message(std::string const &msg) = 0;
   virtual void inform_warning(std::string const &msg) = 0;
   virtual void inform_error(std::string const &msg) = 0;
+
+  struct impl;
+  impl * imp;
 };
 
 extern sanity & global_sanity;
@@ -106,10 +110,9 @@ protected:
   ~format_base();
   format_base(format_base const & other);
   format_base & operator=(format_base const & other);
-  explicit format_base(char const * pattern);
-  explicit format_base(std::string const & pattern);
-  explicit format_base(char const * pattern, std::locale const & loc);
-  explicit format_base(std::string const & pattern, std::locale const & loc);
+
+  explicit format_base(char const * pattern, bool use_locale);
+  explicit format_base(std::string const & pattern, bool use_locale);
 public:
   // It is a lie that these are const; but then, everything about this
   // class is a lie.
@@ -138,11 +141,11 @@ plain_format
   {}
 
   explicit plain_format(char const * pattern)
-    : format_base(pattern)
+    : format_base(pattern, false)
   {}
 
   explicit plain_format(std::string const & pattern)
-    : format_base(pattern)
+    : format_base(pattern, false)
   {}
 };
 
@@ -210,9 +213,16 @@ struct
 i18n_format
   : public format_base
 {
-  i18n_format() {}
-  explicit i18n_format(const char * localized_pattern);
-  explicit i18n_format(std::string const & localized_pattern);
+  i18n_format()
+  {}
+
+  explicit i18n_format(const char * localized_pattern)
+    : format_base(localized_pattern, true)
+  {}
+  
+  explicit i18n_format(std::string const & localized_pattern)
+    : format_base(localized_pattern, true)
+  {}
 };
 
 template<typename T> inline i18n_format const & 
@@ -324,78 +334,13 @@ do { \
   } \
 } while(0)
 
-
-// we're interested in trapping index overflows early and precisely,
-// because they usually represent *very significant* logic errors.  we use
-// an inline template function because the idx(...) needs to be used as an
-// expression, not as a statement.
-
-template <typename T>
-inline T & checked_index(std::vector<T> & v,
-                         typename std::vector<T>::size_type i,
-                         char const * vec,
-                         char const * index,
-                         char const * file,
-                         int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-template <typename T>
-inline T const & checked_index(std::vector<T> const & v,
-                               typename std::vector<T>::size_type i,
-                               char const * vec,
-                               char const * index,
-                               char const * file,
-                               int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-#ifdef QA_SUPPORTED
-template <typename T>
-inline T & checked_index(std::vector<T, QA(T)> & v,
-                         typename std::vector<T>::size_type i,
-                         char const * vec,
-                         char const * index,
-                         char const * file,
-                         int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-
-template <typename T>
-inline T const & checked_index(std::vector<T, QA(T)> const & v,
-                               typename std::vector<T>::size_type i,
-                               char const * vec,
-                               char const * index,
-                               char const * file,
-                               int line)
-{
-  if (UNLIKELY(i >= v.size()))
-    global_sanity.index_failure(vec, index, v.size(), i, file, line);
-  return v[i];
-}
-#endif // QA_SUPPORTED
-
-
-#define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
-
-
-
 // Last gasp dumps
 
 class MusingI
 {
 public:
-  MusingI();
-  virtual ~MusingI();
+  MusingI() { global_sanity.push_musing(this); }
+  virtual ~MusingI() { global_sanity.pop_musing(this); }
   virtual void gasp(std::string & out) const = 0;
 };
 

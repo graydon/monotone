@@ -2,7 +2,7 @@
 // GNU GPL V2 or later
 
 #include "base.hh"
-#include <vector>
+#include "vector.hh"
 
 #include "app_state.hh"
 #include "cert.hh"

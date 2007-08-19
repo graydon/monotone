@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/function.hpp>
 #include "lexical_cast.hh"
