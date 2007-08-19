@@ -8,6 +8,11 @@
           returns the head revisions of the workspace's branch if called
           over mtn automate stdio
 
+        Other
+
+        - contrib/usher.cc has been removed. Please use the
+          net.venge.monotone.contrib.usher branch instead.
+
         Internal
 
         - Update SQLite to 3.4.1.
