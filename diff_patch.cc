@@ -235,6 +235,11 @@ void normalize_extents(vector<extent> & a_b_map,
 
             swap(a_b_map.at(j-1).len, a_b_map.at(j).len);
             swap(a_b_map.at(j-1).type, a_b_map.at(j).type);
+
+            // Adjust position of the later, preserved extent. It should
+            // better point to the second 'a' in the above example.
+            a_b_map.at(j).pos = a_b_map.at(j-1).pos + a_b_map.at(j-1).len;
+
             --j;
           }
       }
