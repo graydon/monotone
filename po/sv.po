@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-08-19 21:35+0200\n"
-"PO-Revision-Date: 2007-08-19 21:37+0200\n"
+"POT-Creation-Date: 2007-08-20 23:05+0200\n"
+"PO-Revision-Date: 2007-08-20 23:14+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1893,7 +1893,7 @@ msgstr ""
 "rutinenpersist_phrase_ok())"
 
 #: cmd_netsync.cc:464
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The --no-transport-auth option is usually only used in combination with --"
 "stdio"
@@ -3143,22 +3143,22 @@ msgstr ""
 "databasen '%s'\n"
 "avbryter skapandet av databasen"
 
-#: diff_patch.cc:620
+#: diff_patch.cc:625
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "filen '%s' existerar inte i arbetskopian"
 
-#: diff_patch.cc:621
+#: diff_patch.cc:626
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' i arbetskopian är en katalog, inte en fil"
 
-#: diff_patch.cc:625
+#: diff_patch.cc:630
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "filen %s i arbetskopian har identiteten %s, %s eftersöktes"
 
-#: diff_patch.cc:746
+#: diff_patch.cc:751
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
