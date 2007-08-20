@@ -1901,13 +1901,13 @@ database::get_revision(revision_id const & id,
   dat = revision_data(rdat);
 }
 
+typedef std::map<revision_id, rev_height> height_map;
+static height_map height_cache;
+
 void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
 {
-  typedef std::map<revision_id, rev_height> height_map;
-  static height_map height_cache;
-
   if (null_id(id))
     {
       height = rev_height::root_height();
@@ -1942,6 +1942,8 @@ database::put_rev_height(revision_id const & id,
   I(!null_id(id));
   I(revision_exists(id));
   I(height.valid());
+  
+  height_cache.erase(id);
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
