@@ -972,7 +972,7 @@ parse_command_line(int argc, char const * const * argv,
 
   if (tests_to_run.size() == 0)
     {
-      P(F("%s: no test suite specified\n"));
+      P(F("%s: no test suite specified\n") % argv[0]);
       need_help = true;
     }
 }
@@ -1005,10 +1005,10 @@ int main(int argc, char **argv)
           P(F("Usage: %s test-file testsuite [options] [tests]\n") % argv[0]);
           P(F("Testsuite: a Lua script defining the test suite to run.\n"
               "Options:\n"
-              "  -l, --list     just list tests that would be run"
-              "  -d, --debug    don't erase working dirs of successful tests"
-              "  -j N, --jobs=N run N test cases in parallel"
-              "                 (note: unlike make, the N is not optional)"
+              "  -l, --list     just list tests that would be run\n"
+              "  -d, --debug    don't erase working dirs of successful tests\n"
+              "  -j N, --jobs=N run N test cases in parallel\n"
+              "                 (note: unlike make, the N is not optional)\n"
               "  -h, --help     display this help message\n"
               // -r is deliberately not mentioned.
               "Tests may be specified as:\n"
