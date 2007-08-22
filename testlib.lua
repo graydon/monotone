@@ -1071,10 +1071,21 @@ function run_one_test(tname)
       test.errline = errline
       posix_umask(oldmask)
    end
+
+   if not r then
+      if test.errline == nil then test.errline = -1 end
+      if type(e) ~= "table" then
+	 local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
+	 e = tbl
+      end
+      if type(e.e) ~= "boolean" then
+	 log_error(e)
+      end
+   end
+   test.log:close()
     
    -- record the short status where report_one_test can find it
    local s = io.open(test.root .. "/STATUS", "w")
-
    if r then
       if test.wanted_fail then
 	 s:write("unexpected success\n")
@@ -1086,11 +1097,6 @@ function run_one_test(tname)
 	 end
       end
    else
-      if test.errline == nil then test.errline = -1 end
-      if type(e) ~= "table" then
-	 local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
-	 e = tbl
-      end
       if e.e == true then
 	 s:write(string.format("skipped (line %i)\n", test.errline))
       elseif e.e == false then
@@ -1098,10 +1104,8 @@ function run_one_test(tname)
 			       test.errline))
       else
 	 s:write(string.format("FAIL (line %i)\n", test.errline))
-	 log_error(e)
       end
    end
-   test.log:close()
    s:close()
    return 0
 end
