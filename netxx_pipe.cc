@@ -336,7 +336,7 @@ Netxx::PipeStream::close (void)
   writefd = -1;
 
   if (child)
-    waitpid(child,0,0);
+    while (waitpid(child,0,0) == -1 && errno == EINTR);
   child = 0;
 #endif
 }
