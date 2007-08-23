@@ -669,6 +669,9 @@ function bg(torun, ret, stdout, stderr, stdin)
                 local res
                 obj.retval, res = timed_wait(obj.pid, timeout)
                 if (res == -1) then
+                  if (obj.retval ~= 0) then
+                    L(locheader(), "error in timed_wait ", obj.retval, "\n")
+                  end
                   kill(obj.pid, 15) -- TERM
                   obj.retval, res = timed_wait(obj.pid, 2)
                   if (res == -1) then
