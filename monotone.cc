@@ -214,7 +214,7 @@ cpp_main(int argc, char ** argv)
       try
         {
           // read global options first
-          // commad specific options will be read below
+          // command specific options will be read below
           args_vector opt_args(args);
           option::concrete_option_set optset = read_global_options(app.opts, opt_args);
 
