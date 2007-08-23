@@ -40,7 +40,7 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <vector>
+#include "vector.hh"
 
 #include "lcs.hh"
 #include "sanity.hh"

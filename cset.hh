@@ -12,7 +12,7 @@
 
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "numeric_vocab.hh"
 #include "paths.hh"

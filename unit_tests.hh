@@ -75,9 +75,11 @@ namespace unit_test {
     char const *group;
     char const *name;
     void (*func)();
+    bool failure_is_success;
     unit_test_case(char const * group,
                    char const * name,
-                   void (*func)());
+                   void (*func)(),
+                   bool fis);
     unit_test_case();
   };
 }
@@ -86,12 +88,12 @@ namespace unit_test {
 // names of symbols in the code being tested, despite their being in a
 // separate namespace, so that references _from_ the test functions _to_ the
 // code under test resolve correctly.
-#define UNIT_TEST(GROUP, TEST)                  \
-  namespace unit_test {                         \
-      static void t_##GROUP##_##TEST();         \
-      static unit_test_case r_##GROUP##_##TEST  \
-      (#GROUP, #TEST, t_##GROUP##_##TEST);      \
-  }                                             \
+#define UNIT_TEST(GROUP, TEST)                    \
+  namespace unit_test {                           \
+      static void t_##GROUP##_##TEST();           \
+      static unit_test_case r_##GROUP##_##TEST    \
+      (#GROUP, #TEST, t_##GROUP##_##TEST, false); \
+  }                                               \
   static void unit_test::t_##GROUP##_##TEST()
 
 // Local Variables:

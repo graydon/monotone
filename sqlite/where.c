@@ -16,7 +16,7 @@
 ** so is applicable.  Because this module is responsible for selecting
 ** indices, you might also think of this module as the "query optimizer".
 **
-** $Id: where.c,v 1.247 2007/04/20 12:22:02 drh Exp $
+** $Id: where.c,v 1.254 2007/07/30 14:40:48 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 
@@ -383,10 +383,22 @@ static int allowedOp(int op){
 /*
 ** Commute a comparision operator.  Expressions of the form "X op Y"
 ** are converted into "Y op X".
+**
+** If a collation sequence is associated with either the left or right
+** side of the comparison, it remains associated with the same side after
+** the commutation. So "Y collate NOCASE op X" becomes 
+** "X collate NOCASE op Y". This is because any collation sequence on
+** the left hand side of a comparison overrides any collation sequence 
+** attached to the right. For the same reason the EP_ExpCollate flag
+** is not commuted.
 */
 static void exprCommute(Expr *pExpr){
+  u16 expRight = (pExpr->pRight->flags & EP_ExpCollate);
+  u16 expLeft = (pExpr->pLeft->flags & EP_ExpCollate);
   assert( allowedOp(pExpr->op) && pExpr->op!=TK_IN );
   SWAP(CollSeq*,pExpr->pRight->pColl,pExpr->pLeft->pColl);
+  pExpr->pRight->flags = (pExpr->pRight->flags & ~EP_ExpCollate) | expLeft;
+  pExpr->pLeft->flags = (pExpr->pLeft->flags & ~EP_ExpCollate) | expRight;
   SWAP(Expr*,pExpr->pRight,pExpr->pLeft);
   if( pExpr->op>=TK_GT ){
     assert( TK_LT==TK_GT+2 );
@@ -452,15 +464,17 @@ static WhereTerm *findTerm(
 
         idxaff = pIdx->pTable->aCol[iColumn].affinity;
         if( !sqlite3IndexAffinityOk(pX, idxaff) ) continue;
-        pColl = sqlite3ExprCollSeq(pParse, pX->pLeft);
+
+        /* Figure out the collation sequence required from an index for
+        ** it to be useful for optimising expression pX. Store this
+        ** value in variable pColl.
+        */
+        assert(pX->pLeft);
+        pColl = sqlite3BinaryCompareCollSeq(pParse, pX->pLeft, pX->pRight);
         if( !pColl ){
-          if( pX->pRight ){
-            pColl = sqlite3ExprCollSeq(pParse, pX->pRight);
-          }
-          if( !pColl ){
-            pColl = pParse->db->pDfltColl;
-          }
+          pColl = pParse->db->pDfltColl;
         }
+
         for(j=0; j<pIdx->nColumn && pIdx->aiColumn[j]!=iColumn; j++){}
         assert( j<pIdx->nColumn );
         if( sqlite3StrICmp(pColl->zName, pIdx->azColl[j]) ) continue;
@@ -876,6 +890,7 @@ or_not_possible:
     if( pStr1 ){
       sqlite3TokenCopy(&pStr1->token, &pRight->token);
       pStr1->token.n = nPattern;
+      pStr1->flags = EP_Dequoted;
     }
     pStr2 = sqlite3ExprDup(pStr1);
     if( pStr2 ){
@@ -1985,7 +2000,7 @@ WhereInfo *sqlite3WhereBegin(
   /* Special case: a WHERE clause that is constant.  Evaluate the
   ** expression and either jump over all of the code or fall thru.
   */
-  if( pWhere && (pTabList->nSrc==0 || sqlite3ExprIsConstant(pWhere)) ){
+  if( pWhere && (pTabList->nSrc==0 || sqlite3ExprIsConstantNotJoin(pWhere)) ){
     sqlite3ExprIfFalse(pParse, pWhere, pWInfo->iBreak, 1);
     pWhere = 0;
   }
@@ -2346,7 +2361,7 @@ WhereInfo *sqlite3WhereBegin(
       if( testOp!=OP_Noop ){
         sqlite3VdbeAddOp(v, OP_Rowid, iCur, 0);
         sqlite3VdbeAddOp(v, OP_MemLoad, pLevel->iMem, 0);
-        sqlite3VdbeAddOp(v, testOp, SQLITE_AFF_NUMERIC, brk);
+        sqlite3VdbeAddOp(v, testOp, SQLITE_AFF_NUMERIC|0x100, brk);
       }
     }else if( pLevel->flags & WHERE_COLUMN_RANGE ){
       /* Case 3: The WHERE clause term that refers to the right-most
@@ -2412,7 +2427,7 @@ WhereInfo *sqlite3WhereBegin(
         pX = pTerm->pExpr;
         assert( (pTerm->flags & TERM_CODED)==0 );
         sqlite3ExprCode(pParse, pX->pRight);
-        sqlite3VdbeAddOp(v, OP_IsNull, -(nEq+1), nxt);
+        sqlite3VdbeAddOp(v, OP_IsNull, -(nEq*2+1), nxt);
         topEq = pTerm->eOperator & (WO_LE|WO_GE);
         disableTerm(pLevel, pTerm);
         testOp = OP_IdxGE;
@@ -2605,24 +2620,24 @@ WhereInfo *sqlite3WhereBegin(
     n = strlen(z);
     if( n+nQPlan < sizeof(sqlite3_query_plan)-10 ){
       if( pLevel->flags & WHERE_IDX_ONLY ){
-        strcpy(&sqlite3_query_plan[nQPlan], "{}");
+        memcpy(&sqlite3_query_plan[nQPlan], "{}", 2);
         nQPlan += 2;
       }else{
-        strcpy(&sqlite3_query_plan[nQPlan], z);
+        memcpy(&sqlite3_query_plan[nQPlan], z, n);
         nQPlan += n;
       }
       sqlite3_query_plan[nQPlan++] = ' ';
     }
     if( pLevel->flags & (WHERE_ROWID_EQ|WHERE_ROWID_RANGE) ){
-      strcpy(&sqlite3_query_plan[nQPlan], "* ");
+      memcpy(&sqlite3_query_plan[nQPlan], "* ", 2);
       nQPlan += 2;
     }else if( pLevel->pIdx==0 ){
-      strcpy(&sqlite3_query_plan[nQPlan], "{} ");
+      memcpy(&sqlite3_query_plan[nQPlan], "{} ", 3);
       nQPlan += 3;
     }else{
       n = strlen(pLevel->pIdx->zName);
       if( n+nQPlan < sizeof(sqlite3_query_plan)-2 ){
-        strcpy(&sqlite3_query_plan[nQPlan], pLevel->pIdx->zName);
+        memcpy(&sqlite3_query_plan[nQPlan], pLevel->pIdx->zName, n);
         nQPlan += n;
         sqlite3_query_plan[nQPlan++] = ' ';
       }

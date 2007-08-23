@@ -248,8 +248,9 @@ cpp_main(int argc, char ** argv)
           // this needs to happen after the monotonercs have been read
           commands::command_id cmd = read_options(optset, app.opts, opt_args);
 
-          if (!app.found_workspace && global_sanity.filename.empty())
-            global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
+          if (!app.found_workspace)
+            global_sanity.set_dump_path((app.opts.conf_dir / "dump")
+                                        .as_external());
 
           app.lua.hook_note_mtn_startup(args);
 

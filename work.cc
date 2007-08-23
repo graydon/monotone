@@ -44,11 +44,11 @@ using boost::lexical_cast;
 
 // workspace / book-keeping file code
 
-static string const inodeprints_file_name("inodeprints");
-static string const local_dump_file_name("debug");
-static string const options_file_name("options");
-static string const user_log_file_name("log");
-static string const revision_file_name("revision");
+static char const inodeprints_file_name[] = "inodeprints";
+static char const local_dump_file_name[] = "debug";
+static char const options_file_name[] = "options";
+static char const user_log_file_name[] = "log";
+static char const revision_file_name[] = "revision";
 
 static void
 get_revision_path(bookkeeping_path & m_path)
@@ -67,7 +67,7 @@ get_options_path(bookkeeping_path & o_path)
 static void
 get_options_path(system_path const & workspace, system_path & o_path)
 {
-  o_path = workspace / bookkeeping_root.as_internal() / options_file_name;
+  o_path = workspace / bookkeeping_root_component / options_file_name;
   L(FL("options path is %s") % o_path);
 }
 
@@ -733,7 +733,7 @@ path_for_detached_nids()
 static inline bookkeeping_path
 path_for_detached_nid(node_id nid)
 {
-  return path_for_detached_nids() / lexical_cast<string>(nid);
+  return path_for_detached_nids() / path_component(lexical_cast<string>(nid));
 }
 
 // Attaching/detaching the root directory:
@@ -769,11 +769,11 @@ editable_working_tree::detach_node(file_path const & src_pth)
       read_directory(src_pth, files, dirs);
       for (vector<path_component>::const_iterator i = files.begin();
            i != files.end(); ++i)
-        move_file(src_pth / *i, dst_pth / (*i)());
+        move_file(src_pth / *i, dst_pth / *i);
       for (vector<path_component>::const_iterator i = dirs.begin();
            i != dirs.end(); ++i)
         if (!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())))
-          move_dir(src_pth / *i, dst_pth / (*i)());
+          move_dir(src_pth / *i, dst_pth / *i);
       root_dir_attached = false;
     }
   else
@@ -843,13 +843,13 @@ editable_working_tree::attach_node(node_id nid, file_path const & dst_pth)
            i != files.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
-          move_file(src_pth / (*i)(), dst_pth / *i);
+          move_file(src_pth / *i, dst_pth / *i);
         }
       for (vector<path_component>::const_iterator i = dirs.begin();
            i != dirs.end(); ++i)
         {
           I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8((*i)())));
-          move_dir(src_pth / (*i)(), dst_pth / *i);
+          move_dir(src_pth / *i, dst_pth / *i);
         }
       delete_dir_shallow(src_pth);
       root_dir_attached = true;
@@ -1435,9 +1435,7 @@ workspace::perform_rename(set<file_path> const & srcs,
     {
       // "rename SRC DST" case
       file_path const & src = *srcs.begin();
-
-      N(!directory_exists(dst),
-        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
+      file_path dpath = dst;
 
       N(!src.empty(),
         F("cannot rename the workspace root (try '%s pivot_root' instead)")
@@ -1445,20 +1443,30 @@ workspace::perform_rename(set<file_path> const & srcs,
       N(new_roster.has_node(src),
         F("source file %s is not versioned") % src);
 
-      renames.insert(make_pair(src, dst));
-      add_parent_dirs(dst, new_roster, nis, db, lua);
+      //this allows the 'magic add' of a non-versioned directory to happen in
+      //all cases.  previously, mtn mv fileA dir/ woudl fail if dir/ wasn't
+      //versioned whereas mtn mv fileA dir/fileA would add dir/ if necessary
+      //and then reparent fileA.
+      if (get_path_status(dst) == path::directory)
+        dpath = dst / src.basename();
+      else
+        {
+          //this handles the case where:
+          // touch foo
+          // mtn mv foo bar/foo where bar doesn't exist
+          file_path parent = dst.dirname();
+	        N(get_path_status(parent) == path::directory,
+	          F("destination path's parent directory %s/ doesn't exist") % parent);
+        }
+
+      renames.insert(make_pair(src, dpath));
+      add_parent_dirs(dpath, new_roster, nis, db, lua);
     }
   else
     {
       // "rename SRC1 [SRC2 ...] DSTDIR" case
-      N(new_roster.has_node(dst),
-        F("destination dir %s/ is not versioned (perhaps add it?)") % dst);
-
-      N(is_dir_t(new_roster.get_node(dst)),
-        (srcs.size() > 1
-        ? F("destination %s is a file, not a directory")
-        : F("destination %s already exists in the workspace manifest"))
-        % dst);
+      N(get_path_status(dst) == path::directory,
+        F("destination %s/ is not a directory") % dst);
 
       for (set<file_path>::const_iterator i = srcs.begin();
            i != srcs.end(); i++)
@@ -1474,6 +1482,8 @@ workspace::perform_rename(set<file_path> const & srcs,
             F("destination %s already exists in the workspace manifest") % d);
 
           renames.insert(make_pair(*i, d));
+
+          add_parent_dirs(d, new_roster, nis, db, lua);
         }
     }
 

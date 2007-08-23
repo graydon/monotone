@@ -2341,7 +2341,7 @@ build_stream_to_server(app_state & app,
       && app.lua.hook_get_netsync_connect_command(u,
                                                   include_pattern,
                                                   exclude_pattern,
-                                                  global_sanity.debug,
+                                                  global_sanity.debug_p(),
                                                   argv))
     {
       I(argv.size() > 0);
@@ -2371,12 +2371,14 @@ call_server(protocol_role role,
             globish const & include_pattern,
             globish const & exclude_pattern,
             app_state & app,
-            utf8 const & address,
+            std::list<utf8> const & addresses,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
   Netxx::PipeCompatibleProbe probe;
   transaction_guard guard(app.db);
+  I(addresses.size() == 1);
+  utf8 address(*addresses.begin());
 
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
@@ -2734,7 +2736,7 @@ serve_connections(protocol_role role,
                   globish const & include_pattern,
                   globish const & exclude_pattern,
                   app_state & app,
-                  utf8 const & address,
+                  std::list<utf8> const & addresses,
                   Netxx::port_type default_port,
                   unsigned long timeout_seconds,
                   unsigned long session_limit)
@@ -2746,8 +2748,6 @@ serve_connections(protocol_role role,
     timeout(static_cast<long>(timeout_seconds)),
     instant(0,1);
 
-  if (!app.opts.bind_port().empty())
-    default_port = std::atoi(app.opts.bind_port().c_str());
 #ifdef USE_IPV6
   bool use_ipv6=true;
 #else
@@ -2765,10 +2765,30 @@ serve_connections(protocol_role role,
 
           Netxx::Address addr(use_ipv6);
 
-          if (!app.opts.bind_address().empty())
-            addr.add_address(app.opts.bind_address().c_str(), default_port);
+          if (addresses.empty())
+            addr.add_all_addresses(default_port);
           else
-            addr.add_all_addresses (default_port);
+            {
+              for (std::list<utf8>::const_iterator it = addresses.begin(); it != addresses.end(); ++it)
+                {
+                  const utf8 & address = *it;
+                  if (!address().empty())
+                    {
+                      size_t l_colon = address().find(':');
+                      size_t r_colon = address().rfind(':');
+              
+                      if (l_colon == r_colon && l_colon == 0)
+                        {
+                          // can't be an IPv6 address as there is only one colon
+                          // must be a : followed by a port
+                          string port_str = address().substr(1);
+                          addr.add_all_addresses(std::atoi(port_str.c_str()));
+                        }
+                      else
+                        addr.add_address(address().c_str(), default_port);
+                    }
+                }
+            }
 
           // If se use IPv6 and the initialisation of server fails, we want
           // to try again with IPv4.  The reason is that someone may have
@@ -2809,6 +2829,49 @@ serve_connections(protocol_role role,
                 guard = shared_ptr<transaction_guard>(new transaction_guard(app.db));
 
               I(guard);
+
+              while (!server_initiated_sync_requests.empty())
+                {
+                  server_initiated_sync_request request
+                    = server_initiated_sync_requests.front();
+                  server_initiated_sync_requests.pop_front();
+
+                  utf8 addr(request.address);
+                  globish inc(request.include);
+                  globish exc(request.exclude);
+
+                  try
+                    {
+                      P(F("connecting to %s") % addr());
+                      shared_ptr<Netxx::StreamBase> server
+                        = build_stream_to_server(app, inc, exc,
+                                                 addr, default_port,
+                                                 timeout);
+
+                      // 'false' here means not to revert changes when
+                      // the SockOpt goes out of scope.
+                      Netxx::SockOpt socket_options(server->get_socketfd(), false);
+                      socket_options.set_non_blocking();
+
+                      protocol_role role = source_and_sink_role;
+                      if (request.what == "sync")
+                        role = source_and_sink_role;
+                      else if (request.what == "push")
+                        role = source_role;
+                      else if (request.what == "pull")
+                        role = sink_role;
+
+                      shared_ptr<session> sess(new session(role, client_voice,
+                                                           inc, exc,
+                                                           app, addr(), server, true));
+
+                      sessions.insert(make_pair(server->get_socketfd(), sess));
+                    }
+                  catch (Netxx::NetworkException & e)
+                    {
+                      P(F("Network error: %s") % e.what());
+                    }
+                }
 
               arm_sessions_and_calculate_probe(probe, sessions, armed_sessions, *guard);
 
@@ -2883,49 +2946,6 @@ serve_connections(protocol_role role,
               while (fd != -1);
               process_armed_sessions(sessions, armed_sessions, *guard);
               reap_dead_sessions(sessions, timeout_seconds);
-
-              while (!server_initiated_sync_requests.empty())
-                {
-                  server_initiated_sync_request request
-                    = server_initiated_sync_requests.front();
-                  server_initiated_sync_requests.pop_front();
-
-                  utf8 addr(request.address);
-                  globish inc(request.include);
-                  globish exc(request.exclude);
-
-                  try
-                    {
-                      P(F("connecting to %s") % addr());
-                      shared_ptr<Netxx::StreamBase> server
-                        = build_stream_to_server(app, inc, exc,
-                                                 addr, default_port,
-                                                 timeout);
-
-                      // 'false' here means not to revert changes when
-                      // the SockOpt goes out of scope.
-                      Netxx::SockOpt socket_options(server->get_socketfd(), false);
-                      socket_options.set_non_blocking();
-
-                      protocol_role role = source_and_sink_role;
-                      if (request.what == "sync")
-                        role = source_and_sink_role;
-                      else if (request.what == "push")
-                        role = source_role;
-                      else if (request.what == "pull")
-                        role = sink_role;
-
-                      shared_ptr<session> sess(new session(role, client_voice,
-                                                           inc, exc,
-                                                           app, addr(), server, true));
-
-                      sessions.insert(make_pair(server->get_socketfd(), sess));
-                    }
-                  catch (Netxx::NetworkException & e)
-                    {
-                      P(F("Network error: %s") % e.what());
-                    }
-                }
 
               if (sessions.empty())
                 {
@@ -3238,7 +3258,7 @@ session::rebuild_merkle_trees(app_state & app,
 void
 run_netsync_protocol(protocol_voice voice,
                      protocol_role role,
-                     utf8 const & addr,
+                     std::list<utf8> const & addrs,
                      globish const & include_pattern,
                      globish const & exclude_pattern,
                      app_state & app)
@@ -3272,7 +3292,7 @@ run_netsync_protocol(protocol_voice voice,
             }
           else
             serve_connections(role, include_pattern, exclude_pattern, app,
-                              addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                              addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                               static_cast<unsigned long>(constants::netsync_timeout_seconds),
                               static_cast<unsigned long>(constants::netsync_connection_limit));
         }
@@ -3280,7 +3300,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           call_server(role, include_pattern, exclude_pattern, app,
-                      addr, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                      addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
         }
     }

@@ -16,6 +16,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 
+#include "vector.hh"
 #include "vocab.hh"
 #include "transforms.hh"
 #include "hash_map.hh"

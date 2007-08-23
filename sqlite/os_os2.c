@@ -13,11 +13,6 @@
 ** This file contains code that is specific to OS/2.
 */
 
-#if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 3) && defined(OS2_HIGH_MEMORY)
-/* os2safe.h has to be included before os2.h, needed for high mem */
-#include <os2safe.h>
-#endif
-
 #include "sqliteInt.h"
 #include "os.h"
 
@@ -166,7 +161,7 @@ int sqlite3Os2OpenExclusive( const char *zFilename, OsFile **pld, int delFlag ){
   f.delOnClose = delFlag ? 1 : 0;
   f.pathToDel = delFlag ? sqlite3OsFullPathname( zFilename ) : NULL;
   OpenCounter( +1 );
-  if( delFlag ) DosForceDelete( sqlite3OsFullPathname( zFilename ) );
+  if( delFlag ) DosForceDelete( (PSZ)sqlite3OsFullPathname( zFilename ) );
   OSTRACE3( "OPEN EX %d \"%s\"\n", hf, sqlite3OsFullPathname ( zFilename ) );
   return allocateOs2File( &f, pld );
 }
@@ -235,12 +230,12 @@ int sqlite3Os2TempFileName( char *zBuf ){
     "0123456789";
   int i, j;
   PSZ zTempPath = 0;
-  if( DosScanEnv( "TEMP", &zTempPath ) ){
-    if( DosScanEnv( "TMP", &zTempPath ) ){
-      if( DosScanEnv( "TMPDIR", &zTempPath ) ){
+  if( DosScanEnv( (PSZ)"TEMP", &zTempPath ) ){
+    if( DosScanEnv( (PSZ)"TMP", &zTempPath ) ){
+      if( DosScanEnv( (PSZ)"TMPDIR", &zTempPath ) ){
            ULONG ulDriveNum = 0, ulDriveMap = 0;
            DosQueryCurrentDisk( &ulDriveNum, &ulDriveMap );
-           sprintf( zTempPath, "%c:", (char)( 'A' + ulDriveNum - 1 ) );
+           sprintf( (char*)zTempPath, "%c:", (char)( 'A' + ulDriveNum - 1 ) );
       }
     }
   }
@@ -269,7 +264,7 @@ int os2Close( OsFile **pld ){
     rc = DosClose( pFile->h );
     pFile->locktype = NO_LOCK;
     if( pFile->delOnClose != 0 ){
-        rc = DosForceDelete( pFile->pathToDel );
+        rc = DosForceDelete( (PSZ)pFile->pathToDel );
     }
     *pld = 0;
     OpenCounter( -1 );
@@ -291,7 +286,7 @@ int os2Read( OsFile *id, void *pBuf, int amt ){
   DosRead( ((os2File*)id)->h, pBuf, amt, &got );
   if (got == (ULONG)amt)
     return SQLITE_OK;
-  else if (got < 0)
+  else if (got == 0)
     return SQLITE_IOERR_READ;
   else {
     memset(&((char*)pBuf)[got], 0, amt-got);
@@ -687,16 +682,22 @@ char *sqlite3Os2FullPathname( const char *zRelative ){
   if( strchr(zRelative, ':') ){
     sqlite3SetString( &zFull, zRelative, (char*)0 );
   }else{
-    char zBuff[SQLITE_TEMPNAME_SIZE - 2] = {0};
-    char zDrive[1] = {0};
-    ULONG cbzFullLen = SQLITE_TEMPNAME_SIZE;
     ULONG ulDriveNum = 0;
     ULONG ulDriveMap = 0;
-    DosQueryCurrentDisk( &ulDriveNum, &ulDriveMap );
-    DosQueryCurrentDir( 0L, zBuff, &cbzFullLen );
-    zFull = sqliteMalloc( cbzFullLen );
-    sprintf( zDrive, "%c", (char)('A' + ulDriveNum - 1) );
-    sqlite3SetString( &zFull, zDrive, ":\\", zBuff, "\\", zRelative, (char*)0 );
+    ULONG cbzBufLen = SQLITE_TEMPNAME_SIZE;
+    char zDrive[2];
+    char *zBuff;
+
+    zBuff = sqliteMalloc( cbzBufLen );
+    if( zBuff != 0 ){
+      DosQueryCurrentDisk( &ulDriveNum, &ulDriveMap );
+      if( DosQueryCurrentDir( ulDriveNum, (PBYTE)zBuff, &cbzBufLen ) == NO_ERROR ){
+        sprintf( zDrive, "%c", (char)('A' + ulDriveNum - 1) );
+        sqlite3SetString( &zFull, zDrive, ":\\", zBuff,
+                          "\\", zRelative, (char*)0 );
+      }
+      sqliteFree( zBuff );
+    }
   }
   return zFull;
 }
@@ -798,7 +799,7 @@ void *sqlite3Os2Dlopen(const char *zFilename){
   UCHAR loadErr[256];
   HMODULE hmod;
   APIRET rc;
-  rc = DosLoadModule(loadErr, sizeof(loadErr), zFilename, &hmod);
+  rc = DosLoadModule((PSZ)loadErr, sizeof(loadErr), zFilename, &hmod);
   if (rc != NO_ERROR) return 0;
   return (void*)hmod;
 }
@@ -815,7 +816,7 @@ void *sqlite3Os2Dlsym(void *pHandle, const char *zSymbol){
     rc = DosQueryProcAddr((HMODULE)pHandle, 0L, _zSymbol, &pfn);
   }
   if (rc != NO_ERROR) return 0;
-  return pfn;
+  return (void *)pfn;
 }
 int sqlite3Os2Dlclose(void *pHandle){
   return DosFreeModule((HMODULE)pHandle);
@@ -871,8 +872,8 @@ static ULONG mutexOwner;
 ** code and what little there is executes quickly and without blocking.
 */
 void sqlite3Os2EnterMutex(){
-  PTIB ptib;
 #ifdef SQLITE_OS2_THREADS
+  PTIB ptib;
   DosEnterCritSec();
   DosGetInfoBlocks( &ptib, NULL );
   mutexOwner = ptib->tib_ptib2->tib2_ultid;
@@ -881,7 +882,9 @@ void sqlite3Os2EnterMutex(){
   inMutex = 1;
 }
 void sqlite3Os2LeaveMutex(){
+#ifdef SQLITE_OS2_THREADS
   PTIB ptib;
+#endif
   assert( inMutex );
   inMutex = 0;
 #ifdef SQLITE_OS2_THREADS

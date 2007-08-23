@@ -51,6 +51,7 @@
 **
 */
 #include "sqliteInt.h"
+#include <math.h>
 
 /*
 ** Conversion types fall into various categories as defined by the
@@ -73,6 +74,7 @@
 #define etTOKEN      13 /* a pointer to a Token structure */
 #define etSRCLIST    14 /* a pointer to a SrcList */
 #define etPOINTER    15 /* The %p conversion */
+#define etSQLESCAPE3 16 /* %w -> Strings with '\"' doubled */
 
 
 /*
@@ -114,6 +116,7 @@ static const et_info fmtinfo[] = {
   {  'z',  0, 6, etDYNSTRING,  0,  0 },
   {  'q',  0, 4, etSQLESCAPE,  0,  0 },
   {  'Q',  0, 4, etSQLESCAPE2, 0,  0 },
+  {  'w',  0, 4, etSQLESCAPE3, 0,  0 },
   {  'c',  0, 0, etCHARX,      0,  0 },
   {  'o',  8, 0, etRADIX,      0,  2 },
   {  'u', 10, 0, etRADIX,      0,  0 },
@@ -453,6 +456,11 @@ static int vxprintf(
         if( xtype==etFLOAT ) realvalue += rounder;
         /* Normalize realvalue to within 10.0 > realvalue >= 1.0 */
         exp = 0;
+        if( sqlite3_isnan(realvalue) ){
+          bufpt = "NaN";
+          length = 3;
+          break;
+        }
         if( realvalue>0.0 ){
           while( realvalue>=1e32 && exp<=350 ){ realvalue *= 1e-32; exp+=32; }
           while( realvalue>=1e8 && exp<=350 ){ realvalue *= 1e-8; exp+=8; }
@@ -460,8 +468,14 @@ static int vxprintf(
           while( realvalue<1e-8 && exp>=-350 ){ realvalue *= 1e8; exp-=8; }
           while( realvalue<1.0 && exp>=-350 ){ realvalue *= 10.0; exp--; }
           if( exp>350 || exp<-350 ){
-            bufpt = "NaN";
-            length = 3;
+            if( prefix=='-' ){
+              bufpt = "-Inf";
+            }else if( prefix=='+' ){
+              bufpt = "+Inf";
+            }else{
+              bufpt = "Inf";
+            }
+            length = strlen(bufpt);
             break;
           }
         }
@@ -599,14 +613,16 @@ static int vxprintf(
         if( precision>=0 && precision<length ) length = precision;
         break;
       case etSQLESCAPE:
-      case etSQLESCAPE2: {
+      case etSQLESCAPE2:
+      case etSQLESCAPE3: {
         int i, j, n, ch, isnull;
         int needQuote;
+        char q = ((xtype==etSQLESCAPE3)?'"':'\'');   /* Quote character */
         char *escarg = va_arg(ap,char*);
         isnull = escarg==0;
         if( isnull ) escarg = (xtype==etSQLESCAPE2 ? "NULL" : "(NULL)");
         for(i=n=0; (ch=escarg[i])!=0; i++){
-          if( ch=='\'' )  n++;
+          if( ch==q )  n++;
         }
         needQuote = !isnull && xtype==etSQLESCAPE2;
         n += i + 1 + needQuote*2;
@@ -617,12 +633,12 @@ static int vxprintf(
           bufpt = buf;
         }
         j = 0;
-        if( needQuote ) bufpt[j++] = '\'';
+        if( needQuote ) bufpt[j++] = q;
         for(i=0; (ch=escarg[i])!=0; i++){
           bufpt[j++] = ch;
-          if( ch=='\'' ) bufpt[j++] = ch;
+          if( ch==q ) bufpt[j++] = ch;
         }
-        if( needQuote ) bufpt[j++] = '\'';
+        if( needQuote ) bufpt[j++] = q;
         bufpt[j] = 0;
         length = j;
         /* The precision is ignored on %q and %Q */
@@ -717,19 +733,22 @@ static void mout(void *arg, const char *zNewText, int nNewChar){
     if( pM->xRealloc==0 ){
       nNewChar =  pM->nAlloc - pM->nChar - 1;
     }else{
-      pM->nAlloc = pM->nChar + nNewChar*2 + 1;
+      int nAlloc = pM->nChar + nNewChar*2 + 1;
       if( pM->zText==pM->zBase ){
-        pM->zText = pM->xRealloc(0, pM->nAlloc);
+        pM->zText = pM->xRealloc(0, nAlloc);
         if( pM->zText && pM->nChar ){
           memcpy(pM->zText, pM->zBase, pM->nChar);
         }
       }else{
         char *zNew;
-        zNew = pM->xRealloc(pM->zText, pM->nAlloc);
+        zNew = pM->xRealloc(pM->zText, nAlloc);
         if( zNew ){
           pM->zText = zNew;
+        }else{
+          return;
         }
       }
+      pM->nAlloc = nAlloc;
     }
   }
   if( pM->zText ){
@@ -837,13 +856,17 @@ char *sqlite3_snprintf(int n, char *zBuf, const char *zFormat, ...){
   char *z;
   va_list ap;
 
+  if( n<=0 ){
+    return zBuf;
+  }
+  zBuf[0] = 0;
   va_start(ap,zFormat);
   z = base_vprintf(0, 0, zBuf, n, zFormat, ap);
   va_end(ap);
   return z;
 }
 
-#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG)
+#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG) || defined(SQLITE_MEMDEBUG)
 /*
 ** A version of printf() that understands %lld.  Used for debugging.
 ** The printf() built into some versions of windows does not understand %lld

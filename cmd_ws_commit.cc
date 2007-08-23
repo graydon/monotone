@@ -444,7 +444,8 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
 
   app.require_workspace();
 
-  file_path dst_path = file_path_external(args.back());
+  utf8 dstr = args.back();
+  file_path dst_path = file_path_external(dstr);
 
   set<file_path> src_paths;
   for (size_t i = 0; i < args.size()-1; i++)
@@ -452,6 +453,15 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
       file_path s = file_path_external(idx(args, i));
       src_paths.insert(s);
     }
+
+  //this catches the case where the user specifies a directory 'by convention'
+  //that doesn't exist.  the code in perform_rename already handles the proper
+  //cases for more than one source item.
+  if (src_paths.size() == 1 && dstr()[dstr().size() -1] == '/')
+    if (get_path_status(*src_paths.begin()) != path::directory)
+	    N(get_path_status(dst_path) == path::directory,
+	      F(_("The specified target directory %s/ doesn't exist.")) % dst_path);
+
   app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
 

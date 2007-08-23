@@ -12,7 +12,7 @@
 
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "vocab.hh"
 #include "dates.hh"
@@ -116,6 +116,12 @@ guess_branch(revision_id const & id, app_state & app);
 #define changelog_cert_name cert_name("changelog")
 #define comment_cert_name cert_name("comment")
 #define testresult_cert_name cert_name("testresult")
+#define suspend_cert_name cert_name("suspend")
+
+void
+cert_revision_suspended_in_branch(revision_id const & ctx,
+                        branch_name const & branchname,
+                        app_state & app);
 
 void
 cert_revision_date_time(revision_id const & m,

@@ -625,17 +625,17 @@ namespace commands
                                                  ident.end()))();
 
     if (visibleid.empty())
-      out << format_text(F(safe_gettext("Commands in group '%s':")) %
+      out << format_text(F("Commands in group '%s':") %
                          join_words(ident)())
           << "\n\n";
     else
       {
         if (cmd->children().size() > 0)
-          out << format_text(F(safe_gettext("Subcommands of '%s %s':")) %
+          out << format_text(F("Subcommands of '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
         else
-          out << format_text(F(safe_gettext("Syntax specific to '%s %s':")) %
+          out << format_text(F("Syntax specific to '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
       }
@@ -660,11 +660,11 @@ namespace commands
 
     // Print command description.
     if (visibleid.empty())
-      out << format_text(F(safe_gettext("Purpose of group '%s':")) %
+      out << format_text(F("Purpose of group '%s':") %
                          join_words(ident)())
           << "\n\n";
     else
-      out << format_text(F(safe_gettext("Description for '%s %s':")) %
+      out << format_text(F("Description for '%s %s':") %
                          ui.prog_name % visibleid)
           << "\n\n";
     out << format_text(cmd->desc(), 2) << "\n\n";
@@ -691,18 +691,18 @@ namespace commands
 
     if (ident.empty())
       {
-        out << format_text("Command groups:") << "\n\n";
+        out << format_text(F("Command groups:")) << "\n\n";
         explain_children(CMD_REF(__root__)->children(), out);
         out << '\n'
-            << format_text("For information on a specific command, type "
-                           "'mtn help <command_name> [subcommand_name ...]'.")
-            << '\n'
-            << format_text("To see the commands available within a group, "
-                           "type 'mtn help <group_name>'.")
-            << '\n'
-            << format_text("Note that you can always abbreviate a command "
+            << format_text(F("For information on a specific command, type "
+                           "'mtn help <command_name> [subcommand_name ...]'."))
+            << "\n\n"
+            << format_text(F("To see the commands available within a group, "
+                           "type 'mtn help <group_name>'."))
+            << "\n\n"
+            << format_text(F("Note that you can always abbreviate a command "
                            "name as long as it does not conflict with other "
-                           "names.")
+                           "names."))
             << "\n\n";
       }
     else

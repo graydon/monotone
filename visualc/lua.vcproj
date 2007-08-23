@@ -113,6 +113,7 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\visualc&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE"
 				StringPooling="true"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"

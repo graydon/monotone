@@ -2,7 +2,7 @@
 #define __KEY_STORE_H__
 
 #include <map>
-#include <vector>
+#include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
 

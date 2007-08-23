@@ -21,12 +21,7 @@ licenses.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
 
-  -- monotone-import.pl: a Perl hack to provide an approximate of what
-     what 'cvs import' does.  The difference is that you have to decide
-     yourself what the import branch is called, and you have to propagate
-     the resulting revision to your development branch if you have one.
-     For a manual, do `perl monotone-import.pl --man'.
-     To get a help text, do `perl monotone-import.pl --help'.
+  -- Monotone.pm: A Perl module to access a 'mtn automate stdio' subprocess.
 
   -- monoprof.sh: A simple monotone profiling script.
 

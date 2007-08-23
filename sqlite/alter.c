@@ -12,7 +12,7 @@
 ** This file contains C code routines that used to generate VDBE code
 ** that implements the ALTER TABLE command.
 **
-** $Id: alter.c,v 1.22 2006/09/08 12:27:37 drh Exp $
+** $Id: alter.c,v 1.27 2007/06/27 17:09:24 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -53,10 +53,15 @@ static void renameTableFunc(
 
   /* The principle used to locate the table name in the CREATE TABLE 
   ** statement is that the table name is the first token that is immediatedly
-  ** followed by a left parenthesis - TK_LP.
+  ** followed by a left parenthesis - TK_LP - or "USING" TK_USING.
   */
   if( zSql ){
     do {
+      if( !*zCsr ){
+        /* Ran out of input before finding an opening bracket. Return NULL. */
+        return;
+      }
+
       /* Store the token that zCsr points to in tname. */
       tname.z = zCsr;
       tname.n = len;
@@ -69,7 +74,7 @@ static void renameTableFunc(
         len = sqlite3GetToken(zCsr, &token);
       } while( token==TK_SPACE );
       assert( len>0 );
-    } while( token!=TK_LP );
+    } while( token!=TK_LP && token!=TK_USING );
 
     zRet = sqlite3MPrintf("%.*s%Q%s", tname.z - zSql, zSql, 
        zTableName, tname.z+tname.n);
@@ -107,6 +112,12 @@ static void renameTriggerFunc(
   */
   if( zSql ){
     do {
+
+      if( !*zCsr ){
+        /* Ran out of input before finding the table name. Return NULL. */
+        return;
+      }
+
       /* Store the token that zCsr points to in tname. */
       tname.z = zCsr;
       tname.n = len;
@@ -262,22 +273,19 @@ void sqlite3AlterRenameTable(
   Table *pTab;              /* Table being renamed */
   char *zName = 0;          /* NULL-terminated version of pName */ 
   sqlite3 *db = pParse->db; /* Database connection */
+  int nTabName;             /* Number of UTF-8 characters in zTabName */
+  const char *zTabName;     /* Original name of the table */
   Vdbe *v;
 #ifndef SQLITE_OMIT_TRIGGER
   char *zWhere = 0;         /* Where clause to locate temp triggers */
 #endif
+  int isVirtualRename = 0;  /* True if this is a v-table with an xRename() */
   
   if( sqlite3MallocFailed() ) goto exit_rename_table;
   assert( pSrc->nSrc==1 );
 
   pTab = sqlite3LocateTable(pParse, pSrc->a[0].zName, pSrc->a[0].zDatabase);
   if( !pTab ) goto exit_rename_table;
-#ifndef SQLITE_OMIT_VIRTUALTABLE
-  if( IsVirtual(pTab) ){
-    sqlite3ErrorMsg(pParse, "virtual tables may not be altered");
-    goto exit_rename_table;
-  }
-#endif
   iDb = sqlite3SchemaToIndex(pParse->db, pTab->pSchema);
   zDb = db->aDb[iDb].zName;
 
@@ -312,16 +320,42 @@ void sqlite3AlterRenameTable(
   }
 #endif
 
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+  if( sqlite3ViewGetColumnNames(pParse, pTab) ){
+    goto exit_rename_table;
+  }
+  if( IsVirtual(pTab) && pTab->pMod->pModule->xRename ){
+    isVirtualRename = 1;
+  }
+#endif
+
   /* Begin a transaction and code the VerifyCookie for database iDb. 
   ** Then modify the schema cookie (since the ALTER TABLE modifies the
-  ** schema).
+  ** schema). Open a statement transaction if the table is a virtual
+  ** table.
   */
   v = sqlite3GetVdbe(pParse);
   if( v==0 ){
     goto exit_rename_table;
   }
-  sqlite3BeginWriteOperation(pParse, 0, iDb);
+  sqlite3BeginWriteOperation(pParse, isVirtualRename, iDb);
   sqlite3ChangeCookie(db, v, iDb);
+
+  /* If this is a virtual table, invoke the xRename() function if
+  ** one is defined. The xRename() callback will modify the names
+  ** of any resources used by the v-table implementation (including other
+  ** SQLite tables) that are identified by the name of the virtual table.
+  */
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+  if( isVirtualRename ){
+    sqlite3VdbeOp3(v, OP_String8, 0, 0, zName, 0);
+    sqlite3VdbeOp3(v, OP_VRename, 0, 0, (const char*)pTab->pVtab, P3_VTAB);
+  }
+#endif
+
+  /* figure out how many UTF-8 characters are in zName */
+  zTabName = pTab->zName;
+  nTabName = sqlite3Utf8CharLen(zTabName, -1);
 
   /* Modify the sqlite_master table to use the new table name. */
   sqlite3NestedParse(pParse,
@@ -337,7 +371,7 @@ void sqlite3AlterRenameTable(
           "name = CASE "
             "WHEN type='table' THEN %Q "
             "WHEN name LIKE 'sqlite_autoindex%%' AND type='index' THEN "
-              "'sqlite_autoindex_' || %Q || substr(name, %d+18,10) "
+             "'sqlite_autoindex_' || %Q || substr(name,%d+18,10) "
             "ELSE name END "
       "WHERE tbl_name=%Q AND "
           "(type='table' OR type='index' OR type='trigger');", 
@@ -345,7 +379,7 @@ void sqlite3AlterRenameTable(
 #ifndef SQLITE_OMIT_TRIGGER
       zName,
 #endif
-      zName, strlen(pTab->zName), pTab->zName
+      zName, nTabName, zTabName
   );
 
 #ifndef SQLITE_OMIT_AUTOINCREMENT

@@ -133,8 +133,8 @@ struct Mem {
   char *z;            /* String or BLOB value */
   int n;              /* Number of characters in string value, including '\0' */
   u16 flags;          /* Some combination of MEM_Null, MEM_Str, MEM_Dyn, etc. */
-  u8  type;           /* One of MEM_Null, MEM_Str, etc. */
-  u8  enc;            /* TEXT_Utf8, TEXT_Utf16le, or TEXT_Utf16be */
+  u8  type;           /* One of SQLITE_NULL, SQLITE_TEXT, SQLITE_INTEGER, etc */
+  u8  enc;            /* SQLITE_UTF8, SQLITE_UTF16BE, SQLITE_UTF16LE */
   void (*xDel)(void *);  /* If not null, call this function to delete Mem.z */
   char zShort[NBFS];  /* Space for short strings */
 };
@@ -172,6 +172,12 @@ typedef struct Mem Mem;
 #define MEM_Ephem     0x0100   /* Mem.z points to an ephemeral string */
 #define MEM_Short     0x0200   /* Mem.z points to Mem.zShort */
 #define MEM_Agg       0x0400   /* Mem.z points to an agg function context */
+#define MEM_Zero      0x0800   /* Mem.i contains count of 0s appended to blob */
+
+#ifdef SQLITE_OMIT_INCRBLOB
+  #undef MEM_Zero
+  #define MEM_Zero 0x0000
+#endif
 
 
 /* A VdbeFunc is just a FuncDef (defined in sqliteInt.h) that contains
@@ -287,7 +293,6 @@ struct Context {
 struct Vdbe {
   sqlite3 *db;        /* The whole database */
   Vdbe *pPrev,*pNext; /* Linked list of VDBEs with the same Vdbe.db */
-  FILE *trace;        /* Write an execution trace here, if not NULL */
   int nOp;            /* Number of instructions in the program */
   int nOpAlloc;       /* Number of slots allocated for aOp[] */
   Op *aOp;            /* Space to hold the virtual machine's program */
@@ -335,6 +340,10 @@ struct Vdbe {
   i64 startTime;          /* Time when query started - used for profiling */
   int nSql;             /* Number of bytes in zSql */
   char *zSql;           /* Text of the SQL statement that generated this */
+#ifdef SQLITE_DEBUG
+  FILE *trace;        /* Write an execution trace here, if not NULL */
+#endif
+  int openedStatement;  /* True if this VM has opened a statement journal */
 #ifdef SQLITE_SSE
   int fetchId;          /* Statement number used by sqlite3_fetch_statement */
   int lru;              /* Counter used for LRU cache replacement */
@@ -358,12 +367,9 @@ int sqlite3VdbeCursorMoveto(Cursor*);
 #if defined(SQLITE_DEBUG) || defined(VDBE_PROFILE)
 void sqlite3VdbePrintOp(FILE*, int, Op*);
 #endif
-#ifdef SQLITE_DEBUG
-void sqlite3VdbePrintSql(Vdbe*);
-#endif
 int sqlite3VdbeSerialTypeLen(u32);
 u32 sqlite3VdbeSerialType(Mem*, int);
-int sqlite3VdbeSerialPut(unsigned char*, Mem*, int);
+int sqlite3VdbeSerialPut(unsigned char*, int, Mem*, int);
 int sqlite3VdbeSerialGet(const unsigned char*, u32, Mem*);
 void sqlite3VdbeDeleteAuxData(VdbeFunc*, int);
 
@@ -377,6 +383,7 @@ int sqlite3VdbeExec(Vdbe*);
 int sqlite3VdbeList(Vdbe*);
 int sqlite3VdbeHalt(Vdbe*);
 int sqlite3VdbeChangeEncoding(Mem *, int);
+int sqlite3VdbeMemTooBig(Mem*);
 int sqlite3VdbeMemCopy(Mem*, const Mem*);
 void sqlite3VdbeMemShallowCopy(Mem*, const Mem*, int);
 int sqlite3VdbeMemMove(Mem*, Mem*);
@@ -385,6 +392,7 @@ int sqlite3VdbeMemSetStr(Mem*, const char*, int, u8, void(*)(void*));
 void sqlite3VdbeMemSetInt64(Mem*, i64);
 void sqlite3VdbeMemSetDouble(Mem*, double);
 void sqlite3VdbeMemSetNull(Mem*);
+void sqlite3VdbeMemSetZeroBlob(Mem*,int);
 int sqlite3VdbeMemMakeWriteable(Mem*);
 int sqlite3VdbeMemDynamicify(Mem*);
 int sqlite3VdbeMemStringify(Mem*, int);
@@ -398,15 +406,24 @@ int sqlite3VdbeMemFromBtree(BtCursor*,int,int,int,Mem*);
 void sqlite3VdbeMemRelease(Mem *p);
 int sqlite3VdbeMemFinalize(Mem*, FuncDef*);
 #ifndef NDEBUG
-void sqlite3VdbeMemSanity(Mem*);
-int sqlite3VdbeOpcodeNoPush(u8);
+  void sqlite3VdbeMemSanity(Mem*);
+  int sqlite3VdbeOpcodeNoPush(u8);
 #endif
 int sqlite3VdbeMemTranslate(Mem*, u8);
-void sqlite3VdbeMemPrettyPrint(Mem *pMem, char *zBuf);
+#ifdef SQLITE_DEBUG
+  void sqlite3VdbePrintSql(Vdbe*);
+  void sqlite3VdbeMemPrettyPrint(Mem *pMem, char *zBuf);
+#endif
 int sqlite3VdbeMemHandleBom(Mem *pMem);
 void sqlite3VdbeFifoInit(Fifo*);
 int sqlite3VdbeFifoPush(Fifo*, i64);
 int sqlite3VdbeFifoPop(Fifo*, i64*);
 void sqlite3VdbeFifoClear(Fifo*);
+
+#ifndef SQLITE_OMIT_INCRBLOB
+  int sqlite3VdbeMemExpandBlob(Mem *);
+#else
+  #define sqlite3VdbeMemExpandBlob(x) SQLITE_OK
+#endif
 
 #endif /* !defined(_VDBEINT_H_) */

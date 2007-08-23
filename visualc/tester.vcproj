@@ -61,9 +61,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
+				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconvD.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -126,7 +127,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -145,7 +146,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
+				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconv.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
@@ -198,6 +199,10 @@
 			</File>
 			<File
 				RelativePath="..\constants.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\file_io.cc"
 				>
 			</File>
 			<File

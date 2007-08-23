@@ -12,7 +12,7 @@
 ** This file contains C code routines that are called by the parser
 ** to handle SELECT statements in SQLite.
 **
-** $Id: select.c,v 1.338 2007/04/16 17:07:55 drh Exp $
+** $Id: select.c,v 1.354 2007/07/18 18:17:12 drh Exp $
 */
 #include "sqliteInt.h"
 
@@ -183,6 +183,20 @@ static void setToken(Token *p, const char *z){
   p->z = (u8*)z;
   p->n = z ? strlen(z) : 0;
   p->dyn = 0;
+}
+
+/*
+** Set the token to the double-quoted and escaped version of the string pointed
+** to by z. For example;
+**
+**    {a"bc}  ->  {"a""bc"}
+*/
+static void setQuotedToken(Token *p, const char *z){
+  p->z = (u8 *)sqlite3MPrintf("\"%w\"", z);
+  p->dyn = 1;
+  if( p->z ){
+    p->n = strlen((char *)p->z);
+  }
 }
 
 /*
@@ -434,6 +448,21 @@ static void codeDistinct(
   sqlite3VdbeAddOp(v, OP_IdxInsert, iTab, 0);
 }
 
+/*
+** Generate an error message when a SELECT is used within a subexpression
+** (example:  "a IN (SELECT * FROM table)") but it has more than 1 result
+** column.  We do this in a subroutine because the error occurs in multiple
+** places.
+*/
+static int checkForMultiColumnSelectError(Parse *pParse, int eDest, int nExpr){
+  if( nExpr>1 && (eDest==SRT_Mem || eDest==SRT_Set) ){
+    sqlite3ErrorMsg(pParse, "only a single result allowed for "
+       "a SELECT that is part of an expression");
+    return 1;
+  }else{
+    return 0;
+  }
+}
 
 /*
 ** This routine generates the code for the inside of the inner loop
@@ -495,6 +524,10 @@ static int selectInnerLoop(
     if( pOrderBy==0 ){
       codeOffset(v, p, iContinue, nColumn);
     }
+  }
+
+  if( checkForMultiColumnSelectError(pParse, eDest, pEList->nExpr) ){
+    return 0;
   }
 
   switch( eDest ){
@@ -803,12 +836,6 @@ static const char *columnType(
   int j;
   if( pExpr==0 || pNC->pSrcList==0 ) return 0;
 
-  /* The TK_AS operator can only occur in ORDER BY, GROUP BY, HAVING,
-  ** and LIMIT clauses.  But pExpr originates in the result set of a
-  ** SELECT.  So pExpr can never contain an AS operator.
-  */
-  assert( pExpr->op!=TK_AS );
-
   switch( pExpr->op ){
     case TK_AGG_COLUMN:
     case TK_COLUMN: {
@@ -1012,7 +1039,7 @@ static void generateColumnNames(
     }else{
       char zName[30];
       assert( p->op!=TK_COLUMN || pTabList==0 );
-      sprintf(zName, "column%d", i+1);
+      sqlite3_snprintf(sizeof(zName), zName, "column%d", i+1);
       sqlite3VdbeSetColName(v, i, COLNAME_NAME, zName, 0);
     }
   }
@@ -1307,6 +1334,15 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             Expr *pExpr, *pRight;
             char *zName = pTab->aCol[j].zName;
 
+            /* If a column is marked as 'hidden' (currently only possible
+            ** for virtual tables), do not include it in the expanded
+            ** result-set list.
+            */
+            if( IsHiddenColumn(&pTab->aCol[j]) ){
+              assert(IsVirtual(pTab));
+              continue;
+            }
+
             if( i>0 ){
               struct SrcList_item *pLeft = &pTabList->a[i-1];
               if( (pLeft[1].jointype & JT_NATURAL)!=0 &&
@@ -1323,12 +1359,12 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             }
             pRight = sqlite3Expr(TK_ID, 0, 0, 0);
             if( pRight==0 ) break;
-            setToken(&pRight->token, zName);
+            setQuotedToken(&pRight->token, zName);
             if( zTabName && (longNames || pTabList->nSrc>1) ){
               Expr *pLeft = sqlite3Expr(TK_ID, 0, 0, 0);
               pExpr = sqlite3Expr(TK_DOT, pLeft, pRight, 0);
               if( pExpr==0 ) break;
-              setToken(&pLeft->token, zTabName);
+              setQuotedToken(&pLeft->token, zTabName);
               setToken(&pExpr->span, sqlite3MPrintf("%s.%s", zTabName, zName));
               pExpr->span.dyn = 1;
               pExpr->token.z = 0;
@@ -1337,6 +1373,7 @@ static int prepSelectStmt(Parse *pParse, Select *p){
             }else{
               pExpr = pRight;
               pExpr->span = pExpr->token;
+              pExpr->span.dyn = 0;
             }
             if( longNames ){
               pNew = sqlite3ExprListAppend(pNew, pExpr, &pExpr->span);
@@ -1358,6 +1395,13 @@ static int prepSelectStmt(Parse *pParse, Select *p){
     }
     sqlite3ExprListDelete(pEList);
     p->pEList = pNew;
+  }
+  if( p->pEList && p->pEList->nExpr>SQLITE_MAX_COLUMN ){
+    sqlite3ErrorMsg(pParse, "too many columns in result set");
+    rc = SQLITE_ERROR;
+  }
+  if( sqlite3MallocFailed() ){
+    rc = SQLITE_NOMEM;
   }
   return rc;
 }
@@ -1503,9 +1547,10 @@ static void computeLimitRegisters(Parse *pParse, Select *p, int iBreak){
     if( v==0 ) return;
     sqlite3ExprCode(pParse, p->pLimit);
     sqlite3VdbeAddOp(v, OP_MustBeInt, 0, 0);
-    sqlite3VdbeAddOp(v, OP_MemStore, iLimit, 0);
+    sqlite3VdbeAddOp(v, OP_MemStore, iLimit, 1);
     VdbeComment((v, "# LIMIT counter"));
     sqlite3VdbeAddOp(v, OP_IfMemZero, iLimit, iBreak);
+    sqlite3VdbeAddOp(v, OP_MemLoad, iLimit, 0);
   }
   if( p->pOffset ){
     p->iOffset = iOffset = pParse->nMem++;
@@ -1753,6 +1798,9 @@ static int multiSelect(
       pOffset = p->pOffset;
       p->pOffset = 0;
       rc = sqlite3Select(pParse, p, op, unionTab, 0, 0, 0, aff);
+      /* Query flattening in sqlite3Select() might refill p->pOrderBy.
+      ** Be sure to delete p->pOrderBy, therefore, to avoid a memory leak. */
+      sqlite3ExprListDelete(p->pOrderBy);
       p->pPrior = pPrior;
       p->pOrderBy = pOrderBy;
       sqlite3ExprDelete(p->pLimit);
@@ -1909,8 +1957,8 @@ static int multiSelect(
     KeyInfo *pKeyInfo;            /* Collating sequence for the result set */
     Select *pLoop;                /* For looping through SELECT statements */
     int nKeyCol;                  /* Number of entries in pKeyInfo->aCol[] */
-    CollSeq **apColl;
-    CollSeq **aCopy;
+    CollSeq **apColl;             /* For looping through pKeyInfo->aColl[] */
+    CollSeq **aCopy;              /* A copy of pKeyInfo->aColl[] */
 
     assert( p->pRightmost==p );
     nKeyCol = nCol + (pOrderBy ? pOrderBy->nExpr : 0);
@@ -1951,9 +1999,23 @@ static int multiSelect(
       int addr;
       u8 *pSortOrder;
 
+      /* Reuse the same pKeyInfo for the ORDER BY as was used above for
+      ** the compound select statements.  Except we have to change out the
+      ** pKeyInfo->aColl[] values.  Some of the aColl[] values will be
+      ** reused when constructing the pKeyInfo for the ORDER BY, so make
+      ** a copy.  Sufficient space to hold both the nCol entries for
+      ** the compound select and the nOrderbyExpr entries for the ORDER BY
+      ** was allocated above.  But we need to move the compound select
+      ** entries out of the way before constructing the ORDER BY entries.
+      ** Move the compound select entries into aCopy[] where they can be
+      ** accessed and reused when constructing the ORDER BY entries.
+      ** Because nCol might be greater than or less than nOrderByExpr
+      ** we have to use memmove() when doing the copy.
+      */
       aCopy = &pKeyInfo->aColl[nOrderByExpr];
       pSortOrder = pKeyInfo->aSortOrder = (u8*)&aCopy[nCol];
-      memcpy(aCopy, pKeyInfo->aColl, nCol*sizeof(CollSeq*));
+      memmove(aCopy, pKeyInfo->aColl, nCol*sizeof(CollSeq*));
+
       apColl = pKeyInfo->aColl;
       for(i=0; i<nOrderByExpr; i++, pOTerm++, apColl++, pSortOrder++){
         Expr *pExpr = pOTerm->pExpr;
@@ -1968,7 +2030,7 @@ static int multiSelect(
       assert( p->pRightmost==p );
       assert( p->addrOpenEphm[2]>=0 );
       addr = p->addrOpenEphm[2];
-      sqlite3VdbeChangeP2(v, addr, p->pEList->nExpr+2);
+      sqlite3VdbeChangeP2(v, addr, p->pOrderBy->nExpr+2);
       pKeyInfo->nField = nOrderByExpr;
       sqlite3VdbeChangeP3(v, addr, (char*)pKeyInfo, P3_KEYINFO_HANDOFF);
       pKeyInfo = 0;
@@ -2047,6 +2109,7 @@ static void substSelect(Select *p, int iTable, ExprList *pEList){
   substExprList(p->pOrderBy, iTable, pEList);
   substExpr(p->pHaving, iTable, pEList);
   substExpr(p->pWhere, iTable, pEList);
+  substSelect(p->pPrior, iTable, pEList);
 }
 #endif /* !defined(SQLITE_OMIT_VIEW) */
 
@@ -2114,6 +2177,10 @@ static void substSelect(Select *p, int iTable, ExprList *pEList){
 **
 **  (14)  The subquery does not use OFFSET
 **
+**  (15)  The outer query is not part of a compound select or the
+**        subquery does not have both an ORDER BY and a LIMIT clause.
+**        (See ticket #2339)
+**
 ** In this routine, the "p" parameter is a pointer to the outer query.
 ** The subquery is p->pSrc->a[iFrom].  isAgg is true if the outer query
 ** uses aggregates and subqueryIsAgg is true if the subquery uses aggregates.
@@ -2158,6 +2225,9 @@ static int flattenSubquery(
   ** and (14). */
   if( pSub->pLimit && p->pLimit ) return 0;              /* Restriction (13) */
   if( pSub->pOffset ) return 0;                          /* Restriction (14) */
+  if( p->pRightmost && pSub->pLimit && pSub->pOrderBy ){
+    return 0;                                            /* Restriction (15) */
+  }
   if( pSubSrc->nSrc==0 ) return 0;                       /* Restriction (7)  */
   if( (pSub->isDistinct || pSub->pLimit) 
          && (pSrc->nSrc>1 || isAgg) ){          /* Restrictions (4)(5)(8)(9) */
@@ -2444,6 +2514,16 @@ static int simpleMinMaxQuery(Parse *pParse, Select *p, int eDest, int iParm){
       sqlite3VdbeAddOp(v, OP_MakeRecord, 1, 0);
       seekOp = OP_MoveGt;
     }
+    if( pIdx->aSortOrder[0]==SQLITE_SO_DESC ){
+      /* Ticket #2514: invert the seek operator if we are using
+      ** a descending index. */
+      if( seekOp==OP_Last ){
+        seekOp = OP_Rewind;
+      }else{
+        assert( seekOp==OP_MoveGt );
+        seekOp = OP_MoveLt;
+      }
+    }
     sqlite3VdbeAddOp(v, seekOp, iIdx, 0);
     sqlite3VdbeAddOp(v, OP_IdxRowid, iIdx, 0);
     sqlite3VdbeAddOp(v, OP_Close, iIdx, 0);
@@ -2479,6 +2559,10 @@ static int processOrderGroupBy(
   assert( pEList );
 
   if( pOrderBy==0 ) return 0;
+  if( pOrderBy->nExpr>SQLITE_MAX_COLUMN ){
+    sqlite3ErrorMsg(pParse, "too many terms in %s BY clause", zType);
+    return 1;
+  }
   for(i=0; i<pOrderBy->nExpr; i++){
     int iCol;
     Expr *pE = pOrderBy->a[i].pExpr;
@@ -2604,6 +2688,10 @@ int sqlite3SelectResolve(
         processOrderGroupBy(&sNC, pGroupBy, "GROUP") ){
       return SQLITE_ERROR;
     }
+  }
+
+  if( sqlite3MallocFailed() ){
+    return SQLITE_NOMEM;
   }
 
   /* Make sure the GROUP BY clause does not contain aggregate functions.
@@ -2822,8 +2910,13 @@ int sqlite3Select(
   if( p->pPrior ){
     if( p->pRightmost==0 ){
       Select *pLoop;
-      for(pLoop=p; pLoop; pLoop=pLoop->pPrior){
+      int cnt = 0;
+      for(pLoop=p; pLoop; pLoop=pLoop->pPrior, cnt++){
         pLoop->pRightmost = p;
+      }
+      if( SQLITE_MAX_COMPOUND_SELECT>0 && cnt>SQLITE_MAX_COMPOUND_SELECT ){
+        sqlite3ErrorMsg(pParse, "too many terms in compound SELECT");
+        return 1;
       }
     }
     return multiSelect(pParse, p, eDest, iParm, aff);
@@ -2860,9 +2953,7 @@ int sqlite3Select(
   ** only a single column may be output.
   */
 #ifndef SQLITE_OMIT_SUBQUERY
-  if( (eDest==SRT_Mem || eDest==SRT_Set) && pEList->nExpr>1 ){
-    sqlite3ErrorMsg(pParse, "only a single result allowed for "
-       "a SELECT that is part of an expression");
+  if( checkForMultiColumnSelectError(pParse, eDest, pEList->nExpr) ){
     goto select_end;
   }
 #endif
@@ -2894,8 +2985,21 @@ int sqlite3Select(
     }else{
       needRestoreContext = 0;
     }
+#if SQLITE_MAX_EXPR_DEPTH>0
+    /* Increment Parse.nHeight by the height of the largest expression
+    ** tree refered to by this, the parent select. The child select
+    ** may contain expression trees of at most
+    ** (SQLITE_MAX_EXPR_DEPTH-Parse.nHeight) height. This is a bit
+    ** more conservative than necessary, but much easier than enforcing
+    ** an exact limit.
+    */
+    pParse->nHeight += sqlite3SelectExprHeight(p);
+#endif
     sqlite3Select(pParse, pItem->pSelect, SRT_EphemTab, 
                  pItem->iCursor, p, i, &isAgg, 0);
+#if SQLITE_MAX_EXPR_DEPTH>0
+    pParse->nHeight -= sqlite3SelectExprHeight(p);
+#endif
     if( needRestoreContext ){
       pParse->zAuthContext = zSavedAuthContext;
     }

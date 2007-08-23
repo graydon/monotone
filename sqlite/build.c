@@ -22,7 +22,7 @@
 **     COMMIT
 **     ROLLBACK
 **
-** $Id: build.c,v 1.421 2007/04/18 14:47:24 danielk1977 Exp $
+** $Id: build.c,v 1.433 2007/07/02 19:31:27 drh Exp $
 */
 #include "sqliteInt.h"
 #include <ctype.h>
@@ -194,8 +194,10 @@ void sqlite3FinishCoding(Parse *pParse){
   /* Get the VDBE program ready for execution
   */
   if( v && pParse->nErr==0 && !sqlite3MallocFailed() ){
+#ifdef SQLITE_DEBUG
     FILE *trace = (db->flags & SQLITE_VdbeTrace)!=0 ? stdout : 0;
     sqlite3VdbeTrace(v, trace);
+#endif
     sqlite3VdbeMakeReady(v, pParse->nVar, pParse->nMem+3,
                          pParse->nTab+3, pParse->explain);
     pParse->rc = SQLITE_DONE;
@@ -910,6 +912,10 @@ void sqlite3AddColumn(Parse *pParse, Token *pName){
   char *z;
   Column *pCol;
   if( (p = pParse->pNewTable)==0 ) return;
+  if( p->nCol+1>SQLITE_MAX_COLUMN ){
+    sqlite3ErrorMsg(pParse, "too many columns on %s", p->zName);
+    return;
+  }
   z = sqlite3NameFromToken(pName);
   if( z==0 ) return;
   for(i=0; i<p->nCol; i++){
@@ -1322,22 +1328,24 @@ static char *createTableStmt(Table *p, int isTemp){
   n += 35 + 6*p->nCol;
   zStmt = sqliteMallocRaw( n );
   if( zStmt==0 ) return 0;
-  strcpy(zStmt, !OMIT_TEMPDB&&isTemp ? "CREATE TEMP TABLE ":"CREATE TABLE ");
+  sqlite3_snprintf(n, zStmt,
+                  !OMIT_TEMPDB&&isTemp ? "CREATE TEMP TABLE ":"CREATE TABLE ");
   k = strlen(zStmt);
   identPut(zStmt, &k, p->zName);
   zStmt[k++] = '(';
   for(pCol=p->aCol, i=0; i<p->nCol; i++, pCol++){
-    strcpy(&zStmt[k], zSep);
+    sqlite3_snprintf(n-k, &zStmt[k], zSep);
     k += strlen(&zStmt[k]);
     zSep = zSep2;
     identPut(zStmt, &k, pCol->zName);
     if( (z = pCol->zType)!=0 ){
       zStmt[k++] = ' ';
-      strcpy(&zStmt[k], z);
+      assert( strlen(z)+k+1<=n );
+      sqlite3_snprintf(n-k, &zStmt[k], "%s", z);
       k += strlen(z);
     }
   }
-  strcpy(&zStmt[k], zEnd);
+  sqlite3_snprintf(n-k, &zStmt[k], "%s", zEnd);
   return zStmt;
 }
 
@@ -1560,7 +1568,7 @@ void sqlite3EndTable(
         pCons = pEnd;
       }
       nName = (const char *)pCons->z - zName;
-      p->addColOffset = 13 + sqlite3utf8CharLen(zName, nName);
+      p->addColOffset = 13 + sqlite3Utf8CharLen(zName, nName);
     }
 #endif
   }
@@ -2231,7 +2239,7 @@ void sqlite3CreateIndex(
   SrcList *pTblName, /* Table to index. Use pParse->pNewTable if 0 */
   ExprList *pList,   /* A list of columns to be indexed */
   int onError,       /* OE_Abort, OE_Ignore, OE_Replace, or OE_None */
-  Token *pStart,     /* The CREATE token that begins a CREATE TABLE statement */
+  Token *pStart,     /* The CREATE token that begins this statement */
   Token *pEnd,       /* The ")" that closes the CREATE INDEX statement */
   int sortOrder,     /* Sort order of primary key when pList==NULL */
   int ifNotExist     /* Omit error if index already exists */
@@ -2355,7 +2363,7 @@ void sqlite3CreateIndex(
     int n;
     Index *pLoop;
     for(pLoop=pTab->pIndex, n=1; pLoop; pLoop=pLoop->pNext, n++){}
-    sprintf(zBuf,"_%d",n);
+    sqlite3_snprintf(sizeof(zBuf),zBuf,"_%d",n);
     zName = 0;
     sqlite3SetString(&zName, "sqlite_autoindex_", pTab->zName, zBuf, (char*)0);
     if( zName==0 ) goto exit_create_index;
@@ -2420,7 +2428,7 @@ void sqlite3CreateIndex(
   pIndex->aSortOrder = (u8 *)(&pIndex->aiRowEst[nCol+1]);
   pIndex->zName = (char *)(&pIndex->aSortOrder[nCol]);
   zExtra = (char *)(&pIndex->zName[nName+1]);
-  strcpy(pIndex->zName, zName);
+  memcpy(pIndex->zName, zName, nName+1);
   pIndex->pTable = pTab;
   pIndex->nColumn = pList->nExpr;
   pIndex->onError = onError;
@@ -2463,7 +2471,7 @@ void sqlite3CreateIndex(
     if( pListItem->pExpr ){
       assert( pListItem->pExpr->pColl );
       zColl = zExtra;
-      strcpy(zExtra, pListItem->pExpr->pColl->zName);
+      sqlite3_snprintf(nExtra, zExtra, "%s", pListItem->pExpr->pColl->zName);
       zExtra += (strlen(zColl) + 1);
     }else{
       zColl = pTab->aCol[j].zColl;
@@ -3091,7 +3099,8 @@ void sqlite3RollbackTransaction(Parse *pParse){
 int sqlite3OpenTempDatabase(Parse *pParse){
   sqlite3 *db = pParse->db;
   if( db->aDb[1].pBt==0 && !pParse->explain ){
-    int rc = sqlite3BtreeFactory(db, 0, 0, MAX_PAGES, &db->aDb[1].pBt);
+    int rc = sqlite3BtreeFactory(db, 0, 0, SQLITE_DEFAULT_CACHE_SIZE,
+                                 &db->aDb[1].pBt);
     if( rc!=SQLITE_OK ){
       sqlite3ErrorMsg(pParse, "unable to open a temporary database "
         "file for storing temporary tables");
@@ -3148,7 +3157,7 @@ void sqlite3CodeVerifySchema(Parse *pParse, int iDb){
   if( iDb>=0 ){
     assert( iDb<db->nDb );
     assert( db->aDb[iDb].pBt!=0 || iDb==1 );
-    assert( iDb<MAX_ATTACHED+2 );
+    assert( iDb<SQLITE_MAX_ATTACHED+2 );
     mask = 1<<iDb;
     if( (pParse->cookieMask & mask)==0 ){
       pParse->cookieMask |= mask;
@@ -3297,6 +3306,7 @@ void sqlite3Reindex(Parse *pParse, Token *pName1, Token *pName2){
   iDb = sqlite3TwoPartName(pParse, pName1, pName2, &pObjName);
   if( iDb<0 ) return;
   z = sqlite3NameFromToken(pObjName);
+  if( z==0 ) return;
   zDb = db->aDb[iDb].zName;
   pTab = sqlite3FindTable(db, z, zDb);
   if( pTab ){

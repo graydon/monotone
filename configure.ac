@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.35, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.36, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -111,6 +111,7 @@ AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
 	          struct stat.st_mtimespec.tv_nsec,
 		  struct stat.st_ctimensec,
 		  struct stat.st_mtimensec])
+AC_CHECK_MEMBERS([struct dirent.d_type], , ,[#include <dirent.h>])
 
 # Checks for library functions.
 AC_FUNC_STAT
@@ -119,7 +120,7 @@ AC_FUNC_LOCALE_WORKS
 AC_FUNC_ICONV_TRANSLIT
 AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
 		__cxa_current_exception_type __cxa_demangle \
-                putenv setenv unsetenv dirfd fstatat])
+                putenv setenv unsetenv dirfd fstatat mkdtemp])
 
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
@@ -127,8 +128,6 @@ AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 # check for all things boost-related
 BOOST_VERSION_CHECK
 BOOST_VERSION_SPECIFIC_BUGS
-
-MTN_BOOST_LIB_FILESYSTEM
 MTN_BOOST_LIB_REGEX
 
 # more complex library checks

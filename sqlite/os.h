@@ -40,7 +40,7 @@
 #     define OS_WIN 1
 #     define OS_UNIX 0
 #     define OS_OS2 0
-#   elif defined(_EMX_) || defined(_OS2) || defined(OS2) || defined(_OS2_) || defined(__OS2__)
+#   elif defined(__EMX__) || defined(_OS2) || defined(OS2) || defined(_OS2_) || defined(__OS2__)
 #     define OS_WIN 0
 #     define OS_UNIX 0
 #     define OS_OS2 1
@@ -67,11 +67,15 @@
 # include <windows.h>
 # define SQLITE_TEMPNAME_SIZE (MAX_PATH+50)
 #elif OS_OS2
+# if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 3) && defined(OS2_HIGH_MEMORY)
+#  include <os2safe.h> /* has to be included before os2.h for linking to work */
+# endif
 # define INCL_DOSDATETIME
 # define INCL_DOSFILEMGR
 # define INCL_DOSERRORS
 # define INCL_DOSMISC
 # define INCL_DOSPROCESS
+# define INCL_DOSMODULEMGR
 # include <os2.h>
 # define SQLITE_TEMPNAME_SIZE (CCHMAXPATHCOMP)
 #else
@@ -352,11 +356,9 @@ int sqlite3OsSeek(OsFile*, i64 offset);
 int sqlite3OsTruncate(OsFile*, i64 size);
 int sqlite3OsSync(OsFile*, int);
 void sqlite3OsSetFullSync(OsFile *id, int setting);
-int sqlite3OsFileHandle(OsFile *id);
 int sqlite3OsFileSize(OsFile*, i64 *pSize);
 int sqlite3OsLock(OsFile*, int);
 int sqlite3OsUnlock(OsFile*, int);
-int sqlite3OsLockState(OsFile *id);
 int sqlite3OsCheckReservedLock(OsFile *id);
 int sqlite3OsOpenReadWrite(const char*, OsFile**, int*);
 int sqlite3OsOpenExclusive(const char*, OsFile**, int);
@@ -382,6 +384,11 @@ int sqlite3OsAllocationSize(void *);
 void *sqlite3OsDlopen(const char*);
 void *sqlite3OsDlsym(void*, const char*);
 int sqlite3OsDlclose(void*);
+
+#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG)
+  int sqlite3OsFileHandle(OsFile *id);
+  int sqlite3OsLockState(OsFile *id);
+#endif
 
 /*
 ** If the SQLITE_ENABLE_REDEF_IO macro is defined, then the OS-layer
