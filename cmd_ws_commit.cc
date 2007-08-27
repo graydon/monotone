@@ -200,9 +200,13 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
                               old_roster, new_roster, app);
     }
 
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
-
+  roster_t restricted_roster;
+  make_restricted_roster(old_roster, new_roster, restricted_roster, 
+                         mask);
+ 
+  make_cset(old_roster, restricted_roster, included);
+  make_cset(restricted_roster, new_roster, excluded);
+  
   // The included cset will be thrown away (reverted) leaving the
   // excluded cset pending in MTN/work which must be valid against the
   // old roster.
