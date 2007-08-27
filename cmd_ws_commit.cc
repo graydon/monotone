@@ -210,10 +210,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
  
   make_cset(old_roster, restricted_roster, preserved);
   
-  // Leave the preserved cset pending in MTN/revision 
-  // which must be valid against the old roster.
-
-  check_restricted_cset(old_roster, preserved);
+  // The preserved cset will be left pending in MTN/revision 
 
   // if/when reverting through the editable_tree interface use
   // make_cset(new_roster, restricted_roster, reverted); 

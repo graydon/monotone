@@ -368,9 +368,6 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
                        node_restriction const & mask);
 
 void
-check_restricted_cset(roster_t const & roster, cset const & cs);
-
-void
 select_nodes_modified_by_cset(cset const & cs,
                               roster_t const & old_roster,
                               roster_t const & new_roster,
