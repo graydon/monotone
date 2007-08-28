@@ -1037,7 +1037,7 @@ int main(int argc, char **argv)
           // logfile.
           source_dir = dirname(tests_to_run[0]);
           lua_lib st(tests_to_run[1], tests_to_run[0]);
-          return test_invoker(st)(tests_to_run[2]);
+          return test_invoker(st())(tests_to_run[2]);
 #else
           E(false, F("self-invocation should not be used on Unix\n"));
 #endif

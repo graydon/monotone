@@ -5,10 +5,11 @@
 #include "base.hh"
 #include "tester-plaf.hh"
 #include "sanity.hh"
+#include "platform.hh"
 
 #include <windows.h>
 
-void make_accessible(string const & name)
+void make_accessible(std::string const & name)
 {
   DWORD attrs = GetFileAttributes(name.c_str());
   E(attrs != INVALID_FILE_ATTRIBUTES,
@@ -40,7 +41,7 @@ time_t get_last_write_time(char const * name)
   return (time_t)((ft64/10000000) - 11644473600LL);
 }
 
-void do_copy_file(string const & from, string const & to)
+void do_copy_file(std::string const & from, std::string const & to)
 {
   // For once something is easier with Windows.
   E(CopyFile(from.c_str(), to.c_str(), true),
@@ -134,7 +135,7 @@ void run_tests_in_children(test_enumerator const & next_test,
                            std::string const & firstdir)
 {
   char const * argv[6];
-  argv[0] = argv0.c_str();
+  argv[0] = runner.c_str();
   argv[1] = "-r";
   argv[2] = testfile.c_str();
   argv[3] = firstdir.c_str();
@@ -142,7 +143,7 @@ void run_tests_in_children(test_enumerator const & next_test,
   argv[5] = 0;
 
   test_to_run t;
-  string testdir;
+  std::string testdir;
   while (next_test(t))
     {
       // This must be done before we try to redirect stdout/err to a
@@ -158,7 +159,7 @@ void run_tests_in_children(test_enumerator const & next_test,
           cleanup(t, 121);
           continue;
         }
-      
+
       change_current_working_dir(testdir);
       argv[4] = t.name.c_str();
       pid_t child = process_spawn(argv);
