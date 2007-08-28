@@ -2310,19 +2310,30 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
       selected.erase(n->first);
     }
 
-  // it would be good to check this and do a check_sane but these seem to 
-  // cause some test breakage
 
-  // if (!restricted.has_root())
-  //  {
-  //     // done to avoid tripping I(has_root()) in check_sane
-  //     W(F("restriction excludes addition of root directory"));
-  //     problems++;
-  //  }
+  // we cannot call restricted.check_sane(true) unconditionally because the
+  // restricted roster is very possibly *not* sane. for example, if we run
+  // the following in a new unversioned directory the from, to and
+  // restricted rosters will all be empty and thus not sane.
+  //
+  // mtn setup .
+  // mtn status
+  //
+  // several tests do this and it seems entirely reasonable. we first check
+  // that the restricted roster is not empty and only then require it to be
+  // sane.
+
+  if (!restricted.all_nodes().empty() && !restricted.has_root())
+   {
+     W(F("restriction excludes addition of root directory"));
+     problems++;
+   }
 
   N(problems == 0, F("invalid restriction"));
 
-  // restricted.check_sane(true);
+  if (!restricted.all_nodes().empty())
+    restricted.check_sane(true);
+
 }
 
 void
