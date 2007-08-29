@@ -325,7 +325,7 @@ UNIT_TEST_OBJ_SUPPORT =							\
 
 bin_PROGRAMS = mtn
 noinst_PROGRAMS = txt2c
-EXTRA_PROGRAMS = 
+EXTRA_PROGRAMS =
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
@@ -341,7 +341,7 @@ tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
 
 txt2c_SOURCES = txt2c.cc
 
-noinst_LIBRARIES = libplatform.a lib3rdparty.a 
+noinst_LIBRARIES = libplatform.a lib3rdparty.a
 libplatform_a_SOURCES = platform.hh tester-plaf.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
@@ -385,25 +385,25 @@ SUFFIXES = .gch
 AM_CPPFLAGS =
 AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS)
-AM_LDFLAGS = 
+AM_LDFLAGS =
 
 lib3rdparty_a_CPPFLAGS =
 lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
 lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
-mtn_LDFLAGS = 
+mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
 mtn_LDADD = libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
-unit_tester_LDFLAGS = 
+unit_tester_LDFLAGS =
 unit_tester_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
 unit_tester_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
 unit_tester_LDADD += libplatform.a lib3rdparty.a \
 		     $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
-tester_LDFLAGS = 
+tester_LDFLAGS =
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 tester_LDADD += libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
@@ -423,18 +423,18 @@ endif
 if MISSING_INET_PTON
   lib3rdparty_a_SOURCES += netxx/inet_pton.cxx netxx/inet_pton.h
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_PTON
-endif    
+endif
 
 if MISSING_INET_NTOP
   lib3rdparty_a_SOURCES += netxx/inet_ntop.cxx netxx/inet_ntop.h
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_NTOP
-endif    
+endif
 
 if MISSING_GETADDRINFO
   lib3rdparty_a_SOURCES += netxx/resolve_gethostbyname.cxx netxx/resolve_getservbyname.cxx
 else
   lib3rdparty_a_SOURCES += netxx/resolve_getaddrinfo.cxx
-endif    
+endif
 
 if MISSING_INET6
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_INET6
@@ -599,7 +599,7 @@ run_%_tests: Makefile
 
 # The leading + causes Make to treat this as a recursive invocation,
 # allowing it to participate in the jobserver protocol.
-%_tests.status: run_%_tests %-testsuite.lua tester FORCE
+%_tests.status: run_%_tests %-testsuite.lua tester$(EXEEXT) FORCE
 	+./run_$*_tests
 
 unit_tests.status : unit_tester
@@ -642,7 +642,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
 
-# we generate some source files to copy data into the executable 
+# we generate some source files to copy data into the executable
 # note that the only things that should go in BUILT_SOURCES are things
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
@@ -707,7 +707,7 @@ package_revision.txt: package_revision_raw.txt
 #      package_full_revision_raw.txt
 #              |                \  <-- add "generated from cached data" text
 #              |      package_full_revision_dist.txt
-#              |           /        
+#              |           /
 #          package_full_revision.txt
 
 # See above comment.
