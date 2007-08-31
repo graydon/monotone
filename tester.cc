@@ -249,7 +249,7 @@ LUAEXT(posix_umask, )
   int oldmask = do_umask((a*8 + b)*8 + c);
   if (oldmask == -1)
     {
-      lua_pushnil(L);
+      lua_pushinteger(L, 0);
       return 1;
     }
   else
@@ -599,8 +599,9 @@ int test_invoker::operator()(std::string const & testname) const
       retcode = luaL_checkinteger(st, -1);
       lua_remove(st, -1);
     }
-  catch (...)
+  catch (std::exception & e)
     {
+      E(false, F("test %s: %s") % testname % e.what());
       retcode = 124;
     }
   return retcode;
