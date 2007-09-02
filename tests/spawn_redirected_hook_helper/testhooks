@@ -13,7 +13,7 @@ function ignore_file (name)
       x:close()
     end
   end
-  
+
   if ok then
     x = io.open("outfile", "w")
     x:close()

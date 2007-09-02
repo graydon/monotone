@@ -949,7 +949,7 @@ parse_command_line(int argc, char const * const * argv,
         }
       else if (int_option(argv[i], "-j", "--jobs=", jobs))
         /* no action required */;
-      else if (argv[i][1] == '-')
+      else if (argv[i][0] == '-')
         {
           P(F("unrecognized option '%s'") % argv[i]);
           need_help = true;
@@ -969,7 +969,7 @@ parse_command_line(int argc, char const * const * argv,
 
   E(!run_one || (!want_help && !debugging && !list_only
                  && tests_to_run.size() == 3 && jobs == 0),
-    F("incorrect self-invocation"));
+    F("incorrect self-invocation; -r <abs path to lua-testsuite.lua> <abs path to tester_dir> <test>"));
 
   if (tests_to_run.size() == 0)
     {
