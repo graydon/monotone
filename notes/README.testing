@@ -55,6 +55,6 @@ Debugging
 ---------
 
 compile with -O0
-run the offending command under gdb
+run the offending command under gdb with something like gdb --args mtn ...
 put a breakpoint on 'sanity::invar<TAB> (note the leading single quote)
 
