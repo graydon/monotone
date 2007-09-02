@@ -13,11 +13,8 @@ mkdir("test_dir3")
 check(mtn("--branch=testbranch", "checkout", "test_dir3"), 1, false, false)
 
 if existsonpath("chmod") and existsonpath("test") then
-  -- Skip this part if run as root (hi Gentoo!)
-  -- Also skip if on Windows, since these permissions are not enforced there
-  if check({"test", "-O", "/"}, false, false, false) == 0 or
-     ostype == "Windows"
-  then
+  -- skip this part if run as root (hi Gentoo!)
+  if check({"test", "-O", "/"}, false, false, false) == 0 then
     partial_skip = true
   else
     mkdir("test_dir4")
