@@ -13,7 +13,7 @@
 
 _outfile = "/tmp/processor-out"
 _errfile = "/tmp/processor-err"
-_sender = "monotone@my.domain.please.change.me"
+_from = "monotone@my.domain.please.change.me"
 
 function get_notify_recipients(branch)
    local emailfile = io.open(get_confdir() .. "/notify", "r")
@@ -117,10 +117,14 @@ function note_netsync_end (session_id, status, bytes_in, bytes_out, certs_in, ce
 	  file:write(summarize_certs(rev_data))
 	  file:close()
 	  local subject = make_subject_line(rev_data)
-	  local from_header = "From: " .. rev_data["certs"]["author"][1]
+	  local reply_to = "Reply-To: "
+	  for j,auth in pairs(rev_data["certs"]["author"]) do
+	     reply_to = reply_to .. auth
+	     if j < # (rev_data["certs"]["author"]) then reply_to = reply_to .. ", " end
+	  end
 
 	  for j,addr in pairs(rev_data["recipients"]) do
-	     spawn_redirected(filename, _outfile, _errfile, "/usr/bin/mail", "-e", "-a", from_header, "-a", "Sender: " .. _sender, "-s", subject, addr)
+	     spawn_redirected(filename, _outfile, _errfile, "/usr/bin/mail", "-e", "-a", reply_to, "-a", "From: " .. _from, "-s", subject, addr)
 	  end
 
 	  os.remove(filename)
