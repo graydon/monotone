@@ -23,10 +23,12 @@ public:
 };
 bool operator < (tag_t const & a, tag_t const & b);
 
+typedef bool suspended_indicator;
+
 class project_t
 {
   app_state & app;
-  std::map<branch_name, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
+  std::map<std::pair<branch_name, suspended_indicator>, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 
