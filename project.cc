@@ -120,7 +120,8 @@ void
 project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
                             multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
-  std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[name];
+  std::pair<branch_name, suspended_indicator> cache_index(name, app.opts.ignore_suspend_certs);
+  std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[cache_index];
   if (branch.first.outdated())
     {
       L(FL("getting heads of branch %s") % name);
