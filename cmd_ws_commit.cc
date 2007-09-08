@@ -207,6 +207,8 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   // excluded cset pending in MTN/work which must be valid against the
   // old roster.
 
+  MM(included);
+  MM(excluded);
   check_restricted_cset(old_roster, excluded);
 
   node_map const & nodes = old_roster.all_nodes();
