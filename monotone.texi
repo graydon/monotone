@@ -5513,7 +5513,13 @@ and revision is correct.
 This command ``kills'', i.e., deletes, a given revision, as well as any
 certs attached to it.  It has an ugly name because it is a dangerous
 command; it permanently and irrevocably deletes historical information
-from your database.  There are a number of caveats:
+from your database.  If you execute this command in a workspace, whose
+parent revision is the one you are about to delete, the killed revision
+is re-applied to this workspace which makes it possible for you to fix
+a problem and commit again later on easily. For this to work, the
+workspace may not have any changes and/or missing files.
+
+There are a number of other caveats with this command:
 @itemize
 @item
 It can only be applied to revisions that have no descendants.  If you
