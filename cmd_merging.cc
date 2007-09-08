@@ -941,6 +941,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,
                           mask);
+    MM(from_to_to);
+    MM(from_to_to_excluded);
     check_restricted_cset(*from_roster, from_to_to);
   }
   N(!from_to_to.empty(), F("no changes to be applied"));
