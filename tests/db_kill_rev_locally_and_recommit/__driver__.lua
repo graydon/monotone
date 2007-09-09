@@ -32,6 +32,5 @@ addfile("file1", "file1")
 addfile("foo/file2", "foofile2")
 
 -- this should just work
-check(mtn("commit", "-m", "recommit same id"))
-
+check(mtn("commit", "-m", "recommit same id"), 0, false, false)
 

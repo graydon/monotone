@@ -11,6 +11,7 @@ ancestor = base_revision()
 writefile("testfile", "stuff stuff")
 commit()
 child = base_revision()
+check(mtn("update", "-r", ancestor), 0, false, false)
 
 -- trying to kill the ancestor. This *is supposed to fail*
 check(mtn("db", "kill_rev_locally", ancestor), 1, false, false)
