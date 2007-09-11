@@ -185,7 +185,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.brief);
+  do_annotate(app, file_node, rid, !app.opts.brief);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
