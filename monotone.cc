@@ -118,14 +118,20 @@ void localize_monotone()
     }
 }
 
-// read command-line options and return the command name
-commands::command_id read_options(options & opts, args_vector args)
+option::concrete_option_set
+read_global_options(options & opts, args_vector & args)
 {
-  commands::command_id cmd;
-
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
+  
+  return optset;
+}
+
+// read command-line options and return the command name
+commands::command_id read_options(option::concrete_option_set & optset, options & opts, args_vector & args)
+{
+  commands::command_id cmd;
 
   if (!opts.args.empty())
     {
@@ -207,7 +213,10 @@ cpp_main(int argc, char ** argv)
       app_state app;
       try
         {
-          commands::command_id cmd = read_options(app.opts, args);
+          // read global options first
+          // command specific options will be read below
+          args_vector opt_args(args);
+          option::concrete_option_set optset = read_global_options(app.opts, opt_args);
 
           if (app.opts.version_given)
             {
@@ -227,12 +236,6 @@ cpp_main(int argc, char ** argv)
                 app.keys.set_key_dir(app.opts.key_dir);
             }
 
-          // stop here if they asked for help
-          if (app.opts.help)
-            {
-              throw usage(cmd);
-            }
-
           // at this point we allow a workspace (meaning search for it
           // and if found read _MTN/options, but don't use the data quite
           // yet, and read all the monotonercs).  Processing the data
@@ -241,10 +244,21 @@ cpp_main(int argc, char ** argv)
           // if we didn't find one at this point.
           app.allow_workspace();
 
-          if (!app.found_workspace && global_sanity.filename.empty())
-            global_sanity.filename = (app.opts.conf_dir / "dump").as_external();
+          // now grab any command specific options and parse the command
+          // this needs to happen after the monotonercs have been read
+          commands::command_id cmd = read_options(optset, app.opts, opt_args);
+
+          if (!app.found_workspace)
+            global_sanity.set_dump_path((app.opts.conf_dir / "dump")
+                                        .as_external());
 
           app.lua.hook_note_mtn_startup(args);
+
+          // stop here if they asked for help
+          if (app.opts.help)
+            {
+              throw usage(cmd);
+            }
 
           // main options processed, now invoke the
           // sub-command w/ remaining args

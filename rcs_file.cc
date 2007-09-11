@@ -10,7 +10,7 @@
 
 #include "base.hh"
 #include <fstream>
-#include <vector>
+#include "vector.hh"
 
 #ifdef WIN32
 #include <windows.h>

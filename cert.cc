@@ -10,7 +10,7 @@
 #include "base.hh"
 #include <limits>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -539,6 +539,15 @@ cert_revision_in_branch(revision_id const & rev,
                         app_state & app)
 {
   put_simple_revision_cert (rev, branch_cert_name, cert_value(branch()),
+                            app);
+}
+
+void
+cert_revision_suspended_in_branch(revision_id const & rev,
+                        branch_name const & branch,
+                        app_state & app)
+{
+  put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
                             app);
 }
 

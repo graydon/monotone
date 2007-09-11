@@ -78,10 +78,6 @@ static access_tracker<string> initial_rel_path;
 // system_path's.
 static access_tracker<system_path> working_root;
 
-bookkeeping_path const bookkeeping_root("_MTN");
-path_component const bookkeeping_root_component("_MTN");
-path_component const old_bookkeeping_root_component("MT");
-
 void
 save_initial_path()
 {

@@ -381,6 +381,8 @@ prepare_diff(cset & included,
       app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster,
                             included, excluded, mask);
+      MM(included);
+      MM(excluded);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -406,6 +408,8 @@ prepare_diff(cset & included,
       app.work.update_current_roster_from_filesystem(new_roster, mask);
       make_restricted_csets(old_roster, new_roster,
                             included, excluded, mask);
+      MM(included);
+      MM(excluded);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = false;
@@ -456,6 +460,8 @@ prepare_diff(cset & included,
 
       make_restricted_csets(old_roster, new_roster,
                             included, excluded, mask);
+      MM(included);
+      MM(excluded);
       check_restricted_cset(old_roster, included);
 
       new_is_archived = true;

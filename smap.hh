@@ -12,7 +12,7 @@
 
 #include <functional>
 #include <numeric>
-#include <vector>
+#include "vector.hh"
 
 
 // this is a map that works by storing a sorted vector and doing binary

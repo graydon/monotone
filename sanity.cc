@@ -12,12 +12,13 @@
 #include <iterator>
 #include <iostream>
 #include <fstream>
-#include <vector>
+#include "vector.hh"
 #include <sstream>
 
 #include <boost/format.hpp>
-#include "lexical_cast.hh"
+#include <boost/circular_buffer.hpp>
 
+#include "lexical_cast.hh"
 #include "constants.hh"
 #include "platform.hh"
 #include "sanity.hh"
@@ -35,19 +36,36 @@ using std::vector;
 
 using boost::format;
 
+struct sanity::impl
+{
+  bool debug;
+  bool quiet;
+  bool reallyquiet;
+  boost::circular_buffer<char> logbuf;
+  std::string filename;
+  std::string gasp_dump;
+  bool already_dumping;
+  std::vector<MusingI const *> musings;
+
+  impl() :
+    debug(false), quiet(false), reallyquiet(false), logbuf(0xffff),
+    already_dumping(false)
+  {}
+};
+
 // debugging / logging system
 
-sanity::sanity() :
-  debug(false), quiet(false), reallyquiet(false), logbuf(0xffff),
-  already_dumping(false)
-{}
-
 sanity::~sanity()
-{}
+{
+  if (imp)
+    delete imp;
+}
 
 void
 sanity::initialize(int argc, char ** argv, char const * lc_all)
 {
+  imp = new impl;
+
   // set up some marked strings, so even if our logbuf overflows, we'll get
   // this data in a crash.  This (and subclass overrides) are probably the
   // only place PERM_MM should ever be used.
@@ -80,38 +98,43 @@ sanity::initialize(int argc, char ** argv, char const * lc_all)
 void
 sanity::dump_buffer()
 {
-  if (!filename.empty())
+  I(imp);
+  if (!imp->filename.empty())
     {
-      ofstream out(filename.c_str());
+      ofstream out(imp->filename.c_str());
       if (out)
         {
-          copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(out));
-          copy(gasp_dump.begin(), gasp_dump.end(), ostream_iterator<char>(out));
+          copy(imp->logbuf.begin(), imp->logbuf.end(),
+               ostream_iterator<char>(out));
+          copy(imp->gasp_dump.begin(), imp->gasp_dump.end(),
+               ostream_iterator<char>(out));
           inform_message((FL("wrote debugging log to %s\n"
                         "if reporting a bug, please include this file")
-                       % filename).str());
+                       % imp->filename).str());
         }
       else
-        inform_message((FL("failed to write debugging log to %s") % filename).str());
+        inform_message((FL("failed to write debugging log to %s")
+                        % imp->filename).str());
     }
   else
     inform_message("discarding debug log, because I have nowhere to write it\n"
-              "(maybe you want --debug or --dump?)");
+                   "(maybe you want --debug or --dump?)");
 }
 
 void
 sanity::set_debug()
 {
-  quiet = false;
-  reallyquiet = false;
-  debug = true;
+  I(imp);
+  imp->quiet = false;
+  imp->reallyquiet = false;
+  imp->debug = true;
 
   // it is possible that some pre-setting-of-debug data
   // accumulated in the log buffer (during earlier option processing)
   // so we will dump it now
   ostringstream oss;
   vector<string> lines;
-  copy(logbuf.begin(), logbuf.end(), ostream_iterator<char>(oss));
+  copy(imp->logbuf.begin(), imp->logbuf.end(), ostream_iterator<char>(oss));
   split_into_lines(oss.str(), lines);
   for (vector<string>::const_iterator i = lines.begin(); i != lines.end(); ++i)
     inform_log((*i) + "\n");
@@ -120,17 +143,30 @@ sanity::set_debug()
 void
 sanity::set_quiet()
 {
-  debug = false;
-  quiet = true;
-  reallyquiet = false;
+  I(imp);
+  imp->debug = false;
+  imp->quiet = true;
+  imp->reallyquiet = false;
 }
 
 void
 sanity::set_reallyquiet()
 {
-  debug = false;
-  quiet = true;
-  reallyquiet = true;
+  I(imp);
+  imp->debug = false;
+  imp->quiet = true;
+  imp->reallyquiet = true;
+}
+
+void
+sanity::set_dump_path(std::string const & path)
+{
+  I(imp);
+  if (imp->filename.empty())
+    {
+      L(FL("setting dump path to %s") % path);
+      imp->filename = path;
+    }
 }
 
 string
@@ -150,11 +186,31 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
     }
 }
 
+bool
+sanity::debug_p()
+{
+  I(imp);
+  return imp->debug;
+}
+
+bool
+sanity::quiet_p()
+{
+  I(imp);
+  return imp->quiet;
+}
+
+// These functions can be called before sanity::initialize() if there
+// is a bug, and therefore must not use I() if imp is unavailable, as
+// that will cause infinite recursion (invariant_failure calls log).
 
 void
 sanity::log(plain_format const & fmt,
             char const * file, int line)
 {
+  if (!imp)
+    throw std::logic_error("sanity::log called before sanity::initialize");
+
   string str = do_format(fmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -163,10 +219,10 @@ sanity::log(plain_format const & fmt,
       if (str.at(str.size() - 1) != '\n')
         str.at(str.size() - 1) = '\n';
     }
-  copy(str.begin(), str.end(), back_inserter(logbuf));
+  copy(str.begin(), str.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
-    logbuf.push_back('\n');
-  if (debug)
+    imp->logbuf.push_back('\n');
+  if (imp->debug)
     inform_log(str);
 }
 
@@ -174,6 +230,9 @@ void
 sanity::progress(i18n_format const & i18nfmt,
                  char const * file, int line)
 {
+  if (!imp)
+    throw std::logic_error("sanity::progress called before sanity::initialize");
+
   string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -182,10 +241,10 @@ sanity::progress(i18n_format const & i18nfmt,
       if (str.at(str.size() - 1) != '\n')
         str.at(str.size() - 1) = '\n';
     }
-  copy(str.begin(), str.end(), back_inserter(logbuf));
+  copy(str.begin(), str.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
-    logbuf.push_back('\n');
-  if (! quiet)
+    imp->logbuf.push_back('\n');
+  if (! imp->quiet)
     inform_message(str);
 }
 
@@ -193,6 +252,9 @@ void
 sanity::warning(i18n_format const & i18nfmt,
                 char const * file, int line)
 {
+  if (!imp)
+    throw std::logic_error("sanity::warning called before sanity::initialize");
+
   string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -202,10 +264,10 @@ sanity::warning(i18n_format const & i18nfmt,
         str.at(str.size() - 1) = '\n';
     }
   string str2 = "warning: " + str;
-  copy(str2.begin(), str2.end(), back_inserter(logbuf));
+  copy(str2.begin(), str2.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
-    logbuf.push_back('\n');
-  if (! reallyquiet)
+    imp->logbuf.push_back('\n');
+  if (! imp->reallyquiet)
     inform_warning(str);
 }
 
@@ -261,20 +323,42 @@ sanity::index_failure(char const * vec_expr,
 // Last gasp dumps
 
 void
+sanity::push_musing(MusingI const *musing)
+{
+  I(imp);
+  if (!imp->already_dumping)
+    imp->musings.push_back(musing);
+}
+
+void
+sanity::pop_musing(MusingI const *musing)
+{
+  I(imp);
+  if (!imp->already_dumping)
+    {
+      I(imp->musings.back() == musing);
+      imp->musings.pop_back();
+    }
+}
+
+
+void
 sanity::gasp()
 {
-  if (already_dumping)
+  if (!imp)
+    return;
+  if (imp->already_dumping)
     {
       L(FL("ignoring request to give last gasp; already in process of dumping"));
       return;
     }
-  already_dumping = true;
-  L(FL("saving current work set: %i items") % musings.size());
+  imp->already_dumping = true;
+  L(FL("saving current work set: %i items") % imp->musings.size());
   ostringstream out;
-  out << (F("Current work set: %i items") % musings.size())
+  out << (F("Current work set: %i items") % imp->musings.size())
       << '\n'; // final newline is kept out of the translation
   for (vector<MusingI const *>::const_iterator
-         i = musings.begin(); i != musings.end(); ++i)
+         i = imp->musings.begin(); i != imp->musings.end(); ++i)
     {
       string tmp;
       try
@@ -295,29 +379,14 @@ sanity::gasp()
           L(FL("ignoring error trigged by saving work set to debug log"));
         }
     }
-  gasp_dump = out.str();
+  imp->gasp_dump = out.str();
   L(FL("finished saving work set"));
-  if (debug)
+  if (imp->debug)
     {
       inform_log("contents of work set:");
-      inform_log(gasp_dump);
+      inform_log(imp->gasp_dump);
     }
-  already_dumping = false;
-}
-
-MusingI::MusingI()
-{
-  if (!global_sanity.already_dumping)
-    global_sanity.musings.push_back(this);
-}
-
-MusingI::~MusingI()
-{
-  if (!global_sanity.already_dumping)
-    {
-      I(global_sanity.musings.back() == this);
-      global_sanity.musings.pop_back();
-    }
+  imp->already_dumping = false;
 }
 
 template <> void
@@ -445,20 +514,14 @@ format_base::operator=(format_base const & other)
   return *this;
 }
 
-format_base::format_base(char const * pattern)
-  : pimpl(new impl(pattern))
+format_base::format_base(char const * pattern, bool use_locale)
+  : pimpl(use_locale ? new impl(pattern, get_user_locale())
+                     : new impl(pattern))
 {}
 
-format_base::format_base(std::string const & pattern)
-  : pimpl(new impl(pattern))
-{}
-
-format_base::format_base(char const * pattern, locale const & loc)
-  : pimpl(new impl(pattern, loc))
-{}
-
-format_base::format_base(string const & pattern, locale const & loc)
-  : pimpl(new impl(pattern, loc))
+format_base::format_base(std::string const & pattern, bool use_locale)
+  : pimpl(use_locale ? new impl(pattern, get_user_locale())
+                     : new impl(pattern))
 {}
 
 ostream &
@@ -491,16 +554,6 @@ std::string
 format_base::str() const
 {
   return pimpl->fmt.str();
-}
-
-i18n_format::i18n_format(const char * localized_pattern)
-  : format_base(localized_pattern, get_user_locale())
-{
-}
-
-i18n_format::i18n_format(std::string const & localized_pattern)
-  : format_base(localized_pattern, get_user_locale())
-{
 }
 
 ostream &

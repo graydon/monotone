@@ -573,7 +573,7 @@ sub generate_diff
 	if ($really_show_diffs) {
 	    print OUTPUT my_backtick("$monotone$db diff --revision=$ancestor --revision=$revision");
 	} else {
-	    print OUTPUT "monotone --db={your.database} diff --revision=$ancestor --revision=$revision\n";
+	    print OUTPUT "mtn --db={your.database} diff --revision=$ancestor --revision=$revision\n";
 	}
     }
     close OUTPUT;
@@ -810,7 +810,7 @@ of the email, separated by lines of dashes.
 
 Do not create difflogs for merges (revisions with more than one
 ancestor), if the ancestors are in at least one of the branches that
-are monotored.  This is the default behavior.
+are monitored.  This is the default behavior.
 
 =item B<--noignore-merges>
 
@@ -871,8 +871,8 @@ unconditionally.
 
 =item B<--monotone>=I<path>
 
-Gives the name or path to monotone or both.  The default is simply
-F<monotone>.
+Gives the name or path to mtn(1) or both.  The default is simply
+F<mtn>.
 
 =back
 

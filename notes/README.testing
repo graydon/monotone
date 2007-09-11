@@ -23,6 +23,10 @@ Running tests:
 -  summary of test logs in tester_dir/tester.log
 -  details of test logs in tester_dir/<testname>/tester.log
 
+- './run_tester_tests --help' describes how to run the tester progam's tests
+- './run_unit_tests   --help' describes how to run the c++ unit tests 
+- './run_lua_tests    --help' describes how to run the lua test suite
+
 Creating tests:
 ---------------
 -  Copy and paste is your friend :)
@@ -46,3 +50,11 @@ check(mtn("ls", "unknown"), 0, true, false)
 -- we want "mtn foobar" to work, but since we know it doesn't
 -- we tell the test program that this is expected to fail
 xfail_if(true, mtn("foobar"), 0)
+
+Debugging
+---------
+
+compile with -O0
+run the offending command under gdb with something like gdb --args mtn ...
+put a breakpoint on 'sanity::invar<TAB> (note the leading single quote)
+

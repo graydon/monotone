@@ -31,7 +31,6 @@ mkdir("foo")
 addfile("file1", "file1")
 addfile("foo/file2", "foofile2")
 
--- boom (until bug #18990 is fixed)
-xfail(mtn("commit", "-m", "recommit same id"))
-
+-- this should just work
+check(mtn("commit", "-m", "recommit same id"), 0, false, false)
 

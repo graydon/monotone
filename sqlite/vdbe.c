@@ -43,7 +43,7 @@
 ** in this file for details.  If in doubt, do not deviate from existing
 ** commenting and indentation practices when changing or adding code.
 **
-** $Id: vdbe.c,v 1.626 2007/06/15 14:53:53 danielk1977 Exp $
+** $Id: vdbe.c,v 1.639 2007/07/26 06:50:06 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -1153,11 +1153,20 @@ case OP_Remainder: {           /* same as TK_REM, no-push */
       case OP_Multiply:    b *= a;       break;
       case OP_Divide: {
         if( a==0 ) goto divide_by_zero;
+        /* Dividing the largest possible negative 64-bit integer (1<<63) by 
+        ** -1 returns an integer to large to store in a 64-bit data-type. On
+        ** some architectures, the value overflows to (1<<63). On others,
+        ** a SIGFPE is issued. The following statement normalizes this
+        ** behaviour so that all architectures behave as if integer 
+        ** overflow occured.
+        */
+        if( a==-1 && b==(((i64)1)<<63) ) a = 1;
         b /= a;
         break;
       }
       default: {
         if( a==0 ) goto divide_by_zero;
+        if( a==-1 ) a = 1;
         b %= a;
         break;
       }
@@ -1184,11 +1193,12 @@ case OP_Remainder: {           /* same as TK_REM, no-push */
         i64 ia = (i64)a;
         i64 ib = (i64)b;
         if( ia==0 ) goto divide_by_zero;
+        if( ia==-1 ) ia = 1;
         b = ib % ia;
         break;
       }
     }
-    if( isnan(b) ){
+    if( sqlite3_isnan(b) ){
       goto divide_by_zero;
     }
     Release(pTos);
@@ -1279,7 +1289,19 @@ case OP_Function: {
   if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
   (*ctx.pFunc->xFunc)(&ctx, n, apVal);
   if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
-  if( sqlite3MallocFailed() ) goto no_mem;
+  if( sqlite3MallocFailed() ){
+    /* Even though a malloc() has failed, the implementation of the
+    ** user function may have called an sqlite3_result_XXX() function
+    ** to return a value. The following call releases any resources
+    ** associated with such a value.
+    **
+    ** Note: Maybe MemRelease() should be called if sqlite3SafetyOn()
+    ** fails also (the if(...) statement above). But if people are
+    ** misusing sqlite, they have bigger problems than a leaked value.
+    */
+    sqlite3VdbeMemRelease(&ctx.s);
+    goto no_mem;
+  }
   popStack(&pTos, n);
 
   /* If any auxilary data functions have been called by this user function,
@@ -2398,6 +2420,7 @@ case OP_Statement: {       /* no-push */
     assert( sqlite3BtreeIsInTrans(pBt) );
     if( !sqlite3BtreeIsInStmt(pBt) ){
       rc = sqlite3BtreeBeginStmt(pBt);
+      p->openedStatement = 1;
     }
   }
   break;
@@ -2509,15 +2532,27 @@ case OP_Transaction: {       /* no-push */
 ** the main database file and P1==1 is the database file used to store
 ** temporary tables.
 **
+** If P1 is negative, then this is a request to read the size of a
+** databases free-list. P2 must be set to 1 in this case. The actual
+** database accessed is ((P1+1)*-1). For example, a P1 parameter of -1
+** corresponds to database 0 ("main"), a P1 of -2 is database 1 ("temp").
+**
 ** There must be a read-lock on the database (either a transaction
 ** must be started or there must be an open cursor) before
 ** executing this instruction.
 */
 case OP_ReadCookie: {
   int iMeta;
+  int iDb = pOp->p1;
+  int iCookie = pOp->p2;
+
   assert( pOp->p2<SQLITE_N_BTREE_META );
-  assert( pOp->p1>=0 && pOp->p1<db->nDb );
-  assert( db->aDb[pOp->p1].pBt!=0 );
+  if( iDb<0 ){
+    iDb = (-1*(iDb+1));
+    iCookie *= -1;
+  }
+  assert( iDb>=0 && iDb<db->nDb );
+  assert( db->aDb[iDb].pBt!=0 );
   /* The indexing of meta values at the schema layer is off by one from
   ** the indexing in the btree layer.  The btree considers meta[0] to
   ** be the number of free pages in the database (a read-only value)
@@ -2525,7 +2560,7 @@ case OP_ReadCookie: {
   ** meta[1] to be the schema cookie.  So we have to shift the index
   ** by one in the following statement.
   */
-  rc = sqlite3BtreeGetMeta(db->aDb[pOp->p1].pBt, 1 + pOp->p2, (u32 *)&iMeta);
+  rc = sqlite3BtreeGetMeta(db->aDb[iDb].pBt, 1 + iCookie, (u32 *)&iMeta);
   pTos++;
   pTos->u.i = iMeta;
   pTos->flags = MEM_Int;
@@ -4276,15 +4311,14 @@ case OP_IntegrityCk: {
     if( (pTos[-nRoot].flags & MEM_Int)==0 ) break;
   }
   assert( nRoot>0 );
-  aRoot = sqliteMallocRaw( sizeof(int*)*(nRoot+1) );
+  aRoot = sqliteMallocRaw( sizeof(int)*(nRoot+1) );
   if( aRoot==0 ) goto no_mem;
   j = pOp->p1;
   assert( j>=0 && j<p->nMem );
   pnErr = &p->aMem[j];
   assert( (pnErr->flags & MEM_Int)!=0 );
   for(j=0; j<nRoot; j++){
-    Mem *pMem = &pTos[-j];
-    aRoot[j] = pMem->u.i;
+    aRoot[j] = (pTos-j)->u.i;
   }
   aRoot[j] = 0;
   popStack(&pTos, nRoot);
@@ -4977,6 +5011,30 @@ case OP_VNext: {   /* no-push */
 }
 #endif /* SQLITE_OMIT_VIRTUALTABLE */
 
+#ifndef SQLITE_OMIT_VIRTUALTABLE
+/* Opcode: VRename * * P3
+**
+** P3 is a pointer to a virtual table object, an sqlite3_vtab structure.
+** This opcode invokes the corresponding xRename method. The value
+** on the top of the stack is popped and passed as the zName argument
+** to the xRename method.
+*/
+case OP_VRename: {   /* no-push */
+  sqlite3_vtab *pVtab = (sqlite3_vtab *)(pOp->p3);
+  assert( pVtab->pModule->xRename );
+
+  Stringify(pTos, encoding);
+
+  if( sqlite3SafetyOff(db) ) goto abort_due_to_misuse;
+  sqlite3VtabLock(pVtab);
+  rc = pVtab->pModule->xRename(pVtab, pTos->z);
+  sqlite3VtabUnlock(db, pVtab);
+  if( sqlite3SafetyOn(db) ) goto abort_due_to_misuse;
+
+  popStack(&pTos, 1);
+  break;
+}
+#endif
 
 #ifndef SQLITE_OMIT_VIRTUALTABLE
 /* Opcode: VUpdate P1 P2 P3

@@ -285,7 +285,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 // bomb out, and therefore so may this.
 static void
 merge_two(revision_id const & left, revision_id const & right,
-          branch_name const & branch, string const & caller, app_state & app)
+          branch_name const & branch, string const & caller, app_state & app,
+          std::ostream & output, bool automate)
 {
   // The following mess constructs a neatly formatted log message that looks
   // like this:
@@ -312,8 +313,15 @@ merge_two(revision_id const & left, revision_id const & right,
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
 
   // Now it's time for the real work.
-  P(F("[left]  %s") % left);
-  P(F("[right] %s") % right);
+  if (automate)
+    {
+      output << left << " " << right << " ";
+    }
+  else
+    {
+      P(F("[left]  %s") % left);
+      P(F("[right] %s") % right);
+    }
   
   revision_id merged;
   transaction_guard guard(app.db);
@@ -324,7 +332,10 @@ merge_two(revision_id const & left, revision_id const & right,
                                                     utf8(log.str()));
 
   guard.commit();
-  P(F("[merged] %s") % merged);
+  if (automate)
+    output << merged << "\n";
+  else
+    P(F("[merged] %s") % merged);
 }
 
 // should merge support --message, --message-file?  It seems somewhat weird,
@@ -356,7 +367,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
     }
 
   P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
-    % heads.size() % app.opts.branchname);
+      % heads.size() % app.opts.branchname);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -410,7 +421,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
       
-      merge_two(p.first, p.second, app.opts.branchname, string("merge"), app);
+      merge_two(p.first, p.second, app.opts.branchname, string("merge"), app, std::cout, false);
 
       ancestors.clear();
       heads_for_ancestor.clear();
@@ -428,7 +439,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   revision_id right = *i++;
   I(i == heads.end());
   
-  merge_two(left, right, app.opts.branchname, string("merge"), app);
+  merge_two(left, right, app.opts.branchname, string("merge"), app, std::cout, false);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -721,7 +732,7 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   N(!is_ancestor(right, left, app),
     F("%s is already an ancestor of %s") % right % left);
 
-  merge_two(left, right, branch, string("explicit merge"), app);
+  merge_two(left, right, branch, string("explicit merge"), app, std::cout, false);
 }
 
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"), 
@@ -866,6 +877,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     make_restricted_csets(*from_roster, to_true_roster,
                           from_to_to, from_to_to_excluded,
                           mask);
+    MM(from_to_to);
+    MM(from_to_to_excluded);
     check_restricted_cset(*from_roster, from_to_to);
   }
   N(!from_to_to.empty(), F("no changes to be applied"));
