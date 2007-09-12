@@ -6296,18 +6296,23 @@ marker.
 
 @end table
 
-@item mtn automate inventory
+@item mtn automate inventory [@var{files...}]
 
 @table @strong
 @item Arguments:
 
-A file path (optional). If present, only show inventory for the given
-file. If it is a directory, show inventory for that directory and
-sub-directories.
+One or more file paths (optional). If present, only show inventory for the given
+files or directories (and their sub-directories). You can use @option{--depth}
+and @option{--exclude} to control what is selected through this restriction.
 
-@item Added in:
+@item Changes:
 
-4.1 (non basic_io version added in 1.0)
+@itemize
+@item
+6.0 -- converted to basic_io format (restriction support, various fixes)
+@item
+1.0 -- initial, line-based format
+@end itemize
 @c FIXME: check this number when merge to main branch
 
 @item Purpose:
