@@ -2089,9 +2089,19 @@ database::put_revision(revision_id const & new_id,
     }
 
   // Phase 3: Construct and write the roster (which also checks the manifest
-  // id as it goes)
+  // id as it goes), but only if the roster does not already exist in the db
+  // (i.e. because it was left over by a kill_rev_locally)
+  // FIXME: there is no knowledge yet on speed implications for commands which
+  // put a lot of revisions in a row (i.e. tailor or cvs_import)!
 
-  put_roster_for_revision(new_id, rev);
+  if (!roster_version_exists(new_id))
+    {
+      put_roster_for_revision(new_id, rev);
+    }
+  else
+    {
+      L(FL("roster for revision '%s' already exists in db") % new_id);
+    }
 
   // Phase 4: rewrite any files that need deltas added
 

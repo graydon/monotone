@@ -180,6 +180,26 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
     }
 }
 
+bool
+workspace::has_changes()
+{
+  parent_map parents;  
+  get_parent_rosters(parents);
+  
+  // if we have more than one parent roster then this workspace contains
+  // a merge which means this is always a committable change
+  if (parents.size() > 1)
+    return true;
+
+  temp_node_id_source nis;
+  roster_t new_roster, old_roster = parent_roster(parents.begin());
+
+  get_current_roster_shape(new_roster, nis);
+  update_current_roster_from_filesystem(new_roster);
+
+  return !(old_roster == new_roster);
+}
+
 // user log file
 
 void

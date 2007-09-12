@@ -2,11 +2,22 @@
 
         0.37 release.
 
+        Changes
+
+        - mtn db kill_rev_locally now checks for an existing workspace
+          before the revision is killed and tries to apply the changes
+          of this particular revision back to the workspace to allow 
+          easy re-committing afterwards
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly
           returns the head revisions of the workspace's branch if called
           over mtn automate stdio
+
+        - mtn commit does no longer crash if it creates a revision whose
+          roster already exists, i.e. was left behind by the command
+          `mtn db kill_rev_locally REV` (savannah #18990) 
 
         Other
 
