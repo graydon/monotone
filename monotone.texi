@@ -2462,7 +2462,7 @@ server is up all the time; if the host reboots while he's travelling and
 the monotone server is down until he next logs in, things aren't much
 better than before.  For the server to start automatically each time,
 he'll need to use the @code{get_passphrase} hook in the server's
-@file{.monotonerc} file again.
+@file{monotonerc} file again.
 
 Because he's running on a shared server, Jim needs to be a little more
 restrictive about which interfaces and addresses his new server process
@@ -8849,7 +8849,7 @@ hook writers.
 @item alias_command(@var{original}, @var{alias})
 
 This function adds a new alias for a monotone command.  A call to this function would
-normally be placed directly in the monotonerc file, rather than in a hook function.
+normally be placed directly in the @file{monotonerc} file, rather than in a hook function.
 
 @item existonpath(@var{possible_command})
 
@@ -8996,7 +8996,7 @@ false otherwise.
 @item register_command(@var{name}, @var{abstract}, @var{description}, @var{function})
 
 Add a command named @var{name} to the @var{user} command group in monotone.  This function is
-normally called directly from a monotonerc file rather than a hook.  When the user issues the
+normally called directly from a @files{monotonerc} file rather than a hook.  When the user issues the
 registered command, monotone will call the lua @var{function} name supplied.  That function would
 then normally use mtn_automate() calls to service the request.
 
