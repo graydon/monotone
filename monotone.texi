@@ -8980,10 +8980,10 @@ The output table will be:
 @smallexample
 @group
 @{
-   1 = @{ name = "thingy", args = @{ 1 = "foo", 2 = "bar" @} @},
-   2 = @{ name = "thingy", args = @{ 1 = "baz" @} @},
-   3 = @{ name = "spork", args = @{ @} @},
-   4 = @{ name = "frob", args = @{ 1 = "oops" @} @}
+   1 = @{ name = "thingy", values = @{ 1 = "foo", 2 = "bar" @} @},
+   2 = @{ name = "thingy", values = @{ 1 = "baz" @} @},
+   3 = @{ name = "spork", values = @{ @} @},
+   4 = @{ name = "frob", values = @{ 1 = "oops" @} @}
 @}
 @end group
 @end smallexample
