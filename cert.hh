@@ -122,7 +122,7 @@ guess_branch(revision_id const & id, database & db);
 void
 cert_revision_suspended_in_branch(revision_id const & ctx,
                         branch_name const & branchname,
-                        app_state & app);
+                        database & db);
 
 void
 cert_revision_date_time(revision_id const & m,

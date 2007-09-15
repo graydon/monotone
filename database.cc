@@ -3523,6 +3523,14 @@ database::hook_get_author(rsa_keypair_id const & k,
   return __app->lua.hook_get_author(__app->opts.branchname, k, author);
 }
 
+bool
+database::hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
+                                     std::map<rsa_keypair_id, bool> const & new_results)
+{
+  return __app->lua.hook_accept_testresult_change(old_results, new_results);
+}
+
+
 key_store &
 database::get_key_store()
 {
@@ -3546,6 +3554,12 @@ utf8 const &
 database::get_opt_author()
 {
   return __app->opts.author;
+}
+
+bool const
+database::get_opt_ignore_suspend_certs()
+{
+  return __app->opts.ignore_suspend_certs;
 }
 
 date_t const

@@ -416,7 +416,7 @@ static void
 accumulate_strict_ancestors(revision_id const & start,
                             set<revision_id> & all_ancestors,
                             multimap<revision_id, revision_id> const & inverse_graph,
-                            app_state & app,
+                            database & db,
                             rev_height const & min_height)
 {
   typedef multimap<revision_id, revision_id>::const_iterator gi;
@@ -436,7 +436,7 @@ accumulate_strict_ancestors(revision_id const & start,
             {
               // prune if we're below min_height
               rev_height h;
-              app.db.get_rev_height(parent, h);
+              db.get_rev_height(parent, h);
               if (h >= min_height)
                 {
                   all_ancestors.insert(parent);
@@ -449,7 +449,7 @@ accumulate_strict_ancestors(revision_id const & start,
 
 // this call is equivalent to running:
 //   erase(remove_if(candidates.begin(), candidates.end(), p));
-//   erase_ancestors(candidates, app);
+//   erase_ancestors(candidates, db);
 // however, by interleaving the two operations, it can in common cases make
 // many fewer calls to the predicate, which can be a significant speed win.
 
@@ -481,11 +481,11 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
   set<revision_id> all_ancestors;
 
   rev_height min_height;
-  app.db.get_rev_height(*candidates.begin(), min_height);
+  db.get_rev_height(*candidates.begin(), min_height);
   for (std::set<revision_id>::const_iterator it = candidates.begin(); it != candidates.end(); it++)
     {
       rev_height h;
-      app.db.get_rev_height(*it, h);
+      db.get_rev_height(*it, h);
       if (h < min_height)
         min_height = h;
     }
@@ -510,7 +510,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
         }
       // okay, it is good enough that all its ancestors should be
       // eliminated
-      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, app, min_height);
+      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, db, min_height);
     }
 
   // now go and eliminate the ancestors

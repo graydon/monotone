@@ -315,8 +315,8 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
     throw usage(execid);
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  complete(app.db, idx(args, 0)(), r);
+  guess_branch(r, app.db);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
   app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
 }

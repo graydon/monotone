@@ -545,10 +545,10 @@ cert_revision_in_branch(revision_id const & rev,
 void
 cert_revision_suspended_in_branch(revision_id const & rev,
                         branch_name const & branch,
-                        app_state & app)
+                        database & db)
 {
   put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
-                            app);
+                            db);
 }
 
 

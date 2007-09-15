@@ -606,6 +606,8 @@ public:
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
   bool hook_get_author(rsa_keypair_id const & k,
                        std::string & author);
+  bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
+                                     std::map<rsa_keypair_id, bool> const & new_results);
   bool must_drop_attr(std::string const & key);
 
   utf8 const & get_opt_author();
@@ -613,6 +615,7 @@ public:
   bool has_opt_branch();
   branch_name const & get_opt_branchname();
   bool const get_opt_set_default();
+  bool const get_opt_ignore_suspend_certs();
   void set_opt_branchname(branch_name const & branchname);
 
   key_store & get_key_store();

@@ -97,20 +97,20 @@ namespace
 
   struct suspended_in_branch : public is_failure
   {
-    app_state & app;
+    database & db;
     base64<cert_value > const & branch_encoded;
-    suspended_in_branch(app_state & app,
+    suspended_in_branch(database & db,
                   base64<cert_value> const & branch_encoded)
-      : app(app), branch_encoded(branch_encoded)
+      : db(db), branch_encoded(branch_encoded)
     {}
     virtual bool operator()(revision_id const & rid)
     {
       vector< revision<cert> > certs;
-      app.db.get_revision_certs(rid,
-                                cert_name(suspend_cert_name),
-                                branch_encoded,
-                                certs);
-      erase_bogus_certs(certs, app);
+      db.get_revision_certs(rid,
+                            cert_name(suspend_cert_name),
+                            branch_encoded,
+                            certs);
+      erase_bogus_certs(certs, db);
       return !certs.empty();
     }
   };
@@ -120,7 +120,8 @@ void
 project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
                             multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
-  std::pair<branch_name, suspended_indicator> cache_index(name, app.opts.ignore_suspend_certs);
+  std::pair<branch_name, suspended_indicator> cache_index(name,
+    db.get_opt_ignore_suspend_certs());
   std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[cache_index];
   if (branch.first.outdated())
     {
@@ -136,9 +137,9 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
       not_in_branch p(db, branch_encoded);
       erase_ancestors_and_failures(branch.second, p, db, inverse_graph_cache_ptr);
       
-      if (!app.opts.ignore_suspend_certs)
+      if (!db.get_opt_ignore_suspend_certs())
         {
-          suspended_in_branch s(app, branch_encoded);
+          suspended_in_branch s(db, branch_encoded);
           for(std::set<revision_id>::iterator it = branch.second.begin(); it != branch.second.end(); it++)
             if (s(*it))
               branch.second.erase(*it);
@@ -188,11 +189,11 @@ project_t::revision_is_suspended_in_branch(revision_id const & id,
   encode_base64(cert_value(branch()), branch_encoded);
 
   vector<revision<cert> > certs;
-  app.db.get_revision_certs(id, suspend_cert_name, branch_encoded, certs);
+  db.get_revision_certs(id, suspend_cert_name, branch_encoded, certs);
 
   int num = certs.size();
 
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, db);
 
   L(FL("found %d (%d valid) %s suspend certs on revision %s")
     % num
@@ -207,7 +208,7 @@ void
 project_t::suspend_revision_in_branch(revision_id const & id,
                                   branch_name const & branch)
 {
-  cert_revision_suspended_in_branch(id, branch, app);
+  cert_revision_suspended_in_branch(id, branch, db);
 }
 
 
