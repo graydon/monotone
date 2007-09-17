@@ -8,8 +8,15 @@
 // PURPOSE.
 
 #include "../numeric_vocab.hh"
+#include "windows.h"
 
 class ssh_agent_platform {
+private:
+  HWND hwnd;
+  HANDLE filemap;
+  char *filemap_view;
+  u32 read_len;
+
 public:
   bool connect();
   bool disconnect();
