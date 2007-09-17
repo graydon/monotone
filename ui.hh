@@ -15,7 +15,7 @@
 // no writing to it directly!
 
 struct i18n_format;
-struct system_path;
+class system_path;
 
 struct ticker
 {
