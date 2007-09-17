@@ -8,7 +8,7 @@
 #include "platform.hh"
 
 #include <set>
-#include <vector>
+#include "vector.hh"
 #include <utility>
 
 #include <boost/regex.hpp>

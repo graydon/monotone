@@ -16,11 +16,11 @@ mtn_sanity::~mtn_sanity()
 void
 mtn_sanity::initialize(int argc, char ** argv, char const * lc_all)
 {
+  this->sanity::initialize(argc, argv, lc_all);
+
   std::string full_version_string;
   get_full_version(full_version_string);
   PERM_MM(full_version_string);
-
-  this->sanity::initialize(argc, argv, lc_all);
 }
 
 void

@@ -36,8 +36,8 @@
 unsigned int sqlite3_pending_byte = 0x40000000;
 #endif
 
-int sqlite3_os_trace = 0;
 #ifdef SQLITE_DEBUG
+int sqlite3_os_trace = 0;
 #define OSTRACE1(X)         if( sqlite3_os_trace ) sqlite3DebugPrintf(X)
 #define OSTRACE2(X,Y)       if( sqlite3_os_trace ) sqlite3DebugPrintf(X,Y)
 #define OSTRACE3(X,Y,Z)     if( sqlite3_os_trace ) sqlite3DebugPrintf(X,Y,Z)

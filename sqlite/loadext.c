@@ -76,6 +76,7 @@
 
 #ifdef SQLITE_OMIT_VIRTUALTABLE
 # define sqlite3_create_module 0
+# define sqlite3_create_module_v2 0
 # define sqlite3_declare_vtab 0
 #endif
 
@@ -240,6 +241,12 @@ const sqlite3_api_routines sqlite3_apis = {
   sqlite3_prepare_v2,
   sqlite3_prepare16_v2,
   sqlite3_clear_bindings,
+
+  /*
+  ** Added for 3.4.1
+  */
+  sqlite3_create_module_v2,
+
 };
 
 /*

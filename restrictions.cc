@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include "restrictions.hh"
 #include "revision.hh"
@@ -306,7 +306,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
     }
   else
     {
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
       {
         // printing this slows down "log <file>".
         L(FL("(debug) default exclude of nid %d path '%s'") 
@@ -403,29 +403,29 @@ using std::string;
 // x's and y's are directories
 // and this is rather painful
 
-file_path fp_root = file_path_internal("");
-file_path fp_f = file_path_internal("f");
-file_path fp_g = file_path_internal("g");
+#define fp_root file_path_internal("")
+#define fp_f file_path_internal("f")
+#define fp_g file_path_internal("g")
 
-file_path fp_x = file_path_internal("x");
-file_path fp_xf = file_path_internal("x/f");
-file_path fp_xg = file_path_internal("x/g");
-file_path fp_xx = file_path_internal("x/x");
-file_path fp_xxf = file_path_internal("x/x/f");
-file_path fp_xxg = file_path_internal("x/x/g");
-file_path fp_xy = file_path_internal("x/y");
-file_path fp_xyf = file_path_internal("x/y/f");
-file_path fp_xyg = file_path_internal("x/y/g");
+#define fp_x file_path_internal("x")
+#define fp_xf file_path_internal("x/f")
+#define fp_xg file_path_internal("x/g")
+#define fp_xx file_path_internal("x/x")
+#define fp_xxf file_path_internal("x/x/f")
+#define fp_xxg file_path_internal("x/x/g")
+#define fp_xy file_path_internal("x/y")
+#define fp_xyf file_path_internal("x/y/f")
+#define fp_xyg file_path_internal("x/y/g")
 
-file_path fp_y = file_path_internal("y");
-file_path fp_yf = file_path_internal("y/f");
-file_path fp_yg = file_path_internal("y/g");
-file_path fp_yx = file_path_internal("y/x");
-file_path fp_yxf = file_path_internal("y/x/f");
-file_path fp_yxg = file_path_internal("y/x/g");
-file_path fp_yy = file_path_internal("y/y");
-file_path fp_yyf = file_path_internal("y/y/f");
-file_path fp_yyg = file_path_internal("y/y/g");
+#define fp_y file_path_internal("y")
+#define fp_yf file_path_internal("y/f")
+#define fp_yg file_path_internal("y/g")
+#define fp_yx file_path_internal("y/x")
+#define fp_yxf file_path_internal("y/x/f")
+#define fp_yxg file_path_internal("y/x/g")
+#define fp_yy file_path_internal("y/y")
+#define fp_yyf file_path_internal("y/y/f")
+#define fp_yyg file_path_internal("y/y/g")
 
 node_id nid_root;
 node_id nid_f;

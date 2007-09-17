@@ -15,7 +15,7 @@
 #include <list>
 #include <set>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <string.h>
 
@@ -770,13 +770,13 @@ database::fetch(results & res,
   I(params == int(query.args.size()));
 
   // profiling finds this logging to be quite expensive
-  if (global_sanity.debug)
+  if (global_sanity.debug_p())
     L(FL("binding %d parameters for %s") % params % query.sql_cmd);
 
   for (int param = 1; param <= params; param++)
     {
       // profiling finds this logging to be quite expensive
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
         {
           string log;
           switch (query.args[param-1].type)
@@ -1900,6 +1900,9 @@ database::get_revision(revision_id const & id,
   dat = revision_data(rdat);
 }
 
+typedef std::map<revision_id, rev_height> height_map;
+static height_map height_cache;
+
 void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
@@ -1910,14 +1913,24 @@ database::get_rev_height(revision_id const & id,
       return;
     }
 
-  results res;
-  fetch(res, one_col, one_row,
-        query("SELECT height FROM heights WHERE revision = ?")
-        % text(id.inner()()));
+  height_map::const_iterator i = height_cache.find(id);
+  if (i == height_cache.end())
+    {
+      results res;
+      fetch(res, one_col, one_row,
+            query("SELECT height FROM heights WHERE revision = ?")
+            % text(id.inner()()));
 
-  I(res.size() == 1);
-  
-  height = rev_height(res[0][0]);
+      I(res.size() == 1);
+
+      height = rev_height(res[0][0]);
+      height_cache.insert(make_pair(id, height));
+    }
+  else
+    {
+      height = i->second;
+    }
+
   I(height.valid());
 }
 
@@ -1928,6 +1941,8 @@ database::put_rev_height(revision_id const & id,
   I(!null_id(id));
   I(revision_exists(id));
   I(height.valid());
+  
+  height_cache.erase(id);
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
@@ -2073,9 +2088,19 @@ database::put_revision(revision_id const & new_id,
     }
 
   // Phase 3: Construct and write the roster (which also checks the manifest
-  // id as it goes)
+  // id as it goes), but only if the roster does not already exist in the db
+  // (i.e. because it was left over by a kill_rev_locally)
+  // FIXME: there is no knowledge yet on speed implications for commands which
+  // put a lot of revisions in a row (i.e. tailor or cvs_import)!
 
-  put_roster_for_revision(new_id, rev);
+  if (!roster_version_exists(new_id))
+    {
+      put_roster_for_revision(new_id, rev);
+    }
+  else
+    {
+      L(FL("roster for revision '%s' already exists in db") % new_id);
+    }
 
   // Phase 4: rewrite any files that need deltas added
 
@@ -2926,6 +2951,8 @@ void database::complete(selector_type ty,
                 {
                   __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
+
+                L(FL("found %d matching branches") % branch_names.size());
 
               // for each branch name, get the branch heads
               set<revision_id> heads;

@@ -415,12 +415,15 @@ toposort(set<revision_id> const & revisions,
 static void
 accumulate_strict_ancestors(revision_id const & start,
                             set<revision_id> & all_ancestors,
-                            multimap<revision_id, revision_id> const & inverse_graph)
+                            multimap<revision_id, revision_id> const & inverse_graph,
+                            app_state & app,
+                            rev_height const & min_height)
 {
   typedef multimap<revision_id, revision_id>::const_iterator gi;
 
   vector<revision_id> frontier;
   frontier.push_back(start);
+
   while (!frontier.empty())
     {
       revision_id rid = frontier.back();
@@ -431,48 +434,61 @@ accumulate_strict_ancestors(revision_id const & start,
           revision_id const & parent = i->second;
           if (all_ancestors.find(parent) == all_ancestors.end())
             {
-              all_ancestors.insert(parent);
-              frontier.push_back(parent);
+              // prune if we're below min_height
+              rev_height h;
+              app.db.get_rev_height(parent, h);
+              if (h >= min_height)
+                {
+                  all_ancestors.insert(parent);
+                  frontier.push_back(parent);
+                }
             }
         }
     }
 }
 
 // this call is equivalent to running:
-//   remove_if(candidates.begin(), candidates.end(), p);
+//   erase(remove_if(candidates.begin(), candidates.end(), p));
 //   erase_ancestors(candidates, app);
 // however, by interleaving the two operations, it can in common cases make
 // many fewer calls to the predicate, which can be a significant speed win.
-//
-// FIXME: once we have heights, we should use them here.  The strategy will
-// be, to calculate the minimum height of all the candidates, and teach
-// accumulate_ancestors to stop at a certain height, and teach the code that
-// removes items from the candidate set to occasionally rescan the candidate
-// set to get a new minimum height (perhaps, whenever we remove the minimum
-// height candidate).
-//
-// Note: The strategy outlined above does only work well for small sets of
-// candidates, because of the overhead induced by fetching heights for all
-// members of the set.
+
 void
 erase_ancestors_and_failures(std::set<revision_id> & candidates,
                              is_failure & p,
-                             app_state & app)
+                             app_state & app,
+                             multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
   // Load up the ancestry graph
   multimap<revision_id, revision_id> inverse_graph;
   
+  if (candidates.empty())
+    return;
+  
+  if (inverse_graph_cache_ptr == NULL)
+    inverse_graph_cache_ptr = &inverse_graph;
+  if (inverse_graph_cache_ptr->empty())
   {
     multimap<revision_id, revision_id> graph;
     app.db.get_revision_ancestry(graph);
     for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
          i != graph.end(); ++i)
-      inverse_graph.insert(make_pair(i->second, i->first));
+      inverse_graph_cache_ptr->insert(make_pair(i->second, i->first));
   }
 
   // Keep a set of all ancestors that we've traversed -- to avoid
   // combinatorial explosion.
   set<revision_id> all_ancestors;
+
+  rev_height min_height;
+  app.db.get_rev_height(*candidates.begin(), min_height);
+  for (std::set<revision_id>::const_iterator it = candidates.begin(); it != candidates.end(); it++)
+    {
+      rev_height h;
+      app.db.get_rev_height(*it, h);
+      if (h < min_height)
+        min_height = h;
+    }
 
   vector<revision_id> todo(candidates.begin(), candidates.end());
   std::random_shuffle(todo.begin(), todo.end());
@@ -494,7 +510,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
         }
       // okay, it is good enough that all its ancestors should be
       // eliminated
-      accumulate_strict_ancestors(rid, all_ancestors, inverse_graph);
+      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, app, min_height);
     }
 
   // now go and eliminate the ancestors
@@ -706,6 +722,8 @@ make_restricted_revision(parent_map const & old_rosters,
       shared_ptr<cset> included(new cset());
       make_restricted_csets(parent_roster(i), new_roster,
                             *included, dummy, mask);
+      MM(*included);
+      MM(dummy);
       check_restricted_cset(parent_roster(i), *included);
       safe_insert(edges, make_pair(parent_id(i), included));
     }
@@ -730,6 +748,8 @@ make_restricted_revision(parent_map const & old_rosters,
       shared_ptr<cset> included(new cset());
       make_restricted_csets(parent_roster(i), new_roster,
                             *included, excluded, mask);
+      MM(*included);
+      MM(excluded);
       check_restricted_cset(parent_roster(i), *included);
       safe_insert(edges, make_pair(parent_id(i), included));
       if (!excluded.empty())

@@ -11,7 +11,7 @@
 #include <deque>
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "cset.hh"
 #include "enumerator.hh"

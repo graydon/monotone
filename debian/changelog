@@ -1,11 +1,39 @@
+monotone (0.36-2) unstable; urgency=low
+
+  * Bump boost build-deps to (>= 1.34.1-2) for packaging changes that make
+    the configure script find the single-threaded version of
+    libboost-regex.
+  * Re-enable -DBOOST_SP_DISABLE_THREADS; the above should render it
+    unnecessary.  This eliminates the sole divergence from upstream.
+  * Correct invalid assumption in tests/invalid_--root_settings that
+    the build directory is not a subdirectory of /tmp.
+  * Build-depend on patch, for the sake of the testsuite.
+
+ -- Zack Weinberg <zackw@panix.com>  Wed, 22 Aug 2007 15:06:51 -0700
+
 monotone (0.36-1) unstable; urgency=low
+
+  [ Richard Levitte ]
+  * New upstream release.
 
   [ Zack Weinberg ]
   * Bump debhelper build-dep to (>= 4.2.0) per cdbs docs.
   * Run testsuite during build.
   * Drop libboost-filesystem-dev build-dependency.
+  * monotone-server.postinst, monotone-server.postrm: Do not assume
+    full pathnames of ucf or adduser.  Use ucfr as well as ucf.
+    At purge time:
+     - do not assume ucf, adduser, or debconf are available (closes: #434604).
+     - if not asked to manage the database, do not delete it.
+     - if deleting the database and there is a hot journal, delete that too.
+     - delete editor backups of ucf-managed conffiles.
+     - expunge the auto-generated key's passphrase from 
+       /etc/monotone/passphrases and if that leaves the file empty,
+       delete it.
+     - do not delete the monotone user or group if leaving /var/lib/monotone
+       on the filesystem.
 
- -- final uploader's name and date here
+ -- Richard Levitte <richard@levitte.org>  Fri, 03 Aug 2007 08:08:36 +0200
 
 monotone (0.35-2) unstable; urgency=low
 
