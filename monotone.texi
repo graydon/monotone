@@ -4814,18 +4814,17 @@ If one or more files are given, the command will only log the revisions
 where those files are changed.
 
 @item mtn annotate @var{file}
-@itemx mtn annotate [--revision=@var{id}] [--brief] @var{file}
+@itemx mtn annotate [--revision=@var{id}] [--revs-only] @var{file}
 
-Dumps an annotated copy of the file to stdout.  In the absence of the 
-@option{--brief} flag, each line of the file
-is translated to <revision id>: <line> in the output, where <revision id>
+Dumps an annotated copy of the file to stdout. The output is in the form
+<short revision id>.. by <author> <date>: <line> Only the first 8
+characters of the revision id are displayed, the author cert value is
+truncated at the first @code{@@} or space character and the date field
+is truncated to remove the time of day.
+
+If @option{--revs-only} is specified, each line of the file is
+translated to <revision id>: <line> in the output, where <revision id>
 is the revision in which that line of the file was last edited.
-
-If @option{--brief} is specified, the output is in the form
-<short revision id>.. by <author> <date>: <line>
-Only the first 8 characters of the revision id are displayed, the  
-author cert value is truncated at the first @code{@@} or space
-character and the date field is truncated to remove the time of day.
 
 @item mtn complete file @var{partial-id}
 @itemx mtn complete [--brief] key @var{partial-id}

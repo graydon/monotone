@@ -56,7 +56,7 @@ writefile("foo", econtents .. "fourth\n")
 commit()
 rev_f = base_revision()
 
-check(mtn("praise", "foo", "--brief", "--rcfile=extra_rc"), 0, true, true)
+check(mtn("praise", "foo", "--revs-only", "--rcfile=extra_rc"), 0, true, true)
 
 check(qgrep(rev_a .. ": first", "stdout"))
 check(qgrep(rev_e1 .. ": second", "stdout")
@@ -65,7 +65,7 @@ check(qgrep(rev_e1 .. ": second", "stdout")
 check(qgrep(rev_a .. ": third", "stdout"))
 check(qgrep(rev_f .. ": fourth", "stdout"))
 
-check(mtn("blame", "foo", "--brief", "--rcfile=extra_rc"), 0, true, true)
+check(mtn("blame", "foo", "--revs-only", "--rcfile=extra_rc"), 0, true, true)
 
 check(qgrep(rev_a .. ": first", "stdout"))
 check(qgrep(rev_e1 .. ": second", "stdout")

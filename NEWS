@@ -9,6 +9,9 @@
           of this particular revision back to the workspace to allow 
           easy re-committing afterwards
 
+        - the "--brief" switch for mtn annotate has been renamed to
+	  "--revs-only" for clarity
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly
@@ -18,6 +21,12 @@
         - mtn commit does no longer crash if it creates a revision whose
           roster already exists, i.e. was left behind by the command
           `mtn db kill_rev_locally REV` (savannah #18990) 
+
+        Documentation changes
+
+        - the documentation of the "--revs-only" (formerly "--brief")
+          switch for the annotate command didn't match its actual
+          behavior, this has been fixed
 
         Other
 

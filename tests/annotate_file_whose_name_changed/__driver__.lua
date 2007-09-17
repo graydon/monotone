@@ -1,3 +1,4 @@
+-- -*-lua-*-
 
 mtn_setup()
 revs = {}
@@ -34,5 +35,5 @@ revs.merged = base_revision()
 -- right: x
 --
 
-check(mtn("annotate", "--brief", "foo.new"), 0, true, false)
+check(mtn("annotate", "--revs-only", "foo.new"), 0, true, false)
 check(greplines("stdout", {revs.base, revs.base, revs.right}))
