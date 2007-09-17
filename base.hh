@@ -16,7 +16,6 @@
 // Configuration directives
 #include "config.h"
 
-#define NDEBUG
 #define BOOST_DISABLE_THREADS
 #define BOOST_SP_DISABLE_THREADS
 #define BOOST_MULTI_INDEX_DISABLE_SERIALIZATION
