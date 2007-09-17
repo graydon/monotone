@@ -20,8 +20,6 @@
 #include "database.hh"
 #include "commands.hh"
 
-class app_state;
-
 // a revision is a text object. It has a precise, normalizable serial form
 // as UTF-8 text. it also has some sub-components. not all of these
 // sub-components are separately serialized (they could be but there is no
@@ -128,20 +126,20 @@ void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
-                               app_state & app);
+                               database & db);
 
 bool
 is_ancestor(revision_id const & ancestor,
             revision_id const & descendent,
-            app_state & app);
+            database & db);
 
 void
 toposort(std::set<revision_id> const & revisions,
          std::vector<revision_id> & sorted,
-         app_state & app);
+         database & db);
 
 void
-erase_ancestors(std::set<revision_id> & revisions, app_state & app);
+erase_ancestors(std::set<revision_id> & revisions, database & db);
 
 struct is_failure
 {
@@ -151,13 +149,13 @@ struct is_failure
 void
 erase_ancestors_and_failures(std::set<revision_id> & revisions,
                              is_failure & p,
-                             app_state & app,
+                             database & db,
                              std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
 void
 ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
                     std::set<revision_id> & new_stuff,
-                    app_state & app);
+                    database & db);
 
 
 // FIXME: can probably optimize this passing a lookaside cache of the active
@@ -166,7 +164,7 @@ void
 select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const roster,
                              std::set<node_id> & nodes_modified,
-                             app_state & app);
+                             database & db);
 
 void
 make_revision(revision_id const & old_rev_id,
@@ -221,13 +219,13 @@ make_restricted_revision(parent_map const & old_rosters,
                          commands::command_id const & cmd_name);
 
 void
-build_changesets_from_manifest_ancestry(app_state & app);
+build_changesets_from_manifest_ancestry(database & db);
 
 void
-build_roster_style_revs_from_manifest_style_revs(app_state & app);
+build_roster_style_revs_from_manifest_style_revs(database & db);
 
 void
-regenerate_caches(app_state & app);
+regenerate_caches(database & db);
 
 // basic_io access to printers and parsers
 
