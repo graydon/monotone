@@ -33,6 +33,7 @@ Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
 Copyright @copyright{} 2006 William Uther @*
+Copyright @copyright{} 2007 Stephen Leake @*
 All rights reserved
 Licensed to the public under the terms of the GNU FDL (>= 1.1).
 See the file COPYING for details
@@ -6588,10 +6589,6 @@ different types (one is a directory, the other a file).
 
    @end table
 @end table
-
-Full support for versioned directories is not yet complete and the
-inventory will only list entries for renamed or dropped
-directories. @c FIXME: is this true?
 
 @item Error conditions:
 
