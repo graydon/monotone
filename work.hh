@@ -195,6 +195,10 @@ struct workspace
 
   // the 'inodeprints file' contains inode fingerprints
 
+  bool in_inodeprints_mode();
+  void read_inodeprints(data & dat);
+  void write_inodeprints(data const & dat);
+
   void enable_inodeprints();
   void maybe_update_inodeprints();
 

@@ -274,7 +274,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
   any_path * o_path;
   bookkeeping_path ws_o_path;
   system_path sys_o_path;
-  
+
   if (workspace.empty())
     {
       get_options_path(ws_o_path);
@@ -285,7 +285,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
       get_options_path(workspace, sys_o_path);
       o_path = & sys_o_path;
     }
-  
+
   try
     {
       if (path_exists(*o_path))
@@ -324,7 +324,7 @@ workspace::get_ws_options_from_path(system_path const & workspace,
     {
       W(F("Failed to read options file %s: %s") % *o_path % e.what());
     }
-  
+
   return false;
 }
 
@@ -393,16 +393,16 @@ workspace::get_local_dump_path(bookkeeping_path & d_path)
 
 // inodeprint file
 
-static bool
-in_inodeprints_mode()
+bool
+workspace::in_inodeprints_mode()
 {
   bookkeeping_path ip_path;
   get_inodeprints_path(ip_path);
   return file_exists(ip_path);
 }
 
-static void
-read_inodeprints(data & dat)
+void
+workspace::read_inodeprints(data & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -410,8 +410,8 @@ read_inodeprints(data & dat)
   read_data(ip_path, dat);
 }
 
-static void
-write_inodeprints(data const & dat)
+void
+workspace::write_inodeprints(data const & dat)
 {
   I(in_inodeprints_mode());
   bookkeeping_path ip_path;
@@ -499,7 +499,7 @@ struct file_itemizer : public tree_walker
   file_itemizer(database & db, lua_hooks & lua,
                 set<file_path> & k,
                 set<file_path> & u,
-                set<file_path> & i, 
+                set<file_path> & i,
                 path_restriction const & r)
     : db(db), lua(lua), known(k), unknown(u), ignored(i), mask(r) {}
   virtual bool visit_dir(file_path const & path);
@@ -533,14 +533,14 @@ struct workspace_itemizer : public tree_walker
   set<file_path> const & known;
   node_id_source & nis;
 
-  workspace_itemizer(roster_t & roster, set<file_path> const & paths, 
+  workspace_itemizer(roster_t & roster, set<file_path> const & paths,
                      node_id_source & nis);
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
 };
 
-workspace_itemizer::workspace_itemizer(roster_t & roster, 
-                                       set<file_path> const & paths, 
+workspace_itemizer::workspace_itemizer(roster_t & roster,
+                                       set<file_path> const & paths,
                                        node_id_source & nis)
     : roster(roster), known(paths), nis(nis)
 {
@@ -653,7 +653,7 @@ addition_builder::visit_file(file_path const & path)
         P(F("skipping %s, already accounted for in workspace") % path);
       return;
     }
-  
+
   I(ros.has_root());
   add_nodes_for(path, path);
 }
@@ -661,7 +661,7 @@ addition_builder::visit_file(file_path const & path)
 struct editable_working_tree : public editable_tree
 {
   editable_working_tree(lua_hooks & lua, content_merge_adaptor const & source,
-                        bool const messages) 
+                        bool const messages)
     : lua(lua), source(source), next_nid(1), root_dir_attached(true),
       messages(messages)
   {};
@@ -699,7 +699,7 @@ struct simulated_working_tree : public editable_tree
 {
   roster_t & workspace;
   node_id_source & nis;
-  
+
   set<file_path> blocked_paths;
   map<node_id, file_path> nid_map;
   int conflicts;
@@ -734,7 +734,7 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
   virtual void get_version(file_id const &, file_data &) const
   { I(false); }
   virtual void record_merge(file_id const &, file_id const &,
-                            file_id const &, 
+                            file_id const &,
                             file_data const &, file_data const &,
                             file_data const &)
   { I(false); }
@@ -938,7 +938,7 @@ void
 simulated_working_tree::drop_detached_node(node_id nid)
 {
   node_t node = workspace.get_node(nid);
-  if (is_dir_t(node)) 
+  if (is_dir_t(node))
     {
       dir_t dir = downcast_to_dir_t(node);
       if (!dir->children.empty())
@@ -1046,22 +1046,6 @@ add_parent_dirs(file_path const & dst, roster_t & ros, node_id_source & nis,
   build.visit_dir(dst.dirname());
 }
 
-inline static bool
-inodeprint_unchanged(inodeprint_map const & ipm, file_path const & path)
-{
-  inodeprint_map::const_iterator old_ip = ipm.find(path);
-  if (old_ip != ipm.end())
-    {
-      hexenc<inodeprint> ip;
-      if (inodeprint_file(path, ip) && ip == old_ip->second)
-          return true; // unchanged
-      else
-          return false; // changed or unavailable
-    }
-  else
-    return false; // unavailable
-}
-
 // updating rosters from the workspace
 
 // TODO: unchanged, changed, missing might be better as set<node_id>
@@ -1107,7 +1091,7 @@ workspace::classify_roster_paths(roster_t const & ros,
           unchanged.insert(fp);
           continue;
         }
-      
+
       // if the node is a directory, check if it exists
       // directories do not have content changes, thus are inserted in the
       // unchanged set
@@ -1119,7 +1103,7 @@ workspace::classify_roster_paths(roster_t const & ros,
               missing.insert(fp);
           continue;
         }
-      
+
       // the node is a file, check if it exists and has been changed
       file_t file = downcast_to_file_t(node);
       file_id fid;
@@ -1264,7 +1248,7 @@ workspace::find_unknown_and_ignored(path_restriction const & mask,
   new_roster.extract_path_set(known);
 
   file_itemizer u(db, lua, known, unknown, ignored, mask);
-  for (vector<file_path>::const_iterator 
+  for (vector<file_path>::const_iterator
          i = roots.begin(); i != roots.end(); ++i)
     {
       walk_tree(*i, u);
@@ -1338,12 +1322,12 @@ in_parent_roster(const parent_map & parents, const node_id & nid)
       if (parent_roster(i).has_node(nid))
         return true;
     }
-  
+
   return false;
 }
 
 void
-workspace::perform_deletions(set<file_path> const & paths, 
+workspace::perform_deletions(set<file_path> const & paths,
                              bool recursive, bool bookkeep_only)
 {
   if (paths.empty())
@@ -1628,7 +1612,7 @@ workspace::perform_content_update(cset const & update,
   roster_t new_roster;
   bookkeeping_path detached = path_for_detached_nids();
 
-  E(!directory_exists(detached), 
+  E(!directory_exists(detached),
     F("workspace is locked\n"
       "you must clean up and remove the %s directory")
     % detached);
