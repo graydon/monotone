@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-10 20:54+0200\n"
-"PO-Revision-Date: 2007-09-10 21:01+0200\n"
+"POT-Creation-Date: 2007-09-21 12:57+0200\n"
+"PO-Revision-Date: 2007-09-21 13:01+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -172,7 +172,7 @@ msgstr "katalogen '' är ogiltig"
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "det finns redan en administrativ katalog (%s) i '%s'"
 
-#: asciik.cc:369 automate.cc:474
+#: asciik.cc:369 automate.cc:477
 msgid "SELECTOR"
 msgstr "VÄLJARE"
 
@@ -180,13 +180,13 @@ msgstr "VÄLJARE"
 msgid "Prints an ASCII representation of the revisions' graph"
 msgstr "Visar en ASCII-representation av revisionsträdet"
 
-#: asciik.cc:375 automate.cc:70 automate.cc:104 automate.cc:154
-#: automate.cc:268 automate.cc:368 automate.cc:396 automate.cc:480
-#: automate.cc:867 automate.cc:1009 automate.cc:1055 automate.cc:1085
-#: automate.cc:1115 automate.cc:1145 automate.cc:1183 automate.cc:1301
-#: automate.cc:1394 automate.cc:1456 automate.cc:1509 automate.cc:1571
-#: automate.cc:1621 automate.cc:1674 automate.cc:1731 automate.cc:1764
-#: automate.cc:1790 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
+#: asciik.cc:375 automate.cc:73 automate.cc:107 automate.cc:157
+#: automate.cc:271 automate.cc:371 automate.cc:399 automate.cc:483
+#: automate.cc:1018 automate.cc:1160 automate.cc:1206 automate.cc:1236
+#: automate.cc:1266 automate.cc:1296 automate.cc:1334 automate.cc:1452
+#: automate.cc:1545 automate.cc:1607 automate.cc:1660 automate.cc:1722
+#: automate.cc:1772 automate.cc:1825 automate.cc:1882 automate.cc:1915
+#: automate.cc:1941 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
 #: cmd_list.cc:651 cmd_ws_commit.cc:638 cmd_ws_commit.cc:685
 #: cmd_ws_commit.cc:735 cmd_ws_commit.cc:787 cmd_ws_commit.cc:905
 #: cmd_ws_commit.cc:949
@@ -194,139 +194,145 @@ msgstr "Visar en ASCII-representation av revisionsträdet"
 msgid "wrong argument count"
 msgstr "felaktigt antal givna argument"
 
-#: automate.cc:64
+#: automate.cc:67
 msgid "[BRANCH]"
 msgstr "[GREN]"
 
-#: automate.cc:65
+#: automate.cc:68
 msgid "Prints the heads of the given branch"
 msgstr "Visar lövet i den givna grenen"
 
-#: automate.cc:98 automate.cc:148 automate.cc:1176
+#: automate.cc:101 automate.cc:151 automate.cc:1327
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
-#: automate.cc:99
+#: automate.cc:102
 msgid "Prints the ancestors of the given revisions"
 msgstr "Skriver ut den givna revisionens förfäder"
 
-#: automate.cc:111 automate.cc:161 automate.cc:208 automate.cc:235
-#: automate.cc:274 automate.cc:278 automate.cc:371 automate.cc:399
-#: automate.cc:1190 cmd_list.cc:658 revision.cc:1793
+#: automate.cc:114 automate.cc:164 automate.cc:211 automate.cc:238
+#: automate.cc:277 automate.cc:281 automate.cc:374 automate.cc:402
+#: automate.cc:1341 cmd_list.cc:658 revision.cc:1793
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
 
-#: automate.cc:149
+#: automate.cc:152
 msgid "Prints the descendents of the given revisions"
 msgstr "Skriver ut den givna revisionens anfäder"
 
-#: automate.cc:199 automate.cc:226
+#: automate.cc:202 automate.cc:229
 msgid "[REV1 [REV2 [REV3 [...]]]]"
 msgstr "[REV1 [REV2 [REV3 [...]]]]"
 
-#: automate.cc:200
+#: automate.cc:203
 msgid "Erases the ancestors in a list of revisions"
 msgstr "Tar bort förfäderna i en given lista av revisioner"
 
-#: automate.cc:227
+#: automate.cc:230
 msgid "Topologically sorts a list of revisions"
 msgstr "Sorterar listan med revisioner topologiskt"
 
-#: automate.cc:261
+#: automate.cc:264
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NY_REV [GAMMAL_REV1 [GAMMAL_REV2 [...]]]"
 
-#: automate.cc:262
+#: automate.cc:265
 msgid "Lists the ancestors of the first revision given, not in the others"
 msgstr ""
 "Visar föräldrarna till den första givna revisionen som inte är föräldrar "
 "till de övriga"
 
-#: automate.cc:305
+#: automate.cc:308
 msgid "Lists the leaves of the revision graph"
 msgstr "Visar revisionsgrafens löv"
 
-#: automate.cc:310 automate.cc:340 automate.cc:434 automate.cc:665
-#: automate.cc:913 automate.cc:940 automate.cc:1249 cmd_automate.cc:82
-#: cmd_automate.cc:338 cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73
-#: cmd_db.cc:86 cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236
-#: cmd_db.cc:247 cmd_list.cc:556
+#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1064
+#: automate.cc:1091 automate.cc:1400 cmd_automate.cc:82 cmd_automate.cc:338
+#: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
+#: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
+#: cmd_list.cc:556
 #, c-format
 msgid "no arguments needed"
 msgstr "inga argument behövs"
 
-#: automate.cc:335
+#: automate.cc:338
 msgid "Lists the roots of the revision graph"
 msgstr "Visar revisionsgrafens rötter"
 
-#: automate.cc:362 automate.cc:390 cmd_list.cc:645 revision.cc:1785
+#: automate.cc:365 automate.cc:393 cmd_list.cc:645 revision.cc:1785
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:363
+#: automate.cc:366
 msgid "Prints the parents of a revision"
 msgstr "Skriver ut identiteten på en revisions föräldrar"
 
-#: automate.cc:391
+#: automate.cc:394
 msgid "Prints the children of a revision"
 msgstr "Skriver ut identiteten på en revisions barn"
 
-#: automate.cc:429
+#: automate.cc:432
 msgid "Prints the complete ancestry graph"
 msgstr "Skriver ut den fullständiga föräldragrafen"
 
-#: automate.cc:475
+#: automate.cc:478
 msgid "Lists the revisions that match a selector"
 msgstr "Visar revisionerna som matchar en väljare"
 
-#: automate.cc:660
+#: automate.cc:857 cmd_diff_log.cc:477 cmd_ws_commit.cc:146
+#: cmd_ws_commit.cc:370 cmd_ws_commit.cc:405 cmd_ws_commit.cc:490
+#: cmd_ws_commit.cc:1239 cmd_ws_commit.cc:1253
+msgid "[PATH]..."
+msgstr "[SÖKVÄG]..."
+
+#: automate.cc:858
 msgid "Prints a summary of files found in the workspace"
 msgstr "Skriver ut en sammanfattning om filerna funna i en arbetskopia"
 
-#: automate.cc:679 automate.cc:920 cmd_files.cc:302 cmd_files.cc:363
+#: automate.cc:870 automate.cc:1071 cmd_files.cc:302 cmd_files.cc:363
 #: cmd_merging.cc:152 cmd_merging.cc:643 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:803
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr "detta kommando kan enbart användas i en arbetskopia med en förälder"
 
-#: automate.cc:861 automate.cc:1003 cmd_merging.cc:975
+#: automate.cc:1012 automate.cc:1154 cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:862
+#: automate.cc:1013
 msgid "Shows change information for a revision"
 msgstr "Visar information om ändringen i en revision"
 
-#: automate.cc:892 automate.cc:1027 automate.cc:1517 automate.cc:1578
-#: automate.cc:1583
+#: automate.cc:1043 automate.cc:1178 automate.cc:1668 automate.cc:1729
+#: automate.cc:1734
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i databasen"
 
-#: automate.cc:908
+#: automate.cc:1059
 msgid "Shows the revision on which the workspace is based"
 msgstr "Visar revisionen denna arbetskopia grundar sig på"
 
-#: automate.cc:935
+#: automate.cc:1086
 msgid "Shows the revision of the current workspace"
 msgstr "Visar nuvarande arbetskopias revision"
 
-#: automate.cc:1004
+#: automate.cc:1155
 msgid "Shows the manifest associated with a revision"
 msgstr "Visar manifestet kopplad till en revision"
 
-#: automate.cc:1049 automate.cc:1078
+#: automate.cc:1200 automate.cc:1229
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1050
+#: automate.cc:1201
 msgid "Prints the revision data in packet format"
 msgstr "Skriv ut datapaket för revision till stdout"
 
-#: automate.cc:1063 automate.cc:1093 automate.cc:1154 automate.cc:1156
-#: automate.cc:1738 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
+#: automate.cc:1214 automate.cc:1244 automate.cc:1305 automate.cc:1307
+#: automate.cc:1889 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:373
 #: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:873
@@ -334,161 +340,161 @@ msgstr "Skriv ut datapaket för revision till stdout"
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1079
+#: automate.cc:1230
 msgid "Prints the certs associated with a revision in packet format"
 msgstr "Skriver ut certificate tillhörande en revision i paketformat"
 
-#: automate.cc:1109 cmd_files.cc:321
+#: automate.cc:1260 cmd_files.cc:321
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1110
+#: automate.cc:1261
 msgid "Prints the file data in packet format"
 msgstr "Skriv ut datapaket för fil till stdout"
 
-#: automate.cc:1123
+#: automate.cc:1274
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1139
+#: automate.cc:1290
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NY_FIL"
 
-#: automate.cc:1140
+#: automate.cc:1291
 msgid "Prints the file delta in packet format"
 msgstr "Skriv ut datapaket för fildelta till stdout"
 
-#: automate.cc:1177
+#: automate.cc:1328
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr "Skriver ut revisionernas gemensamma föräldrar"
 
-#: automate.cc:1244
+#: automate.cc:1395
 msgid "Prints all branch certs in the revision graph"
 msgstr "Skriver ut revisionsgrafens samtliga grencertifikat"
 
-#: automate.cc:1295
+#: automate.cc:1446
 msgid "[BRANCH_PATTERN]"
 msgstr "[GRENMÖNSTER]"
 
-#: automate.cc:1296
+#: automate.cc:1447
 msgid "Prints all tags attached to a set of branches"
 msgstr "Skriva ut de givna grenarnas samtliga taggar"
 
-#: automate.cc:1388
+#: automate.cc:1539
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSEN"
 
-#: automate.cc:1389
+#: automate.cc:1540
 msgid "Generates a key"
 msgstr "Skapa ett nyckelpar"
 
-#: automate.cc:1409 cmd_key_cert.cc:51
+#: automate.cc:1560 cmd_key_cert.cc:51
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1412 cmd_key_cert.cc:54
+#: automate.cc:1563 cmd_key_cert.cc:54
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1414 cmd_key_cert.cc:56
+#: automate.cc:1565 cmd_key_cert.cc:56
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1450
+#: automate.cc:1601
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1451
+#: automate.cc:1602
 msgid "Shows the value of an option"
 msgstr "Visar en inställnings värde"
 
-#: automate.cc:1479
+#: automate.cc:1630
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1502
+#: automate.cc:1653
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1503
+#: automate.cc:1654
 msgid ""
 "Lists the revisions that changed the content relative to another revision"
 msgstr ""
 "Visar revisionerna som ändrade innehållet i förhållande till en annan "
 "revision"
 
-#: automate.cc:1522 automate.cc:1588
+#: automate.cc:1673 automate.cc:1739
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1564
+#: automate.cc:1715
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
-#: automate.cc:1565
+#: automate.cc:1716
 msgid ""
 "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 "Skriver ut namnet på en fil i målrevisionen i förhållande till en given "
 "revision"
 
-#: automate.cc:1615
+#: automate.cc:1766
 msgid "[FILEID] CONTENTS"
 msgstr "[FILID] INNEHÅLL"
 
-#: automate.cc:1616
+#: automate.cc:1767
 msgid "Stores a file in the database"
 msgstr "Lagra en fil i databasen"
 
-#: automate.cc:1638 cmd_files.cc:252
+#: automate.cc:1789 cmd_files.cc:252
 #, c-format
 msgid "no file version %s found in database"
 msgstr "filversionen %s finns inte i databasen"
 
-#: automate.cc:1668
+#: automate.cc:1819
 msgid "REVISION-DATA"
 msgstr "REVISIONS-DATA"
 
-#: automate.cc:1669
+#: automate.cc:1820
 msgid "Stores a revision into the database"
 msgstr "Lagra en revision i databasen"
 
-#: automate.cc:1708
+#: automate.cc:1859
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "saknar nödvändiga förutsättningar för att stoppa in revision %s"
 
-#: automate.cc:1725
+#: automate.cc:1876
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISION CERTNAMN CERTVÄRDE"
 
-#: automate.cc:1726
+#: automate.cc:1877
 msgid "Adds a revision certificate"
 msgstr "Lägger till ett certifikat till revision"
 
-#: automate.cc:1758 cmd_db.cc:277
+#: automate.cc:1909 cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄN NAMN VÄRDE"
 
-#: automate.cc:1759 cmd_db.cc:278
+#: automate.cc:1910 cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Sätt en databasvariabel"
 
-#: automate.cc:1784 cmd_db.cc:296
+#: automate.cc:1935 cmd_db.cc:296
 msgid "DOMAIN NAME"
 msgstr "DOMÄN NAMN"
 
-#: automate.cc:1785
+#: automate.cc:1936
 msgid "Gets a database variable"
 msgstr "Hämta värdet för en databasvariabel"
 
-#: automate.cc:1802
+#: automate.cc:1953
 #, c-format
 msgid "variable not found"
 msgstr "variabeln finns inte"
@@ -861,12 +867,6 @@ msgid ""
 msgstr ""
 "denna arbetskopia har mer än en förälder\n"
 "(ange en revision att se skillnader emot med --revision)"
-
-#: cmd_diff_log.cc:477 cmd_ws_commit.cc:146 cmd_ws_commit.cc:370
-#: cmd_ws_commit.cc:405 cmd_ws_commit.cc:490 cmd_ws_commit.cc:1239
-#: cmd_ws_commit.cc:1253
-msgid "[PATH]..."
-msgstr "[SÖKVÄG]..."
 
 #: cmd_diff_log.cc:478
 msgid "Shows current differences"
@@ -3332,7 +3332,7 @@ msgstr "hoppar över filen '%s' som har ej stödbart namn"
 msgid "skipping directory '%s' with unsupported name"
 msgstr "hoppar över katalogen '%s' som har ej stödbart namn"
 
-#: file_io.cc:521 work.cc:1310
+#: file_io.cc:521 work.cc:1294
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "ingen sådan fil eller katalog: '%s'"
@@ -3427,7 +3427,7 @@ msgstr "%s anropades med inkorrekt parameter"
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:576 rcs_import.cc:1229 work.cc:1589
+#: lua.cc:576 rcs_import.cc:1229 work.cc:1573
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
@@ -3994,7 +3994,7 @@ msgstr "ange annan upphovsman till ändringarna"
 msgid "block size in bytes for \"automate stdio\" output"
 msgstr "blockstorlek för utdata från \"automate stdio\", i antal byte"
 
-#: options_list.hh:32 options_list.hh:297 options_list.hh:340
+#: options_list.hh:32 options_list.hh:305 options_list.hh:348
 #, c-format
 msgid "cannot be zero or negative"
 msgstr "får ej vara noll eller negativt"
@@ -4020,76 +4020,80 @@ msgid "print a brief version of the normal output"
 msgstr "låt utskriften vara mer kortfattad än normalt"
 
 #: options_list.hh:82
+msgid "annotate using full revision ids only"
+msgstr "annotering med revisionsidentiteter enbart"
+
+#: options_list.hh:90
 msgid "set location of configuration directory"
 msgstr "ange i vilken katalog konfigurationsfilerna finns"
 
-#: options_list.hh:92
+#: options_list.hh:100
 msgid "override date/time for commit"
 msgstr "ange annat datum och tid för ändringarna"
 
-#: options_list.hh:106
+#: options_list.hh:114
 msgid "set name of database"
 msgstr "ange databasens filnamn"
 
-#: options_list.hh:114
+#: options_list.hh:122
 msgid "print debug log to stderr while running"
 msgstr "skriv ut felsökningslogg till stderr under körning"
 
-#: options_list.hh:122
+#: options_list.hh:130
 msgid "limit the number of levels of directories to descend"
 msgstr "begränsa hur djupt i katalogstrukturen monotone ska gå ned"
 
-#: options_list.hh:127
+#: options_list.hh:135
 #, c-format
 msgid "cannot be negative"
 msgstr "kan inte ha negativa värden"
 
-#: options_list.hh:136
+#: options_list.hh:144
 msgid "argument to pass external diff hook"
 msgstr "argument att skicka med till extern diff"
 
-#: options_list.hh:145
+#: options_list.hh:153
 msgid "use context diff format"
 msgstr "använd formatet 'context diff'"
 
-#: options_list.hh:152
+#: options_list.hh:160
 msgid "use external diff hook for generating diffs"
 msgstr "använd extern diff för att framställa skillnad mellan revisioner"
 
-#: options_list.hh:159
+#: options_list.hh:167
 msgid "use unified diff format"
 msgstr "använd formatet 'unified diff'"
 
-#: options_list.hh:167
+#: options_list.hh:175
 msgid "do not show the function containing each block of changes"
 msgstr "visa inte funktionen som innehåller varje ändringsstycke"
 
-#: options_list.hh:174
+#: options_list.hh:182
 msgid "print diffs along with logs"
 msgstr "skriv ut skillnaden mellan denna och tidigare revision i loggen"
 
-#: options_list.hh:183
+#: options_list.hh:191
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr "släng attribut med den givna nyckeln vid konvertering till listor"
 
-#: options_list.hh:191
+#: options_list.hh:199
 msgid "don't perform the operation, just show what would have happened"
 msgstr "utför inte operationen, visa bara vad som skulle ha hänt"
 
-#: options_list.hh:199
+#: options_list.hh:207
 msgid "file to dump debugging log to, on failure"
 msgstr "fil att skriva ut felsökningsloggen till om något gick fel"
 
-#: options_list.hh:208
+#: options_list.hh:216
 msgid "leave out anything described by its argument"
 msgstr "utelämna allt som matchar argumentet"
 
-#: options_list.hh:216
+#: options_list.hh:224
 msgid "only update monotone's internal bookkeeping, not the filesystem"
 msgstr ""
 "uppdatera enbart monotones interna administration, inte arbetskopian i övrigt"
 
-#: options_list.hh:224
+#: options_list.hh:232
 msgid ""
 "sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force "
 "monotone to sign, 'check' to sign with both and compare"
@@ -4098,145 +4102,145 @@ msgstr ""
 "för att tvinga monotone att signera, 'check' för att signera med båda och "
 "jämföra"
 
-#: options_list.hh:232
+#: options_list.hh:240
 msgid "print detailed version number"
 msgstr "skriv ut detaljerad versionsinformation"
 
-#: options_list.hh:239
+#: options_list.hh:247
 msgid "display help message"
 msgstr "skriv ut extra hjälptext"
 
-#: options_list.hh:248
+#: options_list.hh:256
 msgid "include anything described by its argument"
 msgstr "ta med allt allt som matchar argumentet"
 
-#: options_list.hh:256
+#: options_list.hh:264
 msgid "Do not ignore revisions marked as suspended"
 msgstr "Ignorera inte avstängda revisioner"
 
-#: options_list.hh:265
+#: options_list.hh:273
 msgid "set key for signatures"
 msgstr "ange nyckel att signera med"
 
-#: options_list.hh:273
+#: options_list.hh:281
 msgid "set location of key store"
 msgstr "ange i vilken katalog nycklarna finns"
 
-#: options_list.hh:282
+#: options_list.hh:290
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "skicka med angiven nyckel även om den inte använts för att signera"
 
-#: options_list.hh:292
+#: options_list.hh:300
 msgid "limit log output to the last number of entries"
 msgstr "begränsa loggutskriften till detta antal poster bakåt i tiden"
 
-#: options_list.hh:301
+#: options_list.hh:309
 msgid "file to write the log to"
 msgstr "fil att skriva ut loggen till"
 
-#: options_list.hh:312
+#: options_list.hh:320
 msgid "set commit changelog message"
 msgstr "ange loggmeddelandet för arkivering"
 
-#: options_list.hh:319
+#: options_list.hh:327
 msgid "set filename containing commit changelog message"
 msgstr "ange filnamnet som innehåller loggmeddelandet för arkivering"
 
-#: options_list.hh:327
+#: options_list.hh:335
 msgid "perform the operations for files missing from workspace"
 msgstr "genomför operationen på filer som saknas i arbetskatalogen"
 
-#: options_list.hh:335
+#: options_list.hh:343
 msgid "limit log output to the next number of entries"
 msgstr "begränsa loggutskriften till detta antal poster framåt i tiden"
 
-#: options_list.hh:345
+#: options_list.hh:353
 msgid "exclude files when printing logs"
 msgstr ""
 "ta ej med vilka filer som lagts till, tagits bort eller ändrats i loggen"
 
-#: options_list.hh:353
+#: options_list.hh:361
 msgid "do not use ASCII graph to display ancestry"
 msgstr "använd inte en ASCIIgraf för att visualisera föräldraskapet"
 
-#: options_list.hh:361
+#: options_list.hh:369
 msgid "do not ignore any files"
 msgstr "ignorera inga filer"
 
-#: options_list.hh:369
+#: options_list.hh:377
 msgid "exclude merges when printing logs"
 msgstr "ta ej med ihopslagningar i loggen"
 
-#: options_list.hh:377
+#: options_list.hh:385
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "använd inte ~/.monotone/monotonerc eller _MTN/monotonerc"
 
-#: options_list.hh:385
+#: options_list.hh:393
 msgid "do not load standard lua hooks"
 msgstr "använd inte standard-lua-rutinerna"
 
-#: options_list.hh:393
+#: options_list.hh:401
 msgid "record process id of server"
 msgstr "spara serverns process-ID i denna fil"
 
-#: options_list.hh:401
+#: options_list.hh:409
 msgid "suppress verbose, informational and progress messages"
 msgstr "skriv inte ut informations- eller förloppsmeddelanden"
 
-#: options_list.hh:411
+#: options_list.hh:419
 msgid "load extra rc file"
 msgstr "använd denna lua-fil"
 
-#: options_list.hh:419
+#: options_list.hh:427
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr "skriv inte ut varningar eller informations- eller förloppsmeddelanden"
 
-#: options_list.hh:429
+#: options_list.hh:437
 msgid "also operate on the contents of any listed directories"
 msgstr "ta även med innehållet för varje listad katalog"
 
-#: options_list.hh:438
+#: options_list.hh:446
 msgid "select revision id for operation"
 msgstr "ange den revision som operationen ska utföras på"
 
-#: options_list.hh:446
+#: options_list.hh:454
 msgid "limit search for workspace to specified root"
 msgstr "begränsa sökningen efter arbetskopian till denna katalog"
 
-#: options_list.hh:454
+#: options_list.hh:462
 msgid "use the current arguments as the future default"
 msgstr "använd de givna argumenten som framtida standardvärden"
 
-#: options_list.hh:462
+#: options_list.hh:470
 msgid "set ticker style (count|dot|none)"
 msgstr "sätt stilen för förloppsinformationen (count|dot|none)"
 
-#: options_list.hh:473
+#: options_list.hh:481
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "argumentet måste vara 'none', 'dot' eller 'count'"
 
-#: options_list.hh:477
+#: options_list.hh:485
 msgid "revision(s) to start logging at"
 msgstr "revision(er) där loggen ska börja"
 
-#: options_list.hh:484
+#: options_list.hh:492
 msgid "revision(s) to stop logging at"
 msgstr "revision(er) där loggen ska sluta"
 
-#: options_list.hh:492
+#: options_list.hh:500
 msgid "perform the operations for unknown files from workspace"
 msgstr "genomför operationen på okända filer i arbetskatalogen"
 
-#: options_list.hh:501
+#: options_list.hh:509
 msgid "verbose completion output"
 msgstr "ge utförlig information"
 
-#: options_list.hh:509
+#: options_list.hh:517
 msgid "print version number, then exit"
 msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 
-#: options_list.hh:517
+#: options_list.hh:525
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
@@ -4893,27 +4897,27 @@ msgstr "bindning av nod %d blockerad av icke-noterad sökväg '%s'"
 msgid "%d workspace conflicts"
 msgstr "%d konflikter i arbetskopian"
 
-#: work.cc:1187
+#: work.cc:1171
 #, c-format
 msgid "missing directory '%s'"
 msgstr "saknar katalogen '%s'"
 
-#: work.cc:1192
+#: work.cc:1176
 #, c-format
 msgid "not a directory '%s'"
 msgstr "'%s' är inte en katalog"
 
-#: work.cc:1205
+#: work.cc:1189
 #, c-format
 msgid "missing file '%s'"
 msgstr "saknar filen '%s'"
 
-#: work.cc:1210
+#: work.cc:1194
 #, c-format
 msgid "not a file '%s'"
 msgstr "'%s' är inte en fil"
 
-#: work.cc:1221
+#: work.cc:1205
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -4933,118 +4937,118 @@ msgstr ""
 " '%s drop --missing' eller\n"
 " '%s revert --missing'"
 
-#: work.cc:1377
+#: work.cc:1361
 #, c-format
 msgid "unable to drop the root directory"
 msgstr "kan inte ta bort rotkatalogen"
 
-#: work.cc:1380
+#: work.cc:1364
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "hoppar över %s, ej noterad i arbetskopian för närvarande"
 
-#: work.cc:1390
+#: work.cc:1374
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kan inte ta bort %s/, den är inte tom"
 
-#: work.cc:1405
+#: work.cc:1389
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr ""
 "katalogen %s är inte tom - den kommer att slängas administrativt men inte "
 "fysiskt"
 
-#: work.cc:1416
+#: work.cc:1400
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr ""
 "filen %s är ändrad - den kommer att slängas administrativt men inte fysiskt"
 
-#: work.cc:1420
+#: work.cc:1404
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "tar bort %s från arbetskopians manifest"
 
-#: work.cc:1461 work.cc:1495
+#: work.cc:1445 work.cc:1479
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
 msgstr ""
 "kan inte byta namn på arbetskopians rot (försök med '%s pivot_root' istället)"
 
-#: work.cc:1464 work.cc:1498
+#: work.cc:1448 work.cc:1482
 #, c-format
 msgid "source file %s is not versioned"
 msgstr "källfilen %s är inte versionshanterad"
 
-#: work.cc:1479
+#: work.cc:1463
 #, c-format
 msgid "destination path's parent directory %s/ doesn't exist"
 msgstr "målvägens föräldrakatalog %s/ finns inte"
 
-#: work.cc:1489
+#: work.cc:1473
 #, c-format
 msgid "destination %s/ is not a directory"
 msgstr "målet %s/ är inte en katalog"
 
-#: work.cc:1502
+#: work.cc:1486
 #, c-format
 msgid "destination %s already exists in the workspace manifest"
 msgstr "målet %s finns redan i arbetskopians manifest"
 
-#: work.cc:1516
+#: work.cc:1500
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "byter namn från %s till %s i arbetskopians manifest"
 
-#: work.cc:1541
+#: work.cc:1525
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "hoppar över %s, den existerar inte i arbetskopian"
 
-#: work.cc:1545
+#: work.cc:1529
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr ""
 "byter inte namn till %s i filsystemet, för den finns redan noterad i "
 "arbetskopian"
 
-#: work.cc:1550
+#: work.cc:1534
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
 msgstr ""
 "%s finns inte i arbetskopian, men %s gör det, så namnbytet utförs inte i "
 "filsystemet"
 
-#: work.cc:1570
+#: work.cc:1554
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' är inte noterad i arbetskopian eller "
 "finns inte"
 
-#: work.cc:1573
+#: work.cc:1557
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "den föreslagna nya rotkatalogen '%s' är inte en katalog"
 
-#: work.cc:1576
+#: work.cc:1560
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "den föreslagna nya rotkatalogen '%s' innehåller den otillåtna sökvägen %s"
 
-#: work.cc:1586
+#: work.cc:1570
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "katalogen '%s' är inte noterad i arbetskopian eller finns inte"
 
-#: work.cc:1592
+#: work.cc:1576
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' är i vägen"
 
-#: work.cc:1632
+#: work.cc:1616
 #, c-format
 msgid ""
 "workspace is locked\n"
