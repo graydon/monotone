@@ -772,12 +772,12 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
 	    io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
                 "You may want to check that $MTN_MERGE or the lua variable `merger' is set\n"..
                 "to something available.  If you want to use vim or emacs, you can also\n"..
-		"set $EDITOR to something appropriate"))
+		"set $EDITOR to something appropriate.\n"))
 	 else
 	    io.write (string.format("No external 3-way merge command found.\n"..
                 "You may want to check that $EDITOR is set to an editor that supports 3-way\n"..
                 "merge, set this explicitly in your get_preferred_merge3_command hook,\n"..
-                "or add a 3-way merge program to your path.\n\n"))
+                "or add a 3-way merge program to your path.\n"))
 	 end
       end
    end
