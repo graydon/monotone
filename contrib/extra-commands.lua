@@ -17,7 +17,7 @@ function cpp(...)
     mtn_automate("get_option", "branch")	-- make sure we have a valid workspace
     mtn_automate("commit")
     mtn_automate("pull")
-    heads = mtn_automate("heads")
+    local ok, heads = mtn_automate("heads")
     words = 0
     for word in string.gfind(heads, "[^%s]+") do words=words+1 end
     if words == 1 then

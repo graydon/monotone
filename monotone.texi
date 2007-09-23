@@ -9068,12 +9068,13 @@ For the definition of @code{temp_file()}, see @ref{Default hooks}.
 
 @item mtn_automate( ... )
 
-The mtn_automate function calls the the monotone automate command passed in
-its arguments.  The result of the call is a pair of strings, the first
-being the output from the automate command, and the second being the text
-of any warnings output by the automate command.
-This function is not for use in ordinary hooks, but rather for lua based
-commands as defined by @code{register_command()}.
+The @code{mtn_automate} Lua function calls the Monotone
+@command{automate} command passed in its arguments. The result of the
+call is a pair consisting of a boolean return code, indicating whether
+the call was successful or not, and a string being the @code{stdout}
+output from the @command{automate} command. This function is not for use
+in ordinary Lua hooks, but rather for Lua based commands as defined by
+the Lua function @code{register_command}.
 
 @item parse_basic_io(@var{data})
 
