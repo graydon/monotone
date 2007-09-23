@@ -488,7 +488,7 @@ mergers.diffutils = {
           tbl.afile,
           tbl.rfile
       )
-      if (ret ~= 0) then
+      if (ret == 2) then
          io.write(gettext("Error running GNU diffutils 3-way difference tool 'diff3'\n"))
          return false
       end
@@ -510,7 +510,8 @@ mergers.diffutils = {
    available =
       function ()
           return program_exists_in_path("diff3") and
-                 program_exists_in_path("sdiff");
+                 program_exists_in_path("sdiff") and
+                 program_exists_in_path("diff");
       end,
    wanted =
       function ()
