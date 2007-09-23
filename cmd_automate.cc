@@ -62,7 +62,7 @@ namespace commands {
   }
 }
 
-static string const interface_version = "5.0";
+static string const interface_version = "6.0";
 
 // Name: interface_version
 // Arguments: none
@@ -197,7 +197,7 @@ class automate_reader
       case 'o': loc = opt; break;
       case 'l': loc = cmd; break;
       default:
-        E(false, 
+        E(false,
             F("Bad input to automate stdio: unknown start token '%c'") % c);
       }
   }
@@ -259,26 +259,26 @@ public:
   }
   ~automate_streambuf()
   {}
-  
+
   void set_err(int e)
   {
     sync();
     err = e;
   }
-  
+
   void end_cmd()
   {
     _M_sync(true);
     ++cmdnum;
     err = 0;
   }
-  
+
   virtual int sync()
   {
     _M_sync();
     return 0;
   }
-  
+
   void _M_sync(bool end = false)
   {
     if (!out)
@@ -309,22 +309,22 @@ public:
 struct automate_ostream : public std::ostream
 {
   automate_streambuf _M_autobuf;
-  
+
   automate_ostream(std::ostream &out, size_t blocksize)
     : std::ostream(NULL),
       _M_autobuf(out, blocksize)
   { this->init(&_M_autobuf); }
-  
+
   ~automate_ostream()
   {}
-  
+
   automate_streambuf *
   rdbuf() const
   { return const_cast<automate_streambuf *>(&_M_autobuf); }
-  
+
   void set_err(int e)
   { _M_autobuf.set_err(e); }
-  
+
   void end_cmd()
   { _M_autobuf.end_cmd(); }
 };
@@ -338,7 +338,7 @@ CMD_AUTOMATE(stdio, "",
     F("no arguments needed"));
 
     // initialize the database early so any calling process is notified
-    // immediately if a version discrepancy exists 
+    // immediately if a version discrepancy exists
   app.db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
@@ -430,9 +430,9 @@ LUAEXT(mtn_automate, )
       app_p->mtn_automate_allowed = false;
 
       // automate_ostream os(output, app_p->opts.automate_stdio_size);
-  
+
       int n = lua_gettop(L);
-  
+
       E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
 
       app_p->db.ensure_open();
@@ -452,7 +452,7 @@ LUAEXT(mtn_automate, )
         id.push_back(utf8((*iter)()));
 
       E(!id.empty(), F("no command found"));
-      
+
       set< commands::command_id > matches =
         CMD_REF(automate)->complete_command(id);
 
