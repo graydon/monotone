@@ -385,18 +385,21 @@ function runcmd(cmd, prefix, bgnd)
   else
     L(locheader(), cmd_as_str(cmd), "\n")
   end
+
+  local oldexec = execute
+  if bgnd then
+     execute = spawn
+  end
   if type(cmd[1]) == "function" then
     result = {pcall(unpack(cmd))}
   elseif type(cmd[1]) == "string" then
-    if bgnd then
-      result = {pcall(spawn, unpack(cmd))}
-    else
-      result = {pcall(execute, unpack(cmd))}
-    end
+     result = {pcall(execute, unpack(cmd))}
   else
+     execute = oldexec
     err("runcmd called with bad command table " ..
 	"(first entry is a " .. type(cmd[1]) ..")")
-  end
+ end
+ execute = oldexec
   
   if local_redir then
     files.stdin:close()
@@ -682,7 +685,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                 
                 test.bglist[obj.id] = nil
                 L(locheader(), "checking background command from ", out.locstr,
-                  table.concat(out.cmd, " "), "\n")
+		  cmd_as_str(out.cmd), "\n")
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
                 return true
               end
