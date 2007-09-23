@@ -477,7 +477,7 @@ mergers.rcsmerge = {
 }
 
 --  GNU diffutils based merging
-mergers.diffutils_new = {
+mergers.diffutils = {
     --  merge procedure execution
     cmd = function (tbl)
         if os.getenv("MTN_MERGE_DIFFUTILS") == "partial" then
