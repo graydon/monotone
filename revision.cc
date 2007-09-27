@@ -714,17 +714,16 @@ make_restricted_revision(parent_map const & old_rosters,
                          revision_t & rev)
 {
   edge_map edges;
-  cset dummy;
   for (parent_map::const_iterator i = old_rosters.begin();
        i != old_rosters.end();
        i++)
     {
       shared_ptr<cset> included(new cset());
-      make_restricted_csets(parent_roster(i), new_roster,
-                            *included, dummy, mask);
-      MM(*included);
-      MM(dummy);
-      check_restricted_cset(parent_roster(i), *included);
+      roster_t restricted_roster;
+
+      make_restricted_roster(parent_roster(i), new_roster, 
+                             restricted_roster, mask);
+      make_cset(parent_roster(i), restricted_roster, *included);
       safe_insert(edges, make_pair(parent_id(i), included));
     }
 
@@ -746,11 +745,12 @@ make_restricted_revision(parent_map const & old_rosters,
        i++)
     {
       shared_ptr<cset> included(new cset());
-      make_restricted_csets(parent_roster(i), new_roster,
-                            *included, excluded, mask);
-      MM(*included);
-      MM(excluded);
-      check_restricted_cset(parent_roster(i), *included);
+      roster_t restricted_roster;
+
+      make_restricted_roster(parent_roster(i), new_roster, 
+                             restricted_roster, mask);
+      make_cset(parent_roster(i), restricted_roster, *included);
+      make_cset(restricted_roster, new_roster, excluded);
       safe_insert(edges, make_pair(parent_id(i), included));
       if (!excluded.empty())
         no_excludes = false;
