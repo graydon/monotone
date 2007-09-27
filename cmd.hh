@@ -73,6 +73,7 @@ namespace commands
     virtual std::string params(void) const;
     virtual std::string abstract(void) const;
     virtual std::string desc(void) const;
+    virtual names_set subcommands(void) const;
     options::options_type const & opts(void) const;
     bool use_workspace_options(void) const;
     children_set & children(void);
