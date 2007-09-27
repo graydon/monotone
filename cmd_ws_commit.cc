@@ -212,8 +212,6 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   
   // The preserved cset will be left pending in MTN/revision 
 
-  MM(included);
-  MM(excluded);
   // if/when reverting through the editable_tree interface use
   // make_cset(new_roster, restricted_roster, reverted); 
   // to get a cset that gets us back to the restricted roster
