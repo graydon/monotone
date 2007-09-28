@@ -54,3 +54,13 @@ licenses.
 
   -- monotone-cluster-push.lua: A simple script to push changes to other
      servers upon receiving them.  This will only work on a server instance.
+
+  -- extra-commands.lua: Some simple lua user commands to automate common
+     command sequences.  The lua code should be copied to a monotonerc file
+     for use.
+
+  -- monotone-mail-notify-standalone.lua: a mail notification script which
+     runs without any other external dependencies than /usr/bin/mail and
+     offers an individual per-branch recipient configuration with a syntax
+     similar to the one found in ~/.monotone/read-permissions
+

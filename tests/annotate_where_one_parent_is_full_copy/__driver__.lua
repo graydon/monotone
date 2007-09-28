@@ -1,3 +1,4 @@
+-- -*-lua-*-
 
 mtn_setup()
 
@@ -45,5 +46,5 @@ revs.d = base_revision()
 -- REVA: c
 --
 
-check(mtn("annotate", "--brief", "foo"), 0, true, false)
+check(mtn("annotate", "--revs-only", "foo"), 0, true, false)
 check(greplines("stdout", {revs.a, revs.a, revs.b, revs.b, revs.a}))

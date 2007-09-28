@@ -54,7 +54,7 @@ writefile("foo", econtents .. "fourth\n")
 commit()
 rev_f = base_revision()
 
-check(mtn("annotate", "foo", "--brief"), 0, true, true)
+check(mtn("annotate", "foo", "--revs-only"), 0, true, true)
 
 check(qgrep(rev_a .. ": first", "stdout"))
 check(qgrep(rev_e1 .. ": second", "stdout")

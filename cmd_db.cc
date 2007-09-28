@@ -29,27 +29,6 @@ CMD_GROUP(db, "db", "", CMD_REF(database),
           N_("Deals with the database"),
           "");
 
-// Deletes a revision from the local database.  This can be used to
-// 'undo' a changed revision from a local database without leaving
-// (much of) a trace.
-
-static void
-kill_rev_locally(app_state& app, string const& id)
-{
-  revision_id ident;
-  complete(app, id, ident);
-  N(app.db.revision_exists(ident),
-    F("no such revision '%s'") % ident);
-
-  //check that the revision does not have any children
-  set<revision_id> children;
-  app.db.get_revision_children(ident, children);
-  N(!children.size(),
-    F("revision %s already has children. We cannot kill it.") % ident);
-
-  app.db.delete_existing_rev_and_certs(ident);
-}
-
 CMD(db_init, "init", "", CMD_REF(db), "",
     N_("Initializes a database"),
     N_("Creates a new database file and initializes it."),
@@ -141,7 +120,65 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   if (args.size() != 1)
     throw usage(execid);
 
-  kill_rev_locally(app,idx(args, 0)());
+  revision_id revid;
+
+  complete(app, idx(args, 0)(), revid);
+  N(app.db.revision_exists(revid),
+    F("no such revision '%s'") % revid);
+
+  // Check that the revision does not have any children
+  std::set<revision_id> children;
+  app.db.get_revision_children(revid, children);
+  N(!children.size(),
+    F("revision %s already has children. We cannot kill it.") % revid);
+
+  // If we're executing this in a workspace, check if the workspace parent
+  // revision is the one to kill. If so, write out the changes made in this
+  // particular revision to _MTN/revision to allow the user redo his (fixed)
+  // commit afterwards. Of course we can't do this at all if
+  //
+  // a) the user is currently not inside a workspace
+  // b) the user has updated the current workspace to another revision already
+  //    thus the working revision is no longer based on the revision we're
+  //    trying to kill
+  // c) there are uncomitted changes in the working revision of this workspace.
+  //    this *eventually* could be handled with a workspace merge scenario, but
+  //    is left out for now
+  app.allow_workspace();
+  if (app.found_workspace)
+    {
+      revision_t old_work_rev;
+      app.work.get_work_rev(old_work_rev);
+
+      for (edge_map::const_iterator i = old_work_rev.edges.begin();
+           i != old_work_rev.edges.end(); i++)
+        {
+          if (edge_old_revision(i) != revid)
+            continue;
+
+          N(!app.work.has_changes(),
+            F("Cannot kill revision %s,\n"
+              "because it would leave the current workspace in an invalid\n"
+              "state, from which monotone cannot recover automatically since\n"
+              "the workspace contains uncommitted changes.\n"
+              "Consider updating your workspace to another revision first,\n"
+              "before you try to kill this revision again.") % revid);
+
+          P(F("applying changes from %s on the current workspace")
+            % revid);
+
+          revision_t new_work_rev;
+          app.db.get_revision(revid, new_work_rev);
+          new_work_rev.made_for = made_for_workspace;
+          app.work.put_work_rev(new_work_rev);
+          
+          // extra paranoia... we _should_ never run this section twice
+          // since a merged workspace would fail early with work.has_changes()
+          break;
+        }
+    }
+
+  app.db.delete_existing_rev_and_certs(revid);
 }
 
 CMD(db_kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),

@@ -21,7 +21,7 @@ project_t::project_t(app_state & app)
 {}
 
 void
-project_t::get_branch_list(std::set<branch_name> & names)
+project_t::get_branch_list(std::set<branch_name> & names, bool allow_suspend_certs)
 {
   if (indicator.outdated())
     {
@@ -37,9 +37,10 @@ project_t::get_branch_list(std::set<branch_name> & names)
           const branch_name branch(*i);
           std::set<revision_id> heads;
 
-          get_branch_heads(branch, heads, &inverse_graph_cache);
+          if (allow_suspend_certs)
+            get_branch_heads(branch, heads, &inverse_graph_cache);
           
-          if (!heads.empty())
+          if (!allow_suspend_certs || !heads.empty())
             branches.insert(branch);
         }
     }
@@ -49,7 +50,8 @@ project_t::get_branch_list(std::set<branch_name> & names)
 
 void
 project_t::get_branch_list(globish const & glob,
-                           std::set<branch_name> & names)
+                           std::set<branch_name> & names,
+                           bool allow_suspend_certs)
 {
   std::vector<std::string> got;
   app.db.get_branches(glob(), got);
@@ -63,9 +65,10 @@ project_t::get_branch_list(globish const & glob,
       const branch_name branch(*i);
       std::set<revision_id> heads;
 
-      get_branch_heads(branch, heads, &inverse_graph_cache);
+      if (allow_suspend_certs)
+        get_branch_heads(branch, heads, &inverse_graph_cache);
 
-      if (!heads.empty())
+      if (!allow_suspend_certs || !heads.empty())
         names.insert(branch);
     }
 }
@@ -117,7 +120,8 @@ void
 project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
                             multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
-  std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[name];
+  std::pair<branch_name, suspended_indicator> cache_index(name, app.opts.ignore_suspend_certs);
+  std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[cache_index];
   if (branch.first.outdated())
     {
       L(FL("getting heads of branch %s") % name);

@@ -23,18 +23,21 @@ public:
 };
 bool operator < (tag_t const & a, tag_t const & b);
 
+typedef bool suspended_indicator;
+
 class project_t
 {
   app_state & app;
-  std::map<branch_name, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
+  std::map<std::pair<branch_name, suspended_indicator>, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 
 public:
   project_t(app_state & app);
 
-  void get_branch_list(std::set<branch_name> & names);
-  void get_branch_list(globish const & glob, std::set<branch_name> & names);
+  void get_branch_list(std::set<branch_name> & names, bool allow_suspend_certs = true);
+  void get_branch_list(globish const & glob, std::set<branch_name> & names,
+                        bool allow_suspend_certs = true);
   void get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
                         std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 

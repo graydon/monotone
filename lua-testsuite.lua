@@ -116,6 +116,12 @@ function addfile(filename, contents, mt)
   check(mt("add", filename), 0, false, false)
 end
 
+function adddir(dirname, mt)
+  if not isdir(dirname) then mkdir(dirname) end
+  if mt == nil then mt = mtn end
+  check(mt("add", dirname), 0, false, false)
+end
+
 function revert_to(rev, branch, mt)
   if type(branch) == "function" then
     mt = branch
@@ -297,6 +303,17 @@ function prepare_to_run_tests (P)
    -- files or directories that we cannot read or write (mostly to
    -- test error handling behavior).
    require_not_root()
+
+   -- Several tests require the ability to create temporary
+   -- directories outside the workspace.
+   local d = make_temp_dir()
+   if d == nil then
+      P("This test suite requires the ability to create files\n"..
+        "in the system-wide temporary directory.  Please correct the\n"..
+        "access permissions on this directory and try again.\n")
+      return 1
+   end
+   unlogged_remove(d)
 
    monotone_path = getpathof("mtn")
    if monotone_path == nil then monotone_path = "mtn" end

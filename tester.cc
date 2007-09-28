@@ -249,7 +249,7 @@ LUAEXT(posix_umask, )
   int oldmask = do_umask((a*8 + b)*8 + c);
   if (oldmask == -1)
     {
-      lua_pushnil(L);
+      lua_pushinteger(L, 0);
       return 1;
     }
   else
@@ -599,8 +599,9 @@ int test_invoker::operator()(std::string const & testname) const
       retcode = luaL_checkinteger(st, -1);
       lua_remove(st, -1);
     }
-  catch (...)
+  catch (std::exception & e)
     {
+      E(false, F("test %s: %s") % testname % e.what());
       retcode = 124;
     }
   return retcode;
@@ -948,7 +949,7 @@ parse_command_line(int argc, char const * const * argv,
         }
       else if (int_option(argv[i], "-j", "--jobs=", jobs))
         /* no action required */;
-      else if (argv[i][1] == '-')
+      else if (argv[i][0] == '-')
         {
           P(F("unrecognized option '%s'") % argv[i]);
           need_help = true;
@@ -968,11 +969,11 @@ parse_command_line(int argc, char const * const * argv,
 
   E(!run_one || (!want_help && !debugging && !list_only
                  && tests_to_run.size() == 3 && jobs == 0),
-    F("incorrect self-invocation"));
+    F("incorrect self-invocation; -r <abs path to lua-testsuite.lua> <abs path to tester_dir> <test>"));
 
   if (tests_to_run.size() == 0)
     {
-      P(F("%s: no test suite specified\n"));
+      P(F("%s: no test suite specified\n") % argv[0]);
       need_help = true;
     }
 }
@@ -1005,10 +1006,10 @@ int main(int argc, char **argv)
           P(F("Usage: %s test-file testsuite [options] [tests]\n") % argv[0]);
           P(F("Testsuite: a Lua script defining the test suite to run.\n"
               "Options:\n"
-              "  -l, --list     just list tests that would be run"
-              "  -d, --debug    don't erase working dirs of successful tests"
-              "  -j N, --jobs=N run N test cases in parallel"
-              "                 (note: unlike make, the N is not optional)"
+              "  -l, --list     just list tests that would be run\n"
+              "  -d, --debug    don't erase working dirs of successful tests\n"
+              "  -j N, --jobs=N run N test cases in parallel\n"
+              "                 (note: unlike make, the N is not optional)\n"
               "  -h, --help     display this help message\n"
               // -r is deliberately not mentioned.
               "Tests may be specified as:\n"
@@ -1037,7 +1038,7 @@ int main(int argc, char **argv)
           // logfile.
           source_dir = dirname(tests_to_run[0]);
           lua_lib st(tests_to_run[1], tests_to_run[0]);
-          return test_invoker(st)(tests_to_run[2]);
+          return test_invoker(st())(tests_to_run[2]);
 #else
           E(false, F("self-invocation should not be used on Unix\n"));
 #endif

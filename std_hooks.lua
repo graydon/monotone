@@ -19,7 +19,7 @@ function temp_file(namehint)
    return file, name
 end
 
-function execute(path, ...)   
+function execute(path, ...)
    local pid
    local ret = -1
    pid = spawn(path, unpack(arg))
@@ -40,7 +40,7 @@ end
 -- returns immediately
 -- This is needed to work around some brokenness with some merge tools
 -- (e.g. on OS X)
-function execute_confirm(path, ...)   
+function execute_confirm(path, ...)
    ret = execute(path, unpack(arg))
 
    if (ret ~= 0)
@@ -63,30 +63,30 @@ if (attr_init_functions == nil) then
    attr_init_functions = {}
 end
 
-attr_init_functions["mtn:execute"] = 
+attr_init_functions["mtn:execute"] =
    function(filename)
-      if (is_executable(filename)) then 
-        return "true" 
-      else 
-        return nil 
-      end 
+      if (is_executable(filename)) then
+        return "true"
+      else
+        return nil
+      end
    end
 
-attr_init_functions["mtn:manual_merge"] = 
+attr_init_functions["mtn:manual_merge"] =
    function(filename)
-      if (binary_file(filename)) then 
+      if (binary_file(filename)) then
         return "true" -- binary files must be merged manually
-      else 
+      else
         return nil
-      end 
+      end
    end
 
 if (attr_functions == nil) then
    attr_functions = {}
 end
 
-attr_functions["mtn:execute"] = 
-   function(filename, value) 
+attr_functions["mtn:execute"] =
+   function(filename, value)
       if (value == "true") then
          make_executable(filename)
       end
@@ -200,7 +200,7 @@ function binary_file(name)
       if string.find(lowname, pat) then return false end
    end
 
-   -- unknown - read file and use the guess-binary 
+   -- unknown - read file and use the guess-binary
    -- monotone built-in function
    return guess_binary_file_contents(name)
 end
@@ -211,7 +211,7 @@ end
 function get_encloser_pattern(name)
    -- texinfo has special sectioning commands
    if (string.find(name, "%.texi$")) then
-      -- sectioning commands in texinfo: @node, @chapter, @top, 
+      -- sectioning commands in texinfo: @node, @chapter, @top,
       -- @((sub)?sub)?section, @unnumbered(((sub)?sub)?sec)?,
       -- @appendix(((sub)?sub)?sec)?, @(|major|chap|sub(sub)?)heading
       return ("^@("
@@ -285,7 +285,7 @@ function edit_comment(basetext, user_log_message)
    if (tmp == nil) then os.remove(tname); return nil end
    local res = ""
    local line = tmp:read()
-   while(line ~= nil) do 
+   while(line ~= nil) do
       if (not string.find(line, "^MTN:")) then
          res = res .. line .. "\n"
       end
@@ -377,7 +377,7 @@ mergers.meld = {
    cmd = function (tbl)
       io.write (string.format("\nWARNING: 'meld' was choosen to perform external 3-way merge.\n"..
           "You should merge all changes to *CENTER* file due to limitation of program\n"..
-          "arguments.\n\n")) 
+          "arguments.\n\n"))
       local path = "meld"
       local ret = execute(path, tbl.lfile, tbl.afile, tbl.rfile)
       if (ret ~= 0) then
@@ -476,47 +476,112 @@ mergers.rcsmerge = {
    wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
 }
 
+--  GNU diffutils based merging
 mergers.diffutils = {
-   cmd = function (tbl)
-      local ret = execute(
-          "diff3",
-          "--merge",
-          "--label", string.format("%s [left]",     tbl.left_path ),
-          "--label", string.format("%s [ancestor]", tbl.anc_path  ),
-          "--label", string.format("%s [right]",    tbl.right_path),
-          tbl.lfile,
-          tbl.afile,
-          tbl.rfile
-      )
-      if (ret ~= 0) then
-         io.write(gettext("Error running GNU diffutils 3-way difference tool 'diff3'\n"))
-         return false
-      end
-      local ret = execute(
-          "sdiff",
-          "--diff-program=diff",
-          "--suppress-common-lines",
-          "--minimal",
-          "--output", tbl.outfile,
-          tbl.lfile,
-          tbl.rfile
-      )
-      if (ret == 2) then
-         io.write(gettext("Error running GNU diffutils 2-two merging tool 'sdiff'\n"))
-         return false
-      end
-      return tbl.outfile
-   end,
-   available =
-      function ()
-          return program_exists_in_path("diff3") and
-                 program_exists_in_path("sdiff");
-      end,
-   wanted =
-      function ()
-           return true
-      end
-}
+    --  merge procedure execution
+    cmd = function (tbl)
+        --  parse options
+        local option = {}
+        option.partial = false
+        option.diff3opts = ""
+        option.sdiffopts = ""
+        local options = os.getenv("MTN_MERGE_DIFFUTILS")
+        if options ~= nil then
+            for spec in string.gmatch(options, "%s*(%w[^,]*)%s*,?") do
+                local name, value = string.match(spec, "^(%w+)=([^,]*)")
+                if name == nil then
+                    name = spec
+                    value = true
+                end
+                if type(option[name]) == "nil" then
+                    io.write(gettext("Invalid \"diffutils\" merger option \"" .. name .. "\"\n"))
+                    return false
+                end
+                option[name] = value
+            end
+        end
+
+        --  determine the diff3(1) command
+        local diff3 = {
+            "diff3",
+            "--merge",
+            "--label", string.format("%s [left]",     tbl.left_path ),
+            "--label", string.format("%s [ancestor]", tbl.anc_path  ),
+            "--label", string.format("%s [right]",    tbl.right_path),
+        }
+        if option.diff3opts ~= "" then
+            for opt in string.gmatch(option.diff3opts, "%s*([^%s]+)%s*") do
+                table.insert(diff3, opt)
+            end
+        end
+        table.insert(diff3, string.gsub(tbl.lfile, "\\", "/") .. "")
+        table.insert(diff3, string.gsub(tbl.afile, "\\", "/") .. "")
+        table.insert(diff3, string.gsub(tbl.rfile, "\\", "/") .. "")
+
+        --  dispatch according to major operation mode
+        if option.partial then
+            --  partial batch/non-modal 3-way merge "resolution":
+            --  simply merge content with help of conflict markers
+            io.write(gettext("performing 3-way merge, adding conflict markers\n"))
+            local ret = execute_redirected("", string.gsub(tbl.outfile, "\\", "/"), "", unpack(diff3))
+            if ret == 2 then
+                io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
+                return false
+            end
+            return tbl.outfile
+        else
+            --  real interactive/modal 3/2-way merge resolution:
+            --  display 3-way merge conflict and perform 2-way merge resolution
+
+            --  display 3-way merge conflict (batch)
+            io.write("\n")
+            io.write(gettext("---- CONFLICT SUMMARY ------------------------------------------------\n"))
+            local ret = execute(unpack(diff3))
+            if ret == 2 then
+                io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
+                return false
+            end
+
+            --  perform 2-way merge resolution (interactive)
+            io.write("\n")
+            io.write(gettext("---- CONFLICT RESOLUTION ---------------------------------------------\n"))
+            local sdiff = {
+                "sdiff",
+                "--diff-program=diff",
+                "--suppress-common-lines",
+                "--minimal",
+                "--output=" .. string.gsub(tbl.outfile, "\\", "/")
+            }
+            if option.sdiffopts ~= "" then
+                for opt in string.gmatch(option.sdiffopts, "%s*([^%s]+)%s*") do
+                    table.insert(sdiff, opt)
+                end
+            end
+            table.insert(sdiff, string.gsub(tbl.lfile, "\\", "/") .. "")
+            table.insert(sdiff, string.gsub(tbl.rfile, "\\", "/") .. "")
+            local ret = execute(unpack(sdiff))
+            if ret == 2 then
+                io.write(gettext("Error running GNU diffutils 2-way merging tool 'sdiff'\n"))
+                return false
+            end
+            return tbl.outfile
+        end
+    end,
+
+    --  merge procedure availability check
+    available = function ()
+        --  make sure the GNU diffutils tools are available
+        return program_exists_in_path("diff3") and
+               program_exists_in_path("sdiff") and
+               program_exists_in_path("diff");
+    end,
+
+    --  merge procedure request check
+    wanted = function ()
+        --  assume it is requested (if it is available at all)
+        return true
+    end
+}   
 
 mergers.emacs = {
    cmd = function (tbl)
@@ -527,15 +592,21 @@ mergers.emacs = {
          emacs = "emacs"
       end
       local elisp = "(ediff-merge-files-with-ancestor \"%s\" \"%s\" \"%s\" nil \"%s\")"
-      local ret = execute(emacs, "--eval", 
-                          string.format(elisp, tbl.lfile, tbl.rfile, tbl.afile, tbl.outfile))
+      -- Converting backslashes is necessary on Win32 MinGW; emacs
+      -- lisp string syntax says '\' is an escape.
+      local ret = execute(emacs, "--eval",
+                          string.format(elisp,
+                          string.gsub (tbl.lfile, "\\", "/"),
+                          string.gsub (tbl.rfile, "\\", "/"),
+                          string.gsub (tbl.afile, "\\", "/"),
+                          string.gsub (tbl.outfile, "\\", "/")))
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), emacs))
          return false
       end
       return tbl.outfile
    end,
-   available = 
+   available =
       function ()
 	 return program_exists_in_path("xemacs") or
 	    program_exists_in_path("emacs")
@@ -555,12 +626,12 @@ mergers.emacs = {
 mergers.xxdiff = {
    cmd = function (tbl)
       local path = "xxdiff"
-      local ret = execute(path, 
+      local ret = execute(path,
                         "--title1", tbl.left_path,
                         "--title2", tbl.right_path,
                         "--title3", tbl.merged_path,
-                        tbl.lfile, tbl.afile, tbl.rfile, 
-                        "--merge", 
+                        tbl.lfile, tbl.afile, tbl.rfile,
+                        "--merge",
                         "--merged-filename", tbl.outfile,
                         "--exit-with-merge-status")
       if (ret ~= 0) then
@@ -576,12 +647,12 @@ mergers.xxdiff = {
 mergers.kdiff3 = {
    cmd = function (tbl)
       local path = "kdiff3"
-      local ret = execute(path, 
+      local ret = execute(path,
                           "--L1", tbl.anc_path,
                           "--L2", tbl.left_path,
                           "--L3", tbl.right_path,
-                          tbl.afile, tbl.lfile, tbl.rfile, 
-                          "--merge", 
+                          tbl.afile, tbl.lfile, tbl.rfile,
+                          "--merge",
                           "--o", tbl.outfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), path))
@@ -613,8 +684,8 @@ mergers.opendiff = {
 
 function write_to_temporary_file(data, namehint)
    tmp, filename = temp_file(namehint)
-   if (tmp == nil) then 
-      return nil 
+   if (tmp == nil) then
+      return nil
    end;
    tmp:write(data)
    io.close(tmp)
@@ -638,7 +709,7 @@ function copy_text_file(srcname, destname)
 end
 
 function read_contents_of_file(filename, mode)
-   tmp = io.open(filename, mode) 
+   tmp = io.open(filename, mode)
    if (tmp == nil) then
       return nil
    end
@@ -684,39 +755,39 @@ function get_preferred_merge3_command (tbl)
    end
 end
 
-function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right) 
+function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, right)
    local ret = nil
    local tbl = {}
-   
-   tbl.anc_path = anc_path 
-   tbl.left_path = left_path 
-   tbl.right_path = right_path 
 
-   tbl.merged_path = merged_path 
-   tbl.afile = nil 
-   tbl.lfile = nil 
-   tbl.rfile = nil 
-   tbl.outfile = nil 
-   tbl.meld_exists = false 
+   tbl.anc_path = anc_path
+   tbl.left_path = left_path
+   tbl.right_path = right_path
+
+   tbl.merged_path = merged_path
+   tbl.afile = nil
+   tbl.lfile = nil
+   tbl.rfile = nil
+   tbl.outfile = nil
+   tbl.meld_exists = false
    tbl.lfile = write_to_temporary_file (left, "left")
    tbl.afile = write_to_temporary_file (ancestor, "ancestor")
    tbl.rfile = write_to_temporary_file (right, "right")
    tbl.outfile = write_to_temporary_file ("", "merged")
-   
-   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil 
-   then 
+
+   if tbl.lfile ~= nil and tbl.rfile ~= nil and tbl.afile ~= nil and tbl.outfile ~= nil
+   then
       local cmd,mkey = get_preferred_merge3_command (tbl)
-      if cmd ~=nil 
-      then 
+      if cmd ~=nil
+      then
          io.write (string.format(gettext("executing external 3-way merge command\n")))
          ret = cmd (tbl)
          if not ret then
             ret = nil
          else
             ret = read_contents_of_file (ret, "r")
-            if string.len (ret) == 0 
-            then 
-               ret = nil 
+            if string.len (ret) == 0
+            then
+               ret = nil
             end
          end
       else
@@ -724,23 +795,23 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
 	    io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
                 "You may want to check that $MTN_MERGE or the lua variable `merger' is set\n"..
                 "to something available.  If you want to use vim or emacs, you can also\n"..
-		"set $EDITOR to something appropriate"))
+		"set $EDITOR to something appropriate.\n"))
 	 else
 	    io.write (string.format("No external 3-way merge command found.\n"..
                 "You may want to check that $EDITOR is set to an editor that supports 3-way\n"..
                 "merge, set this explicitly in your get_preferred_merge3_command hook,\n"..
-                "or add a 3-way merge program to your path.\n\n"))
+                "or add a 3-way merge program to your path.\n"))
 	 end
       end
    end
-   
+
    os.remove (tbl.lfile)
    os.remove (tbl.rfile)
    os.remove (tbl.afile)
    os.remove (tbl.outfile)
-   
+
    return ret
-end 
+end
 
 -- expansion of values used in selector completion
 
@@ -776,7 +847,7 @@ function expand_selector(str)
    then
       return ("d:" .. dtstr)
    end
-   
+
    return nil
 end
 
@@ -789,35 +860,35 @@ function expand_date(str)
       return (str)
    end
 
-   -- "now" 
+   -- "now"
    if str == "now"
    then
       local t = os.time(os.date('!*t'))
       return os.date("%FT%T", t)
    end
-   
+
    -- today don't uses the time         # for xgettext's sake, an extra quote
    if str == "today"
    then
       local t = os.time(os.date('!*t'))
       return os.date("%F", t)
    end
-   
+
    -- "yesterday", the source of all hangovers
    if str == "yesterday"
    then
       local t = os.time(os.date('!*t'))
       return os.date("%F", t - 86400)
    end
-   
+
    -- "CVS style" relative dates such as "3 weeks ago"
-   local trans = { 
-      minute = 60; 
-      hour = 3600; 
-      day = 86400; 
-      week = 604800; 
-      month = 2678400; 
-      year = 31536000 
+   local trans = {
+      minute = 60;
+      hour = 3600;
+      day = 86400;
+      week = 604800;
+      month = 2678400;
+      year = 31536000
    }
    local pos, len, n, type = string.find(str, "(%d+) ([minutehordaywk]+)s? ago")
    if trans[type] ~= nil
@@ -826,11 +897,11 @@ function expand_date(str)
       if trans[type] <= 3600
       then
         return os.date("%FT%T", t - (n * trans[type]))
-      else      
+      else
         return os.date("%F", t - (n * trans[type]))
       end
    end
-   
+
    return nil
 end
 
@@ -935,8 +1006,8 @@ function get_netsync_connect_command(uri, args)
 
         local argv = nil
 
-        if uri["scheme"] == "ssh" 
-                and uri["host"] 
+        if uri["scheme"] == "ssh"
+                and uri["host"]
                 and uri["path"] then
 
                 argv = { "ssh" }
@@ -949,7 +1020,7 @@ function get_netsync_connect_command(uri, args)
                         table.insert(argv, uri["port"])
                 end
 
-                -- ssh://host/~/dir/file.mtn or 
+                -- ssh://host/~/dir/file.mtn or
                 -- ssh://host/~user/dir/file.mtn should be home-relative
                 if string.find(uri["path"], "^/~") then
                         uri["path"] = string.sub(uri["path"], 2)
@@ -957,13 +1028,13 @@ function get_netsync_connect_command(uri, args)
 
                 table.insert(argv, uri["host"])
         end
-        
+
         if uri["scheme"] == "file" and uri["path"] then
                 argv = { }
         end
 
-        if uri["scheme"] == "ssh+ux" 
-                and uri["host"] 
+        if uri["scheme"] == "ssh+ux"
+                and uri["host"]
                 and uri["path"] then
 
                 argv = { "ssh" }
@@ -976,7 +1047,7 @@ function get_netsync_connect_command(uri, args)
                         table.insert(argv, uri["port"])
                 end
 
-                -- ssh://host/~/dir/file.mtn or 
+                -- ssh://host/~/dir/file.mtn or
                 -- ssh://host/~user/dir/file.mtn should be home-relative
                 if string.find(uri["path"], "^/~") then
                         uri["path"] = string.sub(uri["path"], 2)
@@ -1010,7 +1081,7 @@ function get_netsync_connect_command(uri, args)
 end
 
 function use_transport_auth(uri)
-        if uri["scheme"] == "ssh" 
+        if uri["scheme"] == "ssh"
         or uri["scheme"] == "ssh+ux"
         or uri["scheme"] == "file" then
                 return false

@@ -385,18 +385,21 @@ function runcmd(cmd, prefix, bgnd)
   else
     L(locheader(), cmd_as_str(cmd), "\n")
   end
+
+  local oldexec = execute
+  if bgnd then
+     execute = spawn
+  end
   if type(cmd[1]) == "function" then
     result = {pcall(unpack(cmd))}
   elseif type(cmd[1]) == "string" then
-    if bgnd then
-      result = {pcall(spawn, unpack(cmd))}
-    else
-      result = {pcall(execute, unpack(cmd))}
-    end
+     result = {pcall(execute, unpack(cmd))}
   else
+     execute = oldexec
     err("runcmd called with bad command table " ..
 	"(first entry is a " .. type(cmd[1]) ..")")
-  end
+ end
+ execute = oldexec
   
   if local_redir then
     files.stdin:close()
@@ -669,6 +672,9 @@ function bg(torun, ret, stdout, stderr, stdin)
                 local res
                 obj.retval, res = timed_wait(obj.pid, timeout)
                 if (res == -1) then
+                  if (obj.retval ~= 0) then
+                    L(locheader(), "error in timed_wait ", obj.retval, "\n")
+                  end
                   kill(obj.pid, 15) -- TERM
                   obj.retval, res = timed_wait(obj.pid, 2)
                   if (res == -1) then
@@ -679,7 +685,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                 
                 test.bglist[obj.id] = nil
                 L(locheader(), "checking background command from ", out.locstr,
-                  table.concat(out.cmd, " "), "\n")
+		  cmd_as_str(out.cmd), "\n")
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
                 return true
               end
@@ -1071,10 +1077,21 @@ function run_one_test(tname)
       test.errline = errline
       posix_umask(oldmask)
    end
+
+   if not r then
+      if test.errline == nil then test.errline = -1 end
+      if type(e) ~= "table" then
+	 local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
+	 e = tbl
+      end
+      if type(e.e) ~= "boolean" then
+	 log_error(e)
+      end
+   end
+   test.log:close()
     
    -- record the short status where report_one_test can find it
    local s = io.open(test.root .. "/STATUS", "w")
-
    if r then
       if test.wanted_fail then
 	 s:write("unexpected success\n")
@@ -1086,11 +1103,6 @@ function run_one_test(tname)
 	 end
       end
    else
-      if test.errline == nil then test.errline = -1 end
-      if type(e) ~= "table" then
-	 local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
-	 e = tbl
-      end
       if e.e == true then
 	 s:write(string.format("skipped (line %i)\n", test.errline))
       elseif e.e == false then
@@ -1098,10 +1110,8 @@ function run_one_test(tname)
 			       test.errline))
       else
 	 s:write(string.format("FAIL (line %i)\n", test.errline))
-	 log_error(e)
       end
    end
-   test.log:close()
    s:close()
    return 0
 end

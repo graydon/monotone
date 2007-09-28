@@ -98,6 +98,7 @@ struct workspace
 
   void update_any_attrs();
 
+  bool has_changes();
 
   // write out a new (partial) revision describing the current workspace;
   // the important pieces of this are the base revision id and the "shape"
@@ -193,6 +194,10 @@ struct workspace
   void get_local_dump_path(bookkeeping_path & d_path);
 
   // the 'inodeprints file' contains inode fingerprints
+
+  bool in_inodeprints_mode();
+  void read_inodeprints(data & dat);
+  void write_inodeprints(data const & dat);
 
   void enable_inodeprints();
   void maybe_update_inodeprints();

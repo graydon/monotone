@@ -78,6 +78,14 @@ OPT(brief, "brief", bool, false,
 }
 #endif
 
+OPT(revs_only, "revs-only", bool, false,
+     gettext_noop("annotate using full revision ids only"))
+#ifdef option_bodies
+{
+  revs_only = true;
+}
+#endif
+
 GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
      gettext_noop("set location of configuration directory"))
 #ifdef option_bodies

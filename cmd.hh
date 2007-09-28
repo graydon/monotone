@@ -67,11 +67,13 @@ namespace commands
 
     utf8 const & primary_name(void) const;
     names_set const & names(void) const;
+    void add_alias(const utf8 &new_name);
     command * parent(void) const;
     bool hidden(void) const;
     virtual std::string params(void) const;
     virtual std::string abstract(void) const;
     virtual std::string desc(void) const;
+    virtual names_set subcommands(void) const;
     options::options_type const & opts(void) const;
     bool use_workspace_options(void) const;
     children_set & children(void);
@@ -86,6 +88,7 @@ namespace commands
 
     bool has_name(utf8 const & name) const;
     command const * find_command(command_id const & id) const;
+    command * find_command(command_id const & id);
     std::set< command_id >
       complete_command(command_id const & id,
                        command_id completed = command_id(),
@@ -112,6 +115,11 @@ namespace commands
              std::string const & abstract,
              std::string const & desc,
              options::options_type const & opts);
+
+    void exec(app_state & app,
+              command_id const & execid,
+              args_vector const & args,
+              std::ostream & output) const;
 
     void exec(app_state & app,
               command_id const & execid,
@@ -288,6 +296,7 @@ CMD_FWD_DECL(review);
 CMD_FWD_DECL(tree);
 CMD_FWD_DECL(variables);
 CMD_FWD_DECL(workspace);
+CMD_FWD_DECL(user);
 
 // Local Variables:
 // mode: C++
