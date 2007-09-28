@@ -892,16 +892,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       basic_io::stanza st;
       inventory_item const & item = i->second;
 
-      if (i->first.as_internal() == "")
-        {
-          // This is the workspace root directory; print a nicer name.
-          st.push_str_pair(syms::path, ".");
-        }
-      else
-        {
-          //  Not the root directory
-          st.push_file_pair(syms::path, i->first);
-        }
+      st.push_file_pair(syms::path, i->first);
 
       if (item.old_node.exists)
         {

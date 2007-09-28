@@ -33,7 +33,7 @@ check(mtn("automate", "inventory"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
 
 index = check_inventory (parsed, index,
-{    path = ".",
+{    path = "",
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
@@ -85,7 +85,7 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = ".",
+{    path = "",
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
@@ -257,7 +257,7 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = ".",
+{    path = "",
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
@@ -301,7 +301,7 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{    path = ".",
+{    path = "",
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
