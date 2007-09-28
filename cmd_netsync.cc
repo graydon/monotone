@@ -69,11 +69,11 @@ find_key(utf8 const & addr,
   rsa_keypair_id key;
   uri u;
   utf8 host(addr);
-  if (parse_uri(addr(), u))
+
+  parse_uri(addr(), u);
+  if (!u.host.empty())
     host = utf8(u.host);
-  if (!app.lua.hook_get_netsync_key(host,
-                                    include, exclude,
-                                    key)
+  if (!app.lua.hook_get_netsync_key(host, include, exclude, key)
       || key() == "")
     {
       if (needed)
