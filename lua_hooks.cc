@@ -30,6 +30,7 @@
 #include "uri.hh"
 #include "cmd.hh"
 #include "commands.hh"
+#include "globish.hh"
 
 // defined in {std,test}_hooks.lua, converted to {std,test}_hooks.c respectively
 extern char const std_hooks_constant[];

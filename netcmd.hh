@@ -20,6 +20,8 @@
 #include "hmac.hh"
 #include "string_queue.hh"
 
+struct globish;
+
 typedef enum
   {
     server_voice,

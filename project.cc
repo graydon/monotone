@@ -54,7 +54,7 @@ project_t::get_branch_list(globish const & glob,
                            bool allow_suspend_certs)
 {
   std::vector<std::string> got;
-  app.db.get_branches(glob(), got);
+  app.db.get_branches(glob, got);
   names.clear();
   multimap<revision_id, revision_id> inverse_graph_cache;
   
