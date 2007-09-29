@@ -10,159 +10,168 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <unistd.h>
+#include <cstddef>
+#include <ctime>
 #include "numeric_vocab.hh"
-#include "vocab.hh"
 
 namespace constants
 {
-
   // this file contains magic constants which you could, in theory, tweak.
   // probably best not to tweak them though.
+  // all scalar constants are defined in this file so their values are
+  // visible to the compiler; aggregate constants are defined in
+  // constants.cc, which also has some static assertions to make sure
+  // everything is consistent.
 
   // number of bits in an RSA key we use
-  extern size_t const keylen;
+  std::size_t const keylen = 1024;
 
   // number of characters in a SHA1 id
-  static size_t const idlen = 40;
+  std::size_t const idlen = 40;
 
   // number of characters in an encoded epoch
-  static size_t const epochlen = idlen;
+  std::size_t const epochlen = idlen;
 
   // number of characters in a raw epoch
-  static size_t const epochlen_bytes = epochlen / 2;
+  std::size_t const epochlen_bytes = epochlen / 2;
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
-  extern time_t const cvs_window;
+  std::time_t const cvs_window = 60 * 5;
 
   // number of bytes in a password buffer. further bytes will be dropped.
-  static size_t const maxpasswd = 0xfff;
+  std::size_t const maxpasswd = 0xfff;
 
   // number of bytes to use in buffers, for buffered i/o operations
-  static size_t const bufsz = 0x3ffff;
+  std::size_t const bufsz = 0x3ffff;
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
-  extern size_t const db_log_line_sz;
+  std::size_t const db_log_line_sz = 70;
 
   // maximum size in bytes of the database xdelta version reconstruction
-  // cache
-  extern size_t const db_version_cache_sz;
+  // cache.  the value of 7 MB was determined as the optimal point after
+  // timing various values with a pull of the monotone repository - it could
+  // be tweaked further.
+  std::size_t const db_version_cache_sz = 7 * (1 << 20);
 
   // maximum size in bytes of the write-back roster cache
-  extern size_t const db_roster_cache_sz;
+  // the value of 7 MB was determined by blindly copying the line above and
+  // not doing any testing at all - it could be tweaked further.
+  std::size_t const db_roster_cache_sz = 7 * (1 << 20);
 
   // estimated number of bytes taken for a node_t and its corresponding
   // marking_t.  used to estimate the current size of the write-back roster
-  // cache
-  extern size_t const db_estimated_roster_node_sz;
+  // cache.    the calculation is:
+  //   -- 40 bytes content hash
+  //   -- a path component, maybe 10 or 15 bytes
+  //   -- 40 bytes birth revision
+  //   -- 40 bytes name marking hash
+  //   -- 40 bytes content marking hash
+  //   -- plus internal pointers, etc., for strings, sets, shared_ptrs, heap
+  //      overhead, ...
+  //   -- plus any space taken for attrs
+  // so ~175 bytes for a file node, plus internal slop, plus attrs (another
+  // 60 bytes per attr, or so), minus 80 bytes for dir nodes.  So this just
+  // picks a number that seems a reasonable amount over 175.
+  std::size_t const db_estimated_roster_node_sz = 210;
 
   // maximum number of bytes to be consumed with the delayed write cache
-  extern unsigned long const db_max_delayed_file_bytes;
+  unsigned long const db_max_delayed_file_bytes = 16 * (1 << 20);
 
   // size of a line of text in the log buffer, beyond which log lines will be
   // truncated.
-  extern size_t const log_line_sz;
+  std::size_t const log_line_sz = 0x300;
 
   // assumed width of the terminal, when we can't query for it directly
-  extern size_t const default_terminal_width;
+  std::size_t const default_terminal_width = 72;
 
-  // all the ASCII characters (bytes) which are legal in a packet
-  extern char const * const legal_packet_bytes;
-
-  // boost regex that matches the bytes in legal_packet_bytes
-  extern std::string const regex_legal_packet_bytes;
+  // all the ASCII characters (bytes) which are legal in a base64 blob
+  extern char const legal_base64_bytes[];
 
   // all the ASCII characters (bytes) which are legal in an ACE string
-  extern char const * const legal_ace_bytes;
+  extern char const legal_ace_bytes[];
 
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
-  extern char const * const legal_id_bytes;
-
-  // boost regex that matches the bytes in legal_id_bytes
-  extern std::string const regex_legal_id_bytes;
+  extern char const legal_id_bytes[];
 
   // all the ASCII characters (bytes) which can occur in cert names
-  extern char const * const legal_cert_name_bytes;
-
-  // boost regex that matches the bytes in legal_cert_name_bytes
-  extern std::string const regex_legal_cert_name_bytes;
+  extern char const legal_cert_name_bytes[];
 
   // all the ASCII characters (bytes) which can occur in key names
-  extern char const * const legal_key_name_bytes;
-
-  // boost regex that matches the bytes in legal_key_name_bytes
-  extern std::string const regex_legal_key_name_bytes;
+  extern char const legal_key_name_bytes[];
 
   // remaining constants are related to netsync protocol
 
   // number of bytes in the hash used in netsync
-  static size_t const merkle_hash_length_in_bytes = 20;
+  std::size_t const merkle_hash_length_in_bytes = 20;
 
   // number of bits of merkle prefix consumed by each level of tree
-  extern size_t const merkle_fanout_bits;
+  std::size_t const merkle_fanout_bits = 4;
 
   // derived from hash_length_in_bytes
-  extern size_t const merkle_hash_length_in_bits;
+  std::size_t const merkle_hash_length_in_bits
+  = merkle_hash_length_in_bytes * 8;
 
   // derived from fanout_bits
-  extern size_t const merkle_num_tree_levels;
+  std::size_t const merkle_num_tree_levels
+  = merkle_hash_length_in_bits / merkle_fanout_bits;
 
   // derived from fanout_bits
-  extern size_t const merkle_num_slots;
+  std::size_t const merkle_num_slots = 1 << merkle_fanout_bits;
 
   // derived from fanout_bits
-  extern size_t const merkle_bitmap_length_in_bits;
+  std::size_t const merkle_bitmap_length_in_bits = merkle_num_slots * 2;
 
   // derived from fanout_bits
-  extern size_t const merkle_bitmap_length_in_bytes;
+  std::size_t const merkle_bitmap_length_in_bytes
+  = merkle_bitmap_length_in_bits / 8;
 
   // the current netcmd/netsync protocol version
-  extern u8 const netcmd_current_protocol_version;
+  u8 const netcmd_current_protocol_version = 6;
 
   // minimum size of any netcmd on the wire
-  static size_t const netcmd_minsz = (1     // version
-                                      + 1   // cmd code
-                                      + 1); // smallest uleb possible
+  std::size_t const netcmd_minsz = (1     // version
+                                    + 1   // cmd code
+                                    + 1); // smallest uleb possible
 
 
   // largest command *payload* allowed in a netcmd
   // in practice, this sets the size of the largest compressed file
-  static size_t const netcmd_payload_limit = 2 << 27;
+  std::size_t const netcmd_payload_limit = 2 << 27;
 
   // maximum size of any netcmd on the wire, including payload
-  static size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
+  std::size_t const netcmd_maxsz = netcmd_minsz + netcmd_payload_limit;
 
   // netsync fragments larger than this are gzipped
-  extern size_t const netcmd_minimum_bytes_to_bother_with_gzip;
+  std::size_t const netcmd_minimum_bytes_to_bother_with_gzip = 0xfff;
 
   // TCP port to listen on / connect to when doing netsync
-  static size_t const netsync_default_port = 4691;
+  std::size_t const netsync_default_port = 4691;
 
   // maximum number of simultaneous clients on a server
-  static size_t const netsync_connection_limit = 1024;
+  std::size_t const netsync_connection_limit = 1024;
 
   // number of seconds a connection can be idle before it's dropped
-  static size_t const netsync_timeout_seconds = 21600; // 6 hours
+  std::size_t const netsync_timeout_seconds = 21600; // 6 hours
 
   // netsync HMAC key length
-  extern size_t const netsync_session_key_length_in_bytes;
+  std::size_t const netsync_session_key_length_in_bytes = 20;
 
   // netsync HMAC value length
-  extern size_t const netsync_hmac_value_length_in_bytes;
+  std::size_t const netsync_hmac_value_length_in_bytes = 20;
 
   // how long a sha1 digest should be
-  static size_t const sha1_digest_length = 20; // 160 bits
+  std::size_t const sha1_digest_length = 20; // 160 bits
 
   // netsync session key default initializer
-  extern netsync_session_key const netsync_key_initializer;
+  extern char const netsync_key_initializer[];
 
   // attributes
-  extern std::string const encoding_attribute;
-  extern std::string const binary_encoding;
-  extern std::string const default_encoding;
-  extern std::string const manual_merge_attribute;
+  extern char const encoding_attribute[];
+  extern char const binary_encoding[];
+  extern char const default_encoding[];
+  extern char const manual_merge_attribute[];
 }
 
 // Local Variables:

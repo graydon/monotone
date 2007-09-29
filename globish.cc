@@ -1,4 +1,5 @@
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2007 Zack Weinberg <zackw@panix.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -10,201 +11,666 @@
 #include "base.hh"
 #include "sanity.hh"
 #include "globish.hh"
+#include "option.hh" // for arg_type
+#include "numeric_vocab.hh"
+
+#include <iterator>
+#include <ostream>
 
 using std::string;
 using std::vector;
+using std::back_inserter;
+using std::back_insert_iterator;
 
-using boost::regex_match;
+// The algorithm here is originally from pdksh 5.  That implementation uses
+// the high bit of unsigned chars as a quotation flag.  We can't do that,
+// because we need to be utf8 clean.  Instead, we copy the string and
+// replace "live" metacharacters with single bytes from the
+// control-character range.  This is why bytes <= 0x1f are not allowed in the
+// pattern.
 
-// this converts a globish pattern to a regex.  The regex should be usable by
-// the Boost regex library operating in default mode, i.e., it should be a
-// valid ECMAscript regex.
-//
-// Pattern tranformation:
-//
-// - As a special case, the empty pattern is translated to "$.^", which cannot
-//   match any string.
-//
-// - Any character except those described below are copied as they are.
-// - The backslash (\) escapes the following character.  The escaping
-//   backslash is copied to the regex along with the following character.
-// - * is transformed to .* in the regex.
-// - ? is transformed to . in the regex.
-// - { is transformed to ( in the regex
-// - } is transformed to ) in the regex
-// - , is transformed to | in the regex, if within { and }
-// - ^ is escaped unless it comes directly after an unescaped [.
-// - ! is transformed to ^ in the regex if it comes directly after an
-//   unescaped [.
-// - ] directly following an unescaped [ is escaped.
-static void
-maybe_quote(char c, string & re)
+enum metachar {
+  META_STAR = 1,   // *
+  META_QUES,       // ?
+  META_CC_BRA,     // [
+  META_CC_INV_BRA, // [^ or [!
+  META_CC_KET,     // ] (matches either of the above two)
+  META_ALT_BRA,    // {
+  META_ALT_OR,     // , (when found inside unquoted { ... })
+  META_ALT_KET,    // }
+};
+
+// Compile a character class.
+
+static string::const_iterator
+compile_charclass(string const & pat, string::const_iterator p,
+                  back_insert_iterator<string> & to)
 {
-  if (!(isalnum(c) || c == '_'))
+  string in_class;
+  char bra = (char)META_CC_BRA;
+
+  p++;
+  N(p != pat.end(),
+    F("invalid pattern '%s': unmatched '['") % pat);
+
+  if (*p == '!' || *p == '^')
     {
-      re += '\\';
+      bra = (char)META_CC_INV_BRA;
+      p++;
+      N(p != pat.end(),
+        F("invalid pattern '%s': unmatched '['") % pat);
     }
-  re += c;
+
+  while (p != pat.end() && *p != ']')
+    {
+      if (*p == '\\')
+        {
+          p++;
+          if (p == pat.end())
+            break;
+        }
+      // A dash at the beginning or end of the pattern is literal.
+      else if (*p == '-'
+               && in_class.size() != 0
+               && p+1 != pat.end()
+               && p[1] != ']')
+        {
+          p++;
+          if (*p == '\\')
+            p++;
+          if (p == pat.end())
+            break;
+
+          // the cast is needed because boost::format will not obey the %x
+          // if given a 'char'.
+          N((widen<unsigned int, char>(*p)) >= ' ',
+            F("invalid pattern '%s': control character 0x%02x is not allowed")
+            % pat % (widen<unsigned int, char>(*p)));
+
+          unsigned int start = widen<unsigned int, char>(in_class.end()[-1]);
+          unsigned int stop = widen<unsigned int, char>(*p);
+
+          N(start != stop,
+            F("invalid pattern '%s': "
+              "one-element character ranges are not allowed") % pat);
+          N(start < stop,
+            F("invalid pattern '%s': "
+              "endpoints of a character range must be in "
+              "ascending numeric order") % pat);
+          N(start < 0x80 && stop < 0x80,
+            F("invalid pattern '%s': cannot use non-ASCII characters "
+              "in classes") % pat);
+
+          L(FL("expanding range from %X (%c) to %X (%c)")
+            % (start+1) % (char)(start+1) % stop % (char)stop);
+          
+          for (unsigned int r = start + 1; r < stop; r++)
+            in_class.push_back((char)r);
+        }
+      else
+        N(*p != '[', F("syntax error in '%s': "
+                       "character classes may not be nested") % pat);
+
+      N((widen<unsigned int, char>(*p)) >= ' ',
+        F("invalid pattern '%s': control character 0x%02x is not allowed")
+        % pat % (widen<unsigned int, char>(*p)));
+
+      N((widen<unsigned int, char>(*p)) < 0x80,
+        F("invalid pattern '%s': cannot use non-ASCII characters in classes")
+        % pat);
+
+      in_class.push_back(*p);
+      p++;
+    }
+
+  N(p != pat.end(),
+    F("invalid pattern '%s': unmatched '['") % pat);
+
+  N(in_class.size() != 0,
+    F("invalid pattern '%s': empty character class") % pat);
+
+  // minor optimization: one-element non-inverted character class becomes
+  // the character.
+  if (bra == (char)META_CC_BRA && in_class.size() == 1)
+    *to++ = in_class[0];
+  else
+    {
+      *to++ = bra;
+      std::sort(in_class.begin(), in_class.end());
+      std::copy(in_class.begin(), in_class.end(), to);
+      *to++ = (char)META_CC_KET;
+    }
+  return p;
 }
 
+// Compile one fragment of a glob pattern.
+
 static void
-checked_globish_to_regex(string const & glob, string & regex)
+compile_frag(string const & pat, back_insert_iterator<string> & to)
 {
-  int in_braces = 0;            // counter for levels if {}
+  unsigned int brace_depth = 0;
 
-  regex.clear();
-  regex.reserve(glob.size() * 2);
+  for (string::const_iterator p = pat.begin(); p != pat.end(); p++)
+    switch (*p)
+      {
+      default:
+        N((widen<unsigned int, char>(*p)) >= ' ',
+          F("invalid pattern '%s': control character 0x%02x is not allowed")
+          % pat % (widen<unsigned int, char>(*p)));
+        
+        *to++ = *p;
+        break;
 
-  L(FL("checked_globish_to_regex: input = '%s'") % glob);
+      case '*':
+        // optimization: * followed by any sequence of ?s and *s is
+        // equivalent to the number of ?s that appeared in the sequence,
+        // followed by a single star.  the latter can be matched without
+        // nearly as much backtracking.
 
-  if (glob == "")
+        for (p++; p != pat.end(); p++)
+          {
+            if (*p == '?')
+              *to++ = META_QUES;
+            else if (*p != '*')
+              break;
+          }
+
+        p--;
+        *to++ = META_STAR;
+        break;
+
+      case '?':
+        *to++ = META_QUES;
+        break;
+        
+      case '\\':
+        p++;
+        N(p != pat.end(),
+          F("invalid pattern '%s': un-escaped \\ at end") % pat);
+
+        N((widen<unsigned int, char>(*p)) >= ' ',
+          F("invalid pattern '%s': control character 0x%02x is not allowed")
+          % pat % (widen<unsigned int, char>(*p)));
+
+        *to++ = *p;
+        break;
+
+      case '[':
+        p = compile_charclass(pat, p, to);
+        break;
+
+      case ']':
+        N(false, F("invalid pattern '%s': unmatched ']'") % pat);
+
+      case '{':
+        // There's quite a bit of optimization we could be doing on
+        // alternatives, but it's hairy, especially if you get into
+        // nested alternatives; so we're not doing any of it now.
+        // (Look at emacs's regexp-opt.el for inspiration.)
+        brace_depth++;
+        N(brace_depth < 6,
+          F("invalid pattern '%s': braces nested too deeply") % pat);
+        *to++ = META_ALT_BRA;
+        break;
+
+      case ',':
+        if (brace_depth > 0)
+          *to++ = META_ALT_OR;
+        else
+          *to++ = ',';
+        break;
+
+      case '}':
+        N(brace_depth > 0,
+          F("invalid pattern '%s': unmatched '}'") % pat);
+        brace_depth--;
+        *to++ = META_ALT_KET;
+        break;
+      }
+
+  N(brace_depth == 0,
+    F("invalid pattern '%s': unmatched '{'") % pat);
+}
+
+// common code used by the constructors.
+
+static inline string
+compile(string const & pat)
+{
+  string s;
+  back_insert_iterator<string> to = back_inserter(s);
+  compile_frag(pat, to);
+  return s;
+}
+
+static inline string
+compile(vector<arg_type>::const_iterator const & beg,
+        vector<arg_type>::const_iterator const & end)
+{
+  if (end - beg == 0)
+    return "";
+  if (end - beg == 1)
+    return compile((*beg)());
+
+  string s;
+  back_insert_iterator<string> to = back_inserter(s);
+
+  *to++ = META_ALT_BRA;
+  vector<arg_type>::const_iterator i = beg;
+  for (;;)
     {
-      regex = "$.^";
-      // and the below loop will do nothing
+      compile_frag((*i)(), to);
+      i++;
+      if (i == end)
+        break;
+      *to++ = META_ALT_OR;
     }
-  for (string::const_iterator i = glob.begin(); i != glob.end(); ++i)
+  *to++ = META_ALT_KET;
+  return s;
+}
+
+globish::globish(string const & p) : compiled_pattern(compile(p)) {}
+globish::globish(char const * p) : compiled_pattern(compile(p)) {}
+
+globish::globish(vector<arg_type> const & p)
+  : compiled_pattern(compile(p.begin(), p.end())) {}
+globish::globish(vector<arg_type>::const_iterator const & beg,
+                 vector<arg_type>::const_iterator const & end)
+  : compiled_pattern(compile(beg, end)) {}
+
+// Debugging.
+
+static string
+decode(string::const_iterator p, string::const_iterator end)
+{
+  string s;
+  for (; p != end; p++)
+    switch (*p)
+      {
+      case META_STAR:       s.push_back('*'); break;
+      case META_QUES:       s.push_back('?'); break;
+      case META_CC_BRA:     s.push_back('['); break;
+      case META_CC_KET:     s.push_back(']'); break;
+      case META_CC_INV_BRA: s.push_back('[');
+                            s.push_back('!'); break;
+
+      case META_ALT_BRA:    s.push_back('{'); break;
+      case META_ALT_KET:    s.push_back('}'); break;
+      case META_ALT_OR:     s.push_back(','); break;
+
+        // Some of these are only special in certain contexts,
+        // but it does no harm to escape them always.
+      case '[': case ']': case '-': case '!': case '^':
+      case '{': case '}': case ',':
+      case '*': case '?': case '\\':
+        s.push_back('\\');
+        // fall through
+      default:
+        s.push_back(*p);
+      }
+  return s;
+}
+
+string
+globish::operator()() const
+{
+  return decode(compiled_pattern.begin(), compiled_pattern.end());
+}
+
+template <> void dump(globish const & g, string & s)
+{
+  s = g();
+}
+
+std::ostream & operator<<(std::ostream & o, globish const & g)
+{
+  return o << g();
+}
+
+// Matching.
+
+static string::const_iterator
+find_next_subpattern(string::const_iterator p,
+                       string::const_iterator pe,
+                       bool want_alternatives)
+{
+  unsigned int depth = 1;
+  for (; p != pe; p++)
+    switch (*p)
+      {
+      default: break;
+
+      case META_ALT_BRA:
+        depth++; break;
+
+      case META_ALT_KET:
+        depth--;
+        if (depth == 0)
+          return p+1;
+
+      case META_ALT_OR:
+        if (depth == 1 && want_alternatives)
+          return p+1;
+      }
+
+  I(false);
+}
+                   
+
+static bool
+do_match(string::const_iterator s, string::const_iterator se,
+         string::const_iterator p, string::const_iterator pe)
+{
+  unsigned int sc, pc;
+
+  if (global_sanity.debug_p()) // decode() is expensive
+    L(FL("subpattern: '%s' against '%s'") % string(s,se) % decode(p,pe));
+
+  while (p < pe)
     {
-      char c = *i;
-
-      N(in_braces < 5, F("braces nested too deep in pattern '%s'") % glob);
-
-      switch(c)
+      pc = widen<unsigned int, char>(*p++);
+      sc = s < se ? widen<unsigned int, char>(*s) : 0;
+      s++;
+      switch (pc)
         {
-        case '*':
-          regex += ".*";
+        default:           // literal
+          if (sc != pc)
+            return false;
           break;
-        case '?':
-          regex += '.';
+
+        case META_QUES: // any single character
+          if (sc == 0)
+            return false;
           break;
-        case '{':
-          in_braces++;
-          regex += '(';
+
+        case META_CC_BRA:  // any of these characters
+          {
+            bool matched = false;
+            I(p < pe);
+            I(*p != META_CC_KET);
+            do
+              {
+                if (widen<unsigned int, char>(*p) == sc)
+                  matched = true;
+                p++;
+                I(p < pe);
+              }
+            while (*p != META_CC_KET);
+            if (!matched)
+              return false;
+          }
+          p++;
           break;
-        case '}':
-          N(in_braces != 0,
-            F("trying to end a brace expression in a glob when none is started"));
-          regex += ')';
-          in_braces--;
+
+        case META_CC_INV_BRA:  // any but these characters
+          I(p < pe);
+          I(*p != META_CC_KET);
+          do
+            {
+              if (widen<unsigned int, char>(*p) == sc)
+                return false;
+              p++;
+              I(p < pe);
+            }
+          while (*p != META_CC_KET);
+          p++;
           break;
-        case ',':
-          if (in_braces > 0)
-            regex += '|';
+
+        case META_STAR:    // zero or more arbitrary characters
+          if (p == pe)
+            return true; // star at end always matches, if we get that far
+
+          pc = widen<unsigned int, char>(*p);
+          // If the next character in p is not magic, we can only match
+          // starting from places in s where that character appears.
+          if (pc >= ' ')
+            {
+              if (global_sanity.debug_p())
+                L(FL("after *: looking for '%c' in '%c%s'")
+                  % (char)pc % (char)sc % string(s, se));
+              p++;
+              for (;;)
+                {
+                  if (sc == pc && do_match(s, se, p, pe))
+                    return true;
+                  if (s >= se)
+                    break;
+                  sc = widen<unsigned int, char>(*s++);
+                }
+            }
           else
-            maybe_quote(c, regex);
-          break;
-        case '\\':
-          N(++i != glob.end(), F("pattern '%s' ends with backslash") % glob);
-          maybe_quote(*i, regex);
-          break;
-        default:
-          maybe_quote(c, regex);
-          break;
+            {
+              if (global_sanity.debug_p())
+                L(FL("metacharacter after *: doing it the slow way"));
+              s--;
+              do
+                {
+                  if (do_match(s, se, p, pe))
+                    return true;
+                  s++;
+                }
+              while (s < se);
+            }
+          return false;
+
+        case META_ALT_BRA:
+          {
+            string::const_iterator prest, psub, pnext;
+            string::const_iterator srest;
+
+            prest = find_next_subpattern(p, pe, false);
+            psub = p;
+            s--;
+            do
+              {
+                pnext = find_next_subpattern(psub, pe, true);
+                srest = (prest == pe ? se : s);
+                for (; srest < se; srest++)
+                  {
+                    if (do_match(s, srest, psub, pnext - 1)
+                        && do_match(srest, se, prest, pe))
+                      return true;
+                  }
+                // try the empty target too
+                if (do_match(s, srest, psub, pnext - 1)
+                    && do_match(srest, se, prest, pe))
+                  return true;
+                
+                psub = pnext;
+              }
+            while (pnext < prest);
+            return false;
+          }
         }
     }
-
-  N(in_braces == 0,
-    F("run-away brace expression in pattern '%s'") % glob);
-
-  L(FL("checked_globish_to_regex: output = '%s'") % regex);
+  return s == se;
 }
 
-void
-combine_and_check_globish(vector<globish> const & patterns, globish & pattern)
+bool globish::matches(string const & target) const
 {
-  string p;
-  if (patterns.size() > 1)
-    p += '{';
-  bool first = true;
-  for (vector<globish>::const_iterator i = patterns.begin();
-       i != patterns.end(); ++i)
-    {
-      string tmp;
-      // run for the checking it does
-      checked_globish_to_regex((*i)(), tmp);
-      if (!first)
-        p += ',';
-      first = false;
-      p += (*i)();
-    }
-  if (patterns.size() > 1)
-    p += '}';
-  pattern = globish(p);
-}
+  bool result;
+  
+  // The empty pattern matches nothing.
+  if (compiled_pattern.empty())
+    result = false;
+  else
+    result = do_match (target.begin(), target.end(),
+                       compiled_pattern.begin(), compiled_pattern.end());
 
-globish_matcher::globish_matcher(globish const & include_pat,
-                                 globish const & exclude_pat)
-{
-  string re;
-  checked_globish_to_regex(include_pat(), re);
-  r_inc = re;
-  checked_globish_to_regex(exclude_pat(), re);
-  r_exc = re;
-}
-
-bool
-globish_matcher::operator()(string const & s)
-{
-  // regex_match may throw a runtime_error, if the regex turns out to be
-  // really pathological
-  bool inc_match = regex_match(s, r_inc);
-  bool exc_match = regex_match(s, r_exc);
-  bool result = inc_match && !exc_match;
-  L(FL("matching '%s' against '%s' excluding '%s': %s, %s: %s")
-    % s % r_inc % r_exc
-    % (inc_match ? "included" : "not included")
-    % (exc_match ? "excluded" : "not excluded")
-    % (result ? "matches" : "does not match"));
+  L(FL("matching '%s' against '%s': %s")
+    % target % (*this)() % (result ? "matches" : "does not match"));
   return result;
 }
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
-UNIT_TEST(globish, checked_globish_to_regex)
+UNIT_TEST(globish, syntax)
 {
-  string pat;
-
-  checked_globish_to_regex("*", pat);
-  UNIT_TEST_CHECK(pat == ".*");
-  checked_globish_to_regex("?", pat);
-  UNIT_TEST_CHECK(pat == ".");
-  checked_globish_to_regex("{a,b,c}d", pat);
-  UNIT_TEST_CHECK(pat == "(a|b|c)d");
-  checked_globish_to_regex("foo{a,{b,c},?*}d", pat);
-  UNIT_TEST_CHECK(pat == "foo(a|(b|c)|..*)d");
-  checked_globish_to_regex("\\a\\b\\|\\{\\*", pat);
-  UNIT_TEST_CHECK(pat == "ab\\|\\{\\*");
-  checked_globish_to_regex(".+$^{}", pat);
-  UNIT_TEST_CHECK(pat == "\\.\\+\\$\\^()");
-  checked_globish_to_regex(",", pat);
-  // we're very conservative about metacharacters, and quote all
-  // non-alphanumerics, hence the backslash
-  UNIT_TEST_CHECK(pat == "\\,");
-  checked_globish_to_regex("\\.\\+\\$\\^\\(\\)", pat);
-  UNIT_TEST_CHECK(pat == "\\.\\+\\$\\^\\(\\)");
-
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo\\", pat), informative_failure);
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{foo", pat), informative_failure);
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{foo,bar{baz,quux}", pat), informative_failure);
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo}", pat), informative_failure);
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("foo,bar{baz,quux}}", pat), informative_failure);
-  UNIT_TEST_CHECK_THROW(checked_globish_to_regex("{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}", pat), informative_failure);
-}
-
-UNIT_TEST(globish, combine_and_check_globish)
-{
-  vector<globish> s;
-  s.push_back(globish("a"));
-  s.push_back(globish("b"));
-  s.push_back(globish("c"));
-  globish combined;
-  combine_and_check_globish(s, combined);
-  UNIT_TEST_CHECK(combined() == "{a,b,c}");
-}
-
-UNIT_TEST(globish, globish_matcher)
-{
+  struct tcase
   {
+    char const * in;
+    char const * out;
+  };
+  tcase const good[] = {
+    { "a",   "a" },
+    { "\\a", "a" },
+    { "[a]", "a" },
+    { "[!a]", "[!a]" },
+    { "[^a]", "[!a]" },
+    { "[\\!a]", "[\\!a]" },
+    { "[\\^a]", "[\\^a]" },
+    { "[ab]", "[ab]" },
+    { "[a-b]", "[ab]" },
+    { "[a-c]", "[abc]" },
+    { "[ac-]", "[\\-ac]" },
+    { "[-ac]", "[\\-ac]" },
+    { "[+-/]", "[+\\,\\-./]" },
+
+    { "\xC2\xA1", "\xC2\xA1" }, // U+00A1 in UTF8
+    
+    { "*",   "*" },
+    { "\\*", "\\*" },
+    { "[*]", "\\*" },
+    { "?",   "?" },
+    { "\\?", "\\?" },
+    { "[?]", "\\?" },
+    { ",",   "\\," },
+    { "\\,", "\\," },
+    { "[,]", "\\," },
+    { "\\{", "\\{" },
+    { "[{]", "\\{" },
+    { "[}]", "\\}" },
+    { "\\[", "\\[" },
+    { "\\]", "\\]" },
+    { "\\\\", "\\\\" },
+
+    { "**",      "*" },
+    { "*?",      "?*" },
+    { "*???*?*", "????*" },
+    { "*a?*?b*", "*a??*b*" },
+
+    { "{a,b,c}d", "{a,b,c}d" },
+    { "foo{a,{b,c},?*}d", "foo{a,{b,c},?*}d" },
+    { "\\a\\b\\|\\{\\*", "ab|\\{\\*" },
+    { ".+$^{}", ".+$\\^{}" },
+    { "\\.\\+\\$\\^\\(\\)", ".+$\\^()" },
+    { 0, 0 }
+  };
+
+  char const * const bad[] = {
+    "[",
+    "[!",
+    "[\\",
+    "[\\]",
+    "[foo",
+    "[!foo",
+    "foo]",
+    "[\003]",
+    "[a-a]",
+    "[f-a]",
+    "[]",
+    "[\xC2\xA1]",
+    "[\xC2\xA1\xC2\xA2]",
+    "[\xC2\xA1-\xC2\xA2]",
+    "[-\xC2\xA1]",
+    "[[]",
+    "[]",
+
+    "\003",
+    "foo\\",
+    "{foo",
+    "{foo,bar{baz,quux}",
+    "foo}",
+    "foo,bar{baz,quux}}",
+    "{{{{{{{{{{a,b},c},d},e},f},g},h},i},j},k}",
+    0
+  };
+  char const dummy[] = "";
+
+  for (tcase const * p = good; p->in; p++)
+    {
+      globish g(p->in);
+      string s;
+      dump(g, s);
+      L(FL("globish syntax: %s -> %s [expect %s]") % p->in % s % p->out);
+      UNIT_TEST_CHECK(s == p->out);
+    }
+
+  for (char const * const * p = bad; *p; p++)
+    {
+      L(FL("globish syntax: invalid %s") % *p);
+      UNIT_TEST_CHECK_THROW(I(globish(*p).matches(dummy)), informative_failure);
+    }
+}
+
+UNIT_TEST(globish, from_vector)
+{
+  vector<arg_type> v;
+  v.push_back(arg_type("a"));
+  v.push_back(arg_type("b"));
+  v.push_back(arg_type("c"));
+  globish combined(v);
+  string s;
+  dump(combined, s);
+  UNIT_TEST_CHECK(s == "{a,b,c}");
+}
+
+UNIT_TEST(globish, simple_matches)
+{
+  UNIT_TEST_CHECK(globish("abc").matches("abc"));
+  UNIT_TEST_CHECK(!globish("abc").matches("aac"));
+
+  UNIT_TEST_CHECK(globish("a[bc]d").matches("abd"));
+  UNIT_TEST_CHECK(globish("a[bc]d").matches("acd"));
+  UNIT_TEST_CHECK(!globish("a[bc]d").matches("and"));
+  UNIT_TEST_CHECK(!globish("a[bc]d").matches("ad"));
+  UNIT_TEST_CHECK(!globish("a[bc]d").matches("abbd"));
+
+  UNIT_TEST_CHECK(globish("a[!bc]d").matches("and"));
+  UNIT_TEST_CHECK(globish("a[!bc]d").matches("a#d"));
+  UNIT_TEST_CHECK(!globish("a[!bc]d").matches("abd"));
+  UNIT_TEST_CHECK(!globish("a[!bc]d").matches("acd"));
+  UNIT_TEST_CHECK(!globish("a[!bc]d").matches("ad"));
+  UNIT_TEST_CHECK(!globish("a[!bc]d").matches("abbd"));
+
+  UNIT_TEST_CHECK(globish("a?c").matches("abc"));
+  UNIT_TEST_CHECK(globish("a?c").matches("aac"));
+  UNIT_TEST_CHECK(globish("a?c").matches("a%c"));
+  UNIT_TEST_CHECK(!globish("a?c").matches("a%d"));
+  UNIT_TEST_CHECK(!globish("a?c").matches("d%d"));
+  UNIT_TEST_CHECK(!globish("a?c").matches("d%c"));
+  UNIT_TEST_CHECK(!globish("a?c").matches("a%%d"));
+
+  UNIT_TEST_CHECK(globish("a*c").matches("ac"));
+  UNIT_TEST_CHECK(globish("a*c").matches("abc"));
+  UNIT_TEST_CHECK(globish("a*c").matches("abac"));
+  UNIT_TEST_CHECK(globish("a*c").matches("abbcc"));
+  UNIT_TEST_CHECK(globish("a*c").matches("abcbbc"));
+  UNIT_TEST_CHECK(!globish("a*c").matches("abcbb"));
+  UNIT_TEST_CHECK(!globish("a*c").matches("abcb"));
+  UNIT_TEST_CHECK(!globish("a*c").matches("aba"));
+  UNIT_TEST_CHECK(!globish("a*c").matches("ab"));
+
+  UNIT_TEST_CHECK(globish("*.bak").matches(".bak"));
+  UNIT_TEST_CHECK(globish("*.bak").matches("a.bak"));
+  UNIT_TEST_CHECK(globish("*.bak").matches("foo.bak"));
+  UNIT_TEST_CHECK(globish("*.bak").matches(".bak.bak"));
+  UNIT_TEST_CHECK(globish("*.bak").matches("fwibble.bak.bak"));
+
+  UNIT_TEST_CHECK(globish("a*b*[cd]").matches("abc"));
+  UNIT_TEST_CHECK(globish("a*b*[cd]").matches("abcd"));
+  UNIT_TEST_CHECK(globish("a*b*[cd]").matches("aabrd"));
+  UNIT_TEST_CHECK(globish("a*b*[cd]").matches("abbbbbbbccd"));
+  UNIT_TEST_CHECK(!globish("a*b*[cd]").matches("ab"));
+  UNIT_TEST_CHECK(!globish("a*b*[cd]").matches("abde"));
+  UNIT_TEST_CHECK(!globish("a*b*[cd]").matches("aaaaaaab"));
+  UNIT_TEST_CHECK(!globish("a*b*[cd]").matches("axxxxd"));
+  UNIT_TEST_CHECK(!globish("a*b*[cd]").matches("adb"));
+}
+
+UNIT_TEST(globish, complex_matches)
+{  {
     globish_matcher m(globish("{a,b}?*\\*|"), globish("*c*"));
     UNIT_TEST_CHECK(m("aq*|"));
     UNIT_TEST_CHECK(m("bq*|"));

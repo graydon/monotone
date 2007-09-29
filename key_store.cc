@@ -131,33 +131,25 @@ key_store::try_ensure_in_db(hexenc<id> const & hash)
 }
 
 void
-key_store::get_key_ids(string const & pattern,
-                   vector<rsa_keypair_id> & priv)
+key_store::get_key_ids(globish const & pattern,
+                       vector<rsa_keypair_id> & priv)
 {
   maybe_read_key_dir();
   priv.clear();
-  globish inc(pattern);
-  if (pattern.empty())
-    inc = globish("*");
-  globish_matcher gm(inc, globish(""));
   for (map<rsa_keypair_id, keypair>::const_iterator
          i = keys.begin(); i != keys.end(); ++i)
-    {
-      if (gm((i->first)()))
-        priv.push_back(i->first);
-    }
+    if (pattern.matches((i->first)()))
+      priv.push_back(i->first);
 }
 
 void
-key_store::get_keys(vector<rsa_keypair_id> & priv)
+key_store::get_key_ids(vector<rsa_keypair_id> & priv)
 {
   maybe_read_key_dir();
   priv.clear();
   for (map<rsa_keypair_id, keypair>::const_iterator
          i = keys.begin(); i != keys.end(); ++i)
-    {
-      priv.push_back(i->first);
-    }
+    priv.push_back(i->first);
 }
 
 bool

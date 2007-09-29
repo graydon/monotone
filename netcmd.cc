@@ -18,6 +18,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "hmac.hh"
+#include "globish.hh"
 
 using std::string;
 
@@ -680,8 +681,8 @@ UNIT_TEST(netcmd, functions)
         do_netcmd_roundtrip(out_cmd, in_cmd, buf);
         in_cmd.read_anonymous_cmd(in_role, in_include_pattern, in_exclude_pattern, in_key);
         UNIT_TEST_CHECK(in_key == out_key);
-        UNIT_TEST_CHECK(in_include_pattern == out_include_pattern);
-        UNIT_TEST_CHECK(in_exclude_pattern == out_exclude_pattern);
+        UNIT_TEST_CHECK(in_include_pattern() == out_include_pattern());
+        UNIT_TEST_CHECK(in_exclude_pattern() == out_exclude_pattern());
         UNIT_TEST_CHECK(in_role == out_role);
         L(FL("anonymous_cmd test done, buffer was %d bytes") % buf.size());
       }
@@ -711,8 +712,8 @@ UNIT_TEST(netcmd, functions)
         UNIT_TEST_CHECK(in_key == out_key);
         UNIT_TEST_CHECK(in_signature == out_signature);
         UNIT_TEST_CHECK(in_role == out_role);
-        UNIT_TEST_CHECK(in_include_pattern == out_include_pattern);
-        UNIT_TEST_CHECK(in_exclude_pattern == out_exclude_pattern);
+        UNIT_TEST_CHECK(in_include_pattern() == out_include_pattern());
+        UNIT_TEST_CHECK(in_exclude_pattern() == out_exclude_pattern());
         L(FL("auth_cmd test done, buffer was %d bytes") % buf.size());
       }
 
