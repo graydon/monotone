@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-23 10:25-0400\n"
-"PO-Revision-Date: 2007-09-23 10:30-0400\n"
+"POT-Creation-Date: 2007-09-28 22:05-0400\n"
+"PO-Revision-Date: 2007-09-28 23:10-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -256,7 +256,7 @@ msgstr "Imprime los datos de una revisión en formato paquetizado"
 #: automate.cc:1889 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:373
-#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:873
+#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:899
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisión '%s' no existe"
@@ -1006,12 +1006,12 @@ msgstr "Imprime los contenidos de un archivo (dado un identificador)"
 msgid "Prints the contents of a file (given a name)"
 msgstr "Imprime los contenidos de un archivo (dado un nombre)"
 
-#: cmd.hh:136
+#: cmd.hh:137
 #, c-format
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorado el camino al directorio de servicio '%s'"
 
-#: cmd.hh:146
+#: cmd.hh:147
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
 msgstr ""
@@ -2456,52 +2456,52 @@ msgstr "Comandos que lidian con el área de trabajo"
 msgid "Commands defined by the user"
 msgstr "Comandos definidos por el usuario"
 
-#: commands.cc:533
+#: commands.cc:549
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando desconocido '%s'"
 
-#: commands.cc:543
+#: commands.cc:559
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' es ambiguo; posibles completaciones son:"
 
-#: commands.cc:628
+#: commands.cc:654
 #, c-format
 msgid "Commands in group '%s':"
 msgstr "Comandos en el grupo '%s'"
 
-#: commands.cc:634
+#: commands.cc:660
 #, c-format
 msgid "Subcommands of '%s %s':"
 msgstr "Subcomandos de '%s %s'"
 
-#: commands.cc:638
+#: commands.cc:664
 #, c-format
 msgid "Syntax specific to '%s %s':"
 msgstr "Sintaxis especifica de '%s %s':"
 
-#: commands.cc:663
+#: commands.cc:689
 #, c-format
 msgid "Purpose of group '%s':"
 msgstr "Propósito del grupo '%s'"
 
-#: commands.cc:667
+#: commands.cc:693
 #, c-format
 msgid "Description for '%s %s':"
 msgstr "Descripción para '%s %s':"
 
-#: commands.cc:677
+#: commands.cc:703
 #, c-format
 msgid "Aliases: %s."
 msgstr "Alias: %s."
 
-#: commands.cc:694
+#: commands.cc:720
 #, c-format
 msgid "Command groups:"
 msgstr "Grupos de comandos:"
 
-#: commands.cc:697
+#: commands.cc:723
 #, c-format
 msgid ""
 "For information on a specific command, type 'mtn help <command_name> "
@@ -2510,14 +2510,16 @@ msgstr ""
 "Para información sobre un comando específico, escriba 'mtn help "
 "<nombre_comando> [nomber_subcomando ...]'."
 
-#: commands.cc:700
+#: commands.cc:726
 #, c-format
-msgid "To see the commands available within a group, type 'mtn help <group_name>'."
+msgid ""
+"To see more details about the commands of a particular group, type 'mtn help "
+"<group_name>'."
 msgstr ""
-"Para ver los comandos disponibles en un grupo, escriba 'mtn help "
+"Para ver mas detalles sobre los comandos de un grupo en particular, escriba 'mtn help "
 "<nombre_grupo>'."
 
-#: commands.cc:703
+#: commands.cc:729
 #, c-format
 msgid ""
 "Note that you can always abbreviate a command name as long as it does not "
@@ -2526,58 +2528,58 @@ msgstr ""
 "Tenga en cuenta que Ud. siempre puede abreviar el nombre del comando siempre "
 "y cuando no entre en conflicto con otros nombres."
 
-#: commands.cc:721
+#: commands.cc:747
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr "comando '%s' es inválido; es un grupo"
 
-#: commands.cc:724
+#: commands.cc:750
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "no se ha especificado subcomando para '%s'"
 
-#: commands.cc:727
+#: commands.cc:753
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "'%s' no concuerda como un subcomando de '%s'"
 
-#: commands.cc:748
+#: commands.cc:774
 msgid "command [ARGS...]"
 msgstr "comando [ARGUMENTOS...]"
 
-#: commands.cc:749
+#: commands.cc:775
 msgid "Displays help about commands and options"
 msgstr "Muestra ayuda sobre comandos y opciones"
 
-#: commands.cc:766
+#: commands.cc:792
 msgid "Triggers the specified kind of crash"
 msgstr "Dispara el tipo de falla especificado"
 
-#: commands.cc:880
+#: commands.cc:906
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiendo selección '%s'"
 
-#: commands.cc:888
+#: commands.cc:914
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "no hay concordancia para la selección '%s'"
 
-#: commands.cc:895
+#: commands.cc:921
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido a '%s'"
 
-#: commands.cc:912
+#: commands.cc:938
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "selección '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:929
+#: commands.cc:955
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:930
+#: commands.cc:956
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2586,7 +2588,7 @@ msgstr ""
 "rama '%s' tiene múltiples cabezas\n"
 "considere utilizar '%s merge'"
 
-#: commands.cc:945
+#: commands.cc:971
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "'--message' y '--message-file' son mutuamente exclusivos"
