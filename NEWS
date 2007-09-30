@@ -16,6 +16,18 @@
           within a group, so its easier to get an overview which commands
           are available at all
 
+        - the "MTN_MERGE=diffutils" merger (provided by std_hooks.lua)
+          was improved. It now accepts a MTN_MERGE_DIFFUTILS environment
+          variable which can be used to control its behaviour
+          through comma-separated "key[=value]" entries. Currently
+          supported entries are "partial" for doing a partial
+          batch/non-modal 3-way merge "resolution" which uses
+          embedded content conflict markers and "diff3opts=[...]" and
+          "sdiffopts=[...]" for passing arbitrary options to the used
+          "diff3" and "sdiff" tools. When used in combination with "mtn
+          merge_into_workspace" this way one especially can achieve a
+          CVS/SVN style non-modal workspace-based merging.
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly
