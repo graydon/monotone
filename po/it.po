@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-09-24 21:54+0100\n"
+"PO-Revision-Date: 2007-09-30 12:44+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -47,23 +47,23 @@ msgstr "Stampa una rappresentazione ASCII del grafo delle revisioni"
 #: automate.cc:371
 #: automate.cc:399
 #: automate.cc:483
-#: automate.cc:1018
-#: automate.cc:1160
-#: automate.cc:1206
-#: automate.cc:1236
-#: automate.cc:1266
-#: automate.cc:1296
-#: automate.cc:1334
-#: automate.cc:1452
-#: automate.cc:1545
-#: automate.cc:1607
-#: automate.cc:1660
-#: automate.cc:1722
-#: automate.cc:1772
-#: automate.cc:1825
-#: automate.cc:1882
-#: automate.cc:1915
-#: automate.cc:1941
+#: automate.cc:1009
+#: automate.cc:1151
+#: automate.cc:1197
+#: automate.cc:1227
+#: automate.cc:1257
+#: automate.cc:1287
+#: automate.cc:1325
+#: automate.cc:1443
+#: automate.cc:1536
+#: automate.cc:1598
+#: automate.cc:1651
+#: automate.cc:1713
+#: automate.cc:1763
+#: automate.cc:1816
+#: automate.cc:1873
+#: automate.cc:1906
+#: automate.cc:1932
 #: cmd_files.cc:232
 #: cmd_files.cc:327
 #: cmd_files.cc:353
@@ -88,7 +88,7 @@ msgstr "Stampa la testa di un dato ramo"
 
 #: automate.cc:101
 #: automate.cc:151
-#: automate.cc:1327
+#: automate.cc:1318
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV_1 [REV_2 [REV_3 […]]]"
 
@@ -104,7 +104,7 @@ msgstr "Stampa gli antenati di una data reivisione"
 #: automate.cc:281
 #: automate.cc:374
 #: automate.cc:402
-#: automate.cc:1341
+#: automate.cc:1332
 #: cmd_list.cc:658
 #: revision.cc:1793
 #, c-format
@@ -143,9 +143,9 @@ msgstr "Elenca le foglie del grafo delle revisioni"
 #: automate.cc:313
 #: automate.cc:343
 #: automate.cc:437
-#: automate.cc:1064
-#: automate.cc:1091
-#: automate.cc:1400
+#: automate.cc:1055
+#: automate.cc:1082
+#: automate.cc:1391
 #: cmd_automate.cc:82
 #: cmd_automate.cc:338
 #: cmd_db.cc:38
@@ -207,7 +207,7 @@ msgid "Prints a summary of files found in the workspace"
 msgstr "Stampa un sommario dei file contenuti nello spazio di lavoro"
 
 #: automate.cc:870
-#: automate.cc:1071
+#: automate.cc:1062
 #: cmd_files.cc:302
 #: cmd_files.cc:363
 #: cmd_merging.cc:152
@@ -218,53 +218,53 @@ msgstr "Stampa un sommario dei file contenuti nello spazio di lavoro"
 msgid "this command can only be used in a single-parent workspace"
 msgstr "questo comando può essere usato solamente in spazio lavoro genitore-solo"
 
-#: automate.cc:1012
-#: automate.cc:1154
+#: automate.cc:1003
+#: automate.cc:1145
 #: cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[ID_REV]"
 
 # TODO: cambiamenti?
-#: automate.cc:1013
+#: automate.cc:1004
 msgid "Shows change information for a revision"
 msgstr "Mostra le informazioni sui cambiamenti di una revisione"
 
-#: automate.cc:1043
-#: automate.cc:1178
-#: automate.cc:1668
-#: automate.cc:1729
-#: automate.cc:1734
+#: automate.cc:1034
+#: automate.cc:1169
+#: automate.cc:1659
+#: automate.cc:1720
+#: automate.cc:1725
 #, c-format
 msgid "no revision %s found in database"
 msgstr "nel database non è presente la revisione %s"
 
-#: automate.cc:1059
+#: automate.cc:1050
 msgid "Shows the revision on which the workspace is based"
 msgstr "Mostra le revisioni su cui è basato lo spazio di lavoro"
 
-#: automate.cc:1086
+#: automate.cc:1077
 msgid "Shows the revision of the current workspace"
 msgstr "Mostra la revisione dello spazio di lavoro attuale"
 
 # TODO: manifesto?
-#: automate.cc:1155
+#: automate.cc:1146
 msgid "Shows the manifest associated with a revision"
 msgstr "Mostra il manifesto associato con una revisione"
 
-#: automate.cc:1200
-#: automate.cc:1229
+#: automate.cc:1191
+#: automate.cc:1220
 msgid "REVID"
 msgstr "ID_REV"
 
-#: automate.cc:1201
+#: automate.cc:1192
 msgid "Prints the revision data in packet format"
 msgstr ""
 
-#: automate.cc:1214
-#: automate.cc:1244
-#: automate.cc:1305
-#: automate.cc:1307
-#: automate.cc:1889
+#: automate.cc:1205
+#: automate.cc:1235
+#: automate.cc:1296
+#: automate.cc:1298
+#: automate.cc:1880
 #: cmd_db.cc:127
 #: cmd_diff_log.cc:398
 #: cmd_diff_log.cc:427
@@ -278,171 +278,171 @@ msgstr ""
 #: cmd_netsync.cc:373
 #: cmd_ws_commit.cc:559
 #: cmd_ws_commit.cc:1306
-#: commands.cc:873
+#: commands.cc:899
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisione %s non esiste"
 
-#: automate.cc:1230
+#: automate.cc:1221
 msgid "Prints the certs associated with a revision in packet format"
 msgstr ""
 
-#: automate.cc:1260
+#: automate.cc:1251
 #: cmd_files.cc:321
 msgid "FILEID"
 msgstr "ID_FILE"
 
-#: automate.cc:1261
+#: automate.cc:1252
 msgid "Prints the file data in packet format"
 msgstr ""
 
-#: automate.cc:1274
+#: automate.cc:1265
 #, c-format
 msgid "no such file '%s'"
 msgstr "il file ‘%s’ non esiste"
 
-#: automate.cc:1290
+#: automate.cc:1281
 msgid "OLD_FILE NEW_FILE"
 msgstr "VECCHIO_FILE NUOVO_FILE"
 
-#: automate.cc:1291
+#: automate.cc:1282
 msgid "Prints the file delta in packet format"
 msgstr ""
 
-#: automate.cc:1328
+#: automate.cc:1319
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr "Stampa le revisioni che sono antenati comuni di una lista di revisioni"
 
-#: automate.cc:1395
+#: automate.cc:1386
 msgid "Prints all branch certs in the revision graph"
 msgstr "Stampa tutti i certificati di ramo in un grafo delle revisioni"
 
-#: automate.cc:1446
+#: automate.cc:1437
 msgid "[BRANCH_PATTERN]"
 msgstr "[PATTERN_RAMO]"
 
 # TODO: attaccati?
-#: automate.cc:1447
+#: automate.cc:1438
 msgid "Prints all tags attached to a set of branches"
 msgstr "Stampa tutti i tag attaccati ad un set di rami"
 
-#: automate.cc:1539
+#: automate.cc:1530
 msgid "KEYID PASSPHRASE"
 msgstr "ID_CHIAVE PASSPHRASE"
 
-#: automate.cc:1540
+#: automate.cc:1531
 msgid "Generates a key"
 msgstr "Genera una chiave"
 
-#: automate.cc:1560
+#: automate.cc:1551
 #: cmd_key_cert.cc:51
 #, c-format
 msgid "key '%s' already exists"
 msgstr "chiave ‘%s’ già esistente"
 
-#: automate.cc:1563
+#: automate.cc:1554
 #: cmd_key_cert.cc:54
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "genero la coppia di chiavi ‘%s’"
 
-#: automate.cc:1565
+#: automate.cc:1556
 #: cmd_key_cert.cc:56
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "immagazzino la coppia di chiavi ‘%s’ in ‘%s/’"
 
-#: automate.cc:1601
+#: automate.cc:1592
 msgid "OPTION"
 msgstr "OPZIONE"
 
-#: automate.cc:1602
+#: automate.cc:1593
 msgid "Shows the value of an option"
 msgstr "Mostra il valore di un'opzione"
 
-#: automate.cc:1630
+#: automate.cc:1621
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "‘%s’ non è un'opzione riconosciuta per la copia di lavoro"
 
-#: automate.cc:1653
+#: automate.cc:1644
 msgid "REV FILE"
 msgstr "REV FILE"
 
 # TODO: capire meglio cosa fa
-#: automate.cc:1654
+#: automate.cc:1645
 msgid "Lists the revisions that changed the content relative to another revision"
 msgstr "Elenca le revisioni che hanno il contenuto diverso rispetto ad un'altra revisione"
 
-#: automate.cc:1673
-#: automate.cc:1739
+#: automate.cc:1664
+#: automate.cc:1730
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "il file ‘%s’ è sconosciuto per la revisione %s"
 
-#: automate.cc:1715
+#: automate.cc:1706
 msgid "REV1 FILE REV2"
 msgstr "REV1 FILE REV2"
 
-#: automate.cc:1716
+#: automate.cc:1707
 msgid "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 
-#: automate.cc:1766
+#: automate.cc:1757
 msgid "[FILEID] CONTENTS"
 msgstr "[ID-FILE] CONTENUTI"
 
-#: automate.cc:1767
+#: automate.cc:1758
 msgid "Stores a file in the database"
 msgstr "Inserisce un file nel database"
 
-#: automate.cc:1789
+#: automate.cc:1780
 #: cmd_files.cc:252
 #, c-format
 msgid "no file version %s found in database"
 msgstr "nel database non è presente alcun file con versione ‘%s’"
 
-#: automate.cc:1819
+#: automate.cc:1810
 msgid "REVISION-DATA"
 msgstr "DATI-REVISIONE"
 
-#: automate.cc:1820
+#: automate.cc:1811
 msgid "Stores a revision into the database"
 msgstr "Inserisce una revisione nel database"
 
-#: automate.cc:1859
+#: automate.cc:1850
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "manca un requisito per la revisione %s"
 
-#: automate.cc:1876
+#: automate.cc:1867
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISIONE NOME VALORE"
 
-#: automate.cc:1877
+#: automate.cc:1868
 msgid "Adds a revision certificate"
 msgstr "Aggiunge un certificato di revisione"
 
-#: automate.cc:1909
+#: automate.cc:1900
 #: cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMINIO NOME VALORE"
 
-#: automate.cc:1910
+#: automate.cc:1901
 #: cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Imposta una variabile del database"
 
-#: automate.cc:1935
+#: automate.cc:1926
 #: cmd_db.cc:296
 msgid "DOMAIN NAME"
 msgstr "DOMINIO NOME"
 
-#: automate.cc:1936
+#: automate.cc:1927
 msgid "Gets a database variable"
 msgstr "Legge una variabile dal database"
 
-#: automate.cc:1953
+#: automate.cc:1944
 #, c-format
 msgid "variable not found"
 msgstr "variabile non trovata"
@@ -572,6 +572,8 @@ msgid ""
 "It is illegal to call the mtn_automate() lua extension,\n"
 "unless from a command function defined by register_command()."
 msgstr ""
+"Non è permesso chiamare l'estensione lua mtn_automate(),\n"
+"tranne che da un comando definito con register_command()."
 
 #: cmd_automate.cc:436
 #, c-format
@@ -971,13 +973,13 @@ msgid "Prints the contents of a file (given a name)"
 msgstr "Stampa il contenuto di un dato file"
 
 # TODO: boh?
-#: cmd.hh:136
+#: cmd.hh:137
 #, c-format
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorata la directory di servizio ‘%s’"
 
 # TODO: sto interrompendo?
-#: cmd.hh:146
+#: cmd.hh:147
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
 msgstr "tutte le istruzioni passate erano relative a directory di servizio; sospendo"
@@ -1919,6 +1921,9 @@ msgid ""
 "    attr   %s\n"
 "    value  %s"
 msgstr ""
+"  aggiunto su  %s\n"
+"   l'attributo %s\n"
+"   con valore  %s"
 
 #: cmd_ws_commit.cc:89
 #, c-format
@@ -2362,119 +2367,119 @@ msgstr "Comandi che riguardano lo spazio di lavoro"
 msgid "Commands defined by the user"
 msgstr "Comandi definiti dall'utente"
 
-#: commands.cc:533
+#: commands.cc:549
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando ‘%s’ sconosciuto"
 
-#: commands.cc:543
+#: commands.cc:559
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "‘%s’ è ambiguo; può essere completato come:"
 
-#: commands.cc:628
+#: commands.cc:654
 #, c-format
 msgid "Commands in group '%s':"
 msgstr "Comandi nel gruppo ‘%s’:"
 
-#: commands.cc:634
+#: commands.cc:660
 #, c-format
 msgid "Subcommands of '%s %s':"
 msgstr "Sottocomandi di ‘%s %s’:"
 
-#: commands.cc:638
+#: commands.cc:664
 #, c-format
 msgid "Syntax specific to '%s %s':"
 msgstr "Sinstassi specifica di ‘%s %s’:"
 
-#: commands.cc:663
+#: commands.cc:689
 #, c-format
 msgid "Purpose of group '%s':"
 msgstr "Scopo del gruppo ‘%s’:"
 
-#: commands.cc:667
+#: commands.cc:693
 #, c-format
 msgid "Description for '%s %s':"
 msgstr "Descrizione di ‘%s %s’:"
 
-#: commands.cc:677
+#: commands.cc:703
 #, c-format
 msgid "Aliases: %s."
 msgstr "Alias: %s."
 
-#: commands.cc:694
+#: commands.cc:720
 #, c-format
 msgid "Command groups:"
 msgstr "Gruppi di comandi:"
 
-#: commands.cc:697
+#: commands.cc:723
 #, c-format
 msgid "For information on a specific command, type 'mtn help <command_name> [subcommand_name ...]'."
 msgstr ""
 
-#: commands.cc:700
+#: commands.cc:726
 #, c-format
-msgid "To see the commands available within a group, type 'mtn help <group_name>'."
+msgid "To see more details about the commands of a particular group, type 'mtn help <group_name>'."
 msgstr ""
 
-#: commands.cc:703
+#: commands.cc:729
 #, c-format
 msgid "Note that you can always abbreviate a command name as long as it does not conflict with other names."
-msgstr ""
+msgstr "Ricorda che puoi sempre abbreviare il nome di un comando fintantantoché non collide con altri comandi."
 
-#: commands.cc:721
+#: commands.cc:747
 #, c-format
 msgid "command '%s' is invalid; it is a group"
-msgstr ""
+msgstr "il commando ‘%s’ non è valido: è un gruppo"
 
-#: commands.cc:724
+#: commands.cc:750
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "nessun sottocomando specificato per ‘%s’"
 
-#: commands.cc:727
+#: commands.cc:753
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "impossibile identificare ‘%s’ come sottocomando di ‘%s’"
 
-#: commands.cc:748
+#: commands.cc:774
 msgid "command [ARGS...]"
 msgstr "comando [ARGOMENTI…]"
 
 # TODO: help=testo di aiuto?
-#: commands.cc:749
+#: commands.cc:775
 msgid "Displays help about commands and options"
 msgstr "Mostra l'help relativo a comandi e opzioni"
 
-#: commands.cc:766
+#: commands.cc:792
 msgid "Triggers the specified kind of crash"
 msgstr ""
 
-#: commands.cc:880
+#: commands.cc:906
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "espando la selezione ‘%s’"
 
-#: commands.cc:888
+#: commands.cc:914
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "nessuna corrispondenza per la selezione ‘%s’"
 
-#: commands.cc:895
+#: commands.cc:921
 #, c-format
 msgid "expanded to '%s'"
 msgstr "espanso in ‘%s’"
 
-#: commands.cc:912
+#: commands.cc:938
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "la selezione ‘%s’ ha espansioni multiple ambigue:"
 
-#: commands.cc:929
+#: commands.cc:955
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:930
+#: commands.cc:956
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2483,7 +2488,7 @@ msgstr ""
 "il ramo ‘%s’ ha più teste\n"
 "valuta l'uso di ‘%s merge’"
 
-#: commands.cc:945
+#: commands.cc:971
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "‘--message’ e ‘--message-file’ sono mutuamente esclusivi"
@@ -3930,7 +3935,7 @@ msgstr "include qualsiasi cosa sia stata fornita come parametro"
 
 #: options_list.hh:264
 msgid "Do not ignore revisions marked as suspended"
-msgstr ""
+msgstr "Non ignorare le revisioni segnalate come sospese"
 
 #: options_list.hh:273
 msgid "set key for signatures"
@@ -4967,12 +4972,12 @@ msgstr "impossibile entrare nella directory ‘%s’: %s"
 #: unix/fs.cc:74
 #, c-format
 msgid "could not find home directory for uid %d"
-msgstr ""
+msgstr "impossibile trovare la cartella HOME per lo uid %d"
 
 #: unix/fs.cc:107
 #, c-format
 msgid "could not find home directory for user %s"
-msgstr ""
+msgstr "impossibile trovare la cartella HOME per l'utente ‘%s’"
 
 #: unix/fs.cc:124
 #, c-format
