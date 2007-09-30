@@ -483,43 +483,47 @@ mergers.diffutils = {
         --  parse options
         local option = {}
         option.partial = false
-        option.showall = false
+        option.diff3opts = ""
+        option.sdiffopts = ""
         local options = os.getenv("MTN_MERGE_DIFFUTILS")
         if options ~= nil then
-            for name in string.gmatch(options, "(%w+),?") do
-                if type(option[name]) ~= "boolean" then
+            for spec in string.gmatch(options, "%s*(%w[^,]*)%s*,?") do
+                local name, value = string.match(spec, "^(%w+)=([^,]*)")
+                if name == nil then
+                    name = spec
+                    value = true
+                end
+                if type(option[name]) == "nil" then
                     io.write(gettext("Invalid \"diffutils\" merger option \"" .. name .. "\"\n"))
                     return false
                 end
-                io.write(gettext("set \"diffutils\" merger option \"" .. name .. "\"\n"))
-                option[name] = true
+                option[name] = value
             end
         end
 
-        --  determine diff3(1) changes show type
-        local diff3_showoption = "--show-overlap"
-        if option.showall then
-            diff3_showoption = "--show-all"
+        --  determine the diff3(1) command
+        local diff3 = {
+            "diff3",
+            "--merge",
+            "--label", string.format("%s [left]",     tbl.left_path ),
+            "--label", string.format("%s [ancestor]", tbl.anc_path  ),
+            "--label", string.format("%s [right]",    tbl.right_path),
+        }
+        if option.diff3opts ~= "" then
+            for opt in string.gmatch(option.diff3opts, "%s*([^%s]+)%s*") do
+                table.insert(diff3, opt)
+            end
         end
+        table.insert(diff3, string.gsub(tbl.lfile, "\\", "/") .. "")
+        table.insert(diff3, string.gsub(tbl.afile, "\\", "/") .. "")
+        table.insert(diff3, string.gsub(tbl.rfile, "\\", "/") .. "")
 
         --  dispatch according to major operation mode
         if option.partial then
             --  partial batch/non-modal 3-way merge "resolution":
             --  simply merge content with help of conflict markers
-
-            io.write("performing 3-way merge, adding conflict markers\n")
-            local ret = execute_redirected(
-                "", string.gsub(tbl.outfile, "\\", "/"), "",
-                "diff3",
-                "--merge",
-                diff3_showoption,
-                "--label", string.format("%s [left]",     tbl.left_path ),
-                "--label", string.format("%s [ancestor]", tbl.anc_path  ),
-                "--label", string.format("%s [right]",    tbl.right_path),
-                string.gsub(tbl.lfile, "\\", "/") .. "",
-                string.gsub(tbl.afile, "\\", "/") .. "",
-                string.gsub(tbl.rfile, "\\", "/") .. ""
-            )
+            io.write(gettext("performing 3-way merge, adding conflict markers\n"))
+            local ret = execute_redirected("", string.gsub(tbl.outfile, "\\", "/"), "", unpack(diff3))
             if ret == 2 then
                 io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
                 return false
@@ -531,18 +535,8 @@ mergers.diffutils = {
 
             --  display 3-way merge conflict (batch)
             io.write("\n")
-            io.write("---- CONFLICT SUMMARY ------------------------------------------------\n")
-            local ret = execute(
-                "diff3",
-                "--merge",
-                diff3_showoption,
-                "--label", string.format("%s [left]",     tbl.left_path ),
-                "--label", string.format("%s [ancestor]", tbl.anc_path  ),
-                "--label", string.format("%s [right]",    tbl.right_path),
-                string.gsub(tbl.lfile, "\\", "/") .. "",
-                string.gsub(tbl.afile, "\\", "/") .. "",
-                string.gsub(tbl.rfile, "\\", "/") .. ""
-            )
+            io.write(gettext("---- CONFLICT SUMMARY ------------------------------------------------\n"))
+            local ret = execute(unpack(diff3))
             if ret == 2 then
                 io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
                 return false
@@ -550,16 +544,22 @@ mergers.diffutils = {
 
             --  perform 2-way merge resolution (interactive)
             io.write("\n")
-            io.write("---- CONFLICT RESOLUTION ---------------------------------------------\n")
-            local ret = execute(
+            io.write(gettext("---- CONFLICT RESOLUTION ---------------------------------------------\n"))
+            local sdiff = {
                 "sdiff",
                 "--diff-program=diff",
                 "--suppress-common-lines",
                 "--minimal",
-                "--output", string.gsub(tbl.outfile, "\\", "/"),
-                string.gsub(tbl.lfile, "\\", "/") .. "",
-                string.gsub(tbl.rfile, "\\", "/") .. ""
-            )
+                "--output=" .. string.gsub(tbl.outfile, "\\", "/")
+            }
+            if option.sdiffopts ~= "" then
+                for opt in string.gmatch(option.sdiffopts, "%s*([^%s]+)%s*") do
+                    table.insert(sdiff, opt)
+                end
+            end
+            table.insert(sdiff, string.gsub(tbl.lfile, "\\", "/") .. "")
+            table.insert(sdiff, string.gsub(tbl.rfile, "\\", "/") .. "")
+            local ret = execute(unpack(sdiff))
             if ret == 2 then
                 io.write(gettext("Error running GNU diffutils 2-way merging tool 'sdiff'\n"))
                 return false

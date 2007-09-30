@@ -459,15 +459,15 @@ externalize_var_domain(var_domain const & d, external & ext)
 struct
 idna
 {
-  char *name;
+  char const * name;
   size_t inlen;
   u32 in[100];
-  char *out;
+  char const * out;
   int allowunassigned;
   int usestd3asciirules;
   int toasciirc;
   int tounicoderc;
-} idna_vec[] =
+} const idna_vec[] =
   {
     {
       "Arabic (Egyptian)", 17,

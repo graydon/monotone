@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-21 12:57+0200\n"
-"PO-Revision-Date: 2007-09-21 13:01+0200\n"
+"POT-Creation-Date: 2007-09-29 17:29+0200\n"
+"PO-Revision-Date: 2007-09-29 17:31+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -182,11 +182,11 @@ msgstr "Visar en ASCII-representation av revisionsträdet"
 
 #: asciik.cc:375 automate.cc:73 automate.cc:107 automate.cc:157
 #: automate.cc:271 automate.cc:371 automate.cc:399 automate.cc:483
-#: automate.cc:1018 automate.cc:1160 automate.cc:1206 automate.cc:1236
-#: automate.cc:1266 automate.cc:1296 automate.cc:1334 automate.cc:1452
-#: automate.cc:1545 automate.cc:1607 automate.cc:1660 automate.cc:1722
-#: automate.cc:1772 automate.cc:1825 automate.cc:1882 automate.cc:1915
-#: automate.cc:1941 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
+#: automate.cc:1009 automate.cc:1151 automate.cc:1197 automate.cc:1227
+#: automate.cc:1257 automate.cc:1287 automate.cc:1325 automate.cc:1443
+#: automate.cc:1536 automate.cc:1598 automate.cc:1651 automate.cc:1713
+#: automate.cc:1763 automate.cc:1816 automate.cc:1873 automate.cc:1906
+#: automate.cc:1932 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
 #: cmd_list.cc:651 cmd_ws_commit.cc:638 cmd_ws_commit.cc:685
 #: cmd_ws_commit.cc:735 cmd_ws_commit.cc:787 cmd_ws_commit.cc:905
 #: cmd_ws_commit.cc:949
@@ -202,7 +202,7 @@ msgstr "[GREN]"
 msgid "Prints the heads of the given branch"
 msgstr "Visar lövet i den givna grenen"
 
-#: automate.cc:101 automate.cc:151 automate.cc:1327
+#: automate.cc:101 automate.cc:151 automate.cc:1318
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
@@ -212,7 +212,7 @@ msgstr "Skriver ut den givna revisionens förfäder"
 
 #: automate.cc:114 automate.cc:164 automate.cc:211 automate.cc:238
 #: automate.cc:277 automate.cc:281 automate.cc:374 automate.cc:402
-#: automate.cc:1341 cmd_list.cc:658 revision.cc:1793
+#: automate.cc:1332 cmd_list.cc:658 revision.cc:1793
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -247,8 +247,8 @@ msgstr ""
 msgid "Lists the leaves of the revision graph"
 msgstr "Visar revisionsgrafens löv"
 
-#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1064
-#: automate.cc:1091 automate.cc:1400 cmd_automate.cc:82 cmd_automate.cc:338
+#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1055
+#: automate.cc:1082 automate.cc:1391 cmd_automate.cc:82 cmd_automate.cc:338
 #: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
 #: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
 #: cmd_list.cc:556
@@ -290,211 +290,211 @@ msgstr "[SÖKVÄG]..."
 msgid "Prints a summary of files found in the workspace"
 msgstr "Skriver ut en sammanfattning om filerna funna i en arbetskopia"
 
-#: automate.cc:870 automate.cc:1071 cmd_files.cc:302 cmd_files.cc:363
+#: automate.cc:870 automate.cc:1062 cmd_files.cc:302 cmd_files.cc:363
 #: cmd_merging.cc:152 cmd_merging.cc:643 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:803
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr "detta kommando kan enbart användas i en arbetskopia med en förälder"
 
-#: automate.cc:1012 automate.cc:1154 cmd_merging.cc:975
+#: automate.cc:1003 automate.cc:1145 cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:1013
+#: automate.cc:1004
 msgid "Shows change information for a revision"
 msgstr "Visar information om ändringen i en revision"
 
-#: automate.cc:1043 automate.cc:1178 automate.cc:1668 automate.cc:1729
-#: automate.cc:1734
+#: automate.cc:1034 automate.cc:1169 automate.cc:1659 automate.cc:1720
+#: automate.cc:1725
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i databasen"
 
-#: automate.cc:1059
+#: automate.cc:1050
 msgid "Shows the revision on which the workspace is based"
 msgstr "Visar revisionen denna arbetskopia grundar sig på"
 
-#: automate.cc:1086
+#: automate.cc:1077
 msgid "Shows the revision of the current workspace"
 msgstr "Visar nuvarande arbetskopias revision"
 
-#: automate.cc:1155
+#: automate.cc:1146
 msgid "Shows the manifest associated with a revision"
 msgstr "Visar manifestet kopplad till en revision"
 
-#: automate.cc:1200 automate.cc:1229
+#: automate.cc:1191 automate.cc:1220
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1201
+#: automate.cc:1192
 msgid "Prints the revision data in packet format"
 msgstr "Skriv ut datapaket för revision till stdout"
 
-#: automate.cc:1214 automate.cc:1244 automate.cc:1305 automate.cc:1307
-#: automate.cc:1889 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
+#: automate.cc:1205 automate.cc:1235 automate.cc:1296 automate.cc:1298
+#: automate.cc:1880 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:373
-#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:873
+#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:899
 #, c-format
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1230
+#: automate.cc:1221
 msgid "Prints the certs associated with a revision in packet format"
 msgstr "Skriver ut certificate tillhörande en revision i paketformat"
 
-#: automate.cc:1260 cmd_files.cc:321
+#: automate.cc:1251 cmd_files.cc:321
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1261
+#: automate.cc:1252
 msgid "Prints the file data in packet format"
 msgstr "Skriv ut datapaket för fil till stdout"
 
-#: automate.cc:1274
+#: automate.cc:1265
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1290
+#: automate.cc:1281
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NY_FIL"
 
-#: automate.cc:1291
+#: automate.cc:1282
 msgid "Prints the file delta in packet format"
 msgstr "Skriv ut datapaket för fildelta till stdout"
 
-#: automate.cc:1328
+#: automate.cc:1319
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr "Skriver ut revisionernas gemensamma föräldrar"
 
-#: automate.cc:1395
+#: automate.cc:1386
 msgid "Prints all branch certs in the revision graph"
 msgstr "Skriver ut revisionsgrafens samtliga grencertifikat"
 
-#: automate.cc:1446
+#: automate.cc:1437
 msgid "[BRANCH_PATTERN]"
 msgstr "[GRENMÖNSTER]"
 
-#: automate.cc:1447
+#: automate.cc:1438
 msgid "Prints all tags attached to a set of branches"
 msgstr "Skriva ut de givna grenarnas samtliga taggar"
 
-#: automate.cc:1539
+#: automate.cc:1530
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSEN"
 
-#: automate.cc:1540
+#: automate.cc:1531
 msgid "Generates a key"
 msgstr "Skapa ett nyckelpar"
 
-#: automate.cc:1560 cmd_key_cert.cc:51
+#: automate.cc:1551 cmd_key_cert.cc:51
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1563 cmd_key_cert.cc:54
+#: automate.cc:1554 cmd_key_cert.cc:54
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1565 cmd_key_cert.cc:56
+#: automate.cc:1556 cmd_key_cert.cc:56
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1601
+#: automate.cc:1592
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1602
+#: automate.cc:1593
 msgid "Shows the value of an option"
 msgstr "Visar en inställnings värde"
 
-#: automate.cc:1630
+#: automate.cc:1621
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1653
+#: automate.cc:1644
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1654
+#: automate.cc:1645
 msgid ""
 "Lists the revisions that changed the content relative to another revision"
 msgstr ""
 "Visar revisionerna som ändrade innehållet i förhållande till en annan "
 "revision"
 
-#: automate.cc:1673 automate.cc:1739
+#: automate.cc:1664 automate.cc:1730
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1715
+#: automate.cc:1706
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
-#: automate.cc:1716
+#: automate.cc:1707
 msgid ""
 "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 "Skriver ut namnet på en fil i målrevisionen i förhållande till en given "
 "revision"
 
-#: automate.cc:1766
+#: automate.cc:1757
 msgid "[FILEID] CONTENTS"
 msgstr "[FILID] INNEHÅLL"
 
-#: automate.cc:1767
+#: automate.cc:1758
 msgid "Stores a file in the database"
 msgstr "Lagra en fil i databasen"
 
-#: automate.cc:1789 cmd_files.cc:252
+#: automate.cc:1780 cmd_files.cc:252
 #, c-format
 msgid "no file version %s found in database"
 msgstr "filversionen %s finns inte i databasen"
 
-#: automate.cc:1819
+#: automate.cc:1810
 msgid "REVISION-DATA"
 msgstr "REVISIONS-DATA"
 
-#: automate.cc:1820
+#: automate.cc:1811
 msgid "Stores a revision into the database"
 msgstr "Lagra en revision i databasen"
 
-#: automate.cc:1859
+#: automate.cc:1850
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "saknar nödvändiga förutsättningar för att stoppa in revision %s"
 
-#: automate.cc:1876
+#: automate.cc:1867
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISION CERTNAMN CERTVÄRDE"
 
-#: automate.cc:1877
+#: automate.cc:1868
 msgid "Adds a revision certificate"
 msgstr "Lägger till ett certifikat till revision"
 
-#: automate.cc:1909 cmd_db.cc:277
+#: automate.cc:1900 cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄN NAMN VÄRDE"
 
-#: automate.cc:1910 cmd_db.cc:278
+#: automate.cc:1901 cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Sätt en databasvariabel"
 
-#: automate.cc:1935 cmd_db.cc:296
+#: automate.cc:1926 cmd_db.cc:296
 msgid "DOMAIN NAME"
 msgstr "DOMÄN NAMN"
 
-#: automate.cc:1936
+#: automate.cc:1927
 msgid "Gets a database variable"
 msgstr "Hämta värdet för en databasvariabel"
 
-#: automate.cc:1953
+#: automate.cc:1944
 #, c-format
 msgid "variable not found"
 msgstr "variabeln finns inte"
@@ -1075,12 +1075,12 @@ msgstr "Skriver ut innehållet på en fil (givet en filidentitet)"
 msgid "Prints the contents of a file (given a name)"
 msgstr "Skriver ut innehållet på en fil (givet ett filnamn)"
 
-#: cmd.hh:136
+#: cmd.hh:137
 #, c-format
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorerad administrativ sökväg '%s'"
 
-#: cmd.hh:146
+#: cmd.hh:147
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
 msgstr "alla givna argument är administrativa sökvägar; avbryter"
@@ -2516,52 +2516,52 @@ msgstr "Kommandon för att hantera arbetskopian"
 msgid "Commands defined by the user"
 msgstr "Användardefinierade kommandon"
 
-#: commands.cc:533
+#: commands.cc:549
 #, c-format
 msgid "unknown command '%s'"
 msgstr "okänt kommando '%s'"
 
-#: commands.cc:543
+#: commands.cc:559
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' är flertydigt; möjliga tolkningar är:"
 
-#: commands.cc:628
+#: commands.cc:654
 #, c-format
 msgid "Commands in group '%s':"
 msgstr "Kommandon i gruppen '%s':"
 
-#: commands.cc:634
+#: commands.cc:660
 #, c-format
 msgid "Subcommands of '%s %s':"
 msgstr "Subkommandon till '%s %s':"
 
-#: commands.cc:638
+#: commands.cc:664
 #, c-format
 msgid "Syntax specific to '%s %s':"
 msgstr "Specifik syntax för '%s %s':"
 
-#: commands.cc:663
+#: commands.cc:689
 #, c-format
 msgid "Purpose of group '%s':"
 msgstr "Syftet med gruppen '%s':"
 
-#: commands.cc:667
+#: commands.cc:693
 #, c-format
 msgid "Description for '%s %s':"
 msgstr "Beskrivning av '%s %s':"
 
-#: commands.cc:677
+#: commands.cc:703
 #, c-format
 msgid "Aliases: %s."
 msgstr "Synonym: %s."
 
-#: commands.cc:694
+#: commands.cc:720
 #, c-format
 msgid "Command groups:"
 msgstr "kommandogrupper:"
 
-#: commands.cc:697
+#: commands.cc:723
 #, c-format
 msgid ""
 "For information on a specific command, type 'mtn help <command_name> "
@@ -2570,15 +2570,14 @@ msgstr ""
 "För att få information om specifika kommandon, skriv 'mtn help "
 "<kommandonamn> [subkommandonamn ...]'."
 
-#: commands.cc:700
+#: commands.cc:726
 #, c-format
 msgid ""
-"To see the commands available within a group, type 'mtn help <group_name>'."
-msgstr ""
-"För att få information om kommandon inom en grupp, skriv 'mtn help "
-"<gruppname>'."
+"To see more details about the commands of a particular group, type 'mtn help "
+"<group_name>'."
+msgstr "För att få mer detaljer om kommandon inom en specifik grupp, skriv 'mtn help <gruppname>'."
 
-#: commands.cc:703
+#: commands.cc:729
 #, c-format
 msgid ""
 "Note that you can always abbreviate a command name as long as it does not "
@@ -2586,58 +2585,58 @@ msgid ""
 msgstr ""
 "Notera att du alltid kan förkorta ett kommandonamn så länge det är unikt."
 
-#: commands.cc:721
+#: commands.cc:747
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr "kommandot '%s' är ogiltigt, det är en grupp"
 
-#: commands.cc:724
+#: commands.cc:750
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "inga underkommandon angivna för '%s'"
 
-#: commands.cc:727
+#: commands.cc:753
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "Kunde inte matcha '%s' med något subkommando i '%s'"
 
-#: commands.cc:748
+#: commands.cc:774
 msgid "command [ARGS...]"
 msgstr "kommandon [ARGUMENT...]"
 
-#: commands.cc:749
+#: commands.cc:775
 msgid "Displays help about commands and options"
 msgstr "Visa hjälp för kommandon och väljare"
 
-#: commands.cc:766
+#: commands.cc:792
 msgid "Triggers the specified kind of crash"
 msgstr "Triggar en specifik sorts krash"
 
-#: commands.cc:880
+#: commands.cc:906
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expanderar valet '%s'"
 
-#: commands.cc:888
+#: commands.cc:914
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "det finns inget som matchar '%s'"
 
-#: commands.cc:895
+#: commands.cc:921
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expanderar till '%s'"
 
-#: commands.cc:912
+#: commands.cc:938
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "valet '%s' har mer än en möjlig betydelse:"
 
-#: commands.cc:929
+#: commands.cc:955
 msgid "note: "
 msgstr "obs: "
 
-#: commands.cc:930
+#: commands.cc:956
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2646,7 +2645,7 @@ msgstr ""
 "grenen '%s' har mer än ett löv\n"
 "du kanske borde överväga '%s merge'"
 
-#: commands.cc:945
+#: commands.cc:971
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"

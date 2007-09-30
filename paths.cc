@@ -954,7 +954,7 @@ using std::logic_error;
 
 UNIT_TEST(paths, path_component)
 {
-  char const * baddies[] = {".",
+  char const * const baddies[] = {".",
                             "..",
                             "/foo",
                             "\\foo",
@@ -963,7 +963,7 @@ UNIT_TEST(paths, path_component)
                             0 };
 
   // these would not be okay in a full file_path, but are okay here.
-  char const * goodies[] = {"c:foo",
+  char const * const goodies[] = {"c:foo",
                             "_mtn",
                             "_mtN",
                             "_mTn",
@@ -974,13 +974,13 @@ UNIT_TEST(paths, path_component)
                             0 };
 
   
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       // the comparison prevents the compiler from eliminating the
       // expression.
       UNIT_TEST_CHECK_THROW((path_component(*c)()) == *c, logic_error);
     }
-  for (char const **c = goodies; *c; ++c)
+  for (char const * const *c = goodies; *c; ++c)
     {
       path_component p(*c);
       UNIT_TEST_CHECK_THROW(file_path() / p, logic_error);
@@ -993,7 +993,7 @@ UNIT_TEST(paths, path_component)
 
 UNIT_TEST(paths, file_path_internal)
 {
-  char const * baddies[] = {"/foo",
+  char const * const baddies[] = {"/foo",
                             "foo//bar",
                             "foo/../bar",
                             "../bar",
@@ -1028,13 +1028,13 @@ UNIT_TEST(paths, file_path_internal)
                             0 };
   initial_rel_path.unset();
   initial_rel_path.set(string(), true);
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       UNIT_TEST_CHECK_THROW(file_path_internal(*c), logic_error);
     }
   initial_rel_path.unset();
   initial_rel_path.set("blah/blah/blah", true);
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       UNIT_TEST_CHECK_THROW(file_path_internal(*c), logic_error);
     }
@@ -1042,7 +1042,7 @@ UNIT_TEST(paths, file_path_internal)
   UNIT_TEST_CHECK(file_path().empty());
   UNIT_TEST_CHECK(file_path_internal("").empty());
 
-  char const * goodies[] = {"",
+  char const * const goodies[] = {"",
                             "a",
                             "foo",
                             "foo/bar/baz",
@@ -1062,7 +1062,7 @@ UNIT_TEST(paths, file_path_internal)
       initial_rel_path.set(i ? string()
                              : string("blah/blah/blah"),
                            true);
-      for (char const ** c = goodies; *c; ++c)
+      for (char const * const * c = goodies; *c; ++c)
         {
           file_path fp = file_path_internal(*c);
           UNIT_TEST_CHECK(fp.as_internal() == *c);
@@ -1073,7 +1073,7 @@ UNIT_TEST(paths, file_path_internal)
   initial_rel_path.unset();
 }
 
-static void check_fp_normalizes_to(char * before, char * after)
+static void check_fp_normalizes_to(char const * before, char const * after)
 {
   L(FL("check_fp_normalizes_to: '%s' -> '%s'") % before % after);
   file_path fp = file_path_external(utf8(before));
@@ -1090,7 +1090,7 @@ UNIT_TEST(paths, file_path_external_null_prefix)
   initial_rel_path.unset();
   initial_rel_path.set(string(), true);
 
-  char const * baddies[] = {"/foo",
+  char const * const baddies[] = {"/foo",
                             "../bar",
                             "_MTN/blah",
                             "_MTN",
@@ -1118,7 +1118,7 @@ UNIT_TEST(paths, file_path_external_null_prefix)
                             "_MtN/foo",
                             "_mTN/foo",
                             0 };
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       L(FL("test_file_path_external_null_prefix: trying baddie: %s") % *c);
       UNIT_TEST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
@@ -1171,7 +1171,7 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   initial_rel_path.unset();
   initial_rel_path.set(string("a/b"), true);
 
-  char const * baddies[] = {"/foo",
+  char const * const baddies[] = {"/foo",
                             "../../../bar",
                             "../../..",
                             "../../_MTN",
@@ -1201,7 +1201,7 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
                             "../../_MtN/foo",
                             "../../_mTN/foo",
                             0 };
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       L(FL("test_file_path_external_prefix_a_b: trying baddie: %s") % *c);
       UNIT_TEST_CHECK_THROW(file_path_external(utf8(*c)), informative_failure);
@@ -1469,7 +1469,7 @@ UNIT_TEST(paths, depth)
     }
 }
 
-static void check_bk_normalizes_to(char * before, char * after)
+static void check_bk_normalizes_to(char const * before, char const * after)
 {
   bookkeeping_path bp(bookkeeping_root / before);
   L(FL("normalizing %s to %s (got %s)") % before % after % bp);
@@ -1479,7 +1479,7 @@ static void check_bk_normalizes_to(char * before, char * after)
 
 UNIT_TEST(paths, bookkeeping)
 {
-  char const * baddies[] = {"/foo",
+  char const * const baddies[] = {"/foo",
                             "foo//bar",
                             "foo/../bar",
                             "../bar",
@@ -1498,7 +1498,7 @@ UNIT_TEST(paths, bookkeeping)
                             0 };
   string tmp_path_string;
 
-  for (char const ** c = baddies; *c; ++c)
+  for (char const * const * c = baddies; *c; ++c)
     {
       L(FL("test_bookkeeping_path baddie: trying '%s'") % *c);
             UNIT_TEST_CHECK_THROW(bookkeeping_path(tmp_path_string.assign(*c)),
@@ -1519,7 +1519,7 @@ UNIT_TEST(paths, bookkeeping)
   check_bk_normalizes_to("foo/bar/baz", "_MTN/foo/bar/baz");
 }
 
-static void check_system_normalizes_to(char * before, char * after)
+static void check_system_normalizes_to(char const * before, char const * after)
 {
   system_path sp(before);
   L(FL("normalizing '%s' to '%s' (got '%s')") % before % after % sp);
@@ -1836,17 +1836,17 @@ UNIT_TEST(paths, ordering_random)
 
 UNIT_TEST(paths, test_internal_string_is_bookkeeping_path)
 {
-  char const * yes[] = {"_MTN",
+  char const * const yes[] = {"_MTN",
                         "_MTN/foo",
                         "_mtn/Foo",
                         0 };
-  char const * no[] = {"foo/_MTN",
+  char const * const no[] = {"foo/_MTN",
                        "foo/bar",
                        0 };
-  for (char const ** c = yes; *c; ++c)
+  for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path
                 ::internal_string_is_bookkeeping_path(utf8(std::string(*c))));
-  for (char const ** c = no; *c; ++c)
+  for (char const * const * c = no; *c; ++c)
     UNIT_TEST_CHECK(!bookkeeping_path
                  ::internal_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
@@ -1856,19 +1856,19 @@ UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix_none)
   initial_rel_path.unset();
   initial_rel_path.set(string(), true);
 
-  char const * yes[] = {"_MTN",
+  char const * const yes[] = {"_MTN",
                         "_MTN/foo",
                         "_mtn/Foo",
                         "_MTN/foo/..",
                         0 };
-  char const * no[] = {"foo/_MTN",
+  char const * const no[] = {"foo/_MTN",
                        "foo/bar",
                        "_MTN/..",
                        0 };
-  for (char const ** c = yes; *c; ++c)
+  for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path
                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
-  for (char const ** c = no; *c; ++c)
+  for (char const * const * c = no; *c; ++c)
     UNIT_TEST_CHECK(!bookkeeping_path
                  ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
@@ -1878,21 +1878,21 @@ UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix_a_b)
   initial_rel_path.unset();
   initial_rel_path.set(string("a/b"), true);
 
-  char const * yes[] = {"../../_MTN",
+  char const * const yes[] = {"../../_MTN",
                         "../../_MTN/foo",
                         "../../_mtn/Foo",
                         "../../_MTN/foo/..",
                         "../../foo/../_MTN/foo",
                         0 };
-  char const * no[] = {"foo/_MTN",
+  char const * const no[] = {"foo/_MTN",
                        "foo/bar",
                        "_MTN",
                        "../../foo/_MTN",
                        0 };
-  for (char const ** c = yes; *c; ++c)
+  for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path
                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
-  for (char const ** c = no; *c; ++c)
+  for (char const * const * c = no; *c; ++c)
     UNIT_TEST_CHECK(!bookkeeping_path
                  ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }
@@ -1902,20 +1902,20 @@ UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
   initial_rel_path.unset();
   initial_rel_path.set(string("_MTN"), true);
 
-  char const * yes[] = {".",
+  char const * const yes[] = {".",
                         "foo",
                         "../_MTN/foo/..",
                         "../_mtn/foo",
                         "../foo/../_MTN/foo",
                         0 };
-  char const * no[] = {"../foo",
+  char const * const no[] = {"../foo",
                        "../foo/bar",
                        "../foo/_MTN",
                        0 };
-  for (char const ** c = yes; *c; ++c)
+  for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path
                 ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
-  for (char const ** c = no; *c; ++c)
+  for (char const * const * c = no; *c; ++c)
     UNIT_TEST_CHECK(!bookkeeping_path
                  ::external_string_is_bookkeeping_path(utf8(std::string(*c))));
 }

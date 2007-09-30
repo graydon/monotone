@@ -304,6 +304,17 @@ function prepare_to_run_tests (P)
    -- test error handling behavior).
    require_not_root()
 
+   -- Several tests require the ability to create temporary
+   -- directories outside the workspace.
+   local d = make_temp_dir()
+   if d == nil then
+      P("This test suite requires the ability to create files\n"..
+        "in the system-wide temporary directory.  Please correct the\n"..
+        "access permissions on this directory and try again.\n")
+      return 1
+   end
+   unlogged_remove(d)
+
    monotone_path = getpathof("mtn")
    if monotone_path == nil then monotone_path = "mtn" end
    set_env("mtn", monotone_path)
