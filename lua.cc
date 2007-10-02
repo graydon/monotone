@@ -548,17 +548,17 @@ namespace
   {
     record_if_matches(string const & b, char const * p,
                       vector<string> & t)
-      : base(b + "/"), glob(globish(p), globish()), target(t)
+      : base(b + "/"), glob(p), target(t)
     { target.clear(); }
 
     virtual void consume(const char * component)
     {
-      if (glob(component))
+      if (glob.matches(component))
         target.push_back(base + component);
     }
   private:
     string base;
-    globish_matcher glob;
+    globish glob;
     vector<string> & target;
   };
 }

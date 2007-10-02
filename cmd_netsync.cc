@@ -69,11 +69,11 @@ find_key(utf8 const & addr,
   rsa_keypair_id key;
   uri u;
   utf8 host(addr);
-  if (parse_uri(addr(), u))
+
+  parse_uri(addr(), u);
+  if (!u.host.empty())
     host = utf8(u.host);
-  if (!app.lua.hook_get_netsync_key(host,
-                                    include, exclude,
-                                    key)
+  if (!app.lua.hook_get_netsync_key(host, include, exclude, key)
       || key() == "")
     {
       if (needed)
@@ -92,12 +92,9 @@ find_key_if_needed(utf8 const & addr,
                    bool needed = true)
 {
       uri u;
-      bool transport_requires_auth(true);
-      if (parse_uri(addr(), u))
-        {
-          transport_requires_auth = app.lua.hook_use_transport_auth(u);
-        }
-      if (transport_requires_auth)
+      parse_uri(addr(), u);
+
+      if (app.lua.hook_use_transport_auth(u))
         {
           find_key(addr, include, exclude, app, needed);
         }
@@ -111,15 +108,10 @@ extract_patterns(args_vector const & args,
   if (args.size() >= 2 || app.opts.exclude_given)
     {
       E(args.size() >= 2, F("no branch pattern given"));
-      int pattern_offset = 1;
-      vector<globish> patterns;
-      std::transform(args.begin() + pattern_offset, args.end(),
-                     std::inserter(patterns, patterns.end()),
-                     &typecast_vocab<utf8, globish>);
-      combine_and_check_globish(patterns, include_pattern);
-      vector<globish> excludes;
-      typecast_vocab_container(app.opts.exclude_patterns, excludes);
-      combine_and_check_globish(excludes, exclude_pattern);
+
+      include_pattern = globish(args.begin() + 1, args.end());
+      exclude_pattern = globish(app.opts.exclude_patterns);
+
       if (!app.db.var_exists(default_include_pattern_key)
           || app.opts.set_default)
         {
@@ -301,13 +293,7 @@ CMD(clone, "clone", "", CMD_REF(network),
     }
 
   globish include_pattern(app.opts.branchname());
-
-  globish exclude_pattern;
-  {
-    vector<globish> excludes;
-    typecast_vocab_container(app.opts.exclude_patterns, excludes);
-    combine_and_check_globish(excludes, exclude_pattern);
-  }
+  globish exclude_pattern(app.opts.exclude_patterns);
 
   find_key_if_needed(addr, include_pattern, exclude_pattern,
                      app, false);

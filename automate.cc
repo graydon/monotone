@@ -1450,7 +1450,6 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
     filtering = true;
   }
 
-  globish_matcher match(incl, globish());
   basic_io::printer prt;
   basic_io::stanza stz;
   stz.push_str_pair(symbol("format_version"), "1");
@@ -1474,7 +1473,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
           if (app.lua.hook_ignore_branch(*branch))
             continue;
 
-          if (!show && match((*branch)()))
+          if (!show && incl.matches((*branch)()))
             show = true;
           branch_names.push_back((*branch)());
         }
