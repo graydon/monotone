@@ -1,0 +1,2 @@
+alias_command("annotate", "blame")
+alias_command("annotate", "praise")

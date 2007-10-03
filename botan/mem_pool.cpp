@@ -59,6 +59,13 @@ inline bool Pooling_Allocator::Memory_Block::operator<(const void* other) const
    return (buffer < other);
    }
 
+inline bool Pooling_Allocator::Memory_Block::operator>(const void* other) const
+   {
+   if(buffer <= other && other < buffer_end)
+      return false;
+   return (buffer > other);
+   }
+
 /*************************************************
 * See if ptr is contained by this block          *
 *************************************************/
@@ -213,7 +220,7 @@ void Pooling_Allocator::deallocate(void* ptr, u32bit n)
       const u32bit block_no = round_up(n, BLOCK_SIZE) / BLOCK_SIZE;
 
       std::vector<Memory_Block>::iterator i =
-         std::lower_bound(blocks.begin(), blocks.end(), ptr);
+         std::lower_bound(blocks.begin(), blocks.end(), ptr, diff_less<Memory_Block,void*>());
 
       if(i != blocks.end() && i->contains((byte*)ptr, block_no))
          i->free(ptr, block_no);
@@ -278,7 +285,7 @@ void Pooling_Allocator::get_more_core(u32bit in_bytes)
       }
 
    std::sort(blocks.begin(), blocks.end());
-   last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr);
+   last_used = std::lower_bound(blocks.begin(), blocks.end(), ptr, diff_less<Memory_Block,void*>());
    }
 
 }

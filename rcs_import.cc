@@ -7,8 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
-#include <iostream>
 #include <iterator>
 #include <list>
 #include <map>
@@ -16,15 +16,13 @@
 #include <sstream>
 #include <stack>
 #include <stdexcept>
-#include <string>
-#include <vector>
+#include "vector.hh"
 
 #include <unistd.h>
-#include <cstdio>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <boost/tokenizer.hpp>
 
 #include "app_state.hh"
@@ -35,9 +33,9 @@
 #include "file_io.hh"
 #include "interner.hh"
 #include "keys.hh"
-#include "packet.hh"
 #include "paths.hh"
 #include "platform-wrapped.hh"
+#include "project.hh"
 #include "rcs_file.hh"
 #include "revision.hh"
 #include "safe_map.hh"
@@ -464,7 +462,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
       return;
     }
 
-  if (db.file_version_exists(old_id))
+  if (db.file_version_exists(file_id(old_id)))
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
@@ -472,7 +470,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
     }
   else
     {
-      I(db.file_or_manifest_base_exists(new_id(), "files")
+      I(db.file_or_manifest_base_exists(new_id, "files")
         || db.delta_exists(new_id(), "file_deltas"));
       db.put_file_delta(file_id(old_id), file_id(new_id), file_delta(del));
     }
@@ -494,7 +492,7 @@ insert_into_db(data const & curr_data,
   {
     string tmp;
     global_pieces.build_string(next_lines, tmp);
-    next_data = tmp;
+    next_data = data(tmp);
   }
   delta del;
   diff(curr_data, next_data, del);
@@ -582,7 +580,7 @@ process_branch(string const & begin_version,
     {
       L(FL("version %s has %d lines") % curr_version % curr_lines->size());
 
-      cvs_commit curr_commit(r, curr_version, curr_id, cvs);
+      cvs_commit curr_commit(r, curr_version, file_id(curr_id), cvs);
       if (!curr_commit.is_synthetic_branch_root)
         {
           cvs.stk.top()->append_commit(curr_commit);
@@ -682,15 +680,11 @@ import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & c
     hexenc<id> id;
     data dat(r.deltatexts.find(r.admin.head)->second->text);
     calculate_ident(dat, id);
-    file_id fid = id;
+    file_id fid(id);
 
     cvs.set_filename (filename, fid);
     cvs.index_branchpoint_symbols (r);
-
-    if (! db.file_version_exists (fid))
-      {
-        db.put_file(fid, dat);
-      }
+    db.put_file(fid, file_data(dat));
 
     {
       // create the head state in case it is a loner
@@ -1018,7 +1012,7 @@ cluster_consumer
   app_state & app;
   string const & branchname;
   cvs_branch const & branch;
-  set<split_path> created_dirs;
+  set<file_path> created_dirs;
   map<cvs_path, cvs_version> live_files;
   ticker & n_revisions;
 
@@ -1049,7 +1043,7 @@ cluster_consumer
                    ticker & n_revs);
 
   void consume_cluster(cvs_cluster const & c);
-  void add_missing_parents(split_path const & sp, cset & cs);
+  void add_missing_parents(file_path const & sp, cset & cs);
   void build_cset(cvs_cluster const & c, cset & cs);
   void store_auxiliary_certs(prepared_revision const & p);
   void store_revisions();
@@ -1219,8 +1213,8 @@ import_cvs_repo(system_path const & cvsroot,
   }
 
   cvs_history cvs;
-  N(app.opts.branch_name() != "", F("need base --branch argument for importing"));
-  cvs.base_branch = app.opts.branch_name();
+  N(app.opts.branchname() != "", F("need base --branch argument for importing"));
+  cvs.base_branch = app.opts.branchname();
 
   // push the trunk
   cvs.trunk = shared_ptr<cvs_branch>(new cvs_branch());
@@ -1267,14 +1261,13 @@ import_cvs_repo(system_path const & cvsroot,
   // now we have a "last" rev for each tag
   {
     ticker n_tags(_("tags"), "t", 1);
-    packet_db_writer dbw(app);
     transaction_guard guard(app.db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
          i != cvs.resolved_tags.end(); ++i)
       {
         string tag = cvs.tag_interner.lookup(i->first);
         ui.set_tick_trailer("marking tag " + tag);
-        cert_revision_tag(i->second.second, tag, app, dbw);
+        app.get_project().put_tag(i->second.second, tag);
         ++n_tags;
       }
     guard.commit();
@@ -1348,23 +1341,16 @@ cluster_consumer::store_revisions()
 {
   for (vector<prepared_revision>::const_iterator i = preps.begin();
        i != preps.end(); ++i)
-    {
-      if (! app.db.revision_exists(i->rid))
-        {
-          data tmp;
-          write_revision(*(i->rev), tmp);
-          app.db.put_revision(i->rid, *(i->rev));
-          store_auxiliary_certs(*i);
-          ++n_revisions;
-        }
-    }
+    if (app.db.put_revision(i->rid, *(i->rev)))
+      {
+        store_auxiliary_certs(*i);
+        ++n_revisions;
+      }
 }
 
 void
 cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
 {
-  packet_db_writer dbw(app);
-
   for (vector<cvs_tag>::const_iterator i = p.tags.begin();
        i != p.tags.end(); ++i)
     {
@@ -1386,28 +1372,24 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
         }
     }
 
-  cert_revision_in_branch(p.rid, cert_value(branchname), app, dbw);
-  cert_revision_author(p.rid, cvs.author_interner.lookup(p.author), app, dbw);
-  cert_revision_changelog(p.rid, cvs.changelog_interner.lookup(p.changelog), app, dbw);
-  cert_revision_date_time(p.rid, p.time, app, dbw);
+  app.get_project().put_standard_certs(p.rid,
+                                       branch_name(branchname),
+                                       utf8(cvs.changelog_interner.lookup(p.changelog)),
+                                       date_t::from_unix_epoch(p.time),
+                                       utf8(cvs.author_interner.lookup(p.author)));
 }
 
 void
-cluster_consumer::add_missing_parents(split_path const & sp, cset & cs)
+cluster_consumer::add_missing_parents(file_path const & path, cset & cs)
 {
-  split_path tmp(sp);
-  if (tmp.empty())
+  if (created_dirs.find(path) != created_dirs.end())
     return;
-  tmp.pop_back();
-  while (!tmp.empty())
-    {
-      if (created_dirs.find(tmp) == created_dirs.end())
-        {
-          safe_insert(created_dirs, tmp);
-          safe_insert(cs.dirs_added, tmp);
-        }
-      tmp.pop_back();
-    }
+
+  if (!path.empty())
+    add_missing_parents(path.dirname(), cs);
+
+  safe_insert(created_dirs, path);
+  safe_insert(cs.dirs_added, path);
 }
 
 void
@@ -1418,8 +1400,6 @@ cluster_consumer::build_cset(cvs_cluster const & c,
        i != c.entries.end(); ++i)
     {
       file_path pth = file_path_internal(cvs.path_interner.lookup(i->first));
-      split_path sp;
-      pth.split(sp);
 
       file_id fid(cvs.file_version_interner.lookup(i->second.version));
       if (i->second.live)
@@ -1427,9 +1407,9 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           map<cvs_path, cvs_version>::const_iterator e = live_files.find(i->first);
           if (e == live_files.end())
             {
-              add_missing_parents(sp, cs);
+              add_missing_parents(pth.dirname(), cs);
               L(FL("adding entry state '%s' on '%s'") % fid % pth);
-              safe_insert(cs.files_added, make_pair(sp, fid));
+              safe_insert(cs.files_added, make_pair(pth, fid));
               live_files[i->first] = i->second.version;
             }
           else if (e->second != i->second.version)
@@ -1438,7 +1418,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
               L(FL("applying state delta on '%s' : '%s' -> '%s'")
                 % pth % old_fid % fid);
               safe_insert(cs.deltas_applied,
-                          make_pair(sp, make_pair(old_fid, fid)));
+                          make_pair(pth, make_pair(old_fid, fid)));
               live_files[i->first] = i->second.version;
             }
         }
@@ -1448,7 +1428,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           if (e != live_files.end())
             {
               L(FL("deleting entry state '%s' on '%s'") % fid % pth);
-              safe_insert(cs.nodes_deleted, sp);
+              safe_insert(cs.nodes_deleted, pth);
               live_files.erase(i->first);
             }
         }

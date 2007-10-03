@@ -52,12 +52,17 @@ _mtn() {
 (( $+functions[_mtn_command] )) ||
 _mtn_command() {
     (( $+_mtn_cmds )) || 
-    _mtn_cmds=(add annotate approve attr automate cat cert checkout chkeypass \
-	ci co comment commit complete cvs_import db diff disapprove drop dropkey \
-	explicit_merge fload fmerge genkey get_roster heads help identify list log \
-	ls merge merge_into_dir mv pivot_root privkey propagate pubkey pull push \
-	rcs_import read refresh_inodeprints rename revert rm serve set setup \
-	show_conflicts status sync tag testresult trusted unset update)
+    _mtn_cmds=(
+	add annotate approve asciik attr automate cat cert checkout ci
+	clone co comment commit complete cvs_import db diff disapprove
+	drop dropkey explicit_merge fdiff fload fmerge genkey
+	get_roster heads help identify import list log ls merge
+	merge_into_dir merge_into_workspace migrate_workspace mkdir mv
+	passphrase pivot_root pluck privkey propagate pubkey pull push
+	rcs_import read refresh_inodeprints rename revert rm serve set
+	setup show_conflicts ssh_agent_add ssh_agent_export status
+	sync tag testresult trusted unset update
+    )
     
     local cmd="$words[1]"
     if (( CURRENT == 1 )); then
@@ -99,6 +104,8 @@ _mtn_approve() {
 	'(*)*:revision:_mtn_selector_or_revision'
 }
 
+# missing: asciik
+
 (( $+functions[_mtn_attr] )) ||
 _mtn_attr() {
     if (( CURRENT == 2 )); then	
@@ -114,13 +121,21 @@ _mtn_attr() {
 
 (( $+functions[_mtn_automate] )) ||
 _mtn_automate() {
-    compadd -- \
-	ancestors ancestry_difference attributes branches certs children \
-	common_ancestors descendents erase_ancestors \
-	get_base_revision_id get_current_revision_id get_file get_manifest_of \
-	get_revision graph heads interface_version inventory keys \
-	leaves packet_for_fdelta packet_for_rdata packets_for_certs \
-	parents select tags toposort 
+    (( $+_mtn_automate_cmds )) ||
+    _mtn_automate_cmds=(
+	ancestors ancestry_difference attributes branches cert certs
+	children common_ancestors content_diff db_get db_set
+	descendents erase_ancestors genkey get_base_revision_id
+	get_content_changed get_corresponding_path
+	get_current_revision_id get_file get_file_of get_manifest_of
+	get_option get_revision graph heads identify interface_version
+	inventory keys leaves packet_for_fdata packet_for_fdelta
+	packet_for_rdata packets_for_certs parents put_file
+	put_revision select stdio tags toposort
+    )
+    if (( CURRENT == 2 )) ; then
+	compadd -a _mtn_automate_cmds
+    fi
 }
 
 (( $+functions[_mtn_cat] )) ||
@@ -146,15 +161,12 @@ _mtn_checkout() {
 	'(*)*:directory for checkout: '
 }
 
-(( $+functions[_mtn_chkeypass] )) ||
-_mtn_chkeypass() {
-    _mtn_keys
-}
-
 (( $+functions[_mtn_ci] )) ||
 _mtn_ci() {
     _mtn_commit
 }
+
+# missing: clone
 
 (( $+functions[_mtn_co] )) ||
 _mtn_co() {
@@ -196,10 +208,15 @@ _mtn_cvs_import() {
 
 (( $+functions[_mtn_db] )) ||
 _mtn_db() {
-    compadd -- \
-	init info version dump load migrate execute \
-	kill_rev_locally kill_branch_certs_locally kill_tag_locally \
-	check changesetify rosterify set_epoch
+    (( $+_mtn_db_cmds )) ||
+    _mtn_db_cmds=( 
+	changesetify check dump execute info init
+	kill_branch_certs_locally kill_rev_locally kill_tag_locally
+	load migrate regenerate_caches rosterify set_epoch version
+    )
+    if (( CURRENT == 2 )) ; then
+	compadd -a _mtn_db_cmds
+    fi
 }
 
 (( $+functions[_mtn_diff] )) ||
@@ -245,10 +262,32 @@ _mtn_explicit_merge() {
 	'3:dest branch:_mtn_branches'
 }
 
+# missing: fdiff
+# missing: fload
+# missing: fmerge
+# missing: genkey
+# missing: get_roster
+
 (( $+functions[_mtn_heads] )) ||
 _mtn_heads() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'
+}
+
+# missing: help
+# missing: identify
+# missing: import
+
+(( $+functions[_mtn_list] )) ||
+_mtn_list() {
+    (( $+_mtn_ls_cmds )) ||
+    _mtn_ls_cmds=(
+	certs keys branches epochs tags vars 
+	known unknown ignored missing changed
+    )
+    if (( CURRENT == 2 )) ; then
+	compadd -a _mtn_ls_cmds
+    fi
 }
 
 (( $+functions[_mtn_log] )) ||
@@ -264,13 +303,6 @@ _mtn_log() {
 	'*:restriction for log:_mtn_files_known'
 }
 
-(( $+functions[_mtn_list] )) ||
-_mtn_list() {
-    compadd -- \
-	certs keys branches epochs tags vars \
-	known unknown ignored missing changed
-}
-
 (( $+functions[_mtn_ls] )) ||
 _mtn_ls() {
     _mtn_list
@@ -284,6 +316,26 @@ _mtn_merge() {
 	'--author=[override author for commit]:author: '
 }
 
+# missing: merge_into_dir
+# missing: merge_into_workspace
+
+(( $+functions[_mtn_mkdir] )) ||
+_mtn_mkdir() {
+    _arguments -s : \
+	'--no-respect-ignore[do not ignore any files]'\
+	'*:directory to create: '
+}
+
+(( $+functions[_mtn_mv] )) ||
+_mtn_mv() {
+    _mtn_rename
+}
+
+# missing: passphrase
+# missing: pivot_root
+# missing: pluck
+# missing: privkey
+
 (( $+functions[_mtn_propagate] )) ||
 _mtn_propagate() {
     _arguments -s : \
@@ -294,6 +346,8 @@ _mtn_propagate() {
 	'1:source branch:_mtn_branches'\
 	'2:dest branch:_mtn_branches'\
 }
+
+# missing: pubkey
 
 (( $+functions[_mtn_pull] )) ||
 _mtn_pull() {
@@ -314,6 +368,9 @@ _mtn_rcs_import() {
 	'*:files to import:_files'
 }
 
+# missing: read
+# missing: refresh_inodeprints
+
 (( $+functions[_mtn_rename] )) ||
 _mtn_rename() {
     _arguments -s : \
@@ -330,6 +387,11 @@ _mtn_revert() {
 	'*:files to revert:_mtn_files_changed'
 }
 
+(( $+functions[_mtn_rm] )) ||
+_mtn_rm() {
+    _mtn_drop
+}
+
 (( $+functions[_mtn_serve] )) ||
 _mtn_serve() {
     _arguments -s : \
@@ -340,6 +402,12 @@ _mtn_serve() {
 	'--no-transport-auth[disable transport authentication]'\
 	'*:pattern: '
 }
+
+# missing: set
+# missing: setup
+# missing: show_conflicts
+# missing: ssh_agent_add
+# missing: ssh_agent_export
 
 (( $+functions[_mtn_status] )) ||
 _mtn_status() {
@@ -371,12 +439,16 @@ _mtn_testresult() {
 	'2:result:(pass fail true false yes no 1 0)'
 }
 
+# missing: trusted
+# missing: unset
+
 (( $+functions[_mtn_update] )) ||
 _mtn_update() {
     _arguments -s : \
 	{'(--branch)-b+','(-b)--branch='}'[select branch cert for operation]:branch:_mtn_branches'\
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'
 }
+
 
 # define completion functions for files maintained by monotone.
 
@@ -402,7 +474,7 @@ _mtn_files() {
     local prefix=${PREFIX}X
     local rcwd="$(_mtn_rcwd)"
     local -a list
-    list=( ${${${(f)"$(mtn ls --depth=0 $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
+    list=( ${${${(f)"$(mtn ls $1 ${prefix:h} 2>/dev/null)"}#$rcwd}#/} )
     compadd -f -a list 
 }
 

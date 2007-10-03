@@ -3,10 +3,10 @@
  * 13-May-2004
  */
 
+#include "base.hh"
 #include <unistd.h>
 #include <string.h>
 #include <iostream>
-#include <string>
 #include <windows.h>
 
 #include "sanity.hh"
@@ -43,6 +43,7 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
   {
     I(SetConsoleMode(mt_stdin, pwmode) != 0);
     std::cin.getline(buf, bufsz, '\n');
+    std::cout << std::endl;
     I(SetConsoleMode(mt_stdin, origmode) != 0);
   }
   else
@@ -50,7 +51,7 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
     std::cout << "\x1B\x37\x1B[30;40m";
     std::cout.flush();
     fgets(buf, bufsz, stdin); /* Sorry, but cin.getline just doesn't work under MinGW's rxvt */
-    std::cout << "\x1B[0m\x1B\x38";
+    std::cout << "\x1B[0m\x1B\x38\n";
     std::cout.flush();
 
     /* ...and fgets gives us an LF we don't want */
@@ -59,3 +60,11 @@ read_password(std::string const & prompt, char * buf, size_t bufsz)
       buf[bufend] = '\0';
   }
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

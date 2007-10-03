@@ -1,3 +1,4 @@
+-- -*-lua-*-
 
 mtn_setup()
 revs = {}
@@ -15,8 +16,10 @@ commit()
 revs.left = base_revision()
 
 revert_to(revs.base)
+remove("junk")
+
 copy("foo.rightnewname", "foo")
-check(mtn("rename", "-e", "foo", "foo.new"), 0, false, false)
+check(mtn("rename", "foo", "foo.new"), 0, false, false)
 commit()
 revs.right = base_revision()
 
@@ -32,5 +35,5 @@ revs.merged = base_revision()
 -- right: x
 --
 
-check(mtn("annotate", "--brief", "foo.new"), 0, true, false)
+check(mtn("annotate", "--revs-only", "foo.new"), 0, true, false)
 check(greplines("stdout", {revs.base, revs.base, revs.right}))

@@ -7,9 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
-#include <iostream>
 
+#include "base.hh"
 #include "constants.hh"
 #include "hash_map.hh"
 #include "sanity.hh"
@@ -50,16 +49,14 @@ static inline void
 verify_full(T & val)
 { val.ok = true; }
 
+// NOTE: _not_ verify_full; you use verify_full for ATOMICs, verify() for
+// everything else.
 inline void
-verify_full(path_component & val)
+verify(hexenc<id> & val)
 {
-  // FIXME: probably ought to do something here?
-  val.ok = true;
-}
+  if (val.ok)
+    return;
 
-inline void
-verify_full(hexenc<id> & val)
-{
   if (val().empty())
     return;
 
@@ -120,7 +117,7 @@ verify_full(netsync_session_key & val)
 {
   if (val().size() == 0)
     {
-      val.s.append(constants::netsync_session_key_length_in_bytes, 0);
+      val.s = std::string(constants::netsync_session_key_length_in_bytes, 0);
       return;
     }
 
@@ -135,7 +132,7 @@ verify_full(netsync_hmac_value & val)
 {
   if (val().size() == 0)
     {
-      val.s.append(constants::netsync_hmac_value_length_in_bytes, 0);
+      val.s = std::string(constants::netsync_hmac_value_length_in_bytes, 0);
       return;
     }
 
@@ -225,6 +222,65 @@ void dump(roster_delta const & d, string &);
 
 template
 void dump(manifest_data const & d, string &);
+
+#ifdef BUILD_UNIT_TESTS
+
+#include "unit_tests.hh"
+
+UNIT_TEST(vocab, verify_hexenc_id)
+{
+  // -------- magic empty string and default constructor are okay:
+  UNIT_TEST_CHECK(hexenc<id>("")() == "");
+  hexenc<id> my_default_id;
+  UNIT_TEST_CHECK(my_default_id() == "");
+
+  // -------- wrong length:
+  UNIT_TEST_CHECK_THROW(hexenc<id>("a"), informative_failure);
+  // 39 letters
+  UNIT_TEST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                    informative_failure);
+  // 41 letters
+  UNIT_TEST_CHECK_THROW(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+                    informative_failure);
+  // but 40 is okay
+  UNIT_TEST_CHECK(hexenc<id>("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")()
+              == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+  // -------- bad characters:
+  UNIT_TEST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("h000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("G000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("H000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("*000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("`000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("z000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("Z000000000000000000000000000000000000000"), informative_failure);
+  // different positions:
+  UNIT_TEST_CHECK_THROW(hexenc<id>("g000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0g00000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("00g0000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000g000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000g00000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000g000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000000000000000000000g00000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000g000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000g000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("0000000000000000000000000000000000000g00"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("00000000000000000000000000000000000000g0"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("000000000000000000000000000000000000000g"), informative_failure);
+  // uppercase hex is bad too!
+  UNIT_TEST_CHECK_THROW(hexenc<id>("A000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("B000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("C000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("D000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("E000000000000000000000000000000000000000"), informative_failure);
+  UNIT_TEST_CHECK_THROW(hexenc<id>("F000000000000000000000000000000000000000"), informative_failure);
+  // but lowercase and digits are all fine
+  UNIT_TEST_CHECK(hexenc<id>("0123456789abcdef0123456789abcdef01234567")()
+              == "0123456789abcdef0123456789abcdef01234567");
+}
+
+#endif // BUILD_UNIT_TESTS
 
 // Local Variables:
 // mode: C++

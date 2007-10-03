@@ -92,9 +92,10 @@ static int sqlite3_get_table_cb(void *pArg, int nCol, char **argv, char **colv){
       if( argv[i]==0 ){
         z = 0;
       }else{
-        z = sqlite3_malloc( strlen(argv[i])+1 );
+        int n = strlen(argv[i])+1;
+        z = sqlite3_malloc( n );
         if( z==0 ) goto malloc_failed;
-        strcpy(z, argv[i]);
+        memcpy(z, argv[i], n);
       }
       p->azResult[p->nData++] = z;
     }
@@ -146,7 +147,7 @@ int sqlite3_get_table(
     assert( sizeof(res.azResult[0])>= sizeof(res.nData) );
     res.azResult[0] = (char*)res.nData;
   }
-  if( rc==SQLITE_ABORT ){
+  if( (rc&0xff)==SQLITE_ABORT ){
     sqlite3_free_table(&res.azResult[1]);
     if( res.zErrMsg ){
       if( pzErrMsg ){
@@ -156,12 +157,12 @@ int sqlite3_get_table(
       sqliteFree(res.zErrMsg);
     }
     db->errCode = res.rc;
-    return res.rc;
+    return res.rc & db->errMask;
   }
   sqliteFree(res.zErrMsg);
   if( rc!=SQLITE_OK ){
     sqlite3_free_table(&res.azResult[1]);
-    return rc;
+    return rc & db->errMask;
   }
   if( res.nAlloc>res.nData ){
     char **azNew;
@@ -176,7 +177,7 @@ int sqlite3_get_table(
   *pazResult = &res.azResult[1];
   if( pnColumn ) *pnColumn = res.nColumn;
   if( pnRow ) *pnRow = res.nRow;
-  return rc;
+  return rc & db->errMask;
 }
 
 /*

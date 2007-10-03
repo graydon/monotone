@@ -4,13 +4,24 @@
 #include <stdexcept>
 #include <map>
 #include <set>
-#include <string>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/function.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 #include "sanity.hh"
+#include "vocab.hh"
+
+// The types to represent the command line's parameters.
+class arg_type : public utf8 {
+public:
+  explicit arg_type(void) : utf8() {}
+  explicit arg_type(std::string const & s) : utf8(s) {}
+  explicit arg_type(utf8 const & u) : utf8(u) {}
+};
+template <>
+inline void dump(arg_type const & a, std::string & out) { out = a(); }
+typedef std::vector< arg_type > args_vector;
 
 namespace option {
   // Base for errors thrown by this code.
@@ -35,9 +46,9 @@ namespace option {
   // by either boost::bad_lexical_cast or bad_arg_internal
   struct bad_arg : public option_error
   {
-    bad_arg(std::string const & opt, std::string const & arg);
+    bad_arg(std::string const & opt, arg_type const & arg);
     bad_arg(std::string const & opt,
-	    std::string const & arg,
+	    arg_type const & arg,
 	    std::string const & reason);
   };
   // from_command_line() catches this and boost::bad_lexical_cast
@@ -96,7 +107,7 @@ namespace option {
     concrete_option_set operator | (concrete_option_set const & other) const;
     void reset() const;
     std::string get_usage_str() const;
-    void from_command_line(std::vector<std::string> & args, bool allow_xargs = true);
+    void from_command_line(args_vector & args, bool allow_xargs = true);
     void from_command_line(int argc, char const * const * argv);
     void from_key_value_pairs(std::vector<std::pair<std::string, std::string> > const & keyvals);
   };

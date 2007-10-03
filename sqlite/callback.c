@@ -13,7 +13,7 @@
 ** This file contains functions used to access the internal hash tables
 ** of user defined functions and collation sequences.
 **
-** $Id: callback.c,v 1.15 2006/05/24 12:43:27 drh Exp $
+** $Id: callback.c,v 1.18 2007/05/07 09:32:45 danielk1977 Exp $
 */
 
 #include "sqliteInt.h"
@@ -63,6 +63,7 @@ static int synthCollSeq(sqlite3 *db, CollSeq *pColl){
     pColl2 = sqlite3FindCollSeq(db, aEnc[i], z, n, 0);
     if( pColl2->xCmp!=0 ){
       memcpy(pColl, pColl2, sizeof(CollSeq));
+      pColl->xDel = 0;         /* Do not copy the destructor */
       return SQLITE_OK;
     }
   }
@@ -195,6 +196,11 @@ static CollSeq *findCollSeqEntry(
 **
 ** If the entry specified is not found and 'create' is true, then create a
 ** new entry.  Otherwise return NULL.
+**
+** A separate function sqlite3LocateCollSeq() is a wrapper around
+** this routine.  sqlite3LocateCollSeq() invokes the collation factory
+** if necessary and generates an error message if the collating sequence
+** cannot be found.
 */
 CollSeq *sqlite3FindCollSeq(
   sqlite3 *db,
@@ -339,7 +345,7 @@ void sqlite3SchemaFree(void *p){
   sqlite3HashInit(&pSchema->tblHash, SQLITE_HASH_STRING, 0);
   for(pElem=sqliteHashFirst(&temp1); pElem; pElem=sqliteHashNext(pElem)){
     Table *pTab = sqliteHashData(pElem);
-    sqlite3DeleteTable(0, pTab);
+    sqlite3DeleteTable(pTab);
   }
   sqlite3HashClear(&temp1);
   pSchema->pSeqTab = 0;

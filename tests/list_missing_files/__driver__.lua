@@ -20,7 +20,7 @@ canonicalize("stdout")
 check(samefile("stdout", "missingfoo")) 
 
 writefile("foo")
-check(mtn("drop", "foo"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "foo"), 0, false, false)
 remove("foo")
 check(mtn("ls", "missing"), 0, 0, 0)
 
@@ -33,6 +33,6 @@ canonicalize("stdout")
 check(samefile("stdout", "missingbar")) 
 
 writefile("bar")
-check(mtn("drop", "bar"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar"), 0, false, false)
 remove("bar")
 check(mtn("ls", "missing"), 0, 0, 0)

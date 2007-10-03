@@ -10,8 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
-#include <vector>
+#include "vector.hh"
 #include <algorithm>
 #include <set>
 

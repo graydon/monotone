@@ -12,24 +12,36 @@ building and installation process for monotone
 
   * software prerequisites:
 
+    - autoconf.
+    - automake.
+    - gettext.
     - a supported C++ compiler: g++ 3.2 or later.
     - an installed copy of boost 1.33.0 or later.
     - zlib 1.1.4 or later.
+    - libiconv if the iconv() function is missing.
 
         on debian: 
 
-           apt-get install libboost-date-time-dev
-           apt-get install libboost-filesystem-dev
+           apt-get install autoconf
+           apt-get install automake
+           apt-get install gettext
            apt-get install libboost-regex-dev
-           apt-get install libboost-serialization-dev
-           apt-get install libboost-test-dev
            apt-get install libboost-dev
+           apt-get install libz-dev
            apt-get install g++
 
         on fedora: 
 
+           apt-get install autoconf
+           apt-get install automake
+           apt-get install gettext
            apt-get install boost-devel 
+           apt-get install libz-devel
            apt-get install g++
+
+        on Windows (incomplete):
+
+           libiconv (http://gnuwin32.sourceforge.net/packages/libiconv.htm)
 
         on other systems:
 
@@ -155,6 +167,10 @@ building and installation process for monotone
     confirm monotone's functionality on your system.
     Do not run "make check" as root (Unix)!  Doing so will cause the
     failure of some of the tests!
+    Also, make sure your testing process has enough memory.  Experience
+    has shown that some tests may fail "mysteriously" when there is too
+    little memory.  A possible hint is that 128MB was too little on
+    FreeBSD 6 on x86 while 256MB was enough.
 
     You might also like to try fetching monotone's sources from our
     monotone server. this process will transfer the complete development
@@ -164,7 +180,7 @@ building and installation process for monotone
 
         mtn --db=mt.mtn db init
 
-        mtn --db=mt.mtn pull venge.net "net.venge.monotone*"
+        mtn --db=mt.mtn pull monotone.ca "net.venge.monotone*"
 
         mtn --db=mt.mtn --branch=net.venge.monotone checkout monotone-sources
 

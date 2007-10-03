@@ -1,5 +1,5 @@
+#include "base.hh"
 #include "lua.hh"
-
 #include "globish.hh"
 #include "sanity.hh"
 
@@ -12,15 +12,9 @@ LUAEXT(match, globish)
 
   bool result = false;
   try {
-    string r(re);
-    string n;
-    string s(str);
-    result = globish_matcher(r, n)(s);
+    globish g(re);
+    result = g.matches(str);
   } catch (informative_failure & e) {
-    return luaL_error(L, e.what());
-  } catch (pcre::compile_error & e) {
-    return luaL_error(L, e.what());
-  } catch (pcre::match_error & e) {
     return luaL_error(L, e.what());
   } catch (...) {
     return luaL_error(L, "Unknown error.");
@@ -28,4 +22,12 @@ LUAEXT(match, globish)
   lua_pushboolean(L, result);
   return 1;
 }
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 

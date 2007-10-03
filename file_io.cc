@@ -7,12 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <iostream>
 #include <fstream>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/convenience.hpp>
-#include <boost/filesystem/exception.hpp>
 
 #include "botan/botan.h"
 
@@ -23,24 +20,6 @@
 #include "platform-wrapped.hh"
 #include "numeric_vocab.hh"
 
-
-// Parts of boost::filesystem change in 1.34 . One particular
-// difference is that some exceptions are different now.
-
-#include <boost/version.hpp>
-
-#if BOOST_VERSION < 103400
-# define FS_ERROR fs::filesystem_error
-# define FS_ERROR_SYSTEM native_error
-#else
-# define FS_ERROR fs::filesystem_path_error
-# define FS_ERROR_SYSTEM system_error
-#endif
-
-
-
-
-
 // this file deals with talking to the filesystem, loading and
 // saving files.
 
@@ -48,7 +27,7 @@ using std::cin;
 using std::ifstream;
 using std::ios_base;
 using std::ofstream;
-using std::runtime_error;
+using std::logic_error;
 using std::string;
 using std::vector;
 
@@ -131,13 +110,35 @@ file_exists(any_path const & p)
   return get_path_status(p) == path::file;
 }
 
+namespace
+{
+  struct directory_not_empty_exception {};
+  struct directory_empty_helper : public dirent_consumer
+  {
+    virtual void consume(char const *)
+    { throw directory_not_empty_exception(); }
+  };
+}
+
+bool
+directory_empty(any_path const & path)
+{
+  directory_empty_helper h;
+  try {
+    do_read_directory(system_path(path).as_external(), h, h, h);
+  } catch (directory_not_empty_exception) {
+    return false;
+  }
+  return true;
+}
+
 static bool did_char_is_binary_init;
 static bool char_is_binary[256];
 
 static void
 set_char_is_binary(char c, bool is_binary)
 {
-    char_is_binary[static_cast<uint8_t>(c)] = is_binary;
+    char_is_binary[static_cast<u8>(c)] = is_binary;
 }
 
 static void
@@ -167,67 +168,36 @@ bool guess_binary(string const & s)
 
   for (size_t i = 0; i < s.size(); ++i)
     {
-      if (char_is_binary[ static_cast<uint8_t>(s[i]) ])
+      if (char_is_binary[ static_cast<u8>(s[i]) ])
         return true;
     }
   return false;
 }
 
-static fs::path
-mkdir(any_path const & p)
-{
-  return fs::path(p.as_external(), fs::native);
-}
-
 void
 mkdir_p(any_path const & p)
 {
-  try
+  switch (get_path_status(p))
     {
-      fs::create_directories(mkdir(p));
+    case path::directory:
+      return;
+    case path::file:
+      E(false, F("could not create directory '%s': it is a file") % p);
+    case path::nonexistent:
+      std::string const current = p.as_external();
+      any_path const parent = p.dirname();
+      if (current != parent.as_external())
+        {
+          mkdir_p(parent);
+        }
+      do_mkdir(current);
     }
-  catch (FS_ERROR & err)
-    {
-      // check for this case first, because in this case, the next line will
-      // print "could not create directory: Success".  Which is unhelpful.
-      E(get_path_status(p) != path::file,
-        F("could not create directory '%s'\nit is a file") % p);
-      E(false,
-        F("could not create directory '%s'\n%s")
-        % err.path1().native_directory_string() % os_strerror(err.FS_ERROR_SYSTEM()));
-    }
-  require_path_is_directory(p,
-                            F("could not create directory '%s'") % p,
-                            F("could not create directory '%s'\nit is a file") % p);
 }
 
 void
 make_dir_for(any_path const & p)
 {
-  fs::path tmp(p.as_external(), fs::native);
-  if (tmp.has_branch_path())
-    {
-      fs::path dir = tmp.branch_path();
-      fs::create_directories(dir);
-      N(fs::exists(dir) && fs::is_directory(dir),
-        F("failed to create directory '%s' for '%s'") % dir.string() % p);
-    }
-}
-
-static void
-do_shallow_deletion_with_sane_error_message(any_path const & p)
-{
-  fs::path fp = mkdir(p);
-  try
-    {
-      fs::remove(fp);
-    }
-  catch (FS_ERROR & err)
-    {
-      E(false, F("could not remove '%s'\n%s")
-        % err.path1().native_directory_string()
-        % os_strerror(err.FS_ERROR_SYSTEM()));
-    }
+  mkdir_p(p.dirname());
 }
 
 void
@@ -236,7 +206,7 @@ delete_file(any_path const & p)
   require_path_is_file(p,
                        F("file to delete '%s' does not exist") % p,
                        F("file to delete, '%s', is not a file but a directory") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
@@ -245,15 +215,63 @@ delete_dir_shallow(any_path const & p)
   require_path_is_directory(p,
                             F("directory to delete '%s' does not exist") % p,
                             F("directory to delete, '%s', is not a directory but a file") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
 
 void
 delete_file_or_dir_shallow(any_path const & p)
 {
   N(path_exists(p), F("object to delete, '%s', does not exist") % p);
-  do_shallow_deletion_with_sane_error_message(p);
+  do_remove(p.as_external());
 }
+
+namespace
+{
+  struct fill_pc_vec : public dirent_consumer
+  {
+    fill_pc_vec(vector<path_component> & v) : v(v) { v.clear(); }
+
+    // FIXME BUG: this treats 's' as being already utf8, but it is actually
+    // in the external character set.  Also, will I() out on invalid
+    // pathnames, when it should N() or perhaps W() and skip.
+    virtual void consume(char const * s)
+    { v.push_back(path_component(s)); }
+
+  private:
+    vector<path_component> & v;
+  };
+
+  struct file_deleter : public dirent_consumer
+  {
+    file_deleter(any_path const & p) : parent(p) {}
+    virtual void consume(char const * f)
+    {
+      // FIXME: same bug as above.
+      do_remove((parent / path_component(f)).as_external());
+    }
+  private:
+    any_path const & parent;
+  };
+}
+
+static void
+do_remove_recursive(any_path const & p)
+{
+  // for the reasons described in walk_tree_recursive, we read the entire
+  // directory before recursing into any subdirs.  however, it is safe to
+  // delete files as we encounter them, and we do so.
+  vector<path_component> subdirs;
+  fill_pc_vec subdir_fill(subdirs);
+  file_deleter delete_files(p);
+
+  do_read_directory(p.as_external(), delete_files, subdir_fill, delete_files);
+  for (vector<path_component>::const_iterator i = subdirs.begin();
+       i != subdirs.end(); i++)
+    do_remove_recursive(p / *i);
+
+  do_remove(p.as_external());
+}
+
 
 void
 delete_dir_recursive(any_path const & p)
@@ -261,7 +279,8 @@ delete_dir_recursive(any_path const & p)
   require_path_is_directory(p,
                             F("directory to delete, '%s', does not exist") % p,
                             F("directory to delete, '%s', is a file") % p);
-  fs::remove_all(mkdir(p));
+
+  do_remove_recursive(p);
 }
 
 void
@@ -273,8 +292,9 @@ move_file(any_path const & old_path,
                        F("rename source file '%s' is a directory "
                          "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
@@ -282,30 +302,26 @@ move_dir(any_path const & old_path,
          any_path const & new_path)
 {
   require_path_is_directory(old_path,
-                            F("rename source dir '%s' does not exist") % old_path,
+                            F("rename source dir '%s' does not exist")
+                            % old_path,
                             F("rename source dir '%s' is a file "
                               "-- bug in monotone?") % old_path);
   require_path_is_nonexistent(new_path,
-                              F("rename target '%s' already exists") % new_path);
-  fs::rename(mkdir(old_path), mkdir(new_path));
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
 move_path(any_path const & old_path,
           any_path const & new_path)
 {
-  switch (get_path_status(old_path))
-    {
-    case path::nonexistent:
-      N(false, F("rename source path '%s' does not exist") % old_path);
-      break;
-    case path::file:
-      move_file(old_path, new_path);
-      break;
-    case path::directory:
-      move_dir(old_path, new_path);
-      break;
-    }
+  N(path_exists(old_path),
+    F("rename source path '%s' does not exist") % old_path);
+  require_path_is_nonexistent(new_path,
+                              F("rename target '%s' already exists")
+                              % new_path);
+  rename_clobberingly(old_path.as_external(), new_path.as_external());
 }
 
 void
@@ -322,37 +338,21 @@ read_data(any_path const & p, data & dat)
   pipe.start_msg();
   file >> pipe;
   pipe.end_msg();
-  dat = pipe.read_all_as_string();
+  dat = data(pipe.read_all_as_string());
 }
 
 void read_directory(any_path const & path,
-                    vector<utf8> & files,
-                    vector<utf8> & dirs)
+                    vector<path_component> & files,
+                    vector<path_component> & dirs)
 {
-  files.clear();
-  dirs.clear();
-  fs::directory_iterator ei;
-  for (fs::directory_iterator di(system_path(path).as_external());
-       di != ei; ++di)
-    {
-      fs::path entry = *di;
-      if (!fs::exists(entry)
-          || di->string() == "."
-          || di->string() == "..")
-        continue;
-
-      // FIXME: BUG: this screws up charsets (assumes blindly that the fs is
-      // utf8)
-      if (fs::is_directory(entry))
-        dirs.push_back(utf8(entry.leaf()));
-      else
-        files.push_back(utf8(entry.leaf()));
-    }
+  vector<path_component> special_files;
+  fill_pc_vec ff(files), df(dirs), sf(special_files);
+  do_read_directory(path.as_external(), ff, df, sf);
+  E(special_files.empty(), F("cannot handle special files in dir '%s'") % path);
 }
 
-
 // This function can only be called once per run.
-static void
+void
 read_data_stdin(data & dat)
 {
   static bool have_consumed_stdin = false;
@@ -362,7 +362,7 @@ read_data_stdin(data & dat)
   pipe.start_msg();
   cin >> pipe;
   pipe.end_msg();
-  dat = pipe.read_all_as_string();
+  dat = data(pipe.read_all_as_string());
 }
 
 void
@@ -380,53 +380,34 @@ read_data_for_command_line(utf8 const & path, data & dat)
 // trying, and I'm not sure it's really a strict requirement of this tool,
 // but you might want to make this code a bit tighter.
 
-
 static void
 write_data_impl(any_path const & p,
                 data const & dat,
-                any_path const & tmp)
+                any_path const & tmp,
+                bool user_private)
 {
   N(!directory_exists(p),
     F("file '%s' cannot be overwritten as data; it is a directory") % p);
 
   make_dir_for(p);
 
-  {
-    // data.tmp opens
-    ofstream file(tmp.as_external().c_str(),
-                  ios_base::out | ios_base::trunc | ios_base::binary);
-    N(file, F("cannot open file %s for writing") % tmp);
-    Botan::Pipe pipe(new Botan::DataSink_Stream(file));
-    pipe.process_msg(dat());
-    // data.tmp closes
-  }
-
-  rename_clobberingly(tmp, p);
-}
-
-static void
-write_data_impl(any_path const & p,
-                data const & dat)
-{
-  // we write, non-atomically, to _MTN/data.tmp.
-  // nb: no mucking around with multiple-writer conditions. we're a
-  // single-user single-threaded program. you get what you paid for.
-  assert_path_is_directory(bookkeeping_root);
-  bookkeeping_path tmp = bookkeeping_root / (FL("data.tmp.%d") %
-                                             get_process_id()).str();
-  write_data_impl(p, dat, tmp);
+  write_data_worker(p.as_external(), dat(), tmp.as_external(), user_private);
 }
 
 void
 write_data(file_path const & path, data const & dat)
 {
-  write_data_impl(path, dat);
+  // use the bookkeeping root as the temporary directory.
+  assert_path_is_directory(bookkeeping_root);
+  write_data_impl(path, dat, bookkeeping_root, false);
 }
 
 void
 write_data(bookkeeping_path const & path, data const & dat)
 {
-  write_data_impl(path, dat);
+  // use the bookkeeping root as the temporary directory.
+  assert_path_is_directory(bookkeeping_root);
+  write_data_impl(path, dat, bookkeeping_root, false);
 }
 
 void
@@ -434,130 +415,160 @@ write_data(system_path const & path,
            data const & data,
            system_path const & tmpdir)
 {
-  write_data_impl(path, data, tmpdir / (FL("data.tmp.%d") %
-                                             get_process_id()).str());
+  write_data_impl(path, data, tmpdir, false);
 }
+
+void
+write_data_userprivate(system_path const & path,
+                       data const & data,
+                       system_path const & tmpdir)
+{
+  write_data_impl(path, data, tmpdir, true);
+}
+
+// recursive directory walking
 
 tree_walker::~tree_walker() {}
 
-static inline bool
-try_file_pathize(fs::path const & p, file_path & fp)
+bool
+tree_walker::visit_dir(file_path const & path)
+{
+  return true;
+}
+
+// subroutine of walk_tree_recursive: if the path composition of PATH and PC
+// is a valid file_path, write it to ENTRY and return true.  otherwise,
+// generate an appropriate diagnostic and return false.  in this context, an
+// invalid path is *not* an invariant failure, because it came from a
+// directory scan.  ??? arguably belongs as a file_path method.
+static bool
+safe_compose(file_path const & path, path_component const & pc, bool isdir,
+             file_path & entry)
 {
   try
     {
-      // FIXME BUG: This has broken charset handling
-      fp = file_path_internal(p.string());
+      entry = path / pc;
       return true;
     }
-  catch (runtime_error const & c)
+  catch (logic_error)
     {
-      // This arguably has broken charset handling too...
-      W(F("caught runtime error %s constructing file path for %s")
-        % c.what() % p.string());
+      // do what the above operator/ did, by hand, and then figure out what
+      // sort of diagnostic to issue.
+      utf8 badpth;
+      if (path.empty())
+        badpth = utf8(pc());
+      else
+        badpth = utf8(path.as_internal() + "/" + pc());
+
+      if (!isdir)
+        W(F("skipping file '%s' with unsupported name") % badpth);
+      else if (bookkeeping_path::internal_string_is_bookkeeping_path(badpth))
+        L(FL("ignoring bookkeeping directory '%s'") % badpth);
+      else
+        W(F("skipping directory '%s' with unsupported name") % badpth);
       return false;
     }
 }
 
 static void
-walk_tree_recursive(fs::path const & absolute,
-                    fs::path const & relative,
+walk_tree_recursive(file_path const & path,
                     tree_walker & walker)
 {
-  std::vector<std::pair<fs::path, fs::path> > dirs;
-  fs::directory_iterator ei;
-  for(fs::directory_iterator di(absolute);
-      di != ei; ++di)
-    {
-      fs::path entry = *di;
-      // the fs::native is necessary here, or it will bomb out on any paths
-      // that look at it funny.  (E.g., rcs files with "," in the name.)
-      fs::path rel_entry = relative / fs::path(entry.leaf(), fs::native);
-      rel_entry.normalize();
-
-      if (bookkeeping_path::is_bookkeeping_path(rel_entry.string()))
-        {
-          L(FL("ignoring book keeping entry %s") % rel_entry.string());
-          continue;
-        }
-
-      if (!fs::exists(entry)
-          || di->string() == "."
-          || di->string() == "..")
-        {
-          // ignore
-          continue;
-        }
-      else
-        {
-          if (fs::is_directory(entry))
-            dirs.push_back(std::make_pair(entry, rel_entry));
-          else
-            {
-              file_path p;
-              if (!try_file_pathize(rel_entry, p))
-                continue;
-              walker.visit_file(p);
-            }
-        }
-    }
-  // At this point, the directory iterator has gone out of scope, and its
-  // memory released.  This is important, because it can allocate rather a
+  // Read the directory up front, so that the directory handle is released
+  // before we recurse.  This is important, because it can allocate rather a
   // bit of memory (especially on ReiserFS, see [1]; opendir uses the
   // filesystem's blocksize as a clue how much memory to allocate).  We used
-  // to recurse into subdirectories directly in the loop above; this left
-  // the memory describing _this_ directory pinned on the heap.  Then our
-  // recursive call itself made another recursive call, etc., causing a huge
-  // spike in peak memory.  By splitting the loop in half, we avoid this
-  // problem.
+  // to recurse into subdirectories on the fly; this left the memory
+  // describing _this_ directory pinned on the heap.  Then our recursive
+  // call itself made another recursive call, etc., causing a huge spike in
+  // peak memory.  By splitting the loop in half, we avoid this problem.
   // 
   // [1] http://lkml.org/lkml/2006/2/24/215
-  for (std::vector<std::pair<fs::path, fs::path> >::const_iterator i = dirs.begin();
+  vector<path_component> files, dirs;
+  read_directory(path, files, dirs);
+
+  for (vector<path_component>::const_iterator i = files.begin();
+       i != files.end(); ++i)
+    {
+      file_path entry;
+      if (safe_compose(path, *i, false, entry))
+        walker.visit_file(entry);
+    }
+
+  for (vector<path_component>::const_iterator i = dirs.begin();
        i != dirs.end(); ++i)
     {
-      fs::path const & entry = i->first;
-      fs::path const & rel_entry = i->second;
-      file_path p;
-      if (!try_file_pathize(rel_entry, p))
-        continue;
-      walker.visit_dir(p);
-      walk_tree_recursive(entry, rel_entry, walker);
+      file_path entry;
+      if (safe_compose(path, *i, true, entry))
+        if (walker.visit_dir(entry))
+          walk_tree_recursive(entry, walker);
     }
 }
-
-void
-tree_walker::visit_dir(file_path const & path)
-{
-}
-
 
 // from some (safe) sub-entry of cwd
 void
-walk_tree(file_path const & path,
-          tree_walker & walker,
-          bool require_existing_path)
+walk_tree(file_path const & path, tree_walker & walker)
 {
   if (path.empty())
     {
-      walk_tree_recursive(fs::current_path(), fs::path(), walker);
+      walk_tree_recursive(path, walker);
       return;
     }
 
   switch (get_path_status(path))
     {
     case path::nonexistent:
-      N(!require_existing_path, F("no such file or directory: '%s'") % path);
-      walker.visit_file(path);
+      N(false, F("no such file or directory: '%s'") % path);
       break;
     case path::file:
       walker.visit_file(path);
       break;
     case path::directory:
-      walker.visit_dir(path);
-      walk_tree_recursive(system_path(path).as_external(),
-                          path.as_external(),
-                          walker);
+      if (walker.visit_dir(path))
+        walk_tree_recursive(path, walker);
       break;
     }
+}
+
+bool
+ident_existing_file(file_path const & p, file_id & ident)
+{
+  return ident_existing_file(p, ident, get_path_status(p));
+}
+
+bool
+ident_existing_file(file_path const & p, file_id & ident, path::status status)
+{
+  switch (status)
+    {
+    case path::nonexistent:
+      return false;
+    case path::file:
+      break;
+    case path::directory:
+      W(F("expected file '%s', but it is a directory.") % p);
+      return false;
+    }
+
+  hexenc<id> id;
+  calculate_ident(p, id);
+  ident = file_id(id);
+
+  return true;
+}
+
+void
+calculate_ident(file_path const & file,
+                hexenc<id> & ident)
+{
+  // no conversions necessary, use streaming form
+  // Best to be safe and check it isn't a dir.
+  assert_path_is_file(file);
+  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"), new Botan::Hex_Encoder());
+  Botan::DataSource_Stream infile(file.as_external(), true);
+  p.process_msg(infile);
+
+  ident = hexenc<id>(lowercase(p.read_all_as_string()));
 }
 
 // Local Variables:

@@ -113,6 +113,7 @@
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE"
 				StringPooling="true"
+				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -165,19 +166,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\algolist.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\allocate.cpp"
+				RelativePath="..\botan\alg_id.cpp"
 				>
 			</File>
 			<File
 				RelativePath="..\botan\arc4.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\asn1_alg.cpp"
 				>
 			</File>
 			<File
@@ -193,7 +186,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\asn1_ext.cpp"
+				RelativePath="..\botan\asn1_int.cpp"
 				>
 			</File>
 			<File
@@ -213,10 +206,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\barrett.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\botan\base.cpp"
 				>
 			</File>
@@ -226,10 +215,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\basefilt.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\ber_code.cpp"
 				>
 			</File>
 			<File
@@ -257,6 +242,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\big_rand.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\bit_ops.cpp"
 				>
 			</File>
@@ -277,7 +266,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\certstore.cpp"
+				RelativePath="..\botan\certstor.cpp"
 				>
 			</File>
 			<File
@@ -289,7 +278,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\conf.cpp"
+				RelativePath="..\botan\config.cpp"
 				>
 			</File>
 			<File
@@ -317,7 +306,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\datastor.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\def_alg.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\def_char.cpp"
 				>
 			</File>
 			<File
@@ -329,11 +326,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\defalloc.cpp"
+				RelativePath="..\botan\def_powm.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\der_code.cpp"
+				RelativePath="..\botan\defalloc.cpp"
 				>
 			</File>
 			<File
@@ -361,15 +358,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\dl_cache.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\botan\dl_group.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\dl_param.cpp"
 				>
 			</File>
 			<File
@@ -449,10 +438,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\fused.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\botan\get_algo.cpp"
 				>
 			</File>
@@ -489,7 +474,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\init.cpp"
+				RelativePath="..\botan\init_def.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\init_opt.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\jacobi.cpp"
 				>
 			</File>
 			<File
@@ -501,11 +494,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\look_pk.cpp"
+				RelativePath="..\botan\libstate.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\lookup.cpp"
+				RelativePath="..\botan\look_pk.cpp"
 				>
 			</File>
 			<File
@@ -529,10 +522,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\mod_exp.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\botan\mode_pad.cpp"
 				>
 			</File>
@@ -541,15 +530,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\modules.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\mp_asm.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\mp_comba.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\mp_core.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\mp_fkmul.cpp"
 				>
 			</File>
 			<File
@@ -561,11 +550,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\mp_mulop.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\mp_numth.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\mp_shift.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\mp_smul.cpp"
+				RelativePath="..\botan\mp_sqr.cpp"
 				>
 			</File>
 			<File
@@ -657,6 +654,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\powm_fw.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\powm_mnt.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\prf_x942.cpp"
 				>
 			</File>
@@ -725,6 +730,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\x509_ext.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\x509_key.cpp"
 				>
 			</File>
@@ -749,6 +758,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\x509stat.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\x509stor.cpp"
 				>
 			</File>
@@ -766,7 +779,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\algolist.h"
+				RelativePath="..\botan\alg_id.h"
 				>
 			</File>
 			<File
@@ -778,7 +791,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\asn1.h"
+				RelativePath="..\botan\asn1_int.h"
 				>
 			</File>
 			<File
@@ -787,10 +800,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\asn1_oid.h"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\barrett.h"
 				>
 			</File>
 			<File
@@ -834,6 +843,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\build.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\cbc.h"
 				>
 			</File>
@@ -847,10 +860,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\charset.h"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\conf.h"
 				>
 			</File>
 			<File
@@ -882,7 +891,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\def_eng.h"
+				RelativePath="..\botan\datastor.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\def_char.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\def_powm.h"
 				>
 			</File>
 			<File
@@ -906,7 +923,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\dl_param.h"
+				RelativePath="..\botan\dl_group.h"
 				>
 			</File>
 			<File
@@ -927,6 +944,10 @@
 			</File>
 			<File
 				RelativePath="..\botan\emsa.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\eng_def.h"
 				>
 			</File>
 			<File
@@ -998,6 +1019,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\libstate.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\look_add.h"
 				>
 			</File>
@@ -1026,10 +1051,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\mod_exp.h"
-				>
-			</File>
-			<File
 				RelativePath="..\botan\mode_pad.h"
 				>
 			</File>
@@ -1038,11 +1059,19 @@
 				>
 			</File>
 			<File
-				RelativePath="..\botan\mp_core.h"
+				RelativePath="..\botan\modules.h"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\mp_madd.h"
+				RelativePath="..\botan\mp_asm.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\mp_asmi.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\mp_core.h"
 				>
 			</File>
 			<File
@@ -1067,10 +1096,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\out_buf.h"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\par_hash.h"
 				>
 			</File>
 			<File
@@ -1130,6 +1155,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\pow_mod.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\pubkey.h"
 				>
 			</File>
@@ -1170,6 +1199,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\stl_util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\symkey.h"
 				>
 			</File>
@@ -1202,6 +1235,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\x509_ext.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\x509_key.h"
 				>
 			</File>
@@ -1214,15 +1251,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\x509find.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\x509self.h"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\x509stor.h"
+				RelativePath="..\botan\x509stat.h"
 				>
 			</File>
 			<File
-				RelativePath="..\botan\x919_mac.h"
+				RelativePath="..\botan\x509stor.h"
 				>
 			</File>
 			<File

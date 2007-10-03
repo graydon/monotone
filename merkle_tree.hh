@@ -11,15 +11,14 @@
 // PURPOSE.
 
 #include <map>
-#include <string>
+#include <set>
 
+#include <boost/shared_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
 
-#include "app_state.hh"
-#include "numeric_vocab.hh"
+#include "vector.hh"
 #include "vocab.hh"
 #include "transforms.hh"
-//#include <tr1/unordered_map>
 #include "hash_map.hh"
 
 // This file contains data structures and functions for managing merkle
@@ -91,23 +90,6 @@ struct merkle_node
 
 typedef boost::shared_ptr<merkle_node> merkle_ptr;
 
-//typedef std::map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
-/*
-namespace std {
-  namespace tr1 {
-    template<>
-    struct hash<std::pair<prefix, size_t> >
-        : public std::unary_function<std::pair<prefix, size_t>, std::size_t> {
-      hash<string> h;
-      hash<size_t> t;
-      std::size_t operator()(std::pair<prefix, size_t> const & val) const {
-        return h(val.first()) + t(val.second);
-      }
-    };
-  }
-}
-typedef std::tr1::unordered_map<std::pair<prefix,size_t>, merkle_ptr> merkle_table;
-*/
 typedef std::pair<prefix,size_t> merkle_node_id;
 namespace hashmap {
   template<>

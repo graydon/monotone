@@ -10,9 +10,12 @@ names = {"_mtn", "_mtN", "_mTn", "_Mtn", "_MTn", "_MtN", "_mTN", "_MTN"}
 -- bookkeeping files are an error for add
 for _,i in pairs(names) do if not exists(i) then writefile(i) end end
 for _,i in pairs(names) do
-  check(mtn("add", i), 1, false, false)
+  check(mtn("add", i), 1, false, true)
+  check(qgrep(i, "stderr"))
 end
-check(mtn("ls", "known"), 0)
+check(mtn("ls", "known"), 0, true, false)
+check(grep("-qi", "_mtn", "stdout"), 1)
+
 for _,i in pairs(names) do remove(i) end
 
 -- run setup again, because we've removed our bookkeeping dir.
@@ -25,9 +28,12 @@ for _,i in pairs(names) do
   writefile(i.."/foo", "")
 end
 for _,i in pairs(names) do
-  check(mtn("add", i), 1, false, false)
+  check(mtn("add", i), 1, false, true)
+  check(qgrep(i, "stderr"))
 end
-check(mtn("ls", "known"), 0)
+check(mtn("ls", "known"), 0, true, false)
+check(grep("-qi", "_mtn", "stdout"), 1)
+
 for _,i in pairs(names) do remove(i) end
 
 -- just to make sure, check that it's not only add that fails, if it somehow

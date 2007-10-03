@@ -12,9 +12,8 @@
 
 #include <functional>
 #include <numeric>
-#include <vector>
+#include "vector.hh"
 
-#include <iostream>
 
 // this is a map that works by storing a sorted vector and doing binary
 // search.  for maps that are filled once and then used many times, it is

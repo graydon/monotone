@@ -11,14 +11,16 @@
 // the only .cc file that depends on the revision/full_revision header files,
 // which change constantly.
 
-#include "config.h"
 
+#include "base.hh"
 #include <iostream>
 #include <sstream>
 
 #include <boost/version.hpp>
 #include <boost/config.hpp>
 
+#include "app_state.hh"
+#include "cmd.hh"
 #include "platform.hh"
 #include "mt_version.hh"
 #include "package_revision.h"
@@ -26,9 +28,24 @@
 #include "sanity.hh"
 
 using std::cout;
-using std::endl;
 using std::ostringstream;
 using std::string;
+
+CMD(version, "version", "", CMD_REF(informative), "",
+    N_("Shows the program version"),
+    "",
+    options::opts::full)
+{
+  N(args.size() == 0,
+    F("no arguments allowed"));
+
+  string version;
+  if (app.opts.full)
+    get_full_version(version);
+  else
+    get_version(version);
+  cout << version << '\n';
+}
 
 void
 get_version(string & out)
@@ -42,7 +59,7 @@ print_version()
 {
   string s;
   get_version(s);
-  cout << s << endl;
+  cout << s << '\n';
 }
 
 void
@@ -51,7 +68,7 @@ get_full_version(string & out)
   ostringstream oss;
   string s;
   get_version(s);
-  oss << s << "\n";
+  oss << s << '\n';
   get_system_flavour(s);
   oss << F("Running on          : %s\n"
            "C++ compiler        : %s\n"
@@ -72,7 +89,7 @@ print_full_version()
 {
   string s;
   get_full_version(s);
-  cout << s << endl;
+  cout << s << '\n';
 }
 
 // Local Variables:

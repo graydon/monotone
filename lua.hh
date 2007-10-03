@@ -7,7 +7,6 @@
 
 #include <map>
 #include <set>
-#include <string>
 
 struct lua_State;
 
@@ -57,18 +56,18 @@ Lua
   Lua & push_bool(bool b);
   Lua & push_nil();
   Lua & push_table();
+  Lua & set_field(std::string const & key, int idx = -2);
   Lua & set_table(int idx = -3);
   Lua & call(int in, int out);
   Lua & pop(int count = 1);
   Lua & func(std::string const & fname);
-  Lua & loadstring(std::string const & str, std::string const & identity);
-  Lua & loadfile(std::string const & filename);
+  Lua & loadstring(char const * str, char const * identity);
+  Lua & loadfile(char const * filename);
 };
 
-bool run_string(lua_State * st,
-                std::string const &str,
-                std::string const & identity);
-bool run_file(lua_State * st, std::string const &filename);
+bool run_string(lua_State * st, char const * str, char const * identity);
+bool run_file(lua_State * st, char const * filename);
+void run_directory(lua_State * st, char const * dirname, char const * pattern);
 void add_functions(lua_State * st);
 
 namespace luaext

@@ -1,5 +1,8 @@
 
 mtn_setup()
+save_env()
+
+unset_env("SSH_AUTH_SOCK")
 
 check(get("persist.lua"))
 
@@ -19,3 +22,5 @@ check(qgrep("branch", "stdout"))
 check(qgrep("author", "stdout"))
 check(qgrep("date", "stdout"))
 check(qgrep("changelog", "stdout"))
+
+restore_env()

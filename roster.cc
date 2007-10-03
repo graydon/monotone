@@ -7,11 +7,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <stack>
 #include <set>
-#include <string>
-#include <vector>
+#include "vector.hh"
 #include <sstream>
 
 #include "app_state.hh"
@@ -23,13 +23,12 @@
 #include "vocab.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
-#include "localized_file_io.hh"
+#include "lexical_cast.hh"
+#include "file_io.hh"
 #include "parallel_iter.hh"
 #include "restrictions.hh"
 #include "safe_map.hh"
 #include "ui.hh"
-
-#include <boost/lexical_cast.hpp>
 
 using std::inserter;
 using std::make_pair;
@@ -53,7 +52,7 @@ dump(full_attr_map_t const & val, string & out)
   ostringstream oss;
   for (full_attr_map_t::const_iterator i = val.begin(); i != val.end(); ++i)
     oss << "attr key: '" << i->first << "'\n"
-        << "  status: " << (i->second.first ? "live" : "dead") << "\n"
+        << "  status: " << (i->second.first ? "live" : "dead") << '\n'
         << "   value: '" << i->second.second << "'\n";
   out = oss.str();
 }
@@ -78,17 +77,17 @@ dump(marking_t const & marking, string & out)
 {
   ostringstream oss;
   string tmp;
-  oss << "birth_revision: " << marking.birth_revision << "\n";
+  oss << "birth_revision: " << marking.birth_revision << '\n';
   dump(marking.parent_name, tmp);
-  oss << "parent_name: " << tmp << "\n";
+  oss << "parent_name: " << tmp << '\n';
   dump(marking.file_content, tmp);
-  oss << "file_content: " << tmp << "\n";
+  oss << "file_content: " << tmp << '\n';
   oss << "attrs (number: " << marking.attrs.size() << "):\n";
   for (map<attr_key, set<revision_id> >::const_iterator
          i = marking.attrs.begin(); i != marking.attrs.end(); ++i)
     {
       dump(i->second, tmp);
-      oss << "  " << i->first << ": " << tmp << "\n";
+      oss << "  " << i->first << ": " << tmp << '\n';
     }
   out = oss.str();
 }
@@ -105,7 +104,7 @@ dump(marking_map const & markings, string & out)
       string marking_str, indented_marking_str;
       dump(i->second, marking_str);
       prefix_lines_with("    ", marking_str, indented_marking_str);
-      oss << indented_marking_str << "\n";
+      oss << indented_marking_str << '\n';
     }
   out = oss.str();
 }
@@ -119,25 +118,24 @@ namespace
   //   it's an id you use for the parent of the root, or of any node which
   //   is detached.
   //
-  // - the_null_component is a path_component. It is the *name* of the root
-  //   node. Its string representation is "", the empty string.
+  // - the root node has a real node id, just like any other directory.
   //
-  // - The split_path corresponding to the_null_node is [], the empty vector.
+  // - the path_component whose string representation is "", the empty
+  //   string, is the *name* of the root node.  write it as
+  //   path_component() and test for it with component.empty().
   //
-  // - The split_path corresponding to the root node is [""], the 1-element
-  //   vector containing the_null_component.
+  // - similarly, the file_path whose string representation is "" also
+  //   names the root node.  write it as file_path() and test for it
+  //   with path.empty().
   //
-  // - The split_path corresponding to foo/bar is ["", "foo", "bar"].
-  //
-  // - The only legal one-element split_path is [""], referring to the
-  //   root node.
+  // - there is no file_path or path_component corresponding to the_null_node.
   //
   // We do this in order to support the notion of moving the root directory
-  // around, or applying attributes to the root directory (though we will
-  // not support moving the root at this time, since we haven't worked out
-  // all the UI implications yet).
-  //
-
+  // around, or applying attributes to the root directory.  Note that the
+  // only supported way to move the root is with the 'pivot_root' operation,
+  // which atomically turns the root directory into a subdirectory and some
+  // existing subdirectory into the root directory.  This is an UI constraint,
+  // not a constraint at this level.
 
   const node_id first_node = 1;
   const node_id first_temp_node = widen<node_id, int>(1) << (sizeof(node_id) * 8 - 1);
@@ -151,7 +149,7 @@ namespace
 node::node(node_id i)
   : self(i),
     parent(the_null_node),
-    name(the_null_component)
+    name()
 {
 }
 
@@ -159,7 +157,7 @@ node::node(node_id i)
 node::node()
   : self(the_null_node),
     parent(the_null_node),
-    name(the_null_component)
+    name()
 {
 }
 
@@ -193,7 +191,7 @@ void
 dir_node::attach_child(path_component const & pc, node_t child)
 {
   I(null_node(child->parent));
-  I(null_name(child->name));
+  I(child->name.empty());
   safe_insert(children, make_pair(pc, child));
   child->parent = this->self;
   child->name = pc;
@@ -205,7 +203,7 @@ dir_node::detach_child(path_component const & pc)
 {
   node_t n = get_child(pc);
   n->parent = the_null_node;
-  n->name = the_null_component;
+  n->name = path_component();
   safe_erase(children, pc);
   return n;
 }
@@ -253,25 +251,25 @@ dump(node_t const & n, string & out)
   string name;
   dump(n->name, name);
   oss << "address: " << n << " (uses: " << n.use_count() << ")\n"
-      << "self: " << n->self << "\n"
-      << "parent: " << n->parent << "\n"
-      << "name: " << name << "\n";
+      << "self: " << n->self << '\n'
+      << "parent: " << n->parent << '\n'
+      << "name: " << name << '\n';
   string attr_map_s;
   dump(n->attrs, attr_map_s);
   oss << "attrs:\n" << attr_map_s;
   oss << "type: ";
   if (is_file_t(n))
     oss << "file\n"
-        << "content: " << downcast_to_file_t(n)->content << "\n";
+        << "content: " << downcast_to_file_t(n)->content << '\n';
   else
     {
       oss << "dir\n";
       dir_map const & c = downcast_to_dir_t(n)->children;
-      oss << "children: " << c.size() << "\n";
+      oss << "children: " << c.size() << '\n';
       for (dir_map::const_iterator i = c.begin(); i != c.end(); ++i)
         {
           dump(i->first, name);
-          oss << "  " << name << " -> " << i->second << "\n";
+          oss << "  " << name << " -> " << i->second << '\n';
         }
     }
   out = oss.str();
@@ -287,7 +285,7 @@ roster_t::do_deep_copy_from(roster_t const & other)
   I(nodes.empty());
   for (node_map::const_iterator i = other.nodes.begin(); i != other.nodes.end();
        ++i)
-    safe_insert(nodes, make_pair(i->first, i->second->clone()));
+    hinted_safe_insert(nodes, nodes.end(), make_pair(i->first, i->second->clone()));
   for (node_map::iterator i = nodes.begin(); i != nodes.end(); ++i)
     if (is_dir_t(i->second))
       {
@@ -319,12 +317,14 @@ dfs_iter
 {
 
   dir_t root;
+  string curr_path;
   bool return_root;
+  bool track_path;
   stack< pair<dir_t, dir_map::const_iterator> > stk;
 
 
-  dfs_iter(dir_t r)
-    : root(r), return_root(root)
+  dfs_iter(dir_t r, bool t = false)
+    : root(r), return_root(root), track_path(t)
   {
     if (root && !root->children.empty())
       stk.push(make_pair(root, root->children.begin()));
@@ -334,6 +334,13 @@ dfs_iter
   bool finished() const
   {
     return (!return_root) && stk.empty();
+  }
+
+
+  string const & path() const
+  {
+    I(track_path);
+    return curr_path;
   }
 
 
@@ -349,6 +356,33 @@ dfs_iter
       }
   }
 
+private:
+  void advance_top()
+  {
+    int prevsize = 0;
+    int nextsize = 0;
+    if (track_path)
+      {
+        prevsize = stk.top().second->first().size();
+      }
+
+    ++stk.top().second;
+
+    if (track_path)
+      {
+        if (stk.top().second != stk.top().first->children.end())
+          nextsize = stk.top().second->first().size();
+
+        int tmpsize = curr_path.size()-prevsize;
+        I(tmpsize >= 0);
+        curr_path.resize(tmpsize);
+        if (nextsize != 0)
+          curr_path.insert(curr_path.end(),
+                           stk.top().second->first().begin(),
+                           stk.top().second->first().end());
+      }
+  }
+public:
 
   void operator++()
   {
@@ -357,6 +391,8 @@ dfs_iter
     if (return_root)
       {
         return_root = false;
+        if (!stk.empty())
+          curr_path = stk.top().second->first();
         return;
       }
 
@@ -367,16 +403,32 @@ dfs_iter
       {
         dir_t dtmp = downcast_to_dir_t(ntmp);
         stk.push(make_pair(dtmp, dtmp->children.begin()));
+
+        if (track_path)
+          {
+            if (!curr_path.empty())
+              curr_path += "/";
+            if (!dtmp->children.empty())
+              curr_path += dtmp->children.begin()->first();
+          }
       }
     else
-      ++(stk.top().second);
+      {
+        advance_top();
+      }
 
     while (!stk.empty()
            && stk.top().second == stk.top().first->children.end())
       {
         stk.pop();
         if (!stk.empty())
-          ++stk.top().second;
+          {
+            if (track_path)
+              {
+                curr_path.resize(curr_path.size()-1);
+              }
+            advance_top();
+          }
       }
   }
 };
@@ -398,7 +450,8 @@ same_type(node_t a, node_t b)
 
 inline bool
 shallow_equal(node_t a, node_t b,
-              bool shallow_compare_dir_children)
+              bool shallow_compare_dir_children,
+              bool compare_file_contents)
 {
   if (a->self != b->self)
     return false;
@@ -417,10 +470,13 @@ shallow_equal(node_t a, node_t b,
 
   if (is_file_t(a))
     {
-      file_t fa = downcast_to_file_t(a);
-      file_t fb = downcast_to_file_t(b);
-      if (!(fa->content == fb->content))
-        return false;
+      if (compare_file_contents)
+        {
+          file_t fa = downcast_to_file_t(a);
+          file_t fb = downcast_to_file_t(b);
+          if (!(fa->content == fb->content))
+            return false;
+        }
     }
   else
     {
@@ -487,29 +543,67 @@ roster_t::operator==(roster_t const & other) const
   return true;
 }
 
-
-node_t
-roster_t::get_node(split_path const & sp) const
+// This is exactly the same as roster_t::operator== (and the same FIXME
+// above applies) except that it does not compare file contents.
+bool
+equal_shapes(roster_t const & a, roster_t const & b)
 {
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
-
-  MM(sp);
-  MM(*this);
-
-  I(has_root());
-
-  if (dirname.empty())
+  node_map::const_iterator i = a.nodes.begin(), j = b.nodes.begin();
+  while (i != a.nodes.end() && j != b.nodes.end())
     {
-      I(null_name(basename));
-      return root_dir;
+      if (i->first != j->first)
+        return false;
+      if (!shallow_equal(i->second, j->second, true, false))
+        return false;
+      ++i;
+      ++j;
     }
 
-  dir_t d = root_dir;
-  for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
-    d = downcast_to_dir_t(d->get_child(*i));
-  return d->get_child(basename);
+  if (i != a.nodes.end() || j != b.nodes.end())
+    return false;
+
+  dfs_iter p(a.root_dir), q(b.root_dir);
+  while (! (p.finished() || q.finished()))
+    {
+      if (!shallow_equal(*p, *q, true, false))
+        return false;
+      ++p;
+      ++q;
+    }
+
+  if (!(p.finished() && q.finished()))
+    return false;
+
+  return true;
+}
+
+node_t
+roster_t::get_node(file_path const & p) const
+{
+  MM(*this);
+  MM(p);
+
+  I(has_root());
+  if (p.empty())
+    return root_dir;
+
+  dir_t nd = root_dir;
+  string const & pi = p.as_internal();
+  string::size_type start = 0, stop;
+  for (;;)
+    {
+      stop = pi.find('/', start);
+      path_component pc(pi, start, (stop == string::npos
+                                    ? stop : stop - start));
+      dir_map::const_iterator child = nd->children.find(pc);
+
+      I(child != nd->children.end());
+      if (stop == string::npos)
+        return child->second;
+
+      start = stop + 1;
+      nd = downcast_to_dir_t(child->second);
+    }
 }
 
 bool
@@ -525,36 +619,37 @@ roster_t::is_root(node_id n) const
 }
 
 bool
-roster_t::has_node(split_path const & sp) const
+roster_t::has_node(file_path const & p) const
 {
-  split_path dirname;
-  path_component basename;
-  dirname_basename(sp, dirname, basename);
+  MM(*this);
+  MM(p);
 
-  if (dirname.empty())
-    {
-      I(null_name(basename));
-      return has_root();
-    }
-
-  // If we have no root, we *definitely* don't have a non-root path
   if (!has_root())
     return false;
-
-  dir_t d = root_dir;
-  for (split_path::const_iterator i = dirname.begin()+1; i != dirname.end(); ++i)
+  if (p.empty())
+    return true;
+  
+  dir_t nd = root_dir;
+  string const & pi = p.as_internal();
+  string::size_type start = 0, stop;
+  for (;;)
     {
-      if (d->children.find(*i) == d->children.end())
+      stop = pi.find('/', start);
+      path_component pc(pi, start, (stop == string::npos
+                                    ? stop : stop - start));
+      dir_map::const_iterator child = nd->children.find(pc);
+
+      if (child == nd->children.end())
         return false;
-      node_t child = d->get_child(*i);
-      if (!is_dir_t(child))
+      if (stop == string::npos)
+        return true;
+      if (!is_dir_t(child->second))
         return false;
-      d = downcast_to_dir_t(child);
+
+      start = stop + 1;
+      nd = downcast_to_dir_t(child->second);
     }
-  return d->children.find(basename) != d->children.end();
 }
-
-
 
 node_t
 roster_t::get_node(node_id nid) const
@@ -564,17 +659,42 @@ roster_t::get_node(node_id nid) const
 
 
 void
-roster_t::get_name(node_id nid, split_path & sp) const
+roster_t::get_name(node_id nid, file_path & p) const
 {
   I(!null_node(nid));
-  sp.clear();
-  while (!null_node(nid))
+
+  stack<node_t> sp;
+  size_t size = 0;
+
+  while (nid != root_dir->self)
     {
       node_t n = get_node(nid);
-      sp.push_back(n->name);
+      sp.push(n);
+      size += n->name().length() + 1;
       nid = n->parent;
     }
-  reverse(sp.begin(), sp.end());
+
+  if (size == 0)
+    {
+      p.clear();
+      return;
+    }
+
+  I(!bookkeeping_path::internal_string_is_bookkeeping_path(utf8(sp.top()->name())));
+
+  string tmp;
+  tmp.reserve(size);
+
+  for (;;)
+    {
+      tmp += sp.top()->name();
+      sp.pop();
+      if (sp.empty())
+        break;
+      tmp += "/";
+    }
+
+  p = file_path(tmp, 0, string::npos);  // short circuit constructor
 }
 
 
@@ -603,20 +723,20 @@ roster_t::replace_node_id(node_id from, node_id to)
 // this records the old location into the old_locations member, to prevent the
 // same node from being re-attached at the same place.
 node_id
-roster_t::detach_node(split_path const & pth)
+roster_t::detach_node(file_path const & p)
 {
-  split_path dirname;
+  file_path dirname;
   path_component basename;
-  dirname_basename(pth, dirname, basename);
+  p.dirname_basename(dirname, basename);
 
   I(has_root());
-  if (dirname.empty())
+  if (basename.empty())
     {
       // detaching the root dir
-      I(null_name(basename));
+      I(dirname.empty());
       node_id root_id = root_dir->self;
-      safe_insert(old_locations,
-                  make_pair(root_id, make_pair(root_dir->parent, root_dir->name)));
+      safe_insert(old_locations, make_pair(root_id, make_pair(root_dir->parent,
+                                                              root_dir->name)));
       // clear ("reset") the root_dir shared_pointer
       root_dir.reset();
       I(!has_root());
@@ -638,7 +758,7 @@ roster_t::detach_node(node_id nid)
   if (null_node(n->parent))
     {
       // detaching the root dir
-      I(null_name(n->name));
+      I(n->name.empty());
       safe_insert(old_locations,
                   make_pair(nid, make_pair(n->parent, n->name)));
       root_dir.reset();
@@ -660,7 +780,7 @@ roster_t::drop_detached_node(node_id nid)
   // ensure the node is already detached
   node_t n = get_node(nid);
   I(null_node(n->parent));
-  I(null_name(n->name));
+  I(n->name.empty());
   // if it's a dir, make sure it's empty
   if (is_dir_t(n))
     I(downcast_to_dir_t(n)->children.empty());
@@ -713,19 +833,19 @@ roster_t::create_file_node(file_id const & content, node_id nid)
 }
 
 void
-roster_t::attach_node(node_id nid, split_path const & dst)
+roster_t::attach_node(node_id nid, file_path const & p)
 {
-  split_path dirname;
-  path_component basename;
-  dirname_basename(dst, dirname, basename);
-
-  MM(dst);
-
-  if (dirname.empty())
+  MM(p);
+  if (p.empty())
     // attaching the root node
-    attach_node(nid, the_null_node, basename);
+    attach_node(nid, the_null_node, path_component());
   else
-    attach_node(nid, get_node(dirname)->self, basename);
+    {
+      file_path dir;
+      path_component base;
+      p.dirname_basename(dir, base);
+      attach_node(nid, get_node(dir)->self, base);
+    }
 }
 
 void
@@ -736,18 +856,18 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
   I(!null_node(n->self));
   // ensure the node is already detached (as best one can)
   I(null_node(n->parent));
-  I(null_name(n->name));
+  I(n->name.empty());
 
   // this iterator might point to old_locations.end(), because old_locations
   // only includes entries for renames, not new nodes
   map<node_id, pair<node_id, path_component> >::iterator
     i = old_locations.find(nid);
 
-  if (null_node(parent) || null_name(name))
+  if (null_node(parent) || name.empty())
     {
-      I(null_node(parent) && null_name(name));
+      I(null_node(parent) && name.empty());
       I(null_node(n->parent));
-      I(null_name(n->name));
+      I(n->name.empty());
       I(!has_root());
       root_dir = downcast_to_dir_t(n);
       I(i == old_locations.end() || i->second != make_pair(root_dir->parent,
@@ -765,7 +885,7 @@ roster_t::attach_node(node_id nid, node_id parent, path_component name)
 }
 
 void
-roster_t::apply_delta(split_path const & pth,
+roster_t::apply_delta(file_path const & pth,
                       file_id const & old_id,
                       file_id const & new_id)
 {
@@ -786,7 +906,7 @@ roster_t::set_content(node_id nid, file_id const & new_id)
 
 
 void
-roster_t::clear_attr(split_path const & pth,
+roster_t::clear_attr(file_path const & pth,
                      attr_key const & name)
 {
   set_attr(pth, name, make_pair(false, attr_value()));
@@ -801,7 +921,7 @@ roster_t::erase_attr(node_id nid,
 }
 
 void
-roster_t::set_attr(split_path const & pth,
+roster_t::set_attr(file_path const & pth,
                    attr_key const & name,
                    attr_value const & val)
 {
@@ -810,7 +930,7 @@ roster_t::set_attr(split_path const & pth,
 
 
 void
-roster_t::set_attr(split_path const & pth,
+roster_t::set_attr(file_path const & pth,
                    attr_key const & name,
                    pair<bool, attr_value> const & val)
 {
@@ -840,7 +960,7 @@ roster_t::set_attr_unknown_to_dead_ok(node_id nid,
 }
 
 bool
-roster_t::get_attr(split_path const & pth,
+roster_t::get_attr(file_path const & pth,
                    attr_key const & name,
                    attr_value & val) const
 {
@@ -862,13 +982,13 @@ dump(roster_t const & val, string & out)
 {
   ostringstream oss;
   if (val.root_dir)
-    oss << "Root node: " << val.root_dir->self << "\n"
-        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << "\n";
+    oss << "Root node: " << val.root_dir->self << '\n'
+        << "   at " << val.root_dir << ", uses: " << val.root_dir.use_count() << '\n';
   else
     oss << "root dir is NULL\n";
   for (node_map::const_iterator i = val.nodes.begin(); i != val.nodes.end(); ++i)
     {
-      oss << "\nNode " << i->first << "\n";
+      oss << "\nNode " << i->first << '\n';
       string node_s;
       dump(i->second, node_s);
       oss << node_s;
@@ -896,14 +1016,14 @@ roster_t::check_sane(bool temp_nodes_ok) const
       I(n->self == nid);
       if (is_dir_t(n))
         {
-          if (null_name(n->name) || null_node(n->parent))
-            I(null_name(n->name) && null_node(n->parent));
+          if (n->name.empty() || null_node(n->parent))
+            I(n->name.empty() && null_node(n->parent));
           else
-            I(!null_name(n->name) && !null_node(n->parent));
+            I(!n->name.empty() && !null_node(n->parent));
         }
       else
         {
-          I(!null_name(n->name) && !null_node(n->parent));
+          I(!n->name.empty() && !null_node(n->parent));
           I(!null_id(downcast_to_file_t(n)->content));
         }
       for (full_attr_map_t::const_iterator i = n->attrs.begin(); i != n->attrs.end(); ++i)
@@ -981,9 +1101,9 @@ editable_roster_base::editable_roster_base(roster_t & r, node_id_source & nis)
 {}
 
 node_id
-editable_roster_base::detach_node(split_path const & src)
+editable_roster_base::detach_node(file_path const & src)
 {
-  // L(FL("detach_node('%s')") % file_path(src));
+  // L(FL("detach_node('%s')") % src);
   return r.detach_node(src);
 }
 
@@ -1013,37 +1133,37 @@ editable_roster_base::create_file_node(file_id const & content)
 }
 
 void
-editable_roster_base::attach_node(node_id nid, split_path const & dst)
+editable_roster_base::attach_node(node_id nid, file_path const & dst)
 {
-  // L(FL("attach_node(%d, '%s')") % nid % file_path(dst));
+  // L(FL("attach_node(%d, '%s')") % nid % dst);
   MM(dst);
   MM(this->r);
   r.attach_node(nid, dst);
 }
 
 void
-editable_roster_base::apply_delta(split_path const & pth,
+editable_roster_base::apply_delta(file_path const & pth,
                                   file_id const & old_id,
                                   file_id const & new_id)
 {
-  // L(FL("clear_attr('%s', '%s', '%s')") % file_path(pth) % old_id % new_id);
+  // L(FL("apply_delta('%s', '%s', '%s')") % pth % old_id % new_id);
   r.apply_delta(pth, old_id, new_id);
 }
 
 void
-editable_roster_base::clear_attr(split_path const & pth,
+editable_roster_base::clear_attr(file_path const & pth,
                                  attr_key const & name)
 {
-  // L(FL("clear_attr('%s', '%s')") % file_path(pth) % name);
+  // L(FL("clear_attr('%s', '%s')") % pth % name);
   r.clear_attr(pth, name);
 }
 
 void
-editable_roster_base::set_attr(split_path const & pth,
+editable_roster_base::set_attr(file_path const & pth,
                                attr_key const & name,
                                attr_value const & val)
 {
-  // L(FL("set_attr('%s', '%s', '%s')") % file_path(pth) % name % val);
+  // L(FL("set_attr('%s', '%s', '%s')") % pth % name % val);
   r.set_attr(pth, name, val);
 }
 
@@ -1091,37 +1211,37 @@ namespace
   };
 
 
-  // This handles all the stuff in a_new.
-  void unify_roster_oneway(roster_t & a, set<node_id> & a_new,
-                           roster_t & b, set<node_id> & b_new,
-                           node_id_source & nis)
+  void union_new_nodes(roster_t & a, set<node_id> & a_new,
+                       roster_t & b, set<node_id> & b_new,
+                       node_id_source & nis)
   {
+    // We must not replace a node whose id is in both a_new and b_new
+    // with a new temp id that is already in either set.  b_new is
+    // destructively modified, so record the union of both sets now.
+    set<node_id> all_new_nids;
+    std::set_union(a_new.begin(), a_new.end(),
+                   b_new.begin(), b_new.end(),
+                   std::inserter(all_new_nids, all_new_nids.begin()));
+
+    // First identify nodes that are new in A but not in B, or new in both.
     for (set<node_id>::const_iterator i = a_new.begin(); i != a_new.end(); ++i)
       {
         node_id const aid = *i;
-        split_path sp;
+        file_path p;
         // SPEEDUP?: climb out only so far as is necessary to find a shared
         // id?  possibly faster (since usually will get a hit immediately),
         // but may not be worth the effort (since it doesn't take that long to
         // get out in any case)
-        a.get_name(aid, sp);
-        node_id bid = b.get_node(sp)->self;
-        if (temp_node(bid))
+        a.get_name(aid, p);
+        node_id bid = b.get_node(p)->self;
+        if (b_new.find(bid) != b_new.end())
           {
-            node_id new_nid = nis.next();
-            // the node_id_source provided to this function must only generate
-            // true node ids, because this code was written with the
-            // assumption that only true nids would come in or go out, and
-            // temp ids are used as an intermediate stage to indicate nodes
-            // that need true ids installed.
-            // FIXME: make everything work correctly when this node_id_source
-            // returns temp ids.  This is needed for workspace merge support.
-            // FIXME: having done this, add a test in database_check.cc that
-            // for each revision, generates that rev's roster from scratch,
-            // and compares it to the one stored in the db.  (Do the
-            // comparison using something like equal_up_to_renumbering, except
-            // should say if (!temp_node(a) && !temp_node(b)) I(a == b).)
-            I(!temp_node(new_nid));
+            I(temp_node(bid));
+            node_id new_nid;
+            do
+              new_nid = nis.next();
+            while (all_new_nids.find(new_nid) != all_new_nids.end());
+
             a.replace_node_id(aid, new_nid);
             b.replace_node_id(bid, new_nid);
             b_new.erase(bid);
@@ -1131,16 +1251,30 @@ namespace
             a.replace_node_id(aid, bid);
           }
       }
-  }
 
+    // Now identify nodes that are new in B but not A.
+    for (set<node_id>::const_iterator i = b_new.begin(); i != b_new.end(); i++)
+      {
+        node_id const bid = *i;
+        file_path p;
+        // SPEEDUP?: climb out only so far as is necessary to find a shared
+        // id?  possibly faster (since usually will get a hit immediately),
+        // but may not be worth the effort (since it doesn't take that long to
+        // get out in any case)
+        b.get_name(bid, p);
+        node_id aid = a.get_node(p)->self;
+        I(a_new.find(aid) == a_new.end());
+        b.replace_node_id(bid, aid);
+      }
+  }
 
   void
   union_corpses(roster_t & left, roster_t & right)
   {
     // left and right should be equal, except that each may have some attr
     // corpses that the other does not
-    map<node_id, node_t>::const_iterator left_i = left.all_nodes().begin();
-    map<node_id, node_t>::const_iterator right_i = right.all_nodes().begin();
+    node_map::const_iterator left_i = left.all_nodes().begin();
+    node_map::const_iterator right_i = right.all_nodes().begin();
     while (left_i != left.all_nodes().end() || right_i != right.all_nodes().end())
       {
         I(left_i->second->self == right_i->second->self);
@@ -1212,8 +1346,7 @@ namespace
     // "add_file", then this really is a new id; both rosters will have temp
     // ids, and we replace both of them with a newly allocated id.  After
     // this, the two rosters will have identical node_ids at every path.
-    unify_roster_oneway(left, left_new, right, right_new, nis);
-    unify_roster_oneway(right, right_new, left, left_new, nis);
+    union_new_nodes(left, left_new, right, right_new, nis);
 
     // The other thing we need to fix up is attr corpses.  Live attrs are made
     // identical by the csets; but if, say, on one side of a fork an attr is
@@ -1392,10 +1525,10 @@ namespace
 
   void
   mark_merged_node(marking_t const & left_marking,
-                   set<revision_id> left_uncommon_ancestors,
+                   set<revision_id> const & left_uncommon_ancestors,
                    node_t ln,
                    marking_t const & right_marking,
-                   set<revision_id> right_uncommon_ancestors,
+                   set<revision_id> const & right_uncommon_ancestors,
                    node_t rn,
                    revision_id const & new_rid,
                    node_t n,
@@ -1478,73 +1611,74 @@ namespace
       I(n->attrs.find(i->first) != n->attrs.end());
   }
 
+} // anonymous namespace
 
-  // This function is also responsible for verifying ancestry invariants --
-  // those invariants on a roster that involve the structure of the roster's
-  // parents, rather than just the structure of the roster itself.
-  void
-  mark_merge_roster(roster_t const & left_roster,
-                    marking_map const & left_markings,
-                    set<revision_id> const & left_uncommon_ancestors,
-                    roster_t const & right_roster,
-                    marking_map const & right_markings,
-                    set<revision_id> const & right_uncommon_ancestors,
-                    revision_id const & new_rid,
-                    roster_t const & merge,
-                    marking_map & new_markings)
-  {
-    for (node_map::const_iterator i = merge.all_nodes().begin();
-         i != merge.all_nodes().end(); ++i)
-      {
-        node_t const & n = i->second;
-        // SPEEDUP?: instead of using find repeatedly, iterate everything in
-        // parallel
-        map<node_id, node_t>::const_iterator lni = left_roster.all_nodes().find(i->first);
-        map<node_id, node_t>::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        bool exists_in_left = (lni != left_roster.all_nodes().end());
-        bool exists_in_right = (rni != right_roster.all_nodes().end());
+// This function is also responsible for verifying ancestry invariants --
+// those invariants on a roster that involve the structure of the roster's
+// parents, rather than just the structure of the roster itself.
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings)
+{
+  for (node_map::const_iterator i = merge.all_nodes().begin();
+       i != merge.all_nodes().end(); ++i)
+    {
+      node_t const & n = i->second;
+      node_map::const_iterator lni = left_roster.all_nodes().find(i->first);
+      node_map::const_iterator rni = right_roster.all_nodes().find(i->first);
 
-        marking_t new_marking;
+      bool exists_in_left = (lni != left_roster.all_nodes().end());
+      bool exists_in_right = (rni != right_roster.all_nodes().end());
 
-        if (!exists_in_left && !exists_in_right)
-          mark_new_node(new_rid, n, new_marking);
+      marking_t new_marking;
 
-        else if (!exists_in_left && exists_in_right)
-          {
-            node_t const & right_node = rni->second;
-            marking_t const & right_marking = safe_get(right_markings, n->self);
-            // must be unborn on the left (as opposed to dead)
-            I(right_uncommon_ancestors.find(right_marking.birth_revision)
-              != right_uncommon_ancestors.end());
-            mark_unmerged_node(right_marking, right_node,
-                               new_rid, n, new_marking);
-          }
-        else if (exists_in_left && !exists_in_right)
-          {
-            node_t const & left_node = lni->second;
-            marking_t const & left_marking = safe_get(left_markings, n->self);
-            // must be unborn on the right (as opposed to dead)
-            I(left_uncommon_ancestors.find(left_marking.birth_revision)
-              != left_uncommon_ancestors.end());
-            mark_unmerged_node(left_marking, left_node,
-                               new_rid, n, new_marking);
-          }
-        else
-          {
-            node_t const & left_node = lni->second;
-            node_t const & right_node = rni->second;
-            mark_merged_node(safe_get(left_markings, n->self),
-                             left_uncommon_ancestors, left_node,
-                             safe_get(right_markings, n->self),
-                             right_uncommon_ancestors, right_node,
+      if (!exists_in_left && !exists_in_right)
+        mark_new_node(new_rid, n, new_marking);
+
+      else if (!exists_in_left && exists_in_right)
+        {
+          node_t const & right_node = rni->second;
+          marking_t const & right_marking = safe_get(right_markings, n->self);
+          // must be unborn on the left (as opposed to dead)
+          I(right_uncommon_ancestors.find(right_marking.birth_revision)
+            != right_uncommon_ancestors.end());
+          mark_unmerged_node(right_marking, right_node,
                              new_rid, n, new_marking);
-          }
+        }
+      else if (exists_in_left && !exists_in_right)
+        {
+          node_t const & left_node = lni->second;
+          marking_t const & left_marking = safe_get(left_markings, n->self);
+          // must be unborn on the right (as opposed to dead)
+          I(left_uncommon_ancestors.find(left_marking.birth_revision)
+            != left_uncommon_ancestors.end());
+          mark_unmerged_node(left_marking, left_node,
+                             new_rid, n, new_marking);
+        }
+      else
+        {
+          node_t const & left_node = lni->second;
+          node_t const & right_node = rni->second;
+          mark_merged_node(safe_get(left_markings, n->self),
+                           left_uncommon_ancestors, left_node,
+                           safe_get(right_markings, n->self),
+                           right_uncommon_ancestors, right_node,
+                           new_rid, n, new_marking);
+        }
 
-        safe_insert(new_markings, make_pair(i->first, new_marking));
-      }
-  }
+      safe_insert(new_markings, make_pair(i->first, new_marking));
+    }
+}
 
+namespace {
 
   class editable_roster_for_nonmerge
     : public editable_roster_base
@@ -1557,7 +1691,7 @@ namespace
         rid(rid), markings(markings)
     {}
 
-    virtual node_id detach_node(split_path const & src)
+    virtual node_id detach_node(file_path const & src)
     {
       node_id nid = this->editable_roster_base::detach_node(src);
       marking_map::iterator marking = markings.find(nid);
@@ -1583,7 +1717,7 @@ namespace
       return handle_new(this->editable_roster_base::create_file_node(content));
     }
 
-    virtual void apply_delta(split_path const & pth,
+    virtual void apply_delta(file_path const & pth,
                              file_id const & old_id, file_id const & new_id)
     {
       this->editable_roster_base::apply_delta(pth, old_id, new_id);
@@ -1594,13 +1728,13 @@ namespace
       marking->second.file_content.insert(rid);
     }
 
-    virtual void clear_attr(split_path const & pth, attr_key const & name)
+    virtual void clear_attr(file_path const & pth, attr_key const & name)
     {
       this->editable_roster_base::clear_attr(pth, name);
       handle_attr(pth, name);
     }
 
-    virtual void set_attr(split_path const & pth, attr_key const & name,
+    virtual void set_attr(file_path const & pth, attr_key const & name,
                           attr_value const & val)
     {
       this->editable_roster_base::set_attr(pth, name, val);
@@ -1616,7 +1750,7 @@ namespace
       return nid;
     }
 
-    void handle_attr(split_path const & pth, attr_key const & name)
+    void handle_attr(file_path const & pth, attr_key const & name)
     {
       node_id nid = r.get_node(pth)->self;
       marking_map::iterator marking = markings.find(nid);
@@ -1638,6 +1772,18 @@ namespace
     marking_map & markings;
   };
 
+  // Interface note: make_roster_for_merge and make_roster_for_nonmerge
+  // each exist in two variants:
+  //
+  // 1. A variant that does all of the actual work, taking every single
+  //    relevant base-level data object as a separate argument.  This
+  //    variant is called directly by the unit tests, and also by variant 2.
+  //
+  // 2. A variant that takes a revision object, a revision ID, a database,
+  //    and a node_id_source.  This variant uses those four things to look
+  //    up all of the low-level data required by variant 1, then calls
+  //    variant 1 to get the real work done.  This is the one called by
+  //    (one variant of) make_roster_for_revision.
 
   // yes, this function takes 14 arguments.  I'm very sorry.
   void
@@ -1645,13 +1791,13 @@ namespace
                         roster_t const & left_roster,
                         marking_map const & left_markings,
                         cset const & left_cs,
-                        set<revision_id> left_uncommon_ancestors,
+                        set<revision_id> const & left_uncommon_ancestors,
 
                         revision_id const & right_rid,
                         roster_t const & right_roster,
                         marking_map const & right_markings,
                         cset const & right_cs,
-                        set<revision_id> right_uncommon_ancestors,
+                        set<revision_id> const & right_uncommon_ancestors,
 
                         revision_id const & new_rid,
                         roster_t & new_roster,
@@ -1692,7 +1838,17 @@ namespace
       unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
                     nis);
-      I(new_roster == from_right_r);
+
+      // Kluge: If both csets have no content changes, and the node_id_source
+      // passed to this function is a temp_node_id_source, then we are being
+      // called from get_current_roster_shape, and we should not attempt to
+      // verify that these rosters match as far as content IDs.
+      if (left_cs.deltas_applied.size() == 0
+          && right_cs.deltas_applied.size() == 0
+          && typeid(nis) == typeid(temp_node_id_source))
+        I(equal_shapes(new_roster, from_right_r));
+      else
+        I(new_roster == from_right_r);
     }
 
     // SPEEDUP?: instead of constructing new marking from scratch, track which
@@ -1708,29 +1864,34 @@ namespace
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_merge(revision_id const & left_rid, cset const & left_cs,
-                        revision_id const & right_rid, cset const & right_cs,
-                        revision_id const & new_rid,
+  make_roster_for_merge(revision_t const & rev, revision_id const & new_rid,
                         roster_t & new_roster, marking_map & new_markings,
-                        app_state & app)
+                        database & db, node_id_source & nis)
   {
+    edge_map::const_iterator i = rev.edges.begin();
+    revision_id const & left_rid = edge_old_revision(i);
+    cset const & left_cs = edge_changes(i);
+    ++i;
+    revision_id const & right_rid = edge_old_revision(i);
+    cset const & right_cs = edge_changes(i);
+
     I(!null_id(left_rid) && !null_id(right_rid));
     database::cached_roster left_cached, right_cached;
-    app.db.get_roster(left_rid, left_cached);
-    app.db.get_roster(right_rid, right_cached);
-    true_node_id_source tnis = true_node_id_source(app);
+    db.get_roster(left_rid, left_cached);
+    db.get_roster(right_rid, right_cached);
 
     set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
-    app.db.get_uncommon_ancestors(left_rid, right_rid,
+    db.get_uncommon_ancestors(left_rid, right_rid,
                                   left_uncommon_ancestors,
                                   right_uncommon_ancestors);
-    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second, left_cs,
-                          left_uncommon_ancestors,
-                          right_rid, *right_cached.first, *right_cached.second, right_cs,
-                          right_uncommon_ancestors,
+
+    make_roster_for_merge(left_rid, *left_cached.first, *left_cached.second,
+                          left_cs, left_uncommon_ancestors,
+                          right_rid, *right_cached.first, *right_cached.second,
+                          right_cs, right_uncommon_ancestors,
                           new_rid,
                           new_roster, new_markings,
-                          tnis);
+                          nis);
   }
 
   // Warning: this function expects the parent's roster and markings in the
@@ -1752,14 +1913,14 @@ namespace
   // WARNING: this function is not tested directly (no unit tests).  Do not
   // put real logic in it.
   void
-  make_roster_for_nonmerge(revision_id const & parent_rid,
-                           cset const & parent_cs,
+  make_roster_for_nonmerge(revision_t const & rev,
                            revision_id const & new_rid,
                            roster_t & new_roster, marking_map & new_markings,
-                           app_state & app)
+                           database & db, node_id_source & nis)
   {
-    app.db.get_roster(parent_rid, new_roster, new_markings);
-    true_node_id_source nis(app);
+    revision_id const & parent_rid = edge_old_revision(rev.edges.begin());
+    cset const & parent_cs = edge_changes(rev.edges.begin());
+    db.get_roster(parent_rid, new_roster, new_markings);
     make_roster_for_nonmerge(parent_cs, new_rid, new_roster, new_markings, nis);
   }
 }
@@ -1812,31 +1973,33 @@ mark_roster_with_one_parent(roster_t const & parent,
 void
 make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
                          roster_t & new_roster, marking_map & new_markings,
-                         app_state & app)
+                         database & db, node_id_source & nis)
 {
   MM(rev);
   MM(new_rid);
   MM(new_roster);
   MM(new_markings);
   if (rev.edges.size() == 1)
-    make_roster_for_nonmerge(edge_old_revision(rev.edges.begin()),
-                             edge_changes(rev.edges.begin()),
-                             new_rid, new_roster, new_markings, app);
+    make_roster_for_nonmerge(rev, new_rid, new_roster, new_markings, db, nis);
   else if (rev.edges.size() == 2)
-    {
-      edge_map::const_iterator i = rev.edges.begin();
-      revision_id const & left_rid = edge_old_revision(i);
-      cset const & left_cs = edge_changes(i);
-      ++i;
-      revision_id const & right_rid = edge_old_revision(i);
-      cset const & right_cs = edge_changes(i);
-      make_roster_for_merge(left_rid, left_cs, right_rid, right_cs,
-                            new_rid, new_roster, new_markings, app);
-    }
+    make_roster_for_merge(rev, new_rid, new_roster, new_markings, db, nis);
   else
     I(false);
 
-  new_roster.check_sane_against(new_markings);
+  // If nis is not a true_node_id_source, we have to assume we can get temp
+  // node ids out of it.  ??? Provide a predicate method on node_id_sources
+  // instead of doing a typeinfo comparison.
+  new_roster.check_sane_against(new_markings,
+                                typeid(nis) != typeid(true_node_id_source));
+}
+
+void
+make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings,
+                         app_state & app)
+{
+  true_node_id_source nis(app);
+  make_roster_for_revision(rev, new_rid, new_roster, new_markings, app.db, nis);
 }
 
 
@@ -1852,31 +2015,31 @@ namespace
                           node_id nid, node_t n,
                           cset & cs)
   {
-    split_path sp;
-    from.get_name(nid, sp);
-    safe_insert(cs.nodes_deleted, sp);
+    file_path pth;
+    from.get_name(nid, pth);
+    safe_insert(cs.nodes_deleted, pth);
   }
 
 
   void delta_only_in_to(roster_t const & to, node_id nid, node_t n,
                         cset & cs)
   {
-    split_path sp;
-    to.get_name(nid, sp);
+    file_path pth;
+    to.get_name(nid, pth);
     if (is_file_t(n))
       {
         safe_insert(cs.files_added,
-                    make_pair(sp, downcast_to_file_t(n)->content));
+                    make_pair(pth, downcast_to_file_t(n)->content));
       }
     else
       {
-        safe_insert(cs.dirs_added, sp);
+        safe_insert(cs.dirs_added, pth);
       }
     for (full_attr_map_t::const_iterator i = n->attrs.begin();
          i != n->attrs.end(); ++i)
       if (i->second.first)
         safe_insert(cs.attrs_set,
-                    make_pair(make_pair(sp, i->first), i->second.second));
+                    make_pair(make_pair(pth, i->first), i->second.second));
   }
 
   void delta_in_both(node_id nid,
@@ -1890,13 +2053,13 @@ namespace
     if (shallow_equal(from_n, to_n, false))
       return;
 
-    split_path from_sp, to_sp;
-    from.get_name(nid, from_sp);
-    to.get_name(nid, to_sp);
+    file_path from_p, to_p;
+    from.get_name(nid, from_p);
+    to.get_name(nid, to_p);
 
     // Compare name and path.
     if (from_n->name != to_n->name || from_n->parent != to_n->parent)
-      safe_insert(cs.nodes_renamed, make_pair(from_sp, to_sp));
+      safe_insert(cs.nodes_renamed, make_pair(from_p, to_p));
 
     // Compare file content.
     if (is_file_t(from_n))
@@ -1906,7 +2069,7 @@ namespace
         if (!(from_f->content == to_f->content))
           {
             safe_insert(cs.deltas_applied,
-                        make_pair(to_sp, make_pair(from_f->content,
+                        make_pair(to_p, make_pair(from_f->content,
                                                    to_f->content)));
           }
       }
@@ -1922,14 +2085,14 @@ namespace
               && i.left_data().first)
             {
               safe_insert(cs.attrs_cleared,
-                          make_pair(to_sp, i.left_key()));
+                          make_pair(to_p, i.left_key()));
             }
           else if ((i.state() == parallel::in_right
                     || (i.state() == parallel::in_both && !i.left_data().first))
                    && i.right_data().first)
             {
               safe_insert(cs.attrs_set,
-                          make_pair(make_pair(to_sp, i.right_key()),
+                          make_pair(make_pair(to_p, i.right_key()),
                                     i.right_data().second));
             }
           else if (i.state() == parallel::in_both
@@ -1938,7 +2101,7 @@ namespace
                    && i.right_data().second != i.left_data().second)
             {
               safe_insert(cs.attrs_set,
-                          make_pair(make_pair(to_sp, i.right_key()),
+                          make_pair(make_pair(to_p, i.right_key()),
                                     i.right_data().second));
             }
         }
@@ -1989,11 +2152,11 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
   for (node_map::const_iterator i = a.all_nodes().begin();
        i != a.all_nodes().end(); ++i)
     {
-      split_path sp;
-      a.get_name(i->first, sp);
-      if (!b.has_node(sp))
+      file_path p;
+      a.get_name(i->first, p);
+      if (!b.has_node(p))
         return false;
-      node_t b_n = b.get_node(sp);
+      node_t b_n = b.get_node(p);
       // we already know names are the same
       if (!same_type(i->second, b_n))
         return false;
@@ -2081,36 +2244,40 @@ class editable_roster_for_check
 {
  public:
   editable_roster_for_check(roster_t & r);
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
-  virtual void attach_node(node_id nid, split_path const & dst);
+  virtual void attach_node(node_id nid, file_path const & dst);
   int problems;
 
  private:
   temp_node_id_source nis;
-  map<node_id, pair<split_path, vector<path_component> > > detached_dirs;
+  map<node_id, pair<file_path, vector<path_component> > > detached_dirs;
 };
 
 editable_roster_for_check::editable_roster_for_check(roster_t & r)
   : editable_roster_base(r, nis), problems(0)
 {
   node_map nodes = r.all_nodes();
-  node_map::const_iterator i = nodes.begin();
-  node_id max = i->first;
 
-  for (; i != nodes.end(); ++i)
+  if (!nodes.empty())
     {
-      if (i->first > max)
-        max = i->first;
-    }
+      node_map::const_iterator i = nodes.begin();
+      node_id max = i->first;
 
-  // ensure our node source starts beyond the max temp node in this roster
-  while (nis.next() <= max)
-    ;
+      for (; i != nodes.end(); ++i)
+        {
+          if (i->first > max)
+            max = i->first;
+        }
+
+      // ensure our node source starts beyond the max temp node in this roster
+      while (nis.next() <= max)
+        ;
+    }
 }
 
 node_id
-editable_roster_for_check::detach_node(split_path const & src)
+editable_roster_for_check::detach_node(file_path const & src)
 {
   node_t n = r.get_node(src);
   if (is_dir_t(n))
@@ -2135,18 +2302,17 @@ editable_roster_for_check::drop_detached_node(node_id nid)
   node_t n = r.get_node(nid);
   if (is_dir_t(n) && !downcast_to_dir_t(n)->children.empty())
     {
-      map<node_id, pair<split_path, vector<path_component> > >::const_iterator 
+      map<node_id, pair<file_path, vector<path_component> > >::const_iterator 
         i = detached_dirs.find(nid);
       I(i != detached_dirs.end());
 
-      split_path dir = i->second.first;
+      file_path dir = i->second.first;
       for (vector<path_component>::const_iterator 
              p = i->second.second.begin(); p != i->second.second.end(); ++p)
         {
-          split_path child(dir);
-          child.push_back(*p);
-          W(F("restriction includes deletion of '%s' but excludes deletion of '%s'")
-            % dir % child);
+          W(F("restriction includes deletion of '%s' "
+              "but excludes deletion of '%s'")
+            % dir % (dir / *p));
           problems++;
         }
     }
@@ -2157,16 +2323,14 @@ editable_roster_for_check::drop_detached_node(node_id nid)
 }
 
 void
-editable_roster_for_check::attach_node(node_id nid, split_path const & dst)
+editable_roster_for_check::attach_node(node_id nid, file_path const & dst)
 {
-  split_path dirname;
-  path_component basename;
-  dirname_basename(dst, dirname, basename);
+  file_path parent = dst.dirname();
 
-  if (!dirname.empty() && !r.has_node(dirname))
+  if (!r.has_node(parent) && !dst.empty())
     {
       W(F("restriction excludes addition of '%s' but includes addition of '%s'")
-        % dirname % dst);
+        % parent % dst);
       problems++;
     }
   else
@@ -2205,15 +2369,15 @@ select_nodes_modified_by_cset(cset const & cs,
 {
   nodes_modified.clear();
 
-  path_set modified_prestate_nodes;
-  path_set modified_poststate_nodes;
+  set<file_path> modified_prestate_nodes;
+  set<file_path> modified_poststate_nodes;
 
   // Pre-state damage
 
   copy(cs.nodes_deleted.begin(), cs.nodes_deleted.end(),
        inserter(modified_prestate_nodes, modified_prestate_nodes.begin()));
 
-  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_prestate_nodes.insert(i->first);
 
@@ -2222,36 +2386,36 @@ select_nodes_modified_by_cset(cset const & cs,
   copy(cs.dirs_added.begin(), cs.dirs_added.end(),
        inserter(modified_poststate_nodes, modified_poststate_nodes.begin()));
 
-  for (map<split_path, file_id>::const_iterator i = cs.files_added.begin();
+  for (map<file_path, file_id>::const_iterator i = cs.files_added.begin();
        i != cs.files_added.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (map<split_path, split_path>::const_iterator i = cs.nodes_renamed.begin();
+  for (map<file_path, file_path>::const_iterator i = cs.nodes_renamed.begin();
        i != cs.nodes_renamed.end(); ++i)
     modified_poststate_nodes.insert(i->second);
 
-  for (map<split_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
+  for (map<file_path, pair<file_id, file_id> >::const_iterator i = cs.deltas_applied.begin();
        i != cs.deltas_applied.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (set<pair<split_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
+  for (set<pair<file_path, attr_key> >::const_iterator i = cs.attrs_cleared.begin();
        i != cs.attrs_cleared.end(); ++i)
     modified_poststate_nodes.insert(i->first);
 
-  for (map<pair<split_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
+  for (map<pair<file_path, attr_key>, attr_value>::const_iterator i = cs.attrs_set.begin();
        i != cs.attrs_set.end(); ++i)
     modified_poststate_nodes.insert(i->first.first);
 
   // Finale
 
-  for (path_set::const_iterator i = modified_prestate_nodes.begin();
+  for (set<file_path>::const_iterator i = modified_prestate_nodes.begin();
        i != modified_prestate_nodes.end(); ++i)
     {
       I(old_roster.has_node(*i));
       nodes_modified.insert(old_roster.get_node(*i)->self);
     }
 
-  for (path_set::const_iterator i = modified_poststate_nodes.begin();
+  for (set<file_path>::const_iterator i = modified_poststate_nodes.begin();
        i != modified_poststate_nodes.end(); ++i)
     {
       I(new_roster.has_node(*i));
@@ -2261,22 +2425,37 @@ select_nodes_modified_by_cset(cset const & cs,
 }
 
 void
-roster_t::extract_path_set(path_set & paths) const
+roster_t::extract_path_set(set<file_path> & paths) const
 {
   paths.clear();
   if (has_root())
     {
-      for (dfs_iter i(root_dir); !i.finished(); ++i)
+      for (dfs_iter i(root_dir, true); !i.finished(); ++i)
         {
-          node_t curr = *i;
-          split_path pth;
-          get_name(curr->self, pth);
-          if (!workspace_root(pth))
+          file_path pth = file_path_internal(i.path());
+          if (!pth.empty())
             paths.insert(pth);
         }
     }
 }
 
+// ??? make more similar to the above (member function, use dfs_iter)
+void
+get_content_paths(roster_t const & roster, map<file_id, file_path> & paths)
+{
+  node_map const & nodes = roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin(); i != nodes.end(); ++i)
+    {
+      node_t node = roster.get_node(i->first);
+      if (is_file_t(node))
+        {
+          file_path p;
+          roster.get_name(i->first, p);
+          file_t file = downcast_to_file_t(node);
+          paths.insert(make_pair(file->content, p));
+        }
+    }
+}
 
 ////////////////////////////////////////////////////////////////////
 //   I/O routines
@@ -2368,27 +2547,23 @@ roster_t::print_to(basic_io::printer & pr,
     st.push_str_pair(basic_io::syms::format_version, "1");
     pr.print_stanza(st);
   }
-  for (dfs_iter i(root_dir); !i.finished(); ++i)
+  for (dfs_iter i(root_dir, true); !i.finished(); ++i)
     {
       node_t curr = *i;
-      split_path pth;
-      get_name(curr->self, pth);
-
-      file_path fp = file_path(pth);
-
       basic_io::stanza st;
-      if (is_dir_t(curr))
-        {
-          // L(FL("printing dir %s") % fp);
-          st.push_file_pair(basic_io::syms::dir, fp);
-        }
-      else
-        {
-          file_t ftmp = downcast_to_file_t(curr);
-          st.push_file_pair(basic_io::syms::file, fp);
-          st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
-          // L(FL("printing file %s") % fp);
-        }
+
+      {
+        if (is_dir_t(curr))
+          {
+            st.push_str_pair(basic_io::syms::dir, i.path());
+          }
+        else
+          {
+            file_t ftmp = downcast_to_file_t(curr);
+            st.push_str_pair(basic_io::syms::file, i.path());
+            st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
+          }
+      }
 
       if (print_local_parts)
         {
@@ -2450,7 +2625,7 @@ roster_t::parse_from(basic_io::parser & pa,
   // Instantiate some lookaside caches to ensure this roster reuses
   // string storage across ATOMIC elements.
   id::symtab id_syms;
-  path_component::symtab path_syms;
+  utf8::symtab path_syms;
   attr_key::symtab attr_key_syms;
   attr_value::symtab attr_value_syms;
 
@@ -2509,9 +2684,7 @@ roster_t::parse_from(basic_io::parser & pa,
       else
         {
           I(!pth.empty());
-          split_path sp;
-          internal_string_to_split_path(pth, sp);
-          attach_node(n->self, sp);
+          attach_node(n->self, file_path_internal(pth));
         }
 
       // Non-dormant attrs
@@ -2569,7 +2742,7 @@ write_roster_and_marking(roster_t const & ros,
     ros.check_sane(true);
   basic_io::printer pr;
   ros.print_to(pr, mm, print_local_parts);
-  dat = pr.buf;
+  dat = data(pr.buf);
 }
 
 
@@ -2580,7 +2753,7 @@ write_roster_and_marking(roster_t const & ros,
 {
   data tmp;
   write_roster_and_marking(ros, mm, tmp, true);
-  dat = tmp;
+  dat = roster_data(tmp);
 }
 
 
@@ -2591,7 +2764,7 @@ write_manifest_of_roster(roster_t const & ros,
   data tmp;
   marking_map mm;
   write_roster_and_marking(ros, mm, tmp, false);
-  dat = tmp;
+  dat = manifest_data(tmp);
 }
 
 void calculate_ident(roster_t const & ros,
@@ -2617,7 +2790,6 @@ void calculate_ident(roster_t const & ros,
 
 #include "roster_delta.hh"
 
-#include <string>
 #include <cstdlib>
 #include <boost/lexical_cast.hpp>
 
@@ -2657,11 +2829,21 @@ do_testing_on_one_roster(roster_t const & r)
   int n; MM(n);
   n = r.all_nodes().size();
   int dfs_counted = 0; MM(dfs_counted);
-  split_path root_name;
-  file_path().split(root_name);
-  for (dfs_iter i(downcast_to_dir_t(r.get_node(root_name))); !i.finished(); ++i)
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(file_path())));
+       !i.finished(); ++i)
     ++dfs_counted;
   I(n == dfs_counted);
+
+  // Test dfs_iter's path calculations.
+  for (dfs_iter i(downcast_to_dir_t(r.get_node(file_path())), true);
+       !i.finished(); ++i)
+    {
+      file_path from_iter = file_path_internal(i.path());
+      file_path from_getname;
+      node_t curr = *i;
+      r.get_name(curr->self, from_getname);
+      I(from_iter == from_getname);
+    }
 
   // do a read/write spin
   roster_data r_dat; MM(r_dat);
@@ -2842,9 +3024,7 @@ file_id new_ident(randomizer & rng)
 
 path_component new_component(randomizer & rng)
 {
-  split_path pieces;
-  file_path_internal(new_word(rng)).split(pieces);
-  return pieces.back();
+  return path_component(new_word(rng));
 }
 
 
@@ -2858,24 +3038,33 @@ attr_key pick_attr(attr_map_t const & attrs, randomizer & rng)
   return random_element(attrs, rng)->first;
 }
 
-bool parent_of(split_path const & p,
-               split_path const & c)
+bool parent_of(file_path const & p,
+               file_path const & c)
 {
   bool is_parent = false;
 
-  if (p.size() <= c.size())
-    {
-      split_path::const_iterator c_anchor =
-        search(c.begin(), c.end(),
-               p.begin(), p.end());
+  // the null path is the parent of all paths.
+  if (p.depth() == 0)
+    is_parent = true;
 
-      is_parent = (c_anchor == c.begin());
+  else if (p.depth() <= c.depth())
+    {
+      string const & ci = c.as_internal();
+      string const & pi = p.as_internal();
+      
+      string::const_iterator c_anchor =
+        search(ci.begin(), ci.end(),
+               pi.begin(), pi.end());
+
+      is_parent = (c_anchor == ci.begin() && (ci.size() == pi.size()
+                                              || *(ci.begin() + pi.size())
+                                              == '/'));
     }
 
   //     L(FL("path '%s' is%s parent of '%s'")
-  //       % file_path(p)
+  //       % p
   //       % (is_parent ? "" : " not")
-  //       % file_path(c));
+  //       % c);
 
   return is_parent;
 }
@@ -2887,9 +3076,9 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
   while (c.empty())
     {
       node_t n = random_element(r.all_nodes(), rng)->second;
-      split_path pth;
+      file_path pth;
       r.get_name(n->self, pth);
-      // L(FL("considering acting on '%s'") % file_path(pth));
+      // L(FL("considering acting on '%s'") % pth);
 
       switch (rng.uniform(7))
         {
@@ -2897,22 +3086,22 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
         case 0:
         case 1:
         case 2:
-          if (is_file_t(n) || (pth.size() > 1 && rng.flip()))
+          if (is_file_t(n) || (pth.depth() > 1 && rng.flip()))
             // Add a sibling of an existing entry.
-            pth[pth.size() - 1] = new_component(rng);
+            pth = pth.dirname() / new_component(rng);
 
           else
             // Add a child of an existing entry.
-            pth.push_back(new_component(rng));
+            pth = pth / new_component(rng);
 
           if (rng.flip())
             {
-              // L(FL("adding dir '%s'") % file_path(pth));
+              // L(FL("adding dir '%s'") % pth);
               safe_insert(c.dirs_added, pth);
             }
           else
             {
-              // L(FL("adding file '%s'") % file_path(pth));
+              // L(FL("adding file '%s'") % pth);
               safe_insert(c.files_added, make_pair(pth, new_ident(rng)));
             }
           break;
@@ -2920,43 +3109,42 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
         case 3:
           if (is_file_t(n))
             {
-              // L(FL("altering content of file '%s'") % file_path(pth));
+              // L(FL("altering content of file '%s'") % pth);
               safe_insert(c.deltas_applied,
-                          make_pair
-                          (pth, make_pair(downcast_to_file_t(n)->content,
-                                          new_ident(rng))));
+                          make_pair(pth,
+                                    make_pair(downcast_to_file_t(n)->content,
+                                              new_ident(rng))));
             }
           break;
 
         case 4:
           {
             node_t n2 = random_element(r.all_nodes(), rng)->second;
-            split_path pth2;
-            r.get_name(n2->self, pth2);
-
             if (n == n2)
               continue;
 
-            if (is_file_t(n2) || (pth2.size() > 1 && rng.flip()))
+            file_path pth2;
+            r.get_name(n2->self, pth2);
+
+            if (is_file_t(n2) || (pth2.depth() > 1 && rng.flip()))
               {
                 // L(FL("renaming to a sibling of an existing entry '%s'")
-                //   % file_path(pth2));
+                //   % pth2);
                 // Move to a sibling of an existing entry.
-                pth2[pth2.size() - 1] = new_component(rng);
+                pth2 = pth2.dirname() / new_component(rng);
               }
 
             else
               {
                 // L(FL("renaming to a child of an existing entry '%s'")
-                //   % file_path(pth2));
+                //   % pth2);
                 // Move to a child of an existing entry.
-                pth2.push_back(new_component(rng));
+                pth2 = pth2 / new_component(rng);
               }
 
             if (!parent_of(pth, pth2))
               {
-                // L(FL("renaming '%s' -> '%s")
-                //   % file_path(pth) % file_path(pth2));
+                // L(FL("renaming '%s' -> '%s") % pth % pth2);
                 safe_insert(c.nodes_renamed, make_pair(pth, pth2));
               }
           }
@@ -2967,7 +3155,7 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
               && (is_file_t(n) || downcast_to_dir_t(n)->children.empty())
               && r.all_nodes().size() > 1) // do not delete the root
             {
-              // L(FL("deleting '%s'") % file_path(pth));
+              // L(FL("deleting '%s'") % pth);
               safe_insert(c.nodes_deleted, pth);
             }
           break;
@@ -2980,29 +3168,29 @@ void perform_random_action(roster_t & r, node_id_source & nis, randomizer & rng)
                 {
                   if (rng.flip())
                     {
-                      // L(FL("clearing attr on '%s'") % file_path(pth));
+                      // L(FL("clearing attr on '%s'") % pth);
                       safe_insert(c.attrs_cleared, make_pair(pth, k));
                     }
                   else
                     {
-                      // L(FL("changing attr on '%s'\n") % file_path(pth));
+                      // L(FL("changing attr on '%s'\n") % pth);
                       safe_insert(c.attrs_set,
                                   make_pair(make_pair(pth, k), new_word(rng)));
                     }
                 }
               else
                 {
-                  // L(FL("setting previously set attr on '%s'")
-                  //   % file_path(pth));
+                  // L(FL("setting previously set attr on '%s'") % pth);
                   safe_insert(c.attrs_set,
                               make_pair(make_pair(pth, k), new_word(rng)));
                 }
             }
           else
             {
-              // L(FL("setting attr on '%s'") % file_path(pth));
+              // L(FL("setting attr on '%s'") % pth);
               safe_insert(c.attrs_set,
-                          make_pair(make_pair(pth, new_word(rng)), new_word(rng)));
+                          make_pair(make_pair(pth, new_word(rng)),
+                                    new_word(rng)));
             }
           break;
         }
@@ -3040,10 +3228,8 @@ UNIT_TEST(roster, random_actions)
 
   {
     // give all the rosters a root
-    split_path root;
     cset c;
-    root.push_back(the_null_component);
-    c.dirs_added.insert(root);
+    c.dirs_added.insert(file_path());
     apply_cset_and_do_testing(r, c, nis);
   }
 
@@ -3051,8 +3237,8 @@ UNIT_TEST(roster, random_actions)
   for (int i = 0; i < 2000; )
     {
       int manychanges = 100 + rng.uniform(300);
-      P(F("random roster actions: outer step at %d, making %d changes")
-        % i % manychanges);
+      // P(F("random roster actions: outer step at %d, making %d changes")
+      //   % i % manychanges);
 
       for (int outer_limit = i + manychanges; i < outer_limit; )
         {
@@ -3092,51 +3278,51 @@ check_sane_roster_do_tests(int to_run, int& total)
   MM(r);
 
   // roster must have a root dir
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
 
-  split_path sp_, sp_foo, sp_foo_bar, sp_foo_baz;
-  file_path().split(sp_);
-  file_path_internal("foo").split(sp_foo);
-  file_path_internal("foo/bar").split(sp_foo_bar);
-  file_path_internal("foo/baz").split(sp_foo_baz);
+  file_path fp_;
+  file_path fp_foo = file_path_internal("foo");
+  file_path fp_foo_bar = file_path_internal("foo/bar");
+  file_path fp_foo_baz = file_path_internal("foo/baz");
+
   node_id nid_f = r.create_file_node(file_id(string("0000000000000000000000000000000000000000")),
                                      nis);
   // root must be a directory, not a file
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_f, sp_), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_f, fp_), logic_error));
 
   node_id root_dir = r.create_dir_node(nis);
-  r.attach_node(root_dir, sp_);
+  r.attach_node(root_dir, fp_);
   // has a root dir, but a detached file
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
 
-  r.attach_node(nid_f, sp_foo);
+  r.attach_node(nid_f, fp_foo);
   // now should be sane
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   node_id nid_d = r.create_dir_node(nis);
   // if "foo" exists, can't attach another node at "foo"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_d, fp_foo), logic_error));
   // if "foo" is a file, can't attach a node at "foo/bar"
-  MAYBE(BOOST_CHECK_THROW(r.attach_node(nid_d, sp_foo_bar), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_d, fp_foo_bar), logic_error));
 
-  BOOST_CHECK(r.detach_node(sp_foo) == nid_f);
-  r.attach_node(nid_d, sp_foo);
-  r.attach_node(nid_f, sp_foo_bar);
-  BOOST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK(r.detach_node(fp_foo) == nid_f);
+  r.attach_node(nid_d, fp_foo);
+  r.attach_node(nid_f, fp_foo_bar);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(false), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 
   temp_node_id_source nis_tmp;
   node_id nid_tmp = r.create_dir_node(nis_tmp);
   // has a detached node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(true), logic_error));
-  r.attach_node(nid_tmp, sp_foo_baz);
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error));
+  r.attach_node(nid_tmp, fp_foo_baz);
   // now has no detached nodes, but one temp node
-  MAYBE(BOOST_CHECK_THROW(r.check_sane(false), logic_error));
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  MAYBE(UNIT_TEST_CHECK_THROW(r.check_sane(false), logic_error));
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
 }
 
 #undef MAYBE
@@ -3157,58 +3343,54 @@ UNIT_TEST(roster, check_sane_roster_loop)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
-  split_path root, foo_bar;
-  file_path().split(root);
-  file_path_internal("foo/bar").split(foo_bar);
+  file_path root;
   r.attach_node(r.create_dir_node(nis), root);
   node_id nid_foo = r.create_dir_node(nis);
   node_id nid_bar = r.create_dir_node(nis);
-  r.attach_node(nid_foo, nid_bar, foo_bar[1]);
-  r.attach_node(nid_bar, nid_foo, foo_bar[2]);
-  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
+  r.attach_node(nid_foo, nid_bar, path_component("foo"));
+  r.attach_node(nid_bar, nid_foo, path_component("bar"));
+  UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 UNIT_TEST(roster, check_sane_roster_screwy_dir_map)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
-  split_path root, foo;
-  file_path().split(root);
-  file_path_internal("foo").split(foo);
+  file_path root;
   r.attach_node(r.create_dir_node(nis), root);
   roster_t other; MM(other);
   node_id other_nid = other.create_dir_node(nis);
   dir_t root_n = downcast_to_dir_t(r.get_node(root));
-  root_n->children.insert(make_pair(*(foo.end()-1), other.get_node(other_nid)));
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  root_n->children.insert(make_pair(path_component("foo"),
+                                    other.get_node(other_nid)));
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
   // well, but that one was easy, actually, because a dir traversal will hit
   // more nodes than actually exist... so let's make it harder, by making sure
   // that a dir traversal will hit exactly as many nodes as actually exist.
   node_id distractor_nid = r.create_dir_node(nis);
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
   // and even harder, by making that node superficially valid too
   dir_t distractor_n = downcast_to_dir_t(r.get_node(distractor_nid));
   distractor_n->parent = distractor_nid;
-  distractor_n->name = *(foo.end()-1);
+  distractor_n->name = path_component("foo");
   distractor_n->children.insert(make_pair(distractor_n->name, distractor_n));
-  BOOST_CHECK_THROW(r.check_sane(), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(), logic_error);
 }
 
 UNIT_TEST(roster, bad_attr)
 {
   testing_node_id_source nis;
   roster_t r; MM(r);
-  split_path root;
-  file_path().split(root);
+  file_path root;
   r.attach_node(r.create_dir_node(nis), root);
-  BOOST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
+  UNIT_TEST_CHECK_THROW(r.set_attr(root, attr_key("test_key1"),
                                make_pair(false, attr_value("invalid"))),
                     logic_error);
-  BOOST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_NOT_THROW(r.check_sane(true), logic_error);
   safe_insert(r.get_node(root)->attrs,
               make_pair(attr_key("test_key2"),
                         make_pair(false, attr_value("invalid"))));
-  BOOST_CHECK_THROW(r.check_sane(true), logic_error);
+  UNIT_TEST_CHECK_THROW(r.check_sane(true), logic_error);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -3223,7 +3405,8 @@ UNIT_TEST(roster, bad_attr)
 // purpose of this section is to systematically and exhaustively test every
 // possible case.
 //
-// Our underlying merger, *-merge, works on scalars, case-by-case.  The cases are:
+// Our underlying merger, *-merge, works on scalars, case-by-case.
+// The cases are:
 //   0 parent:
 //       a*
 //   1 parent:
@@ -3316,14 +3499,6 @@ namespace
   revision_id right_rid(string("2222222222222222222222222222222222222222"));
   revision_id new_rid(string("4444444444444444444444444444444444444444"));
 
-  split_path
-  split(string const & s)
-  {
-    split_path sp;
-    file_path_internal(s).split(sp);
-    return sp;
-  }
-
 ////////////////
 // These classes encapsulate information about all the different scalars
 // that *-merge applies to.
@@ -3363,7 +3538,7 @@ namespace
     void setup(roster_t & roster, marking_map & markings)
     {
       roster.create_dir_node(root_nid);
-      roster.attach_node(root_nid, split(""));
+      roster.attach_node(root_nid, file_path_internal(""));
       marking_t marking;
       marking.birth_revision = old_rid;
       marking.parent_name.insert(old_rid);
@@ -3375,9 +3550,9 @@ namespace
     virtual void dump(string & out) const
     {
       ostringstream oss;
-      oss << "type: " << my_type() << "\n"
-          << "root_nid: " << root_nid << "\n"
-          << "obj_under_test_nid: " << obj_under_test_nid << "\n";
+      oss << "type: " << my_type() << '\n'
+          << "root_nid: " << root_nid << '\n'
+          << "obj_under_test_nid: " << obj_under_test_nid << '\n';
       out = oss.str();
     }
   };
@@ -3451,7 +3626,7 @@ namespace
           file_maker::make_file(scalar_origin_rid, obj_under_test_nid,
                                 safe_get(values, val),
                                 roster, markings);
-          roster.attach_node(obj_under_test_nid, split("foo"));
+          roster.attach_node(obj_under_test_nid, file_path_internal("foo"));
           markings[obj_under_test_nid].file_content = this_scalar_mark;
         }
       roster.check_sane_against(markings);
@@ -3463,13 +3638,13 @@ namespace
   {
     virtual string my_type() const { return "X_basename_scalar"; }
 
-    map<scalar_val, split_path> values;
+    map<scalar_val, file_path> values;
     X_basename_scalar(node_id_source & nis)
       : a_scalar(nis)
     {
-      safe_insert(values, make_pair(scalar_a, split("a")));
-      safe_insert(values, make_pair(scalar_b, split("b")));
-      safe_insert(values, make_pair(scalar_c, split("c")));
+      safe_insert(values, make_pair(scalar_a, file_path_internal("a")));
+      safe_insert(values, make_pair(scalar_b, file_path_internal("b")));
+      safe_insert(values, make_pair(scalar_c, file_path_internal("c")));
     }
     virtual void
     set(revision_id const & scalar_origin_rid, scalar_val val,
@@ -3492,24 +3667,24 @@ namespace
   {
     virtual string my_type() const { return "X_parent_scalar"; }
 
-    map<scalar_val, split_path> values;
+    map<scalar_val, file_path> values;
     node_id const a_nid, b_nid, c_nid;
     X_parent_scalar(node_id_source & nis)
       : a_scalar(nis), a_nid(nis.next()), b_nid(nis.next()), c_nid(nis.next())
     {
-      safe_insert(values, make_pair(scalar_a, split("dir_a/foo")));
-      safe_insert(values, make_pair(scalar_b, split("dir_b/foo")));
-      safe_insert(values, make_pair(scalar_c, split("dir_c/foo")));
+      safe_insert(values, make_pair(scalar_a, file_path_internal("dir_a/foo")));
+      safe_insert(values, make_pair(scalar_b, file_path_internal("dir_b/foo")));
+      safe_insert(values, make_pair(scalar_c, file_path_internal("dir_c/foo")));
     }
     void
     setup_dirs(roster_t & roster, marking_map & markings)
     {
       roster.create_dir_node(a_nid);
-      roster.attach_node(a_nid, split("dir_a"));
+      roster.attach_node(a_nid, file_path_internal("dir_a"));
       roster.create_dir_node(b_nid);
-      roster.attach_node(b_nid, split("dir_b"));
+      roster.attach_node(b_nid, file_path_internal("dir_b"));
       roster.create_dir_node(c_nid);
-      roster.attach_node(c_nid, split("dir_c"));
+      roster.attach_node(c_nid, file_path_internal("dir_c"));
       marking_t marking;
       marking.birth_revision = old_rid;
       marking.parent_name.insert(old_rid);
@@ -3558,7 +3733,7 @@ namespace
       // _not_ scalar_origin_rid, because our object exists everywhere, regardless of
       // when the attr shows up
       T::make_obj(old_rid, obj_under_test_nid, roster, markings);
-      roster.attach_node(obj_under_test_nid, split("foo"));
+      roster.attach_node(obj_under_test_nid, file_path_internal("foo"));
       if (val != scalar_none)
         {
           safe_insert(roster.get_node(obj_under_test_nid)->attrs,
@@ -3593,7 +3768,7 @@ namespace
       if (val != scalar_none)
         {
           T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
-          roster.attach_node(obj_under_test_nid, split("foo"));
+          roster.attach_node(obj_under_test_nid, file_path_internal("foo"));
           safe_insert(roster.get_node(obj_under_test_nid)->attrs,
                       make_pair(attr_key("test_key"), safe_get(values, val)));
           markings[obj_under_test_nid].attrs[attr_key("test_key")] = this_scalar_mark;
@@ -4113,7 +4288,7 @@ namespace
       if (val != scalar_none)
         {
           T::make_obj(scalar_origin_rid, obj_under_test_nid, roster, markings);
-          roster.attach_node(obj_under_test_nid, split("foo"));
+          roster.attach_node(obj_under_test_nid, file_path_internal("foo"));
         }
       if (val != scalar_none && val != scalar_none_2)
         {
@@ -4186,17 +4361,18 @@ UNIT_TEST(roster, die_die_die_merge)
   testing_node_id_source nis;
 
   // left roster is empty except for the root
-  left_roster.attach_node(left_roster.create_dir_node(nis), split(""));
+  left_roster.attach_node(left_roster.create_dir_node(nis), file_path());
   marking_t an_old_marking;
   an_old_marking.birth_revision = old_rid;
   an_old_marking.parent_name = singleton(old_rid);
-  safe_insert(left_markings, make_pair(left_roster.get_node(split(""))->self,
+  safe_insert(left_markings, make_pair(left_roster.root()->self,
                                        an_old_marking));
   // right roster is identical, except for a dir created in the old rev
   right_roster = left_roster;
   right_markings = left_markings;
-  right_roster.attach_node(right_roster.create_dir_node(nis), split("foo"));
-  safe_insert(right_markings, make_pair(right_roster.get_node(split("foo"))->self,
+  right_roster.attach_node(right_roster.create_dir_node(nis),
+                           file_path_internal("foo"));
+  safe_insert(right_markings, make_pair(right_roster.get_node(file_path_internal("foo"))->self,
                                         an_old_marking));
 
   left_roster.check_sane_against(left_markings);
@@ -4204,7 +4380,7 @@ UNIT_TEST(roster, die_die_die_merge)
 
   cset left_cs; MM(left_cs);
   // we add the node
-  left_cs.dirs_added.insert(split("foo"));
+  left_cs.dirs_added.insert(file_path_internal("foo"));
   // we do nothing
   cset right_cs; MM(right_cs);
 
@@ -4213,7 +4389,7 @@ UNIT_TEST(roster, die_die_die_merge)
 
   // because the dir was created in the old rev, the left side has logically
   // seen it and killed it, so it needs to be dead in the result.
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, left_roster, left_markings, left_cs,
                            singleton(left_rid),
                            right_rid, right_roster, right_markings, right_cs,
@@ -4221,7 +4397,7 @@ UNIT_TEST(roster, die_die_die_merge)
                            new_rid, new_roster, new_markings,
                            nis),
      logic_error);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(right_rid, right_roster, right_markings, right_cs,
                            singleton(right_rid),
                            left_rid, left_roster, left_markings, left_cs,
@@ -4242,11 +4418,11 @@ UNIT_TEST(roster, same_nid_diff_type)
 
   roster_t dir_roster; MM(dir_roster);
   marking_map dir_markings; MM(dir_markings);
-  dir_roster.attach_node(dir_roster.create_dir_node(nis), split(""));
+  dir_roster.attach_node(dir_roster.create_dir_node(nis), file_path());
   marking_t marking;
   marking.birth_revision = old_rid;
   marking.parent_name = singleton(old_rid);
-  safe_insert(dir_markings, make_pair(dir_roster.get_node(split(""))->self,
+  safe_insert(dir_markings, make_pair(dir_roster.root()->self,
                                       marking));
 
   roster_t file_roster; MM(file_roster);
@@ -4257,11 +4433,11 @@ UNIT_TEST(roster, same_nid_diff_type)
   // okay, they both have the root dir
   node_id nid = nis.next();
   dir_roster.create_dir_node(nid);
-  dir_roster.attach_node(nid, split("foo"));
+  dir_roster.attach_node(nid, file_path_internal("foo"));
   safe_insert(dir_markings, make_pair(nid, marking));
 
   file_roster.create_file_node(new_ident(rng), nid);
-  file_roster.attach_node(nid, split("foo"));
+  file_roster.attach_node(nid, file_path_internal("foo"));
   marking.file_content = singleton(old_rid);
   safe_insert(file_markings, make_pair(nid, marking));
 
@@ -4269,14 +4445,14 @@ UNIT_TEST(roster, same_nid_diff_type)
   file_roster.check_sane_against(file_markings);
 
   cset cs; MM(cs);
-  BOOST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), logic_error);
-  BOOST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), logic_error);
+  UNIT_TEST_CHECK_THROW(make_cset(dir_roster, file_roster, cs), logic_error);
+  UNIT_TEST_CHECK_THROW(make_cset(file_roster, dir_roster, cs), logic_error);
 
   cset left_cs; MM(left_cs);
   cset right_cs; MM(right_cs);
   roster_t new_roster; MM(new_roster);
   marking_map new_markings; MM(new_markings);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, dir_roster, dir_markings, left_cs,
                            singleton(left_rid),
                            right_rid, file_roster, file_markings, right_cs,
@@ -4284,7 +4460,7 @@ UNIT_TEST(roster, same_nid_diff_type)
                            new_rid, new_roster, new_markings,
                            nis),
      logic_error);
-  BOOST_CHECK_THROW(
+  UNIT_TEST_CHECK_THROW(
      make_roster_for_merge(left_rid, file_roster, file_markings, left_cs,
                            singleton(left_rid),
                            right_rid, dir_roster, dir_markings, right_cs,
@@ -4302,14 +4478,14 @@ UNIT_TEST(roster, write_roster)
   marking_map mm; MM(mm);
 
   testing_node_id_source nis;
-  split_path root, foo, xx, fo, foo_bar, foo_ang, foo_zoo;
-  file_path().split(root);
-  file_path_internal("foo").split(foo);
-  file_path_internal("foo/ang").split(foo_ang);
-  file_path_internal("foo/bar").split(foo_bar);
-  file_path_internal("foo/zoo").split(foo_zoo);
-  file_path_internal("fo").split(fo);
-  file_path_internal("xx").split(xx);
+
+  file_path root;
+  file_path foo = file_path_internal("foo");
+  file_path foo_ang = file_path_internal("foo/ang");
+  file_path foo_bar = file_path_internal("foo/bar");
+  file_path foo_zoo = file_path_internal("foo/zoo");
+  file_path fo = file_path_internal("fo");
+  file_path xx = file_path_internal("xx");
 
   file_id f1(string("1111111111111111111111111111111111111111"));
   revision_id rid(string("1234123412341234123412341234123412341234"));
@@ -4384,7 +4560,7 @@ UNIT_TEST(roster, write_roster)
                       ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW( I(expected == mdat), logic_error);
   }
 
   {
@@ -4442,17 +4618,16 @@ UNIT_TEST(roster, write_roster)
                       ));
     MM(expected);
 
-    BOOST_CHECK_NOT_THROW( I(expected == rdat), logic_error);
+    UNIT_TEST_CHECK_NOT_THROW( I(expected == rdat), logic_error);
   }
 }
 
 UNIT_TEST(roster, check_sane_against)
 {
   testing_node_id_source nis;
-  split_path root, foo, bar;
-  file_path().split(root);
-  file_path_internal("foo").split(foo);
-  file_path_internal("bar").split(bar);
+  file_path root;
+  file_path foo = file_path_internal("foo");
+  file_path bar = file_path_internal("bar");
 
   file_id f1(string("1111111111111111111111111111111111111111"));
   revision_id rid(string("1234123412341234123412341234123412341234"));
@@ -4478,7 +4653,7 @@ UNIT_TEST(roster, check_sane_against)
     r.attach_node(nid, bar);
     // missing the marking
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4502,7 +4677,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.detach_node(bar);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4521,7 +4696,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].birth_revision = revision_id();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4540,7 +4715,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].parent_name.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4559,7 +4734,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4578,7 +4753,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].file_content.insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4593,7 +4768,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     r.set_attr(root, attr_key("my_key"), attr_value("my_value"));
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4608,7 +4783,7 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_key")].clear();
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 
   {
@@ -4623,103 +4798,130 @@ UNIT_TEST(roster, check_sane_against)
     mark_new_node(rid, r.get_node(nid), mm[nid]);
     mm[nid].attrs[attr_key("my_second_key")].insert(rid);
 
-    BOOST_CHECK_THROW(r.check_sane_against(mm), logic_error);
+    UNIT_TEST_CHECK_THROW(r.check_sane_against(mm), logic_error);
   }
 }
 
 static void
 check_post_roster_unification_ok(roster_t const & left,
-                                 roster_t const & right)
+                                 roster_t const & right,
+                                 bool temp_nodes_ok)
 {
   MM(left);
   MM(right);
   I(left == right);
-  left.check_sane();
-  right.check_sane();
+  left.check_sane(temp_nodes_ok);
+  right.check_sane(temp_nodes_ok);
 }
 
 static void
-create_some_new_temp_nodes(temp_node_id_source & nis,
-                           roster_t & left_ros,
-                           set<node_id> & left_new_nodes,
-                           roster_t & right_ros,
-                           set<node_id> & right_new_nodes,
-                           randomizer & rng)
+create_random_unification_task(roster_t & left,
+                               roster_t & right,
+                               editable_roster_base & left_erb,
+                               editable_roster_base & right_erb,
+                               editable_roster_for_merge & left_erm,
+                               editable_roster_for_merge & right_erm,
+			       randomizer & rng)
 {
-  size_t n_nodes = 10 + (rng.uniform(30));
-  editable_roster_base left_er(left_ros, nis);
-  editable_roster_base right_er(right_ros, nis);
-
+  size_t n_nodes = 20 + rng.uniform(60);
+  
   // Stick in a root if there isn't one.
-  if (!left_ros.has_root())
+  if (!left.has_root())
     {
-      I(!right_ros.has_root());
-      split_path root;
-      root.push_back(the_null_component);
+      I(!right.has_root());
 
-      node_id left_nid = left_er.create_dir_node();
-      left_new_nodes.insert(left_nid);
-      left_er.attach_node(left_nid, root);
+      node_id left_nid = left_erm.create_dir_node();
+      left_erm.attach_node(left_nid, file_path());
 
-      node_id right_nid = right_er.create_dir_node();
-      right_new_nodes.insert(right_nid);
-      right_er.attach_node(right_nid, root);
+      node_id right_nid = right_erm.create_dir_node();
+      right_erm.attach_node(right_nid, file_path());
     }
 
   // Now throw in a bunch of others
   for (size_t i = 0; i < n_nodes; ++i)
     {
-      node_t left_n = random_element(left_ros.all_nodes(), rng)->second;
+      node_t left_n = random_element(left.all_nodes(), rng)->second;
+
+      // With equal probability, choose to make the new node appear to
+      // be new in just the left, just the right, or both.
+      editable_roster_base * left_er;
+      editable_roster_base * right_er;
+      switch (rng.uniform(2))
+        {
+        case 0: left_er = &left_erm; right_er = &right_erm; break;
+        case 1: left_er = &left_erb; right_er = &right_erm; break;
+        case 2: left_er = &left_erm; right_er = &right_erb; break;
+        default: I(false);
+        }
 
       node_id left_nid, right_nid;
       if (rng.flip())
         {
-          left_nid = left_er.create_dir_node();
-          right_nid = right_er.create_dir_node();
+          left_nid = left_er->create_dir_node();
+          right_nid = right_er->create_dir_node();
         }
       else
         {
           file_id fid = new_ident(rng);
-          left_nid = left_er.create_file_node(fid);
-          right_nid = right_er.create_file_node(fid);
+          left_nid = left_er->create_file_node(fid);
+          right_nid = right_er->create_file_node(fid);
         }
 
-      left_new_nodes.insert(left_nid);
-      right_new_nodes.insert(right_nid);
+      file_path pth;
+      left.get_name(left_n->self, pth);
+      I(right.has_node(pth));
 
-      split_path pth;
-      left_ros.get_name(left_n->self, pth);
-
-      I(right_ros.has_node(pth));
-
-      if (is_file_t(left_n) || (pth.size() > 1 && rng.flip()))
+      if (is_file_t(left_n) || (pth.depth() > 1 && rng.flip()))
         // Add a sibling of an existing entry.
-        pth[pth.size() - 1] = new_component(rng);
+        pth = pth.dirname() / new_component(rng);
       else
         // Add a child of an existing entry.
-        pth.push_back(new_component(rng));
+        pth = pth / new_component(rng);
 
-      left_er.attach_node(left_nid, pth);
-      right_er.attach_node(right_nid, pth);
+      left_er->attach_node(left_nid, pth);
+      right_er->attach_node(right_nid, pth);
     }
 }
 
-UNIT_TEST(roster, unify_rosters_randomized)
+static void
+unify_rosters_randomized_core(node_id_source & tmp_nis,
+                              node_id_source & test_nis,
+                              bool temp_nodes_ok)
 {
-  L(FL("TEST: begin checking unification of rosters (randomly)"));
-  temp_node_id_source tmp_nis;
-  testing_node_id_source test_nis;
   roster_t left, right;
   randomizer rng;
   for (size_t i = 0; i < 30; ++i)
     {
-      set<node_id> left_new, right_new;
-      create_some_new_temp_nodes(tmp_nis, left, left_new, right, right_new, rng);
-      create_some_new_temp_nodes(tmp_nis, right, right_new, left, left_new, rng);
-      unify_rosters(left, left_new, right, right_new, test_nis);
-      check_post_roster_unification_ok(left, right);
+      editable_roster_base left_erb(left, test_nis);
+      editable_roster_base right_erb(right, test_nis);
+      editable_roster_for_merge left_erm(left, tmp_nis);
+      editable_roster_for_merge right_erm(right, tmp_nis);
+
+      create_random_unification_task(left, right,
+                                     left_erb, right_erb,
+                                     left_erm, right_erm, rng);
+      unify_rosters(left, left_erm.new_nodes,
+                    right, right_erm.new_nodes,
+                    test_nis);
+      check_post_roster_unification_ok(left, right, temp_nodes_ok);
     }
-  L(FL("TEST: end checking unification of rosters (randomly)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_trueids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, true IDs)"));
+  temp_node_id_source tmp_nis;
+  testing_node_id_source test_nis;
+  unify_rosters_randomized_core(tmp_nis, test_nis, false);
+  L(FL("TEST: end checking unification of rosters (randomly, true IDs)"));
+}
+
+UNIT_TEST(roster, unify_rosters_randomized_tempids)
+{
+  L(FL("TEST: begin checking unification of rosters (randomly, temp IDs)"));
+  temp_node_id_source tmp_nis;
+  unify_rosters_randomized_core(tmp_nis, tmp_nis, true);
+  L(FL("TEST: end checking unification of rosters (randomly, temp IDs)"));
 }
 
 UNIT_TEST(roster, unify_rosters_end_to_end_ids)
@@ -4734,7 +4936,8 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
   roster_t has_not_roster; MM(has_not_roster);
   marking_map has_not_markings; MM(has_not_markings);
   {
-    has_not_roster.attach_node(has_not_roster.create_dir_node(nis), split(""));
+    has_not_roster.attach_node(has_not_roster.create_dir_node(nis),
+                               file_path());
     marking_t root_marking;
     root_marking.birth_revision = old_rid;
     root_marking.parent_name = singleton(old_rid);
@@ -4747,7 +4950,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
   node_id new_id;
   {
     new_id = has_roster.create_file_node(my_fid, nis);
-    has_roster.attach_node(new_id, split("foo"));
+    has_roster.attach_node(new_id, file_path_internal("foo"));
     marking_t file_marking;
     file_marking.birth_revision = has_rid;
     file_marking.parent_name = file_marking.file_content = singleton(has_rid);
@@ -4755,7 +4958,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
   }
 
   cset add_cs; MM(add_cs);
-  safe_insert(add_cs.files_added, make_pair(split("foo"), my_fid));
+  safe_insert(add_cs.files_added, make_pair(file_path_internal("foo"), my_fid));
   cset no_add_cs; MM(no_add_cs);
 
   // added in left, then merged
@@ -4768,7 +4971,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
                           singleton(has_not_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->self == new_id);
+    I(new_roster.get_node(file_path_internal("foo"))->self == new_id);
   }
   // added in right, then merged
   {
@@ -4780,7 +4983,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
                           singleton(has_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->self == new_id);
+    I(new_roster.get_node(file_path_internal("foo"))->self == new_id);
   }
   // added in merge
   // this is a little "clever", it uses the same has_not_roster twice, but the
@@ -4794,8 +4997,8 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
                           singleton(has_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->self
-      != has_roster.get_node(split("foo"))->self);
+    I(new_roster.get_node(file_path_internal("foo"))->self
+      != has_roster.get_node(file_path_internal("foo"))->self);
   }
   L(FL("TEST: end checking unification of rosters (end to end, ids)"));
 }
@@ -4817,25 +5020,25 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
   marking_map first_markings; MM(first_markings);
   node_id foo_id;
   {
-    first_roster.attach_node(first_roster.create_dir_node(nis), split(""));
+    first_roster.attach_node(first_roster.create_dir_node(nis), file_path());
     marking_t marking;
     marking.birth_revision = old_rid;
     marking.parent_name = singleton(old_rid);
     safe_insert(first_markings, make_pair(first_roster.root()->self, marking));
 
     foo_id = first_roster.create_file_node(my_fid, nis);
-    first_roster.attach_node(foo_id, split("foo"));
+    first_roster.attach_node(foo_id, file_path_internal("foo"));
     marking.file_content = singleton(old_rid);
     safe_insert(first_markings,
-                make_pair(first_roster.get_node(split("foo"))->self, marking));
+                make_pair(first_roster.get_node(file_path_internal("foo"))->self, marking));
   }
 
   roster_t second_roster = first_roster; MM(second_roster);
   marking_map second_markings = first_markings; MM(second_markings);
   {
     second_roster.attach_node(second_roster.create_file_node(my_fid, nis),
-                              split("bar"));
-    safe_insert(second_roster.get_node(split("bar"))->attrs,
+                              file_path_internal("bar"));
+    safe_insert(second_roster.get_node(file_path_internal("bar"))->attrs,
                 make_pair(attr_key("testbar"), make_pair(false, attr_value())));
     marking_t marking;
     marking.birth_revision = second_rid;
@@ -4843,7 +5046,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
     safe_insert(marking.attrs,
                 make_pair(attr_key("testbar"), singleton(second_rid)));
     safe_insert(second_markings,
-                make_pair(second_roster.get_node(split("bar"))->self, marking));
+                make_pair(second_roster.get_node(file_path_internal("bar"))->self, marking));
   }
 
   // put in the attrs on foo
@@ -4859,7 +5062,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
   }
 
   cset add_cs; MM(add_cs);
-  safe_insert(add_cs.files_added, make_pair(split("bar"), my_fid));
+  safe_insert(add_cs.files_added, make_pair(file_path_internal("bar"), my_fid));
   cset no_add_cs; MM(no_add_cs);
 
   {
@@ -4871,10 +5074,10 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
                           singleton(second_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->attrs.size() == 2);
-    I(new_roster.get_node(split("bar"))->attrs
-      == second_roster.get_node(split("bar"))->attrs);
-    I(new_roster.get_node(split("bar"))->attrs.size() == 1);
+    I(new_roster.get_node(file_path_internal("foo"))->attrs.size() == 2);
+    I(new_roster.get_node(file_path_internal("bar"))->attrs
+      == second_roster.get_node(file_path_internal("bar"))->attrs);
+    I(new_roster.get_node(file_path_internal("bar"))->attrs.size() == 1);
   }
   {
     roster_t new_roster; MM(new_roster);
@@ -4885,10 +5088,10 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
                           singleton(first_rid),
                           new_rid, new_roster, new_markings,
                           nis);
-    I(new_roster.get_node(split("foo"))->attrs.size() == 2);
-    I(new_roster.get_node(split("bar"))->attrs
-      == second_roster.get_node(split("bar"))->attrs);
-    I(new_roster.get_node(split("bar"))->attrs.size() == 1);
+    I(new_roster.get_node(file_path_internal("foo"))->attrs.size() == 2);
+    I(new_roster.get_node(file_path_internal("bar"))->attrs
+      == second_roster.get_node(file_path_internal("bar"))->attrs);
+    I(new_roster.get_node(file_path_internal("bar"))->attrs.size() == 1);
   }
 
   L(FL("TEST: end checking unification of rosters (end to end, attr corpses)"));

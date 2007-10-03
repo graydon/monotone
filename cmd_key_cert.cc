@@ -7,27 +7,36 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <sstream>
+#include "base.hh"
 #include <iostream>
+#include <sstream>
+#include <fstream>
 
 #include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
+#include "app_state.hh"
 #include "keys.hh"
-#include "packet.hh"
 #include "transforms.hh"
+#include "ssh_agent.hh"
+#include "botan/pipe.h"
 
 using std::cout;
 using std::ostream_iterator;
 using std::ostringstream;
 using std::set;
 using std::string;
+using std::ofstream;
+using Botan::Pipe;
+using Botan::RSA_PrivateKey;
 
-CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
+CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Generates an RSA key-pair"),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -49,13 +58,15 @@ CMD(genkey, N_("key and cert"), N_("KEYID"), N_("generate an RSA key-pair"),
   app.keys.put_key_pair(ident, kp);
 }
 
-CMD(dropkey, N_("key and cert"), N_("KEYID"),
-    N_("drop a public and private key"), options::opts::none)
+CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Drops a public and/or private key"),
+    "",
+    options::opts::none)
 {
   bool key_deleted = false;
 
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   rsa_keypair_id ident(idx(args, 0)());
   bool checked_db = false;
@@ -89,12 +100,13 @@ CMD(dropkey, N_("key and cert"), N_("KEYID"),
   N(key_deleted, fmt % idx(args, 0)());
 }
 
-CMD(chkeypass, N_("key and cert"), N_("KEYID"),
-    N_("change passphrase of a private RSA key"),
+CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
+    N_("Changes the passphrase of a private RSA key"),
+    "",
     options::opts::none)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -110,21 +122,80 @@ CMD(chkeypass, N_("key and cert"), N_("KEYID"),
   P(F("passphrase changed"));
 }
 
-CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
-    N_("create a cert for a revision"), options::opts::none)
+CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
+    N_("[FILENAME]"),
+    N_("Exports a private key for use with ssh-agent"),
+    "",
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(execid);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(app.lua, id, new_phrase, true, true);
+  Pipe p;
+  p.start_msg();
+  if (new_phrase().length())
+    {
+      Botan::PKCS8::encrypt_key(*priv,
+                                p,
+                                new_phrase(),
+                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+    }
+  else
+    {
+      Botan::PKCS8::encode(*priv, p);
+    }
+  string decoded_key = p.read_all_as_string();
+  if (args.size() == 0)
+    cout << decoded_key;
+  else
+    {
+      string external_path = system_path(idx(args, 0)).as_external();
+      ofstream fout(external_path.c_str(), ofstream::out);
+      fout << decoded_key;
+    }
+}
+
+CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
+    N_("Adds a private key to ssh-agent"),
+    "",
+    options::opts::none)
+{
+  if (args.size() > 1)
+    throw usage(execid);
+
+  rsa_keypair_id id;
+  keypair key;
+  get_user_key(id, app);
+  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  app.keys.get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  app.agent.add_identity(*priv, id());
+}
+
+CMD(cert, "cert", "", CMD_REF(key_and_cert),
+    N_("REVISION CERTNAME [CERTVAL]"),
+    N_("Creates a certificate for a revision"),
+    "",
+    options::opts::none)
 {
   if ((args.size() != 3) && (args.size() != 2))
-    throw usage(name);
+    throw usage(execid);
 
   transaction_guard guard(app.db);
 
-  hexenc<id> ident;
   revision_id rid;
   complete(app, idx(args, 0)(), rid);
-  ident = rid.inner();
 
-  cert_name name;
-  internalize_cert_name(idx(args, 1), name);
+  cert_name cname;
+  internalize_cert_name(idx(args, 1), cname);
 
   rsa_keypair_id key;
   get_user_key(key, app);
@@ -133,34 +204,31 @@ CMD(cert, N_("key and cert"), N_("REVISION CERTNAME [CERTVAL]"),
   if (args.size() == 3)
     val = cert_value(idx(args, 2)());
   else
-    val = cert_value(get_stdin());
+    {
+      data dat;
+      read_data_stdin(dat);
+      val = cert_value(dat());
+    }
 
-  base64<cert_value> val_encoded;
-  encode_base64(val, val_encoded);
-
-  cert t(ident, name, val_encoded, key);
-
-  packet_db_writer dbw(app);
-  calculate_cert(app, t);
-  dbw.consume_revision_cert(revision<cert>(t));
+  app.get_project().put_cert(rid, cname, val);
   guard.commit();
 }
 
-CMD(trusted, N_("key and cert"), 
+CMD(trusted, "trusted", "", CMD_REF(key_and_cert), 
     N_("REVISION NAME VALUE SIGNER1 [SIGNER2 [...]]"),
-    N_("test whether a hypothetical cert would be trusted\n"
-       "by current settings"),
+    N_("Tests whether a hypothetical certificate would be trusted"),
+    N_("The current settings are used to run the test."),
     options::opts::none)
 {
   if (args.size() < 4)
-    throw usage(name);
+    throw usage(execid);
 
   revision_id rid;
   complete(app, idx(args, 0)(), rid, false);
   hexenc<id> ident(rid.inner());
 
-  cert_name name;
-  internalize_cert_name(idx(args, 1), name);
+  cert_name cname;
+  internalize_cert_name(idx(args, 1), cname);
 
   cert_value value(idx(args, 2)());
 
@@ -174,7 +242,7 @@ CMD(trusted, N_("key and cert"),
 
 
   bool trusted = app.lua.hook_get_revision_cert_trust(signers, ident,
-                                                      name, value);
+                                                      cname, value);
 
 
   ostringstream all_signers;
@@ -187,64 +255,83 @@ CMD(trusted, N_("key and cert"),
             "was signed by: %s\n"
             "it would be: %s")
     % ident
-    % name
+    % cname
     % value
     % all_signers.str()
     % (trusted ? _("trusted") : _("UNtrusted")))
-    << "\n"; // final newline is kept out of the translation
+    << '\n'; // final newline is kept out of the translation
 }
 
-CMD(tag, N_("review"), N_("REVISION TAGNAME"),
-    N_("put a symbolic tag cert on a revision"), options::opts::none)
+CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
+    N_("Puts a symbolic tag certificate on a revision"),
+    "",
+    options::opts::none)
 {
   if (args.size() != 2)
-    throw usage(name);
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_tag(r, idx(args, 1)(), app, dbw);
+  cert_revision_tag(r, idx(args, 1)(), app);
 }
 
 
-CMD(testresult, N_("review"), N_("ID (pass|fail|true|false|yes|no|1|0)"),
-    N_("note the results of running a test on a revision"), options::opts::none)
+CMD(testresult, "testresult", "", CMD_REF(review),
+    N_("ID (pass|fail|true|false|yes|no|1|0)"),
+    N_("Notes the results of running a test on a revision"),
+    "",
+    options::opts::none)
 {
   if (args.size() != 2)
-    throw usage(name);
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_testresult(r, idx(args, 1)(), app, dbw);
+  cert_revision_testresult(r, idx(args, 1)(), app);
 }
 
 
-CMD(approve, N_("review"), N_("REVISION"),
-    N_("approve of a particular revision"),
+CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
+    N_("Approves a particular revision"),
+    "",
     options::opts::branch)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_value branchname;
-  guess_branch(r, app, branchname);
-  N(app.opts.branch_name() != "", F("need --branch argument for approval"));
-  cert_revision_in_branch(r, app.opts.branch_name(), app, dbw);
+  guess_branch(r, app);
+  N(app.opts.branchname() != "", F("need --branch argument for approval"));
+  app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
 
-CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
-    N_("comment on a particular revision"), options::opts::none)
+CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
+    N_("Suspends a particular revision"),
+    "",
+    options::opts::branch)
+{
+  if (args.size() != 1)
+    throw usage(execid);
+
+  revision_id r;
+  complete(app, idx(args, 0)(), r);
+  guess_branch(r, app);
+  N(app.opts.branchname() != "", F("need --branch argument to suspend"));
+  app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
+}
+
+CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
+    N_("Comments on a particular revision"),
+    "",
+    options::opts::none)
 {
   if (args.size() != 1 && args.size() != 2)
-    throw usage(name);
+    throw usage(execid);
 
   utf8 comment;
   if (args.size() == 2)
-    comment = idx(args, 1)();
+    comment = idx(args, 1);
   else
     {
       external comment_external;
@@ -258,8 +345,7 @@ CMD(comment, N_("review"), N_("REVISION [COMMENT]"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  packet_db_writer dbw(app);
-  cert_revision_comment(r, comment, app, dbw);
+  cert_revision_comment(r, comment, app);
 }
 
 // Local Variables:

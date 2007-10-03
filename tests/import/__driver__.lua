@@ -131,7 +131,53 @@ check(not qgrep("committed revision ", "stderr"))
 -- This attempt is expected to FAIL, because we gave it a non-existing key.
 -- However, we want to check that such an error didn't leave a _MTN behind.
 check(mtn("import", "importdir",
-	  "--message", "Import seven, trying to import a workspace",
+	  "--message", "Import nine, trying to import a workspace",
 	  "--branch", "importbranch",
 	  "--key", "bozo@bozoland.com"), 1, false, false)
 check(not exists("importdir/_MTN"))
+
+------------------------------------------------------------------------------
+-- Tenth attempt, importing with an added subdirectory
+mkdir("importdir/subdir10")
+writefile("importdir/subdir10/importmesubdir", "version 0 of subdir file\n")
+
+check(mtn("import", "importdir",
+	  "--message", "Import ten, trying to import a workspace subdirectory",
+	  "--branch", "importbranch"), 0, false, false)
+
+check(mtn("checkout", "exportdir10", "--branch", "importbranch"),
+      0, false, false)
+
+check(exists("exportdir10/subdir10/importmesubdir"))
+
+------------------------------------------------------------------------------
+-- Eleventh attempt, checking that ignorable files aren't normally imported
+mkdir("importdir/subdir11")
+writefile("importdir/fake_test_hooks.lua", "version 0 of ignored file\n")
+writefile("importdir/subdir11/fake_test_hooks.lua", "version 0 of subdir fake ignored file\n")
+
+check(mtn("import", "importdir",
+	  "--message", "Import eleven, trying to import a normally ignored file",
+	  "--branch", "importbranch"), 0, false, false)
+
+check(mtn("checkout", "exportdir11", "--branch", "importbranch"),
+      0, false, false)
+
+check(not exists("exportdir11/fake_test_hooks.lua"))
+check(not exists("exportdir11/subdir11/fake_test_hooks.lua"))
+
+------------------------------------------------------------------------------
+-- twelth attempt, now trying again, without ignoring.
+mkdir("importdir/subdir12")
+writefile("importdir/fake_test_hooks.lua", "version 0 of ignored file\n")
+writefile("importdir/subdir12/fake_test_hooks.lua", "version 0 of subdir fake ignored file\n")
+
+check(mtn("import", "importdir", "--no-respect-ignore",
+	  "--message", "Import twelve, trying to import a normally ignored file",
+	  "--branch", "importbranch"), 0, false, false)
+
+check(mtn("checkout", "exportdir12", "--branch", "importbranch"),
+      0, false, false)
+
+check(exists("exportdir12/fake_test_hooks.lua"))
+check(exists("exportdir12/subdir12/fake_test_hooks.lua"))

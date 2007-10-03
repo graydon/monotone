@@ -10,9 +10,9 @@ check(indir("foo", mtn("setup", "--branch=testbranch", "")), 1, false, false)
 check(indir("foo", mtn("checkout", "--revision", rev, "")), 1, false, false)
 check(indir("foo", mtn("checkout", "--branch=testbranch", "")), 1, false, false)
 
-check(mtn("add", ""), 1, false, false)
-check(mtn("drop", ""), 1, false, false)
-check(mtn("rename", "testfile", ""), 1, false, false)
-check(mtn("rename", "", "otherfile"), 1, false, false)
+check(mtn("--bookkeep-only", "add", ""), 1, false, false)
+check(mtn("--bookkeep-only", "drop", ""), 1, false, false)
+check(mtn("--bookkeep-only", "rename", "testfile", ""), 1, false, false)
+check(mtn("--bookkeep-only", "rename", "", "otherfile"), 1, false, false)
 
 check(mtn("revert", ""), 1, false, false)

@@ -10,9 +10,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
-#include <vector>
-#include <boost/lexical_cast.hpp>
+#include "vector.hh"
+#include "lexical_cast.hh"
 
 #include "randomizer.hh"
 

@@ -16,8 +16,7 @@ check(mtn("crash", "I", "--dump=fork"), 3, false, false)
 check(exists("fork"))
 
 -- all the exceptions caught in monotone.cc and translated to error messages
-for _,tag in pairs({  'std::bad_alloc',
-		      'std::bad_cast',
+for _,tag in pairs({  'std::bad_cast',
 		      'std::bad_typeid',
 		      'std::bad_exception',
 		      'std::domain_error',
@@ -34,6 +33,11 @@ for _,tag in pairs({  'std::bad_alloc',
    check(mtn("crash", tag, "--dump=fork"), 3, false, false)
    check(exists("fork"))
 end
+
+-- bad_alloc is special
+remove("fork")
+check(mtn("crash", "std::bad_alloc", "--dump=fork"), 1, false, false)
+check(not exists("fork"))
 
 -- selected signals - note hardwired signal numbers :(
 skip_if(ostype == "Windows")

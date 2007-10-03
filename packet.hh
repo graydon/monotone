@@ -10,14 +10,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iosfwd>
-#include <memory>
-
-#include <boost/function.hpp>
-
-#include "app_state.hh"
-#include "ui.hh"
 #include "vocab.hh"
+
+class app_state;
+struct cert;
 
 // the idea here is that monotone can produce and consume "packet streams",
 // where each packet is *informative* rather than transactional. that is to
@@ -34,28 +30,13 @@
 // terminal or inclusion in an email / netnews post. they can be edited with
 // vi, filtered with grep, and concatenated with cat.
 //
-// there are currently 8 types of packets, though this can grow without hurting
-// anyone's feelings. if there's a backwards compatibility problem, just introduce
-// a new packet type.
+// there are currently 8 types of packets, though this can grow without
+// hurting anyone's feelings. if there's a backwards compatibility problem,
+// just introduce a new packet type.
 
 struct packet_consumer
 {
-protected:
-  boost::function1<void, revision_id> on_revision_written;
-  boost::function1<void, cert const &> on_cert_written;
-  boost::function1<void, rsa_keypair_id> on_pubkey_written;
-  boost::function1<void, rsa_keypair_id> on_keypair_written;
 public:
-
-  virtual void set_on_revision_written(boost::function1<void, revision_id>
-                                                const & x);
-  virtual void set_on_cert_written(boost::function1<void, cert const &>
-                                                const & x);
-  virtual void set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
-                                                const & x);
-  virtual void set_on_keypair_written(boost::function1<void, rsa_keypair_id>
-                                                const & x);
-
   virtual ~packet_consumer() {}
   virtual void consume_file_data(file_id const & ident,
                                  file_data const & dat) = 0;
@@ -81,30 +62,6 @@ struct packet_writer : public packet_consumer
   std::ostream & ost;
   explicit packet_writer(std::ostream & o);
   virtual ~packet_writer() {}
-  virtual void consume_file_data(file_id const & ident,
-                                 file_data const & dat);
-  virtual void consume_file_delta(file_id const & id_old,
-                                  file_id const & id_new,
-                                  file_delta const & del);
-
-  virtual void consume_revision_data(revision_id const & ident,
-                                     revision_data const & dat);
-  virtual void consume_revision_cert(revision<cert> const & t);
-
-  virtual void consume_public_key(rsa_keypair_id const & ident,
-                                  base64< rsa_pub_key > const & k);
-  virtual void consume_key_pair(rsa_keypair_id const & ident,
-                                keypair const & kp);
-};
-
-// this writer injects packets it receives to the database.
-
-struct packet_db_writer : public packet_consumer
-{
-  app_state & app;
-public:
-  packet_db_writer(app_state & app);
-  virtual ~packet_db_writer();
   virtual void consume_file_data(file_id const & ident,
                                  file_data const & dat);
   virtual void consume_file_delta(file_id const & id_old,

@@ -14,17 +14,11 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: main.c,v 1.354 2006/07/30 20:50:45 drh Exp $
+** $Id: main.c,v 1.378 2007/08/13 15:28:34 danielk1977 Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
 #include <ctype.h>
-
-/*
-** The following constant value is used by the SQLITE_BIGENDIAN and
-** SQLITE_LITTLEENDIAN macros.
-*/
-const int sqlite3one = 1;
 
 /*
 ** The version of the library
@@ -32,6 +26,24 @@ const int sqlite3one = 1;
 const char sqlite3_version[] = SQLITE_VERSION;
 const char *sqlite3_libversion(void){ return sqlite3_version; }
 int sqlite3_libversion_number(void){ return SQLITE_VERSION_NUMBER; }
+
+/*
+** If the following function pointer is not NULL and if
+** SQLITE_ENABLE_IOTRACE is enabled, then messages describing
+** I/O active are written using this function.  These messages
+** are intended for debugging activity only.
+*/
+void (*sqlite3_io_trace)(const char*, ...) = 0;
+
+/*
+** If the following global variable points to a string which is the
+** name of a directory, then that directory will be used to store
+** temporary files.
+**
+** See also the "PRAGMA temp_store_directory" SQL command.
+*/
+char *sqlite3_temp_directory = 0;
+
 
 /*
 ** This is the default collating function named "BINARY" which is always
@@ -115,8 +127,18 @@ int sqlite3_close(sqlite3 *db){
   }
 #endif 
 
-  /* If there are any outstanding VMs, return SQLITE_BUSY. */
   sqlite3ResetInternalSchema(db, 0);
+
+  /* If a transaction is open, the ResetInternalSchema() call above
+  ** will not have called the xDisconnect() method on any virtual
+  ** tables in the db->aVTrans[] array. The following sqlite3VtabRollback()
+  ** call will do so. We need to do this before the check for active
+  ** SQL statements below, as the v-table implementation may be storing
+  ** some prepared statements internally.
+  */
+  sqlite3VtabRollback(db);
+
+  /* If there are any outstanding VMs, return SQLITE_BUSY. */
   if( db->pVdbe ){
     sqlite3Error(db, SQLITE_BUSY, 
         "Unable to close due to unfinalised statements");
@@ -128,13 +150,14 @@ int sqlite3_close(sqlite3 *db){
   ** cannot be opened for some reason. So this routine needs to run in
   ** that case. But maybe there should be an extra magic value for the
   ** "failed to open" state.
+  **
+  ** TODO: Coverage tests do not test the case where this condition is
+  ** true. It's hard to see how to cause it without messing with threads.
   */
   if( db->magic!=SQLITE_MAGIC_CLOSED && sqlite3SafetyOn(db) ){
     /* printf("DID NOT CLOSE\n"); fflush(stdout); */
     return SQLITE_ERROR;
   }
-
-  sqlite3VtabRollback(db);
 
   for(j=0; j<db->nDb; j++){
     struct Db *pDb = &db->aDb[j];
@@ -159,12 +182,21 @@ int sqlite3_close(sqlite3 *db){
 
   for(i=sqliteHashFirst(&db->aCollSeq); i; i=sqliteHashNext(i)){
     CollSeq *pColl = (CollSeq *)sqliteHashData(i);
+    /* Invoke any destructors registered for collation sequence user data. */
+    for(j=0; j<3; j++){
+      if( pColl[j].xDel ){
+        pColl[j].xDel(pColl[j].pUser);
+      }
+    }
     sqliteFree(pColl);
   }
   sqlite3HashClear(&db->aCollSeq);
 #ifndef SQLITE_OMIT_VIRTUALTABLE
   for(i=sqliteHashFirst(&db->aModule); i; i=sqliteHashNext(i)){
     Module *pMod = (Module *)sqliteHashData(i);
+    if( pMod->xDestroy ){
+      pMod->xDestroy(pMod->pAux);
+    }
     sqliteFree(pMod);
   }
   sqlite3HashClear(&db->aModule);
@@ -208,6 +240,7 @@ void sqlite3RollbackAll(sqlite3 *db){
   }
   sqlite3VtabRollback(db);
   if( db->flags&SQLITE_InternChanges ){
+    sqlite3ExpirePreparedStatements(db);
     sqlite3ResetInternalSchema(db, 0);
   }
 
@@ -223,7 +256,7 @@ void sqlite3RollbackAll(sqlite3 *db){
 */
 const char *sqlite3ErrStr(int rc){
   const char *z;
-  switch( rc ){
+  switch( rc & 0xff ){
     case SQLITE_ROW:
     case SQLITE_DONE:
     case SQLITE_OK:         z = "not an error";                          break;
@@ -239,9 +272,9 @@ const char *sqlite3ErrStr(int rc){
     case SQLITE_CORRUPT:    z = "database disk image is malformed";      break;
     case SQLITE_FULL:       z = "database or disk is full";              break;
     case SQLITE_CANTOPEN:   z = "unable to open database file";          break;
-    case SQLITE_PROTOCOL:   z = "database locking protocol failure";     break;
     case SQLITE_EMPTY:      z = "table contains no data";                break;
     case SQLITE_SCHEMA:     z = "database schema has changed";           break;
+    case SQLITE_TOOBIG:     z = "String or BLOB exceeded size limit";    break;
     case SQLITE_CONSTRAINT: z = "constraint failed";                     break;
     case SQLITE_MISMATCH:   z = "datatype mismatch";                     break;
     case SQLITE_MISUSE:     z = "library routine called out of sequence";break;
@@ -533,13 +566,39 @@ int sqlite3_create_function16(
   char *zFunc8;
   assert( !sqlite3MallocFailed() );
 
-  zFunc8 = sqlite3utf16to8(zFunctionName, -1);
+  zFunc8 = sqlite3Utf16to8(zFunctionName, -1);
   rc = sqlite3CreateFunc(db, zFunc8, nArg, eTextRep, p, xFunc, xStep, xFinal);
   sqliteFree(zFunc8);
 
   return sqlite3ApiExit(db, rc);
 }
 #endif
+
+
+/*
+** Declare that a function has been overloaded by a virtual table.
+**
+** If the function already exists as a regular global function, then
+** this routine is a no-op.  If the function does not exist, then create
+** a new one that always throws a run-time error.  
+**
+** When virtual tables intend to provide an overloaded function, they
+** should call this routine to make sure the global function exists.
+** A global function must exist in order for name resolution to work
+** properly.
+*/
+int sqlite3_overload_function(
+  sqlite3 *db,
+  const char *zName,
+  int nArg
+){
+  int nName = strlen(zName);
+  if( sqlite3FindFunction(db, zName, nName, nArg, SQLITE_UTF8, 0)==0 ){
+    sqlite3CreateFunc(db, zName, nArg, SQLITE_UTF8,
+                      0, sqlite3InvalidFunction, 0, 0);
+  }
+  return sqlite3ApiExit(db, SQLITE_OK);
+}
 
 #ifndef SQLITE_OMIT_TRACE
 /*
@@ -696,7 +755,8 @@ int sqlite3BtreeFactory(
 */
 const char *sqlite3_errmsg(sqlite3 *db){
   const char *z;
-  if( !db || sqlite3MallocFailed() ){
+  assert( !sqlite3MallocFailed() );
+  if( !db ){
     return sqlite3ErrStr(SQLITE_NOMEM);
   }
   if( sqlite3SafetyCheck(db) || db->errCode==SQLITE_MISUSE ){
@@ -735,7 +795,8 @@ const void *sqlite3_errmsg16(sqlite3 *db){
   };
 
   const void *z;
-  if( sqlite3MallocFailed() ){
+  assert( !sqlite3MallocFailed() );
+  if( !db ){
     return (void *)(&outOfMemBe[SQLITE_UTF16NATIVE==SQLITE_UTF16LE?1:0]);
   }
   if( sqlite3SafetyCheck(db) || db->errCode==SQLITE_MISUSE ){
@@ -763,7 +824,7 @@ int sqlite3_errcode(sqlite3 *db){
   if( sqlite3SafetyCheck(db) ){
     return SQLITE_MISUSE;
   }
-  return db->errCode;
+  return db->errCode & db->errMask;
 }
 
 /*
@@ -775,7 +836,8 @@ static int createCollation(
   const char *zName, 
   int enc, 
   void* pCtx,
-  int(*xCompare)(void*,int,const void*,int,const void*)
+  int(*xCompare)(void*,int,const void*,int,const void*),
+  void(*xDel)(void*)
 ){
   CollSeq *pColl;
   int enc2;
@@ -810,12 +872,33 @@ static int createCollation(
       return SQLITE_BUSY;
     }
     sqlite3ExpirePreparedStatements(db);
+
+    /* If collation sequence pColl was created directly by a call to
+    ** sqlite3_create_collation, and not generated by synthCollSeq(),
+    ** then any copies made by synthCollSeq() need to be invalidated.
+    ** Also, collation destructor - CollSeq.xDel() - function may need
+    ** to be called.
+    */ 
+    if( (pColl->enc & ~SQLITE_UTF16_ALIGNED)==enc2 ){
+      CollSeq *aColl = sqlite3HashFind(&db->aCollSeq, zName, strlen(zName));
+      int j;
+      for(j=0; j<3; j++){
+        CollSeq *p = &aColl[j];
+        if( p->enc==pColl->enc ){
+          if( p->xDel ){
+            p->xDel(p->pUser);
+          }
+          p->xCmp = 0;
+        }
+      }
+    }
   }
 
   pColl = sqlite3FindCollSeq(db, (u8)enc2, zName, strlen(zName), 1);
   if( pColl ){
     pColl->xCmp = xCompare;
     pColl->pUser = pCtx;
+    pColl->xDel = xDel;
     pColl->enc = enc2 | (enc & SQLITE_UTF16_ALIGNED);
   }
   sqlite3Error(db, SQLITE_OK, 0);
@@ -841,6 +924,7 @@ static int openDatabase(
   /* Allocate the sqlite data structure */
   db = sqliteMalloc( sizeof(sqlite3) );
   if( db==0 ) goto opendb_out;
+  db->errMask = 0xff;
   db->priorNewRowid = 0;
   db->magic = SQLITE_MAGIC_BUSY;
   db->nDb = 2;
@@ -849,6 +933,9 @@ static int openDatabase(
   db->flags |= SQLITE_ShortColNames
 #if SQLITE_DEFAULT_FILE_FORMAT<4
                  | SQLITE_LegacyFileFmt
+#endif
+#ifdef SQLITE_ENABLE_LOAD_EXTENSION
+                 | SQLITE_LoadExtension
 #endif
       ;
   sqlite3HashInit(&db->aFunc, SQLITE_HASH_STRING, 0);
@@ -861,9 +948,9 @@ static int openDatabase(
   ** and UTF-16, so add a version for each to avoid any unnecessary
   ** conversions. The only error that can occur here is a malloc() failure.
   */
-  if( createCollation(db, "BINARY", SQLITE_UTF8, 0, binCollFunc) ||
-      createCollation(db, "BINARY", SQLITE_UTF16BE, 0, binCollFunc) ||
-      createCollation(db, "BINARY", SQLITE_UTF16LE, 0, binCollFunc) ||
+  if( createCollation(db, "BINARY", SQLITE_UTF8, 0, binCollFunc, 0) ||
+      createCollation(db, "BINARY", SQLITE_UTF16BE, 0, binCollFunc, 0) ||
+      createCollation(db, "BINARY", SQLITE_UTF16LE, 0, binCollFunc, 0) ||
       (db->pDfltColl = sqlite3FindCollSeq(db, SQLITE_UTF8, "BINARY", 6, 0))==0 
   ){
     assert( sqlite3MallocFailed() );
@@ -872,7 +959,7 @@ static int openDatabase(
   }
 
   /* Also add a UTF-8 case-insensitive collation sequence. */
-  createCollation(db, "NOCASE", SQLITE_UTF8, 0, nocaseCollatingFunc);
+  createCollation(db, "NOCASE", SQLITE_UTF8, 0, nocaseCollatingFunc, 0);
 
   /* Set flags on the built-in collating sequences */
   db->pDfltColl->type = SQLITE_COLL_BINARY;
@@ -882,7 +969,8 @@ static int openDatabase(
   }
 
   /* Open the backend database driver */
-  rc = sqlite3BtreeFactory(db, zFilename, 0, MAX_PAGES, &db->aDb[0].pBt);
+  rc = sqlite3BtreeFactory(db, zFilename, 0, SQLITE_DEFAULT_CACHE_SIZE,
+                           &db->aDb[0].pBt);
   if( rc!=SQLITE_OK ){
     sqlite3Error(db, rc, 0);
     db->magic = SQLITE_MAGIC_CLOSED;
@@ -902,15 +990,57 @@ static int openDatabase(
   db->aDb[1].safety_level = 1;
 #endif
 
+  db->magic = SQLITE_MAGIC_OPEN;
+  if( sqlite3MallocFailed() ){
+    goto opendb_out;
+  }
+
   /* Register all built-in functions, but do not attempt to read the
   ** database schema yet. This is delayed until the first time the database
   ** is accessed.
   */
-  if( !sqlite3MallocFailed() ){
-    sqlite3RegisterBuiltinFunctions(db);
-    sqlite3Error(db, SQLITE_OK, 0);
+  sqlite3Error(db, SQLITE_OK, 0);
+  sqlite3RegisterBuiltinFunctions(db);
+
+  /* Load automatic extensions - extensions that have been registered
+  ** using the sqlite3_automatic_extension() API.
+  */
+  (void)sqlite3AutoLoadExtensions(db);
+  if( sqlite3_errcode(db)!=SQLITE_OK ){
+    goto opendb_out;
   }
-  db->magic = SQLITE_MAGIC_OPEN;
+
+#ifdef SQLITE_ENABLE_FTS1
+  if( !sqlite3MallocFailed() ){
+    extern int sqlite3Fts1Init(sqlite3*);
+    rc = sqlite3Fts1Init(db);
+  }
+#endif
+
+#ifdef SQLITE_ENABLE_FTS2
+  if( !sqlite3MallocFailed() && rc==SQLITE_OK ){
+    extern int sqlite3Fts2Init(sqlite3*);
+    rc = sqlite3Fts2Init(db);
+  }
+#endif
+
+#ifdef SQLITE_ENABLE_ICU
+  if( !sqlite3MallocFailed() && rc==SQLITE_OK ){
+    extern int sqlite3IcuInit(sqlite3*);
+    rc = sqlite3IcuInit(db);
+  }
+#endif
+  sqlite3Error(db, rc, 0);
+
+  /* -DSQLITE_DEFAULT_LOCKING_MODE=1 makes EXCLUSIVE the default locking
+  ** mode.  -DSQLITE_DEFAULT_LOCKING_MODE=0 make NORMAL the default locking
+  ** mode.  Doing nothing at all also makes NORMAL the default.
+  */
+#ifdef SQLITE_DEFAULT_LOCKING_MODE
+  db->dfltLockMode = SQLITE_DEFAULT_LOCKING_MODE;
+  sqlite3PagerLockingMode(sqlite3BtreePager(db->aDb[0].pBt),
+                          SQLITE_DEFAULT_LOCKING_MODE);
+#endif
 
 opendb_out:
   if( SQLITE_NOMEM==(rc = sqlite3_errcode(db)) ){
@@ -999,6 +1129,7 @@ int sqlite3_reset(sqlite3_stmt *pStmt){
   }else{
     rc = sqlite3VdbeReset((Vdbe*)pStmt);
     sqlite3VdbeMakeReady((Vdbe*)pStmt, -1, 0, 0, 0);
+    assert( (rc & (sqlite3_db_handle(pStmt)->errMask))==rc );
   }
   return rc;
 }
@@ -1015,7 +1146,24 @@ int sqlite3_create_collation(
 ){
   int rc;
   assert( !sqlite3MallocFailed() );
-  rc = createCollation(db, zName, enc, pCtx, xCompare);
+  rc = createCollation(db, zName, enc, pCtx, xCompare, 0);
+  return sqlite3ApiExit(db, rc);
+}
+
+/*
+** Register a new collation sequence with the database handle db.
+*/
+int sqlite3_create_collation_v2(
+  sqlite3* db, 
+  const char *zName, 
+  int enc, 
+  void* pCtx,
+  int(*xCompare)(void*,int,const void*,int,const void*),
+  void(*xDel)(void*)
+){
+  int rc;
+  assert( !sqlite3MallocFailed() );
+  rc = createCollation(db, zName, enc, pCtx, xCompare, xDel);
   return sqlite3ApiExit(db, rc);
 }
 
@@ -1033,9 +1181,9 @@ int sqlite3_create_collation16(
   int rc = SQLITE_OK;
   char *zName8; 
   assert( !sqlite3MallocFailed() );
-  zName8 = sqlite3utf16to8(zName, -1);
+  zName8 = sqlite3Utf16to8(zName, -1);
   if( zName8 ){
-    rc = createCollation(db, zName8, enc, pCtx, xCompare);
+    rc = createCollation(db, zName8, enc, pCtx, xCompare, 0);
     sqliteFree(zName8);
   }
   return sqlite3ApiExit(db, rc);
@@ -1284,4 +1432,12 @@ int sqlite3_clear_bindings(sqlite3_stmt *pStmt){
 */
 int sqlite3_sleep(int ms){
   return sqlite3OsSleep(ms);
+}
+
+/*
+** Enable or disable the extended result codes.
+*/
+int sqlite3_extended_result_codes(sqlite3 *db, int onoff){
+  db->errMask = onoff ? 0xffffffff : 0xff;
+  return SQLITE_OK;
 }

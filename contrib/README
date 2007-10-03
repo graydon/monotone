@@ -21,12 +21,7 @@ licenses.
      For a manual, do `perl Notify.pl --man'.
      To get a help text, do `perl Notify.pl --help'.
 
-  -- monotone-import.pl: a Perl hack to provide an approximate of what
-     what 'cvs import' does.  The difference is that you have to decide
-     yourself what the import branch is called, and you have to propagate
-     the resulting revision to your development branch if you have one.
-     For a manual, do `perl monotone-import.pl --man'.
-     To get a help text, do `perl monotone-import.pl --help'.
+  -- Monotone.pm: A Perl module to access a 'mtn automate stdio' subprocess.
 
   -- monoprof.sh: A simple monotone profiling script.
 
@@ -41,3 +36,31 @@ licenses.
      a directory pointed at by $MTN_LUAHOOKSDIR.  Hooks are commonly added
      using the function add_hook().  There is simple documentation at the
      top of ext_hooks.lua.in.
+
+  -- monotone-mirror.sh: script to mirror another (remote) database and to
+     perform actions after mirroring, all according to a specification file.
+     monotone-mirror-postaction-update.sh: a post action script that updates
+     directories after a database has been mirrored according to a
+     specification file.
+     Both files has comments in the beginning, explaining how the specification
+     files should be written.
+
+  -- monotone-run-script-post-netsync.lua: run a script after revs or certs
+     for a particular branch have arrived via netsync
+
+  -- mtn_makepermissions: creates read-permissions and write-permissions from
+     files in the subdirectories read-permissions.d and write-permissions.d,
+     Debian-style.
+
+  -- monotone-cluster-push.lua: A simple script to push changes to other
+     servers upon receiving them.  This will only work on a server instance.
+
+  -- extra-commands.lua: Some simple lua user commands to automate common
+     command sequences.  The lua code should be copied to a monotonerc file
+     for use.
+
+  -- monotone-mail-notify-standalone.lua: a mail notification script which
+     runs without any other external dependencies than /usr/bin/mail and
+     offers an individual per-branch recipient configuration with a syntax
+     similar to the one found in ~/.monotone/read-permissions
+

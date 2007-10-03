@@ -11,9 +11,10 @@
 // interface. the global user_interface object 'ui' owns clog, so no
 // writing to it directly!
 
-#include "config.h"
 
+#include "base.hh"
 #include "platform.hh"
+#include "paths.hh"
 #include "sanity.hh"
 #include "ui.hh"
 #include "charset.hh"
@@ -24,39 +25,14 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
-#include <boost/lexical_cast.hpp>
+#include <map>
+#include <set>
+#include "lexical_cast.hh"
+#include "safe_map.hh"
 
-#include <typeinfo>
 #include <cstring>
 
-// Add #ifdeffage here as appropriate for other compiler-specific ways to
-// get this information.  Windows note: as best I can determine from poking
-// around on MSDN, MSVC type_info.name() is already demangled, and there is
-// no documented equivalent of __cxa_current_exception_type().
-#ifdef HAVE_CXXABI_H
- #include <cxxabi.h>
- #ifdef HAVE___CXA_DEMANGLE
-  inline char const * demangle_typename(char const * name)
-  {
-    int status = -1;
-    char * dem = abi::__cxa_demangle(name, 0, 0, &status);
-    if (status == 0)
-      return dem;
-    else
-      return 0;
-  }
- #else
-  #define demangle_typename(x) 0
- #endif
- #ifdef HAVE___CXA_CURRENT_EXCEPTION_TYPE
-  #define get_current_exception_type() abi::__cxa_current_exception_type()
- #else
-  #define get_current_exception_type() 0
- #endif
-#else
- #define demangle_typename(x) 0
- #define get_current_exception_type() 0
-#endif
+#include "current_exception.hh"
 
 using std::clog;
 using std::cout;
@@ -74,6 +50,20 @@ using boost::lexical_cast;
 
 struct user_interface ui;
 
+struct user_interface::impl
+{
+  std::set<string> issued_warnings;
+
+  bool some_tick_is_dirty;    // At least one tick needs being printed
+  bool last_write_was_a_tick;
+  map<string,ticker *> tickers;
+  tick_writer * t_writer;
+  string tick_trailer;
+
+  impl() : some_tick_is_dirty(false), last_write_was_a_tick(false),
+           t_writer(0) {}
+};
+
 ticker::ticker(string const & tickname, string const & s, size_t mod,
     bool kilocount) :
   ticks(0),
@@ -87,27 +77,27 @@ ticker::ticker(string const & tickname, string const & s, size_t mod,
   shortname(s),
   count_size(0)
 {
-  I(ui.tickers.find(keyname) == ui.tickers.end());
-  ui.tickers.insert(make_pair(keyname, this));
+  I(ui.imp);
+  safe_insert(ui.imp->tickers, make_pair(keyname, this));
 }
 
 ticker::~ticker()
 {
-  I(ui.tickers.find(keyname) != ui.tickers.end());
-  if (ui.some_tick_is_dirty)
-    {
-      ui.write_ticks();
-    }
-  ui.tickers.erase(keyname);
+  I(ui.imp);
+  safe_erase(ui.imp->tickers, keyname);
+
+  if (ui.imp->some_tick_is_dirty)
+    ui.write_ticks();
   ui.finish_ticking();
 }
 
 void
 ticker::operator++()
 {
-  I(ui.tickers.find(keyname) != ui.tickers.end());
+  I(ui.imp);
+  I(ui.imp->tickers.find(keyname) != ui.imp->tickers.end());
   ticks++;
-  ui.some_tick_is_dirty = true;
+  ui.imp->some_tick_is_dirty = true;
   if (ticks % mod == 0)
     ui.write_ticks();
 }
@@ -115,18 +105,60 @@ ticker::operator++()
 void
 ticker::operator+=(size_t t)
 {
-  I(ui.tickers.find(keyname) != ui.tickers.end());
+  I(ui.imp);
+  I(ui.imp->tickers.find(keyname) != ui.imp->tickers.end());
   size_t old = ticks;
 
   ticks += t;
   if (t != 0)
     {
-      ui.some_tick_is_dirty = true;
+      ui.imp->some_tick_is_dirty = true;
       if (ticks % mod == 0 || (ticks / mod) > (old / mod))
         ui.write_ticks();
     }
 }
 
+// We would like to put these in an anonymous namespace but we can't because
+// struct user_interface needs to make them friends.
+struct tick_writer
+{
+public:
+  tick_writer() {}
+  virtual ~tick_writer() {}
+  virtual void write_ticks() = 0;
+  virtual void clear_line() = 0;
+};
+
+struct tick_write_count : virtual public tick_writer
+{
+public:
+  tick_write_count();
+  ~tick_write_count();
+  void write_ticks();
+  void clear_line();
+private:
+  std::vector<size_t> last_tick_widths;
+  size_t last_tick_len;
+};
+
+struct tick_write_dot : virtual public tick_writer
+{
+public:
+  tick_write_dot();
+  ~tick_write_dot();
+  void write_ticks();
+  void clear_line();
+private:
+  std::map<std::string,size_t> last_ticks;
+  unsigned int chars_on_line;
+};
+
+struct tick_write_nothing : virtual public tick_writer
+{
+public:
+  void write_ticks() {}
+  void clear_line() {}
+};
 
 tick_write_count::tick_write_count() : last_tick_len(0)
 {
@@ -197,8 +229,9 @@ void tick_write_count::write_ticks()
   vector<string> tick_title_strings;
   vector<string> tick_count_strings;
 
-  for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
-       i != ui.tickers.end(); ++i)
+  I(ui.imp);
+  for (map<string,ticker *>::const_iterator i = ui.imp->tickers.begin();
+       i != ui.imp->tickers.end(); ++i)
     {
       ticker * tick = i->second;
 
@@ -255,7 +288,7 @@ void tick_write_count::write_ticks()
     }
 
   string tickline1;
-  bool write_tickline1 = !(ui.last_write_was_a_tick
+  bool write_tickline1 = !(ui.imp->last_write_was_a_tick
                            && (tick_widths == last_tick_widths));
   if (write_tickline1)
     {
@@ -280,10 +313,10 @@ void tick_write_count::write_ticks()
       tickline2.append(idx(tick_count_strings, i));
     }
 
-  if (!ui.tick_trailer.empty())
+  if (!ui.imp->tick_trailer.empty())
     {
       tickline2 += " ";
-      tickline2 += ui.tick_trailer;
+      tickline2 += ui.imp->tick_trailer;
     }
 
   size_t curr_sz = display_width(utf8(tickline2));
@@ -294,8 +327,8 @@ void tick_write_count::write_ticks()
   unsigned int tw = terminal_width();
   if(write_tickline1)
     {
-      if (ui.last_write_was_a_tick)
-        clog << "\n";
+      if (ui.imp->last_write_was_a_tick)
+        clog << '\n';
 
       if (tw && display_width(utf8(tickline1)) > tw)
         {
@@ -303,7 +336,7 @@ void tick_write_count::write_ticks()
           // bytes, not by characters)
           tickline1.resize(tw);
         }
-      clog << tickline1 << "\n";
+      clog << tickline1 << '\n';
     }
   if (tw && display_width(utf8(tickline2)) > tw)
     {
@@ -311,7 +344,7 @@ void tick_write_count::write_ticks()
       // bytes, not by characters)
       tickline2.resize(tw);
     }
-  clog << "\r" << tickline2;
+  clog << '\r' << tickline2;
   clog.flush();
 }
 
@@ -331,11 +364,12 @@ tick_write_dot::~tick_write_dot()
 
 void tick_write_dot::write_ticks()
 {
+  I(ui.imp);
   static const string tickline_prefix = ui.output_prefix();
   string tickline1, tickline2;
   bool first_tick = true;
 
-  if (ui.last_write_was_a_tick)
+  if (ui.imp->last_write_was_a_tick)
     {
       tickline1 = "";
       tickline2 = "";
@@ -347,12 +381,12 @@ void tick_write_dot::write_ticks()
       chars_on_line = tickline_prefix.size();
     }
 
-  for (map<string,ticker *>::const_iterator i = ui.tickers.begin();
-       i != ui.tickers.end(); ++i)
+  for (map<string,ticker *>::const_iterator i = ui.imp->tickers.begin();
+       i != ui.imp->tickers.end(); ++i)
     {
       map<string,size_t>::const_iterator old = last_ticks.find(i->first);
 
-      if (!ui.last_write_was_a_tick)
+      if (!ui.imp->last_write_was_a_tick)
         {
           if (!first_tick)
             tickline1 += ", ";
@@ -396,23 +430,21 @@ void tick_write_dot::clear_line()
 // global, and we don't want global constructors/destructors doing
 // any real work.  see monotone.cc for how this is handled.
 
-user_interface::user_interface() :
-  prog_name("?"),
-  last_write_was_a_tick(false),
-  t_writer(0)
-{}
+user_interface::user_interface() : prog_name("?"), imp(0) {}
 
 void user_interface::initialize()
 {
+  imp = new user_interface::impl;
+  
   cout.exceptions(ios_base::badbit);
 #ifdef SYNC_WITH_STDIO_WORKS
   clog.sync_with_stdio(false);
 #endif
   clog.unsetf(ios_base::unitbuf);
   if (have_smart_terminal())
-    set_tick_writer(new tick_write_count);
+    set_tick_write_count();
   else
-    set_tick_writer(new tick_write_dot);
+    set_tick_write_dot();
 }
 
 user_interface::~user_interface()
@@ -420,53 +452,78 @@ user_interface::~user_interface()
 
 void user_interface::deinitialize()
 {
-  delete t_writer;
+  I(imp);
+  delete imp->t_writer;
+  delete imp;
 }
 
 void
 user_interface::finish_ticking()
 {
-  if (tickers.size() == 0 &&
-      last_write_was_a_tick)
+  I(imp);
+  if (imp->tickers.size() == 0 && imp->last_write_was_a_tick)
     {
-      tick_trailer = "";
-      t_writer->clear_line();
-      last_write_was_a_tick = false;
+      imp->tick_trailer = "";
+      imp->t_writer->clear_line();
+      imp->last_write_was_a_tick = false;
     }
 }
 
 void
 user_interface::set_tick_trailer(string const & t)
 {
-  tick_trailer = t;
+  I(imp);
+  imp->tick_trailer = t;
 }
 
 void
-user_interface::set_tick_writer(tick_writer * t)
+user_interface::set_tick_write_dot()
 {
-  if (t_writer != 0)
-    delete t_writer;
-  t_writer = t;
+  I(imp);
+  if (imp->t_writer != 0)
+    delete imp->t_writer;
+  imp->t_writer = new tick_write_dot;
 }
+
+void
+user_interface::set_tick_write_count()
+{
+  I(imp);
+  if (imp->t_writer != 0)
+    delete imp->t_writer;
+  imp->t_writer = new tick_write_count;
+}
+
+void
+user_interface::set_tick_write_nothing()
+{
+  I(imp);
+  if (imp->t_writer != 0)
+    delete imp->t_writer;
+  imp->t_writer = new tick_write_nothing;
+}
+
 
 void
 user_interface::write_ticks()
 {
-  t_writer->write_ticks();
-  last_write_was_a_tick = true;
-  some_tick_is_dirty = false;
+  I(imp);
+  imp->t_writer->write_ticks();
+  imp->last_write_was_a_tick = true;
+  imp->some_tick_is_dirty = false;
 }
 
 void
 user_interface::warn(string const & warning)
 {
-  if (issued_warnings.find(warning) == issued_warnings.end())
+  I(imp);
+  if (imp->issued_warnings.find(warning) == imp->issued_warnings.end())
     {
       string message;
       prefix_lines_with(_("warning: "), warning, message);
       inform(message);
     }
-  issued_warnings.insert(warning);
+  imp->issued_warnings.insert(warning);
 }
 
 // this message should be kept consistent with unix/main.cc and
@@ -476,7 +533,7 @@ user_interface::fatal(string const & fatal)
 {
   inform(F("fatal: %s\n"
            "this is almost certainly a bug in monotone.\n"
-           "please send this error message, the output of '%s --full-version',\n"
+           "please send this error message, the output of '%s version --full',\n"
            "and a description of what you were doing to %s.")
          % fatal % prog_name % PACKAGE_BUGREPORT);
   global_sanity.dump_buffer();
@@ -563,12 +620,13 @@ sanitize(string const & line)
 void
 user_interface::ensure_clean_line()
 {
-  if (last_write_was_a_tick)
+  I(imp);
+  if (imp->last_write_was_a_tick)
     {
       write_ticks();
-      t_writer->clear_line();
+      imp->t_writer->clear_line();
     }
-  last_write_was_a_tick = false;
+  imp->last_write_was_a_tick = false;
 }
 
 void
@@ -588,8 +646,7 @@ user_interface::inform(string const & line)
   string prefixedLine;
   prefix_lines_with(output_prefix(), line, prefixedLine);
   ensure_clean_line();
-  clog << sanitize(prefixedLine) << endl;
-  clog.flush();
+  clog << sanitize(prefixedLine) << endl; // flushes
 }
 
 unsigned int
@@ -599,6 +656,96 @@ guess_terminal_width()
   if (!w)
     w = constants::default_terminal_width;
   return w;
+}
+
+// A very simple class that adds an operator() to a string that returns
+// the string itself.  This is to make it compatible with, for example,
+// the utf8 class, allowing it to be usable in other contexts without
+// encoding conversions.
+class string_adaptor : public string
+{
+public:
+  string_adaptor(string const & str) : string(str) {}
+  string const & operator()(void) const { return *this; }
+};
+
+// See description for format_text below for more details.
+static string
+format_paragraph(string const & text, size_t const col, size_t curcol)
+{
+  I(text.find('\n') == string::npos);
+
+  string formatted;
+  if (curcol < col)
+    {
+      formatted = string(col - curcol, ' ');
+      curcol = col;
+    }
+
+  const size_t maxcol = guess_terminal_width();
+
+  vector< string_adaptor > words = split_into_words(string_adaptor(text));
+  for (vector< string_adaptor >::const_iterator iter = words.begin();
+       iter != words.end(); iter++)
+    {
+      string const & word = (*iter)();
+
+      if (iter != words.begin() &&
+          curcol + display_width(utf8(word)) + 1 > maxcol)
+        {
+          formatted += '\n' + string(col, ' ');
+          curcol = col;
+        }
+      else if (iter != words.begin())
+        {
+          formatted += ' ';
+          curcol++;
+        }
+
+      formatted += word;
+      curcol += display_width(utf8(word));
+    }
+
+  return formatted;
+}
+
+// Reformats the given text so that it fits in the current screen with no
+// wrapping.
+//
+// The input text is a series of words and sentences.  Paragraphs may be
+// separated with a '\n' character, which is taken into account to do the
+// proper formatting.  The text should not finish in '\n'.
+//
+// 'col' specifies the column where the text will start and 'curcol'
+// specifies the current position of the cursor.
+string
+format_text(string const & text, size_t const col, size_t curcol)
+{
+  I(curcol <= col);
+
+  string formatted;
+
+  vector< string > lines;
+  split_into_lines(text, lines);
+  for (vector< string >::const_iterator iter = lines.begin();
+       iter != lines.end(); iter++)
+    {
+      string const & line = *iter;
+
+      formatted += format_paragraph(line, col, curcol);
+      if (iter + 1 != lines.end())
+        formatted += "\n\n";
+      curcol = 0;
+    }
+
+  return formatted;
+}
+
+// See description for the other format_text below for more details.
+string
+format_text(i18n_format const & text, size_t const col, size_t curcol)
+{
+  return format_text(text.str(), col, curcol);
 }
 
 // Local Variables:

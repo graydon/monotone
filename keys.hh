@@ -11,7 +11,11 @@
 // PURPOSE.
 
 #include "vocab.hh"
-#include <string>
+#include "botan/rsa.h"
+#include <boost/shared_ptr.hpp>
+
+using Botan::RSA_PrivateKey;
+using boost::shared_ptr;
 
 class lua_hooks;
 class app_state;
@@ -65,6 +69,20 @@ void decrypt_rsa(lua_hooks & lua,
                  base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext);
+
+void
+get_passphrase(lua_hooks & lua,
+               rsa_keypair_id const & keyid,
+               utf8 & phrase,
+               bool confirm_phrase = false,
+               bool force_from_user = false,
+               bool generating_key = false);
+
+shared_ptr<RSA_PrivateKey>
+get_private_key(lua_hooks & lua,
+                rsa_keypair_id const & id,
+                base64< rsa_priv_key > const & priv,
+                bool force_from_user = false);
 
 // netsync stuff
 

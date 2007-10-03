@@ -2,7 +2,7 @@
 include("common/netsync.lua")
 mtn_setup()
 netsync.setup()
-rseed = os.time()
+rseed = get_pid()
 
 addfile("testfile", "foo")
 commit()

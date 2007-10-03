@@ -20,32 +20,82 @@ set -e
 
 case "$1" in
     purge)
-       
-       MTN_DB=/var/lib/monotone/default.mtn
-       MTN_HOME=/var/lib/monotone
-       MTN_CONFDIR=/etc/monotone
-       MTN_KEYDIR=$MTN_HOME/keys
+       # note: when executing in this mode, this script cannot assume
+       # the existence of _any_ of the package dependencies.  it must
+       # work using only Essential packages.  hence, in several cases
+       # below we do cleanups only if the relevant program exists.
 
-       # remove configs from ucf database and filesystem
-       /usr/bin/ucf --purge /etc/monotone/write-permissions
-       /usr/bin/ucf --purge /etc/monotone/read-permissions
-       /usr/bin/ucf --purge /etc/monotone/hooks.lua
+       # remove config files from ucf database and filesystem
+       for conf in write-permissions read-permissions hooks.lua; do
 
-       rm -f /etc/monotone/write-permissions || true
-       rm -f /etc/monotone/read-permissions || true
-       rm -f /etc/monotone/hooks.lua || true
+          # mimic dpkg and remove backups too
+          for ext in '' '~' '%' .bak .ucf-new .ucf-old .ucf-dist; do
+             rm -f /etc/monotone/$conf$ext || true
+          done 
 
-       if [ -n "`id -u monotone 2>/dev/null`" ]; then
-           /usr/sbin/deluser --quiet --remove-home monotone 2>/dev/null >/dev/null
+          # clear entries in ucf database
+          # note: we cannot assume ucf is still installed at this point
+          # (if it isn't, we don't need to worry about its database)
+          if which ucf > /dev/null; then
+             ucf --purge /etc/monotone/$conf
+          fi
+          if which ucfr > /dev/null; then
+             ucfr --purge monotone-server /etc/monotone/$conf
+          fi
+       done
+
+       # if debconf still exists and we were asked to auto-manage the
+       # database, delete the auto-generated key and database. don't
+       # delete anything else in /var/lib/monotone - there might be
+       # hand-created databases and keys that the admin wants to keep.
+       # in any case remove /var/lib/monotone(/keys) if empty.
+
+       if [ -e /usr/share/debconf/confmodule ]; then
+	   . /usr/share/debconf/confmodule
+
+	   db_get monotone-server/manage-db
+	   if [ "$RET" = true ]; then
+	       db_get monotone-server/key
+	       rm -f /var/lib/monotone/keys/"$RET"
+
+	       rm -f /var/lib/monotone/default.mtn
+	       rm -f /var/lib/monotone/default.mtn-journal
+
+	       grep -v "$RET" /etc/monotone/passphrases \
+	                    > /etc/monotone/passphrases.dpkg-new || true
+	       if [ -s /etc/monotone/passphrases.dpkg-new ]; then
+		   mv -f /etc/monotone/passphrases.dpkg-new \
+		         /etc/monotone/passphrases
+	       else
+		   rm -f /etc/monotone/passphrases.dpkg-new \
+		         /etc/monotone/passphrases
+	       fi
+
+	   fi
+	   # do not stop debconf, the debhelper additions will need it.
        fi
+       rmdir --ignore-fail-on-non-empty /var/lib/monotone/keys
+       rmdir --ignore-fail-on-non-empty /var/lib/monotone
 
-       if [ -n "`id -g monotone 2>/dev/null`" ]; then
-           /usr/sbin/delgroup --quiet monotone 2>/dev/null >/dev/null
+       # if deluser/delgroup exist, remove the server user and group.
+       # do not do this if /var/lib/monotone still exists (so that it
+       # will still have a named user owning it).
+       if which deluser > /dev/null && [ ! -e /var/lib/monotone ]; then
+	   if [ -n "`id -u monotone 2>/dev/null`" ]; then
+               deluser --quiet monotone 2>/dev/null >/dev/null
+	   fi
+
+	   if [ -n "`id -g monotone 2>/dev/null`" ]; then
+               delgroup --quiet monotone 2>/dev/null >/dev/null
+	   fi
+       else
+	   if [ -e /var/lib/monotone ]; then
+	       reason="/var/lib/monotone still exists"
+	   else
+	       reason="deluser is not available"
+	   fi
+	   echo "warning: not deleting monotone user or group because $reason" >&2
        fi
-       
-       # delete the monotone database (only on purge)
-       rm -rf $MTN_HOME
-
     ;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
     ;;

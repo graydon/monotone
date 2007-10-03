@@ -1,8 +1,7 @@
 #ifndef __SIMPLESTRING_XFORM_HH__
 #define __SIMPLESTRING_XFORM_HH__
 
-#include <vector>
-#include <string>
+#include "vector.hh"
 
 std::string uppercase(std::string const & in);
 std::string lowercase(std::string const & in);
@@ -21,6 +20,45 @@ void join_lines(std::vector<std::string> const & in,
 void join_lines(std::vector<std::string> const & in,
                 std::string & out);
 
+template< class T >
+std::vector< T > split_into_words(T const & in)
+{
+  std::string const & instr = in();
+  std::vector< T > out;
+
+  std::string::size_type begin = 0;
+  std::string::size_type end = instr.find_first_of(" ", begin);
+
+  while (end != std::string::npos && end >= begin)
+    {
+      out.push_back(T(instr.substr(begin, end-begin)));
+      begin = end + 1;
+      if (begin >= instr.size())
+        break;
+      end = instr.find_first_of(" ", begin);
+    }
+  if (begin < instr.size())
+    out.push_back(T(instr.substr(begin, instr.size() - begin)));
+
+  return out;
+}
+
+template< class Container >
+typename Container::value_type join_words(Container const & in, std::string const & sep = " ")
+{
+  std::string str;
+  typename Container::const_iterator iter = in.begin();
+  while (iter != in.end())
+    {
+      str += (*iter)();
+      iter++;
+      if (iter != in.end())
+        str += sep;
+    }
+  typedef typename Container::value_type result_type;
+  return result_type(str);
+}
+
 void prefix_lines_with(std::string const & prefix,
                        std::string const & lines,
                        std::string & out);
@@ -33,9 +71,6 @@ std::string remove_ws(std::string const & s);
 
 // remove leading and trailing whitespace
 std::string trim_ws(std::string const & s);
-
-// line-ending conversion
-void line_end_convert(std::string const & linesep, std::string const & src, std::string & dst);
 
 // Local Variables:
 // mode: C++

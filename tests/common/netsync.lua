@@ -16,7 +16,7 @@ function netsync.setup()
   check(copy("test.db", "test3.db"))
   check(copy("keys", "keys3"))
   check(getstd("common/netsync-hooks.lua", "netsync.lua"))
-  math.randomseed(os.time())
+  math.randomseed(get_pid())
 end
 
 function netsync.setup_with_notes()
@@ -26,8 +26,13 @@ end
 
 function netsync.internal.client(srv, oper, pat, n, res)
   if n == nil then n = 2 end
+  if n == 1 then
+  args = {"--rcfile=netsync.lua", "--keydir=keys",
+          "--db=test.db", oper, srv.address}
+  else
   args = {"--rcfile=netsync.lua", "--keydir=keys"..n,
           "--db=test"..n..".db", oper, srv.address}
+  end
   if type(pat) == "string" then
     table.insert(args, pat)
   elseif type(pat) == "table" then
@@ -51,7 +56,7 @@ function netsync.start(opts, n, min)
   end
   local args = {}
   local fn = mtn
-  local addr = "localhost:" .. math.random(20000, 50000)
+  local addr = "localhost:" .. math.random(1024, 65535)
   table.insert(args, "--dump=_MTN/server_dump")
   table.insert(args, "--bind="..addr)
   if min then

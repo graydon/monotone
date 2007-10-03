@@ -11,7 +11,7 @@ root_r_sha = base_revision()
 root_f_sha = sha1("foo")
 
 -- produce move edge
-check(mtn("rename", "foo", "bar"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo", "bar"), 0, false, false)
 rename("foo", "bar")
 commit()
 

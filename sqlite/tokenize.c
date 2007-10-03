@@ -15,7 +15,7 @@
 ** individual tokens and sends those tokens one-by-one over to the
 ** parser for analysis.
 **
-** $Id: tokenize.c,v 1.124 2006/08/12 12:33:14 drh Exp $
+** $Id: tokenize.c,v 1.131 2007/07/23 19:31:17 drh Exp $
 */
 #include "sqliteInt.h"
 #include "os.h"
@@ -394,16 +394,13 @@ int sqlite3RunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
   int tokenType;
   int lastTokenParsed = -1;
   sqlite3 *db = pParse->db;
-  extern void *sqlite3ParserAlloc(void*(*)(int));
-  extern void sqlite3ParserFree(void*, void(*)(void*));
-  extern int sqlite3Parser(void*, int, Token, Parse*);
 
   if( db->activeVdbeCnt==0 ){
     db->u1.isInterrupted = 0;
   }
   pParse->rc = SQLITE_OK;
   i = 0;
-  pEngine = sqlite3ParserAlloc((void*(*)(int))sqlite3MallocX);
+  pEngine = sqlite3ParserAlloc((void*(*)(size_t))sqlite3MallocX);
   if( pEngine==0 ){
     return SQLITE_NOMEM;
   }
@@ -421,6 +418,10 @@ int sqlite3RunParser(Parse *pParse, const char *zSql, char **pzErrMsg){
     assert( pParse->sLastToken.dyn==0 );
     pParse->sLastToken.n = getToken((unsigned char*)&zSql[i],&tokenType);
     i += pParse->sLastToken.n;
+    if( i>SQLITE_MAX_SQL_LENGTH ){
+      pParse->rc = SQLITE_TOOBIG;
+      break;
+    }
     switch( tokenType ){
       case TK_SPACE:
       case TK_COMMENT: {
@@ -495,7 +496,7 @@ abort_parse:
     ** structure built up in pParse->pNewTable. The calling code (see vtab.c)
     ** will take responsibility for freeing the Table structure.
     */
-    sqlite3DeleteTable(pParse->db, pParse->pNewTable);
+    sqlite3DeleteTable(pParse->pNewTable);
   }
 
   sqlite3DeleteTrigger(pParse->pNewTrigger);

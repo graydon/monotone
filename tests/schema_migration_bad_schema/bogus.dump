@@ -1,0 +1,3 @@
+BEGIN EXCLUSIVE;
+CREATE TABLE foo (bar primary key, baz not null);
+COMMIT;

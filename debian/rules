@@ -1,17 +1,19 @@
 #!/usr/bin/make -f
 
-include /usr/share/cdbs/1/rules/buildcore.mk
-include /usr/share/cdbs/1/class/autotools.mk
 include /usr/share/cdbs/1/rules/debhelper.mk
-#include /usr/share/cdbs/1/rules/simple-patchsys.mk
+include /usr/share/cdbs/1/class/autotools.mk
 
+DEB_MAKE_CHECK_TARGET = check
+DEB_DH_INSTALLINIT_ARGS = --name=monotone
 
-install/monotone::
-	cp contrib/monotone.bash_completion debian/monotone/etc/bash_completion.d/monotone
+CPUS := $(shell getconf _NPROCESSORS_ONLN)
 
-install/monotone-doc::
+build : DEB_MAKE_INVOKE = $(DEB_MAKE_ENVVARS) $(MAKE) -j$(CPUS) -C $(DEB_BUILDDIR)
+
+build/monotone-doc::
 	make monotone.pdf
 
-binary-install/monotone-server::
-	dh_installinit --name=monotone
-
+# dh_install cannot do this.
+install/monotone::
+	cp contrib/monotone.bash_completion \
+		debian/monotone/etc/bash_completion.d/monotone

@@ -1,5 +1,5 @@
 /*
-** $Id: lparser.c,v 2.42 2006/06/05 15:57:59 roberto Exp $
+** $Id: lparser.c,v 2.42a 2006/06/05 15:57:59 roberto Exp $
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -938,6 +938,8 @@ static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
     primaryexp(ls, &nv.v);
     if (nv.v.k == VLOCAL)
       check_conflict(ls, lh, &nv.v);
+    luaY_checklimit(ls->fs, nvars, LUAI_MAXCCALLS - ls->L->nCcalls,
+                    "variable names");
     assignment(ls, &nv, nvars+1);
   }
   else {  /* assignment -> `=' explist1 */

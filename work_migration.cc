@@ -7,12 +7,15 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "sanity.hh"
 #include "ui.hh"
 #include "simplestring_xform.hh"
 #include "revision.hh"
+#include "file_io.hh"
+#include "work.hh"
 
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <exception>
 
 using std::string;
@@ -56,7 +59,7 @@ get_ws_format()
     {
       if (directory_exists(bookkeeping_root))
         format = 1;
-      else if (directory_exists(old_bookkeeping_root))
+      else if (directory_exists(file_path() / old_bookkeeping_root_component))
         format = 0;
       else
         N(false, F("workspace required but not found"));

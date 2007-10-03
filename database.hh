@@ -15,23 +15,20 @@ struct sqlite3_stmt;
 struct cert;
 int sqlite3_finalize(sqlite3_stmt *);
 
-#include <stdarg.h>
-
-#include <vector>
+#include "vector.hh"
 #include <set>
 #include <map>
-#include <string>
 
-#include "cset.hh"
 #include "numeric_vocab.hh"
+#include "vocab.hh"
 #include "paths.hh"
 #include "cleanup.hh"
 #include "roster.hh"
 #include "selectors.hh"
-#include "vocab.hh"
-#include "rev_height.hh"
+#include "graph.hh"
 
 // FIXME: would be better not to include this everywhere
+#include "outdated_indicator.hh"
 #include "lru_writeback_cache.hh"
 
 // this file defines a public, typed interface to the database.
@@ -74,10 +71,11 @@ int sqlite3_finalize(sqlite3_stmt *);
 // the program. I don't know if there's any way to make it clearer.
 
 class transaction_guard;
-struct posting;
 class app_state;
 struct revision_t;
 struct query;
+class rev_height;
+struct globish;
 
 class database
 {
@@ -89,16 +87,18 @@ private:
   app_state * __app;
   struct sqlite3 * __sql;
 
+  enum open_mode { normal_mode = 0,
+                   schema_bypass_mode,
+                   format_bypass_mode };
+
   void install_functions(app_state * app);
-  struct sqlite3 * sql(bool init = false, bool migrating_format = false);
+  struct sqlite3 * sql(enum open_mode mode = normal_mode);
 
   void check_filename();
   void check_db_exists();
+  void check_db_nonexistent();
   void open();
   void close();
-
-  std::string const schema;
-  void check_schema();
   void check_format();
 
 public:
@@ -112,6 +112,9 @@ public:
   bool is_dbfile(any_path const & file);
   void ensure_open();
   void ensure_open_for_format_changes();
+private:
+  void ensure_open_for_maintenance();
+public:
   void check_is_not_rosterified();
   bool database_specified();
 
@@ -139,9 +142,10 @@ private:
   // --== Generic database metadata gathering ==--
   //
 private:
-  unsigned long count(std::string const & table);
-  unsigned long space_usage(std::string const & table,
-                            std::string const & concatenated_columns);
+  std::string count(std::string const & table);
+  std::string space(std::string const & table,
+                    std::string const & concatenated_columns,
+                    u64 & total);
   unsigned int page_size();
   unsigned int cache_size();
 
@@ -183,6 +187,7 @@ private:
   bool have_delayed_file(file_id const & id);
   void load_delayed_file(file_id const & id, file_data & dat);
   void cancel_delayed_file(file_id const & id);
+  void drop_or_cancel_file(file_id const & id);
   void schedule_delayed_file(file_id const & id, file_data const & dat);
 
   std::map<file_id, file_data> delayed_files;
@@ -211,6 +216,10 @@ private:
   bool delta_exists(std::string const & ident,
                     std::string const & table);
 
+  bool delta_exists(std::string const & ident,
+                    std::string const & base,
+                    std::string const & table);
+
   void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
                                            data & dat,
                                            std::string const & table);
@@ -223,8 +232,8 @@ private:
   void get_roster_delta(std::string const & ident,
                         std::string const & base,
                         roster_delta & del);
-  friend class file_and_manifest_reconstruction_graph;
-  friend class roster_reconstruction_graph;
+  friend struct file_and_manifest_reconstruction_graph;
+  friend struct roster_reconstruction_graph;
   void get_version(hexenc<id> const & ident,
                    data & dat,
                    std::string const & data_table,
@@ -284,7 +293,7 @@ public:
   // --== The ancestry graph ==--
   //
 public:
-  void get_revision_ancestry(std::multimap<revision_id, revision_id> & graph);
+  void get_revision_ancestry(rev_ancestry_map & graph);
 
   void get_revision_parents(revision_id const & ident,
                            std::set<revision_id> & parents);
@@ -314,10 +323,10 @@ public:
   void get_revision(revision_id const & ident,
                     revision_data & dat);
 
-  void put_revision(revision_id const & new_id,
+  bool put_revision(revision_id const & new_id,
                     revision_t const & rev);
 
-  void put_revision(revision_id const & new_id,
+  bool put_revision(revision_id const & new_id,
                     revision_data const & dat);
 
   //
@@ -343,13 +352,28 @@ public:
   bool roster_version_exists(revision_id const & ident);
   void get_roster_ids(std::set<revision_id> & ids);
 
+  // using roster deltas
+  void get_markings(revision_id const & id,
+                    node_id const & nid,
+                    marking_t & markings);
+
+  void get_file_content(revision_id const & id,
+                        node_id const & nid,
+                        file_id & content);
+private:
+  struct extractor;
+  struct file_content_extractor;
+  struct markings_extractor;
+  void extract_from_deltas(revision_id const & id, extractor & x);
+
   //
   // --== Keys ==--
   //
 private:
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 public:
-  void get_key_ids(std::string const & pattern,
+  void get_key_ids(std::vector<rsa_keypair_id> & pubkeys);
+  void get_key_ids(globish const & pattern,
                    std::vector<rsa_keypair_id> & pubkeys);
 
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
@@ -364,7 +388,7 @@ public:
   void get_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> & pub_encoded);
 
-  void put_key(rsa_keypair_id const & ident,
+  bool put_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> const & pub_encoded);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
@@ -407,42 +431,51 @@ private:
                  std::vector<cert> & certs,
                  std::string const & table);
 
+  outdated_indicator_factory cert_stamper;
 public:
+
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
-  void put_revision_cert(revision<cert> const & cert);
+  bool put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  void get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
-                               std::pair<revision_id, rsa_keypair_id> > > & idx);
+  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
+                              std::pair<revision_id, rsa_keypair_id> > > & idx);
 
-  void get_revision_certs(std::vector< revision<cert> > & certs);
+  // Only used by database_check.cc
+  outdated_indicator get_revision_certs(std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  outdated_indicator get_revision_certs(cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(cert_name const & name,
+  // Only used by get_branch_certs (project.cc)
+  outdated_indicator get_revision_certs(cert_name const & name,
                           base64<cert_value> const & val,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Only used by revision_is_in_branch (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
                           base64<cert_value> const & value,
                           std::vector< revision<cert> > & certs);
 
-  void get_revisions_with_cert(cert_name const & name,
+  // Only used by get_branch_heads (project.cc)
+  outdated_indicator get_revisions_with_cert(cert_name const & name,
                                base64<cert_value> const & value,
                                std::set<revision_id> & revisions);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through project.cc, and by
+  // anc_graph::add_node_for_oldstyle_revision (revision.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< revision<cert> > & certs);
 
-  void get_revision_certs(revision_id const & ident,
+  // Used through get_revision_cert_hashes (project.cc)
+  outdated_indicator get_revision_certs(revision_id const & ident,
                           std::vector< hexenc<id> > & hashes);
 
   void get_revision_cert(hexenc<id> const & hash,
@@ -458,15 +491,15 @@ public:
   // --== Epochs ==--
   //
 public:
-  void get_epochs(std::map<cert_value, epoch_data> & epochs);
+  void get_epochs(std::map<branch_name, epoch_data> & epochs);
 
-  void get_epoch(epoch_id const & eid, cert_value & branch, epoch_data & epo);
+  void get_epoch(epoch_id const & eid, branch_name & branch, epoch_data & epo);
 
   bool epoch_exists(epoch_id const & eid);
 
-  void set_epoch(cert_value const & branch, epoch_data const & epo);
+  void set_epoch(branch_name const & branch, epoch_data const & epo);
 
-  void clear_epoch(cert_value const & branch);
+  void clear_epoch(branch_name const & branch);
 
   //
   // --== Database 'vars' ==--
@@ -512,6 +545,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate();
+  void test_migration_step(std::string const &);
   // for kill_rev_locally:
   void delete_existing_rev_and_certs(revision_id const & rid);
   // for kill_branch_certs_locally:
@@ -527,7 +561,9 @@ private:
                                     database & db);
 public:
     // branches
-  void get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(std::vector<std::string> & names);
+  outdated_indicator get_branches(globish const & glob,
+                                  std::vector<std::string> & names);
 
   bool check_integrity();
 
@@ -559,6 +595,56 @@ public:
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
 };
+
+// Parent maps are used in a number of places to keep track of all the
+// parent rosters of a given revision.
+typedef std::map<revision_id, database::cached_roster>
+parent_map;
+
+typedef parent_map::value_type
+parent_entry;
+
+inline revision_id const & parent_id(parent_entry const & p)
+{
+  return p.first;
+}
+
+inline revision_id const & parent_id(parent_map::const_iterator i)
+{
+  return i->first;
+}
+
+inline database::cached_roster const &
+parent_cached_roster(parent_entry const & p)
+{
+  return p.second;
+}
+
+inline database::cached_roster const &
+parent_cached_roster(parent_map::const_iterator i)
+{
+  return i->second;
+}
+
+inline roster_t const & parent_roster(parent_entry const & p)
+{
+  return *(p.second.first);
+}
+
+inline roster_t const & parent_roster(parent_map::const_iterator i)
+{
+  return *(i->second.first);
+}
+
+inline marking_map const & parent_marking(parent_entry const & p)
+{
+  return *(p.second.second);
+}
+
+inline marking_map const & parent_marking(parent_map::const_iterator i)
+{
+  return *(i->second.second);
+}
 
 // Transaction guards nest. Acquire one in any scope you'd like
 // transaction-protected, and it'll make sure the db aborts a transaction
@@ -623,11 +709,6 @@ public:
   void maybe_checkpoint(size_t nbytes);
   void commit();
 };
-
-
-void
-close_all_databases();
-
 
 // Local Variables:
 // mode: C++

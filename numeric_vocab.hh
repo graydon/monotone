@@ -10,22 +10,21 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <cstddef>
+#include <climits>              // Some architectures need this for CHAR_BIT
+                                // The lack of this was reported as bug #19984
 #include <limits>
-
-#include "mt-stdint.h"
 #include <boost/static_assert.hpp>
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef uint32_t u32;
-typedef uint64_t u64;
+typedef TYPE_U8  u8;
+typedef TYPE_U16 u16;
+typedef TYPE_U32 u32;
+typedef TYPE_U64 u64;
 
-BOOST_STATIC_ASSERT(sizeof(char) == 1);
-BOOST_STATIC_ASSERT(CHAR_BIT == 8);
-BOOST_STATIC_ASSERT(sizeof(u8) == 1);
-BOOST_STATIC_ASSERT(sizeof(u16) == 2);
-BOOST_STATIC_ASSERT(sizeof(u32) == 4);
-BOOST_STATIC_ASSERT(sizeof(u64) == 8);
+typedef TYPE_S8  s8;
+typedef TYPE_S16 s16;
+typedef TYPE_S32 s32;
+typedef TYPE_S64 s64;
 
 // This is similar to static_cast<T>(v).  The difference is that when T is
 // unsigned, this cast does not sign-extend:
@@ -42,8 +41,9 @@ widen(V const & v)
     return static_cast<T>(v);
   else
     {
+      const size_t char_bit = std::numeric_limits<unsigned char>::digits;
       T mask = std::numeric_limits<T>::max();
-      size_t shift = (sizeof(T) - sizeof(V)) * 8;
+      size_t shift = (sizeof(T) - sizeof(V)) * char_bit;
       mask >>= shift;
       return static_cast<T>(v) & mask;
     }

@@ -7,14 +7,15 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <map>
-#include <string>
-#include <vector>
+#include "vector.hh"
 
 #include "restrictions.hh"
 #include "revision.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;
@@ -30,31 +31,21 @@ using std::vector;
 // include these nodes.
 
 static void
-make_path_set(vector<file_path> const & paths, path_set & split_paths)
-{
-  for (vector<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
-    {
-      split_path sp;
-      i->split(sp);
-      split_paths.insert(sp);
-    }
-}
-
-static void
 map_nodes(map<node_id, restricted_path::status> & node_map,
           roster_t const & roster,
-          path_set const & paths,
-          path_set & known_paths,
+          set<file_path> const & paths,
+          set<file_path> & known_paths,
           restricted_path::status const status)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
       if (roster.has_node(*i))
         {
           known_paths.insert(*i);
           node_id nid = roster.get_node(*i)->self;
 
-          map<node_id, restricted_path::status>::iterator n = node_map.find(nid);
+          map<node_id, restricted_path::status>::iterator n
+            = node_map.find(nid);
           if (n != node_map.end())
             N(n->second == status,
               F("conflicting include/exclude on path '%s'") % *i);
@@ -65,13 +56,13 @@ map_nodes(map<node_id, restricted_path::status> & node_map,
 }
 
 static void
-map_paths(map<split_path, restricted_path::status> & path_map,
-          path_set const & paths,
+map_paths(map<file_path, restricted_path::status> & path_map,
+          set<file_path> const & paths,
           restricted_path::status const status)
 {
-  for (path_set::const_iterator i = paths.begin(); i != paths.end(); ++i)
+  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
-      map<split_path, restricted_path::status>::iterator p = path_map.find(*i);
+      map<file_path, restricted_path::status>::iterator p = path_map.find(*i);
       if (p != path_map.end())
         N(p->second == status,
           F("conflicting include/exclude on path '%s'") % *i);
@@ -81,14 +72,14 @@ map_paths(map<split_path, restricted_path::status> & path_map,
 }
 
 static void
-validate_roster_paths(path_set const & included_paths, 
-                      path_set const & excluded_paths, 
-                      path_set const & known_paths,
+validate_roster_paths(set<file_path> const & included_paths, 
+                      set<file_path> const & excluded_paths, 
+                      set<file_path> const & known_paths,
                       app_state & app)
 {
   int bad = 0;
 
-  for (path_set::const_iterator i = included_paths.begin();
+  for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
     {
       // ignored paths are allowed into the restriction but are not
@@ -96,8 +87,7 @@ validate_roster_paths(path_set const & included_paths,
       // rosters
       if (known_paths.find(*i) == known_paths.end())
         {
-          file_path fp(*i);
-          if (!app.lua.hook_ignore_file(fp))
+          if (!app.lua.hook_ignore_file(*i))
             {
               bad++;
               W(F("restriction includes unknown path '%s'") % *i);
@@ -105,7 +95,7 @@ validate_roster_paths(path_set const & included_paths,
         }
     }
 
-  for (path_set::const_iterator i = excluded_paths.begin();
+  for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
     {
       if (known_paths.find(*i) == known_paths.end())
@@ -119,37 +109,35 @@ validate_roster_paths(path_set const & included_paths,
 }
 
 void
-validate_workspace_paths(path_set const & included_paths, 
-                         path_set const & excluded_paths,
+validate_workspace_paths(set<file_path> const & included_paths, 
+                         set<file_path> const & excluded_paths,
                          app_state & app)
 {
   int bad = 0;
 
-  for (path_set::const_iterator i = included_paths.begin();
+  for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
     {
-      if (workspace_root(*i)) 
+      if (i->empty()) 
         continue;
 
       // ignored paths are allowed into the restriction but are not
       // considered invalid if they are found in none of the restriction's
       // rosters
-      file_path fp(*i);
-      if (!path_exists(fp) && !app.lua.hook_ignore_file(fp))
+      if (!path_exists(*i) && !app.lua.hook_ignore_file(*i))
         {
           bad++;
           W(F("restriction includes unknown path '%s'") % *i);
         }
     }
 
-  for (path_set::const_iterator i = excluded_paths.begin();
+  for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
     {
-      if (workspace_root(*i)) 
+      if (i->empty()) 
         continue;
 
-      file_path fp(*i);
-      if (!path_exists(fp))
+      if (!path_exists(*i))
         {
           bad++;
           W(F("restriction excludes unknown path '%s'") % *i);
@@ -162,11 +150,10 @@ validate_workspace_paths(path_set const & included_paths,
 restriction::restriction(std::vector<file_path> const & includes,
                          std::vector<file_path> const & excludes,
                          long depth)
-  : depth(depth)
-{
-  make_path_set(includes, included_paths);
-  make_path_set(excludes, excluded_paths);
-}
+  : included_paths(includes.begin(), includes.end()),
+    excluded_paths(excludes.begin(), excludes.end()),
+    depth(depth)
+{}
 
 node_restriction::node_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
@@ -204,6 +191,33 @@ node_restriction::node_restriction(std::vector<file_path> const & includes,
   validate_roster_paths(included_paths, excluded_paths, known_paths, a);
 }
 
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   parent_map const & rosters1,
+                                   roster_t const & roster2,
+                                   app_state & a) :
+  restriction(includes, excludes, depth)
+{
+  for (parent_map::const_iterator i = rosters1.begin();
+       i != rosters1.end();
+       i++)
+    {
+      map_nodes(node_map, parent_roster(i), included_paths, known_paths, 
+                restricted_path::included);
+      map_nodes(node_map, parent_roster(i), excluded_paths, known_paths, 
+                restricted_path::excluded);
+    }
+
+  map_nodes(node_map, roster2, included_paths, known_paths, 
+            restricted_path::included);
+  map_nodes(node_map, roster2, excluded_paths, known_paths, 
+            restricted_path::excluded);
+
+  validate_roster_paths(included_paths, excluded_paths, known_paths, a);
+}
+
+
 path_restriction::path_restriction(std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
@@ -222,22 +236,22 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   MM(roster);
   I(roster.has_node(nid));
 
-  split_path sp;
-  roster.get_name(nid, sp);
+  file_path fp;
+  roster.get_name(nid, fp);
 
   if (empty())
     {
       if (depth != -1)
         {
-          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          int path_depth = fp.depth();
           if (path_depth <= depth + 1)
             {
-              L(FL("depth includes nid %d path '%s'") % nid % file_path(sp));
+              L(FL("depth includes nid %d path '%s'") % nid % fp);
               return true;
             }
           else
             {
-              L(FL("depth excludes nid %d path '%s'") % nid % file_path(sp));
+              L(FL("depth excludes nid %d path '%s'") % nid % fp);
               return false;
             }
         }
@@ -269,12 +283,12 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
             {
             case restricted_path::included:
               L(FL("explicit include of nid %d path '%s'") 
-                % current % file_path(sp));
+                % current % fp);
               return true;
 
             case restricted_path::excluded:
               L(FL("explicit exclude of nid %d path '%s'") 
-                % current % file_path(sp));
+                % current % fp);
               return false;
             }
         }
@@ -287,49 +301,46 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   if (included_paths.empty())
     {
       L(FL("default include of nid %d path '%s'") 
-        % nid % file_path(sp));
+        % nid % fp);
       return true;
     }
   else
     {
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
       {
         // printing this slows down "log <file>".
         L(FL("(debug) default exclude of nid %d path '%s'") 
-          % nid % file_path(sp));
+          % nid % fp);
       }
       return false;
     }
 }
 
 bool
-path_restriction::includes(split_path const & sp) const
+path_restriction::includes(file_path const & pth) const
 {
   if (empty())
     {
       if (depth != -1)
         {
-          int path_depth = sp.size() - 1; // -1 to not count root path_component
+          int path_depth = pth.depth();
           if (path_depth <= depth + 1)
             {
-              L(FL("depth includes path '%s'") % file_path(sp));
+              L(FL("depth includes path '%s'") % pth);
               return true;
             }
           else
             {
-              L(FL("depth excludes path '%s'") % file_path(sp));
+              L(FL("depth excludes path '%s'") % pth);
               return false;
             }
         }
       else
         {
-          L(FL("empty include of path '%s'") % file_path(sp));
+          L(FL("empty include of path '%s'") % pth);
           return true;
         }
     }
-
-  split_path current(sp);
-  int path_depth = 0;
 
   // FIXME: this uses depth+1 because the old semantics of depth=0 were
   // something like "the current directory and its immediate children". it
@@ -337,41 +348,41 @@ path_restriction::includes(split_path const & sp) const
   // this directory" and depth=1 to mean "this directory and its immediate
   // children"
 
-  while (!current.empty() && (depth == -1 || path_depth <= depth + 1))
+  int path_depth = 0;
+  file_path fp = pth;
+  while (depth == -1 || path_depth <= depth + 1)
     {
-      map<split_path, restricted_path::status>::const_iterator 
-        r = path_map.find(current);
+      map<file_path, restricted_path::status>::const_iterator 
+        r = path_map.find(fp);
 
       if (r != path_map.end())
         {
           switch (r->second)
             {
             case restricted_path::included:
-              L(FL("explicit include of path '%s'") 
-                % file_path(sp));
+              L(FL("explicit include of path '%s'") % pth);
               return true;
 
             case restricted_path::excluded:
-              L(FL("explicit exclude of path '%s'") 
-                % file_path(sp));
+              L(FL("explicit exclude of path '%s'") % pth);
               return false;
             }
         }
 
-      current.pop_back();
+      if (fp.empty())
+        break;
+      fp = fp.dirname();
       path_depth++;
     }
 
   if (included_paths.empty())
     {
-      L(FL("default include of path '%s'") 
-        % file_path(sp));
+      L(FL("default include of path '%s'") % pth);
       return true;
     }
   else
     {
-      L(FL("default exclude of path '%s'") 
-        % file_path(sp));
+      L(FL("default exclude of path '%s'") % pth);
       return false;
     }
 }
@@ -392,29 +403,29 @@ using std::string;
 // x's and y's are directories
 // and this is rather painful
 
-split_path sp_root;
-split_path sp_f;
-split_path sp_g;
+#define fp_root file_path_internal("")
+#define fp_f file_path_internal("f")
+#define fp_g file_path_internal("g")
 
-split_path sp_x;
-split_path sp_xf;
-split_path sp_xg;
-split_path sp_xx;
-split_path sp_xxf;
-split_path sp_xxg;
-split_path sp_xy;
-split_path sp_xyf;
-split_path sp_xyg;
+#define fp_x file_path_internal("x")
+#define fp_xf file_path_internal("x/f")
+#define fp_xg file_path_internal("x/g")
+#define fp_xx file_path_internal("x/x")
+#define fp_xxf file_path_internal("x/x/f")
+#define fp_xxg file_path_internal("x/x/g")
+#define fp_xy file_path_internal("x/y")
+#define fp_xyf file_path_internal("x/y/f")
+#define fp_xyg file_path_internal("x/y/g")
 
-split_path sp_y;
-split_path sp_yf;
-split_path sp_yg;
-split_path sp_yx;
-split_path sp_yxf;
-split_path sp_yxg;
-split_path sp_yy;
-split_path sp_yyf;
-split_path sp_yyg;
+#define fp_y file_path_internal("y")
+#define fp_yf file_path_internal("y/f")
+#define fp_yg file_path_internal("y/g")
+#define fp_yx file_path_internal("y/x")
+#define fp_yxf file_path_internal("y/x/f")
+#define fp_yxg file_path_internal("y/x/g")
+#define fp_yy file_path_internal("y/y")
+#define fp_yyf file_path_internal("y/y/f")
+#define fp_yyg file_path_internal("y/y/g")
 
 node_id nid_root;
 node_id nid_f;
@@ -461,30 +472,6 @@ static void setup(roster_t & roster)
 {
   temp_node_id_source nis;
 
-  file_path_internal("").split(sp_root);
-  file_path_internal("f").split(sp_f);
-  file_path_internal("g").split(sp_g);
-
-  file_path_internal("x").split(sp_x);
-  file_path_internal("x/f").split(sp_xf);
-  file_path_internal("x/g").split(sp_xg);
-  file_path_internal("x/x").split(sp_xx);
-  file_path_internal("x/x/f").split(sp_xxf);
-  file_path_internal("x/x/g").split(sp_xxg);
-  file_path_internal("x/y").split(sp_xy);
-  file_path_internal("x/y/f").split(sp_xyf);
-  file_path_internal("x/y/g").split(sp_xyg);
-
-  file_path_internal("y").split(sp_y);
-  file_path_internal("y/f").split(sp_yf);
-  file_path_internal("y/g").split(sp_yg);
-  file_path_internal("y/x").split(sp_yx);
-  file_path_internal("y/x/f").split(sp_yxf);
-  file_path_internal("y/x/g").split(sp_yxg);
-  file_path_internal("y/y").split(sp_yy);
-  file_path_internal("y/y/f").split(sp_yyf);
-  file_path_internal("y/y/g").split(sp_yyg);
-
   // these directories must exist for the path_restrictions to be valid.  it
   // is a bit lame to be creating directories arbitrarily like this. perhaps
   // unit_tests should run in a unit_tests.dir or something.
@@ -518,29 +505,29 @@ static void setup(roster_t & roster)
   nid_yyf = roster.create_file_node(fid_yxf, nis);
   nid_yyg = roster.create_file_node(fid_yxg, nis);
 
-  roster.attach_node(nid_root, sp_root);
-  roster.attach_node(nid_f, sp_f);
-  roster.attach_node(nid_g, sp_g);
+  roster.attach_node(nid_root, fp_root);
+  roster.attach_node(nid_f, fp_f);
+  roster.attach_node(nid_g, fp_g);
 
-  roster.attach_node(nid_x,   sp_x);
-  roster.attach_node(nid_xf,  sp_xf);
-  roster.attach_node(nid_xg,  sp_xg);
-  roster.attach_node(nid_xx,  sp_xx);
-  roster.attach_node(nid_xxf, sp_xxf);
-  roster.attach_node(nid_xxg, sp_xxg);
-  roster.attach_node(nid_xy,  sp_xy);
-  roster.attach_node(nid_xyf, sp_xyf);
-  roster.attach_node(nid_xyg, sp_xyg);
+  roster.attach_node(nid_x,   fp_x);
+  roster.attach_node(nid_xf,  fp_xf);
+  roster.attach_node(nid_xg,  fp_xg);
+  roster.attach_node(nid_xx,  fp_xx);
+  roster.attach_node(nid_xxf, fp_xxf);
+  roster.attach_node(nid_xxg, fp_xxg);
+  roster.attach_node(nid_xy,  fp_xy);
+  roster.attach_node(nid_xyf, fp_xyf);
+  roster.attach_node(nid_xyg, fp_xyg);
 
-  roster.attach_node(nid_y,   sp_y);
-  roster.attach_node(nid_yf,  sp_yf);
-  roster.attach_node(nid_yg,  sp_yg);
-  roster.attach_node(nid_yx,  sp_yx);
-  roster.attach_node(nid_yxf, sp_yxf);
-  roster.attach_node(nid_yxg, sp_yxg);
-  roster.attach_node(nid_yy,  sp_yy);
-  roster.attach_node(nid_yyf, sp_yyf);
-  roster.attach_node(nid_yyg, sp_yyg);
+  roster.attach_node(nid_y,   fp_y);
+  roster.attach_node(nid_yf,  fp_yf);
+  roster.attach_node(nid_yg,  fp_yg);
+  roster.attach_node(nid_yx,  fp_yx);
+  roster.attach_node(nid_yxf, fp_yxf);
+  roster.attach_node(nid_yxg, fp_yxg);
+  roster.attach_node(nid_yy,  fp_yy);
+  roster.attach_node(nid_yyf, fp_yyf);
+  roster.attach_node(nid_yyg, fp_yyg);
 
 }
 
@@ -553,61 +540,61 @@ UNIT_TEST(restrictions, empty_restriction)
 
   node_restriction nmask;
 
-  BOOST_CHECK(nmask.empty());
+  UNIT_TEST_CHECK(nmask.empty());
 
-  BOOST_CHECK(nmask.includes(roster, nid_root));
-  BOOST_CHECK(nmask.includes(roster, nid_f));
-  BOOST_CHECK(nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_g));
 
-  BOOST_CHECK(nmask.includes(roster, nid_x));
-  BOOST_CHECK(nmask.includes(roster, nid_xf));
-  BOOST_CHECK(nmask.includes(roster, nid_xg));
-  BOOST_CHECK(nmask.includes(roster, nid_xx));
-  BOOST_CHECK(nmask.includes(roster, nid_xxf));
-  BOOST_CHECK(nmask.includes(roster, nid_xxg));
-  BOOST_CHECK(nmask.includes(roster, nid_xy));
-  BOOST_CHECK(nmask.includes(roster, nid_xyf));
-  BOOST_CHECK(nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK(nmask.includes(roster, nid_y));
-  BOOST_CHECK(nmask.includes(roster, nid_yf));
-  BOOST_CHECK(nmask.includes(roster, nid_yg));
-  BOOST_CHECK(nmask.includes(roster, nid_yx));
-  BOOST_CHECK(nmask.includes(roster, nid_yxf));
-  BOOST_CHECK(nmask.includes(roster, nid_yxg));
-  BOOST_CHECK(nmask.includes(roster, nid_yy));
-  BOOST_CHECK(nmask.includes(roster, nid_yyf));
-  BOOST_CHECK(nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask;
 
-  BOOST_CHECK(pmask.empty());
+  UNIT_TEST_CHECK(pmask.empty());
 
-  BOOST_CHECK(pmask.includes(sp_root));
-  BOOST_CHECK(pmask.includes(sp_f));
-  BOOST_CHECK(pmask.includes(sp_g));
+  UNIT_TEST_CHECK(pmask.includes(fp_root));
+  UNIT_TEST_CHECK(pmask.includes(fp_f));
+  UNIT_TEST_CHECK(pmask.includes(fp_g));
 
-  BOOST_CHECK(pmask.includes(sp_x));
-  BOOST_CHECK(pmask.includes(sp_xf));
-  BOOST_CHECK(pmask.includes(sp_xg));
-  BOOST_CHECK(pmask.includes(sp_xx));
-  BOOST_CHECK(pmask.includes(sp_xxf));
-  BOOST_CHECK(pmask.includes(sp_xxg));
-  BOOST_CHECK(pmask.includes(sp_xy));
-  BOOST_CHECK(pmask.includes(sp_xyf));
-  BOOST_CHECK(pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(pmask.includes(fp_x));
+  UNIT_TEST_CHECK(pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(pmask.includes(fp_xyg));
 
-  BOOST_CHECK(pmask.includes(sp_y));
-  BOOST_CHECK(pmask.includes(sp_yf));
-  BOOST_CHECK(pmask.includes(sp_yg));
-  BOOST_CHECK(pmask.includes(sp_yx));
-  BOOST_CHECK(pmask.includes(sp_yxf));
-  BOOST_CHECK(pmask.includes(sp_yxg));
-  BOOST_CHECK(pmask.includes(sp_yy));
-  BOOST_CHECK(pmask.includes(sp_yyf));
-  BOOST_CHECK(pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(pmask.includes(fp_y));
+  UNIT_TEST_CHECK(pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, simple_include)
@@ -625,61 +612,61 @@ UNIT_TEST(restrictions, simple_include)
 
   node_restriction nmask(includes, excludes, -1, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK(!nmask.includes(roster, nid_root));
-  BOOST_CHECK(!nmask.includes(roster, nid_f));
-  BOOST_CHECK(!nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
 
-  BOOST_CHECK(!nmask.includes(roster, nid_x));
-  BOOST_CHECK(!nmask.includes(roster, nid_xf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xg));
-  BOOST_CHECK( nmask.includes(roster, nid_xx));
-  BOOST_CHECK( nmask.includes(roster, nid_xxf));
-  BOOST_CHECK( nmask.includes(roster, nid_xxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xy));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK(!nmask.includes(roster, nid_y));
-  BOOST_CHECK(!nmask.includes(roster, nid_yf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yx));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxg));
-  BOOST_CHECK( nmask.includes(roster, nid_yy));
-  BOOST_CHECK( nmask.includes(roster, nid_yyf));
-  BOOST_CHECK( nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, -1, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK(!pmask.includes(sp_root));
-  BOOST_CHECK(!pmask.includes(sp_f));
-  BOOST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  BOOST_CHECK(!pmask.includes(sp_x));
-  BOOST_CHECK(!pmask.includes(sp_xf));
-  BOOST_CHECK(!pmask.includes(sp_xg));
-  BOOST_CHECK( pmask.includes(sp_xx));
-  BOOST_CHECK( pmask.includes(sp_xxf));
-  BOOST_CHECK( pmask.includes(sp_xxg));
-  BOOST_CHECK(!pmask.includes(sp_xy));
-  BOOST_CHECK(!pmask.includes(sp_xyf));
-  BOOST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  BOOST_CHECK(!pmask.includes(sp_y));
-  BOOST_CHECK(!pmask.includes(sp_yf));
-  BOOST_CHECK(!pmask.includes(sp_yg));
-  BOOST_CHECK(!pmask.includes(sp_yx));
-  BOOST_CHECK(!pmask.includes(sp_yxf));
-  BOOST_CHECK(!pmask.includes(sp_yxg));
-  BOOST_CHECK( pmask.includes(sp_yy));
-  BOOST_CHECK( pmask.includes(sp_yyf));
-  BOOST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, simple_exclude)
@@ -697,61 +684,61 @@ UNIT_TEST(restrictions, simple_exclude)
 
   node_restriction nmask(includes, excludes, -1, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK( nmask.includes(roster, nid_root));
-  BOOST_CHECK( nmask.includes(roster, nid_f));
-  BOOST_CHECK( nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_g));
 
-  BOOST_CHECK( nmask.includes(roster, nid_x));
-  BOOST_CHECK( nmask.includes(roster, nid_xf));
-  BOOST_CHECK( nmask.includes(roster, nid_xg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xx));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxg));
-  BOOST_CHECK( nmask.includes(roster, nid_xy));
-  BOOST_CHECK( nmask.includes(roster, nid_xyf));
-  BOOST_CHECK( nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK( nmask.includes(roster, nid_y));
-  BOOST_CHECK( nmask.includes(roster, nid_yf));
-  BOOST_CHECK( nmask.includes(roster, nid_yg));
-  BOOST_CHECK( nmask.includes(roster, nid_yx));
-  BOOST_CHECK( nmask.includes(roster, nid_yxf));
-  BOOST_CHECK( nmask.includes(roster, nid_yxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yy));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, -1, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK( pmask.includes(sp_root));
-  BOOST_CHECK( pmask.includes(sp_f));
-  BOOST_CHECK( pmask.includes(sp_g));
+  UNIT_TEST_CHECK( pmask.includes(fp_root));
+  UNIT_TEST_CHECK( pmask.includes(fp_f));
+  UNIT_TEST_CHECK( pmask.includes(fp_g));
 
-  BOOST_CHECK( pmask.includes(sp_x));
-  BOOST_CHECK( pmask.includes(sp_xf));
-  BOOST_CHECK( pmask.includes(sp_xg));
-  BOOST_CHECK(!pmask.includes(sp_xx));
-  BOOST_CHECK(!pmask.includes(sp_xxf));
-  BOOST_CHECK(!pmask.includes(sp_xxg));
-  BOOST_CHECK( pmask.includes(sp_xy));
-  BOOST_CHECK( pmask.includes(sp_xyf));
-  BOOST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  BOOST_CHECK( pmask.includes(sp_y));
-  BOOST_CHECK( pmask.includes(sp_yf));
-  BOOST_CHECK( pmask.includes(sp_yg));
-  BOOST_CHECK( pmask.includes(sp_yx));
-  BOOST_CHECK( pmask.includes(sp_yxf));
-  BOOST_CHECK( pmask.includes(sp_yxg));
-  BOOST_CHECK(!pmask.includes(sp_yy));
-  BOOST_CHECK(!pmask.includes(sp_yyf));
-  BOOST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_exclude)
@@ -771,61 +758,61 @@ UNIT_TEST(restrictions, include_exclude)
 
   node_restriction nmask(includes, excludes, -1, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK(!nmask.includes(roster, nid_root));
-  BOOST_CHECK(!nmask.includes(roster, nid_f));
-  BOOST_CHECK(!nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
 
-  BOOST_CHECK( nmask.includes(roster, nid_x));
-  BOOST_CHECK( nmask.includes(roster, nid_xf));
-  BOOST_CHECK( nmask.includes(roster, nid_xg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xx));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxg));
-  BOOST_CHECK( nmask.includes(roster, nid_xy));
-  BOOST_CHECK( nmask.includes(roster, nid_xyf));
-  BOOST_CHECK( nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK( nmask.includes(roster, nid_y));
-  BOOST_CHECK( nmask.includes(roster, nid_yf));
-  BOOST_CHECK( nmask.includes(roster, nid_yg));
-  BOOST_CHECK( nmask.includes(roster, nid_yx));
-  BOOST_CHECK( nmask.includes(roster, nid_yxf));
-  BOOST_CHECK( nmask.includes(roster, nid_yxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yy));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, -1, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK(!pmask.includes(sp_root));
-  BOOST_CHECK(!pmask.includes(sp_f));
-  BOOST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  BOOST_CHECK( pmask.includes(sp_x));
-  BOOST_CHECK( pmask.includes(sp_xf));
-  BOOST_CHECK( pmask.includes(sp_xg));
-  BOOST_CHECK(!pmask.includes(sp_xx));
-  BOOST_CHECK(!pmask.includes(sp_xxf));
-  BOOST_CHECK(!pmask.includes(sp_xxg));
-  BOOST_CHECK( pmask.includes(sp_xy));
-  BOOST_CHECK( pmask.includes(sp_xyf));
-  BOOST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  BOOST_CHECK( pmask.includes(sp_y));
-  BOOST_CHECK( pmask.includes(sp_yf));
-  BOOST_CHECK( pmask.includes(sp_yg));
-  BOOST_CHECK( pmask.includes(sp_yx));
-  BOOST_CHECK( pmask.includes(sp_yxf));
-  BOOST_CHECK( pmask.includes(sp_yxg));
-  BOOST_CHECK(!pmask.includes(sp_yy));
-  BOOST_CHECK(!pmask.includes(sp_yyf));
-  BOOST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, exclude_include)
@@ -848,61 +835,61 @@ UNIT_TEST(restrictions, exclude_include)
 
   node_restriction nmask(includes, excludes, -1, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK(!nmask.includes(roster, nid_root));
-  BOOST_CHECK(!nmask.includes(roster, nid_f));
-  BOOST_CHECK(!nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
 
-  BOOST_CHECK(!nmask.includes(roster, nid_x));
-  BOOST_CHECK(!nmask.includes(roster, nid_xf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xg));
-  BOOST_CHECK( nmask.includes(roster, nid_xx));
-  BOOST_CHECK( nmask.includes(roster, nid_xxf));
-  BOOST_CHECK( nmask.includes(roster, nid_xxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xy));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK(!nmask.includes(roster, nid_y));
-  BOOST_CHECK(!nmask.includes(roster, nid_yf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yx));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxg));
-  BOOST_CHECK( nmask.includes(roster, nid_yy));
-  BOOST_CHECK( nmask.includes(roster, nid_yyf));
-  BOOST_CHECK( nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, -1, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK(!pmask.includes(sp_root));
-  BOOST_CHECK(!pmask.includes(sp_f));
-  BOOST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  BOOST_CHECK(!pmask.includes(sp_x));
-  BOOST_CHECK(!pmask.includes(sp_xf));
-  BOOST_CHECK(!pmask.includes(sp_xg));
-  BOOST_CHECK( pmask.includes(sp_xx));
-  BOOST_CHECK( pmask.includes(sp_xxf));
-  BOOST_CHECK( pmask.includes(sp_xxg));
-  BOOST_CHECK(!pmask.includes(sp_xy));
-  BOOST_CHECK(!pmask.includes(sp_xyf));
-  BOOST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  BOOST_CHECK(!pmask.includes(sp_y));
-  BOOST_CHECK(!pmask.includes(sp_yf));
-  BOOST_CHECK(!pmask.includes(sp_yg));
-  BOOST_CHECK(!pmask.includes(sp_yx));
-  BOOST_CHECK(!pmask.includes(sp_yxf));
-  BOOST_CHECK(!pmask.includes(sp_yxg));
-  BOOST_CHECK( pmask.includes(sp_yy));
-  BOOST_CHECK( pmask.includes(sp_yyf));
-  BOOST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, invalid_roster_paths)
@@ -915,7 +902,7 @@ UNIT_TEST(restrictions, invalid_roster_paths)
   excludes.push_back(file_path_internal("bar"));
 
   app_state app;
-  BOOST_CHECK_THROW(node_restriction(includes, excludes, -1, roster, app), 
+  UNIT_TEST_CHECK_THROW(node_restriction(includes, excludes, -1, roster, app), 
                     informative_failure);
 }
 
@@ -929,7 +916,7 @@ UNIT_TEST(restrictions, invalid_workspace_paths)
   excludes.push_back(file_path_internal("bar"));
 
   app_state app;
-  BOOST_CHECK_THROW(path_restriction(includes, excludes, -1, app),
+  UNIT_TEST_CHECK_THROW(path_restriction(includes, excludes, -1, app),
                     informative_failure);
 }
 
@@ -952,61 +939,61 @@ UNIT_TEST(restrictions, include_depth_0)
 
   node_restriction nmask(includes, excludes, depth, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK(!nmask.includes(roster, nid_root));
-  BOOST_CHECK(!nmask.includes(roster, nid_f));
-  BOOST_CHECK(!nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
 
-  BOOST_CHECK( nmask.includes(roster, nid_x));
-  BOOST_CHECK( nmask.includes(roster, nid_xf));
-  BOOST_CHECK( nmask.includes(roster, nid_xg));
-  BOOST_CHECK( nmask.includes(roster, nid_xx));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxg));
-  BOOST_CHECK( nmask.includes(roster, nid_xy));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK( nmask.includes(roster, nid_y));
-  BOOST_CHECK( nmask.includes(roster, nid_yf));
-  BOOST_CHECK( nmask.includes(roster, nid_yg));
-  BOOST_CHECK( nmask.includes(roster, nid_yx));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxg));
-  BOOST_CHECK( nmask.includes(roster, nid_yy));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, depth, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK(!pmask.includes(sp_root));
-  BOOST_CHECK(!pmask.includes(sp_f));
-  BOOST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  BOOST_CHECK( pmask.includes(sp_x));
-  BOOST_CHECK( pmask.includes(sp_xf));
-  BOOST_CHECK( pmask.includes(sp_xg));
-  BOOST_CHECK( pmask.includes(sp_xx));
-  BOOST_CHECK(!pmask.includes(sp_xxf));
-  BOOST_CHECK(!pmask.includes(sp_xxg));
-  BOOST_CHECK( pmask.includes(sp_xy));
-  BOOST_CHECK(!pmask.includes(sp_xyf));
-  BOOST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  BOOST_CHECK( pmask.includes(sp_y));
-  BOOST_CHECK( pmask.includes(sp_yf));
-  BOOST_CHECK( pmask.includes(sp_yg));
-  BOOST_CHECK( pmask.includes(sp_yx));
-  BOOST_CHECK(!pmask.includes(sp_yxf));
-  BOOST_CHECK(!pmask.includes(sp_yxg));
-  BOOST_CHECK( pmask.includes(sp_yy));
-  BOOST_CHECK(!pmask.includes(sp_yyf));
-  BOOST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_depth_0_empty_restriction)
@@ -1026,61 +1013,61 @@ UNIT_TEST(restrictions, include_depth_0_empty_restriction)
 
   node_restriction nmask(includes, excludes, depth, roster, app);
 
-  BOOST_CHECK( nmask.empty());
+  UNIT_TEST_CHECK( nmask.empty());
 
-  BOOST_CHECK( nmask.includes(roster, nid_root));
-  BOOST_CHECK( nmask.includes(roster, nid_f));
-  BOOST_CHECK( nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_g));
 
-  BOOST_CHECK( nmask.includes(roster, nid_x));
-  BOOST_CHECK(!nmask.includes(roster, nid_xf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xx));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_xy));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK( nmask.includes(roster, nid_y));
-  BOOST_CHECK(!nmask.includes(roster, nid_yf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yx));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yxg));
-  BOOST_CHECK(!nmask.includes(roster, nid_yy));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyf));
-  BOOST_CHECK(!nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, depth, app);
 
-  BOOST_CHECK( pmask.empty());
+  UNIT_TEST_CHECK( pmask.empty());
 
-  BOOST_CHECK( pmask.includes(sp_root));
-  BOOST_CHECK( pmask.includes(sp_f));
-  BOOST_CHECK( pmask.includes(sp_g));
+  UNIT_TEST_CHECK( pmask.includes(fp_root));
+  UNIT_TEST_CHECK( pmask.includes(fp_f));
+  UNIT_TEST_CHECK( pmask.includes(fp_g));
 
-  BOOST_CHECK( pmask.includes(sp_x));
-  BOOST_CHECK(!pmask.includes(sp_xf));
-  BOOST_CHECK(!pmask.includes(sp_xg));
-  BOOST_CHECK(!pmask.includes(sp_xx));
-  BOOST_CHECK(!pmask.includes(sp_xxf));
-  BOOST_CHECK(!pmask.includes(sp_xxg));
-  BOOST_CHECK(!pmask.includes(sp_xy));
-  BOOST_CHECK(!pmask.includes(sp_xyf));
-  BOOST_CHECK(!pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
 
-  BOOST_CHECK( pmask.includes(sp_y));
-  BOOST_CHECK(!pmask.includes(sp_yf));
-  BOOST_CHECK(!pmask.includes(sp_yg));
-  BOOST_CHECK(!pmask.includes(sp_yx));
-  BOOST_CHECK(!pmask.includes(sp_yxf));
-  BOOST_CHECK(!pmask.includes(sp_yxg));
-  BOOST_CHECK(!pmask.includes(sp_yy));
-  BOOST_CHECK(!pmask.includes(sp_yyf));
-  BOOST_CHECK(!pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
 UNIT_TEST(restrictions, include_depth_1)
@@ -1102,61 +1089,61 @@ UNIT_TEST(restrictions, include_depth_1)
 
   node_restriction nmask(includes, excludes, depth, roster, app);
 
-  BOOST_CHECK(!nmask.empty());
+  UNIT_TEST_CHECK(!nmask.empty());
 
-  BOOST_CHECK(!nmask.includes(roster, nid_root));
-  BOOST_CHECK(!nmask.includes(roster, nid_f));
-  BOOST_CHECK(!nmask.includes(roster, nid_g));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
 
-  BOOST_CHECK( nmask.includes(roster, nid_x));
-  BOOST_CHECK( nmask.includes(roster, nid_xf));
-  BOOST_CHECK( nmask.includes(roster, nid_xg));
-  BOOST_CHECK( nmask.includes(roster, nid_xx));
-  BOOST_CHECK( nmask.includes(roster, nid_xxf));
-  BOOST_CHECK( nmask.includes(roster, nid_xxg));
-  BOOST_CHECK( nmask.includes(roster, nid_xy));
-  BOOST_CHECK( nmask.includes(roster, nid_xyf));
-  BOOST_CHECK( nmask.includes(roster, nid_xyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_xyg));
 
-  BOOST_CHECK( nmask.includes(roster, nid_y));
-  BOOST_CHECK( nmask.includes(roster, nid_yf));
-  BOOST_CHECK( nmask.includes(roster, nid_yg));
-  BOOST_CHECK( nmask.includes(roster, nid_yx));
-  BOOST_CHECK( nmask.includes(roster, nid_yxf));
-  BOOST_CHECK( nmask.includes(roster, nid_yxg));
-  BOOST_CHECK( nmask.includes(roster, nid_yy));
-  BOOST_CHECK( nmask.includes(roster, nid_yyf));
-  BOOST_CHECK( nmask.includes(roster, nid_yyg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_yyg));
 
   // check restricted paths
 
   path_restriction pmask(includes, excludes, depth, app);
 
-  BOOST_CHECK(!pmask.empty());
+  UNIT_TEST_CHECK(!pmask.empty());
 
-  BOOST_CHECK(!pmask.includes(sp_root));
-  BOOST_CHECK(!pmask.includes(sp_f));
-  BOOST_CHECK(!pmask.includes(sp_g));
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
 
-  BOOST_CHECK( pmask.includes(sp_x));
-  BOOST_CHECK( pmask.includes(sp_xf));
-  BOOST_CHECK( pmask.includes(sp_xg));
-  BOOST_CHECK( pmask.includes(sp_xx));
-  BOOST_CHECK( pmask.includes(sp_xxf));
-  BOOST_CHECK( pmask.includes(sp_xxg));
-  BOOST_CHECK( pmask.includes(sp_xy));
-  BOOST_CHECK( pmask.includes(sp_xyf));
-  BOOST_CHECK( pmask.includes(sp_xyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK( pmask.includes(fp_xf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xx));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_xy));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_xyg));
 
-  BOOST_CHECK( pmask.includes(sp_y));
-  BOOST_CHECK( pmask.includes(sp_yf));
-  BOOST_CHECK( pmask.includes(sp_yg));
-  BOOST_CHECK( pmask.includes(sp_yx));
-  BOOST_CHECK( pmask.includes(sp_yxf));
-  BOOST_CHECK( pmask.includes(sp_yxg));
-  BOOST_CHECK( pmask.includes(sp_yy));
-  BOOST_CHECK( pmask.includes(sp_yyf));
-  BOOST_CHECK( pmask.includes(sp_yyg));
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK( pmask.includes(fp_yf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yx));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK( pmask.includes(fp_yy));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK( pmask.includes(fp_yyg));
 }
 
 #endif // BUILD_UNIT_TESTS

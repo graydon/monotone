@@ -7,17 +7,18 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <set>
 
 #include <boost/shared_ptr.hpp>
 
 #include "diff_patch.hh"
 #include "merge.hh"
-#include "packet.hh"
 #include "revision.hh"
 #include "roster_merge.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;
@@ -34,9 +35,7 @@ get_file_details(roster_t const & ros, node_id nid,
   I(ros.has_node(nid));
   file_t f = downcast_to_file_t(ros.get_node(nid));
   fid = f->content;
-  split_path sp;
-  ros.get_name(nid, sp);
-  pth = file_path(sp);
+  ros.get_name(nid, pth);
 }
 
 void
@@ -196,15 +195,6 @@ store_roster_merge_result(roster_t const & left_roster,
     transaction_guard guard(app.db);
 
     app.db.put_revision(merged_rid, merged_rev);
-    packet_db_writer dbw(app);
-    if (app.opts.date_given)
-      cert_revision_date_time(merged_rid, app.opts.date, app, dbw);
-    else
-      cert_revision_date_now(merged_rid, app, dbw);
-    if (app.opts.author().length() > 0)
-      cert_revision_author(merged_rid, app.opts.author(), app, dbw);
-    else
-      cert_revision_author_default(merged_rid, app, dbw);
 
     guard.commit();
   }

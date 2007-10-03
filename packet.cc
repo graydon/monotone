@@ -7,10 +7,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iostream>
-#include <string>
-
-#include <boost/lexical_cast.hpp>
+#include "base.hh"
+#include <sstream>
 
 #include "app_state.hh"
 #include "cset.hh"
@@ -22,235 +20,16 @@
 #include "simplestring_xform.hh"
 #include "keys.hh"
 #include "cert.hh"
-#include "pcrewrap.hh"
 
-using std::endl;
 using std::istream;
+using std::istringstream;
 using std::make_pair;
 using std::map;
 using std::ostream;
 using std::pair;
 using std::string;
 
-using boost::lexical_cast;
 using boost::shared_ptr;
-
-void
-packet_consumer::set_on_revision_written(boost::function1<void,
-                                         revision_id> const & x)
-{
-  on_revision_written=x;
-}
-
-void
-packet_consumer::set_on_cert_written(boost::function1<void,
-                                     cert const &> const & x)
-{
-  on_cert_written=x;
-}
-
-void
-packet_consumer::set_on_pubkey_written(boost::function1<void, rsa_keypair_id>
-                                       const & x)
-{
-  on_pubkey_written=x;
-}
-
-void
-packet_consumer::set_on_keypair_written(boost::function1<void, rsa_keypair_id>
-                                        const & x)
-{
-  on_keypair_written=x;
-}
-
-
-packet_db_writer::packet_db_writer(app_state & app)
-  : app(app)
-{}
-
-packet_db_writer::~packet_db_writer()
-{}
-
-void
-packet_db_writer::consume_file_data(file_id const & ident,
-                                    file_data const & dat)
-{
-  if (app.db.file_version_exists(ident))
-    {
-      L(FL("file version '%s' already exists in db") % ident);
-      return;
-    }
-
-  transaction_guard guard(app.db);
-  app.db.put_file(ident, dat);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_file_delta(file_id const & old_id,
-                                     file_id const & new_id,
-                                     file_delta const & del)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.file_version_exists(new_id))
-    {
-      L(FL("file version '%s' already exists in db") % new_id);
-      return;
-    }
-
-  if (!app.db.file_version_exists(old_id))
-    {
-      W(F("file preimage '%s' missing in db") % old_id);
-      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
-      return;
-    }
-
-  app.db.put_file_version(old_id, new_id, del);
-
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_data(revision_id const & ident,
-                                        revision_data const & dat)
-{
-  MM(ident);
-  transaction_guard guard(app.db);
-  if (app.db.revision_exists(ident))
-    {
-      L(FL("revision '%s' already exists in db") % ident);
-      return;
-    }
-
-  revision_t rev;
-  MM(rev);
-  read_revision(dat, rev);
-
-  for (edge_map::const_iterator i = rev.edges.begin();
-       i != rev.edges.end(); ++i)
-    {
-      if (!edge_old_revision(i).inner()().empty()
-          && !app.db.revision_exists(edge_old_revision(i)))
-        {
-          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
-          W(F("dropping revision '%s'") % ident);
-          return;
-        }
-
-      for (map<split_path, file_id>::const_iterator a
-             = edge_changes(i).files_added.begin();
-           a != edge_changes(i).files_added.end(); ++a)
-        {
-          if (! app.db.file_version_exists(a->second))
-            {
-              W(F("missing prerequisite file '%s'") % a->second);
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-
-      for (map<split_path, pair<file_id, file_id> >::const_iterator d
-             = edge_changes(i).deltas_applied.begin();
-           d != edge_changes(i).deltas_applied.end(); ++d)
-        {
-          I(!delta_entry_src(d).inner()().empty());
-          I(!delta_entry_dst(d).inner()().empty());
-
-          if (! app.db.file_version_exists(delta_entry_src(d)))
-            {
-              W(F("missing prerequisite file pre-delta '%s'")
-                % delta_entry_src(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-
-          if (! app.db.file_version_exists(delta_entry_dst(d)))
-            {
-              W(F("missing prerequisite file post-delta '%s'")
-                % delta_entry_dst(d));
-              W(F("dropping revision '%s'") % ident);
-              return;
-            }
-        }
-    }
-
-  app.db.put_revision(ident, dat);
-  if (on_revision_written)
-    on_revision_written(ident);
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_revision_cert(revision<cert> const & t)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.revision_cert_exists(t))
-    {
-      L(FL("revision cert on '%s' already exists in db")
-        % t.inner().ident);
-      return;
-    }
-
-  if (!app.db.revision_exists(revision_id(t.inner().ident)))
-    {
-      W(F("cert revision '%s' does not exist in db")
-        % t.inner().ident);
-      W(F("dropping cert"));
-      return;
-    }
-
-  app.db.put_revision_cert(t);
-  if (on_cert_written)
-    on_cert_written(t.inner());
-
-  guard.commit();
-}
-
-
-void
-packet_db_writer::consume_public_key(rsa_keypair_id const & ident,
-                                     base64< rsa_pub_key > const & k)
-{
-  transaction_guard guard(app.db);
-
-  if (app.db.public_key_exists(ident))
-    {
-      base64<rsa_pub_key> tmp;
-      app.db.get_key(ident, tmp);
-      if (!keys_match(ident, tmp, ident, k))
-        W(F("key '%s' is not equal to key '%s' in database") % ident % ident);
-      L(FL("skipping existing public key %s") % ident);
-      return;
-    }
-
-  L(FL("putting public key %s") % ident);
-  app.db.put_key(ident, k);
-  if (on_pubkey_written)
-    on_pubkey_written(ident);
-
-  guard.commit();
-}
-
-void
-packet_db_writer::consume_key_pair(rsa_keypair_id const & ident,
-                                   keypair const & kp)
-{
-  transaction_guard guard(app.db);
-
-  if (app.keys.key_pair_exists(ident))
-    {
-      L(FL("skipping existing key pair %s") % ident);
-      return;
-    }
-
-  app.keys.put_key_pair(ident, kp);
-  if (on_keypair_written)
-    on_keypair_written(ident);
-
-  guard.commit();
-}
 
 // --- packet writer ---
 
@@ -262,9 +41,9 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -274,10 +53,10 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << endl
-      << "        " << new_id.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[fdelta " << old_id.inner()() << '\n'
+      << "        " << new_id.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
@@ -286,38 +65,38 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]" << endl
-      << trim_ws(packed()) << endl
-      << "[end]" << endl;
+  ost << "[rdata " << ident.inner()() << "]\n"
+      << trim_ws(packed()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[rcert " << t.inner().ident() << endl
-      << "       " << t.inner().name() << endl
-      << "       " << t.inner().key() << endl
-      << "       " << trim_ws(t.inner().value()) << "]" << endl
-      << trim_ws(t.inner().sig()) << endl
-      << "[end]" << endl;
+  ost << "[rcert " << t.inner().ident() << '\n'
+      << "       " << t.inner().name() << '\n'
+      << "       " << t.inner().key() << '\n'
+      << "       " << trim_ws(t.inner().value()) << "]\n"
+      << trim_ws(t.inner().sig()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_public_key(rsa_keypair_id const & ident,
                                   base64< rsa_pub_key > const & k)
 {
-  ost << "[pubkey " << ident() << "]" << endl
-      << trim_ws(k()) << endl
-      << "[end]" << endl;
+  ost << "[pubkey " << ident() << "]\n"
+      << trim_ws(k()) << '\n'
+      << "[end]\n";
 }
 
 void
 packet_writer::consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
 {
-  ost << "[keypair " << ident() << "]" << endl
-      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << endl
-      << "[end]" << endl;
+  ost << "[keypair " << ident() << "]\n"
+      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << '\n'
+      << "[end]\n";
 }
 
 
@@ -326,149 +105,237 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 // Note: If these change, the character sets in constants.cc may need to
 // change too.
 
-static pcre::regex identr("\\A[[:xdigit:]]{40}\\Z");
-static pcre::regex keyr("\\A[-a-zA-Z0-9\\.@\\+_]+\\Z");
-static pcre::regex base64r("\\A[a-zA-Z0-9+/=[:space:]]+\\Z");
-
-static pcre::regex fdelta_hdr("\\A([[:xdigit:]]{40})"          // ident
-                              "[[:space:]]+"
-                              "([[:xdigit:]]{40})\\Z");        // ident
-
-static pcre::regex rcert_hdr("\\A([[:xdigit:]]{40})"           // ident
-                             "[[:space:]]+"
-                             "([-a-zA-Z0-9]+)"                 // certname
-                             "[[:space:]]+"
-                             "([-a-zA-Z0-9\\.@\\+_]+)"         // key
-                             "[[:space:]]+"
-                             "([a-zA-Z0-9+/=[:space:]]+)\\Z"); // base64
-
-static pcre::regex keypair_body("\\A([a-zA-Z0-9+/=[:space:]]+)"   // base64
-                                "#"
-                                "([a-zA-Z0-9+/=[:space:]]+)\\Z"); // base64
-
-inline void require(bool x)
+struct
+feed_packet_consumer
 {
-  E(x, F("malformed packet"));
-}
+  app_state & app;
+  size_t & count;
+  packet_consumer & cons;
+  feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
+   : app(app_), count(count), cons(c)
+  {}
+  void validate_id(string const & id) const
+  {
+    E(id.size() == constants::idlen
+      && id.find_first_not_of(constants::legal_id_bytes) == string::npos,
+      F("malformed packet: invalid identifier"));
+  }
+  void validate_base64(string const & s) const
+  {
+    E(s.size() > 0
+      && s.find_first_not_of(constants::legal_base64_bytes) == string::npos,
+      F("malformed packet: invalid base64 block"));
+  }
+  void validate_key(string const & k) const
+  {
+    E(k.size() > 0
+      && k.find_first_not_of(constants::legal_key_name_bytes) == string::npos,
+      F("malformed packet: invalid key name"));
+  }
+  void validate_certname(string const & cn) const
+  {
+    E(cn.size() > 0
+      && cn.find_first_not_of(constants::legal_cert_name_bytes) == string::npos,
+      F("malformed packet: invalid cert name"));
+  }
+  void validate_no_more_args(istringstream & iss) const
+  {
+    string next;
+    iss >> next;
+    E(next.size() == 0,
+      F("malformed packet: too many arguments in header"));
+  }
 
-static void feed_packet_consumer(pcre::matches & res,
-                                 packet_consumer & cons,
-                                 app_state & app)
-{
-  if (res.size() != 4)
-    throw oops("matched impossible packet with "
-               + lexical_cast<string>(res.size()) + " matching parts: " +
-               string(res[0].first, res[0].second));
-  I(res[1].matched());
-  I(res[2].matched());
-  I(res[3].matched());
-  string type(res[1].first, res[1].second);
-  string args(res[2].first, res[2].second);
-  string body(res[3].first, res[3].second);
-  if ((type[0] == 'f' || type[0] == 'r')
-      && type.compare(1, type.size()-1, "data") == 0)
-    {
-      L(FL("read data packet"));
-      require(identr.match(args));
-      require(base64r.match(body));
-      base64<gzip<data> > body_packed(trim_ws(body));
-      data contents;
-      unpack(body_packed, contents);
-      if (type == "rdata")
-        cons.consume_revision_data(revision_id(hexenc<id>(args)),
-                                   revision_data(contents));
-      else if (type == "fdata")
-        cons.consume_file_data(file_id(hexenc<id>(args)),
-                               file_data(contents));
-      else
-        throw oops("matched impossible data packet with head '" + type + "'");
-    }
-  else if (type == "fdelta")
-    {
-      L(FL("read delta packet"));
-      pcre::matches matches;
-      require(fdelta_hdr.match(args, matches));
-      require(base64r.match(body));
-      file_id src_id(hexenc<id>(matches[1].str()));
-      file_id dst_id(hexenc<id>(matches[2].str()));
+  void data_packet(string const & args, string const & body,
+                   bool is_revision) const
+  {
+    L(FL("read %s data packet") % (is_revision ? "revision" : "file"));
+    validate_id(args);
+    validate_base64(body);
 
-      base64<gzip<delta> > body_packed(trim_ws(body));
-      delta contents;
-      unpack(body_packed, contents);
-      cons.consume_file_delta(src_id, dst_id, file_delta(contents));
-    }
-  else if (type == "rcert")
-    {
-      L(FL("read cert packet"));
-      pcre::matches matches;
-      require(rcert_hdr.match(args, matches));
-      require(base64r.match(body));
+    data contents;
+    unpack(base64<gzip<data> >(body), contents);
+    if (is_revision)
+      cons.consume_revision_data(revision_id(hexenc<id>(args)),
+                                 revision_data(contents));
+    else
+      cons.consume_file_data(file_id(hexenc<id>(args)),
+                             file_data(contents));
+  }
 
-      // canonicalize the base64 encodings to permit searches
-      hexenc<id> certid(matches[1].str());
-      cert_name name(matches[2].str());
-      rsa_keypair_id keyid(matches[3].str());
-      base64<cert_value> val(canonical_base64(matches[4].str()));
-      base64<rsa_sha1_signature> contents(canonical_base64(trim_ws(body)));
+  void fdelta_packet(string const & args, string const & body) const
+  {
+    L(FL("read delta packet"));
+    istringstream iss(args);
+    string src_id; iss >> src_id; validate_id(src_id);
+    string dst_id; iss >> dst_id; validate_id(dst_id);
+    validate_no_more_args(iss);
+    validate_base64(body);
 
-      cert t(certid, name, val, keyid, contents);
-      cons.consume_revision_cert(revision<cert>(t));
-    }
-  else if (type == "pubkey")
-    {
-      L(FL("read pubkey data packet"));
-      require(keyr.match(args));
-      require(base64r.match(body));
+    delta contents;
+    unpack(base64<gzip<delta> >(body), contents);
+    cons.consume_file_delta(file_id(hexenc<id>(src_id)),
+                            file_id(hexenc<id>(dst_id)),
+                            file_delta(contents));
+  }
 
-      base64<rsa_pub_key> contents(trim_ws(body));
-      cons.consume_public_key(rsa_keypair_id(args), contents);
-    }
-  else if (type == "keypair")
-    {
-      L(FL("read keypair data packet"));
-      pcre::matches matches;
-      require(keyr.match(args));
-      require(keypair_body.match(body, matches));
+  void rcert_packet(string const & args, string const & body) const
+  {
+    L(FL("read cert packet"));
+    istringstream iss(args);
+    string certid; iss >> certid; validate_id(certid);
+    string name;   iss >> name;   validate_certname(name);
+    string keyid;  iss >> keyid;  validate_key(keyid);
+    string val;    iss >> val;    validate_base64(val);
+    validate_no_more_args(iss);
+    validate_base64(body);
+    // canonicalize the base64 encodings to permit searches
+    cert t = cert(hexenc<id>(certid),
+                  cert_name(name),
+                  base64<cert_value>(canonical_base64(val)),
+                  rsa_keypair_id(keyid),
+                  base64<rsa_sha1_signature>(canonical_base64(body)));
+    cons.consume_revision_cert(revision<cert>(t));
+  }
 
-      string pub_dat(trim_ws(matches[1].str()));
-      string priv_dat(trim_ws(matches[2].str()));
-      cons.consume_key_pair(rsa_keypair_id(args), keypair(pub_dat, priv_dat));
-    }
-  else if (type == "privkey")
-    {
-      L(FL("read privkey data packet"));
-      require(keyr.match(args));
-      require(base64r.match(body));
+  void pubkey_packet(string const & args, string const & body) const
+  {
+    L(FL("read pubkey packet"));
+    validate_key(args);
+    validate_base64(body);
 
-      rsa_keypair_id keyid(args);
-      base64<arc4<rsa_priv_key> > contents (trim_ws(body));
-      keypair kp;
-      migrate_private_key(app, keyid, contents, kp);
-      cons.consume_key_pair(keyid, kp);
-    }
-  else
-    {
-      W(F("unknown packet type: '%s'") % type);
-    }
-}
+    cons.consume_public_key(rsa_keypair_id(args),
+                            base64<rsa_pub_key>(body));
+  }
+
+  void keypair_packet(string const & args, string const & body) const
+  {
+    L(FL("read keypair packet"));
+    string::size_type hashpos = body.find('#');
+    string pub(body, 0, hashpos);
+    string priv(body, hashpos+1);
+
+    validate_key(args);
+    validate_base64(pub);
+    validate_base64(priv);
+    cons.consume_key_pair(rsa_keypair_id(args),
+                          keypair(base64<rsa_pub_key>(pub),
+                                  base64<rsa_priv_key>(priv)));
+  }
+
+  void privkey_packet(string const & args, string const & body) const
+  {
+    L(FL("read privkey packet"));
+    validate_key(args);
+    validate_base64(body);
+    keypair kp;
+    migrate_private_key(app,
+                        rsa_keypair_id(args),
+                        base64<arc4<rsa_priv_key> >(body),
+                        kp);
+    cons.consume_key_pair(rsa_keypair_id(args), kp);
+  }
+  
+  void operator()(string const & type,
+                  string const & args,
+                  string const & body) const
+  {
+    if (type == "rdata")
+      data_packet(args, body, true);
+    if (type == "fdata")
+      data_packet(args, body, false);
+    else if (type == "fdelta")
+      fdelta_packet(args, body);
+    else if (type == "rcert")
+      rcert_packet(args, body);
+    else if (type == "pubkey")
+      pubkey_packet(args, body);
+    else if (type == "keypair")
+      keypair_packet(args, body);
+    else if (type == "privkey")
+      privkey_packet(args, body);
+    else
+      {
+        W(F("unknown packet type: '%s'") % type);
+        return;
+      }
+    ++count;
+  }
+};
 
 static size_t
 extract_packets(string const & s, packet_consumer & cons, app_state & app)
 {
-  static pcre::regex expr("\\[([a-z]+)[[:space:]]+([^\\[\\]]+)\\]"
-                          "([^\\[\\]]+)"
-                          "\\[end\\]");
   size_t count = 0;
-  pcre::matches m;
+  feed_packet_consumer feeder(count, cons, app);
 
-  while (expr.nextmatch(s, m))
-    {
-      feed_packet_consumer(m, cons, app);
-      count++;
-    }
+  string::const_iterator p, tbeg, tend, abeg, aend, bbeg, bend;
+
+  enum extract_state {
+    skipping, open_bracket, scanning_type, found_type,
+    scanning_args, found_args, scanning_body,
+    end_1, end_2, end_3, end_4, end_5
+  } state = skipping;
+  
+  for (p = s.begin(); p != s.end(); p++)
+    switch (state)
+      {
+      case skipping: if (*p == '[') state = open_bracket; break;
+      case open_bracket:
+        if (is_alpha (*p))
+          state = scanning_type;
+        else
+          state = skipping;
+        tbeg = p;
+        break;
+      case scanning_type:
+        if (!is_alpha (*p))
+          {
+            state = is_space(*p) ? found_type : skipping;
+            tend = p;
+          }
+        break;
+      case found_type:
+        if (!is_space (*p))
+          {
+            state = (*p != ']') ? scanning_args : skipping;
+            abeg = p;
+          }
+        break;
+      case scanning_args:
+        if (*p == ']')
+          {
+            state = found_args;
+            aend = p;
+          }
+        break;
+      case found_args:
+        state = (*p != '[' && *p != ']') ? scanning_body : skipping;
+        bbeg = p;
+        break;
+      case scanning_body:
+        if (*p == '[')
+          {
+            state = end_1;
+            bend = p;
+          }
+        else if (*p == ']')
+          state = skipping;
+        break;
+
+      case end_1: state = (*p == 'e') ? end_2 : skipping; break;
+      case end_2: state = (*p == 'n') ? end_3 : skipping; break;
+      case end_3: state = (*p == 'd') ? end_4 : skipping; break;
+      case end_4:
+        if (*p == ']')
+          feeder(string(tbeg, tend), string(abeg, aend), string(bbeg, bend));
+        state = skipping;
+        break;
+      default:
+        I(false);
+      }
   return count;
 }
-
 
 size_t
 read_packets(istream & in, packet_consumer & cons, app_state & app)
@@ -503,8 +370,76 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
 #include "unit_tests.hh"
 #include "transforms.hh"
 
-using std::istringstream;
 using std::ostringstream;
+
+UNIT_TEST(packet, validators)
+{
+  ostringstream oss;
+  packet_writer pw(oss);
+  app_state app;
+  size_t count;
+  feed_packet_consumer f(count, pw, app);
+
+#define N_THROW(expr) UNIT_TEST_CHECK_NOT_THROW(expr, informative_failure)
+#define Y_THROW(expr) UNIT_TEST_CHECK_THROW(expr, informative_failure)
+
+  // validate_id
+  N_THROW(f.validate_id("5d7005fadff386039a8d066684d22d369c1e6c94"));
+  Y_THROW(f.validate_id(""));
+  Y_THROW(f.validate_id("5d7005fadff386039a8d066684d22d369c1e6c9"));
+  for (int i = 1; i < std::numeric_limits<unsigned char>::max(); i++)
+    if (!((i >= '0' && i <= '9')
+          || (i >= 'a' && i <= 'f')))
+      Y_THROW(f.validate_id(string("5d7005fadff386039a8d066684d22d369c1e6c9")
+                            + char(i)));
+
+  // validate_base64
+  N_THROW(f.validate_base64("YmwK"));
+  N_THROW(f.validate_base64(" Y m x h a A o = "));
+  N_THROW(f.validate_base64("ABCD EFGH IJKL MNOP QRST UVWX YZ"
+                            "abcd efgh ijkl mnop qrst uvwx yz"
+                            "0123 4567 89/+ z\t=\r=\n="));
+
+  Y_THROW(f.validate_base64(""));
+  Y_THROW(f.validate_base64("!@#$"));
+
+  // validate_key
+  N_THROW(f.validate_key("graydon@venge.net"));
+  N_THROW(f.validate_key("dscherger+mtn"));
+  N_THROW(f.validate_key("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                         "abcdefghijklmnopqrstuvwxyz"
+                         "0123456789-.@+_"));
+  Y_THROW(f.validate_key(""));
+  Y_THROW(f.validate_key("graydon at venge dot net"));
+
+  // validate_certname
+  N_THROW(f.validate_certname("graydon-at-venge-dot-net"));
+  N_THROW(f.validate_certname("ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "abcdefghijklmnopqrstuvwxyz"
+                              "0123456789-"));
+    
+  Y_THROW(f.validate_certname(""));
+  Y_THROW(f.validate_certname("graydon@venge.net"));
+  Y_THROW(f.validate_certname("graydon at venge dot net"));
+
+  // validate_no_more_args
+  {
+    istringstream iss("a b");
+    string a; iss >> a; UNIT_TEST_CHECK(a == "a");
+    string b; iss >> b; UNIT_TEST_CHECK(b == "b");
+    N_THROW(f.validate_no_more_args(iss));
+  }
+  {
+    istringstream iss("a ");
+    string a; iss >> a; UNIT_TEST_CHECK(a == "a");
+    N_THROW(f.validate_no_more_args(iss));
+  }
+  {
+    istringstream iss("a b");
+    string a; iss >> a; UNIT_TEST_CHECK(a == "a");
+    Y_THROW(f.validate_no_more_args(iss));
+  }
+}
 
 UNIT_TEST(packet, roundabout)
 {
@@ -531,10 +466,8 @@ UNIT_TEST(packet, roundabout)
     // a rdata packet
     revision_t rev;
     rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-    split_path sp;
-    file_path_internal("").split(sp);
     shared_ptr<cset> cs(new cset);
-    cs->dirs_added.insert(sp);
+    cs->dirs_added.insert(file_path_internal(""));
     rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
                                     cs));
     revision_data rdat;
@@ -579,7 +512,7 @@ UNIT_TEST(packet, roundabout)
       packet_writer pw(oss);
       istringstream iss(tmp);
       read_packets(iss, pw, aaa);
-      BOOST_CHECK(oss.str() == tmp);
+      UNIT_TEST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }
 }

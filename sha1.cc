@@ -10,9 +10,8 @@
 // This file holds a registry of different SHA-1 implementations, and lets us
 // benchmark them.
 
-#include <string>
+#include "base.hh"
 #include <map>
-#include <iostream>
 #include <botan/engine.h>
 #include <botan/libstate.h>
 
@@ -93,7 +92,10 @@ void hook_botan_sha1()
   Botan::global_state().add_engine(new Monotone_SHA1_Engine);
 }
 
-CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", options::opts::none)
+CMD_HIDDEN(benchmark_sha1, "benchmark_sha1", "", CMD_REF(debug), "",
+           N_("Benchmarks SHA-1 cores"),
+           "",
+           options::opts::none)
 {
   P(F("Benchmarking %s SHA-1 cores") % registry().size());
   int mebibytes = 100;
@@ -111,3 +113,13 @@ CMD(benchmark_sha1, hidden_group(), "", "benchmark SHA-1 cores", options::opts::
       P(F("%s: %s MiB/s") % i->second.first % mebibytes_per_sec);
     }
 }
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+

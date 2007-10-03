@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -40,6 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\lua&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -60,7 +61,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconvD.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -123,7 +127,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="true"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -142,9 +146,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib libiconv.lib"
+				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconv.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(ProjectDir)\Release&quot;"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -195,6 +199,10 @@
 			</File>
 			<File
 				RelativePath="..\constants.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\file_io.cc"
 				>
 			</File>
 			<File
@@ -256,6 +264,26 @@
 			<File
 				RelativePath="..\tester.cc"
 				>
+			</File>
+			<File
+				RelativePath="..\testlib.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAs="2"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\vocab.cc"
@@ -347,17 +375,28 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\tester.lua"
+			RelativePath="..\testlib.lua"
 			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="txt2c testlib.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\testlib.lua&quot; testlib &gt;&quot;$(ProjectDir)\..\testlib.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="testlib.c"
+				/>
+			</FileConfiguration>
 			<FileConfiguration
 				Name="Release|Win32"
 				>
 				<Tool
 					Name="VCCustomBuildTool"
-					Description="txt2c tester.lua"
-					CommandLine="$(TargetDir)\txt2c.exe --strip-trailing $(ProjectDir)\..\tester.lua tester &gt;$(ProjectDir)\..\tester.h&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="tester.h"
+					Description="txt2c testlib.lua"
+					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\testlib.lua&quot; testlib &gt;&quot;$(ProjectDir)\..\testlib.c&quot;&#x0D;&#x0A;"
+					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
+					Outputs="testlib.c"
 				/>
 			</FileConfiguration>
 		</File>

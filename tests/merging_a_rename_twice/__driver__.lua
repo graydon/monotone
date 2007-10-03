@@ -43,7 +43,7 @@ revs.c = base_revision()
 
 -- produce state E
 revert_to(revs.a)
-check(mtn("rename", "x", "y"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "x", "y"), 0, false, false)
 rename("x", "y")
 commit("branch.y")
 revs.e = base_revision()
@@ -66,6 +66,7 @@ commit("branch.x")
 
 -- produce state H
 revert_to(revs.g)
+remove("bar")
 check(mtn("add", "baz"), 0, false, false)
 commit("branch.y")
 
@@ -76,6 +77,10 @@ check(qgrep('state D', "y"))
 
 -- produce state J
 revert_to(revs.e)
+remove("foo")
+remove("bar")
+remove("baz")
+
 check(mtn("add", "quux"), 0, false, false)
 commit("branch.y")
 

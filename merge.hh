@@ -10,11 +10,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <set>
-
-#include "app_state.hh"
 #include "vocab.hh"
-#include "roster.hh"
+
+class app_state;
+class roster_t;
 
 // Destructively alter a roster_merge_result to attempt to remove any
 // conflicts in it. Takes a content_merge_adaptor to pass on to the content

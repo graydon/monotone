@@ -7,18 +7,18 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "epoch.hh"
 #include "netio.hh"
 #include "constants.hh"
 #include "transforms.hh"
 
-#include <string>
 
 using std::string;
 
 void
 read_epoch(string const & in,
-           cert_value & branch, epoch_data & epoch)
+           branch_name & branch, epoch_data & epoch)
 {
   size_t pos = 0;
   string raw_branch;
@@ -26,14 +26,14 @@ read_epoch(string const & in,
   extract_variable_length_string(in, raw_branch, pos, "epoch, branch name");
   raw_epoch = data(extract_substring(in, pos, constants::epochlen_bytes,
                                      "epoch, epoch data"));
-  branch = cert_value(raw_branch);
+  branch = branch_name(raw_branch);
   hexenc<data> tmp;
   encode_hexenc(raw_epoch, tmp);
   epoch = epoch_data(tmp);
 }
 
 void
-write_epoch(cert_value const & branch, epoch_data const & epoch,
+write_epoch(branch_name const & branch, epoch_data const & epoch,
             string & out)
 {
   insert_variable_length_string(branch(), out);
@@ -43,7 +43,7 @@ write_epoch(cert_value const & branch, epoch_data const & epoch,
 }
 
 void
-epoch_hash_code(cert_value const & branch, epoch_data const & epoch,
+epoch_hash_code(branch_name const & branch, epoch_data const & epoch,
                 epoch_id & eid)
 {
   string tmp(branch() + ":" + epoch.inner()());

@@ -1,0 +1,45 @@
+head	1.1;
+access;
+symbols
+	branched:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.02.27.21.10.04;	author markus;	state Exp;
+branches
+	1.1.2.1;
+next	;
+commitid	QPchEs2ZzRb4Oa8s;
+
+1.1.2.1
+date	2007.02.27.21.10.06;	author markus;	state Exp;
+branches;
+next	;
+commitid	xzFImDTBmyb5Oa8s;
+
+
+desc
+@@
+
+
+1.1
+log
+@initial import
+@
+text
+@version 0 of test file2
+@
+
+
+1.1.2.1
+log
+@commit on branch
+@
+text
+@d1 1
+a1 1
+version 1 of test file2
+@
+

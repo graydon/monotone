@@ -29,8 +29,8 @@ R2=base_revision()
 
 -- check that merge is included by default
 check(mtn("log"), 0, true, false)
-check(qgrep("^Revision.*"..R2, "stdout"))
+check(qgrep("^[\\|\\\\\/ ]+Revision.*"..R2, "stdout"))
 
 -- and that it is excluded by --no-merges
 check(mtn("log", "--no-merges"), 0, true, false)
-check(not qgrep("^Revision.*"..R2, "stdout"))
+check(not qgrep("^[\\|\\\\\/ ]+Revision.*"..R2, "stdout"))

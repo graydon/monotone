@@ -38,8 +38,8 @@
 // stdio or iostreams.  strsignal() should be safe, but it is conceivable it
 // would allocate memory; should it cause trouble, out it goes.
 
-#include "config.h"
 
+#include "base.hh"
 #include <signal.h>
 #include <time.h>
 #include <string.h>

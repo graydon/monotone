@@ -1,0 +1,78 @@
+head	1.2;
+access;
+symbols
+	branched:1.2.0.2
+	VENDOR_REL_1:1.1.1.1
+	VENDOR:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2007.03.08.08.10.25;	author markus;	state Exp;
+branches
+	1.2.2.1;
+next	1.1;
+commitid	JXqf58BweBoFcg9s;
+
+1.1
+date	2007.03.08.08.10.24;	author markus;	state Exp;
+branches
+	1.1.1.1;
+next	;
+commitid	J1BbsCUAYvXEcg9s;
+
+1.2.2.1
+date	2007.03.08.08.10.26;	author markus;	state Exp;
+branches;
+next	;
+commitid	s3jspLSQWmNFcg9s;
+
+1.1.1.1
+date	2007.03.08.08.10.24;	author markus;	state Exp;
+branches;
+next	;
+commitid	J1BbsCUAYvXEcg9s;
+
+
+desc
+@@
+
+
+1.2
+log
+@commit 0
+@
+text
+@version 1 of test file1
+@
+
+
+1.2.2.1
+log
+@commit on branch
+@
+text
+@d1 1
+a1 1
+version 2 of test file1
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 1
+a1 1
+version 0 of test file1
+@
+
+
+1.1.1.1
+log
+@Initial import of VENDORWARE 1
+@
+text
+@@

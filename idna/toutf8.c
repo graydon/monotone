@@ -120,7 +120,8 @@ stringprep_locale_charset (void)
  **/
 char *
 stringprep_convert (const char *str,
-		    const char *to_codeset, const char *from_codeset)
+		    const char *to_codeset, const char *from_codeset,
+                    int best_effort)
 {
   iconv_t cd;
   char *dest;
@@ -131,6 +132,7 @@ stringprep_convert (const char *str,
   size_t err;
   size_t outbuf_size;
   int have_error = 0;
+  int from_utf8;
   int len;
 
   if (strcmp (to_codeset, from_codeset) == 0)
@@ -143,7 +145,21 @@ stringprep_convert (const char *str,
       return p;
     }
 
+  from_utf8 = (strcmp (from_codeset, "UTF-8") == 0);
+
+#ifdef ICONV_TRANSLIT
+  if (best_effort)
+    {
+      char to_c[strlen (to_codeset) + 10];
+      strcpy (to_c, to_codeset);
+      strcat (to_c, "//TRANSLIT");
+      cd = iconv_open (to_c, from_codeset);
+    }
+  else
+    cd = iconv_open (to_codeset, from_codeset);
+#else
   cd = iconv_open (to_codeset, from_codeset);
+#endif
 
   if (cd == (iconv_t) - 1)
     return NULL;
@@ -188,8 +204,45 @@ again:
 	  break;
 
 	case EILSEQ:
-	  have_error = 1;
-	  break;
+          if (!best_effort || outbytes_remaining == 0)
+            {
+              have_error = 1;
+              break;
+            }
+          else
+            {
+              int char_len;
+              if (!from_utf8)
+                char_len = 1; // not from UTF-8, one '?' will do
+              else
+                {
+                  if      ((*p & 0x80) == 0)
+                    char_len = 1;
+                  else if ((*p & 0x40) == 0)
+                    char_len = 1; // error: not allowed to begin a sequence
+                  else if ((*p & 0x20) == 0)
+                    char_len = 2;
+                  else if ((*p & 0x10) == 0)
+                    char_len = 3;
+                  else if ((*p & 0x08) == 0)
+                    char_len = 4;
+                  else if ((*p & 0x04) == 0)
+                    char_len = 5;
+                  else if ((*p & 0x02) == 0)
+                    char_len = 6;
+                  else
+                    char_len = 1; // error: 0xFE/0xFF not used by UTF-8
+                }
+              if (char_len > inbytes_remaining)
+                char_len = inbytes_remaining;
+              p += char_len;
+              inbytes_remaining -= char_len;
+              *outp++ = '?';
+              --outbytes_remaining;
+              if (inbytes_remaining > 0)
+                goto again;
+            }
+          break;
 
 	default:
 	  have_error = 1;
@@ -226,11 +279,12 @@ stringprep_locale_charset ()
 
 char *
 stringprep_convert (const char *str,
-		    const char *to_codeset, const char *from_codeset)
+		    const char *to_codeset, const char *from_codeset,
+                    int best_effort)
 {
   char *p;
   fprintf (stderr, "libidn: warning: libiconv not installed, cannot "
-	   "convert data to UTF-8\n");
+	   "convert data from %s to %s\n", from_codeset, to_codeset);
   p = malloc (strlen (str) + 1);
   if (!p)
     return NULL;
@@ -253,7 +307,7 @@ stringprep_convert (const char *str,
 char *
 stringprep_locale_to_utf8 (const char *str)
 {
-  return stringprep_convert (str, "UTF-8", stringprep_locale_charset ());
+  return stringprep_convert (str, "UTF-8", stringprep_locale_charset (), 0);
 }
 
 /**
@@ -269,5 +323,5 @@ stringprep_locale_to_utf8 (const char *str)
 char *
 stringprep_utf8_to_locale (const char *str)
 {
-  return stringprep_convert (str, stringprep_locale_charset (), "UTF-8");
+  return stringprep_convert (str, stringprep_locale_charset (), "UTF-8", 0);
 }

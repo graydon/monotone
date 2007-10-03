@@ -1,0 +1,43 @@
+head	1.1;
+access;
+symbols
+	branch:1.1.0.2;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2007.02.27.19.30.19;	author markus;	state dead;
+branches
+	1.1.2.1;
+next	;
+commitid	Wdel5yc2L7LQfa8s;
+
+1.1.2.1
+date	2007.02.27.19.30.19;	author markus;	state Exp;
+branches;
+next	;
+commitid	Wdel5yc2L7LQfa8s;
+
+
+desc
+@@
+
+
+1.1
+log
+@file bar was initially added on branch branch.
+@
+text
+@@
+
+
+1.1.2.1
+log
+@add bar
+@
+text
+@a0 1
+bar
+@
+

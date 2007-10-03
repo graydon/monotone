@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 
 struct uri
 {
@@ -23,7 +22,7 @@ struct uri
   std::string fragment;
 };
 
-bool
+void
 parse_uri(std::string const & in, uri & out);
 
 // Local Variables:

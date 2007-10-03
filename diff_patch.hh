@@ -10,18 +10,15 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "app_state.hh"
-#include "cert.hh"
 #include "vocab.hh"
+#include "roster.hh"
 
 #include <boost/shared_ptr.hpp>
 
-#include <iostream>
 #include <map>
-#include <string>
-#include <vector>
+#include "vector.hh"
 
-class roster_t;
+class app_state;
 
 struct conflict {};
 
@@ -50,13 +47,13 @@ content_merge_adaptor
                             file_id const & right_ident,
                             file_id const & merged_ident,
                             file_data const & left_data,
+                            file_data const & right_data,
                             file_data const & merged_data) = 0;
 
   virtual void get_ancestral_roster(node_id nid,
                                     boost::shared_ptr<roster_t const> & anc) = 0;
 
-  virtual void get_version(file_path const & path,
-                           file_id const & ident,
+  virtual void get_version(file_id const & ident,
                            file_data & dat) const = 0;
 
   virtual ~content_merge_adaptor() {}
@@ -78,13 +75,13 @@ content_merge_database_adaptor
                     file_id const & right_ident,
                     file_id const & merged_ident,
                     file_data const & left_data,
+                    file_data const & right_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t const> & anc);
 
-  void get_version(file_path const & path,
-                   file_id const & ident,
+  void get_version(file_id const & ident,
                    file_data & dat) const;
 };
 
@@ -95,21 +92,23 @@ content_merge_workspace_adaptor
   std::map<file_id, file_data> temporary_store;
   app_state & app;
   boost::shared_ptr<roster_t const> base;
+  std::map<file_id, file_path> content_paths;
   content_merge_workspace_adaptor (app_state & app,
-                                   boost::shared_ptr<roster_t const> base)
-    : app(app), base(base)
+                                   boost::shared_ptr<roster_t const> base,
+                                   std::map<file_id, file_path> const & paths)
+    : app(app), base(base), content_paths(paths)
   {}
   void record_merge(file_id const & left_ident,
                     file_id const & right_ident,
                     file_id const & merged_ident,
                     file_data const & left_data,
+                    file_data const & right_data,
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
                             boost::shared_ptr<roster_t const> & anc);
 
-  void get_version(file_path const & path,
-                   file_id const & ident,
+  void get_version(file_id const & ident,
                    file_data & dat) const;
 };
 

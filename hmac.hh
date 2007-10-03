@@ -1,7 +1,6 @@
 #ifndef __HMAC_HH__
 #define __HMAC_HH__
 
-#include <string>
 
 #include "botan/botan.h"
 #include "vocab.hh"

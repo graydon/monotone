@@ -3,7 +3,8 @@
 // licensed to the public under the terms of the GNU GPL (>= 2)
 // see the file COPYING for details
 
-#include <string>
+#include "base.hh"
+#include <iostream>
 #include <sstream>
 #include <windows.h>
 
@@ -135,6 +136,7 @@ pid_t process_spawn(const char * const argv[])
   memset(&si, 0, sizeof(si));
   si.cb = sizeof(STARTUPINFO);
   /* We don't need to set any of the STARTUPINFO members */
+  std::cout.flush();
   if (CreateProcess(realexe, (char*)cmd.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)==0)
     {
       os_err_t errnum = GetLastError();
@@ -228,6 +230,12 @@ pid_t process_spawn_redirected(char const * in,
     }
 }
 
+pid_t process_spawn_pipe(char const * const argv[], FILE** in, FILE** out)
+{
+  // XXX: not implemented on Win32 yet
+  return -1;
+}
+
 int process_wait(pid_t pid, int *res, int timeout)
 {
   HANDLE hProcess = (HANDLE)pid;
@@ -267,3 +275,10 @@ pid_t get_process_id()
   return GetCurrentProcessId();
 }
 
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:

@@ -1,3 +1,4 @@
+-- -*-lua-*-
 
 mtn_setup()
 revs = {}
@@ -36,14 +37,14 @@ check(mtn("annotate", "."), 1, false, false)
 -- REV0: b
 -- REV1: x
 
-check(mtn("annotate", "--brief", "foo0"), 0, true, false)
+check(mtn("annotate", "--revs-only", "foo0"), 0, true, false)
 check(greplines("stdout", {revs[1], revs[0], revs[0], revs[1]}))
 
 
 --
 -- unchanged should have all (3) lines from REV0 
 --
-check(mtn("annotate", "--brief", "unchanged"), 0, true, false)
+check(mtn("annotate", "--revs-only", "unchanged"), 0, true, false)
 check(greplines("stdout", {revs[0], revs[0], revs[0]}))
 
 --
@@ -52,16 +53,16 @@ check(greplines("stdout", {revs[0], revs[0], revs[0]}))
 -- REV2: 11
 -- REV3: 22
 
-check(mtn("annotate", "--brief", "bar0"), 0, true, false)
+check(mtn("annotate", "--revs-only", "bar0"), 0, true, false)
 check(greplines("stdout", {revs[1], revs[2], revs[3]}))
 
 
 --
 -- OK, now try some renames
 --
-check(mtn("rename", "foo0", "tmp"), 0, false, false)
-check(mtn("rename", "bar0", "foo0"), 0, false, false)
-check(mtn("rename", "tmp", "bar0"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "foo0", "tmp"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "bar0", "foo0"), 0, false, false)
+check(mtn("rename", "--bookkeep-only", "tmp", "bar0"), 0, false, false)
 rename("foo0", "tmp")
 rename("bar0", "foo0")
 rename("tmp", "bar0")
@@ -71,10 +72,10 @@ revs[4] = base_revision()
 --
 -- Now the previous annotate results should be reversed
 --
-check(mtn("annotate", "--brief", "bar0"), 0, true, false)
+check(mtn("annotate", "--revs-only", "bar0"), 0, true, false)
 check(greplines("stdout", {revs[1], revs[0], revs[0], revs[1]}))
 
-check(mtn("annotate", "--brief", "foo0"), 0, true, false)
+check(mtn("annotate", "--revs-only", "foo0"), 0, true, false)
 check(greplines("stdout", {revs[1], revs[2], revs[3]}))
 
 --
@@ -91,8 +92,7 @@ commit()
 revs[6] = base_revision()
 
 -- Now make right side
-remove("_MTN")
-check(mtn("co", "--revision", revs[4], "."), 0, false, false)
+revert_to(revs[4])
 writefile("bar0", "bar\non right side of fork\n")
 commit()
 revs[7] = base_revision()
@@ -112,5 +112,5 @@ check(mtn("merge"), 0, false, false)
 -- REV9: changed on the
 -- REV8: right fork
 
-check(mtn("annotate", "--brief", "forkfile"), 0, true, false)
+check(mtn("annotate", "--revs-only", "forkfile"), 0, true, false)
 check(greplines("stdout", {revs[8], revs[9], revs[8]}))

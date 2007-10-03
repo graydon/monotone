@@ -1,0 +1,5 @@
+Missing something that was here before?  Some things may simply be
+deprecated because monotone itself got better, or because they moved
+to their own branches.  Some of them are noted here.
+
+ - usher        Moved to its own branch, net.venge.monotone.contrib.usher

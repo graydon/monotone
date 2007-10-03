@@ -18,7 +18,7 @@ writefile("foo", "changed foo once")
 commit("testbranch", "foo has changed once.")
 rev_foo2 = base_revision()
 
-check(mtn("drop", "bar"), 0, false, false)
+check(mtn("drop", "--bookkeep-only", "bar"), 0, false, false)
 commit("testbranch", "Dropped bar.")
 
 writefile("foo", "changed foo again")
@@ -28,10 +28,10 @@ rev_foo3 = base_revision()
 check(mtn("log", "foo"), 0, true, false)
 rename("stdout", "log")
 
-check(grep("^Revision:", "log"), 0, true, false)
+check(grep("^[\\|\\\\\/ ]+Revision:", "log"), 0, true, false)
 rename("stdout", "revs")
 check(numlines("revs") == 3)
 
-check(grep("^Revision: " .. rev_foo1, "log"), 0, true)
-check(grep("^Revision: " .. rev_foo2, "log"), 0, true)
-check(grep("^Revision: " .. rev_foo3, "log"), 0, true)
+check(grep("^[\\|\\\\\/ ]+Revision: " .. rev_foo1, "log"), 0, true)
+check(grep("^[\\|\\\\\/ ]+Revision: " .. rev_foo2, "log"), 0, true)
+check(grep("^[\\|\\\\\/ ]+Revision: " .. rev_foo3, "log"), 0, true)

@@ -1,5 +1,5 @@
 /*
-** $Id: ldebug.c,v 2.29 2005/12/22 16:19:56 roberto Exp $
+** $Id: ldebug.c,v 2.29a 2005/12/22 16:19:56 roberto Exp $
 ** Debug Interface
 ** See Copyright Notice in lua.h
 */
@@ -436,12 +436,12 @@ static Instruction symbexec (const Proto *pt, int lastpc, int reg) {
         check(b < pt->sizep);
         nup = pt->p[b]->nups;
         check(pc + nup < pt->sizecode);
-        for (j = 1; j <= nup; ++j) {
+        for (j = 1; j <= nup; j++) {
           OpCode op1 = GET_OPCODE(pt->code[pc + j]);
           check(op1 == OP_GETUPVAL || op1 == OP_MOVE);
         }
         if (reg != NO_REG)  /* tracing? */
-          pc += nup;  /* do nut 'execute' these pseudo-instructions */
+          pc += nup;  /* do not 'execute' these pseudo-instructions */
         break;
       }
       case OP_VARARG: {
@@ -563,8 +563,8 @@ void luaG_typeerror (lua_State *L, const TValue *o, const char *op) {
 
 
 void luaG_concaterror (lua_State *L, StkId p1, StkId p2) {
-  if (ttisstring(p1)) p1 = p2;
-  lua_assert(!ttisstring(p1));
+  if (ttisstring(p1) || ttisnumber(p1)) p1 = p2;
+  lua_assert(!ttisstring(p1) && !ttisnumber(p1));
   luaG_typeerror(L, p1, "concatenate");
 }
 

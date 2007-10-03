@@ -57,9 +57,9 @@ AC_DEFUN([BOOST_SUFFIX_ARG],
 [AC_ARG_VAR([BOOST_SUFFIX],
             [Space-separated list of suffixes to try appending to the names
 	     of Boost libraries.  "none" means no suffix. The default is:
-	     "none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"])
+	     "none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt -gcc-mt-s"])
 if test x"$BOOST_SUFFIX" = x; then
-  BOOST_SUFFIX="none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt-s"
+  BOOST_SUFFIX="none -gcc -mipspro -mt -sunpro -sw -mgw -gcc-mt -gcc-mt-s"
 fi
 ])
 
@@ -163,39 +163,4 @@ AC_DEFUN([MTN_NEED_BOOST_LIB],
  AC_SUBST(BOOSTLIBS)
 ])
 
-AC_DEFUN([MTN_BOOST_LIB_FILESYSTEM],
-[MTN_NEED_BOOST_LIB([filesystem],
-  [AC_LANG_PROGRAM([[
-      #include <boost/filesystem/path.hpp>
-      #include <boost/filesystem/operations.hpp>
-      using namespace boost::filesystem;
-    ]],[[
-      exists(path("/boot"));
     ]])])])
-
-AC_DEFUN([MTN_BOOST_LIB_DATE_TIME],
-[MTN_NEED_BOOST_LIB([date_time],
-  [AC_LANG_PROGRAM([[
-      #include <boost/date_time/posix_time/posix_time.hpp>
-      #include <iostream>
-      using namespace boost::posix_time; 
-    ]],[[
-      std::cout << to_iso_extended_string(second_clock::universal_time());
-    ]])])])
-
-dnl Unlike all the others, if we don't have this library we can still
-dnl build monotone; we just can't do all the tests.
-AC_DEFUN([MTN_BOOST_LIB_UNIT_TEST_FRAMEWORK],
-[BOOST_LIB_IFELSE([unit_test_framework],
-  [AC_LANG_SOURCE([[
-      #include <boost/test/unit_test_suite.hpp>
-      #include <boost/test/test_tools.hpp>
-      using boost::unit_test_framework::test_suite;
-      test_suite * init_unit_test_suite(int argc, char * argv[]) 
-      { return NULL; }
-    ]])],
- [AM_CONDITIONAL(BUILD_UNIT_TESTS, true)
-  BOOST_UNITTEST="$lib"],
- [AM_CONDITIONAL(BUILD_UNIT_TESTS, false)])
- AC_SUBST(BOOST_UNITTEST)
-])

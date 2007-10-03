@@ -16,6 +16,7 @@
 #define _SQLITE_OS_C_ 1
 #include "sqliteInt.h"
 #include "os.h"
+#undef _SQLITE_OS_C_
 
 /*
 ** The following routines are convenience wrappers around methods
@@ -52,14 +53,6 @@ int sqlite3OsSync(OsFile *id, int fullsync){
 void sqlite3OsSetFullSync(OsFile *id, int value){
   id->pMethod->xSetFullSync(id, value);
 }
-#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG)
-/* This method is currently only used while interactively debugging the 
-** pager. More specificly, it can only be used when sqlite3DebugPrintf() is
-** included in the build. */
-int sqlite3OsFileHandle(OsFile *id){
-  return id->pMethod->xFileHandle(id);
-}
-#endif
 int sqlite3OsFileSize(OsFile *id, i64 *pSize){
   return id->pMethod->xFileSize(id, pSize);
 }
@@ -69,12 +62,23 @@ int sqlite3OsLock(OsFile *id, int lockType){
 int sqlite3OsUnlock(OsFile *id, int lockType){
   return id->pMethod->xUnlock(id, lockType);
 }
-int sqlite3OsLockState(OsFile *id){
-  return id->pMethod->xLockState(id);
-}
 int sqlite3OsCheckReservedLock(OsFile *id){
   return id->pMethod->xCheckReservedLock(id);
 }
+int sqlite3OsSectorSize(OsFile *id){
+  int (*xSectorSize)(OsFile*) = id->pMethod->xSectorSize;
+  return xSectorSize ? xSectorSize(id) : SQLITE_DEFAULT_SECTOR_SIZE;
+}
+
+#if defined(SQLITE_TEST) || defined(SQLITE_DEBUG)
+  /* These methods are currently only used for testing and debugging. */
+  int sqlite3OsFileHandle(OsFile *id){
+    return id->pMethod->xFileHandle(id);
+  }
+  int sqlite3OsLockState(OsFile *id){
+    return id->pMethod->xLockState(id);
+  }
+#endif
 
 #ifdef SQLITE_ENABLE_REDEF_IO
 /*

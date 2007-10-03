@@ -7,9 +7,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <algorithm>
 #include <set>
-#include <string>
 #include <utility>
 
 #include <boost/shared_ptr.hpp>
@@ -18,7 +18,6 @@
 #include "vocab.hh"
 #include "merkle_tree.hh"
 #include "netcmd.hh"
-#include "netsync.hh"
 
 using std::inserter;
 using std::make_pair;
@@ -242,6 +241,9 @@ refiner::process_done_command(size_t n_items)
     }
 
   done = true;
+  
+  // we can clear up the merkle trie's memory now
+  table.clear();
 }
 
 
@@ -510,8 +512,8 @@ refiner_pair
       crank();
     
     // Refinement should have completed by here.
-    BOOST_CHECK(client.done);
-    BOOST_CHECK(server.done);
+    UNIT_TEST_CHECK(client.done);
+    UNIT_TEST_CHECK(server.done);
 
     check_set_differences("client", client);
     check_set_differences("server", server);
@@ -521,8 +523,8 @@ refiner_pair
     check_no_redundant_sends("server->client", 
                              server.items_to_send, 
                              client.get_local_items());
-    BOOST_CHECK(client.items_to_send.size() == server.items_to_receive);
-    BOOST_CHECK(server.items_to_send.size() == client.items_to_receive);
+    UNIT_TEST_CHECK(client.items_to_send.size() == server.items_to_receive);
+    UNIT_TEST_CHECK(server.items_to_send.size() == client.items_to_receive);
     L(FL("stats: %d total, %d cs, %d sc, %d msgs") 
       % (server.items_to_send.size() + client.get_local_items().size())
       % client.items_to_send.size()
@@ -570,7 +572,7 @@ refiner_pair
             L(FL("WARNING: %s transmission will send redundant item %s")
               % context % hid);
           }
-        BOOST_CHECK(j == dst.end());
+        UNIT_TEST_CHECK(j == dst.end());
       }
   }
 
@@ -584,7 +586,7 @@ refiner_pair
                      "diff(local,peer)", tmp, 
                      "items_to_send", r.items_to_send);
 
-    BOOST_CHECK(tmp == r.items_to_send);
+    UNIT_TEST_CHECK(tmp == r.items_to_send);
   }
 };
 

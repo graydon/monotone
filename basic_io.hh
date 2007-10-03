@@ -11,10 +11,7 @@
 // PURPOSE.
 
 
-#include <cstdio>
-#include <iosfwd>
-#include <string>
-#include <vector>
+#include "vector.hh"
 #include <map>
 
 #include "paths.hh"

@@ -7,61 +7,62 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <iosfwd>
+#include "base.hh"
 #include <iostream>
+#include <sstream>
 #include <map>
 
 #include "cmd.hh"
+#include "app_state.hh"
+#include "ui.hh"
+#include "lua.hh"
+#include "lua_hooks.hh"
 
 using std::istream;
 using std::make_pair;
 using std::map;
 using std::ostream;
+using std::ostringstream;
 using std::pair;
+using std::set;
 using std::string;
 using std::vector;
 
-namespace automation {
-  // When this is split into multiple files, there will not be any
-  // guarantees about initialization order. So, use something we can
-  // initialize ourselves.
-  static map<string, automate * const> * automations;
-  automate::automate(string const &n, string const &p,
-                     options::options_type const & o)
-    : name(n), params(p), opts(o)
+CMD_GROUP(automate, "automate", "au", CMD_REF(automation),
+          N_("Interface for scripted execution"),
+          "");
+
+namespace commands {
+  automate::automate(string const & name,
+                     string const & params,
+                     string const & abstract,
+                     string const & desc,
+                     options::options_type const & opts) :
+    command(name, "", CMD_REF(automate), false, params, abstract,
+            desc, true, opts, false)
   {
-    static bool first(true);
-    if (first)
-      {
-        first = false;
-        automations = new map<string, automate * const>;
-      }
-    automations->insert(make_pair(name, this));
   }
-  automate::~automate() {}
+
+  void
+  automate::exec(app_state & app,
+                 command_id const & execid,
+                 args_vector const & args,
+                 std::ostream & output) const
+  {
+    make_io_binary();
+    exec_from_automate(args, execid, app, output);
+  }
+
+  void
+  automate::exec(app_state & app,
+                 command_id const & execid,
+                 args_vector const & args) const
+  {
+    exec(app, execid, args, std::cout);
+  }
 }
 
-automation::automate &
-find_automation(utf8 const & name, string const & root_cmd_name)
-{
-  map<string, automation::automate * const>::const_iterator
-    i = automation::automations->find(name());
-  if (i == automation::automations->end())
-    throw usage(root_cmd_name);
-  else
-    return *(i->second);
-}
-
-void
-automate_command(utf8 cmd, vector<utf8> args,
-                 string const & root_cmd_name,
-                 app_state & app,
-                 ostream & output)
-{
-  find_automation(cmd, root_cmd_name).run(args, root_cmd_name, app, output);
-}
-
-static string const interface_version = "4.0";
+static string const interface_version = "6.0";
 
 // Name: interface_version
 // Arguments: none
@@ -72,12 +73,15 @@ static string const interface_version = "4.0";
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
-AUTOMATE(interface_version, "", options::opts::none)
+CMD_AUTOMATE(interface_version, "",
+             N_("Prints the automation interface's version"),
+             "",
+             options::opts::none)
 {
   N(args.size() == 0,
     F("no arguments needed"));
 
-  output << interface_version << "\n";
+  output << interface_version << '\n';
 }
 
 // Name: stdio
@@ -193,7 +197,7 @@ class automate_reader
       case 'o': loc = opt; break;
       case 'l': loc = cmd; break;
       default:
-        E(false, 
+        E(false,
             F("Bad input to automate stdio: unknown start token '%c'") % c);
       }
   }
@@ -255,26 +259,26 @@ public:
   }
   ~automate_streambuf()
   {}
-  
+
   void set_err(int e)
   {
     sync();
     err = e;
   }
-  
+
   void end_cmd()
   {
     _M_sync(true);
     ++cmdnum;
     err = 0;
   }
-  
+
   virtual int sync()
   {
     _M_sync();
     return 0;
   }
-  
+
   void _M_sync(bool end = false)
   {
     if (!out)
@@ -285,10 +289,10 @@ public:
     int num = pptr() - pbase();
     if (num || end)
       {
-        (*out) << cmdnum << ":"
-            << err << ":"
-            << (end?'l':'m') << ":"
-            << num << ":" << std::string(pbase(), num);
+        (*out) << cmdnum << ':'
+            << err << ':'
+            << (end?'l':'m') << ':'
+            << num << ':' << std::string(pbase(), num);
         setp(pbase(), pbase() + _bufsize);
         out->flush();
       }
@@ -305,31 +309,37 @@ public:
 struct automate_ostream : public std::ostream
 {
   automate_streambuf _M_autobuf;
-  
+
   automate_ostream(std::ostream &out, size_t blocksize)
     : std::ostream(NULL),
       _M_autobuf(out, blocksize)
   { this->init(&_M_autobuf); }
-  
+
   ~automate_ostream()
   {}
-  
+
   automate_streambuf *
   rdbuf() const
   { return const_cast<automate_streambuf *>(&_M_autobuf); }
-  
+
   void set_err(int e)
   { _M_autobuf.set_err(e); }
-  
+
   void end_cmd()
   { _M_autobuf.end_cmd(); }
 };
 
-
-AUTOMATE(stdio, "", options::opts::automate_stdio_size)
+CMD_AUTOMATE(stdio, "",
+             N_("Automates several commands in one run"),
+             "",
+             options::opts::automate_stdio_size)
 {
   N(args.size() == 0,
     F("no arguments needed"));
+
+    // initialize the database early so any calling process is notified
+    // immediately if a version discrepancy exists
+  app.db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
@@ -337,15 +347,13 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
   vector<string> cmdline;
   while(ar.get_command(params, cmdline))//while(!EOF)
     {
-      utf8 cmd;
-      vector<utf8> args;
+      args_vector args;
       vector<string>::iterator i = cmdline.begin();
       E(i != cmdline.end(),
         F("Bad input to automate stdio: command name is missing"));
-      cmd = utf8(*i);
-      for (++i; i != cmdline.end(); ++i)
+      for (; i != cmdline.end(); ++i)
         {
-          args.push_back(utf8(*i));
+          args.push_back(arg_type(*i));
         }
       try
         {
@@ -353,10 +361,43 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
           opts = options::opts::all_options() - options::opts::globals();
           opts.instantiate(&app.opts).reset();
 
-          opts = options::opts::globals();
-          opts = opts | find_automation(cmd, help_name).opts;
-          opts.instantiate(&app.opts).from_key_value_pairs(params);
-          automate_command(cmd, args, help_name, app, os);
+          command_id id;
+          for (args_vector::const_iterator iter = args.begin();
+               iter != args.end(); iter++)
+            id.push_back(utf8((*iter)()));
+
+          if (!id.empty())
+            {
+              I(!args.empty());
+
+              set< command_id > matches =
+                CMD_REF(automate)->complete_command(id);
+
+              if (matches.size() == 0)
+                {
+                  N(false, F("no completions for this command"));
+                }
+              else if (matches.size() > 1)
+                {
+                  N(false, F("multiple completions possible for this command"));
+                }
+
+              id = *matches.begin();
+
+              I(args.size() >= id.size());
+              for (command_id::size_type i = 0; i < id.size(); i++)
+                args.erase(args.begin());
+
+              command const * cmd = CMD_REF(automate)->find_command(id);
+              I(cmd != NULL);
+              automate const * acmd = reinterpret_cast< automate const * >(cmd);
+
+              opts = options::opts::globals() | acmd->opts();
+              opts.instantiate(&app.opts).from_key_value_pairs(params);
+              acmd->exec_from_automate(args, id, app, os);
+            }
+          else
+            opts.instantiate(&app.opts).from_key_value_pairs(params);
         }
       catch(informative_failure & f)
         {
@@ -369,46 +410,101 @@ AUTOMATE(stdio, "", options::opts::automate_stdio_size)
     }
 }
 
-
-CMD_WITH_SUBCMDS(automate, N_("automation"),
-                 N_("automation interface"),
-                 options::opts::none)
+LUAEXT(mtn_automate, )
 {
-  if (args.size() == 0)
-    throw usage(name);
+  args_vector args;
+  std::stringstream output;
+  bool result = true;
+  std::stringstream & os = output;
 
-  vector<utf8>::const_iterator i = args.begin();
-  utf8 cmd = *i;
-  ++i;
-  vector<utf8> cmd_args(i, args.end());
-
-  make_io_binary();
-
-  automate_command(cmd, cmd_args, name, app, std::cout);
-}
-
-std::string commands::cmd_automate::params()
-{
-  std::string out;
-  map<string, automation::automate * const>::const_iterator i;
-  for (i = automation::automations->begin();
-       i != automation::automations->end(); ++i)
+  try
     {
-      out += i->second->name + " " + i->second->params;
-      if (out[out.size()-1] != '\n')
-        out += "\n";
+      app_state* app_p = get_app_state(L);
+      I(app_p != NULL);
+      I(app_p->lua.check_lua_state(L));
+      E(app_p->mtn_automate_allowed,
+          F("It is illegal to call the mtn_automate() lua extension,\n"
+            "unless from a command function defined by register_command()."));
+
+      // don't allow recursive calls
+      app_p->mtn_automate_allowed = false;
+
+      // automate_ostream os(output, app_p->opts.automate_stdio_size);
+
+      int n = lua_gettop(L);
+
+      E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
+
+      app_p->db.ensure_open();
+
+      L(FL("Starting call to mtn_automate lua hook"));
+
+      for (int i=1; i<=n; i++)
+        {
+          arg_type next_arg(luaL_checkstring(L, i));
+          L(FL("arg: %s")%next_arg());
+          args.push_back(next_arg);
+        }
+
+      commands::command_id id;
+      for (args_vector::const_iterator iter = args.begin();
+           iter != args.end(); iter++)
+        id.push_back(utf8((*iter)()));
+
+      E(!id.empty(), F("no command found"));
+
+      set< commands::command_id > matches =
+        CMD_REF(automate)->complete_command(id);
+
+      if (matches.size() == 0)
+        {
+          N(false, F("no completions for this command"));
+        }
+      else if (matches.size() > 1)
+        {
+          N(false, F("multiple completions possible for this command"));
+        }
+
+      id = *matches.begin();
+
+      I(args.size() >= id.size());
+      for (commands::command_id::size_type i = 0; i < id.size(); i++)
+        args.erase(args.begin());
+
+      commands::command const * cmd = CMD_REF(automate)->find_command(id);
+      I(cmd != NULL);
+      commands::automate const * acmd = reinterpret_cast< commands::automate const * >(cmd);
+
+      acmd->exec(*app_p, id, args, os);
+
+      // allow further calls
+      app_p->mtn_automate_allowed = true;
     }
-  return out;
-}
+  catch(informative_failure & f)
+    {
+      // informative failures are passed back to the caller
+      result = false;
+      L(FL("Informative failure caught inside lua call to mtn_automate: %s") % f.what());
+      os.flush();
+      output.flush();
+      output.str().clear();
+      os << f.what();
+    }
+  catch (std::logic_error & e)
+    {
+      // invariant failures are permanent
+      result = false;
+      ui.fatal(e.what());
+      lua_pushstring(L, e.what());
+      lua_error(L);
+    }
 
-options::options_type
-commands::cmd_automate::get_options(vector<utf8> const & args)
-{
-  if (args.size() < 2)
-    return options::options_type();
-  return find_automation(idx(args,1), idx(args,0)()).opts;
-}
+  os.flush();
 
+  lua_pushboolean(L, result);
+  lua_pushstring(L, output.str().c_str());
+  return 2;
+}
 
 // Local Variables:
 // mode: C++

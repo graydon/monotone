@@ -1,3 +1,4 @@
+-- -*-lua-*-
 
 mtn_setup()
 revs = {}
@@ -50,5 +51,5 @@ L("revs.d = ", revs.d, "\n")
 -- REVD: d
 --
 
-check(mtn("--debug", "annotate", "--brief", "foo"), 0, true, true)
+check(mtn("--debug", "annotate", "--revs-only", "foo"), 0, true, true)
 check(greplines("stdout", {revs.a, revs.a, revs.b, revs.c, revs.a, revs.d}))

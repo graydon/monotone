@@ -13,6 +13,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
+#include "platform-wrapped.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.
@@ -42,6 +43,8 @@ bool path_exists(any_path const & path);
 bool directory_exists(any_path const & path);
 // returns true if there is a file at 'path'
 bool file_exists(any_path const & path);
+// returns true if there is a directory at 'path' with no files or sub-directories
+bool directory_empty(any_path const & path);
 
 
 // returns true if the string content is binary according to monotone heuristic
@@ -68,8 +71,10 @@ void move_path(any_path const & old_path,
 void read_data(any_path const & path, data & data);
 
 void read_directory(any_path const & path,
-                    std::vector<utf8> & files,
-                    std::vector<utf8> & dirs);
+                    std::vector<path_component> & files,
+                    std::vector<path_component> & dirs);
+
+void read_data_stdin(data & dat);
 
 // This function knows that "-" means "stdin".
 void read_data_for_command_line(utf8 const & path, data & dat);
@@ -90,11 +95,17 @@ void write_data(system_path const & path,
                 data const & data,
                 system_path const & tmpdir);
 
+// Identical to the above, but the file will be inaccessible to anyone but
+// the user.  Use for things like private keys.
+void write_data_userprivate(system_path const & path,
+                            data const & data,
+                            system_path const & tmpdir);
+
 class tree_walker
 {
 public:
   // returns true if the directory should be descended into
-  virtual void visit_dir(file_path const & path);
+  virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path) = 0;
   virtual ~tree_walker();
 };
@@ -102,10 +113,14 @@ public:
 // from some safe sub-dir of cwd
 // file_path of "" means cwd
 void walk_tree(file_path const & path,
-               tree_walker & walker,
-               bool require_existing_path = true);
+               tree_walker & walker);
 
 
+bool ident_existing_file(file_path const & p, file_id & ident);
+bool ident_existing_file(file_path const & p, file_id & ident, path::status status);
+
+void calculate_ident(file_path const & file,
+                     hexenc<id> & ident);
 
 // Local Variables:
 // mode: C++

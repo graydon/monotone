@@ -11,7 +11,7 @@
 // PURPOSE.
 
 #include <iterator>
-#include <vector>
+#include "vector.hh"
 #include "quick_alloc.hh"
 
 void

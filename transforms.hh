@@ -12,8 +12,6 @@
 
 #include "vocab.hh"
 
-#include <vector>
-
 // this file contans various sorts of string transformations. each
 // transformation should be self-explanatory from its type signature. see
 // transforms.cc for the implementations (most of which are delegations to
@@ -28,54 +26,60 @@ namespace Botan {
   class Gzip_Decompression;
 }
 
-#ifdef HAVE_EXTERN_TEMPLATE
-#define EXTERN extern
-#else
-#define EXTERN /* */
-#endif
+// this generic template cannot actually be used, except with the
+// specializations given below.  give a compile error instead of a link
+// error.
+template<typename XFM> std::string xform(std::string const & in)
+{
+  enum dummy { d = (sizeof(struct xform_must_be_specialized_for_this_type)
+                    == sizeof(XFM)) };
+  return in; // avoid warnings about no return statement
+}
 
-template<typename XFM> std::string xform(std::string const &);
-EXTERN template std::string xform<Botan::Base64_Encoder>(std::string const &);
-EXTERN template std::string xform<Botan::Base64_Decoder>(std::string const &);
-EXTERN template std::string xform<Botan::Hex_Encoder>(std::string const &);
-EXTERN template std::string xform<Botan::Hex_Decoder>(std::string const &);
-EXTERN template std::string xform<Botan::Gzip_Compression>(std::string const &);
-EXTERN template std::string xform<Botan::Gzip_Decompression>(std::string const &);
+// these specializations of the template are defined in transforms.cc
+template<> std::string xform<Botan::Base64_Encoder>(std::string const &);
+template<> std::string xform<Botan::Base64_Decoder>(std::string const &);
+template<> std::string xform<Botan::Hex_Encoder>(std::string const &);
+template<> std::string xform<Botan::Hex_Decoder>(std::string const &);
+template<> std::string xform<Botan::Gzip_Compression>(std::string const &);
+template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 // base64 encoding
 
 template <typename T>
 void encode_base64(T const & in, base64<T> & out)
-{ out = xform<Botan::Base64_Encoder>(in()); }
+{ out = base64<T>(T(xform<Botan::Base64_Encoder>(in()))); }
 
 template <typename T>
 void decode_base64(base64<T> const & in, T & out)
-{ out = xform<Botan::Base64_Decoder>(in()); }
+{ out = T(xform<Botan::Base64_Decoder>(in())); }
 
 
 // hex encoding
 
-std::string encode_hexenc(std::string const & in);
-std::string decode_hexenc(std::string const & in);
+template <typename T>
+void encode_hexenc(T const & in, hexenc<T> & out)
+{ out = hexenc<T>(T(xform<Botan::Hex_Encoder>(in()))); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = decode_hexenc(in()); }
+{ out = T(xform<Botan::Hex_Decoder>(in())); }
 
-template <typename T>
-void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = encode_hexenc(in()); }
+inline std::string encode_hexenc(std::string const & in)
+{ return xform<Botan::Hex_Encoder>(in); }
+inline std::string decode_hexenc(std::string const & in)
+{ return xform<Botan::Hex_Decoder>(in); }
 
 
 // gzip
 
 template <typename T>
 void encode_gzip(T const & in, gzip<T> & out)
-{ out = xform<Botan::Gzip_Compression>(in()); }
+{ out = gzip<T>(xform<Botan::Gzip_Compression>(in())); }
 
 template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
-{ out = xform<Botan::Gzip_Decompression>(in()); }
+{ out = T(xform<Botan::Gzip_Decompression>(in())); }
 
 // string variant for netsync
 template <typename T>
@@ -83,16 +87,13 @@ void encode_gzip(std::string const & in, gzip<T> & out)
 { out = xform<Botan::Gzip_Compression>(in); }
 
 // both at once (this is relatively common)
+// these are usable for T = data and T = delta
 
 template <typename T>
 void pack(T const & in, base64< gzip<T> > & out);
-EXTERN template void pack<data>(data const &, base64< gzip<data> > &);
-EXTERN template void pack<delta>(delta const &, base64< gzip<delta> > &);
 
 template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out);
-EXTERN template void unpack<data>(base64< gzip<data> > const &, data &);
-EXTERN template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
 
 // diffing and patching
@@ -109,9 +110,6 @@ void patch(data const & olddata,
 // version (a.k.a. sha1 fingerprint) calculation
 
 void calculate_ident(data const & dat,
-                     hexenc<id> & ident);
-
-void calculate_ident(base64< gzip<data> > const & dat,
                      hexenc<id> & ident);
 
 void calculate_ident(file_data const & dat,

@@ -7,21 +7,23 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include "cmd.hh"
+#include "app_state.hh"
 #include "rcs_import.hh"
 
 using std::vector;
 
-CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
-    N_("parse versions in RCS files\n"
-       "this command doesn't reconstruct or import revisions."
-       "you probably want cvs_import"),
+CMD(rcs_import, "rcs_import", "", CMD_REF(debug), N_("RCSFILE..."),
+    N_("Parses versions in RCS files"),
+    N_("This command doesn't reconstruct or import revisions.  "
+       "You probably want to use cvs_import."),
     options::opts::branch)
 {
   if (args.size() < 1)
-    throw usage(name);
+    throw usage(execid);
 
-  for (vector<utf8>::const_iterator i = args.begin();
+  for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
     {
       test_parse_rcs_file(system_path((*i)()), app.db);
@@ -29,12 +31,13 @@ CMD(rcs_import, N_("debug"), N_("RCSFILE..."),
 }
 
 
-CMD(cvs_import, N_("rcs"), N_("CVSROOT"), 
-    N_("import all versions in CVS repository"),
+CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"), 
+    N_("Imports all versions in a CVS repository"),
+    "",
     options::opts::branch)
 {
   if (args.size() != 1)
-    throw usage(name);
+    throw usage(execid);
 
   import_cvs_repo(system_path(idx(args, 0)()), app);
 }

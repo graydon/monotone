@@ -25,7 +25,17 @@ void
 apply_roster_delta(roster_delta const & del,
                    roster_t & roster, marking_map & markings);
                    
+bool
+try_get_markings_from_roster_delta(roster_delta const & del,
+                                   node_id const & nid,
+                                   marking_t & markings);
 
+// See the comment on this function's body for a description of its api.
+bool
+try_get_content_from_roster_delta(roster_delta const & del,
+                                  node_id const & nid,
+                                  file_id & content);
+  
 #ifdef BUILD_UNIT_TESTS
 
 // instead of having elaborate tests here, we just export a function, and then
@@ -37,3 +47,13 @@ void test_roster_delta_on(roster_t const & a, marking_map const & a_marking,
 #endif // BUILD_UNIT_TESTS
 
 #endif // __ROSTER_DELTA_HH__
+
+
+// Local Variables:
+// mode: C++
+// fill-column: 76
+// c-file-style: "gnu"
+// indent-tabs-mode: nil
+// End:
+// vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
+

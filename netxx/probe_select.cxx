@@ -158,6 +158,10 @@ Netxx::Probe_impl::probe_type Netxx::Probe_impl::probe (const Timeout &timeout, 
 	if (timeout) {
 	    tmp_timeout.tv_sec = timeout.get_sec();
 	    tmp_timeout.tv_usec = timeout.get_usec();
+	    if (tmp_timeout.tv_sec == 0 && tmp_timeout.tv_usec == 1)
+	      {
+		tmp_timeout.tv_usec = 0;
+	      }
 	    timeout_ptr = &tmp_timeout;
 	} else {
 	    timeout_ptr = 0;

@@ -76,3 +76,30 @@ JANITORIAL
   speed on windows (nb. fork() on windows is insanely slow)
 
 - possibly purge the whole packet-reading/writing stuff. 
+
+- implement a pager so that long outputs get automatically paged if the
+  terminal is intelligent enough to support this feature.  cogito does
+  this and it is very convenient.  (how many times have you had to rerun
+  a command just to pipe it to more(1) or less(1)?)
+
+- implement optional colorization of output for diffs and logs.  simplifies
+  the task of reading diffs *a lot*.  see cogito's diff -c command.
+
+- abstract the way arguments are checked when running a command.  given that
+  each command has a "params" member that describes its syntax, it seems
+  fairly easy to homogenize its syntax, write a simple syntax parser for it
+  and use it to sanity-check the command line given by the user.  this could
+  remove a lot of inconsistencies in error messages that exist in the current
+  code because, at the moment, each command is reponsible of checking the
+  'args' size and format to report errors.
+
+- remove the special-casing of top-level commands.  ideally they should
+  behave just like any other command that accepts subcommands (e.g. 'list').
+  however, the command lookup routine has to support ignoring the top-level
+  command if not given to preserve compatibility and not complicate things
+  a lot.  e.g. 'mtn informative list' should be the same as 'mtn list'.
+
+- modify the CMD_AUTOMATE macro so that it can document all the details of
+  an automate command (input, output, first version, etc.).  the idea is to
+  move all the documentation for automate commands (currently placed in
+  comments in the code) to the online help system.

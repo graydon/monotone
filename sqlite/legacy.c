@@ -14,7 +14,7 @@
 ** other files are for internal use by SQLite and should not be
 ** accessed by users of the library.
 **
-** $Id: legacy.c,v 1.15 2006/06/26 21:35:45 drh Exp $
+** $Id: legacy.c,v 1.18 2007/05/04 13:15:56 drh Exp $
 */
 
 #include "sqliteInt.h"
@@ -44,7 +44,6 @@ int sqlite3_exec(
   char **azCols = 0;
 
   int nRetry = 0;
-  int nChange = 0;
   int nCallback;
 
   if( zSql==0 ) return SQLITE_OK;
@@ -64,7 +63,6 @@ int sqlite3_exec(
       continue;
     }
 
-    db->nChange += nChange;
     nCallback = 0;
 
     nCol = sqlite3_column_count(pStmt);
@@ -101,9 +99,6 @@ int sqlite3_exec(
       if( rc!=SQLITE_ROW ){
         rc = sqlite3_finalize(pStmt);
         pStmt = 0;
-        if( db->pVdbe==0 ){
-          nChange = db->nChange;
-        }
         if( rc!=SQLITE_SCHEMA ){
           nRetry = 0;
           zSql = zLeftover;
@@ -123,13 +118,15 @@ exec_out:
 
   rc = sqlite3ApiExit(0, rc);
   if( rc!=SQLITE_OK && rc==sqlite3_errcode(db) && pzErrMsg ){
-    *pzErrMsg = sqlite3_malloc(1+strlen(sqlite3_errmsg(db)));
+    int nErrMsg = 1 + strlen(sqlite3_errmsg(db));
+    *pzErrMsg = sqlite3_malloc(nErrMsg);
     if( *pzErrMsg ){
-      strcpy(*pzErrMsg, sqlite3_errmsg(db));
+      memcpy(*pzErrMsg, sqlite3_errmsg(db), nErrMsg);
     }
   }else if( pzErrMsg ){
     *pzErrMsg = 0;
   }
 
+  assert( (rc&db->errMask)==rc );
   return rc;
 }

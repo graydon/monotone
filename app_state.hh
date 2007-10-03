@@ -14,9 +14,8 @@ class app_state;
 class lua_hooks;
 
 #include <map>
-#include <vector>
+#include "vector.hh"
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "database.hh"
@@ -24,8 +23,10 @@ class lua_hooks;
 #include "lua_hooks.hh"
 #include "options.hh"
 #include "paths.hh"
+#include "project.hh"
 #include "vocab.hh"
 #include "work.hh"
+#include "ssh_agent.hh"
 
 namespace Botan
 {
@@ -48,11 +49,13 @@ public:
   lua_hooks lua;
   key_store keys;
   workspace work;
+  ssh_agent agent;
 
   options opts;
 
   bool found_workspace;
   bool branch_is_sticky;
+  bool mtn_automate_allowed;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they
@@ -80,9 +83,14 @@ public:
 
   void make_branch_sticky();
 
+private:
+  project_t project;
+public:
+  //project_t & get_project(string const & name);
+  project_t & get_project(); // get_project(opts.project) or I()
+
   void set_database(system_path const & filename);
   void set_key_dir(system_path const & filename);
-  void set_root(system_path const & root);
   void set_diff_format(diff_type dtype);
 
   explicit app_state();

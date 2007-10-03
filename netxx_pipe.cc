@@ -7,10 +7,12 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <netxx_pipe.hh>
 #include "sanity.hh"
 #include "platform.hh"
 #include <netxx/streamserver.h>
+#include <ostream> // for operator<<
 
 #ifdef WIN32
 #include <windows.h>
@@ -334,7 +336,7 @@ Netxx::PipeStream::close (void)
   writefd = -1;
 
   if (child)
-    waitpid(child,0,0);
+    while (waitpid(child,0,0) == -1 && errno == EINTR);
   child = 0;
 #endif
 }

@@ -73,6 +73,12 @@ addfile(filename, contents [, mt])
 	Write the given file, then add it (Using the specified monotone, 
 	if given).
 
+adddir(dirname [, mt])
+
+	Adds the specified directory to monotone (using the given monotone 
+    instance or the global one). Checks if the path is a directory at all,
+    if not tries to create the directory.
+
 revert_to(rev, branch [, mt])
 
 	Use "mtn checkout" to set the workspace to the given branch and revision.

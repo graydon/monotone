@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "cset.hh"
+#include "hybrid_map.hh"
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
@@ -49,7 +50,7 @@ null_node(node_id n)
 // "undefined" value).
 typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
-typedef std::map<node_id, node_t> node_map;
+typedef hybrid_map<node_id, node_t> node_map;
 
 template <> void dump(full_attr_map_t const & val, std::string & out);
 
@@ -115,7 +116,7 @@ is_file_t(node_t n)
 inline bool
 is_root_dir_t(node_t n)
 {
-  if (is_dir_t(n) && null_name(n->name))
+  if (is_dir_t(n) && n->name.empty())
     {
       I(null_node(n->parent));
       return true;
@@ -142,7 +143,8 @@ downcast_to_file_t(node_t const n)
 }
 
 bool
-shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children);
+shallow_equal(node_t a, node_t b, bool shallow_compare_dir_children,
+              bool compare_file_contents = true);
 
 template <> void dump(node_t const & n, std::string & out);
 
@@ -177,16 +179,16 @@ public:
   roster_t(roster_t const & other);
   roster_t & operator=(roster_t const & other);
   bool has_root() const;
-  bool has_node(split_path const & sp) const;
+  bool has_node(file_path const & sp) const;
   bool has_node(node_id nid) const;
   bool is_root(node_id nid) const;
-  node_t get_node(split_path const & sp) const;
+  node_t get_node(file_path const & sp) const;
   node_t get_node(node_id nid) const;
-  void get_name(node_id nid, split_path & sp) const;
+  void get_name(node_id nid, file_path & sp) const;
   void replace_node_id(node_id from, node_id to);
 
   // editable_tree operations
-  node_id detach_node(split_path const & src);
+  node_id detach_node(file_path const & src);
   void drop_detached_node(node_id nid);
   node_id create_dir_node(node_id_source & nis);
   void create_dir_node(node_id nid);
@@ -195,17 +197,17 @@ public:
   void create_file_node(file_id const & content,
                         node_id nid);
   void insert_node(node_t n);
-  void attach_node(node_id nid, split_path const & dst);
+  void attach_node(node_id nid, file_path const & dst);
   void attach_node(node_id nid, node_id parent, path_component name);
-  void apply_delta(split_path const & pth,
+  void apply_delta(file_path const & pth,
                    file_id const & old_id,
                    file_id const & new_id);
-  void clear_attr(split_path const & pth,
+  void clear_attr(file_path const & pth,
                   attr_key const & name);
-  void set_attr(split_path const & pth,
+  void set_attr(file_path const & pth,
                 attr_key const & name,
                 attr_value const & val);
-  void set_attr(split_path const & pth,
+  void set_attr(file_path const & pth,
                 attr_key const & name,
                 std::pair<bool, attr_value> const & val);
 
@@ -221,11 +223,11 @@ public:
 
   // misc.
 
-  bool get_attr(split_path const & pth,
+  bool get_attr(file_path const & pth,
                 attr_key const & key,
                 attr_value & val) const;
 
-  void extract_path_set(path_set & paths) const;
+  void extract_path_set(std::set<file_path> & paths) const;
 
   node_map const & all_nodes() const
   {
@@ -233,6 +235,8 @@ public:
   }
 
   bool operator==(roster_t const & other) const;
+
+  friend bool equal_shapes(roster_t const & a, roster_t const & b);
 
   void check_sane(bool temp_nodes_ok=false) const;
 
@@ -247,7 +251,10 @@ public:
   void parse_from(basic_io::parser & pa,
                   marking_map & mm);
 
-  dir_t const & root() { return root_dir; }
+  dir_t const & root() const
+  {
+    return root_dir;
+  }
 
 private:
   void do_deep_copy_from(roster_t const & other);
@@ -274,7 +281,7 @@ private:
   //
   // FIXME: This _is_ all a little nasty, because this can be a source of
   // abstraction leak -- for instance, roster_merge's contract is that nodes
-  // involved in name-related will be detached in the roster it returns.
+  // involved in name-related conflicts will be detached in the roster it returns.
   // Those nodes really should be allowed to be attached anywhere, or dropped,
   // which is not actually expressible right now.  Worse, whether or not they
   // are in old_locations map is an implementation detail of roster_merge --
@@ -314,6 +321,7 @@ struct temp_node_id_source
 template <> void dump(roster_t const & val, std::string & out);
 
 class app_state;
+class database;
 struct revision_t;
 
 // adaptor class to enable cset application on rosters.
@@ -322,17 +330,17 @@ class editable_roster_base
 {
 public:
   editable_roster_base(roster_t & r, node_id_source & nis);
-  virtual node_id detach_node(split_path const & src);
+  virtual node_id detach_node(file_path const & src);
   virtual void drop_detached_node(node_id nid);
   virtual node_id create_dir_node();
   virtual node_id create_file_node(file_id const & content);
-  virtual void attach_node(node_id nid, split_path const & dst);
-  virtual void apply_delta(split_path const & pth,
+  virtual void attach_node(node_id nid, file_path const & dst);
+  virtual void apply_delta(file_path const & pth,
                            file_id const & old_id,
                            file_id const & new_id);
-  virtual void clear_attr(split_path const & pth,
+  virtual void clear_attr(file_path const & pth,
                           attr_key const & name);
-  virtual void set_attr(split_path const & pth,
+  virtual void set_attr(file_path const & pth,
                         attr_key const & name,
                         attr_value const & val);
   virtual void commit();
@@ -370,11 +378,11 @@ select_nodes_modified_by_cset(cset const & cs,
                               std::set<node_id> & nodes_modified);
 
 void
-extract_roster_path_set(roster_t const & ros,
-                        path_set & paths);
+get_content_paths(roster_t const & roster, 
+                  std::map<file_id, file_path> & paths);
 
-// These two functions are for the use of things like 'update' or 'pluck',
-// that need to construct fake rosters and/or markings in-memory, to achieve
+// These functions are for the use of things like 'update' or 'pluck', that
+// need to construct fake rosters and/or markings in-memory, to achieve
 // particular merge results.
 void
 mark_roster_with_no_parents(revision_id const & rid,
@@ -387,6 +395,17 @@ mark_roster_with_one_parent(roster_t const & parent,
                             roster_t const & child,
                             marking_map & child_markings);
 
+void
+mark_merge_roster(roster_t const & left_roster,
+                  marking_map const & left_markings,
+                  std::set<revision_id> const & left_uncommon_ancestors,
+                  roster_t const & right_roster,
+                  marking_map const & right_markings,
+                  std::set<revision_id> const & right_uncommon_ancestors,
+                  revision_id const & new_rid,
+                  roster_t const & merge,
+                  marking_map & new_markings);
+
 // This is for revisions that are being written to the db, only.  It assigns
 // permanent node ids.
 void
@@ -395,6 +414,16 @@ make_roster_for_revision(revision_t const & rev,
                          roster_t & result,
                          marking_map & marking,
                          app_state & app);
+
+// This is for revisions that are not necessarily going to be written to the
+// db; you can specify your own node_id_source.
+void
+make_roster_for_revision(revision_t const & rev,
+                         revision_id const & rid,
+                         roster_t & result,
+                         marking_map & marking,
+                         database & db,
+                         node_id_source & nis);
 
 void
 read_roster_and_marking(roster_data const & dat,
@@ -423,7 +452,6 @@ namespace basic_io
 // for roster_delta
 void push_marking(basic_io::stanza & st, bool is_file, marking_t const & mark);
 void parse_marking(basic_io::parser & pa, marking_t & marking);
-
 
 #ifdef BUILD_UNIT_TESTS
 

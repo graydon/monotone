@@ -10,8 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
-#include <vector>
 
 // this file knows how to migrate schema databases. the general strategy is
 // to hash each schema we ever use, and make a list of the SQL commands
@@ -22,9 +20,29 @@
 
 struct sqlite3;
 class app_state;
+class system_path;
 
-void calculate_schema_id(sqlite3 *sql, std::string & id);
-void migrate_monotone_schema(sqlite3 *sql, app_state *app);
+void migrate_sql_schema(sqlite3 * db, app_state & app);
+void check_sql_schema(sqlite3 * db, system_path const & filename);
+std::string describe_sql_schema(sqlite3 * db);
+
+// utility routine shared with database.cc
+void assert_sqlite3_ok(sqlite3 * db);
+
+// debugging
+void test_migration_step(sqlite3 * db, app_state & app,
+                         std::string const & schema);
+
+// this constant is part of the database schema, but it is not in schema.sql
+// because sqlite expressions can't do arithmetic on character values.  it
+// is stored in the "user version" field of the database header.  when we
+// encounter a database whose schema hash we don't recognize, we look for
+// this code in the header to decide whether it's a monotone database or
+// some other sqlite3 database.  the expectation is that it will never need
+// to change.  we call it a creator code because it has the same format and
+// function as file creator codes in old-sk00l Mac OS.
+
+const unsigned int mtn_creator_code = ((('_'*256 + 'M')*256 + 'T')*256 + 'N');
 
 // Local Variables:
 // mode: C++

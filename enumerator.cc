@@ -7,15 +7,17 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "base.hh"
 #include <deque>
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "cset.hh"
 #include "enumerator.hh"
 #include "revision.hh"
 #include "vocab.hh"
+#include "app_state.hh"
 
 using std::make_pair;
 using std::map;
@@ -125,7 +127,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
       cset const & cs = edge_changes(i);
 
       // Queue up all the file-adds
-      for (map<split_path, file_id>::const_iterator fa = cs.files_added.begin();
+      for (map<file_path, file_id>::const_iterator fa = cs.files_added.begin();
            fa != cs.files_added.end(); ++fa)
         {
           file_adds.insert(fa->second);
@@ -133,7 +135,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
         }
 
       // Queue up all the file-deltas
-      for (map<split_path, pair<file_id, file_id> >::const_iterator fd
+      for (map<file_path, pair<file_id, file_id> >::const_iterator fd
              = cs.deltas_applied.begin();
            fd != cs.deltas_applied.end(); ++fd)
         {
@@ -202,7 +204,7 @@ revision_enumerator::get_revision_certs(revision_id const & rid,
     }
   if (!found_one)
     {
-      app.db.get_revision_certs(rid, hashes);
+      app.get_project().get_revision_cert_hashes(rid, hashes);
     }
 }
 

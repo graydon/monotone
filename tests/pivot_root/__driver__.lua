@@ -23,18 +23,18 @@ check(indir("workspace", mtn("add", "-R", ".")), 0, false, false)
 
 check(indir("workspace", mtn("commit", "-m", "foo")), 0, false, false)
 
-check(indir("workspace", mtn("pivot_root", "nosuchdir", "foo")), 1, false, false)
-check(indir("workspace", mtn("pivot_root", "dir1/file1", "foo")), 1, false, false)
-check(indir("workspace", mtn("pivot_root", "dir3", "old_root")), 1, false, false)
-check(indir("workspace", mtn("pivot_root", "dir1", "nosuchdir/old_root")), 1, false, false)
-check(indir("workspace", mtn("pivot_root", "dir1", "file1/old_root")), 1, false, false)
-check(indir("workspace", mtn("pivot_root", "dir1", "dir2")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "nosuchdir", "foo")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "dir1/file1", "foo")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "dir3", "old_root")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "dir1", "nosuchdir/old_root")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "dir1", "file1/old_root")), 1, false, false)
+check(indir("workspace", mtn("pivot_root", "--bookkeep-only", "dir1", "dir2")), 1, false, false)
 
 check(indir("workspace", mtn("ls", "changed")), 0)
 check(indir("workspace", mtn("ls", "missing")), 0)
 check(indir("workspace", mtn("ls", "unknown")), 0)
 
-check(indir("workspace", mtn("pivot_root", "--execute", "dir1", "old_root")), 0, false, false)
+check(indir("workspace", mtn("pivot_root", "dir1", "old_root")), 0, false, false)
 
 check(isdir("workspace/_MTN"))
 check(isdir("workspace/dir2"))

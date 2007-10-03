@@ -10,13 +10,13 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <string>
 #include <set>
 #include <map>
 
 #include "vocab.hh"
 #include "paths.hh"
 #include "roster.hh"
+#include "database.hh"
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -63,76 +63,73 @@
 
 class path_restriction;
 class node_restriction;
-class content_merge_adaptor;
-class database;
+struct content_merge_adaptor;
 class lua_hooks;
 
 struct workspace
 {
   void find_missing(roster_t const & new_roster_shape,
                     node_restriction const & mask,
-                    path_set & missing);
+                    std::set<file_path> & missing);
 
   void find_unknown_and_ignored(path_restriction const & mask,
                                 std::vector<file_path> const & roots,
-                                path_set & unknown, path_set & ignored);
+                                std::set<file_path> & unknown,
+                                std::set<file_path> & ignored);
 
-  void perform_additions(path_set const & targets,
+  void perform_additions(std::set<file_path> const & targets,
                          bool recursive = false,
                          bool respect_ignore = true);
 
-  void perform_deletions(path_set const & targets, bool recursive, 
-                         bool execute);
+  void perform_deletions(std::set<file_path> const & targets, bool recursive, 
+                         bool bookkeep_only);
 
   void perform_rename(std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
-                      bool execute);
+                      bool bookkeep_only);
 
   void perform_pivot_root(file_path const & new_root,
                           file_path const & put_old,
-                          bool execute);
+                          bool bookkeep_only);
 
   void perform_content_update(cset const & cs,
-                              content_merge_adaptor const & ca);
+                              content_merge_adaptor const & ca,
+                              bool messages = true);
 
   void update_any_attrs();
 
-  // transitional: the write half of this is exposed, the read half isn't.
+  bool has_changes();
+
   // write out a new (partial) revision describing the current workspace;
   // the important pieces of this are the base revision id and the "shape"
   // changeset (representing tree rearrangements).
   void put_work_rev(revision_t const & rev);
 
-  // the current cset representing uncommitted add/drop/rename operations
-  // (not deltas)
-  void get_work_cset(cset & w);
+  // read the (partial) revision describing the current workspace.
+  void get_work_rev(revision_t & rev);
 
-  // the base revision id that the current working copy was checked out from
-  void get_revision_id(revision_id & c);
-
-  // structures derived from the above
-  void get_base_revision(revision_id & rid, roster_t & ros);
-  void get_base_revision(revision_id & rid, roster_t & ros, marking_map & mm);
-  void get_base_roster(roster_t & ros);
+  // convenience wrappers around the above functions.
 
   // This returns the current roster, except it does not bother updating the
-  // hashes in that roster -- the "shape" is correct, all files and dirs exist
-  // and under the correct names -- but do not trust file content hashes.
-  // If you need the current roster with correct file content hashes, call
-  // update_current_roster_from_filesystem on the result of this function.
+  // hashes in that roster -- the "shape" is correct, all files and dirs
+  // exist and under the correct names -- but do not trust file content
+  // hashes.  If you need the current roster with correct file content
+  // hashes, call update_current_roster_from_filesystem on the result of
+  // this function.  Under almost all conditions, NIS should be a
+  // temp_node_id_source.
   void get_current_roster_shape(roster_t & ros, node_id_source & nis);
 
-  // This returns both the base roster (as get_base_roster would) and the
-  // current roster shape (as get_current_roster_shape would).  The caveats
-  // for get_current_roster_shape also apply to this function.
-  void get_base_and_current_roster_shape(roster_t & base_roster,
-                                         roster_t & current_roster,
-                                         node_id_source & nis);
+  // This returns a map whose keys are revision_ids and whose values are
+  // rosters, there being one such pair for each parent of the current
+  // revision.
+  void get_parent_rosters(parent_map & parents);
 
+  // Inspect the workspace and classify all the paths in it according to
+  // what ROS thinks of them.
   void classify_roster_paths(roster_t const & ros,
-                             path_set & unchanged,
-                             path_set & changed,
-                             path_set & missing);
+                             std::set<file_path> & unchanged,
+                             std::set<file_path> & changed,
+                             std::set<file_path> & missing);
 
   // This updates the file-content hashes in ROSTER, which is assumed to be
   // the "current" roster returned by one of the above get_*_roster_shape
@@ -157,18 +154,23 @@ struct workspace
 
   // the "options map" is another administrative file, stored in
   // _MTN/options. it keeps a list of name/value pairs which are considered
-  // "persistent options", associated with a particular the workspace and
+  // "persistent options", associated with a particular workspace and
   // implied unless overridden on the command line. the set of valid keys
   // corresponds exactly to the argument list of these functions.
 
-  void get_ws_options(utf8 & database_option,
-                      utf8 & branch_option,
-                      utf8 & key_option,
-                      utf8 & keydir_option);
-  void set_ws_options(utf8 & database_option,
-                      utf8 & branch_option,
-                      utf8 & key_option,
-                      utf8 & keydir_option);
+  static bool get_ws_options_from_path(system_path const & workspace,
+                                       system_path & database_option,
+                                       branch_name & branch_option,
+                                       rsa_keypair_id & key_option,
+                                       system_path & keydir_option);
+  void get_ws_options(system_path & database_option,
+                      branch_name & branch_option,
+                      rsa_keypair_id & key_option,
+                      system_path & keydir_option);
+  void set_ws_options(system_path & database_option,
+                      branch_name & branch_option,
+                      rsa_keypair_id & key_option,
+                      system_path & keydir_option);
 
   // the "workspace format version" is a nonnegative integer value, stored
   // in _MTN/format as an unadorned decimal number.  at any given time
@@ -192,6 +194,10 @@ struct workspace
   void get_local_dump_path(bookkeeping_path & d_path);
 
   // the 'inodeprints file' contains inode fingerprints
+
+  bool in_inodeprints_mode();
+  void read_inodeprints(data & dat);
+  void write_inodeprints(data const & dat);
 
   void enable_inodeprints();
   void maybe_update_inodeprints();

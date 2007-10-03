@@ -38,9 +38,9 @@
 
 */
 
+#include "base.hh"
 #include <algorithm>
-#include <iostream>
-#include <vector>
+#include "vector.hh"
 
 #include "lcs.hh"
 #include "sanity.hh"

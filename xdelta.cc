@@ -24,10 +24,10 @@
 // if you want to *read* a patch, you will like unidiff format much better.
 // take a look in diff_patch.(cc|hh) for a nice interface to that.
 
+#include "base.hh"
 #include <algorithm>
-#include <vector>
+#include "vector.hh"
 #include <set>
-#include <string>
 #include <sstream>
 
 #include <boost/shared_ptr.hpp>
@@ -824,17 +824,17 @@ spin(string a, string b)
   string ab, ba;
   compute_delta(a, b, ab);
   compute_delta(b, a, ba);
-  BOOST_CHECK(a == apply_via_normal(b, ba));
-  BOOST_CHECK(a == apply_via_piecewise(b, ba));
-  BOOST_CHECK(b == apply_via_normal(a, ab));
-  BOOST_CHECK(b == apply_via_piecewise(a, ab));
+  UNIT_TEST_CHECK(a == apply_via_normal(b, ba));
+  UNIT_TEST_CHECK(a == apply_via_piecewise(b, ba));
+  UNIT_TEST_CHECK(b == apply_via_normal(a, ab));
+  UNIT_TEST_CHECK(b == apply_via_piecewise(a, ab));
   string ab_inverted, ba_inverted;
   invert_xdelta(a, ab, ab_inverted);
   invert_xdelta(b, ba, ba_inverted);
-  BOOST_CHECK(a == apply_via_normal(b, ab_inverted));
-  BOOST_CHECK(a == apply_via_piecewise(b, ab_inverted));
-  BOOST_CHECK(b == apply_via_normal(a, ba_inverted));
-  BOOST_CHECK(b == apply_via_piecewise(a, ba_inverted));
+  UNIT_TEST_CHECK(a == apply_via_normal(b, ab_inverted));
+  UNIT_TEST_CHECK(a == apply_via_piecewise(b, ab_inverted));
+  UNIT_TEST_CHECK(b == apply_via_normal(a, ba_inverted));
+  UNIT_TEST_CHECK(b == apply_via_piecewise(a, ba_inverted));
 }
 
 UNIT_TEST(xdelta, simple_cases)
@@ -957,7 +957,7 @@ UNIT_TEST(xdelta, random_piecewise_delta)
       for (int j = 0; j < 5; ++j)
         {
           appl->finish(got);
-          BOOST_CHECK(got == prev);
+          UNIT_TEST_CHECK(got == prev);
           next = prev;
           xdelta_randomly_change(next);
           xdelta_randomly_insert(next);
@@ -969,7 +969,7 @@ UNIT_TEST(xdelta, random_piecewise_delta)
           prev = next;
         }
       appl->finish(got);
-      BOOST_CHECK(got == prev);
+      UNIT_TEST_CHECK(got == prev);
   }
 }
 
@@ -1003,7 +1003,7 @@ UNIT_TEST(xdelta, rolling_sanity_check)
         }
       skip.replace_with(reinterpret_cast<u8 const *>(testbuf + new_lo), new_hi - new_lo);
 
-      BOOST_CHECK(skip.sum() == incremental.sum());
+      UNIT_TEST_CHECK(skip.sum() == incremental.sum());
     }
   L(FL("rolling sanity check passed"));
 }                   

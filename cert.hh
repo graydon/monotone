@@ -12,12 +12,10 @@
 
 #include <map>
 #include <set>
-#include <vector>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <time.h>
+#include "vector.hh"
 
 #include "vocab.hh"
+#include "dates.hh"
 
 // Certs associate an opaque name/value pair with a revision ID, and
 // are accompanied by an RSA public-key signature attesting to the
@@ -26,11 +24,14 @@
 // permission.
 
 class app_state;
-struct packet_consumer;
 
 struct cert
 {
   cert();
+
+  // This is to make revision<cert> and manifest<cert> work.
+  explicit cert(std::string const & s);
+
   cert(hexenc<id> const & ident,
       cert_name const & name,
       base64<cert_value> const & value,
@@ -66,12 +67,19 @@ bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
 void load_key_pair(app_state & app,
                    rsa_keypair_id const & id,
                    keypair & kp);
-void calculate_cert(app_state & app, cert & t);
+
+// Only used in cert.cc, and in revision.cc in what looks
+// like migration code.
 void make_simple_cert(hexenc<id> const & id,
                       cert_name const & nm,
                       cert_value const & cv,
                       app_state & app,
                       cert & c);
+
+void put_simple_revision_cert(revision_id const & id,
+                              cert_name const & nm,
+                              cert_value const & val,
+                              app_state & app);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        app_state & app);
@@ -81,18 +89,13 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 
 // Special certs -- system won't work without them.
 
-extern std::string const branch_cert_name;
+#define branch_cert_name cert_name("branch")
 
 void
 cert_revision_in_branch(revision_id const & ctx,
-                        cert_value const & branchname,
-                        app_state & app,
-                        packet_consumer & pc);
+                        branch_name const & branchname,
+                        app_state & app);
 
-void
-get_branch_heads(cert_value const & branchname,
-                 app_state & app,
-                 std::set<revision_id> & heads);
 
 // We also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
@@ -103,68 +106,56 @@ void
 get_user_key(rsa_keypair_id & key, app_state & app);
 
 void
-guess_branch(revision_id const & id,
-             app_state & app,
-             cert_value & branchname);
+guess_branch(revision_id const & id, app_state & app, branch_name & branchname);
+void
+guess_branch(revision_id const & id, app_state & app);
 
-extern std::string const date_cert_name;
-extern std::string const author_cert_name;
-extern std::string const tag_cert_name;
-extern std::string const changelog_cert_name;
-extern std::string const comment_cert_name;
-extern std::string const testresult_cert_name;
+#define date_cert_name cert_name("date")
+#define author_cert_name cert_name("author")
+#define tag_cert_name cert_name("tag")
+#define changelog_cert_name cert_name("changelog")
+#define comment_cert_name cert_name("comment")
+#define testresult_cert_name cert_name("testresult")
+#define suspend_cert_name cert_name("suspend")
 
 void
-cert_revision_date_now(revision_id const & m,
-                      app_state & app,
-                      packet_consumer & pc);
-
-void
-cert_revision_date_time(revision_id const & m,
-                        boost::posix_time::ptime t,
-                        app_state & app,
-                        packet_consumer & pc);
+cert_revision_suspended_in_branch(revision_id const & ctx,
+                        branch_name const & branchname,
+                        app_state & app);
 
 void
 cert_revision_date_time(revision_id const & m,
-                        time_t time,
-                        app_state & app,
-                        packet_consumer & pc);
+                        date_t const & t,
+                        app_state & app);
 
 void
 cert_revision_author(revision_id const & m,
                     std::string const & author,
-                    app_state & app,
-                    packet_consumer & pc);
+                    app_state & app);
 
 void
 cert_revision_author_default(revision_id const & m,
-                            app_state & app,
-                            packet_consumer & pc);
+                            app_state & app);
 
 void
 cert_revision_tag(revision_id const & m,
                  std::string const & tagname,
-                 app_state & app,
-                 packet_consumer & pc);
+                 app_state & app);
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & changelog,
-                        app_state & app,
-                        packet_consumer & pc);
+                        app_state & app);
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      app_state & app,
-                      packet_consumer & pc);
+                      app_state & app);
 
 void
 cert_revision_testresult(revision_id const & m,
                          std::string const & results,
-                         app_state & app,
-                         packet_consumer & pc);
+                         app_state & app);
 
 
 // Local Variables:

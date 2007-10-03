@@ -12,15 +12,14 @@
 
 #include "vocab.hh"
 
-#include <string>
 
 // epochs are pairs (branch name, random data)
 
 void read_epoch(std::string const & in,
-                cert_value & branch, epoch_data & epoch);
-void write_epoch(cert_value const & branch, epoch_data const & epoch,
+                branch_name & branch, epoch_data & epoch);
+void write_epoch(branch_name const & branch, epoch_data const & epoch,
                  std::string & out);
-void epoch_hash_code(cert_value const & branch, epoch_data const & epoch,
+void epoch_hash_code(branch_name const & branch, epoch_data const & epoch,
                      epoch_id & eid);
 
 // Local Variables:
