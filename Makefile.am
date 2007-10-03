@@ -329,7 +329,7 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
 	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
 	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
-	mtn-work_migration.$(OBJEXT)
+	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)
 
 # primaries
 
@@ -426,15 +426,15 @@ tester_LDADD += libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 if INCLUDED_PCRE
   lib3rdparty_a_CPPFLAGS += -I$(top_srcdir)/pcre
   mtn_CPPFLAGS += -I$(top_srcdir)/pcre
-  unit_tests_CPPFLAGS += -I$(top_srcdir)/pcre
+  unit_tester_CPPFLAGS += -I$(top_srcdir)/pcre
   tester_CPPFLAGS += -I$(top_srcdir)/pcre
 else
   mtn_CPPFLAGS += $(PCRE_CFLAGS)
-  unit_tests_CPPFLAGS += $(PCRE_CFLAGS)
+  unit_tester_CPPFLAGS += $(PCRE_CFLAGS)
   tester_CPPFLAGS += $(PCRE_CFLAGS)
 
   mtn_LDADD += $(PCRE_LIBS)
-  unit_tests_LDADD += $(PCRE_LIBS)
+  unit_tester_LDADD += $(PCRE_LIBS)
   tester_LDADD += $(PCRE_LIBS)
 endif
 
@@ -781,7 +781,7 @@ package_full_revision.txt: package_full_revision_raw.txt package_full_revision_d
 # then if that fails fall back on the distributed versions.  This
 # means that 'distclean' should _not_ remove those files, since they
 # are distributed, yet building the package will generate those files,
-# those automake thinks that 'distclean' _should_ remove those files,
+# thus automake thinks that 'distclean' _should_ remove those files,
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
 distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
@@ -789,7 +789,7 @@ distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -
 # the distcheck-hook checks for errors in the use of base.hh
 distcheck-hook:
 	cd $(srcdir) && $(SHELL) audit-includes \
-		$(sort $(mtn_SOURCES) $(unit_tests_SOURCES) $(tester_SOURCES) \
+		$(sort $(mtn_SOURCES) $(unit_tester_SOURCES) $(tester_SOURCES) \
                        $(UNIX_PLATFORM_SOURCES) $(WIN32_PLATFORM_SOURCES) \
                        win32/main.cc unix/main.cc)
 

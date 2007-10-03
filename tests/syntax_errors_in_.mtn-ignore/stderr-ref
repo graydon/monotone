@@ -1,4 +1,4 @@
-mtn: warning: while matching file 'tester.log':
+mtn: warning: while matching file 'ts-stdin':
 .mtn-ignore:1: warning: error near char 2 of regex "\": \ at end of pattern
 	- skipping this regex for all remaining files.
 .mtn-ignore:2: warning: error near char 1 of regex "\c": \c at end of pattern

@@ -108,7 +108,6 @@ function ignore_file(name)
       ignored_files = {}
       local ignfile = io.open(".mtn-ignore", "r")
       if (ignfile ~= nil) then
-<<<<<<< variant A
          local line = ignfile:read()
          while (line ~= nil) do
             if line ~= "" then
@@ -117,16 +116,6 @@ function ignore_file(name)
             line = ignfile:read()
          end
          io.close(ignfile)
->>>>>>> variant B
-      	 for l in ignfile:lines() do table.insert(ignored_files, l) end
-####### Ancestor
-         local line = ignfile:read()
-         while (line ~= nil) do
-            table.insert(ignored_files, line)
-            line = ignfile:read()
-         end
-         io.close(ignfile)
-======= end
       end
    end
 

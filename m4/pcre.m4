@@ -1,17 +1,31 @@
 # Detect libpcre or fall back to our bundled version.
 AC_DEFUN([MTN_LIB_PCRE],
-[AC_ARG_WITH([included-pcre],
-    AC_HELP_STRING([--with-included-pcre],
-     [force use of the included copy of libpcre. (To use a specific
-      installed version, use the environment variables PCRE_CFLAGS and/or
-      PCRE_LIBS.)]),
+[AC_ARG_WITH([system-pcre],
+    AC_HELP_STRING([--with-system-pcre],
+     [use a system-provided copy of libpcre instead of the default bundled
+      copy. (To use a specific installed version, use the environment
+      variables PCRE_CFLAGS and/or PCRE_LIBS.)]),
    [case "$withval" in 
-      (""|yes) with_included_pcre=yes ;;
-      (no)     with_included_pcre=no  ;;
-      (*)      AC_MSG_ERROR([--with(out)-included-pcre takes no argument]) ;;
+      (""|yes) with_system_pcre=yes ;;
+      (no)     with_system_pcre=no  ;;
+      (*)      AC_MSG_ERROR([--with(out)-system-pcre takes no argument]) ;;
     esac],
-   [with_included_pcre=no])
- if test "$with_included_pcre" = no; then
+   [with_system_pcre=no])
+ if test "$with_system_pcre" = yes; then
+   MTN_FIND_PCRE
+ fi
+ if test $with_system_pcre = no; then
+   AC_MSG_NOTICE([using the bundled copy of PCRE])
+ fi
+ AM_CONDITIONAL([INCLUDED_PCRE], [test $with_system_pcre = no])
+ AC_SUBST([PCRE_CFLAGS])
+ AC_SUBST([PCRE_LIBS])
+])
+
+# This is a separate macro primarily to trick autoconf into not looking
+# for pkg-config if we are using the bundled pcre.
+AC_DEFUN([MTN_FIND_PCRE],
+[  PKG_PROG_PKG_CONFIG
    # We manually test the variables here because we want them to work
    # even if pkg-config isn't installed.  The use of + instead of :+ is
    # deliberate; the user should be able to tell us that the empty string
@@ -52,7 +66,7 @@ AC_DEFUN([MTN_LIB_PCRE],
    if test x"$PCRE_LIBS" != x"-lpcre"; then
      AC_MSG_NOTICE([using PCRE link flags: "$PCRE_LIBS"])
    fi
-   AC_CACHE_CHECK([whether the system libpcre works], ac_cv_lib_pcre_works,
+   AC_CACHE_CHECK([whether the system libpcre is usable], ac_cv_lib_pcre_works,
     [save_LIBS="$LIBS"
      save_CFLAGS="$CFLAGS"
      LIBS="$LIBS $PCRE_LIBS"
@@ -66,16 +80,5 @@ AC_DEFUN([MTN_LIB_PCRE],
      LIBS="$save_LIBS"
      CFLAGS="$save_CFLAGS"])
    if test $ac_cv_lib_pcre_works = no; then
-      with_included_pcre=yes
-   fi
- fi
- if test $with_included_pcre = yes; then
-   AC_MSG_NOTICE([using the PCRE library included with the distribution])
- fi
- AM_CONDITIONAL([INCLUDED_PCRE], [test $with_included_pcre = yes])
- AC_SUBST([PCRE_CFLAGS])
- AC_SUBST([PCRE_LIBS])
-])
-   
-   
-
+      with_system_pcre=no
+   fi])

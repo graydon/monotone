@@ -1,7 +1,6 @@
 .mtn-ignore
 dontignoreme
 keys
-keys/tester@test.net
 min_hooks.lua
 test_hooks.lua
 tester.log

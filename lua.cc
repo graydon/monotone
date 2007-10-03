@@ -500,10 +500,7 @@ LUAEXT(search, regex)
   bool result = false;
   try {
     result = pcre::regex(re).match(str);
-  } catch (pcre::compile_error & e) {
-    lua_pushstring(L, e.what());
-    return lua_error(L);
-  } catch (pcre::match_error & e) {
+  } catch (informative_failure & e) {
     lua_pushstring(L, e.what());
     return lua_error(L);
   }
