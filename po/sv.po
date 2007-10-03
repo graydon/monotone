@@ -248,8 +248,8 @@ msgstr ""
 msgid "Lists the leaves of the revision graph"
 msgstr "Visar revisionsgrafens löv"
 
-#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1055
-#: automate.cc:1082 automate.cc:1391 cmd_automate.cc:82 cmd_automate.cc:338
+#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1064
+#: automate.cc:1091 automate.cc:1400 cmd_automate.cc:82 cmd_automate.cc:338
 #: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
 #: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
 #: cmd_list.cc:549
@@ -291,18 +291,18 @@ msgstr "[SÖKVÄG]..."
 msgid "Prints a summary of files found in the workspace"
 msgstr "Skriver ut en sammanfattning om filerna funna i en arbetskopia"
 
-#: automate.cc:870 automate.cc:1062 cmd_files.cc:302 cmd_files.cc:363
+#: automate.cc:870 automate.cc:1071 cmd_files.cc:302 cmd_files.cc:363
 #: cmd_merging.cc:152 cmd_merging.cc:643 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:803
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr "detta kommando kan enbart användas i en arbetskopia med en förälder"
 
-#: automate.cc:1003 automate.cc:1145 cmd_merging.cc:975
+#: automate.cc:1012 automate.cc:1154 cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:1004
+#: automate.cc:1013
 msgid "Shows change information for a revision"
 msgstr "Visar information om ändringen i en revision"
 
@@ -312,23 +312,23 @@ msgstr "Visar information om ändringen i en revision"
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i databasen"
 
-#: automate.cc:1050
+#: automate.cc:1059
 msgid "Shows the revision on which the workspace is based"
 msgstr "Visar revisionen denna arbetskopia grundar sig på"
 
-#: automate.cc:1077
+#: automate.cc:1086
 msgid "Shows the revision of the current workspace"
 msgstr "Visar nuvarande arbetskopias revision"
 
-#: automate.cc:1146
+#: automate.cc:1155
 msgid "Shows the manifest associated with a revision"
 msgstr "Visar manifestet kopplad till en revision"
 
-#: automate.cc:1191 automate.cc:1220
+#: automate.cc:1200 automate.cc:1229
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1192
+#: automate.cc:1201
 msgid "Prints the revision data in packet format"
 msgstr "Skriv ut datapaket för revision till stdout"
 
@@ -341,44 +341,44 @@ msgstr "Skriv ut datapaket för revision till stdout"
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1221
+#: automate.cc:1230
 msgid "Prints the certs associated with a revision in packet format"
 msgstr "Skriver ut certificate tillhörande en revision i paketformat"
 
-#: automate.cc:1251 cmd_files.cc:321
+#: automate.cc:1260 cmd_files.cc:321
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1252
+#: automate.cc:1261
 msgid "Prints the file data in packet format"
 msgstr "Skriv ut datapaket för fil till stdout"
 
-#: automate.cc:1265
+#: automate.cc:1274
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1281
+#: automate.cc:1290
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NY_FIL"
 
-#: automate.cc:1282
+#: automate.cc:1291
 msgid "Prints the file delta in packet format"
 msgstr "Skriv ut datapaket för fildelta till stdout"
 
-#: automate.cc:1319
+#: automate.cc:1328
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr "Skriver ut revisionernas gemensamma föräldrar"
 
-#: automate.cc:1386
+#: automate.cc:1395
 msgid "Prints all branch certs in the revision graph"
 msgstr "Skriver ut revisionsgrafens samtliga grencertifikat"
 
-#: automate.cc:1437
+#: automate.cc:1446
 msgid "[BRANCH_PATTERN]"
 msgstr "[GRENMÖNSTER]"
 
-#: automate.cc:1438
+#: automate.cc:1447
 msgid "Prints all tags attached to a set of branches"
 msgstr "Skriva ut de givna grenarnas samtliga taggar"
 
