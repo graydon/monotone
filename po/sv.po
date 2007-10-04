@@ -144,13 +144,12 @@
 # work set                        arbetsmängd
 # workspace                       arbetskopia (el. kanske arbetskatalog, ibland)
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-10-01 05:50+0200\n"
-"PO-Revision-Date: 2007-10-03 07:31+0200\n"
+"PO-Revision-Date: 2007-10-04 07:17+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
