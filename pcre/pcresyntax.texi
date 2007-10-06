@@ -1,0 +1,583 @@
+@c This file was hand-translated to Texinfo from the upstream PCRE
+@c documentation file pcresyntax.3, whose copyright notice is:
+@c
+@c Author: Philip Hazel, University Computing Service
+@c Cambridge CB2 3QH, England
+@c Last updated: 21 September 2007
+@c Copyright (c) 1997-2007 University of Cambridge.
+@c
+@c Redistribution and use in source and binary forms, with or without
+@c modification, are permitted provided that the following conditions are met:
+@c
+@c     * Redistributions of source code must retain the above copyright notice,
+@c       this list of conditions and the following disclaimer.
+@c
+@c     * Redistributions in binary form must reproduce the above copyright
+@c       notice, this list of conditions and the following disclaimer in the
+@c       documentation and/or other materials provided with the distribution.
+@c
+@c     * Neither the name of the University of Cambridge nor the names of its
+@c       contributors may be used to endorse or promote products derived from
+@c       this software without specific prior written permission.
+@c
+@c THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+@c AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+@c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+@c ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+@c LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+@c CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+@c SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+@c INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+@c CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+@c ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+@c POSSIBILITY OF SUCH DAMAGE.
+@c
+@c Apart from markup translation, all mention of callouts has been
+@c removed, and a few confusing references to PCRE itself or to
+@c specific programming environments have been removed or clarified.
+
+@node Regexp Summary
+@subsection Regexp Syntax Summary
+
+This is a quick-reference summary of the regular expression syntax
+used in Monotone.
+
+@subsubheading Quoting
+
+@table @code
+@item \@var{x}
+  where @var{x} is non-alphanumeric is a literal @var{x}
+@item \Q...\E
+  treat enclosed characters as literal
+@end table
+
+@subsubheading Characters
+
+@table @code
+@item \a
+  alarm, that is, the BEL character (hex 07)
+@item \c@var{x}
+  ``control-@var{x}'', where @var{x} is any character
+@item \e
+  escape (hex 1B)
+@item \f
+  formfeed (hex 0C)
+@item \n
+  newline (hex 0A)
+@item \r
+  carriage return (hex 0D)
+@item \t
+  tab (hex 09)
+@item \@var{ddd}
+  character with octal code @var{ddd}, or backreference
+@item \x@var{hh}
+  character with hex code @var{hh}
+@item \x@{@var{hhh...}@}
+  character with hex code @var{hhh...}
+@end table
+
+@subsubheading Character Types
+
+@table @code
+@item .
+  any character except newline;
+               in dotall mode, any character whatsoever
+@item \C
+  one byte, even in UTF-8 mode (best avoided)
+@item \d
+  a decimal digit
+@item \D
+  a character that is not a decimal digit
+@item \h
+  a horizontal whitespace character
+@item \H
+  a character that is not a horizontal whitespace character
+@item \p@{@var{xx}@}
+  a character with the @var{xx} property
+@item \P@{@var{xx}@}
+  a character without the @var{xx} property
+@item \R
+  a newline sequence
+@item \s
+  a whitespace character
+@item \S
+  a character that is not a whitespace character
+@item \v
+  a vertical whitespace character
+@item \V
+  a character that is not a vertical whitespace character
+@item \w
+  a ``word'' character
+@item \W
+  a ``non-word'' character
+@item \X
+  an extended Unicode sequence
+@end table
+
+@noindent
+@samp{\d}, @samp{\D}, @samp{\s}, @samp{\S}, @samp{\w}, and @samp{\W}
+recognize only ASCII characters.
+
+@subsubheading General category property codes for @samp{\p} and @samp{\P}
+
+@table @code
+@item C
+  Other
+@item Cc
+  Control
+@item Cf
+  Format
+@item Cn
+  Unassigned
+@item Co
+  Private use
+@item Cs
+  Surrogate
+
+@item L
+  Letter
+@item Ll
+  Lower case letter
+@item Lm
+  Modifier letter
+@item Lo
+  Other letter
+@item Lt
+  Title case letter
+@item Lu
+  Upper case letter
+@item L&
+  Ll, Lu, or Lt
+
+@item M
+  Mark
+@item Mc
+  Spacing mark
+@item Me
+  Enclosing mark
+@item Mn
+  Non-spacing mark
+
+@item N
+  Number
+@item Nd
+  Decimal number
+@item Nl
+  Letter number
+@item No
+  Other number
+
+@item P
+  Punctuation
+@item Pc
+  Connector punctuation
+@item Pd
+  Dash punctuation
+@item Pe
+  Close punctuation
+@item Pf
+  Final punctuation
+@item Pi
+  Initial punctuation
+@item Po
+  Other punctuation
+@item Ps
+  Open punctuation
+
+@item S
+  Symbol
+@item Sc
+  Currency symbol
+@item Sk
+  Modifier symbol
+@item Sm
+  Mathematical symbol
+@item So
+  Other symbol
+
+@item Z
+  Separator
+@item Zl
+  Line separator
+@item Zp
+  Paragraph separator
+@item Zs
+  Space separator
+@end table
+
+@subsubheading Script names for @samp{\p} and @samp{\P}
+
+Arabic,
+Armenian,
+Balinese,
+Bengali,
+Bopomofo,
+Braille,
+Buginese,
+Buhid,
+Canadian_Aboriginal,
+Cherokee,
+Common,
+Coptic,
+Cuneiform,
+Cypriot,
+Cyrillic,
+Deseret,
+Devanagari,
+Ethiopic,
+Georgian,
+Glagolitic,
+Gothic,
+Greek,
+Gujarati,
+Gurmukhi,
+Han,
+Hangul,
+Hanunoo,
+Hebrew,
+Hiragana,
+Inherited,
+Kannada,
+Katakana,
+Kharoshthi,
+Khmer,
+Lao,
+Latin,
+Limbu,
+Linear_B,
+Malayalam,
+Mongolian,
+Myanmar,
+New_Tai_Lue,
+Nko,
+Ogham,
+Old_Italic,
+Old_Persian,
+Oriya,
+Osmanya,
+Phags_Pa,
+Phoenician,
+Runic,
+Shavian,
+Sinhala,
+Syloti_Nagri,
+Syriac,
+Tagalog,
+Tagbanwa,
+Tai_Le,
+Tamil,
+Telugu,
+Thaana,
+Thai,
+Tibetan,
+Tifinagh,
+Ugaritic,
+Yi.
+
+@subsubheading Character Classes
+
+@table @code
+@item [...]
+  positive character class
+@item [^...]
+  negative character class
+@item [@var{x}-@var{y}]
+  range (can be used for hex characters)
+@item [[:@var{xxx}:]]
+  positive POSIX named set
+@item [[^:@var{xxx}:]]
+  negative POSIX named set
+
+@item alnum
+  alphanumeric
+@item alpha
+  alphabetic
+@item ascii
+  0-127
+@item blank
+  space or tab
+@item cntrl
+  control character
+@item digit
+  decimal digit
+@item graph
+  printing, excluding space
+@item lower
+  lower case letter
+@item print
+  printing, including space
+@item punct
+  printing, excluding alphanumeric
+@item space
+  whitespace
+@item upper
+  upper case letter
+@item word
+  same as @samp{\w}
+@item xdigit
+  hexadecimal digit
+@end table
+
+In PCRE, POSIX character set names recognize only ASCII
+characters. You can use @samp{\Q...\E} inside a character class.
+
+@subsubheading Quantifiers
+
+@table @code
+@item ?
+  0 or 1, greedy
+@item ?+
+  0 or 1, possessive
+@item ??
+  0 or 1, lazy
+@item *
+  0 or more, greedy
+@item *+
+  0 or more, possessive
+@item *?
+  0 or more, lazy
+@item +
+  1 or more, greedy
+@item ++
+  1 or more, possessive
+@item +?
+  1 or more, lazy
+@item @{@var{n}@}
+  exactly @var{n}
+@item @{@var{n},@var{m}@}
+  at least @var{n}, no more than @var{m}, greedy
+@item @{@var{n},@var{m}@}+
+  at least @var{n}, no more than @var{m}, possessive
+@item @{@var{n},@var{m}@}?
+  at least @var{n}, no more than @var{m}, lazy
+@item @{@var{n},@}
+  @var{n} or more, greedy
+@item @{@var{n},@}+
+  @var{n} or more, possessive
+@item @{@var{n},@}?
+  @var{n} or more, lazy
+@end table
+
+@subsubheading Anchors and Simple Assertions
+
+@table @code
+@item \b
+  word boundary
+@item \B
+  not a word boundary
+@item ^
+  start of subject
+               also after internal newline in multiline mode
+@item \A
+  start of subject
+@item $
+  end of subject
+               also before newline at end of subject
+               also before internal newline in multiline mode
+@item \Z
+  end of subject
+               also before newline at end of subject
+@item \z
+  end of subject
+@item \G
+  first matching position in subject
+@end table
+
+@subsubheading Match Point Reset
+
+@table @code
+@item \K
+  reset start of match
+@end table
+
+@subsubheading Alternation
+
+@table @code
+@item @var{expr}|@var{expr}|@var{expr}...
+@end table
+
+@subsubheading Capturing
+
+@table @code
+@item (...)
+  capturing group
+@item (?<@var{name}>...)
+  named capturing group (like Perl)
+@item (?'@var{name}'...)
+  named capturing group (like Perl)
+@item (?P<@var{name}>...)
+  named capturing group (like Python)
+@item (?:...)
+  non-capturing group
+@item (?|...)
+  non-capturing group; reset group numbers for
+  capturing groups in each alternative
+@end table
+
+@subsubheading Atomic Groups
+
+@table @code
+@item (?>...)
+  atomic, non-capturing group
+@end table
+
+@subsubheading Comment
+
+@table @code
+@item (?#....)
+  comment (not nestable)
+@end table
+
+@subsubheading Option Setting
+
+@table @code
+@item (?i)
+  caseless
+@item (?J)
+  allow duplicate names
+@item (?m)
+  multiline
+@item (?s)
+  single line (dotall)
+@item (?U)
+  default ungreedy (lazy)
+@item (?x)
+  extended (ignore white space)
+@item (?-...)
+  unset option(s)
+@end table
+
+@subsubheading Lookahead and Lookbehind Assertions
+
+@table @code
+@item (?=...)
+  positive look ahead
+@item (?!...)
+  negative look ahead
+@item (?<=...)
+  positive look behind
+@item (?<!...)
+  negative look behind
+@end table
+
+Each top-level branch of a look behind must be of a fixed length.
+
+@subsubheading Backreferences
+
+@table @code
+@item \@var{n}
+  reference by number (can be ambiguous)
+@item \g@var{n}
+  reference by number
+@item \g@{@var{n}@}
+  reference by number
+@item \g@{-@var{n}@}
+  relative reference by number
+@item \k<@var{name}>
+  reference by name (like Perl)
+@item \k'@var{name}'
+  reference by name (like Perl)
+@item \g@{@var{name}@}
+  reference by name (like Perl)
+@item \k@{@var{name}@}
+  reference by name (like .NET)
+@item (?P=@var{name})
+  reference by name (like Python)
+@end table
+
+@subsubheading Subroutine References (possibly recursive)
+
+@table @code
+@item (?R)
+  recurse whole pattern
+@item (?@var{n})
+  call subpattern by absolute number
+@item (?+@var{n})
+  call subpattern by relative number
+@item (?-@var{n})
+  call subpattern by relative number
+@item (?&@var{name})
+  call subpattern by name (like Perl)
+@item (?P>@var{name})
+  call subpattern by name (like Python)
+@end table
+
+@subsubheading Conditional Patterns
+
+@table @code
+@item (?(@var{condition})@var{yes-pattern})
+@item (?(@var{condition})@var{yes-pattern}|@var{no-pattern})
+
+@item (?(@var{n})...
+  absolute reference condition
+@item (?(+@var{n})...
+  relative reference condition
+@item (?(-@var{n})...
+  relative reference condition
+@item (?(<@var{name}>)...
+  named reference condition (like Perl)
+@item (?('@var{name}')...
+  named reference condition (like Perl)
+@item (?(@var{name})...
+  named reference condition (PCRE only)
+@item (?(R)...
+  overall recursion condition
+@item (?(R@var{n})...
+  specific group recursion condition
+@item (?(R&@var{name})...
+  specific recursion condition
+@item (?(DEFINE)...
+  define subpattern for reference
+@item (?(assert)...
+  assertion condition
+@end table
+
+@subsubheading Backtracking Control
+
+The following act immediately they are reached:
+
+@table @code
+@item (*ACCEPT)
+  force successful match
+@item (*FAIL)
+  force backtrack; synonym @samp{(*F)}
+@end table
+
+The following act only when a subsequent match failure causes a backtrack to
+reach them. They all force a match failure, but they differ in what happens
+afterwards. Those that advance the start-of-match point do so only if the
+pattern is not anchored.
+
+@table @code
+@item (*COMMIT)
+  overall failure, no advance of starting point
+@item (*PRUNE)
+  advance to next starting character
+@item (*SKIP)
+  advance start to current matching position
+@item (*THEN)
+  local failure, backtrack to next alternation
+@end table
+
+@subsubheading Newline Conventions
+
+These are recognized only at the very start of the pattern or after a
+@samp{(*BSR_...)} option.
+
+@table @code
+@item (*CR)
+@item (*LF)
+@item (*CRLF)
+@item (*ANYCRLF)
+@item (*ANY)
+@end table
+
+@subsubheading What @samp{\R} Matches
+
+These are recognized only at the very start of the pattern or after a
+@samp{(*...)} option that sets the newline convention.
+
+@table @code
+@item (*BSR_ANYCRLF)
+@item (*BSR_UNICODE)
+@end table

@@ -38,10 +38,8 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-/* This module contains the external function pcre_info(), which gives some
-information about a compiled pattern. However, use of this function is now
-deprecated, as it has been superseded by pcre_fullinfo(). */
-
+/* This file contains a private PCRE function that converts an ordinal
+character value into a UTF8 string. */
 
 #include "pcre_config.h"
 
@@ -49,43 +47,37 @@ deprecated, as it has been superseded by pcre_fullinfo(). */
 
 
 /*************************************************
-* (Obsolete) Return info about compiled pattern  *
+*       Convert character value to UTF-8         *
 *************************************************/
 
-/* This is the original "info" function. It picks potentially useful data out
-of the private structure, but its interface was too rigid. It remains for
-backwards compatibility. The public options are passed back in an int - though
-the re->options field has been expanded to a long int, all the public options
-at the low end of it, and so even on 16-bit systems this will still be OK.
-Therefore, I haven't changed the API for pcre_info().
+/* This function takes an integer value in the range 0 - 0x7fffffff
+and encodes it as a UTF-8 character in 0 to 6 bytes.
 
 Arguments:
-  argument_re   points to compiled code
-  optptr        where to pass back the options
-  first_byte    where to pass back the first character,
-                or -1 if multiline and all branches start ^,
-                or -2 otherwise
+  cvalue     the character value
+  buffer     pointer to buffer for result - at least 6 bytes long
 
-Returns:        number of capturing subpatterns
-                or negative values on error
+Returns:     number of characters placed in the buffer
 */
 
-PCRE_EXP_DEFN int
-pcre_info(const pcre *argument_re, int *optptr, int *first_byte)
+int
+_pcre_ord2utf8(int cvalue, uschar *buffer)
 {
-real_pcre internal_re;
-const real_pcre *re = (const real_pcre *)argument_re;
-if (re == NULL) return PCRE_ERROR_NULL;
-if (re->magic_number != MAGIC_NUMBER)
-  {
-  re = _pcre_try_flipped(re, &internal_re, NULL, NULL);
-  if (re == NULL) return PCRE_ERROR_BADMAGIC;
-  }
-if (optptr != NULL) *optptr = (int)(re->options & PUBLIC_OPTIONS);
-if (first_byte != NULL)
-  *first_byte = ((re->flags & PCRE_FIRSTSET) != 0)? re->first_byte :
-     ((re->flags & PCRE_STARTLINE) != 0)? -1 : -2;
-return re->top_bracket;
+#ifdef SUPPORT_UTF8
+register int i, j;
+for (i = 0; i < _pcre_utf8_table1_size; i++)
+  if (cvalue <= _pcre_utf8_table1[i]) break;
+buffer += i;
+for (j = i; j > 0; j--)
+ {
+ *buffer-- = 0x80 | (cvalue & 0x3f);
+ cvalue >>= 6;
+ }
+*buffer = _pcre_utf8_table2[i] | cvalue;
+return i + 1;
+#else
+return 0;   /* Keep compiler happy; this function won't ever be */
+#endif      /* called when SUPPORT_UTF8 is not defined. */
 }
 
-/* End of pcre_info.c */
+/* End of pcre_ord2utf8.c */
