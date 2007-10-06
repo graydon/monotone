@@ -1,6 +1,10 @@
 This directory contains various things that we're not quite sure what
-to do with, but that someone may find useful.  See individual files for
-licenses.
+to do with, but that someone may find useful.
+
+Unlike the rest of monotone, the code in this directory is _not_ tested,
+and may not even work with the current version of monotone.
+
+See individual files for licenses.
 
   -- monotone.bash_completion: command line completion code for bash.
   -- monotone.zsh_completion: command line completion code for zsh.
