@@ -63,8 +63,11 @@ See individual files for licenses.
      command sequences.  The lua code should be copied to a monotonerc file
      for use.
 
-  -- monotone-mail-notify-standalone.lua: a mail notification script which
-     runs without any other external dependencies than /usr/bin/mail and
-     offers an individual per-branch recipient configuration with a syntax
-     similar to the one found in ~/.monotone/read-permissions
+  -- monotone-mail-notify.lua: a mail notification script which offers an
+     individual per-branch recipient configuration with a syntax similar
+     to the one found in ~/.monotone/read-permissions.
+     It writes out details of each revision received to files which are then
+     picked up by the monotone-mail-notify.sh script which requires shell,
+     source-highlight and mime-construct to build nicely structured emails
+     with summaries of the revision and its diffs.
 
