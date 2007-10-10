@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-01 05:50+0200\n"
-"PO-Revision-Date: 2007-10-04 07:17+0200\n"
+"POT-Creation-Date: 2007-10-10 09:19+0200\n"
+"PO-Revision-Date: 2007-10-10 09:41+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -182,11 +182,11 @@ msgstr "Visar en ASCII-representation av revisionsträdet"
 
 #: asciik.cc:375 automate.cc:73 automate.cc:107 automate.cc:157
 #: automate.cc:271 automate.cc:371 automate.cc:399 automate.cc:483
-#: automate.cc:1018 automate.cc:1160 automate.cc:1206 automate.cc:1236
-#: automate.cc:1266 automate.cc:1296 automate.cc:1334 automate.cc:1452
-#: automate.cc:1544 automate.cc:1606 automate.cc:1659 automate.cc:1721
-#: automate.cc:1771 automate.cc:1824 automate.cc:1881 automate.cc:1914
-#: automate.cc:1940 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
+#: automate.cc:1009 automate.cc:1151 automate.cc:1197 automate.cc:1227
+#: automate.cc:1257 automate.cc:1287 automate.cc:1325 automate.cc:1443
+#: automate.cc:1535 automate.cc:1597 automate.cc:1650 automate.cc:1712
+#: automate.cc:1762 automate.cc:1815 automate.cc:1872 automate.cc:1905
+#: automate.cc:1931 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
 #: cmd_list.cc:644 cmd_ws_commit.cc:638 cmd_ws_commit.cc:685
 #: cmd_ws_commit.cc:735 cmd_ws_commit.cc:787 cmd_ws_commit.cc:905
 #: cmd_ws_commit.cc:949
@@ -202,7 +202,7 @@ msgstr "[GREN]"
 msgid "Prints the heads of the given branch"
 msgstr "Visar lövet i den givna grenen"
 
-#: automate.cc:101 automate.cc:151 automate.cc:1327
+#: automate.cc:101 automate.cc:151 automate.cc:1318
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
@@ -212,7 +212,7 @@ msgstr "Skriver ut den givna revisionens förfäder"
 
 #: automate.cc:114 automate.cc:164 automate.cc:211 automate.cc:238
 #: automate.cc:277 automate.cc:281 automate.cc:374 automate.cc:402
-#: automate.cc:1341 cmd_list.cc:651 revision.cc:1793
+#: automate.cc:1332 cmd_list.cc:651 revision.cc:1793
 #, c-format
 msgid "No such revision %s"
 msgstr "det finns ingen revision med identiteten %s"
@@ -247,8 +247,8 @@ msgstr ""
 msgid "Lists the leaves of the revision graph"
 msgstr "Visar revisionsgrafens löv"
 
-#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1064
-#: automate.cc:1091 automate.cc:1400 cmd_automate.cc:82 cmd_automate.cc:338
+#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1055
+#: automate.cc:1082 automate.cc:1391 cmd_automate.cc:82 cmd_automate.cc:338
 #: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
 #: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
 #: cmd_list.cc:549
@@ -290,49 +290,49 @@ msgstr "[SÖKVÄG]..."
 msgid "Prints a summary of files found in the workspace"
 msgstr "Skriver ut en sammanfattning om filerna funna i en arbetskopia"
 
-#: automate.cc:870 automate.cc:1071 cmd_files.cc:302 cmd_files.cc:363
+#: automate.cc:870 automate.cc:1062 cmd_files.cc:302 cmd_files.cc:363
 #: cmd_merging.cc:152 cmd_merging.cc:643 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:803
 #, c-format
 msgid "this command can only be used in a single-parent workspace"
 msgstr "detta kommando kan enbart användas i en arbetskopia med en förälder"
 
-#: automate.cc:1012 automate.cc:1154 cmd_merging.cc:975
+#: automate.cc:1003 automate.cc:1145 cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[REVID]"
 
-#: automate.cc:1013
+#: automate.cc:1004
 msgid "Shows change information for a revision"
 msgstr "Visar information om ändringen i en revision"
 
-#: automate.cc:1043 automate.cc:1178 automate.cc:1667 automate.cc:1728
-#: automate.cc:1733
+#: automate.cc:1034 automate.cc:1169 automate.cc:1658 automate.cc:1719
+#: automate.cc:1724
 #, c-format
 msgid "no revision %s found in database"
 msgstr "revisionen %s finns inte i databasen"
 
-#: automate.cc:1059
+#: automate.cc:1050
 msgid "Shows the revision on which the workspace is based"
 msgstr "Visar revisionen denna arbetskopia grundar sig på"
 
-#: automate.cc:1086
+#: automate.cc:1077
 msgid "Shows the revision of the current workspace"
 msgstr "Visar nuvarande arbetskopias revision"
 
-#: automate.cc:1155
+#: automate.cc:1146
 msgid "Shows the manifest associated with a revision"
 msgstr "Visar manifestet kopplad till en revision"
 
-#: automate.cc:1200 automate.cc:1229
+#: automate.cc:1191 automate.cc:1220
 msgid "REVID"
 msgstr "REVID"
 
-#: automate.cc:1201
+#: automate.cc:1192
 msgid "Prints the revision data in packet format"
 msgstr "Skriv ut datapaket för revision till stdout"
 
-#: automate.cc:1214 automate.cc:1244 automate.cc:1305 automate.cc:1307
-#: automate.cc:1888 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
+#: automate.cc:1205 automate.cc:1235 automate.cc:1296 automate.cc:1298
+#: automate.cc:1879 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:359
 #: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:899
@@ -340,161 +340,161 @@ msgstr "Skriv ut datapaket för revision till stdout"
 msgid "no such revision '%s'"
 msgstr "det finns ingen revision med identiteten '%s'"
 
-#: automate.cc:1230
+#: automate.cc:1221
 msgid "Prints the certs associated with a revision in packet format"
 msgstr "Skriver ut certificate tillhörande en revision i paketformat"
 
-#: automate.cc:1260 cmd_files.cc:321
+#: automate.cc:1251 cmd_files.cc:321
 msgid "FILEID"
 msgstr "FILID"
 
-#: automate.cc:1261
+#: automate.cc:1252
 msgid "Prints the file data in packet format"
 msgstr "Skriv ut datapaket för fil till stdout"
 
-#: automate.cc:1274
+#: automate.cc:1265
 #, c-format
 msgid "no such file '%s'"
 msgstr "filen '%s' finns inte"
 
-#: automate.cc:1290
+#: automate.cc:1281
 msgid "OLD_FILE NEW_FILE"
 msgstr "GAMMAL_FIL NY_FIL"
 
-#: automate.cc:1291
+#: automate.cc:1282
 msgid "Prints the file delta in packet format"
 msgstr "Skriv ut datapaket för fildelta till stdout"
 
-#: automate.cc:1328
+#: automate.cc:1319
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr "Skriver ut revisionernas gemensamma föräldrar"
 
-#: automate.cc:1395
+#: automate.cc:1386
 msgid "Prints all branch certs in the revision graph"
 msgstr "Skriver ut revisionsgrafens samtliga grencertifikat"
 
-#: automate.cc:1446
+#: automate.cc:1437
 msgid "[BRANCH_PATTERN]"
 msgstr "[GRENMÖNSTER]"
 
-#: automate.cc:1447
+#: automate.cc:1438
 msgid "Prints all tags attached to a set of branches"
 msgstr "Skriva ut de givna grenarnas samtliga taggar"
 
-#: automate.cc:1538
+#: automate.cc:1529
 msgid "KEYID PASSPHRASE"
 msgstr "NYCKELID LÖSEN"
 
-#: automate.cc:1539
+#: automate.cc:1530
 msgid "Generates a key"
 msgstr "Skapa ett nyckelpar"
 
-#: automate.cc:1559 cmd_key_cert.cc:51
+#: automate.cc:1550 cmd_key_cert.cc:51
 #, c-format
 msgid "key '%s' already exists"
 msgstr "nyckeln '%s' finns redan"
 
-#: automate.cc:1562 cmd_key_cert.cc:54
+#: automate.cc:1553 cmd_key_cert.cc:54
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "skapar nyckelparet '%s'"
 
-#: automate.cc:1564 cmd_key_cert.cc:56
+#: automate.cc:1555 cmd_key_cert.cc:56
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "lagrar nyckelparet '%s' i %s/"
 
-#: automate.cc:1600
+#: automate.cc:1591
 msgid "OPTION"
 msgstr "FLAGGA"
 
-#: automate.cc:1601
+#: automate.cc:1592
 msgid "Shows the value of an option"
 msgstr "Visar en inställnings värde"
 
-#: automate.cc:1629
+#: automate.cc:1620
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' är en okänd inställning i arbetskopians metadata"
 
-#: automate.cc:1652
+#: automate.cc:1643
 msgid "REV FILE"
 msgstr "REV FIL"
 
-#: automate.cc:1653
+#: automate.cc:1644
 msgid ""
 "Lists the revisions that changed the content relative to another revision"
 msgstr ""
 "Visar revisionerna som ändrade innehållet i förhållande till en annan "
 "revision"
 
-#: automate.cc:1672 automate.cc:1738
+#: automate.cc:1663 automate.cc:1729
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "filen %s är okänd i revision %s"
 
-#: automate.cc:1714
+#: automate.cc:1705
 msgid "REV1 FILE REV2"
 msgstr "REV1 FIL REV2"
 
-#: automate.cc:1715
+#: automate.cc:1706
 msgid ""
 "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 "Skriver ut namnet på en fil i målrevisionen i förhållande till en given "
 "revision"
 
-#: automate.cc:1765
+#: automate.cc:1756
 msgid "[FILEID] CONTENTS"
 msgstr "[FILID] INNEHÅLL"
 
-#: automate.cc:1766
+#: automate.cc:1757
 msgid "Stores a file in the database"
 msgstr "Lagra en fil i databasen"
 
-#: automate.cc:1788 cmd_files.cc:252
+#: automate.cc:1779 cmd_files.cc:252
 #, c-format
 msgid "no file version %s found in database"
 msgstr "filversionen %s finns inte i databasen"
 
-#: automate.cc:1818
+#: automate.cc:1809
 msgid "REVISION-DATA"
 msgstr "REVISIONS-DATA"
 
-#: automate.cc:1819
+#: automate.cc:1810
 msgid "Stores a revision into the database"
 msgstr "Lagra en revision i databasen"
 
-#: automate.cc:1858
+#: automate.cc:1849
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "saknar nödvändiga förutsättningar för att stoppa in revision %s"
 
-#: automate.cc:1875
+#: automate.cc:1866
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISION CERTNAMN CERTVÄRDE"
 
-#: automate.cc:1876
+#: automate.cc:1867
 msgid "Adds a revision certificate"
 msgstr "Lägger till ett certifikat till revision"
 
-#: automate.cc:1908 cmd_db.cc:277
+#: automate.cc:1899 cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄN NAMN VÄRDE"
 
-#: automate.cc:1909 cmd_db.cc:278
+#: automate.cc:1900 cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Sätt en databasvariabel"
 
-#: automate.cc:1934 cmd_db.cc:296
+#: automate.cc:1925 cmd_db.cc:296
 msgid "DOMAIN NAME"
 msgstr "DOMÄN NAMN"
 
-#: automate.cc:1935
+#: automate.cc:1926
 msgid "Gets a database variable"
 msgstr "Hämta värdet för en databasvariabel"
 
-#: automate.cc:1952
+#: automate.cc:1943
 #, c-format
 msgid "variable not found"
 msgstr "variabeln finns inte"
@@ -2575,7 +2575,9 @@ msgstr ""
 msgid ""
 "To see more details about the commands of a particular group, type 'mtn help "
 "<group_name>'."
-msgstr "För att få mer detaljer om kommandon inom en specifik grupp, skriv 'mtn help <gruppname>'."
+msgstr ""
+"För att få mer detaljer om kommandon inom en specifik grupp, skriv 'mtn help "
+"<gruppname>'."
 
 #: commands.cc:729
 #, c-format
@@ -3416,22 +3418,22 @@ msgstr "make_signature: signaturen är ogiltig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489
+#: lua.cc:465 lua.cc:476 lua.cc:488
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s anropades med inkorrekt parameter"
 
-#: lua.cc:574
+#: lua.cc:571
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Katalogen '%s' finns inte"
 
-#: lua.cc:576 rcs_import.cc:1229 work.cc:1573
+#: lua.cc:573 rcs_import.cc:1229 work.cc:1573
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
 
-#: lua.cc:598
+#: lua.cc:595
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
@@ -4243,35 +4245,72 @@ msgstr "skriv ut versionsnumret och avsluta sedan omedelbart"
 msgid "insert command line arguments taken from the given file"
 msgstr "använd kommandoradsargument ur denna fil"
 
-#: packet.cc:118
+#: packet.cc:121
 #, c-format
 msgid "malformed packet: invalid identifier"
 msgstr "otydbart paket: ogiltig identiteten"
 
-#: packet.cc:124
+#: packet.cc:127
 #, c-format
 msgid "malformed packet: invalid base64 block"
 msgstr "otydbart paket: ogiltigt base64-block"
 
-#: packet.cc:130
+#: packet.cc:133
 #, c-format
 msgid "malformed packet: invalid key name"
 msgstr "otydbart paket: ogiltigt nyckelnamn"
 
-#: packet.cc:136
+#: packet.cc:139
 #, c-format
 msgid "malformed packet: invalid cert name"
 msgstr "otydbart paket: ogiltigt certnamn"
 
-#: packet.cc:143
+#: packet.cc:146
 #, c-format
 msgid "malformed packet: too many arguments in header"
 msgstr "otydbart paket: för många argument i headern"
 
-#: packet.cc:256
+#: packet.cc:259
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr "okänd pakettyp: '%s'"
+
+#: pcrewrap.cc:161
+#, c-format
+msgid "while compiling regex \"%s\": %s"
+msgstr "medans regexen \"%s\" kompilerades: %s"
+
+#: pcrewrap.cc:170
+#, c-format
+msgid "error in regex \"%s\": %s"
+msgstr "fel i regexen \"%s\": %s"
+
+#: pcrewrap.cc:172
+#, c-format
+msgid "error near char %d of regex \"%s\": %s"
+msgstr "fel nära tecken nummer %d i regexen \"%s\": %s"
+
+#: pcrewrap.cc:186
+#, c-format
+msgid "while studying regex \"%s\": %s"
+msgstr "medans regexen \"%s\" studerades: %s"
+
+#: pcrewrap.cc:204
+msgid "backtrack limit exceeded in regular expression matching"
+msgstr "bakåtspårningsnivån har nått sin gräns under jämförelse av regex"
+
+#: pcrewrap.cc:208
+msgid "recursion limit exceeded in regular expression matching"
+msgstr "rekursionen har nått sin gräns under jämförelse av regex"
+
+#: pcrewrap.cc:213
+msgid "invalid UTF-8 sequence found during regular expression matching"
+msgstr "ogiltig UTF8-sekvens funnen under jämförelsen av regex"
+
+#: pcrewrap.cc:216
+#, c-format
+msgid "pcre_match returned %d"
+msgstr "pcre_match gav tillbaka %d"
 
 #: rcs_file.cc:353
 #, c-format
@@ -5683,9 +5722,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 #~ "another name for --no-show-encloser (for compatibility with GNU diff)"
 #~ msgstr ""
 #~ "en synonym till --no-show-encloser (for att vara kompatibel med GNU diff)"
-
-#~ msgid "syntax error near the \"%s\" option: %s"
-#~ msgstr "syntaxfel nära flaggan \"%s\": %s"
 
 #~ msgid "%s %s doesn't use the option %s"
 #~ msgstr "%s %s använder inte flaggan %s"
