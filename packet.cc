@@ -101,6 +101,9 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 
 
 // -- remainder just deals with the regexes for reading packets off streams
+//
+// Note: If these change, the character sets in constants.cc may need to
+// change too.
 
 struct
 feed_packet_consumer

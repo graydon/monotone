@@ -1,0 +1,2405 @@
+@c This file was hand-translated to Texinfo from the upstream PCRE
+@c documentation file pcrepattern.3, whose copyright notice is:
+@c
+@c Author: Philip Hazel, University Computing Service
+@c Cambridge CB2 3QH, England
+@c Last updated: 17 September 2007
+@c Copyright (c) 1997-2007 University of Cambridge.
+@c
+@c Redistribution and use in source and binary forms, with or without
+@c modification, are permitted provided that the following conditions are met:
+@c
+@c     * Redistributions of source code must retain the above copyright notice,
+@c       this list of conditions and the following disclaimer.
+@c
+@c     * Redistributions in binary form must reproduce the above copyright
+@c       notice, this list of conditions and the following disclaimer in the
+@c       documentation and/or other materials provided with the distribution.
+@c
+@c     * Neither the name of the University of Cambridge nor the names of its
+@c       contributors may be used to endorse or promote products derived from
+@c       this software without specific prior written permission.
+@c
+@c THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+@c AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+@c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+@c ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+@c LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+@c CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+@c SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+@c INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+@c CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+@c ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+@c POSSIBILITY OF SUCH DAMAGE.
+@c
+@c Apart from markup translation, all mention of callouts has been
+@c removed, and confusing references to PCRE itself, its configuration
+@c options and library API, or to specific programming environments
+@c have been removed or clarified.
+
+@node Regexp Details
+@subsection Regexp Details
+
+The syntax and semantics of PCRE regular expressions, as used in
+Monotone, are described in detail below.  Regular expressions in
+general are covered in a number of books, some of which have copious
+examples. Jeffrey Friedl's ``Mastering Regular Expressions,''
+published by O'Reilly, covers regular expressions in great detail.
+This description is intended as reference material.
+
+@subsubheading Characters and Metacharacters
+
+A regular expression is a pattern that is matched against a subject
+string from left to right. Most characters stand for themselves in a
+pattern, and match the corresponding characters in the subject. As a
+trivial example, the pattern
+
+@verbatim
+         The quick brown fox
+@end verbatim
+
+@noindent
+matches a portion of a subject string that is identical to
+itself. When caseless matching is specified, letters are matched
+independently of case.
+
+The power of regular expressions comes from the ability to include
+alternatives and repetitions in the pattern. These are encoded in the
+pattern by the use of @dfn{metacharacters}, which do not stand for
+themselves but instead are interpreted in some special way.
+
+There are two different sets of metacharacters: those that are
+recognized anywhere in the pattern except within square brackets, and
+those that are recognized within square brackets. Outside square
+brackets, the metacharacters are as follows:
+
+@table @code
+@itemx \
+general escape character with several uses
+@itemx ^
+assert start of string (or line, in multiline mode)
+@itemx $
+assert end of string (or line, in multiline mode)
+@itemx .
+match any character except newline (by default)
+@itemx [
+start character class definition
+@itemx |
+start of alternative branch
+@itemx (
+start subpattern
+@itemx )
+end subpattern
+@itemx ?
+extends the meaning of @samp{(}
+         also 0 or 1 quantifier
+         also quantifier minimizer
+@itemx *
+0 or more quantifier
+@itemx +
+1 or more quantifier
+         also ``possessive quantifier''
+@itemx @{
+start min/max quantifier
+@end table
+
+@noindent
+Part of a pattern that is in square brackets is called a "character
+class". In a character class the only metacharacters are:
+
+@table @code
+@itemx \
+general escape character
+@itemx ^
+negate the class, but only if the first character
+@itemx -
+indicates character range
+@itemx [
+POSIX character class (only if followed by POSIX
+           syntax)
+@itemx ]
+terminates the character class
+@end table
+
+@noindent
+The following sections describe the use of each of the metacharacters.
+
+@subsubheading Backslash
+
+The backslash character has several uses. Firstly, if it is followed
+by a non-alphanumeric character, it takes away any special meaning
+that character may have. This use of backslash as an escape character
+applies both inside and outside character classes.
+
+For example, if you want to match a @samp{*} character, you write
+@samp{\*} in the pattern.  This escaping action applies whether or not
+the following character would otherwise be interpreted as a
+metacharacter, so it is always safe to precede a non-alphanumeric with
+backslash to specify that it stands for itself. In particular, if you
+want to match a backslash, you write @samp{\\}.
+
+If a pattern is compiled with the @samp{(?x)} option, whitespace in
+the pattern (other than in a character class) and characters between a
+@samp{#} outside a character class and the next newline are
+ignored. An escaping backslash can be used to include a whitespace or
+@samp{#} character as part of the pattern.
+
+If you want to remove the special meaning from a sequence of
+characters, you can do so by putting them between @samp{\Q} and
+@samp{\E}.  The @samp{\Q...\E} sequence is recognized both inside and
+outside character classes.
+
+@subsubheading Non-printing Characters
+
+A second use of backslash provides a way of encoding non-printing characters
+in patterns in a visible manner. There is no restriction on the appearance of
+non-printing characters, apart from the binary zero that terminates a pattern,
+but when a pattern is being prepared by text editing, it is usually easier to
+use one of the following escape sequences than the binary character it
+represents:
+
+@table @code
+@itemx \a
+alarm, that is, the BEL character (hex 07)
+@itemx \c@var{x}
+"control-@var{x}", where @var{x} is any character
+@itemx \e
+escape (hex 1B)
+@itemx \f
+formfeed (hex 0C)
+@itemx \n
+linefeed (hex 0A)
+@itemx \r
+carriage return (hex 0D)
+@itemx \t
+tab (hex 09)
+@itemx \@var{ddd}
+character with octal code @var{ddd}, or backreference
+@itemx \x@var{hh}
+character with hex code @var{hh}
+@itemx \x@{@var{hhh...}@}
+character with hex code @var{hhh...}
+@end table
+
+The precise effect of @samp{\c@var{x}} is as follows: if @var{x} is a lower
+case letter, it is converted to upper case. Then bit 6 of the
+character (hex 40) is inverted.  Thus @samp{\cz} becomes hex 1A (the
+@key{SUB} control character, in ASCII), but @samp{\c@{} becomes hex 3B
+(@samp{;}), and @samp{\c;} becomes hex 7B (@samp{@{}).
+
+@c the math in the next paragraph is not done with @math because
+@c ``2**31'' is a much nicer thing to have in the Info file than ``2^{31}''.
+
+After @samp{\x}, from zero to two hexadecimal digits are read (letters
+can be in upper or lower case). Any number of hexadecimal digits may
+appear between @samp{\x@{} and @samp{@}}, but the value of the
+character code must be less than 256 in non-UTF-8 mode, and less than
+@tex
+$2^{31}$
+@end tex
+@html
+2<sup>31</sup>
+@end html
+@ifnottex
+@ifnothtml
+2**31
+@end ifnothtml
+@end ifnottex
+in UTF-8 mode. That is, the maximum value in hexadecimal is
+7FFFFFFF. Note that this is bigger than the largest Unicode code
+point, which is 10FFFF.
+
+If characters other than hexadecimal digits appear between @samp{\x@{}
+and @samp{@}}, or if there is no terminating @samp{@}}, this form of
+escape is not recognized. Instead, the initial @samp{\x} will be
+interpreted as a basic hexadecimal escape, with no following digits,
+giving a character whose value is zero.
+
+Characters whose value is less than 256 can be defined by either of
+the two syntaxes for @samp{\x}. There is no difference in the way they
+are handled. For example, @samp{\xdc} is exactly the same as
+@samp{\x@{dc@}}.
+
+After @samp{\0} up to two further octal digits are read. If there are
+fewer than two digits, just those that are present are used. Thus the
+sequence @samp{\0\x\07} specifies two binary zeros followed by a
+@key{BEL} character (octal 007). Make sure you supply two digits after
+the initial zero if the pattern character that follows is itself an
+octal digit.
+
+The handling of a backslash followed by a digit other than 0 is
+complicated.  Outside a character class, PCRE reads it and any
+following digits as a decimal number. If the number is less than 10,
+or if there have been at least that many previous capturing left
+parentheses in the expression, the entire sequence is taken as a
+@dfn{back reference}. A description of how this works is given later,
+following the discussion of parenthesized subpatterns.
+
+Inside a character class, or if the decimal number is greater than 9
+and there have not been that many capturing subpatterns, PCRE re-reads
+up to three octal digits following the backslash, and uses them to
+generate a data character. Any subsequent digits stand for
+themselves. In non-UTF-8 mode, the value of a character specified in
+octal must be less than @samp{\400}. In UTF-8 mode, values up to
+@samp{\777} are permitted. For example:
+
+@table @code
+@itemx \040
+is another way of writing a space
+@itemx \40
+is the same, provided there are fewer than 40
+            previous capturing subpatterns
+@itemx \7
+is always a back reference
+@itemx \11
+might be a back reference, or another way of
+            writing a tab
+@itemx \011
+is always a tab
+@itemx \0113
+is a tab followed by the character @samp{3}
+@itemx \113
+might be a back reference, otherwise the
+            character with octal code 113
+@itemx \377
+might be a back reference, otherwise
+            the byte consisting entirely of 1 bits
+@itemx \81
+is either a back reference, or a binary zero
+            followed by the two characters @samp{8} and @samp{1}
+@end table
+
+Note that octal values of 100 or greater must not be introduced by a
+leading zero, because no more than three octal digits are ever read.
+
+All the sequences that define a single character value can be used
+both inside and outside character classes. In addition, inside a
+character class, the sequence @samp{\b} is interpreted as the @key{BS}
+character (hex 08), and the sequences @samp{\R} and @samp{\X} are
+interpreted as the characters @samp{R} and @samp{X},
+respectively. Outside a character class, these sequences have
+different meanings (see below).
+
+@subsubheading Absolute and Relative Back References
+
+The sequence @samp{\g} followed by an unsigned or a negative number,
+optionally enclosed in braces, is an absolute or relative back
+reference. A named back reference can be coded as
+@samp{\g@{name@}}. Back references are discussed later, following the
+discussion of parenthesized subpatterns.
+
+@subsubheading Generic character types
+
+Another use of backslash is for specifying generic character types. The
+following are always recognized:
+
+@table @code
+@itemx \d
+any decimal digit
+@itemx \D
+any character that is not a decimal digit
+@itemx \h
+any horizontal whitespace character
+@itemx \H
+any character that is not a horizontal whitespace character
+@itemx \s
+any whitespace character
+@itemx \S
+any character that is not a whitespace character
+@itemx \v
+any vertical whitespace character
+@itemx \V
+any character that is not a vertical whitespace character
+@itemx \w
+any ``word'' character
+@itemx \W
+any ``non-word'' character
+@end table
+
+Each pair of escape sequences partitions the complete set of
+characters into two disjoint sets. Any given character matches one,
+and only one, of each pair.
+
+These character type sequences can appear both inside and outside
+character classes. They each match one character of the appropriate
+type. If the current matching point is at the end of the subject
+string, all of them fail, since there is no character to match.
+
+For compatibility with Perl, @samp{\s} does not match the @key{VT}
+character (code 11).  This makes it different from the the POSIX
+``space'' class. The @samp{\s} characters are @key{TAB} (9), @key{LF}
+(10), @key{FF} (12), @key{CR} (13), and @key{SPACE} (32).
+
+In UTF-8 mode, characters with values greater than 128 never match
+@samp{\d}, @samp{\s}, or @samp{\w}, and always match @samp{\D},
+@samp{\S}, and @samp{\W}.  These sequences retain their original
+meanings from before UTF-8 support was available, mainly for
+efficiency reasons.
+
+The sequences @samp{\h}, @samp{\H}, @samp{\v}, and @samp{\V} are Perl
+5.10 features. In contrast to the other sequences, these do match
+certain high-valued codepoints in UTF-8 mode.  The horizontal space
+characters are:
+
+@table @code
+@itemx U+0009
+Horizontal tab
+@itemx U+0020
+Space
+@itemx U+00A0
+Non-break space
+@itemx U+1680
+Ogham space mark
+@itemx U+180E
+Mongolian vowel separator
+@item U+2000
+En quad
+@itemx U+2001
+Em quad
+@itemx U+2002
+En space
+@itemx U+2003
+Em space
+@itemx U+2004
+Three-per-em space
+@itemx U+2005
+Four-per-em space
+@itemx U+2006
+Six-per-em space
+@item U+2007
+Figure space
+@itemx U+2008
+Punctuation space
+@itemx U+2009
+Thin space
+@itemx U+200A
+Hair space
+@itemx U+202F
+Narrow no-break space
+@itemx U+205F
+Medium mathematical space
+@itemx U+3000
+Ideographic space
+@end table
+
+@noindent
+The vertical space characters are:
+
+@table @code
+@itemx U+000A
+Linefeed
+@itemx U+000B
+Vertical tab
+@itemx U+000C
+Formfeed
+@itemx U+000D
+Carriage return
+@itemx U+0085
+Next line
+@itemx U+2028
+Line separator
+@itemx U+2029
+Paragraph separator
+@end table
+
+@noindent
+A ``word'' character is an underscore or any character less than 256
+that is a letter or digit. The definition of letters and digits is
+that used for the ``C'' locale.
+
+@subsubheading Newline Conventions
+
+PCRE supports five different conventions for indicating line breaks in
+strings: a single CR (carriage return) character, a single LF
+(linefeed) character, the two-character sequence CRLF, any of the
+three preceding, or any Unicode newline sequence.  The default is to
+match any Unicode newline sequence.  It is possible to override the
+default newline convention by starting a pattern string with one of
+the following five sequences:
+
+@table @code
+@itemx (*CR)
+  carriage return
+@itemx (*LF)
+  linefeed
+@itemx (*CRLF)
+  carriage return, followed by linefeed
+@itemx (*ANYCRLF)
+  any of the three above
+@itemx (*ANY)
+  all Unicode newline sequences
+@end table
+
+For example, the pattern
+
+@verbatim
+         (*CR)a.b
+@end verbatim
+
+@noindent
+changes the convention to CR. That pattern matches @samp{a\nb} because
+LF is no longer a newline. Note that these special settings, which are
+not Perl-compatible, are recognized only at the very start of a
+pattern, and that they must be in upper case. If more than one of them
+is present, the last one is used.
+
+The newline convention does not affect what the @samp{\R} escape
+sequence matches. By default, this is any Unicode newline sequence,
+for Perl compatibility. However, this can be changed; see the
+description of @samp{\R} below.  A change of @samp{\R} setting can be
+combined with a change of newline convention.
+
+@subsubheading Newline Sequences
+
+Outside a character class, by default, the escape sequence @samp{\R} matches
+any Unicode newline sequence. This is a Perl 5.10 feature. In
+non-UTF-8 mode @samp{\R} is equivalent to the following:
+
+@verbatim
+         (?>\r\n|\n|\x0b|\f|\r|\x85)
+@end verbatim
+
+This is an example of an "atomic group", details of which are given
+below.  This particular group matches either the two-character
+sequence @key{CR} followed by @key{LF}, or one of the single
+characters @key{LF} (linefeed, @code{U+000A}), @key{VT} (vertical tab,
+@code{U+000B}), @key{FF} (formfeed, @code{U+000C}), @key{CR} (carriage
+return, @code{U+000D}), or @key{NEL} (next line, @code{U+0085}). The
+two-character sequence is treated as a single unit that cannot be
+split.  In UTF-8 mode, two additional characters whose codepoints are
+greater than 255 are added: @key{LS} (line separator, @code{U+2028})
+and @key{PS} (paragraph separator, @code{U+2029}).
+
+It is possible to change the meaning of @samp{\R} by starting a
+pattern string with one of the following sequences:
+
+@table @code
+@itemx (*BSR_ANYCRLF)
+@key{CR}, @key{LF}, or @key{CR}@key{LF} only
+@itemx (*BSR_UNICODE)
+any Unicode newline sequence (the default)
+@end table
+
+Note that these special settings, which are not Perl-compatible, are
+recognized only at the very start of a pattern, and that they must be
+in upper case. If more than one of them is present, the last one is
+used. They can be combined with a change of newline convention, for
+example, a pattern can start with:
+
+@verbatim
+         (*ANY)(*BSR_ANYCRLF)
+@end verbatim
+
+@noindent
+Inside a character class, @samp{\R} matches the letter @samp{R}.
+
+@subsubheading Unicode Character Properties
+
+Three additional escape sequences match characters with specific
+Unicode properties.  When not in UTF-8 mode, these sequences are of
+course limited to testing characters whose codepoints are less than
+256, but they do work in this mode.  The extra escape sequences are:
+
+@table @code
+@itemx \p@{@var{xx}@}
+a character with the @var{xx} property
+@itemx \P@{@var{xx}@}
+a character without the @var{xx} property
+@itemx \X
+an extended Unicode sequence
+@end table
+
+The property names represented by @var{xx} above are limited to the
+Unicode script names, the general category properties, and @samp{Any},
+which matches any character (including newline). Other properties such
+as @samp{InMusicalSymbols} are not currently supported by PCRE. Note
+that @samp{\P@{Any@}} does not match any characters, so always causes
+a match failure.
+
+Sets of Unicode characters are defined as belonging to certain
+scripts. A character from one of these sets can be matched using a
+script name. For example:
+
+@verbatim
+         \p{Greek}
+         \P{Han}
+@end verbatim
+
+@noindent
+Those that are not part of an identified script are lumped together as
+``Common.'' The current list of scripts is:
+
+Arabic,
+Armenian,
+Balinese,
+Bengali,
+Bopomofo,
+Braille,
+Buginese,
+Buhid,
+Canadian_Aboriginal,
+Cherokee,
+Common,
+Coptic,
+Cuneiform,
+Cypriot,
+Cyrillic,
+Deseret,
+Devanagari,
+Ethiopic,
+Georgian,
+Glagolitic,
+Gothic,
+Greek,
+Gujarati,
+Gurmukhi,
+Han,
+Hangul,
+Hanunoo,
+Hebrew,
+Hiragana,
+Inherited,
+Kannada,
+Katakana,
+Kharoshthi,
+Khmer,
+Lao,
+Latin,
+Limbu,
+Linear_B,
+Malayalam,
+Mongolian,
+Myanmar,
+New_Tai_Lue,
+Nko,
+Ogham,
+Old_Italic,
+Old_Persian,
+Oriya,
+Osmanya,
+Phags_Pa,
+Phoenician,
+Runic,
+Shavian,
+Sinhala,
+Syloti_Nagri,
+Syriac,
+Tagalog,
+Tagbanwa,
+Tai_Le,
+Tamil,
+Telugu,
+Thaana,
+Thai,
+Tibetan,
+Tifinagh,
+Ugaritic,
+Yi.
+
+Each character has exactly one general category property, specified by a
+two-letter abbreviation. For compatibility with Perl, negation can be specified
+by including a circumflex between the opening brace and the property name. For
+example, @samp{\p@{^Lu@}} is the same as @samp{\P@{Lu@}}.
+
+If only one letter is specified with @samp{\p} or @samp{\P}, it
+includes all the general category properties that start with that
+letter. In this case, in the absence of negation, the curly brackets
+in the escape sequence are optional; these two examples have the same
+effect:
+
+@verbatim
+         \p{L}
+         \pL
+@end verbatim
+
+@noindent
+The following general category property codes are supported:
+
+@table @code
+@item C
+Other
+@itemx Cc
+Control
+@itemx Cf
+Format
+@itemx Cn
+Unassigned
+@itemx Co
+Private use
+@itemx Cs
+Surrogate
+
+@item L
+Letter
+@itemx Ll
+Lower case letter
+@itemx Lm
+Modifier letter
+@itemx Lo
+Other letter
+@itemx Lt
+Title case letter
+@itemx Lu
+Upper case letter
+
+@item M
+Mark
+@itemx Mc
+Spacing mark
+@itemx Me
+Enclosing mark
+@itemx Mn
+Non-spacing mark
+
+@item N
+Number
+@itemx Nd
+Decimal number
+@itemx Nl
+Letter number
+@itemx No
+Other number
+
+@item P
+Punctuation
+@itemx Pc
+Connector punctuation
+@itemx Pd
+Dash punctuation
+@itemx Pe
+Close punctuation
+@itemx Pf
+Final punctuation
+@itemx Pi
+Initial punctuation
+@itemx Po
+Other punctuation
+@itemx Ps
+Open punctuation
+
+@item S
+Symbol
+@itemx Sc
+Currency symbol
+@itemx Sk
+Modifier symbol
+@itemx Sm
+Mathematical symbol
+@itemx So
+Other symbol
+
+@item Z
+Separator
+@itemx Zl
+Line separator
+@itemx Zp
+Paragraph separator
+@itemx Zs
+Space separator
+@end table
+
+The special property @samp{L&} is also supported: it matches a
+character that has the @samp{Lu}, @samp{Ll}, or @samp{Lt} property, in
+other words, a letter that is not classified as a modifier or
+``other.''
+
+The @samp{Cs} (Surrogate) property applies only to characters in the
+range @code{U+D800} to @code{U+DFFF}. Such characters are not valid in
+UTF-8 strings (see RFC 3629) and so cannot be tested by PCRE.
+
+The long synonyms for these properties that Perl supports (such as
+@samp{\p@{Letter@}}) are not supported by PCRE, nor is it permitted to
+prefix any of these properties with @samp{Is}.
+
+No character that is in the Unicode table has the @samp{Cn}
+(unassigned) property.  Instead, this property is assumed for any code
+point that is not in the Unicode table.
+
+Specifying caseless matching does not affect these escape sequences. For
+example, @samp{\p@{Lu@}} always matches only upper case letters.
+
+The @samp{\X} escape matches any number of Unicode characters that
+form an extended Unicode sequence. @samp{\X} is equivalent to
+
+@verbatim
+         (?>\PM\pM*)
+@end verbatim
+
+That is, it matches a character without the ``mark'' property,
+followed by zero or more characters with the ``mark'' property, and
+treats the sequence as an atomic group (see below).  Characters with
+the ``mark'' property are typically accents that affect the preceding
+character. None of them have codepoints less than 256, so in non-UTF-8
+mode @samp{\X} matches any one character.
+
+Matching characters by Unicode property is not fast, because PCRE has
+to search a structure that contains data for over fifteen thousand
+characters. That is why the traditional escape sequences such as
+@samp{\d} and @samp{\w} do not use Unicode properties in PCRE.
+
+@subsubheading Resetting the Match Start
+
+The escape sequence @samp{\K}, which is a Perl 5.10 feature, causes
+any previously matched characters not to be included in the final
+matched sequence. For example, the pattern:
+
+@verbatim
+         foo\Kbar
+@end verbatim
+
+@noindent
+matches @samp{foobar}, but reports that it has matched
+@samp{bar}. This feature is similar to a lookbehind assertion
+(described below).  However, in this case, the part of the subject
+before the real match does not have to be of fixed length, as
+lookbehind assertions do. The use of @samp{\K} does not interfere with the
+setting of captured substrings.  For example, when the pattern
+
+@verbatim
+         (foo)\Kbar
+@end verbatim
+
+@noindent
+matches @samp{foobar}, the first substring is still set to @samp{foo}.
+
+@subsubheading Simple assertions
+
+The final use of backslash is for certain simple assertions. An
+assertion specifies a condition that has to be met at a particular
+point in a match, without consuming any characters from the subject
+string. The use of subpatterns for more complicated assertions is
+described below.  The backslashed assertions are:
+
+@table @code
+@itemx \b
+matches at a word boundary
+@itemx \B
+matches when not at a word boundary
+@itemx \A
+matches at the start of the subject
+@itemx \Z
+matches at the end of the subject
+          also matches before a newline at the end of the subject
+@itemx \z
+matches only at the end of the subject
+@itemx \G
+matches at the first matching position in the subject
+@end table
+
+@noindent
+These assertions may not appear in character classes (but note that
+@samp{\b} has a different meaning, namely the backspace character,
+inside a character class).
+
+A word boundary is a position in the subject string where the current
+character and the previous character do not both match @samp{\w} or
+@samp{\W} (i.e.@: one matches @samp{\w} and the other matches
+@samp{\W}), or the start or end of the string if the first or last
+character matches @samp{\w}, respectively.
+
+The @samp{\A}, @samp{\Z}, and @samp{\z} assertions differ from the
+traditional circumflex and dollar (described in the next section) in
+that they only ever match at the very start and end of the subject
+string, whatever options are set. Thus, they are independent of
+multiline mode. The difference between @samp{\Z} and @samp{\z} is that
+@samp{\Z} matches before a newline at the end of the string as well as
+at the very end, whereas @samp{\z} matches only at the end.
+
+The @samp{\G} assertion is true only when the current matching
+position is at the start point of the match.  As used in Monotone,
+@samp{\G} is always equal to @samp{\A}.
+
+@subsubheading Circumflex and Dollar
+
+Outside a character class, in the default matching mode, the
+circumflex character, @samp{^}, is an assertion that is true only if
+the current matching point is at the start of the subject string.
+Inside a character class, circumflex has an entirely different meaning
+(see below).
+
+Circumflex need not be the first character of the pattern if a number
+of alternatives are involved, but it should be the first thing in each
+alternative in which it appears if the pattern is ever to match that
+branch. If all possible alternatives start with a circumflex, that is,
+if the pattern is constrained to match only at the start of the
+subject, it is said to be an ``anchored'' pattern. (There are also
+other constructs that can cause a pattern to be anchored.)
+
+A dollar character, @samp{$}, is an assertion that is true only if the
+current matching point is at the end of the subject string, or
+immediately before a newline at the end of the string (by
+default). Dollar need not be the last character of the pattern if a
+number of alternatives are involved, but it should be the last item in
+any branch in which it appears. Dollar has no special meaning in a
+character class.
+
+The meanings of the circumflex and dollar characters are changed if
+the @samp{(?m)} option is set. When this is the case, a circumflex
+matches immediately after internal newlines as well as at the start of
+the subject string. It does not match after a newline that ends the
+string. A dollar matches before any newlines in the string, as well as
+at the very end, when @samp{(?m)} is set. When newline is specified as
+the two-character sequence @key{CR}@key{LF}, isolated @key{CR} and
+@key{LF} characters do not indicate newlines.
+
+For example, the pattern @samp{^abc$} matches the subject string
+@samp{def\nabc} (where @samp{\n} represents a newline) in multiline
+mode, but not otherwise. Consequently, patterns that are anchored in
+single line mode because all branches start with ^ are not anchored in
+multiline mode.
+
+Note that the sequences @samp{\A}, @samp{\Z}, and @samp{\z} can be
+used to match the start and end of the subject in both modes, and if
+all branches of a pattern start with @samp{\A} it is always anchored.
+
+@subsubheading Full Stop (Period, Dot)
+
+Outside a character class, a dot in the pattern matches any one
+character in the subject string except (by default) a character that
+signifies the end of a line. In UTF-8 mode, the matched character may
+be more than one byte long.
+
+When a line ending is defined as a single character, dot never matches
+that character; when the two-character sequence @key{CR}@key{LF} is
+used, dot does not match @key{CR} if it is immediately followed by
+@key{LF}, but otherwise it matches all characters (including isolated
+@key{CR}s and @key{LF}s). When any Unicode line endings are being
+recognized, dot does not match @key{CR} or @key{LF} or any of the
+other line ending characters.
+
+The behaviour of dot with regard to newlines can be changed. If the
+@samp{(?s)} option is set, a dot matches any one character, without
+exception. If the two-character sequence @key{CR}@key{LF} is present
+in the subject string, it takes two dots to match it.
+
+The handling of dot is entirely independent of the handling of circumflex and
+dollar, the only relationship being that they both involve newlines. Dot has no
+special meaning in a character class.
+
+@subsubheading Matching a Single Byte
+
+Outside a character class, the escape sequence @samp{\C} matches any
+one byte, both in and out of UTF-8 mode. Unlike a dot, it always
+matches any line-ending characters. The feature is provided in Perl in
+order to match individual bytes in UTF-8 mode. Because it breaks up
+UTF-8 characters into individual bytes, what remains in the string may
+be a malformed UTF-8 string. For this reason, the @samp{\C} escape
+sequence is best avoided.
+
+PCRE does not allow @samp{\C} to appear in lookbehind assertions
+(described below), because in UTF-8 mode this would make it impossible
+to calculate the length of the lookbehind.
+
+@subsubheading Square Brackets and Character Classes
+
+An opening square bracket introduces a character class, terminated by
+a closing square bracket. A closing square bracket on its own is not
+special. If a closing square bracket is required as a member of the
+class, it should be the first data character in the class (after an
+initial circumflex, if present) or escaped with a backslash.
+
+A character class matches a single character in the subject. In UTF-8
+mode, the character may occupy more than one byte. A matched character
+must be in the set of characters defined by the class, unless the
+first character in the class definition is a circumflex, in which case
+the subject character must not be in the set defined by the class. If
+a circumflex is actually required as a member of the class, ensure it
+is not the first character, or escape it with a backslash.
+
+For example, the character class @samp{[aeiou]} matches any lower case
+vowel, while @samp{[^aeiou]} matches any character that is not a lower
+case vowel. Note that a circumflex is just a convenient notation for
+specifying the characters that are in the class by enumerating those
+that are not. A class that starts with a circumflex is not an
+assertion: it still consumes a character from the subject string, and
+therefore it fails if the current pointer is at the end of the string.
+
+In UTF-8 mode, characters with values greater than 255 can be included
+in a class as a literal string of bytes, or by using the @samp{\x@{}
+escaping mechanism.
+
+When caseless matching is set, any letters in a class represent both
+their upper case and lower case versions, so for example, a caseless
+@samp{[aeiou]} matches @samp{A} as well as @samp{a}, and a caseless [^aeiou]
+does not match @samp{A}, whereas a caseful version would. In UTF-8 mode,
+PCRE always understands the concept of case for characters whose
+values are less than 128, so caseless matching is always possible. For
+characters with higher values, the concept of case is supported if
+PCRE is compiled with Unicode property support, but not otherwise.  If
+you want to use caseless matching for characters 128 and above, you
+must ensure that PCRE is compiled with Unicode property support as
+well as with UTF-8 support.
+
+Characters that might indicate line breaks are never treated in any
+special way when matching character classes, whatever line-ending
+sequence is in use, and whatever setting of the @samp{(?s)} and
+@samp{(?m)} options is used. A class such as @samp{[^a]} always
+matches one of these characters.
+
+The minus (hyphen) character can be used to specify a range of
+characters in a character class. For example, @samp{[d-m]} matches any
+letter between @samp{d} and @samp{m}, inclusive. If a minus character
+is required in a class, it must be escaped with a backslash or appear
+in a position where it cannot be interpreted as indicating a range,
+typically as the first or last character in the class.
+
+It is not possible to have the literal character @samp{]} as the end
+character of a range. A pattern such as @samp{[W-]46]} is interpreted
+as a class of two characters (@samp{W} and @samp{-}) followed by a
+literal string @samp{46]}, so it would match @samp{W46]} or
+@samp{-46]}. However, if the @samp{]} is escaped with a backslash it
+is interpreted as the end of range, so @samp{[W-\]46]} is interpreted
+as a class containing a range followed by two other characters. The
+octal or hexadecimal representation of @samp{]} can also be used to
+end a range.
+
+Ranges operate in the collating sequence of character values. They can
+also be used for characters specified numerically, for example
+@samp{[\000-\037]}. In UTF-8 mode, ranges can include characters whose
+values are greater than 255, for example @samp{[\x@{100@}-\x@{2ff@}]}.
+
+If a range that includes letters is used when caseless matching is
+set, it matches the letters in either case. For example, @samp{[W-c]}
+is equivalent to @samp{[][\\^_`wxyzabc]}, matched caselessly.
+
+The character types @samp{\d}, @samp{\D}, @samp{\p}, @samp{\P},
+@samp{\s}, @samp{\S}, @samp{\w}, and @samp{\W} may also appear in a
+character class, and add the characters that they match to the
+class. For example, @samp{[\dABCDEF]} matches any hexadecimal digit. A
+circumflex can conveniently be used with the upper case character
+types to specify a more restricted set of characters than the matching
+lower case type. For example, the class @samp{[^\W_]} matches any
+letter or digit, but not underscore.
+
+The only metacharacters that are recognized in character classes are
+backslash, hyphen (only where it can be interpreted as specifying a
+range), circumflex (only at the start), opening square bracket (only
+when it can be interpreted as introducing a POSIX class name---see the
+next section), and the terminating closing square bracket. However,
+escaping other non-alphanumeric characters does no harm.
+
+@subsubheading POSIX Character Classes
+
+Perl supports the POSIX notation for character classes. This uses
+names enclosed by @samp{[:} and @samp{:]} within the enclosing square
+brackets. PCRE also supports this notation. For example,
+
+@verbatim
+         [01[:alpha:]%]
+@end verbatim
+
+@noindent
+matches @samp{0}, @samp{1}, any alphabetic character, or @samp{%}. The
+supported class names are
+
+@table @code
+@itemx alnum
+letters and digits
+@itemx alpha
+letters
+@itemx ascii
+character codes 0 -- 127
+@itemx blank
+space or tab only
+@itemx cntrl
+control characters
+@itemx digit
+decimal digits (same as @samp{\d})
+@itemx graph
+printing characters, excluding space
+@itemx lower
+lower case letters
+@itemx print
+printing characters, including space
+@itemx punct
+printing characters, excluding letters and digits
+@itemx space
+white space (not quite the same as @samp{\s})
+@itemx upper
+upper case letters
+@itemx word
+``word'' characters (same as @samp{\w})
+@itemx xdigit
+hexadecimal digits
+@end table
+
+The ``space'' characters are @key{HT} (9), @key{LF} (10), @key{VT}
+(11), @key{FF} (12), @key{CR} (13), and space (32). Notice that this
+list includes the @key{VT} character (code 11). This makes "space"
+different to @samp{\s}, which does not include @key{VT} (for Perl
+compatibility).
+
+The name ``word'' is a Perl extension, and ``blank'' is a GNU
+extension from Perl 5.8. Another Perl extension is negation, which is
+indicated by a @samp{^} character after the colon. For example,
+
+@verbatim
+         [12[:^digit:]]
+@end verbatim
+
+@noindent
+matches @samp{1}, @samp{2}, or any non-digit. PCRE (and Perl) also
+recognize the POSIX syntax @samp{[.@var{ch}.]} and @samp{[=@var{ch}=]}
+where @var{ch} is a ``collating element,'' but these are not
+supported, and an error is given if they are encountered.
+
+In UTF-8 mode, characters with values greater than 128 do not match
+any of the POSIX character classes.
+
+@subsubheading Vertical Bar
+
+Vertical bar characters are used to separate alternative patterns. For
+example, the pattern
+
+@verbatim
+         gilbert|sullivan
+@end verbatim
+
+@noindent
+matches either @samp{gilbert} or @samp{sullivan}. Any number of
+alternatives may appear, and an empty alternative is permitted
+(matching the empty string). The matching process tries each
+alternative in turn, from left to right, and the first one that
+succeeds is used. If the alternatives are within a subpattern (defined
+below), "succeeds" means matching the rest of the main pattern as well
+as the alternative in the subpattern.
+
+@subsubheading Internal Option Setting
+
+The behavior of the matching engine can be adjusted from within the
+pattern by a sequence of option letters enclosed between @samp{(?} and
+@samp{)}.  The option letters are
+
+@table @code
+@itemx i
+Caseless: characters in one case match the corresponding
+     characters in other cases as well.
+@itemx m
+Multiline: @samp{^} and @samp{$} match at newlines
+     as well as at beginning and end of string.
+@itemx s
+Dotall: dot matches any character, including newline characters.
+@itemx x
+Extended syntax: unescaped white space is ignored and embedded
+     comments are possible.
+@itemx J
+Dupnames: names for capturing subpattern need not be unique.
+@itemx U
+Ungreedy: quantifiers match as few times as possible by default.
+@itemx X
+Extra: for forward compatibility, give an error if any escape sequence
+with no defined meaning appears.
+@end table
+
+For example, @samp{(?im)} sets caseless, multiline matching. It is
+also possible to unset these options by preceding the letters with a
+hyphen, and a combined setting and unsetting such as @samp{(?im-sx)}
+is also permitted.  (This would set the caseless and multiline options
+while unsetting the dotall and extended-syntax options.)  If a letter
+appears both before and after the hyphen, the option is unset.  The
+lowercase option letters are Perl-compatible; the uppercase ones are
+PCRE only.
+
+When an option change occurs at top level (that is, not inside
+subpattern parentheses), the change applies to the remainder of the
+pattern that follows.  An option change within a subpattern (see below
+for a description of subpatterns) affects only that part of the
+current pattern that follows it, so
+
+@verbatim
+         (a(?i)b)c
+@end verbatim
+
+@noindent
+matches @samp{abc} and @samp{aBc} and no other strings.  By this
+means, options can be made to have different settings in different
+parts of the pattern. Any changes made in one alternative do carry on
+into subsequent branches within the same subpattern. For example,
+
+@verbatim
+         (a(?i)b|c)
+@end verbatim
+
+@noindent
+matches @samp{ab}, @samp{aB}, @samp{c}, and @samp{C}, even though when
+matching @samp{C} the first branch is abandoned before the option
+setting. This is because the effects of option settings happen when
+the pattern is parsed. There would be some very weird behaviour
+otherwise.
+
+@emph{Note:} Unlike these options, the similar, PCRE-specific option
+sequences that start with @samp{(*} may appear only at the very
+beginning of the pattern.  Details of these sequences are given in the
+section entitled ``Newline sequences,'' above.
+
+@subsubheading Subpatterns
+
+Subpatterns are delimited by parentheses (round brackets), which can
+be nested.  Turning part of a pattern into a subpattern does two
+things:
+
+@enumerate
+@item 
+It localizes a set of alternatives. For example, the pattern
+
+@verbatim
+         cat(aract|erpillar|)
+@end verbatim
+
+@noindent
+matches one of the words @samp{cat}, @samp{cataract}, or
+@samp{caterpillar}. Without the parentheses, it would match
+@samp{cataract}, @samp{erpillar} or an empty string.
+
+@item
+It sets up the subpattern as a capturing subpattern.  As used in
+Monotone this only means that during matching, the portion of the
+subject string that matched the subpattern is available for back
+references.  Captured subpatterns are, for instance, not available to
+callers of @code{regex.search}.  Opening parentheses are counted from
+left to right (starting from 1) to obtain numbers for the capturing
+subpatterns.
+
+For example, if the string @samp{the red king} is matched against the pattern
+
+@verbatim
+         the ((red|white) (king|queen))
+@end verbatim
+
+the captured substrings are @samp{red king}, @samp{red}, and
+@samp{king}, and are numbered 1, 2, and 3, respectively.
+@end enumerate
+
+The fact that plain parentheses fulfil two functions is not always
+helpful.  There are often times when a grouping subpattern is required
+without a capturing requirement. If an opening parenthesis is followed
+by a question mark and a colon, the subpattern does not do any
+capturing, and is not counted when computing the number of any
+subsequent capturing subpatterns. For example, if the string @samp{the
+white queen} is matched against the pattern
+
+@verbatim
+         the ((?:red|white) (king|queen))
+@end verbatim
+
+@noindent
+the captured substrings are @samp{white queen} and @samp{queen}, and
+are numbered 1 and 2. The maximum number of capturing subpatterns is
+65535.
+
+As a convenient shorthand, if any option settings are required at the
+start of a non-capturing subpattern, the option letters may appear
+between the @samp{?} and the @samp{:}. Thus the two patterns
+
+@verbatim
+         (?i:saturday|sunday)
+         (?:(?i)saturday|sunday)
+@end verbatim
+
+@noindent
+match exactly the same set of strings. Because alternative branches
+are tried from left to right, and options are not reset until the end
+of the subpattern is reached, an option setting in one branch does
+affect subsequent branches, so the above patterns match @samp{SUNDAY}
+as well as @samp{Saturday}.
+
+@subsubheading Duplicate Subpattern Numbers
+
+Perl 5.10 introduced a feature whereby each alternative in a
+subpattern uses the same numbers for its capturing parentheses. Such a
+subpattern starts with @samp{(?|} and is itself a non-capturing
+subpattern. For example, consider this pattern:
+
+@verbatim
+         (?|(Sat)ur|(Sun))day
+@end verbatim
+
+@noindent
+Because the two alternatives are inside a @samp{(?|} group, both sets
+of capturing parentheses are numbered one. Thus, when the pattern
+matches, you can look at captured substring number one, whichever
+alternative matched. This construct is useful when you want to capture
+part, but not all, of one of a number of alternatives. Inside a
+@samp{(?|} group, parentheses are numbered as usual, but the number is
+reset at the start of each branch. The numbers of any capturing
+buffers that follow the subpattern start after the highest number used
+in any branch. The following example is taken from the Perl
+documentation.  The numbers underneath show in which buffer the
+captured content will be stored.
+
+@verbatim
+  # before  ---------------branch-reset----------- after
+  / ( a )  (?| x ( y ) z | (p (q) r) | (t) u (v) ) ( z ) /x
+  # 1            2         2  3        2     3     4
+@end verbatim
+
+@noindent
+A backreference or a recursive call to a numbered subpattern always
+refers to the first one in the pattern with the given number.
+
+An alternative approach to using this ``branch reset'' feature is to
+use duplicate named subpatterns, as described in the next section.
+
+@subsubheading Named Subpatterns
+
+Identifying capturing parentheses by number is simple, but it can be
+very hard to keep track of the numbers in complicated regular
+expressions. Furthermore, if an expression is modified, the numbers
+may change. To help with this difficulty, PCRE supports the naming of
+subpatterns. This feature was not added to Perl until release
+5.10. Python had the feature earlier, and PCRE introduced it at
+release 4.0, using the Python syntax. PCRE now supports both the Perl
+and the Python syntax.
+
+In PCRE, a subpattern can be named in one of three ways:
+@samp{(?<@var{name}>...)} or @samp{(?'@var{name}'...)} as in Perl, or
+@samp{(?P<@var{name}>...)} as in Python. References to capturing
+parentheses from other parts of the pattern, such as backreferences,
+recursion, and conditions, can be made by name as well as by number.
+
+Names consist of up to 32 alphanumeric characters and
+underscores. Named capturing parentheses are still allocated numbers
+as well as names, exactly as if the names were not present.
+
+By default, a name must be unique within a pattern, but it is possible
+to relax this constraint by setting the @samp{(?J)} option. This can
+be useful for patterns where only one instance of the named
+parentheses can match. Suppose you want to match the name of a
+weekday, either as a 3-letter abbreviation or as the full name, and in
+both cases you want to extract the abbreviation. This pattern
+(ignoring the line breaks) does the job:
+
+@verbatim
+         (?Jx)
+         (?<DN>Mon|Fri|Sun)(?:day)?|
+         (?<DN>Tue)(?:sday)?|
+         (?<DN>Wed)(?:nesday)?|
+         (?<DN>Thu)(?:rsday)?|
+         (?<DN>Sat)(?:urday)?
+@end verbatim
+
+@noindent
+There are five capturing substrings, but only one is ever set after a
+match.  (An alternative way of solving this problem is to use a
+``branch reset'' subpattern, as described in the previous section.)
+
+@subsubheading Repetition
+
+Repetition is specified by @dfn{quantifiers}, which can follow any of
+the following items:
+
+@itemize @bullet
+@item
+  a literal data character
+@item
+  the dot metacharacter
+@item
+  the @samp{\C} escape sequence
+@item
+  the @samp{\X} escape sequence (in UTF-8 mode with Unicode properties)
+@item
+  the @samp{\R} escape sequence
+@item
+  an escape such as @samp{\d} that matches a single character
+@item
+  a character class
+@item
+  a back reference (see next section)
+@item
+  a parenthesized subpattern (unless it is an assertion)
+@end itemize
+
+The general repetition quantifier specifies a minimum and maximum
+number of permitted matches, by giving the two numbers in curly
+brackets (braces), separated by a comma. The numbers must be less than
+65536, and the first must be less than or equal to the second. For
+example:
+
+@verbatim
+         z{2,4}
+@end verbatim
+
+@noindent
+matches @samp{zz}, @samp{zzz}, or @samp{zzzz}. A closing brace on its
+own is not a special character. If the second number is omitted, but
+the comma is present, there is no upper limit; if the second number
+and the comma are both omitted, the quantifier specifies an exact
+number of required matches. Thus
+
+@verbatim
+         [aeiou]{3,}
+@end verbatim
+
+@noindent
+matches at least 3 successive vowels, but may match many more, while
+
+@verbatim
+         \d{8}
+@end verbatim
+
+@noindent
+matches exactly 8 digits. An opening curly bracket that appears in a
+position where a quantifier is not allowed, or one that does not match
+the syntax of a quantifier, is taken as a literal character. For
+example, @samp{@{,6@}} is not a quantifier, but a literal string of four
+characters.
+
+In UTF-8 mode, quantifiers apply to UTF-8 characters rather than to
+individual bytes. Thus, for example, @samp{\x@{100@}@{2@}} matches two
+UTF-8 characters, each of which is represented by a two-byte
+sequence. Similarly, @samp{\X@{3@}} matches three Unicode extended
+sequences, each of which may be several bytes long (and they may be of
+different lengths).
+
+The quantifier @samp{@{0@}} is permitted, causing the expression to
+behave as if the previous item and the quantifier were not present.
+
+For convenience, the three most common quantifiers have
+single-character abbreviations:
+
+@table @code
+@itemx *
+is equivalent to @{0,@}
+@itemx +
+is equivalent to @{1,@}
+@itemx ?
+is equivalent to @{0,1@}
+@end table
+
+It is possible to construct infinite loops by following a subpattern that can
+match no characters with a quantifier that has no upper limit, for example:
+
+@verbatim
+         (a?)*
+@end verbatim
+
+@noindent
+Earlier versions of Perl and PCRE used to give an error at compile
+time for such patterns. However, because there are cases where this
+can be useful, such patterns are now accepted, but if any repetition
+of the subpattern does in fact match no characters, the loop is
+forcibly broken.
+
+By default, the quantifiers are @dfn{greedy}, that is, they match as
+much as possible (up to the maximum number of permitted times),
+without causing the rest of the pattern to fail. The classic example
+of where this gives problems is in trying to match comments in C
+programs. These appear between @samp{/*} and @samp{*/}, and within the
+comment, individual @samp{*} and @samp{/} characters may appear. An
+attempt to match C comments by applying the pattern
+
+@verbatim
+         /\*.*\*/
+@end verbatim
+
+@noindent
+to the string
+
+@verbatim
+         /* first comment */  not comment  /* second comment */
+@end verbatim
+
+@noindent
+fails, because it matches the entire string owing to the greediness of
+the @samp{.*} item.
+
+However, if a quantifier is followed by a question mark, it ceases to
+be greedy, and instead matches the minimum number of times possible,
+so the pattern
+
+@verbatim
+         /\*.*?\*/
+@end verbatim
+
+@noindent
+does the right thing with the C comments. The meaning of the various
+quantifiers is not otherwise changed, just the preferred number of
+matches.  Do not confuse this use of question mark with its use as a
+quantifier in its own right. Because it has two uses, it can sometimes
+appear doubled, as in
+
+@verbatim
+         \d??\d
+@end verbatim
+
+@noindent
+which matches one digit by preference, but can match two if that is the only
+way the rest of the pattern matches.
+
+If the @samp{(?U)} option is set (an option that is not available in
+Perl), the quantifiers are not greedy by default, but individual ones
+can be made greedy by following them with a question mark. In other
+words, it inverts the default behaviour.
+
+When a parenthesized subpattern is quantified with a minimum repeat count that
+is greater than 1 or with a limited maximum, more memory is required for the
+compiled pattern, in proportion to the size of the minimum or maximum.
+
+If a pattern starts with @samp{.*} or @samp{.@{0,@}} and the
+@samp{(?s)} option is set, thus allowing the dot to match newlines,
+the pattern is implicitly anchored, because whatever follows will be
+tried against every character position in the subject string, so there
+is no point in retrying the overall match at any position after the
+first. PCRE normally treats such a pattern as though it were preceded
+by @samp{\A}.
+
+In cases where it is known that the subject string contains no
+newlines, it is worth setting @samp{(?s)} in order to obtain this
+optimization, or alternatively using @samp{^} or @samp{\A} to indicate
+anchoring explicitly.
+
+However, there is one situation where the optimization cannot be
+used. When .* is inside capturing parentheses that are the subject of
+a backreference elsewhere in the pattern, a match at the start may
+fail where a later one succeeds. Consider, for example:
+
+@verbatim
+         (.*)abc\1
+@end verbatim
+
+@noindent
+If the subject is @samp{xyz123abc123} the match point is the fourth
+character. For this reason, such a pattern is not implicitly anchored.
+
+When a capturing subpattern is repeated, the value captured is the
+substring that matched the final iteration. For example, after
+
+@verbatim
+         (tweedle[dume]{3}\s*)+
+@end verbatim
+
+@noindent
+has matched @samp{tweedledum tweedledee} the value of the captured
+substring is @samp{tweedledee}. However, if there are nested capturing
+subpatterns, the corresponding captured values may have been set in
+previous iterations. For example, after
+
+@verbatim
+         (a|(b))+
+@end verbatim
+
+@noindent
+matches @samp{aba} the value of the second captured substring is @samp{b}.
+
+@subsubheading Atomic Grouping and Possessive Quantifiers
+
+With both maximizing (@dfn{greedy}) and minimizing (@dfn{ungreedy} or
+@dfn{lazy}) repetition, failure of what follows normally causes the
+repeated item to be re-evaluated to see if a different number of
+repeats allows the rest of the pattern to match. Sometimes it is
+useful to prevent this, either to change the nature of the match, or
+to cause it fail earlier than it otherwise might, when the author of
+the pattern knows there is no point in carrying on.
+
+Consider, for example, the pattern @samp{\d+foo} when applied to the
+subject line
+
+@verbatim
+         123456bar
+@end verbatim
+
+After matching all 6 digits and then failing to match @samp{foo}, the
+normal action of the matcher is to try again with only 5 digits
+matching the @samp{\d+} item, and then with 4, and so on, before
+ultimately failing. @dfn{Atomic grouping} (a term taken from Jeffrey
+Friedl's book) provides the means for specifying that once a
+subpattern has matched, it is not to be re-evaluated in this way.
+
+If we use atomic grouping for the previous example, the matcher gives
+up immediately on failing to match @samp{foo} the first time. The
+notation is a kind of special parenthesis, starting with @samp{(?>} as in
+this example:
+
+@verbatim
+         (?>\d+)foo
+@end verbatim
+
+@noindent
+This kind of parenthesis ``locks up'' the part of the pattern it
+contains once it has matched, and a failure further into the pattern
+is prevented from backtracking into it. Backtracking past it to
+previous items, however, works as normal.  Atomic grouping subpatterns
+are not capturing subpatterns.
+
+An alternative description is that a subpattern of this type matches
+the string of characters that an identical standalone pattern would
+match, if anchored at the current point in the subject string.
+
+Simple cases such as the above example can be thought of as a
+maximizing repeat that must swallow everything it can. So, while both
+@samp{\d+} and @samp{\d+?} are prepared to adjust the number of digits
+they match in order to make the rest of the pattern match,
+@samp{(?>\d+)} can only match an entire sequence of digits.
+
+Atomic groups in general can of course contain arbitrarily complicated
+subpatterns, and can be nested. However, when the subpattern for an
+atomic group is just a single repeated item, as in the example above,
+a simpler notation, called a @dfn{possessive quantifier}, can be
+used. This consists of an additional @samp{+} character following a
+quantifier. Using this notation, the previous example can be rewritten
+as
+
+@verbatim
+         \d++foo
+@end verbatim
+
+@noindent
+Note that a possessive quantifier can be used with an entire group, for
+example:
+
+@verbatim
+         (abc|xyz){2,3}+
+@end verbatim
+
+@noindent
+Possessive quantifiers are always greedy; the setting of the
+@samp{(?U)} option is ignored. They are a convenient notation for the
+simpler forms of atomic group. However, there is no difference in the
+meaning of a possessive quantifier and the equivalent atomic group,
+though there may be a performance difference; possessive quantifiers
+should be slightly faster.
+
+The possessive quantifier syntax is an extension to the Perl 5.8
+syntax.  Jeffrey Friedl originated the idea (and the name) in the
+first edition of his book. Mike McCloskey liked it, so implemented it
+when he built Sun's Java package, and PCRE copied it from there. It
+ultimately found its way into Perl at release 5.10.
+
+PCRE has an optimization that automatically ``possessifies'' certain
+simple pattern constructs. For example, the sequence @samp{A+B} is
+treated as @samp{A++B} because there is no point in backtracking into
+a sequence of @samp{A}s when @samp{B} must follow.
+
+When a pattern contains an unlimited repeat inside a subpattern that
+can itself be repeated an unlimited number of times, the use of an
+atomic group is the only way to avoid some failing matches taking a
+very long time indeed. The pattern
+
+@verbatim
+         (\D+|<\d+>)*[!?]
+@end verbatim
+
+@noindent
+matches an unlimited number of substrings that either consist of
+non-digits, or digits enclosed in @samp{<>}, followed by either
+@samp{!} or @samp{?}. When it matches, it runs quickly. However, if it
+is applied to
+
+@verbatim
+         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+@end verbatim
+
+@noindent
+it takes a long time before reporting failure. This is because the
+string can be divided between the internal @samp{\D+} repeat and the
+external @samp{*} repeat in a large number of ways, and all have to be
+tried. (The example uses @samp{[!?]} rather than a single character at
+the end, because both PCRE and Perl have an optimization that allows
+for fast failure when a single character is used. They remember the
+last single character that is required for a match, and fail early if
+it is not present in the string.) If the pattern is changed so that it
+uses an atomic group, like this:
+
+@verbatim
+         ((?>\D+)|<\d+>)*[!?]
+@end verbatim
+
+@noindent
+sequences of non-digits cannot be broken, and failure happens quickly.
+
+@subsubheading Back References
+
+Outside a character class, a backslash followed by a digit greater
+than 0 (and possibly further digits) is a back reference to a
+capturing subpattern earlier (that is, to its left) in the pattern,
+provided there have been that many previous capturing left
+parentheses.
+
+However, if the decimal number following the backslash is less than
+10, it is always taken as a back reference, and causes an error only
+if there are not that many capturing left parentheses in the entire
+pattern. In other words, the parentheses that are referenced need not
+be to the left of the reference for numbers less than 10. A ``forward
+back reference'' of this type can make sense when a repetition is
+involved and the subpattern to the right has participated in an
+earlier iteration.
+
+It is not possible to have a numerical ``forward back reference'' to a
+subpattern whose number is 10 or more using this syntax because a
+sequence such as @samp{\50} is interpreted as a character defined in
+octal. See the subsection entitled ``Non-printing characters'' above
+for further details of the handling of digits following a
+backslash. There is no such problem when named parentheses are used. A
+back reference to any subpattern is possible using named parentheses
+(see below).
+
+Another way of avoiding the ambiguity inherent in the use of digits
+following a backslash is to use the @samp{\g} escape sequence, which
+is a feature introduced in Perl 5.10. This escape must be followed by
+an unsigned number or a negative number, optionally enclosed in
+braces. These examples are all identical:
+
+@verbatim
+         (ring), \1
+         (ring), \g1
+         (ring), \g{1}
+@end verbatim
+
+An unsigned number specifies an absolute reference without the
+ambiguity that is present in the older syntax. It is also useful when
+literal digits follow the reference. A negative number is a relative
+reference. Consider this example:
+
+@verbatim
+         (abc(def)ghi)\g{-1}
+@end verbatim
+
+@noindent
+The sequence @samp{\g@{-1@}} is a reference to the most recently
+started capturing subpattern before @samp{\g}, that is, is it
+equivalent to @samp{\2}. Similarly, @samp{\g@{-2@}} would be
+equivalent to @samp{\1}. The use of relative references can be helpful
+in long patterns, and also in patterns that are created by joining
+together fragments that contain references within themselves.
+
+A back reference matches whatever actually matched the capturing
+subpattern in the current subject string, rather than anything
+matching the subpattern itself (see ``Subpatterns as subroutines'' below
+for a way of doing that). So the pattern
+
+@verbatim
+         (sens|respons)e and \1ibility
+@end verbatim
+
+@noindent
+matches @samp{sense and sensibility} and @samp{response and
+responsibility}, but not @samp{sense and responsibility}. If caseful
+matching is in force at the time of the back reference, the case of
+letters is relevant. For example,
+
+@verbatim
+         ((?i)rah)\s+\1
+@end verbatim
+
+@noindent
+matches @samp{rah rah} and @samp{RAH RAH}, but not @samp{RAH rah},
+even though the original capturing subpattern is matched caselessly.
+
+There are several different ways of writing back references to named
+subpatterns. The .NET syntax @samp{\k@{name@}} and the Perl syntax
+@samp{\k<name>} or @samp{\k'name'} are supported, as is the Python
+syntax (?P=name). Perl 5.10's unified back reference syntax, in which
+@samp{\g} can be used for both numeric and named references, is also
+supported. We could rewrite the above example in any of the following
+ways:
+
+@verbatim
+         (?<p1>(?i)rah)\s+\k<p1>
+         (?'p1'(?i)rah)\s+\k{p1}
+         (?P<p1>(?i)rah)\s+(?P=p1)
+         (?<p1>(?i)rah)\s+\g{p1}
+@end verbatim
+
+@noindent
+A subpattern that is referenced by name may appear in the pattern
+before or after the reference.
+
+There may be more than one back reference to the same subpattern. If a
+subpattern has not actually been used in a particular match, any back
+references to it always fail. For example, the pattern
+
+@verbatim
+         (a|(bc))\2
+@end verbatim
+
+@noindent
+always fails if it starts to match @samp{a} rather than
+@samp{bc}. Because there may be many capturing parentheses in a
+pattern, all digits following the backslash are taken as part of a
+potential back reference number. If the pattern continues with a digit
+character, some delimiter must be used to terminate the back
+reference. If the @samp{(?x)} option is set, this can be whitespace.
+Otherwise an empty comment (see ``Comments'' below) can be used.
+
+A back reference that occurs inside the parentheses to which it refers
+fails when the subpattern is first used, so, for example, @samp{(a\1)}
+never matches.  However, such references can be useful inside repeated
+subpatterns. For example, the pattern
+
+@verbatim
+         (a|b\1)+
+@end verbatim
+
+@noindent
+matches any number of @samp{a}s and also @samp{aba}, @samp{ababbaa}
+etc. At each iteration of the subpattern, the back reference matches
+the character string corresponding to the previous iteration. In order
+for this to work, the pattern must be such that the first iteration
+does not need to match the back reference. This can be done using
+alternation, as in the example above, or by a quantifier with a
+minimum of zero.
+
+@subsubheading Assertions
+
+An assertion is a test on the characters following or preceding the
+current matching point that does not actually consume any
+characters. The simple assertions coded as @samp{\b}, @samp{\B},
+@samp{\A}, @samp{\G}, @samp{\Z}, @samp{\z}, @samp{^} and @samp{$} are
+described above.
+
+More complicated assertions are coded as subpatterns. There are two
+kinds: those that look ahead of the current position in the subject
+string, and those that look behind it. An assertion subpattern is
+matched in the normal way, except that it does not cause the current
+matching position to be changed.
+
+Assertion subpatterns are not capturing subpatterns, and may not be
+repeated, because it makes no sense to assert the same thing several
+times. If any kind of assertion contains capturing subpatterns within
+it, these are counted for the purposes of numbering the capturing
+subpatterns in the whole pattern.  However, substring capturing is
+carried out only for positive assertions, because it does not make
+sense for negative assertions.
+
+@subsubheading Lookahead Assertions
+
+Lookahead assertions start with @samp{(?=} for positive assertions and
+@samp{(?!}  for negative assertions. For example,
+
+@verbatim
+         \w+(?=;)
+@end verbatim
+
+@noindent
+matches a word followed by a semicolon, but does not include the semicolon in
+the match, and
+
+@verbatim
+         foo(?!bar)
+@end verbatim
+
+@noindent
+matches any occurrence of @samp{foo} that is not followed by
+@samp{bar}. Note that the apparently similar pattern
+
+@verbatim
+         (?!foo)bar
+@end verbatim
+
+@noindent
+does not find an occurrence of @samp{bar} that is preceded by
+something other than @samp{foo}; it finds any occurrence of @samp{bar}
+whatsoever, because the assertion @samp{(?!foo)} is always true when
+the next three characters are @samp{bar}. A lookbehind assertion is
+needed to achieve the other effect.
+
+If you want to force a matching failure at some point in a pattern,
+the most convenient way to do it is with @samp{(?!)} because an empty
+string always matches, so an assertion that requires there not to be
+an empty string must always fail.
+
+@subsubheading Lookbehind Assertions
+
+Lookbehind assertions start with @samp{(?<=} for positive assertions
+and @samp{(?<!}  for negative assertions. For example,
+
+@verbatim
+         (?<!foo)bar
+@end verbatim
+
+@noindent
+matches an occurrence of @samp{bar} that is not preceded by
+@samp{foo}. The contents of a lookbehind assertion are restricted such
+that all the strings it matches must have a fixed length. However, if
+there are several top-level alternatives, they do not all have to have
+the same fixed length. Thus
+
+@verbatim
+         (?<=bullock|donkey)
+@end verbatim
+
+@noindent
+is permitted, but
+
+@verbatim
+         (?<!dogs?|cats?)
+@end verbatim
+
+@noindent
+causes an error at compile time. Branches that match different length
+strings are permitted only at the top level of a lookbehind
+assertion. This is an extension compared with Perl (at least for 5.8),
+which requires all branches to match the same length of string. An
+assertion such as
+
+@verbatim
+         (?<=ab(c|de))
+@end verbatim
+
+@noindent
+is not permitted, because its single top-level branch can match two different
+lengths, but it is acceptable if rewritten to use two top-level branches:
+
+@verbatim
+         (?<=abc|abde)
+@end verbatim
+
+In some cases, the Perl 5.10 escape sequence @samp{\K} (see above) can
+be used instead of a lookbehind assertion; this is not restricted to a
+fixed-length.
+
+The implementation of lookbehind assertions is, for each alternative,
+to temporarily move the current position back by the fixed length and
+then try to match. If there are insufficient characters before the
+current position, the assertion fails.
+
+PCRE does not allow the @samp{\C} escape (which matches a single byte
+in UTF-8 mode) to appear in lookbehind assertions, because it makes it
+impossible to calculate the length of the lookbehind. The @samp{\X}
+and @samp{\R} escapes, which can match different numbers of bytes, are
+also not permitted.
+
+Possessive quantifiers can be used in conjunction with lookbehind
+assertions to specify efficient matching at the end of the subject
+string. Consider a simple pattern such as
+
+@verbatim
+         abcd$
+@end verbatim
+
+@noindent
+when applied to a long string that does not match. Because matching
+proceeds from left to right, PCRE will look for each @samp{a} in the
+subject and then see if what follows matches the rest of the
+pattern. If the pattern is specified as
+
+@verbatim
+         ^.*abcd$
+@end verbatim
+
+@noindent
+the initial @samp{.*} matches the entire string at first, but when this fails
+(because there is no following @samp{a}), it backtracks to match all
+but the last character, then all but the last two characters, and so
+on. Once again the search for @samp{a} covers the entire string, from
+right to left, so we are no better off. However, if the pattern is
+written as
+
+@verbatim
+         ^.*+(?<=abcd)
+@end verbatim
+
+@noindent
+there can be no backtracking for the @samp{.*+} item; it can match
+only the entire string. The subsequent lookbehind assertion does a
+single test on the last four characters. If it fails, the match fails
+immediately. For long strings, this approach makes a significant
+difference to the processing time.
+
+@subsubheading Using multiple assertions
+
+Several assertions (of any sort) may occur in succession. For example,
+
+@verbatim
+         (?<=\d{3})(?<!999)foo
+@end verbatim
+
+@noindent
+matches @samp{foo} preceded by three digits that are not
+@samp{999}. Notice that each of the assertions is applied
+independently at the same point in the subject string. First there is
+a check that the previous three characters are all digits, and then
+there is a check that the same three characters are not @samp{999}.
+This pattern does @emph{not} match @samp{foo} preceded by six
+characters, the first of which are digits and the last three of which
+are not @samp{999}. For example, it doesn't match @samp{123abcfoo}. A
+pattern to do that is
+
+@verbatim
+         (?<=\d{3}...)(?<!999)foo
+@end verbatim
+
+@noindent
+This time the first assertion looks at the preceding six characters,
+checking that the first three are digits, and then the second
+assertion checks that the preceding three characters are not
+@samp{999}.
+
+Assertions can be nested in any combination. For example,
+
+@verbatim
+         (?<=(?<!foo)bar)baz
+@end verbatim
+
+@noindent
+matches an occurrence of @samp{baz} that is preceded by @samp{bar}
+which in turn is not preceded by @samp{foo}, while
+
+@verbatim
+         (?<=\d{3}(?!999)...)foo
+@end verbatim
+
+@noindent
+is another pattern that matches @samp{foo} preceded by three digits
+and any three characters that are not @samp{999}.
+
+@subsubheading Conditional Subpatterns
+
+It is possible to cause the matching process to obey a subpattern
+conditionally or to choose between two alternative subpatterns,
+depending on the result of an assertion, or whether a previous
+capturing subpattern matched or not. The two possible forms of
+conditional subpattern are
+
+@itemize @bullet
+@item
+         (?(@var{condition})@var{yes-pattern})
+@item
+         (?(@var{condition})@var{yes-pattern}|@var{no-pattern})
+@end itemize
+
+If the @var{condition} is satisfied, the @var{yes-pattern} is used;
+otherwise the @var{no-pattern} (if present) is used. If there are more
+than two alternatives in the subpattern, a compile-time error occurs.
+
+There are four kinds of condition: references to subpatterns,
+references to recursion, a pseudo-condition called @samp{DEFINE}, and
+assertions.
+
+@subsubheading Checking for a used subpattern by number
+
+If the text between the parentheses consists of a sequence of digits,
+the condition is true if the capturing subpattern of that number has
+previously matched. An alternative notation is to precede the digits
+with a plus or minus sign. In this case, the subpattern number is
+relative rather than absolute.  The most recently opened parentheses
+can be referenced by @samp{(?(-1)}, the next most recent by
+@samp{(?(-2)}, and so on. In looping constructs it can also make sense
+to refer to subsequent groups with constructs such as @samp{(?(+2)}.
+
+Consider the following pattern, which contains non-significant white
+space to make it more readable and to divide it into three parts for
+ease of discussion (assume a preceding @samp{(?x)}):
+
+@verbatim
+         ( \( )?    [^()]+    (?(1) \) )
+@end verbatim
+
+The first part matches an optional opening parenthesis, and if that
+character is present, sets it as the first captured substring. The
+second part matches one or more characters that are not
+parentheses. The third part is a conditional subpattern that tests
+whether the first set of parentheses matched or not. If they did, that
+is, if subject started with an opening parenthesis, the condition is
+true, and so the yes-pattern is executed and a closing parenthesis is
+required. Otherwise, since no-pattern is not present, the subpattern
+matches nothing. In other words, this pattern matches a sequence of
+non-parentheses, optionally enclosed in parentheses.
+
+If you were embedding this pattern in a larger one, you could use a
+relative reference:
+
+@verbatim
+         ...other stuff... ( \( )?    [^()]+    (?(-1) \) ) ...
+@end verbatim
+
+This makes the fragment independent of the parentheses in the larger pattern.
+
+@subsubheading Checking for a used subpattern by name
+
+Perl uses the syntax @samp{(?(<name>)...)} or @samp{(?('name')...)} to
+test for a used subpattern by name. For compatibility with earlier
+versions of PCRE, which had this facility before Perl, the syntax
+@samp{(?(name)...)} is also recognized. However, there is a possible
+ambiguity with this syntax, because subpattern names may consist
+entirely of digits. PCRE looks first for a named subpattern; if it
+cannot find one and the name consists entirely of digits, PCRE looks
+for a subpattern of that number, which must be greater than
+zero. Using subpattern names that consist entirely of digits is not
+recommended.
+
+Rewriting the above example to use a named subpattern gives this:
+
+@verbatim
+         (?<OPEN> \( )?    [^()]+    (?(<OPEN>) \) )
+@end verbatim
+
+@subsubheading Checking for pattern recursion
+
+If the condition is the string @samp{(R)}, and there is no subpattern
+with the name @samp{R}, the condition is true if a recursive call to
+the whole pattern or any subpattern has been made. If digits or a name
+preceded by ampersand follow the letter @samp{R}, for example:
+
+@verbatim
+         (?(R3)...) or (?(R&name)...)
+@end verbatim
+
+@noindent
+the condition is true if the most recent recursion is into the
+subpattern whose number or name is given. This condition does not
+check the entire recursion stack.
+
+At ``top level,'' all these recursion test conditions are false. Recursive
+patterns are described below.
+
+@subsubheading Defining subpatterns for use by reference only
+
+If the condition is the string @samp{(DEFINE)}, and there is no
+subpattern with the name @samp{DEFINE}, the condition is always
+false. In this case, there may be only one alternative in the
+subpattern. It is always skipped if control reaches this point in the
+pattern; the idea of DEFINE is that it can be used to define
+@dfn{subroutines} that can be referenced from elsewhere. (The use of
+subroutines is described below.) For example, a pattern to match an
+IPv4 address could be written like this (ignore whitespace and line
+breaks):
+
+@verbatim
+         (?(DEFINE) (?<byte> 2[0-4]\d | 25[0-5] | 1\d\d | [1-9]?\d) )
+         \b (?&byte) (\.(?&byte)){3} \b
+@end verbatim
+
+The first part of the pattern is a DEFINE group inside which a another
+group named "byte" is defined. This matches an individual component of
+an IPv4 address (a number less than 256). When matching takes place,
+this part of the pattern is skipped because DEFINE acts like a false
+condition.
+
+The rest of the pattern uses references to the named group to match
+the four dot-separated components of an IPv4 address, insisting on a
+word boundary at each end.
+
+@subsubheading Assertion conditions
+
+If the condition is not in any of the above formats, it must be an
+assertion.  This may be a positive or negative lookahead or lookbehind
+assertion. Consider this pattern, again containing non-significant
+white space, and with the two alternatives on the second line:
+
+@verbatim
+         (?(?=[^a-z]*[a-z])
+         \d{2}-[a-z]{3}-\d{2}  |  \d{2}-\d{2}-\d{2} )
+@end verbatim
+
+The condition is a positive lookahead assertion that matches an
+optional sequence of non-letters followed by a letter. In other words,
+it tests for the presence of at least one letter in the subject. If a
+letter is found, the subject is matched against the first alternative;
+otherwise it is matched against the second. This pattern matches
+strings in one of the two forms @samp{@var{dd}-@var{aaa}-@var{dd}} or
+@samp{@var{dd}-@var{dd}-@var{dd}}, where @var{aaa} are letters and
+@var{dd} are digits.
+
+@subsubheading Comments
+
+The sequence @samp{(?#} marks the start of a comment that continues up
+to the next closing parenthesis. Nested parentheses are not
+permitted. The characters that make up a comment play no part in the
+pattern matching at all.
+
+If the @samp{(?x)} option is set, an unescaped @samp{#} character
+outside a character class introduces a comment that continues to
+immediately after the next newline in the pattern.
+
+@subsubheading Recursive Patterns
+
+Consider the problem of matching a string in parentheses, allowing for
+unlimited nested parentheses. Without the use of recursion, the best
+that can be done is to use a pattern that matches up to some fixed
+depth of nesting. It is not possible to handle an arbitrary nesting
+depth.
+
+PCRE supports special syntax for recursion of the entire pattern, and
+also for individual subpattern recursion. After its introduction in
+PCRE and Python, this kind of recursion was introduced into Perl at
+release 5.10.
+
+A special item that consists of @samp{(?} followed by a number greater
+than zero and a closing parenthesis is a recursive call of the
+subpattern of the given number, provided that it occurs inside that
+subpattern. (If not, it is a subroutine call, which is described in
+the next section.) The special item @samp{(?R)} or @samp{(?0)} is a
+recursive call of the entire regular expression.
+
+In PCRE (like Python, but unlike Perl), a recursive subpattern call is
+always treated as an atomic group. That is, once it has matched some
+of the subject string, it is never re-entered, even if it contains
+untried alternatives and there is a subsequent matching failure.
+
+This PCRE pattern solves the nested parentheses problem (whitespace is
+insignificant):
+
+@verbatim
+         \( ( (?>[^()]+) | (?R) )* \)
+@end verbatim
+
+First it matches an opening parenthesis. Then it matches any number of
+substrings which can either be a sequence of non-parentheses, or a
+recursive match of the pattern itself (that is, a correctly
+parenthesized substring).  Finally there is a closing parenthesis.
+
+If this were part of a larger pattern, you would not want to recurse
+the entire pattern, so instead you could use this:
+
+@verbatim
+         ( \( ( (?>[^()]+) | (?1) )* \) )
+@end verbatim
+
+@noindent
+We have put the pattern into parentheses, and caused the recursion to
+refer to them instead of the whole pattern.
+
+In a larger pattern, keeping track of parenthesis numbers can be
+tricky. This is made easier by the use of relative references. (A Perl
+5.10 feature.)  Instead of @samp{(?1)} in the pattern above you can
+write @samp{(?-2)} to refer to the second most recently opened
+parentheses preceding the recursion. In other words, a negative number
+counts capturing parentheses leftwards from the point at which it is
+encountered.
+
+It is also possible to refer to subsequently opened parentheses, by
+writing references such as @samp{(?+2)}. However, these cannot be
+recursive because the reference is not inside the parentheses that are
+referenced. They are always subroutine calls, as described in the next
+section.
+
+An alternative approach is to use named parentheses instead. The Perl
+syntax for this is @samp{(?&name)}; PCRE's earlier syntax
+@samp{(?P>name)} is also supported. We could rewrite the above example
+as follows:
+
+@verbatim
+         (?<pn> \( ( (?>[^()]+) | (?&pn) )* \) )
+@end verbatim
+
+@noindent
+If there is more than one subpattern with the same name, the earliest
+one is used.
+
+This particular example pattern that we have been looking at contains
+nested unlimited repeats, and so the use of atomic grouping for
+matching strings of non-parentheses is important when applying the
+pattern to strings that do not match. For example, when this pattern
+is applied to
+
+@verbatim
+         (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa()
+@end verbatim
+
+@noindent
+it fails quickly. However, if atomic grouping is not used, the match
+runs for a very long time indeed because there are so many different
+ways the @samp{+} and @samp{*} repeats can carve up the subject, and
+all have to be tested before failure can be reported.
+
+At the end of a match, the values set for any capturing subpatterns
+are those from the outermost level of the recursion at which the
+subpattern value is set.  If the pattern above is matched against
+
+@verbatim
+         (ab(cd)ef)
+@end verbatim
+
+@noindent
+the value for the capturing parentheses is @samp{ef}, which is the
+last value taken on at the top level. If additional parentheses are
+added, giving
+
+@verbatim
+         \( ( ( (?>[^()]+) | (?R) )* ) \)
+            ^                        ^
+@end example
+
+@noindent
+the string they capture is @samp{ab(cd)ef}, the contents of the top
+level parentheses.
+
+Do not confuse the @samp{(?R)} item with the condition @samp{(?(R)},
+which tests for recursion.  Consider this pattern, which matches text
+in angle brackets, allowing for arbitrary nesting. Only digits are
+allowed in nested brackets (that is, when recursing), whereas any
+characters are permitted at the outer level.
+
+@verbatim
+         < (?: (?(R) \d++  | [^<>]*+) | (?R)) * >
+@end verbatim
+
+@noindent
+In this pattern, @samp{(?(R)} is the start of a conditional
+subpattern, with two different alternatives for the recursive and
+non-recursive cases. The @samp{(?R)} item is the actual recursive
+call.
+
+@subsubheading Subpatterns as Subroutines
+
+If the syntax for a recursive subpattern reference (either by number
+or by name) is used outside the parentheses to which it refers, it
+operates like a subroutine in a programming language. The called
+subpattern may be defined before or after the reference. A numbered
+reference can be absolute or relative, as in these examples:
+
+@verbatim
+         (...(absolute)...)...(?2)...
+         (...(relative)...)...(?-1)...
+         (...(?+1)...(relative)...
+@end verbatim
+
+An earlier example pointed out that the pattern
+
+@verbatim
+         (sens|respons)e and \1ibility
+@end verbatim
+
+@noindent
+matches @samp{sense and sensibility} and @samp{response and
+responsibility}, but not @samp{sense and responsibility}. If instead
+the pattern
+
+@verbatim
+         (sens|respons)e and (?1)ibility
+@end verbatim
+
+@noindent
+is used, it does match @samp{sense and responsibility} as well as the
+other two strings. Another example is given in the discussion of
+DEFINE above.
+
+Like recursive subpatterns, a subroutine call is always treated as an
+atomic group. That is, once it has matched some of the subject string,
+it is never re-entered, even if it contains untried alternatives and
+there is a subsequent matching failure.
+
+When a subpattern is used as a subroutine, processing options such as
+case-independence are fixed when the subpattern is defined. They
+cannot be changed for different calls. For example, consider this
+pattern:
+
+@verbatim
+         (abc)(?i:(?-1))
+@end verbatim
+
+It matches @samp{abcabc}. It does not match @samp{abcABC} because the
+change of processing option does not affect the called subpattern.
+
+@subsubheading Backtracking Control
+
+Perl 5.10 introduced a number of special @dfn{backtracking control
+verbs}, which are described in the Perl documentation as
+``experimental and subject to change or removal in a future version of
+Perl.'' It goes on to say: ``Their usage in production code should be
+noted to avoid problems during upgrades.'' The same remarks apply to
+the PCRE features described in this section.
+
+The new verbs make use of what was previously invalid syntax: an
+opening parenthesis followed by an asterisk. In Perl, they are
+generally of the form @samp{(*VERB:ARG)} but PCRE does not support the
+use of arguments, so its general form is just @samp{(*VERB)}. Any
+number of these verbs may occur in a pattern. There are two kinds:
+
+@subsubheading Verbs that act immediately
+
+The following verbs act as soon as they are encountered:
+
+@table @code
+@itemx (*ACCEPT)
+
+This verb causes the match to end successfully, skipping the remainder
+of the pattern. When inside a recursion, only the innermost pattern is
+ended immediately. PCRE differs from Perl in what happens if the
+@samp{(*ACCEPT)} is inside capturing parentheses. In Perl, the data so
+far is captured: in PCRE no data is captured. For example:
+
+@verbatim
+         A(A|B(*ACCEPT)|C)D
+@end verbatim
+
+This matches @samp{AB}, @samp{AAD}, or @samp{ACD}, but when it matches
+@samp{AB}, no data is captured.
+
+@itemx (*FAIL) @r{or} (*F)
+
+This verb causes the match to fail, forcing backtracking to occur. It
+is equivalent to @samp{(?!)} but easier to read.  It is not clear
+whether there is any use for this without the ability to execute code
+in the middle of the pattern (which Perl has but PCRE in Monotone does
+not).
+@end table
+
+@subsubheading Verbs that act after backtracking
+
+The following verbs do nothing when they are encountered. Matching
+continues with what follows, but if there is no subsequent match, a
+failure is forced.  The verbs differ in exactly what kind of failure
+occurs.
+
+@table @code
+@itemx (*COMMIT)
+
+This verb causes the whole match to fail outright if the rest of the
+pattern does not match. Even if the pattern is unanchored, no further
+attempts to find a match by advancing the start point take place. Once
+@code{(*COMMIT)} has been passed, the regular expression engine is
+committed to finding a match at the current starting point, or not at
+all. For example:
+
+@verbatim
+         a+(*COMMIT)b
+@end verbatim
+
+This matches @samp{xxaab} but not @samp{aacaab}. It can be thought of
+as a kind of dynamic anchor, or ``I've started, so I must finish.''
+
+@itemx (*PRUNE)
+
+This verb causes the match to fail at the current position if the rest
+of the pattern does not match. If the pattern is unanchored, the
+normal ``bump-along'' advance to the next starting character then
+happens. Backtracking can occur as usual to the left of
+@code{(*PRUNE)}, or when matching to the right of @code{(*PRUNE)}, but
+if there is no match to the right, backtracking cannot cross
+@code{(*PRUNE)}.  In simple cases, the use of @code{(*PRUNE)} is just
+an alternative to an atomic group or possessive quantifier, but there
+are some uses of @code{(*PRUNE)} that cannot be expressed in any other
+way.
+
+@itemx (*SKIP)
+
+This verb is like @code{(*PRUNE)}, except that if the pattern is
+unanchored, the "bumpalong" advance is not to the next character, but
+to the position in the subject where @code{(*SKIP)} was
+encountered. @code{(*SKIP)} signifies that whatever text was matched
+leading up to it cannot be part of a successful match. Consider:
+
+@verbatim
+         a+(*SKIP)b
+@end verbatim
+
+If the subject is @samp{aaaac...}, after the first match attempt fails
+(starting at the first character in the string), the starting point
+skips on to start the next attempt at @samp{c}. Note that a possessive
+quantifer does not have the same effect in this example; although it
+would suppress backtracking during the first match attempt, the second
+attempt would start at the second character instead of skipping on to
+@samp{c}.
+
+@itemx (*THEN)
+
+This verb causes a skip to the next alternation if the rest of the
+pattern does not match. That is, it cancels pending backtracking, but
+only within the current alternation. Its name comes from the
+observation that it can be used for a pattern-based if-then-else
+block:
+
+@verbatim
+         ( COND1 (*THEN) FOO 
+         | COND2 (*THEN) BAR 
+         | COND3 (*THEN) BAZ ) ...
+@end verbatim
+
+If the @samp{COND1} pattern matches, @samp{FOO} is tried (and possibly
+further items after the end of the group if @samp{FOO} succeeds); on
+failure the matcher skips to the second alternative and tries
+@samp{COND2}, without backtracking into COND1. If @code{(*THEN)} is used
+outside of any alternation, it acts exactly like @code{(*PRUNE)}.
+@end table

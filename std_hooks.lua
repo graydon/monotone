@@ -118,17 +118,30 @@ function ignore_file(name)
          io.close(ignfile)
       end
    end
+
+   local warn_reported_file = false
    for i, line in pairs(ignored_files)
    do
-      local pcallstatus, result = pcall(function() return regex.search(line, name) end)
-      if pcallstatus == true then
-          -- no error from the regex.search call
-          if result == true then return true end
-      else
-          -- regex.search had a problem, warn the user their .mtn-ignore file syntax is wrong
-          io.stderr:write("WARNING: the line '" .. line .. "' in your .mtn-ignore file caused error '" .. result .. "'"
-                           .. " while matching filename '" .. name .. "'.\nignoring this regex for all remaining files.\n")
-          table.remove(ignored_files, i)
+      if (line ~= nil) then
+         local pcallstatus, result = pcall(function() 
+	    return regex.search(line, name) 
+	 end)
+         if pcallstatus == true then
+            -- no error from the regex.search call
+            if result == true then return true end
+         else
+            -- regex.search had a problem, warn the user their 
+            -- .mtn-ignore file syntax is wrong
+	    if not warn_reported_file then
+	       io.stderr:write("mtn: warning: while matching file '"
+	       		       .. name .. "':\n")
+	       warn_reported_file = true
+	    end
+            io.stderr:write(".mtn-ignore:" .. i .. ": warning: " .. result
+	    		    .. "\n\t- skipping this regex for "
+			    .. "all remaining files.\n")
+            ignored_files[i] = nil
+         end
       end
    end
 
