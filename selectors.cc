@@ -79,6 +79,9 @@ namespace selectors
           case 'e':
             type = sel_earlier;
             break;
+          case 'p':
+            type = sel_parent;
+            break;
           default:
             W(F("unknown selector type: %c") % sel[0]);
             break;

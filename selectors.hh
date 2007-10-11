@@ -30,6 +30,7 @@ namespace selectors
       sel_cert,
       sel_earlier,
       sel_later,
+      sel_parent,
       sel_unknown
     }
   selector_type;

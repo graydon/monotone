@@ -2874,6 +2874,7 @@ static void selector_to_certname(selector_type ty,
     case selectors::sel_ident:
     case selectors::sel_cert:
     case selectors::sel_unknown:
+    case selectors::sel_parent:
       I(false); // don't do this.
       break;
     }
@@ -2913,6 +2914,11 @@ void database::complete(selector_type ty,
             {
               lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
               lim % text(i->second + "*");
+            }
+          else if (i->first == selectors::sel_parent)
+            {
+              lim.sql_cmd += "SELECT parent AS id FROM revision_ancestry WHERE child GLOB ?";
+              lim % text(i->second + "*"); 
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -3033,7 +3039,7 @@ void database::complete(selector_type ty,
   // will complete either some idents, or cert values, or "unknown"
   // which generally means "author, tag or branch"
 
-  if (ty == selectors::sel_ident)
+  if (ty == selectors::sel_ident || ty == selectors::sel_parent)
     {
       lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
     }

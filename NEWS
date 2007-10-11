@@ -28,6 +28,12 @@
           merge_into_workspace" this way one especially can achieve a
           CVS/SVN style non-modal workspace-based merging.
 
+        - an additional selector type "p" for selecting parent
+          revision(s) was added. This is especially handy in situations
+          like "mtn diff -r p:<revision> -r <revision>", because one no
+          longer has to figure out the parent revision manually via "mtn
+          automate parents <revision>" beforehand.
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly

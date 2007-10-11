@@ -2765,6 +2765,10 @@ syntax (see below)
 @item Identifier selection
 Uses selector type @code{i}. For example, @code{i:0f3a} matches
 revision IDs which begin with @code{0f3a}.
+@item Parent selection
+Uses selector type @code{p}. For example, @code{p:0f3a} matches the
+revision IDs which are the parent of the revision ID which begins with
+@code{0f3a}.
 @item Tag selection
 Uses selector type @code{t}. For example, @code{t:monotone-0.11} matches
 @code{tag} certs where the cert value begins with @code{monotone-0.11}.
