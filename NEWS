@@ -34,6 +34,13 @@
           longer has to figure out the parent revision manually via "mtn
           automate parents <revision>" beforehand.
 
+        - removed the requirement for the external Boost libraries by
+          replacing boost.regex with PCRE (n.v.m.experiment.pcre). A
+          local copy of PCRE is shipped with Monotone, but one can
+          build Monotone against an external PCRE with Autoconf option
+          --with-system-pcre. Additionally, the internal of use regular
+          expressions were reduced, too (n.v.m.deregexp).
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly
