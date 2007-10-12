@@ -275,12 +275,15 @@ IDNA_SOURCES =								\
 
 PCRE_SOURCES =								\
 	pcre/pcre_chartables.c pcre/pcre_compile.c pcre/pcre_config.c	\
-	pcre/pcre_config.h pcre/pcre_dfa_exec.c pcre/pcre_exec.c	\
-	pcre/pcre_fullinfo.c pcre/pcre_get.c pcre/pcre_globals.c	\
-	pcre/pcre.h pcre/pcre_info.c pcre/pcre_internal.h		\
-	pcre/pcre_maketables.c pcre/pcre_refcount.c pcre/pcre_study.c	\
-	pcre/pcre_tables.c pcre/pcre_try_flipped.c pcre/pcre_version.c	\
-	pcre/pcre_xclass.c
+	pcre/pcre_dfa_exec.c pcre/pcre_exec.c pcre/pcre_fullinfo.c	\
+	pcre/pcre_get.c pcre/pcre_globals.c pcre/pcre_info.c		\
+	pcre/pcre_maketables.c pcre/pcre_newline.c			\
+	pcre/pcre_ord2utf8.c pcre/pcre_refcount.c pcre/pcre_study.c	\
+	pcre/pcre_tables.c pcre/pcre_try_flipped.c			\
+	pcre/pcre_ucp_searchfuncs.c pcre/pcre_valid_utf8.c		\
+	pcre/pcre_version.c pcre/pcre_xclass.c pcre/pcre_config.h	\
+	pcre/pcre.h pcre/pcre_internal.h pcre/ucp.h pcre/ucpinternal.h	\
+	pcre/ucptable.h
 
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
@@ -493,6 +496,7 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf			\
 
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
+TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
@@ -512,15 +516,18 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	$(wildcard $(srcdir)/examples/*)				\
 	win32/monotone.iss win32/modpath.iss $(wildcard			\
 	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
-	mac/monotone.pmproj mac/package-intro.rtf audit-includes
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes	\
+	$(TEXI_FRAGMENTS)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.info: monotone.texi version.texi std_hooks.lua
+monotone.info: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS)
 
-monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(PDF_FIGURES)
 
-monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv -f $< $@
@@ -800,7 +807,8 @@ CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.
 apidocs:
 	doxygen doxygen.cfg
 
-monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
+monotone.html: monotone.texi version.texi $(TEXI_FRAGMENTS) \
+	       std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp -r $(srcdir)/figures .; \
 		cp $(srcdir)/texinfo.css .; \

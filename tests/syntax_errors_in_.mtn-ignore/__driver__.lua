@@ -13,4 +13,5 @@ check(get("stdout-ref"))
 check(get("stderr-ref"))
 
 check(samefile("stdout", "stdout-ref"))
-check(samefile("stderr", "stderr-ref"))
+-- the first line of stderr may vary from run to run
+check(tailfile("stderr", 1) == readfile("stderr-ref"))

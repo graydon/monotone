@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-09-30 22:46+0200\n"
+"POT-Creation-Date: 2007-10-10 16:52+0200\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -68,11 +68,11 @@ msgstr "Gibt eine ASCII-Repräsentation des Graphen aus"
 
 #: asciik.cc:375 automate.cc:73 automate.cc:107 automate.cc:157
 #: automate.cc:271 automate.cc:371 automate.cc:399 automate.cc:483
-#: automate.cc:1018 automate.cc:1160 automate.cc:1206 automate.cc:1236
-#: automate.cc:1266 automate.cc:1296 automate.cc:1334 automate.cc:1452
-#: automate.cc:1544 automate.cc:1606 automate.cc:1659 automate.cc:1721
-#: automate.cc:1771 automate.cc:1824 automate.cc:1881 automate.cc:1914
-#: automate.cc:1940 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
+#: automate.cc:1009 automate.cc:1151 automate.cc:1197 automate.cc:1227
+#: automate.cc:1257 automate.cc:1287 automate.cc:1325 automate.cc:1443
+#: automate.cc:1535 automate.cc:1597 automate.cc:1650 automate.cc:1712
+#: automate.cc:1762 automate.cc:1815 automate.cc:1872 automate.cc:1905
+#: automate.cc:1931 cmd_files.cc:232 cmd_files.cc:327 cmd_files.cc:353
 #: cmd_list.cc:644 cmd_ws_commit.cc:638 cmd_ws_commit.cc:685
 #: cmd_ws_commit.cc:735 cmd_ws_commit.cc:787 cmd_ws_commit.cc:905
 #: cmd_ws_commit.cc:949
@@ -88,7 +88,7 @@ msgstr "[ZWEIG]"
 msgid "Prints the heads of the given branch"
 msgstr "Gibt die Köpfe des übergebenen Zweigs aus"
 
-#: automate.cc:101 automate.cc:151 automate.cc:1327
+#: automate.cc:101 automate.cc:151 automate.cc:1318
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
@@ -98,7 +98,7 @@ msgstr "Gibt die Vorfahren der übergebenen Revisionen aus"
 
 #: automate.cc:114 automate.cc:164 automate.cc:211 automate.cc:238
 #: automate.cc:277 automate.cc:281 automate.cc:374 automate.cc:402
-#: automate.cc:1341 cmd_list.cc:651 revision.cc:1793
+#: automate.cc:1332 cmd_list.cc:651 revision.cc:1793
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
@@ -133,8 +133,8 @@ msgstr ""
 msgid "Lists the leaves of the revision graph"
 msgstr "Gibt die Blätter des Revisionsgraphen aus"
 
-#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1064
-#: automate.cc:1091 automate.cc:1400 cmd_automate.cc:82 cmd_automate.cc:338
+#: automate.cc:313 automate.cc:343 automate.cc:437 automate.cc:1055
+#: automate.cc:1082 automate.cc:1391 cmd_automate.cc:82 cmd_automate.cc:338
 #: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
 #: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
 #: cmd_list.cc:549
@@ -178,7 +178,7 @@ msgstr ""
 "Gibt eine Zusammenfassung der Dateien, die im Arbeitsbereich gefunden "
 "wurden, aus"
 
-#: automate.cc:870 automate.cc:1071 cmd_files.cc:302 cmd_files.cc:363
+#: automate.cc:870 automate.cc:1062 cmd_files.cc:302 cmd_files.cc:363
 #: cmd_merging.cc:152 cmd_merging.cc:643 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:803
 #, c-format
@@ -187,42 +187,42 @@ msgstr ""
 "Dieses Kommando kann nur in einem Arbeitsbereich mit einem Vorfahren genutzt "
 "werden."
 
-#: automate.cc:1012 automate.cc:1154 cmd_merging.cc:975
+#: automate.cc:1003 automate.cc:1145 cmd_merging.cc:975
 msgid "[REVID]"
 msgstr "[REVISIONS_ID]"
 
-#: automate.cc:1013
+#: automate.cc:1004
 msgid "Shows change information for a revision"
 msgstr "Zeigt die Änderungen, die in einer Revision vorgenommen wurden"
 
-#: automate.cc:1043 automate.cc:1178 automate.cc:1667 automate.cc:1728
-#: automate.cc:1733
+#: automate.cc:1034 automate.cc:1169 automate.cc:1658 automate.cc:1719
+#: automate.cc:1724
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
 
-#: automate.cc:1059
+#: automate.cc:1050
 msgid "Shows the revision on which the workspace is based"
 msgstr "Gibt die Revision zurück, auf der der Arbeitsbereich basiert"
 
-#: automate.cc:1086
+#: automate.cc:1077
 msgid "Shows the revision of the current workspace"
 msgstr "Gibt die Revision des derzeitigen Arbeitsbereiches zurück"
 
-#: automate.cc:1155
+#: automate.cc:1146
 msgid "Shows the manifest associated with a revision"
 msgstr "Zeigt das Manifest, welches einer Revision zugeordnet ist"
 
-#: automate.cc:1200 automate.cc:1229
+#: automate.cc:1191 automate.cc:1220
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
-#: automate.cc:1201
+#: automate.cc:1192
 msgid "Prints the revision data in packet format"
 msgstr "Gibt die Revisionsdaten im Paketformat aus"
 
-#: automate.cc:1214 automate.cc:1244 automate.cc:1305 automate.cc:1307
-#: automate.cc:1888 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
+#: automate.cc:1205 automate.cc:1235 automate.cc:1296 automate.cc:1298
+#: automate.cc:1879 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:359
 #: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1306 commands.cc:899
@@ -230,163 +230,163 @@ msgstr "Gibt die Revisionsdaten im Paketformat aus"
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1230
+#: automate.cc:1221
 msgid "Prints the certs associated with a revision in packet format"
 msgstr ""
 "Gibt die Zertifikate, die einer Revision zugeordnet sind, im Paketformat aus"
 
-#: automate.cc:1260 cmd_files.cc:321
+#: automate.cc:1251 cmd_files.cc:321
 msgid "FILEID"
 msgstr "DATEI_ID"
 
-#: automate.cc:1261
+#: automate.cc:1252
 msgid "Prints the file data in packet format"
 msgstr "Gibt die Dateidaten im Paketformat aus"
 
-#: automate.cc:1274
+#: automate.cc:1265
 #, c-format
 msgid "no such file '%s'"
 msgstr "Datei nicht gefunden: '%s'"
 
-#: automate.cc:1290
+#: automate.cc:1281
 msgid "OLD_FILE NEW_FILE"
 msgstr "ALTE_DATEI NEUE_DATEI"
 
-#: automate.cc:1291
+#: automate.cc:1282
 msgid "Prints the file delta in packet format"
 msgstr "Gibt ein Datei-Delta im Paketformat aus"
 
-#: automate.cc:1328
+#: automate.cc:1319
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr ""
 "Gibt die Revisionen aus, die gemeinsame Vorfahren einer Liste von Revisionen "
 "sind"
 
-#: automate.cc:1395
+#: automate.cc:1386
 msgid "Prints all branch certs in the revision graph"
 msgstr "Gibt alle Zweigzertifikate des Revisionsgraphen aus"
 
-#: automate.cc:1446
+#: automate.cc:1437
 msgid "[BRANCH_PATTERN]"
 msgstr "[ZWEIG_MUSTER]"
 
-#: automate.cc:1447
+#: automate.cc:1438
 msgid "Prints all tags attached to a set of branches"
 msgstr "Gibt alle Marken zurück, die einer Menge von Zweigen zugeordnet sind"
 
-#: automate.cc:1538
+#: automate.cc:1529
 msgid "KEYID PASSPHRASE"
 msgstr "SCHLÜSSEL_ID PASSWORT"
 
-#: automate.cc:1539
+#: automate.cc:1530
 msgid "Generates a key"
 msgstr "Erzeugt einen Schlüssel"
 
-#: automate.cc:1559 cmd_key_cert.cc:51
+#: automate.cc:1550 cmd_key_cert.cc:51
 #, c-format
 msgid "key '%s' already exists"
 msgstr "Schlüssel '%s' existiert bereits"
 
-#: automate.cc:1562 cmd_key_cert.cc:54
+#: automate.cc:1553 cmd_key_cert.cc:54
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "erzeuge Schlüsselpaar '%s'"
 
-#: automate.cc:1564 cmd_key_cert.cc:56
+#: automate.cc:1555 cmd_key_cert.cc:56
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "speichere Schlüsselpaar '%s' in %s/"
 
-#: automate.cc:1600
+#: automate.cc:1591
 msgid "OPTION"
 msgstr "OPTION"
 
-#: automate.cc:1601
+#: automate.cc:1592
 msgid "Shows the value of an option"
 msgstr "Zeigt den Wert einer Option im Arbeitsbereich"
 
-#: automate.cc:1629
+#: automate.cc:1620
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: automate.cc:1652
+#: automate.cc:1643
 msgid "REV FILE"
 msgstr "REVISION DATEI"
 
-#: automate.cc:1653
+#: automate.cc:1644
 msgid ""
 "Lists the revisions that changed the content relative to another revision"
 msgstr ""
 "Gibt alle Revisionen aus, die den Inhalt von DATEI relativ zu REVISION "
 "geändert haben"
 
-#: automate.cc:1672 automate.cc:1738
+#: automate.cc:1663 automate.cc:1729
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "Datei %s existiert nicht in der Revision %s"
 
-#: automate.cc:1714
+#: automate.cc:1705
 msgid "REV1 FILE REV2"
 msgstr "REV1 DATEI REV2"
 
-#: automate.cc:1715
+#: automate.cc:1706
 msgid ""
 "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 "Gibt den Namen von DATEI aus REV1 zurück, so wie sie in der REV2 benannt ist"
 
-#: automate.cc:1765
+#: automate.cc:1756
 msgid "[FILEID] CONTENTS"
 msgstr "[DATEIID] INHALT"
 
-#: automate.cc:1766
+#: automate.cc:1757
 msgid "Stores a file in the database"
 msgstr "Speichert eine Datei in der Datenbank"
 
-#: automate.cc:1788 cmd_files.cc:252
+#: automate.cc:1779 cmd_files.cc:252
 #, c-format
 msgid "no file version %s found in database"
 msgstr "Dateiversion %s nicht in Datenbank gefunden"
 
-#: automate.cc:1818
+#: automate.cc:1809
 msgid "REVISION-DATA"
 msgstr "REVISIONS-DATEN"
 
-#: automate.cc:1819
+#: automate.cc:1810
 msgid "Stores a revision into the database"
 msgstr "Speichert eine Revision in der Datenbank"
 
-#: automate.cc:1858
+#: automate.cc:1849
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "fehlende Voraussetzung für Revision %s"
 
-#: automate.cc:1875
+#: automate.cc:1866
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISIONS-ID NAME WERT"
 
-#: automate.cc:1876
+#: automate.cc:1867
 msgid "Adds a revision certificate"
 msgstr "Fügt ein Zertifikat zu einer Revision hinzu"
 
-#: automate.cc:1908 cmd_db.cc:277
+#: automate.cc:1899 cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄNE NAME WERT"
 
-#: automate.cc:1909 cmd_db.cc:278
+#: automate.cc:1900 cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Setzt eine Datenbankvariable"
 
-#: automate.cc:1934 cmd_db.cc:296
+#: automate.cc:1925 cmd_db.cc:296
 msgid "DOMAIN NAME"
 msgstr "DOMÄNE NAME"
 
-#: automate.cc:1935
+#: automate.cc:1926
 msgid "Gets a database variable"
 msgstr "Gibt eine Datenbankvariable zurück"
 
-#: automate.cc:1952
+#: automate.cc:1943
 #, c-format
 msgid "variable not found"
 msgstr "Variable nicht gefunden"
@@ -3388,22 +3388,22 @@ msgstr "make_signature: Signatur ist ungültig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489
+#: lua.cc:465 lua.cc:476 lua.cc:488
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 
-#: lua.cc:574
+#: lua.cc:571
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:576 rcs_import.cc:1229 work.cc:1573
+#: lua.cc:573 rcs_import.cc:1229 work.cc:1573
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: lua.cc:598
+#: lua.cc:595
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
@@ -4225,35 +4225,72 @@ msgstr "zeige Versionsinformationen an und beende dann das Programm"
 msgid "insert command line arguments taken from the given file"
 msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
 
-#: packet.cc:118
+#: packet.cc:121
 #, c-format
 msgid "malformed packet: invalid identifier"
 msgstr "falsch gebildetes Paket: ungültige Kennung"
 
-#: packet.cc:124
+#: packet.cc:127
 #, c-format
 msgid "malformed packet: invalid base64 block"
 msgstr "falsch gebildetes Paket: ungültiger base64-Block"
 
-#: packet.cc:130
+#: packet.cc:133
 #, c-format
 msgid "malformed packet: invalid key name"
 msgstr "falsch gebildetes Paket: ungültiger Schlüsselname"
 
-#: packet.cc:136
+#: packet.cc:139
 #, c-format
 msgid "malformed packet: invalid cert name"
 msgstr "falsch gebildetes Paket: ungültiger Zertifikatsname"
 
-#: packet.cc:143
+#: packet.cc:146
 #, c-format
 msgid "malformed packet: too many arguments in header"
 msgstr "falsch gebildetes Paket: zu viele Argumente im Kopf"
 
-#: packet.cc:256
+#: packet.cc:259
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr "unbekannter Pakettyp: '%s'"
+
+#: pcrewrap.cc:161
+#, c-format
+msgid "while compiling regex \"%s\": %s"
+msgstr "Fehler während der Übersetzung des regulären Ausdrucks \"%s\": %s"
+
+#: pcrewrap.cc:170
+#, c-format
+msgid "error in regex \"%s\": %s"
+msgstr "Fehler im regulären Ausdruck \"%s\": %s"
+
+#: pcrewrap.cc:172
+#, c-format
+msgid "error near char %d of regex \"%s\": %s"
+msgstr "Fehler in der Nähe des Zeichens %d des regulären Ausdrucks \"%s\": %s"
+
+#: pcrewrap.cc:186
+#, c-format
+msgid "while studying regex \"%s\": %s"
+msgstr "Fehler während der Untersuchung des regulären Ausdrucks \"%s\": %s"
+
+#: pcrewrap.cc:204
+msgid "backtrack limit exceeded in regular expression matching"
+msgstr "Backtrack-Grenze im regulären Ausdruck überschritten"
+
+#: pcrewrap.cc:208
+msgid "recursion limit exceeded in regular expression matching"
+msgstr "Rekursions-Grenze im regulären Ausdruck überschritten"
+
+#: pcrewrap.cc:213
+msgid "invalid UTF-8 sequence found during regular expression matching"
+msgstr "ungültige UTF-8-Sequenz während der Anwendung des regulären Ausdrucks gefunden"
+
+#: pcrewrap.cc:216
+#, c-format
+msgid "pcre_match returned %d"
+msgstr "pcre_match gab %d zurück"
 
 #: rcs_file.cc:353
 #, c-format
@@ -4760,7 +4797,8 @@ msgstr "die in der URI explizit angegebene Portnummer besteht nicht aus Zahlen"
 #: uri.cc:66
 #, c-format
 msgid "explicit port-number specification in URI contains nondigits"
-msgstr "die in der URI explizit angegebene Portnummer beinhaltet Nicht-Zahlen-Zeichen"
+msgstr ""
+"die in der URI explizit angegebene Portnummer beinhaltet Nicht-Zahlen-Zeichen"
 
 #: update.cc:73
 #, c-format

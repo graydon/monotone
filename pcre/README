@@ -1,8 +1,10 @@
-This is most of pcre 6.7.  Configuration settings have been HARDWIRED.
-(pcre does not have any portability constraints that we need to worry
-about.)  Unicode support has been removed, and the "dftables.c"
-program has been run and its result checked in.  pcre_internal.h has
-been modified to include pcre_config.h instead of bare config.h.  Some
-#ifdefs have been added to pcre_tables.c, pcre_internal.h, and
-pcre_dfa_exec.c to dike out Unicode more thoroughly.
-
+This is the library component of pcre 7.4, downloaded from
+<ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/>.  The only
+modification made to the code is that each .c file has been changed to
+#include "pcre_config.h" unconditionally, instead of "config.h" only when
+HAVE_CONFIG_H is defined.  The file pcre_config.h is an appropriately
+customized version of pcre's config.h.in.  (This is done so that we
+don't clutter monotone's own config.h with pcre's settings.)  The files
+pcresyntax.texi and pcrepattern.texi are translations to Texinfo of the
+upstream documentation files pcresyntax.3 and pcrepattern.3, which were
+in manpage format.

@@ -687,7 +687,8 @@ file_path::operator /(path_component const & to_append) const
       return file_path(s, 0, string::npos);
     }
   else
-    return file_path(data + "/" + to_append(), 0, string::npos);
+    return file_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                     + to_append(), 0, string::npos);
 }
 
 // similarly, but even less checking is needed.
@@ -697,7 +698,8 @@ file_path::operator /(file_path const & to_append) const
   I(!to_append.empty());
   if (empty())
     return to_append;
-  return file_path(data + "/" + to_append.as_internal(), 0, string::npos);
+  return file_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                   + to_append.as_internal(), 0, string::npos);
 }
 
 bookkeeping_path
@@ -705,7 +707,8 @@ bookkeeping_path::operator /(path_component const & to_append) const
 {
   I(!to_append.empty());
   I(!empty());
-  return bookkeeping_path(data + "/" + to_append(), 0, string::npos);
+  return bookkeeping_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                          + to_append(), 0, string::npos);
 }
 
 system_path
@@ -713,7 +716,8 @@ system_path::operator /(path_component const & to_append) const
 {
   I(!to_append.empty());
   I(!empty());
-  return system_path(data + "/" + to_append(), 0, string::npos);
+  return system_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                     + to_append(), 0, string::npos);
 }
 
 any_path
@@ -721,7 +725,8 @@ any_path::operator /(path_component const & to_append) const
 {
   I(!to_append.empty());
   I(!empty());
-  return any_path(data + "/" + to_append(), 0, string::npos);
+  return any_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                  + to_append(), 0, string::npos);
 }
 
 // these take strings and validate
@@ -730,7 +735,8 @@ bookkeeping_path::operator /(char const * to_append) const
 {
   I(!is_absolute_somewhere(to_append));
   I(!empty());
-  return bookkeeping_path(data + "/" + to_append);
+  return bookkeeping_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                          + to_append);
 }
 
 system_path
@@ -738,7 +744,8 @@ system_path::operator /(char const * to_append) const
 {
   I(!empty());
   I(!is_absolute_here(to_append));
-  return system_path(data + "/" + to_append);
+  return system_path(((*(data.end() - 1) == '/') ? data : data + "/")
+                     + to_append);
 }
 
 ///////////////////////////////////////////////////////////////////////////
