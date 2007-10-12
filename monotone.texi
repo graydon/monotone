@@ -5181,17 +5181,17 @@ following two examples are equivalent:
 @smallexample
 @group
 $ mtn ssh_agent_add
-enter passphrase for key ID [user@example.com]:
+enter passphrase for key ID [user@@example.com]:
 $ mtn ci -m"Changed foo to bar"
-$ mtn push -k user@example.com
+$ mtn push -k user@@example.com
 @end group
 @end smallexample
 
 @smallexample
 @group
 $ mtn ci -m"Changed foo to bar"
-enter passphrase for key ID [user@example.com]:
-$ mtn push -k user@example.com
+enter passphrase for key ID [user@@example.com]:
+$ mtn push -k user@@example.com
 @end group
 @end smallexample
 
@@ -5219,7 +5219,7 @@ $ ssh-add ~/.ssh/id_monotone
 Enter passphrase for /home/user/.ssh/id_monotone:
 Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
 $ mtn ci -m"Changed foo to bar"
-$ mtn push -k user@example.com
+$ mtn push -k user@@example.com
 @end group
 @end smallexample
 
