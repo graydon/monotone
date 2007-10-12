@@ -5165,6 +5165,39 @@ key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
+@item mtn ssh_agent_add
+
+This command will add your monotone keys to your current ssh-agent session.
+You will be asked for the passphrase for each of your monotone private keys
+and they will be added to the ssh-agent. Once this is done you should be able
+to type @emph{ssh-add -l} and see your monotone key listed. When you
+subsequently use these keys through monotone it will use ssh-agent for signing
+without asking your for your passphrase.
+
+This command is mainly for use in a session script as monotone will automatically
+add your keys to ssh-agent on first use if it is available. For example the
+following two examples are equivalent:
+
+@smallexample
+@group
+$ mtn ssh_agent_add
+enter passphrase for key ID [user@example.com]:
+$ mtn ci -m"Changed foo to bar"
+$ mtn push -k user@example.com
+@end group
+@end smallexample
+
+@smallexample
+@group
+$ mtn ci -m"Changed foo to bar"
+enter passphrase for key ID [user@example.com]:
+$ mtn push -k user@example.com
+@end group
+@end smallexample
+
+In the second example, monotone automatically added the key to ssh-agent, making
+entering the passphrase not needed during the push.
+
 @item mtn ssh_agent_export @var{filename}
 
 This command will export your private key in a format that ssh-agent
@@ -5186,7 +5219,7 @@ $ ssh-add ~/.ssh/id_monotone
 Enter passphrase for /home/user/.ssh/id_monotone:
 Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
 $ mtn ci -m"Changed foo to bar"
-$ mtn push
+$ mtn push -k user@example.com
 @end group
 @end smallexample
 
