@@ -111,19 +111,6 @@ building and installation process for monotone
        results.  however, you can force IPv6 detection by saying 'yes'
        or completely disable it using 'no'.
 
-     --enable-static-boost[=prefix]
-
-       this will attempt to link a "mostly static" version of monotone
-       using the .a files supplied with your installation of
-       boost. the resulting binary will be larger but more portable
-       than a normal (dynamic) link.
-
-       you can optionally pass a prefix to the option, which will be
-       used to look for the static libraries; otherwise a list of
-       predefined directories will be used.  for example:
-
-         ./configure --enable-static-boost=/usr/local/boost
-
      --disable-nls
 
        build a version of monotone without support for local message
@@ -134,20 +121,6 @@ building and installation process for monotone
 
        this will disable large file support from the builtin sqlite, to
        achieve maximum binary compatibility with old systems.
-
-     BOOST_SUFFIX=string
-
-       this variable, to be set on configure's command line, can be used
-       to specify a special string suffix to be appended to boost library
-       names.  many Linux distributions provide symlinks to hide this
-       suffix, but others do not.  therefore, you need to pass it to the
-       configure script through this variable for correct detection of
-       boost.  for example:
-
-         ./configure BOOST_SUFFIX=-gcc
-
-       note that, sometimes, the configure script will be able to guess
-       the correct suffix by itself.
 
      --enable-pch
 
