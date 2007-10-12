@@ -81,6 +81,7 @@ contributing authors, including:
   Justin Patrin <papercrane@reversefold.com>
   Kelly F. Hickel <kfh@mqsoftware.com>
   Ralf S. Engelschall <rse@engelschall.com>
+  Thomas Keller <me@thomaskeller.biz>
 
 Several people have also contributed to the translation of monotone
 into non-English languages; their work is available in the po/
@@ -93,6 +94,8 @@ subdirectory.  Contributors include:
   Joel Rosdahl <joel@rosdahl.net>
   Lapo Luchini <lapo@lapo.it>
   Thomas Keller <me@thomaskeller.biz>
+  Thomas Moschny <thomas.moschny@gmx.de>
+  Aristid Breitkreuz <aribrei@arcor.de>
 
 supporting files:
 -----------------
@@ -174,7 +177,6 @@ distributed under a BSD-like license. The license terms are reproduced
 in the files, and do not require that they be reproduced here.
 
 ---
-
 
 The files in lua/*, except lposix.c and modemuncher.c, are copies of
 the lua 5.0 source distribution, from Tecgraf PUC-Rio. lposix.c and
