@@ -9,7 +9,7 @@ function pup(...)
     mtn_automate("update")
 end
 
-register_command("pup", "Pull and update a workspace",
+register_command("pup", "", "Pull and update a workspace",
       "This command approximates the update command of a centralised revision control system.  " ..
       "It first contacts the server to gather new revisions and then it updates the workspace.", "pup")
 
@@ -30,7 +30,7 @@ function cpp(...)
     end
 end
 
-register_command("cpp", "Commit, pull and push a workspace",
+register_command("cpp", "", "Commit, pull and push a workspace",
       "This command approximates the commit command of a centralised revision control system.  " ..
       "It first commits your work to the local repository, then contacts the server to gather " ..
       "new revisions.  If there is a single head at this point, then the local changes are pushed " ..
@@ -42,7 +42,7 @@ function mup(...)
     mtn_automate("update")
 end
 
-register_command("mup", "Merge and update a workspace",
+register_command("mup", "", "Merge and update a workspace",
       "This command merges multiple heads of a branch, and then updates the current workspace" ..
       "to the resulting revision.", "mup")
 

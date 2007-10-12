@@ -9118,7 +9118,7 @@ The output table will be:
 Returns true if a match for @var{regexp} is found in @var{str}, return
 false otherwise.  @xref{Regexps}, for the syntax of @var{regexp}.
 
-@item register_command(@var{name}, @var{abstract}, @var{description}, @var{function})
+@item register_command(@var{name}, @var{params}, @var{abstract}, @var{description}, @var{function})
 
 Add a command named @var{name} to the @var{user} command group in monotone.  This function is
 normally called directly from a @file{monotonerc} file rather than a hook.  When the user issues the
