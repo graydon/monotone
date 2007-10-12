@@ -50,8 +50,8 @@ building and installation process for monotone
            build some of these from source. if your package repository
            does not contain the libraries, see:
 
-                http://gcc.gnu.org      for g++
-                http://www.boost.org    for boost
+                http://gcc.gnu.org/      for g++
+                http://www.boost.org/    for boost
 
 1.1 using boost in the build process:
 

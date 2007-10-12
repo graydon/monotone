@@ -100,7 +100,7 @@ supporting files:
 D. Richard Hipp <drh@hwaci.com> wrote the files in sqlite/*, but is in
 no way affiliated with this project. I simply copied his code, which
 is assigned to the public domain. You can find the original code at
-http://www.sqlite.org.
+http://www.sqlite.org/.
 
 
 The files in idna/* are copies of the core portion of the "GNU libidn"
@@ -210,7 +210,7 @@ THE SOFTWARE.
 
 The files in boost/* are copies of unofficial development files from
 the boost "sandbox" CVS repository, linked off of
-http://www.boost.org. The only license obligation I can find in those
+http://www.boost.org/. The only license obligation I can find in those
 files is to reproduce their license statement in documentation, which
 I am doing here:
 
