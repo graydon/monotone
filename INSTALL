@@ -33,12 +33,12 @@ building and installation process for monotone
 
         on fedora: 
 
-           apt-get install autoconf
-           apt-get install automake
-           apt-get install gettext
-           apt-get install boost-devel 
-           apt-get install libz-devel
-           apt-get install g++
+           yum install autoconf
+           yum install automake
+           yum install gettext
+           yum install boost-devel 
+           yum install zlib-devel
+           yum install gcc-c++
 
         on Windows (incomplete):
 
