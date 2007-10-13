@@ -106,7 +106,7 @@ CREATE TABLE branch_epochs
 	(
 	hash not null unique,         -- hash of remaining fields separated by ":"
 	branch not null unique,       -- joins with revision_certs.value
-	epoch not null                -- random hex-encoded id
+	epoch not null                -- random binary id
 	);
 
 -- database-local variables used to manage various things

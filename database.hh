@@ -135,7 +135,7 @@ private:
              query const & q);
   void execute(query const & q);
 
-  bool table_has_entry(std::string const & key, std::string const & column,
+  bool table_has_entry(hexenc<id> const & key, std::string const & column,
                        std::string const & table);
 
   //
@@ -213,11 +213,11 @@ private:
   bool roster_base_available(revision_id const & ident);
   
   // "do we have any entry for 'ident' that is a delta"
-  bool delta_exists(std::string const & ident,
+  bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
 
-  bool delta_exists(std::string const & ident,
-                    std::string const & base,
+  bool delta_exists(hexenc<id> const & ident,
+                    hexenc<id> const & base,
                     std::string const & table);
 
   void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
@@ -227,10 +227,10 @@ private:
                                             hexenc<id> const & base,
                                             delta & del,
                                             std::string const & table);
-  void get_roster_base(std::string const & ident,
+  void get_roster_base(revision_id const & ident,
                        roster_t & roster, marking_map & marking);
-  void get_roster_delta(std::string const & ident,
-                        std::string const & base,
+  void get_roster_delta(hexenc<id> const & ident,
+                        hexenc<id> const & base,
                         roster_delta & del);
   friend struct file_and_manifest_reconstruction_graph;
   friend struct roster_reconstruction_graph;
@@ -239,7 +239,7 @@ private:
                    std::string const & data_table,
                    std::string const & delta_table);
 
-  void drop(std::string const & base,
+  void drop(hexenc<id> const & base,
             std::string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
@@ -364,7 +364,7 @@ private:
   struct extractor;
   struct file_content_extractor;
   struct markings_extractor;
-  void extract_from_deltas(revision_id const & id, extractor & x);
+  void extract_from_deltas(revision_id const & ident, extractor & x);
 
   //
   // --== Keys ==--
