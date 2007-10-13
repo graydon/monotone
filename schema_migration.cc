@@ -615,6 +615,21 @@ char const migrate_add_heights_index[] =
   "CREATE INDEX heights__height ON heights (height);"
   ;
 
+char const migrate_rev_certs_index[] =
+  "ALTER TABLE revision_certs RENAME TO tmp;\n"
+  "CREATE TABLE revision_certs"
+	"  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+	"    id not null,            -- joins with revisions.id\n"
+	"    name not null,          -- opaque string chosen by user\n"
+	"    value not null,         -- opaque blob\n"
+	"    keypair not null,       -- joins with public_keys.id\n"
+	"    signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+	"    unique(name, value, id, keypair, signature)\n"
+	"  );"
+  "INSERT INTO revision_certs SELECT hash, id, name, value, keypair, signature FROM tmp;"
+  "DROP TABLE tmp;"
+  "CREATE INDEX revision_certs__id ON revision_certs (id);";
+
 // this is a function because it has to refer to the numeric constant
 // defined in schema_migration.hh.
 static void
@@ -700,13 +715,16 @@ const migration_event migration_events[] = {
 
   { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d",
     0, migrate_add_ccode, upgrade_none },
-    
+
   { "fe48b0804e0048b87b4cea51b3ab338ba187bdc2",
     migrate_add_heights_index, 0, upgrade_none },
 
+  { "7ca81b45279403419581d7fde31ed888a80bd34e",
+    migrate_rev_certs_index, 0, upgrade_none },
+
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-  { "7ca81b45279403419581d7fde31ed888a80bd34e", 0, 0, upgrade_none }
+  { "84f2b5ab8a999a6593af35208aa9232b8e65573c", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
