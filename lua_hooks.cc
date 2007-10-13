@@ -969,11 +969,12 @@ namespace commands {
     std::string const f_name;
   public:
     cmd_lua(std::string const & primary_name,
+                   std::string const & params,
                    std::string const & abstract,
                    std::string const & desc,
                    lua_State *L_st,
                    std::string const & func_name) :
-         command(primary_name, "", CMD_REF(user), false, "",
+         command(primary_name, "", CMD_REF(user), false, params,
                  abstract, desc, true, options::options_type() | options::opts::none, true),
                  st(L_st), f_name(func_name)
     {
@@ -1031,15 +1032,16 @@ LUAEXT(alias_command, )
 
 LUAEXT(register_command, )
 {
-  const char *cmd_name = luaL_checkstring(L, -4);
+  const char *cmd_name = luaL_checkstring(L, -5);
+  const char *cmd_params = luaL_checkstring(L, -4);
   const char *cmd_abstract = luaL_checkstring(L, -3);
   const char *cmd_desc = luaL_checkstring(L, -2);
   const char *cmd_func = luaL_checkstring(L, -1);
   
-  N(cmd_name && cmd_abstract && cmd_desc && cmd_func,
+  N(cmd_name && cmd_params && cmd_abstract && cmd_desc && cmd_func,
     F("%s called with an invalid parameter") % "register_command");
   
-  new commands::cmd_lua(cmd_name, cmd_abstract, cmd_desc, L, cmd_func);  // leak this - commands can't be removed anyway
+  new commands::cmd_lua(cmd_name, cmd_params, cmd_abstract, cmd_desc, L, cmd_func);  // leak this - commands can't be removed anyway
   
   lua_pushboolean(L, true);
   return 1;

@@ -28,6 +28,26 @@
           merge_into_workspace" this way one especially can achieve a
           CVS/SVN style non-modal workspace-based merging.
 
+        - an additional selector type "p" for selecting parent
+          revision(s) was added. This is especially handy in situations
+          like "mtn diff -r p:<revision> -r <revision>", because one no
+          longer has to figure out the parent revision manually via "mtn
+          automate parents <revision>" beforehand.
+
+        - removed the requirement for the external Boost libraries by
+          replacing boost.regex with PCRE (n.v.m.experiment.pcre). A
+          local copy of PCRE is shipped with Monotone, but one can
+          build Monotone against an external PCRE with Autoconf option
+          --with-system-pcre. Additionally, the internal of use regular
+          expressions were reduced, too (n.v.m.deregexp).
+
+        - the format of "mtn automate inventory" has changed to basic_io.
+          This fixes a couple of corner cases where the old format 
+          returned wrong information and introduces new capabilities like
+          restricted output, recognized attribute changes, and more.
+          For a complete overview on the new format, please take a look
+          in the appropriate manual section.
+
         Bugs fixed
 
         - mtn automate heads called without a branch argument now properly

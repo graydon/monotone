@@ -662,8 +662,7 @@ DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-bundled-sqlite \
-	--with-bundled-lua \
-	--enable-static-boost
+	--with-bundled-lua
 
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source
