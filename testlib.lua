@@ -166,6 +166,23 @@ function readstdfile(filename)
   return readfile(testdir.."/"..filename)
 end
 
+-- Return all but the first N lines of FILENAME.
+-- Note that (unlike readfile()) the result will
+-- end with a \n whether or not the file did.
+function tailfile(filename, n)
+  L(locheader(), "tailfile ", filename, ", ", n, "\n")
+  local i = 1
+  local t = {}
+  for l in io.lines(filename) do
+    if i > n then
+      table.insert(t, l)
+    end
+    i = i + 1
+  end
+  table.insert(t, "")
+  return table.concat(t, "\n")
+end
+
 function writefile_q(filename, dat)
   local file,e
   if dat == nil then

@@ -3250,26 +3250,26 @@ msgstr "make_signature: firma non valida"
 msgid "passphrase for '%s' is incorrect"
 msgstr "passphrase incorretta per ‘%s’"
 
-#: lua.cc:466
-#: lua.cc:477
-#: lua.cc:489
+#: lua.cc:465
+#: lua.cc:476
+#: lua.cc:488
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "‘%s’ chiamato con un parametro non valido"
 
-#: lua.cc:574
+#: lua.cc:571
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "La directory ‘%s’ non esiste"
 
-#: lua.cc:576
+#: lua.cc:573
 #: rcs_import.cc:1229
 #: work.cc:1573
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "‘%s’ non è una directory"
 
-#: lua.cc:598
+#: lua.cc:595
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "errore lua caricando il file rc ‘%s’"
@@ -4065,37 +4065,74 @@ msgid "insert command line arguments taken from the given file"
 msgstr "inserisce argomenti da linea di comando presi dal file dato"
 
 # TODO: valido/valido
-#: packet.cc:118
+#: packet.cc:121
 #, c-format
 msgid "malformed packet: invalid identifier"
 msgstr "pacchetto non valido: identificatore non valido"
 
-#: packet.cc:124
+#: packet.cc:127
 #, c-format
 msgid "malformed packet: invalid base64 block"
 msgstr "pacchetto non valido: blocco base64 non valido"
 
 # TODO: valido/valido
-#: packet.cc:130
+#: packet.cc:133
 #, c-format
 msgid "malformed packet: invalid key name"
 msgstr "pacchetto non valido: nome di chiave non valido"
 
 # TODO: valido/valido
-#: packet.cc:136
+#: packet.cc:139
 #, c-format
 msgid "malformed packet: invalid cert name"
 msgstr "pacchetto non valido: nome di certificato non valido"
 
-#: packet.cc:143
+#: packet.cc:146
 #, c-format
 msgid "malformed packet: too many arguments in header"
 msgstr "pacchetto non valido: troppi argomenti nell'intestazione"
 
-#: packet.cc:256
+#: packet.cc:259
 #, c-format
 msgid "unknown packet type: '%s'"
 msgstr "pacchetto di tipo sconosciuto: ‘%s’"
+
+#: pcrewrap.cc:161
+#, c-format
+msgid "while compiling regex \"%s\": %s"
+msgstr "durante la compilazione dell'espressione regolare ‘%s’: %s"
+
+#: pcrewrap.cc:170
+#, c-format
+msgid "error in regex \"%s\": %s"
+msgstr "errore nell'espressione regolare ‘%s’: %s"
+
+#: pcrewrap.cc:172
+#, c-format
+msgid "error near char %d of regex \"%s\": %s"
+msgstr ""
+
+#: pcrewrap.cc:186
+#, c-format
+msgid "while studying regex \"%s\": %s"
+msgstr "durante lo studio dell'espressione regolare ‘%s’: %s"
+
+#: pcrewrap.cc:204
+msgid "backtrack limit exceeded in regular expression matching"
+msgstr ""
+
+#: pcrewrap.cc:208
+msgid "recursion limit exceeded in regular expression matching"
+msgstr ""
+
+#: pcrewrap.cc:213
+msgid "invalid UTF-8 sequence found during regular expression matching"
+msgstr ""
+
+#: pcrewrap.cc:216
+#, c-format
+msgid "pcre_match returned %d"
+msgstr ""
 
 #: rcs_file.cc:353
 #, c-format

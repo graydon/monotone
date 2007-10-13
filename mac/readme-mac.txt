@@ -16,7 +16,7 @@ At the time of writing Macports doesn't build these as universal binaries.
 
 2) Configure it (changing paths appropriately):
    mkdir "build"
-   ../configure --enable-static-boost=/usr/local/stow/boost-1.33.1-fat \
+   ../configure \
         --with-libintl-prefix=/usr/local/stow/gettext-0.16.1 \
         CFLAGS="-O2 -mdynamic-no-pic -ggdb -gfull -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386" \
         CXXFLAGS="-O2 -mdynamic-no-pic -fno-threadsafe-statics -ggdb -gfull -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc -arch i386" \

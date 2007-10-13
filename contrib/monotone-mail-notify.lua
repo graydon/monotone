@@ -133,8 +133,10 @@ do
                if j < # (rev_data["certs"]["author"]) then reply_to = reply_to .. ", " end
             end
 
-            local outputFileRev = io.open(_base .. rev_data["revision"] .. os.time() .. ".rev.txt", "w+")
-            local outputFileHdr = io.open(_base .. rev_data["revision"] .. os.time() .. ".hdr.txt", "w+")
+            local now = os.time()
+
+            local outputFileRev = io.open(_base .. rev_data["revision"] .. now .. ".rev.txt", "w+")
+            local outputFileHdr = io.open(_base .. rev_data["revision"] .. now .. ".hdr.txt", "w+")
 
             local to = ""
             for j,addr in pairs(rev_data["recipients"]) do

@@ -59,8 +59,6 @@ AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION(0.11.5)
 AM_ICONV
 AC_PROG_XGETTEXT_FLAG_OPTION
-# similarly, this calls ACX_PTHREAD, which expects C.
-BOOST_THREAD_STUBS
 
 # Stick some logic into config.status, after the logic that
 # AM_GNU_GETTEXT sticks into config.status, to annul the UPDATEPOFILES
@@ -125,10 +123,11 @@ AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
 # simple library checks
 AC_SEARCH_LIBS([deflate], [z], , AC_MSG_FAILURE([zlib is required]))
 
+MTN_LIB_PCRE
+
 # check for all things boost-related
 BOOST_VERSION_CHECK
 BOOST_VERSION_SPECIFIC_BUGS
-MTN_BOOST_LIB_REGEX
 
 # more complex library checks
 MTN_NETXX_DEPENDENCIES
