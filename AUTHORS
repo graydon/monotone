@@ -2,277 +2,87 @@ main files:
 -----------
 
 Graydon Hoare <graydon@pobox.com> originally wrote most of the files
-*.{lua,sql,cc,hh} in the top level directory. That's me.
+in the top level directory and the OS-specific directories 'unix' and
+'win32'.  That's me.
 
-Three exceptions are the file main.cc, which is a slightly reworked
-copy of execution_monitor.cc from the boost project; the file
-lru_cache.h, which is a slightly modified copy of a file from Patrick
-Audley, and the file mkstemp.cc, which is a slightly reworked copy of
-mkstemp code from glib. In both cases I've noted the original
-copyrights in the files.
+Many of the top level files have subsequently been amended, and new
+files added, by other contributing authors, including:
 
-Another possible exception -- depending on how you interpret the word
-"wrote" -- is the file lcs.hh, which I did write, but the writing was
-merely *translation* (without much inventive contribution) from a file
-called differ.scm, from SLIB, which is written by Aubrey Jaffer
-<agj@alum.mit.edu>, and on which he retains Copyright. He has licensed
-this code for any use provided its copyright notice is preserved,
-which it is, in lcs.hh. You can find the original (scheme) code at
-http://www.swiss.ai.mit.edu/~jaffer/
-
-Several of the top level files have subsequently been amended by other
-contributing authors, including:
-
-  Tom Tromey <tromey@redhat.com>
-  Nathaniel Smith <njs@pobox.com>
-  Matt Kraai <kraai@ftbfs.org>
-  Lorenzo Campedelli <lorenzo.campedelli@libero.it>
-  Eric Kidd  <eric.kidd@pobox.com>
-  Christof Petig <christof@petig-baender.de>
-  Paul Snively <psnively@mac.com>
-  Anders Petersson <demitar@worldforge.org>
-  Nathan Myers <ncm@cantrip.org>
+  Eric Anderson <anderse-monotone@cello.hpl.hp.com>
   Olivier Andrieu <oliv__a@users.sourceforge.net>
-  Robert Helgesson <rycee@home.se>
-  Robert Bihlmeyer <robbe+mt@orcus.priv.at>
-  Joel Rosdahl <joel@rosdahl.net>
-  Ben Elliston <bje@wasabisystems.com>
-  Michael Scherer <misc@mandrake.org>
-  Richard Levitte <richard@levitte.org>
-  Derek Scherger <derek@echologic.com>
-  Ulrich Drepper <drepper@redhat.com>
-  Matt Johnston <matt@ucc.asn.au>
-  Julio M. Merino Vidal <jmmv@NetBSD.org>
   Badai Aqrandista <badaiaqrandista@hotmail.com>
-  Jordi Vilalta Prat <jvprat@wanadoo.es>
-  Christian Kollee <stuka@pestilenz.org>
-  Faheem Mitha <faheem@email.unc.edu>
-  Neil Conway <neilc@samurai.com>
-  Wojciech Miłkowski <wmilkowski@interia.pl>
-  Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
   Daniel Berlin <dberlin@dberlin.org>
+  Robert Bihlmeyer <robbe+mt@orcus.priv.at>
+  Ethan Blanton <elb@elitists.net>
+  Marcel van der Boom <marcel@hsdev.com>
+  Grahame Bowland <grahame@angrygoats.net>
+  Jordan Breeding <jordan.breeding@mac.com>
   Jon Bright <jon@siliconcircus.org>
-  Corey Halpin <chalpin@cs.wisc.edu>
+  Timothy Brownawell <tbrownaw@gmail.com>
+  Brian Campbell <brian.p.campbell@dartmouth.edu>
+  Lorenzo Campedelli <lorenzo.campedelli@libero.it>
+  Daniel Carosone <dan@geek.com.au>
+  Neil Conway <neilc@samurai.com>
   Jeremy Cowgar <jeremy@cowgar.com>
+  Benoît Dejean <benoit@placenet.org>
+  Ulrich Drepper <drepper@redhat.com>
   Martin Dvorak <jezek2@advel.cz>
+  Ben Elliston <bje@wasabisystems.com>
+  Ralf S. Engelschall <rse@engelschall.com>
+  Vinzenz Feenstra <evilissimo@c-plusplus.de>
+  Riccardo Ghetta <birrachiara@tin.it>
+  Matthew Gregan <kinetik@orcon.net.nz>
+  Corey Halpin <chalpin@cs.wisc.edu>
+  Robert Helgesson <rycee@home.se>
+  Kelly F. Hickel <kfh@mqsoftware.com>
+  Matt Johnston <matt@ucc.asn.au>
+  Blake Kaplan <mrbkap@gmail.com>
+  Thomas Keller <me@thomaskeller.biz>
+  Eric Kidd  <eric.kidd@pobox.com>
+  Christian Kollee <stuka@pestilenz.org>
+  Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
+  Matt Kraai <kraai@ftbfs.org>
+  Richard Levitte <richard@levitte.org>
+  Patrick Mauritz <oxygene@studentenbude.ath.cx>
+  Roland McGrath <roland@redhat.com>
+  Wojciech Miłkowski <wmilkowski@interia.pl>
+  Faheem Mitha <faheem@email.unc.edu>
+  Thomas Moschny <thomas.moschny@gmx.de>
+  Nathan Myers <ncm@cantrip.org>
+  Justin Patrin <papercrane@reversefold.com>
+  Jeronimo Pellegrini <pellegrini@mpcnet.com.br>
+  Anders Petersson <demitar@worldforge.org>
+  Christof Petig <christof@petig-baender.de>
+  Jordi Vilalta Prat <jvprat@wanadoo.es>
+  Joel Reed <joelwreed@comcast.net>
+  Joel Rosdahl <joel@rosdahl.net>
+  Michael Scherer <misc@mandrake.org>
+  Derek Scherger <derek@echologic.com>
+  Nathaniel Smith <njs@pobox.com>
+  Paul Snively <psnively@mac.com>
   Emile Snyder <emile@alumni.reed.edu>
   Sebastian Spaeth <Sebastian@SSpaeth.de>
-  Joel Reed <joelwreed@comcast.net>
-  Timothy Brownawell <tbrownaw@gmail.com>
-  Matthew Gregan <kinetik@orcon.net.nz>
-  Riccardo Ghetta <birrachiara@tin.it>
-  Brian Campbell <brian.p.campbell@dartmouth.edu>
-  Ethan Blanton <elb@elitists.net>
-  Eric Anderson <anderse-monotone@cello.hpl.hp.com>
+  Tom Tromey <tromey@redhat.com>
   Kaushik Veeraraghavan <kaushikv@gmail.com>
-  Jordan Breeding <jordan.breeding@mac.com>
+  Julio M. Merino Vidal <jmmv@NetBSD.org>
   Vladimir Vukicevic <vladimirv@gmail.com>
-  Benoît Dejean <benoit@placenet.org>
-  Patrick Mauritz <oxygene@studentenbude.ath.cx>
-  Grahame Bowland <grahame@angrygoats.net>
-  Marcel van der Boom <marcel@hsdev.com>
-  Roland McGrath <roland@redhat.com>
-  Daniel Carosone <dan@geek.com.au>
-  Vinzenz Feenstra <evilissimo@c-plusplus.de>
-  Blake Kaplan <mrbkap@gmail.com>
-  Jeronimo Pellegrini <pellegrini@mpcnet.com.br>
-  Thomas Moschny <thomas.moschny@gmx.de>
   Zack Weinberg <zackw@panix.com>
-  Justin Patrin <papercrane@reversefold.com>
-  Kelly F. Hickel <kfh@mqsoftware.com>
-  Ralf S. Engelschall <rse@engelschall.com>
-  Thomas Keller <me@thomaskeller.biz>
 
 Several people have also contributed to the translation of monotone
 into non-English languages; their work is available in the po/
 subdirectory.  Contributors include:
 
-  Benoît Dejean <benoit@placenet.org>
-  Satoru SATOH <ss@gnome.gr.jp>
-  Alex Queiroz <asandroq@gmail.com>
-  Richard Levitte <richard@levitte.org>
-  Joel Rosdahl <joel@rosdahl.net>
-  Lapo Luchini <lapo@lapo.it>
-  Thomas Keller <me@thomaskeller.biz>
-  Thomas Moschny <thomas.moschny@gmx.de>
   Aristid Breitkreuz <aribrei@arcor.de>
-
-supporting files:
------------------
-
-D. Richard Hipp <drh@hwaci.com> wrote the files in sqlite/*, but is in
-no way affiliated with this project. I simply copied his code, which
-is assigned to the public domain. You can find the original code at
-http://www.sqlite.org/.
-
-
-The files in idna/* are copies of the core portion of the "GNU libidn"
-library. Copyright (C) 2002, 2003 Simon Josefsson. They are licensed
-under the GNU LGPL version 2.1. The original sources for libidn can be
-retrieved from http://josefsson.org/libidn/. The library carries an
-additional legal requirement of reproduction of the following text in
-any copies made:
-
----
-
-Libidn AUTHORS -- Information about the authors.
-Copyright (C) 2002, 2003 Simon Josefsson
-See the end for copying conditions.
-
-Simon Josefsson <simon@josefsson.org>
-Designed and implemented libidn.
-
------BEGIN PGP PUBLIC KEY BLOCK-----
-Comment: This 0xB565716F key is used to sign releases of Libidn.
-
-mKsEPNUHKwEFALqJSBHn6Qk5ex138kwymxA3idCFoTi5Q6mVooEVVaYVfeDG+5uV
-T5rhTFDfDcT9SO0eIlfKOraSRnVEHyDDH2PAgJFxyneFELcmLUQ66D+m8z+ziGro
-6bcDSBBDMRkHIX6/kH/vnevjqivIld+j8WTcVX+SArcKyzgQ58uMTrfQdLqzh6D9
-sE/838+ZPZkabmKKWMVWccoaUbWGYOcNwO0ABim0IVNpbW9uIEpvc2Vmc3NvbiA8
-amFzQGV4dHVuZG8uY29tPojYBBMBAgAiAhsDBAsHAwIDFQIDAxYCAQIeAQIXgAUC
-P6QrUQUJA7xyJgAKCRDtoh6UtWVxbwueBP4uh9ZEOuSjt2n5OpfuAablsrRzhlgP
-fluBMfjHNynEFsGjn81l81TCqStRln7wDUj95ZufSi3YvoYSFG1jffGMk/k2trgI
-NtT3kxaGkfns6dykBuV7Ki2wWqdJkTe1ibyai+RCqt+J1ldSUuHdfQZ5wALPJQRb
-4Hqi7M29azFHcfxbMLf3yGYyBuKC7eBVNVaR58UTFK6r0CX3T7eGuk8biEYEExEC
-AAYFAj1Y8r8ACgkQV5Mp08AbKiIX9wCfR2rMiXdKzZB95acA5YSQ4MLQyygAn1Nv
-7M36SAofR/73WjqlPpVAQ+fRiEwEExECAAwFAj1esHUFgwFXijYACgkQvLvElXGK
-klYZnQCeOXIzmEoZ5yOVNygphYmUwON/S8IAn32gWDyaTMpqyDcJEQeLdjcW7boS
-tCVTaW1vbiBKb3NlZnNzb24gPHNpbW9uQGpvc2Vmc3Nvbi5vcmc+iNgEEwECACIC
-GwMECwcDAgMVAgMDFgIBAh4BAheABQI/pCtUBQkDvHImAAoJEO2iHpS1ZXFvPREE
-/j3fX+cLxCCZNTjMhThGFujiT7ty4x1jVc91J6QOA+Jp+78NIIeyg3JTeR3WIv7/
-WFNzLKJXJEEcga+0ViPjoLfvGsHMAnwXqPYAxu1cDY4jId0bCYgoVlnfF9gwOWxe
-btotLpCiuXGL/168zEAXWJpPg6r2MfPhAKUJ9G8q52OOWJW3cObxoZ2gyXjuWOFt
-ygZ1vUAqP/8UGeZNdajHD5uIRgQTEQIABgUCPVjywgAKCRBXkynTwBsqImY3AKCS
-COO5LlNxmritUFY1i7VXBCUlZgCgll/6kE0G/NP3E6AdyzVwAzBPgUeITAQTEQIA
-DAUCPV6wdQWDAVeKNgAKCRC8u8SVcYqSVleXAJ9NZKUvb/erk53fMFUwpUeClOjh
-qwCcC3Du9UQjCn2k+7LWgqNMH+huqW24qwQ81Qd7AQUA2PTaoT8RNkFDlX7UCOB9
-vaRFxrX+dN7l6QO+O0Mg7dVdjItEnaaYkJ+r4LXecI47HogsUGExRdDYGT0Dq7aZ
-8GkC4UKPXc3q2KWQ3ib3wj3qnCGm3IX/I249ydYLAzQyWqMW09wLB5vxhPi4yjet
-4FTGWmtYUlGzDb7+6VZilYRTty0vhFF4cVXlO2R+vgPxFMvUc7o8WGDnQ3iyWAiz
-kQAGKYjFBBgBAgAPAhsMBQI/pCt8BQkDvHIBAAoJEO2iHpS1ZXFvEeIE/ixQWhAC
-pnKjQZeTA7zcshH683NU/bBAjbOq7lJ51aWMXOdXExGJsBD0fyPtRJywMtSB4vrM
-F1WjKZlA0jBOxzxWaWpLvMwdwgkSiql8KTNActxIoijtu0e5GI3V+55Z+Cv/jsPD
-lzeYiob0cO6u/2todt6XVTyCIFKWjf6/5i/LdhXlw7J9gzrCwm28ITC4is3voTNh
-Uceqods6zDrk0qo=
-=1RsN
------END PGP PUBLIC KEY BLOCK-----
-
-----------------------------------------------------------------------
-Copying and distribution of this file, with or without modification,
-are permitted in any medium without royalty provided the copyright
-notice and this notice are preserved.
-
----
-
-The file gettext.h is a copy of the one included in the GNU Gettext
-package, and is Copyright (C) 1995-1998, 2000-2002 Free Software
-Foundation, Inc.  It is licensed under the GNU LGPL version 2.  For
-more information, see the message on top of that file.
-
----
-
-The files in netxx/* are copies of the NetXX library, which is
-Copyright (C) 2001-2003 Peter J Jones (pjones@pmade.org), and
-distributed under a BSD-like license. The license terms are reproduced
-in the files, and do not require that they be reproduced here.
-
----
-
-The files in lua/*, except lposix.c and modemuncher.c, are copies of
-the lua 5.0 source distribution, from Tecgraf PUC-Rio. lposix.c and
-modemuncher.c are from Claudio Terra and Luiz Henrique de Figueiredo,
-both of Tecgraf PUC-Rio, but as near as I can tell those two files are
-declared to be in the public domain. The lua distribution can be
-retrieved from www.lua.org. The files are provided under an MIT-like
-license, reproduced here:
-
----
-
-Copyright (C) 2003 Tecgraf, PUC-Rio.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
----
-
-The files in boost/* are copies of unofficial development files from
-the boost "sandbox" CVS repository, linked off of
-http://www.boost.org/. The only license obligation I can find in those
-files is to reproduce their license statement in documentation, which
-I am doing here:
-
-files in boost/ related to circular buffers:
-
-// Copyright (c) 2003
-// Jan Gaspar, Whitestein Technologies
-
-// Permission to use or copy this software for any purpose is hereby granted 
-// without fee, provided the above notices are retained on all copies.
-// Permission to modify the code and to distribute modified code is granted,
-// provided the above notices are retained, and a notice that the code was
-// modified is included with the above copyright notice.
-
----
-
-Jack Lloyd <lloyd@randombit.net> wrote the majority of the Botan
-library, with contributions as noted in botan/thanks.txt
-The library is distributed under a BSD-like license:
-
----
-
-Copyright (C) 1999-2004 The Botan Project. All rights reserved.
-
-Redistribution and use in source and binary forms, for any use, with or without
-modification, is permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-list of conditions, and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-this list of conditions, and the following disclaimer in the documentation
-and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) "AS IS" AND ANY EXPRESS OR IMPLIED
-WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ARE DISCLAIMED.
-
-IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
-OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
----
-
-The file contrib/colorize is a copy of a perl script written by Cédric
-Bouvier, which is released under the GNU GPL.
-
----
-
-The file lru_cache.h is a copy of a C++ header written by Patrick
-Audley, which was released under the GNU GPL.
-
----
-
-copyright status:
------------------
+  Benoît Dejean <benoit@placenet.org>
+  Stéphane Gimenez <dev@gim.name>
+  Thomas Keller <me@thomaskeller.biz>
+  Richard Levitte <richard@levitte.org>
+  Lapo Luchini <lapo@lapo.it>
+  Thomas Moschny <thomas.moschny@gmx.de>
+  Alex Sandro Queiroz e Silva <asandroq@gmail.com>
+  Joel Rosdahl <joel@rosdahl.net>
+  Nicolas Ruiz <juan.ruiz@ula.ve>
+  Satoru SATOH <ss@gnome.gr.jp>
 
 I believe I am within my rights to assert my own copyright on:
 
@@ -291,78 +101,390 @@ Subsequent additions by contributing authors are implicitly licensed
 to the public under the same terms (GPL), but the contributing authors
 retain copyrights on their portions of the work.
 
----
 
-The file ssh_agent.cc includes a translation of the GET_32BIT_MSB_FIRST
-define from PuTTY's misc.h. PuTTY is licensed under an MIT-like license,
+files derived from other sources:
+---------------------------------
+
+Some files included with the monotone distribution began as copies of
+code from other sources, but have been modified for use in monotone.
+These files all carry attribution notices, and may qualify as
+'separate and independent works in themselves' for purposes of the
+GPL: that is, if separated from the monotone sources, they may be
+usable under less restrictive terms.
+
+lru_writeback_cache.hh was originally written by Patrick Audley and is
+licensed under the GPL v2+.
+
+mkstemp.cc was based on a portion of gfileutiles.c in glib and is
+licensed under the LGPL (version 2 or later).
+
+gettext.h is a copy of the one included in the GNU Gettext package,
+and is Copyright (C) 1995-1998, 2000-2002 Free Software Foundation,
+Inc.  It is licensed under the GNU LGPL version 2 (or later).  For
+more information, see the message on top of that file.
+
+unix/main.cc and win32/main.cc were originally execution_monitor.cc
+from the Boost project.  The files in the boost/ directory are copies
+of files that were at one time available from the boost "sandbox" CVS
+repository, linked off of http://www.boost.org/.  Boost in general is
+licensed under the Boost Software License:
+
+#  Boost Software License - Version 1.0 - August 17th, 2003
+#
+#  Permission is hereby granted, free of charge, to any person or
+#  organization obtaining a copy of the software and accompanying
+#  documentation covered by this license (the "Software") to use,
+#  reproduce, display, distribute, execute, and transmit the Software,
+#  and to prepare derivative works of the Software, and to permit
+#  third-parties to whom the Software is furnished to do so, all
+#  subject to the following:
+#
+#  The copyright notices in the Software and this entire statement,
+#  including the above license grant, this restriction and the
+#  following disclaimer, must be included in all copies of the
+#  Software, in whole or in part, and all derivative works of the
+#  Software, unless such copies or derivative works are solely in the
+#  form of machine-executable object code generated by a source
+#  language processor.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
+#  NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE
+#  DISTRIBUTING THE SOFTWARE BE LIABLE FOR ANY DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+#  DEALINGS IN THE SOFTWARE.
+
+The files in boost/ related to circular buffers are under a slightly
+different license:
+
+#  Copyright (c) 2003 Jan Gaspar, Whitestein Technologies
+#
+#  Permission to use or copy this software for any purpose is hereby
+#  granted without fee, provided the above notices are retained on all
+#  copies.  Permission to modify the code and to distribute modified
+#  code is granted, provided the above notices are retained, and a
+#  notice that the code was modified is included with the above
+#  copyright notice.
+
+
+lcs.cc is a C++ translation of Scheme code written by Aubrey Jaffer.
+The original source is under the following license:
+
+#  "differ.scm" O(NP) Sequence Comparison Algorithm.
+#  Copyright (C) 2001, 2002, 2003 Aubrey Jaffer
+#
+#  Permission to copy this software, to modify it, to redistribute it, to
+#  distribute modified versions, and to use it for any purpose is granted,
+#  subject to the following restrictions and understandings.
+#
+#  1.  Any copy made of this software must include this copyright notice
+#  in full.
+#
+#  2.  I have made no warrantee or representation that the operation of
+#  this software will be error-free, and I am under no obligation to
+#  provide any services, by way of maintenance, update, or otherwise.
+#
+#  3.  In conjunction with products arising from the use of this material,
+#  there shall be no use of my name in any advertising, promotional, or
+#  sales literature without prior written consent in each case.
+
+The translation is licensed under the GPL v2+ as the rest of Monotone,
+but only if an independent copyright actually exists in the
+translation, which was quite mechanical.
+
+ssh_agent.cc includes a translation of the GET_32BIT_MSB_FIRST define
+from PuTTY's misc.h. PuTTY is licensed under an MIT-like license,
 reproduced here:
 
----
+#  PuTTY is copyright 1997-2007 Simon Tatham.
+#
+#  Portions copyright Robert de Bath, Joris van Rantwijk, Delian
+#  Delchev, Andreas Schultz, Jeroen Massar, Wez Furlong, Nicolas Barry,
+#  Justin Bradford, Ben Harris, Malcolm Smith, Ahmad Khalifa, Markus
+#  Kuhn, and CORE SDI S.A.
+#
+#  Permission is hereby granted, free of charge, to any person
+#  obtaining a copy of this software and associated documentation files
+#  (the "Software"), to deal in the Software without restriction,
+#  including without limitation the rights to use, copy, modify, merge,
+#  publish, distribute, sublicense, and/or sell copies of the Software,
+#  and to permit persons to whom the Software is furnished to do so,
+#  subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE
+#  FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+#  CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+#  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
 
-PuTTY is copyright 1997-2007 Simon Tatham.
+ssh_agent.cc also includes socket creation code copied from OpenSSH's
+authfd.c. OpenSSH is licensed under a BSD-like license, reproduced
+here:
 
-Portions copyright Robert de Bath, Joris van Rantwijk, Delian
-Delchev, Andreas Schultz, Jeroen Massar, Wez Furlong, Nicolas Barry,
-Justin Bradford, Ben Harris, Malcolm Smith, Ahmad Khalifa, Markus
-Kuhn, and CORE SDI S.A.
+#  Author: Tatu Ylonen <ylo@cs.hut.fi>
+#  Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+#                     All rights reserved
+#  Functions for connecting the local authentication agent.
+#
+#  As far as I am concerned, the code I have written for this software
+#  can be used freely for any purpose.  Any derived versions of this
+#  software must be clearly marked as such, and if the derived work is
+#  incompatible with the protocol description in the RFC file, it must be
+#  called by a name other than "ssh" or "Secure Shell".
+#
+#  SSH2 implementation,
+#  Copyright (c) 2000 Markus Friedl.  All rights reserved.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+#  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+#  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+#  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+#  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+#  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+#  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+#  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+#  THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Permission is hereby granted, free of charge, to any person
-obtaining a copy of this software and associated documentation files
-(the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software,
-and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+external libraries:
+-------------------
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Monotone distributes unmodified or nearly unmodified copies of several
+third-party libraries on which it relies.  The binary 'mtn' executable
+is a derivative work of these libraries as well as the monotone source
+proper, but the monotone developers do not claim copyright in these
+libraries (except to the extent that we have personally
+contributed code to them).  They are 'separate and independent works
+in themselves'.
 
----
 
-The file ssh_agent.cc includes socket creation code copied from OpenSSH's
-authfd.c. OpenSSH is licensed under a BSD-like license, reproduced here:
+The files in sqlite/ comprise the SQLite database library, written by
+D. Richard Hipp <drh@hwaci.com> and others.  The SQLite distribution
+may be retrieved from http://www.sqlite.org/.  It is declared to be in
+the public domain:
 
----
+#  The author disclaims copyright to this source code.  In place of
+#  a legal notice, here is a blessing:
+#
+#     May you do good and not evil.
+#     May you find forgiveness for yourself and forgive others.
+#     May you share freely, never taking more than you give.
 
-Author: Tatu Ylonen <ylo@cs.hut.fi>
-Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
-                   All rights reserved
-Functions for connecting the local authentication agent.
 
-As far as I am concerned, the code I have written for this software
-can be used freely for any purpose.  Any derived versions of this
-software must be clearly marked as such, and if the derived work is
-incompatible with the protocol description in the RFC file, it must be
-called by a name other than "ssh" or "Secure Shell".
+The files in idna/ are copies of the core portion of the GNU libidn
+library for manipulating internationalized domain names, written by
+Simon Josefsson.  The libidn distribution may be retrieved from
+http://josefsson.org/libidn/.  It is licensed under the GNU LGPL
+version 2.1 or later, with the additional requirement that the
+following text be reproduced in any copies made:
 
-SSH2 implementation,
-Copyright (c) 2000 Markus Friedl.  All rights reserved.
+#  Libidn AUTHORS -- Information about the authors.
+#  Copyright (C) 2002, 2003 Simon Josefsson
+#  See the end for copying conditions.
+#
+#  Simon Josefsson <simon@josefsson.org>
+#  Designed and implemented libidn.
+#
+#  -----BEGIN PGP PUBLIC KEY BLOCK-----
+#  Comment: This 0xB565716F key is used to sign releases of Libidn.
+#
+#  mKsEPNUHKwEFALqJSBHn6Qk5ex138kwymxA3idCFoTi5Q6mVooEVVaYVfeDG+5uV
+#  T5rhTFDfDcT9SO0eIlfKOraSRnVEHyDDH2PAgJFxyneFELcmLUQ66D+m8z+ziGro
+#  6bcDSBBDMRkHIX6/kH/vnevjqivIld+j8WTcVX+SArcKyzgQ58uMTrfQdLqzh6D9
+#  sE/838+ZPZkabmKKWMVWccoaUbWGYOcNwO0ABim0IVNpbW9uIEpvc2Vmc3NvbiA8
+#  amFzQGV4dHVuZG8uY29tPojYBBMBAgAiAhsDBAsHAwIDFQIDAxYCAQIeAQIXgAUC
+#  P6QrUQUJA7xyJgAKCRDtoh6UtWVxbwueBP4uh9ZEOuSjt2n5OpfuAablsrRzhlgP
+#  fluBMfjHNynEFsGjn81l81TCqStRln7wDUj95ZufSi3YvoYSFG1jffGMk/k2trgI
+#  NtT3kxaGkfns6dykBuV7Ki2wWqdJkTe1ibyai+RCqt+J1ldSUuHdfQZ5wALPJQRb
+#  4Hqi7M29azFHcfxbMLf3yGYyBuKC7eBVNVaR58UTFK6r0CX3T7eGuk8biEYEExEC
+#  AAYFAj1Y8r8ACgkQV5Mp08AbKiIX9wCfR2rMiXdKzZB95acA5YSQ4MLQyygAn1Nv
+#  7M36SAofR/73WjqlPpVAQ+fRiEwEExECAAwFAj1esHUFgwFXijYACgkQvLvElXGK
+#  klYZnQCeOXIzmEoZ5yOVNygphYmUwON/S8IAn32gWDyaTMpqyDcJEQeLdjcW7boS
+#  tCVTaW1vbiBKb3NlZnNzb24gPHNpbW9uQGpvc2Vmc3Nvbi5vcmc+iNgEEwECACIC
+#  GwMECwcDAgMVAgMDFgIBAh4BAheABQI/pCtUBQkDvHImAAoJEO2iHpS1ZXFvPREE
+#  /j3fX+cLxCCZNTjMhThGFujiT7ty4x1jVc91J6QOA+Jp+78NIIeyg3JTeR3WIv7/
+#  WFNzLKJXJEEcga+0ViPjoLfvGsHMAnwXqPYAxu1cDY4jId0bCYgoVlnfF9gwOWxe
+#  btotLpCiuXGL/168zEAXWJpPg6r2MfPhAKUJ9G8q52OOWJW3cObxoZ2gyXjuWOFt
+#  ygZ1vUAqP/8UGeZNdajHD5uIRgQTEQIABgUCPVjywgAKCRBXkynTwBsqImY3AKCS
+#  COO5LlNxmritUFY1i7VXBCUlZgCgll/6kE0G/NP3E6AdyzVwAzBPgUeITAQTEQIA
+#  DAUCPV6wdQWDAVeKNgAKCRC8u8SVcYqSVleXAJ9NZKUvb/erk53fMFUwpUeClOjh
+#  qwCcC3Du9UQjCn2k+7LWgqNMH+huqW24qwQ81Qd7AQUA2PTaoT8RNkFDlX7UCOB9
+#  vaRFxrX+dN7l6QO+O0Mg7dVdjItEnaaYkJ+r4LXecI47HogsUGExRdDYGT0Dq7aZ
+#  8GkC4UKPXc3q2KWQ3ib3wj3qnCGm3IX/I249ydYLAzQyWqMW09wLB5vxhPi4yjet
+#  4FTGWmtYUlGzDb7+6VZilYRTty0vhFF4cVXlO2R+vgPxFMvUc7o8WGDnQ3iyWAiz
+#  kQAGKYjFBBgBAgAPAhsMBQI/pCt8BQkDvHIBAAoJEO2iHpS1ZXFvEeIE/ixQWhAC
+#  pnKjQZeTA7zcshH683NU/bBAjbOq7lJ51aWMXOdXExGJsBD0fyPtRJywMtSB4vrM
+#  F1WjKZlA0jBOxzxWaWpLvMwdwgkSiql8KTNActxIoijtu0e5GI3V+55Z+Cv/jsPD
+#  lzeYiob0cO6u/2todt6XVTyCIFKWjf6/5i/LdhXlw7J9gzrCwm28ITC4is3voTNh
+#  Uceqods6zDrk0qo=
+#  =1RsN
+#  -----END PGP PUBLIC KEY BLOCK-----
+#
+#  --------------------------------------------------------------------
+#  Copying and distribution of this file, with or without modification,
+#  are permitted in any medium without royalty provided the copyright
+#  notice and this notice are preserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+The files in netxx/ comprise the NetXX library, written by Peter
+Jones.  It is no longer available from its author.  It is distributed
+under a BSD-like license, reproduced here:
 
+#  Copyright (C) 2001-2004 Peter J Jones (pjones@pmade.org)
+#  All Rights Reserved
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#  2. Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#  3. Neither the name of the Author nor the names of its contributors
+#     may be used to endorse or promote products derived from this
+#     software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
+#  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+#  TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+#  PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR
+#  OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+#  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+#  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+#  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+#  AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+#  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+#  SUCH DAMAGE.
+
+
+The files in lua/ comprise the Lua interpreter, written by
+R. Ierusalimschy, L. H. de Figueiredo, and W. Celes, of Tecgraf
+PUC-Rio, and others.  The Lua distribution may be retrieved from
+http://www.lua.org/. It is licensed under an MIT-like license,
+reproduced here:
+
+#  Copyright (C) 1994-2007 Lua.org, PUC-Rio.
+#
+#  Permission is hereby granted, free of charge, to any person
+#  obtaining a copy of this software and associated documentation
+#  files (the "Software"), to deal in the Software without
+#  restriction, including without limitation the rights to use, copy,
+#  modify, merge, publish, distribute, sublicense, and/or sell copies
+#  of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be
+#  included in all copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+#  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+#  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+#  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+#  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+#  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+#  DEALINGS IN THE SOFTWARE.
+
+
+The files in botan/ comprise the Botan cryptography library, written
+by Jack Lloyd <lloyd@randombit.net> with contributions as noted in
+botan/thanks.txt.  The Botan distribution may be retrieved from
+http://botan.randombit.net/.  It is licensed under a BSD-like license:
+
+#  Copyright (C) 1999-2004 The Botan Project. All rights reserved.
+#
+#  Redistribution and use in source and binary forms, for any use,
+#  with or without modification, is permitted provided that the
+#  following conditions are met:
+#
+#  1. Redistributions of source code must retain the above copyright
+#  notice, this list of conditions, and the following disclaimer.
+#
+#  2. Redistributions in binary form must reproduce the above
+#  copyright notice, this list of conditions, and the following
+#  disclaimer in the documentation and/or other materials provided
+#  with the distribution.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) "AS IS" AND ANY EXPRESS
+#  OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+#  ARE DISCLAIMED.
+#
+#  IN NO EVENT SHALL THE AUTHOR(S) OR CONTRIBUTOR(S) BE LIABLE FOR ANY
+#  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+#  GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+#  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#  WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+The files in pcre/ comprise the Perl-Compatible Regular Expression
+(PCRE) library, written by Philip Hazel <ph10@cam.ac.uk>.  The PCRE
+distribution may be retrieved from http://www.pcre.org/.  It is licensed
+under a BSD-like license:
+
+#  Copyright (c) 1997-2007 University of Cambridge.
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the
+#    distribution.
+#
+#  * Neither the name of the University of Cambridge nor the names of
+#    its contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+#  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+#  OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+the contrib directory:
+----------------------
+
+The contrib/ directory contains a variety of contributions that may be
+useful in conjunction with monotone.  Each file carries its own
+copyright statement and licensing; however, to the best of our
+collective knowledge, all files are available under terms compatible
+with the GPL version 2 (*not* necessarily later versions).  See
+contrib/README for further details.
