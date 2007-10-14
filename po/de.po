@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-10 16:52+0200\n"
+"POT-Creation-Date: 2007-10-14 14:30+0200\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -2631,7 +2631,7 @@ msgstr "Kataloge"
 
 #: database_check.cc:241
 msgid "markings"
-msgstr "Kennzeichen"
+msgstr "Markierungen"
 
 #: database_check.cc:312 netsync.cc:3119 rcs_import.cc:1238
 msgid "revisions"
@@ -3114,17 +3114,17 @@ msgstr "Zertifikats-Revision '%s' existiert nicht in der Datenbank"
 msgid "dropping cert"
 msgstr "entferne Zertifikat"
 
-#: database.cc:3409
+#: database.cc:3415
 #, c-format
 msgid "no database specified"
 msgstr "keine Datenbank spezifiziert"
 
-#: database.cc:3419
+#: database.cc:3425
 #, c-format
 msgid "database %s does not exist"
 msgstr "Datenbank %s existiert nicht"
 
-#: database.cc:3437
+#: database.cc:3443
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -3137,17 +3137,17 @@ msgstr ""
 "Dieser Pfad ist aber ein Arbeitsbereich.  Meinten Sie: \n"
 "%s"
 
-#: database.cc:3442
+#: database.cc:3448
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "%s ist ein Verzeichnis, keine Datenbank"
 
-#: database.cc:3452
+#: database.cc:3458
 #, c-format
 msgid "database %s already exists"
 msgstr "Datenbank %s existiert bereits"
 
-#: database.cc:3457
+#: database.cc:3463
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%"
@@ -4285,7 +4285,9 @@ msgstr "Rekursions-Grenze im regulären Ausdruck überschritten"
 
 #: pcrewrap.cc:213
 msgid "invalid UTF-8 sequence found during regular expression matching"
-msgstr "ungültige UTF-8-Sequenz während der Anwendung des regulären Ausdrucks gefunden"
+msgstr ""
+"ungültige UTF-8-Sequenz während der Anwendung des regulären Ausdrucks "
+"gefunden"
 
 #: pcrewrap.cc:216
 #, c-format
@@ -4525,22 +4527,22 @@ msgstr "Derzeitige Arbeitsgruppe: %i Elemente"
 msgid "expanded selector '%s' -> '%s'"
 msgstr "expandiere Selektor '%s' -> '%s'"
 
-#: selectors.cc:83
+#: selectors.cc:86
 #, c-format
 msgid "unknown selector type: %c"
 msgstr "unbekannter Selektor-Typ: %c"
 
-#: selectors.cc:94
+#: selectors.cc:97
 #, c-format
 msgid "selector '%s' is not a valid date\n"
 msgstr "Der Selektor '%s' ist kein gültiges Datum\n"
 
-#: selectors.cc:112
+#: selectors.cc:115
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
 msgstr "Der Selektor '%s' ist kein gültiges Datum (%s)"
 
-#: selectors.cc:116
+#: selectors.cc:119
 #, c-format
 msgid "expanded date '%s' -> '%s'\n"
 msgstr "expandierte Datum '%s' -> '%s'\n"
