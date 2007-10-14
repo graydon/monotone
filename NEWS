@@ -28,18 +28,26 @@
           merge_into_workspace" this way one especially can achieve a
           CVS/SVN style non-modal workspace-based merging.
 
-        - an additional selector type "p" for selecting parent
-          revision(s) was added. This is especially handy in situations
-          like "mtn diff -r p:<revision> -r <revision>", because one no
-          longer has to figure out the parent revision manually via "mtn
-          automate parents <revision>" beforehand.
+        - There is a new revision selector: "p:REV" selects the
+	  parent(s) of revision REV.  For example, if a revision has
+	  one parent,
 
-        - removed the requirement for the external Boost libraries by
-          replacing boost.regex with PCRE (n.v.m.experiment.pcre). A
-          local copy of PCRE is shipped with Monotone, but one can
-          build Monotone against an external PCRE with Autoconf option
-          --with-system-pcre. Additionally, the internal of use regular
-          expressions were reduced, too (n.v.m.deregexp).
+             mtn diff -r p:REV -r REV
+
+          will show the changes made in that revision.
+
+        - Monotone now uses the Perl-Compatible Regular Expression
+	  (PCRE) library for all regular expressions, instead of the
+	  boost::regex library.  This means that external Boost
+	  libraries are no longer required to build or use Monotone.
+	  If building from source, you will still need the Boost headers
+	  available somewhere.  See INSTALL for details.
+
+          PCRE's syntax for regular expressions is a superset of
+          boost::regex's syntax; it is unlikely that any existing
+          .mtn-ignore files or other user uses of regexps will break.
+          The manual now contains detailed documentation of the regexp
+          syntax, borrowed from PCRE itself.
 
         - the format of "mtn automate inventory" has changed to basic_io.
           This fixes a couple of corner cases where the old format 
@@ -75,7 +83,10 @@
 
         - Update Lua to 5.1.2 plus latest bug fixes.
 
-
+        - Internal use of regular expressions has been almost eliminated.
+          (Regular expressions are still used for .mtn-ignore and the
+	  --show-encloser feature of mtn diff, and are still available to
+	  Lua hooks.)
 
 Fri Aug  3 06:08:36 UTC 2007
 
