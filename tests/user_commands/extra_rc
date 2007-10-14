@@ -14,6 +14,6 @@ function check_head(...)
 end
 
 
-register_command("check_head", "Check that the heads of the branch are what is passed in",
+register_command("check_head", "", "Check that the heads of the branch are what is passed in",
       "This is a bogus command used to demonstrate user commands.", "check_head")
 
