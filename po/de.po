@@ -2771,7 +2771,7 @@ msgstr "Revision %s fehlt Zertifikat %s"
 #, c-format
 msgid "revision %s mismatched certs (%d authors %d dates %d changelogs)"
 msgstr ""
-"Revision %s falsch zugeordnete Zertifikate (%d Autoren %d Daten %d Log-"
+"Revision %s falsch zugeordnete Zertifikate (%d Autoren-, %d Datums-, und %d Log-"
 "Einträge)"
 
 #: database_check.cc:852
