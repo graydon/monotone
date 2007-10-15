@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-11 01:18+0100\n"
+"PO-Revision-Date: 2007-10-15 13:06+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -2988,17 +2988,17 @@ msgstr "la revisione %s non è presente in database"
 msgid "dropping cert"
 msgstr "cancella certificato"
 
-#: database.cc:3409
+#: database.cc:3415
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:3419
+#: database.cc:3425
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:3437
+#: database.cc:3443
 #, c-format
 msgid ""
 "You gave a database option of: \n"
@@ -3007,17 +3007,17 @@ msgid ""
 "%s"
 msgstr ""
 
-#: database.cc:3442
+#: database.cc:3448
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una directory, non un database"
 
-#: database.cc:3452
+#: database.cc:3458
 #, c-format
 msgid "database %s already exists"
 msgstr "il database ‘%s’ esiste già"
 
-#: database.cc:3457
+#: database.cc:3463
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%s'\n"
@@ -4100,12 +4100,12 @@ msgstr "pacchetto di tipo sconosciuto: ‘%s’"
 #: pcrewrap.cc:161
 #, c-format
 msgid "while compiling regex \"%s\": %s"
-msgstr "durante la compilazione dell'espressione regolare ‘%s’: %s"
+msgstr ""
 
 #: pcrewrap.cc:170
-#, c-format
+#, fuzzy, c-format
 msgid "error in regex \"%s\": %s"
-msgstr "errore nell'espressione regolare ‘%s’: %s"
+msgstr "impossibile aprire il file ‘%s’: %s"
 
 #: pcrewrap.cc:172
 #, c-format
@@ -4115,7 +4115,7 @@ msgstr ""
 #: pcrewrap.cc:186
 #, c-format
 msgid "while studying regex \"%s\": %s"
-msgstr "durante lo studio dell'espressione regolare ‘%s’: %s"
+msgstr ""
 
 #: pcrewrap.cc:204
 msgid "backtrack limit exceeded in regular expression matching"
@@ -4356,24 +4356,24 @@ msgstr "Insieme di lavoro attuale: %i elementi"
 msgid "expanded selector '%s' -> '%s'"
 msgstr "espanso il selettore ‘%s’ in ‘%s’"
 
-#: selectors.cc:83
+#: selectors.cc:86
 #, c-format
 msgid "unknown selector type: %c"
 msgstr "selettore di tipo sconosciuto: ‘%c’"
 
 # TODO: remove \n
-#: selectors.cc:94
+#: selectors.cc:97
 #, c-format
 msgid "selector '%s' is not a valid date\n"
 msgstr "il selettore ‘%s’ non è una data valida\n"
 
-#: selectors.cc:112
+#: selectors.cc:115
 #, c-format
 msgid "selector '%s' is not a valid date (%s)"
 msgstr "il selettore ‘%s’ non è una data valida (%s)"
 
 # TODO: remove \n
-#: selectors.cc:116
+#: selectors.cc:119
 #, c-format
 msgid "expanded date '%s' -> '%s'\n"
 msgstr "espansa la data ‘%s’ in ‘%s’\n"
@@ -4970,11 +4970,11 @@ msgid ""
 "with versions of monotone older than %s.\n"
 "we apologize for the inconvenience."
 msgstr ""
-"i metadata dello spazio di lavoro sono nel formato 0. Per usare questo spazio di lavoro\n"
+"i metadati dello spazio di lavoro sono nel formato 0. Per usare questo spazio di lavoro\n"
 "con questa versione di monotone, devi prima cancellarlo e verificarlo\n"
 "di nuovo (convertire dal formato 0 non è possibile.\n"
 "una volta fatto ciò, non potrai più utilizzare questo lo spazio di lavoro\n"
-"con versioni di monotone più vecchie di ‘%s’.\n"
+"con versioni di monotone più vecchie di %s.\n"
 "ci scusiamo per l'inconveniente."
 
 #: work_migration.cc:128
@@ -4986,11 +4986,11 @@ msgid ""
 "once you have done this, you will not be able to use the workspace\n"
 "with versions of monotone older than %s."
 msgstr ""
-"per usare questo spazio di lavoro con questa versione di monotone, il suo metadata\n"
-"deve essere convertito dal formato %d al formato %d, usando il comando\n"
+"per usare questo spazio di lavoro con questa versione di monotone, il suoi metadati\n"
+"devono essere convertiti dal formato %d al formato %d, usando il comando\n"
 "'%s migrate_workspace'.\n"
 "una volta fatto questo, non potrai più usare lo spazio di lavoro\n"
-"con versioni di monotone più vecchie di ‘%s’."
+"con versioni di monotone più vecchie di %s."
 
 #: work_migration.cc:138
 #: work_migration.cc:266
