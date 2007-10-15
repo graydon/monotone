@@ -21,7 +21,7 @@
           variable which can be used to control its behaviour
           through comma-separated "key[=value]" entries. Currently
           supported entries are "partial" for doing a partial
-          batch/non-modal 3-way merge "resolution" which uses
+          batch/non-modal 3-way merge conflict "resolution" which uses
           embedded content conflict markers and "diff3opts=[...]" and
           "sdiffopts=[...]" for passing arbitrary options to the used
           "diff3" and "sdiff" tools. When used in combination with "mtn
