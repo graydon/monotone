@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-11 01:18+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2007-10-15 16:25+0100\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -258,7 +258,7 @@ msgstr "ID_REV"
 
 #: automate.cc:1192
 msgid "Prints the revision data in packet format"
-msgstr ""
+msgstr "Stampa dati-revisione in formato pacchetto"
 
 #: automate.cc:1205
 #: automate.cc:1235
@@ -285,7 +285,7 @@ msgstr "la revisione %s non esiste"
 
 #: automate.cc:1221
 msgid "Prints the certs associated with a revision in packet format"
-msgstr ""
+msgstr "Stampa i certificati associati a una revisione in formato pacchetto"
 
 #: automate.cc:1251
 #: cmd_files.cc:321
@@ -294,7 +294,7 @@ msgstr "ID_FILE"
 
 #: automate.cc:1252
 msgid "Prints the file data in packet format"
-msgstr ""
+msgstr "Stampa il file dati in formato pacchetto"
 
 #: automate.cc:1265
 #, c-format
@@ -307,7 +307,7 @@ msgstr "VECCHIO_FILE NUOVO_FILE"
 
 #: automate.cc:1282
 msgid "Prints the file delta in packet format"
-msgstr ""
+msgstr "Stampa il file delta in formato pacchetto"
 
 #: automate.cc:1319
 msgid "Prints revisions that are common ancestors of a list of revisions"
@@ -386,7 +386,7 @@ msgstr "REV1 FILE REV2"
 
 #: automate.cc:1706
 msgid "Prints the name of a file in a target revision relative to a given revision"
-msgstr ""
+msgstr "Stampa il nome di un file in una revisione selezionata relativa a una revisione data"
 
 #: automate.cc:1756
 msgid "[FILEID] CONTENTS"
@@ -659,11 +659,17 @@ msgid ""
 "Consider updating your workspace to another revision first,\n"
 "before you try to kill this revision again."
 msgstr ""
+"Non è possibile eliminare la revisione ‘%s’,\n"
+"perché l'attuale spazio di lavoro rimarrebbe in uno stato\n"
+"invalido, dal quale monotone non può recuperare automaticamente visto che\n"
+"lo spazio di lavoro contiene cambiamenti non commit.\n"
+"Prendi in consiferazione l'aggiornamento del tuo spazio di lavoro ad altra revisione precedente,\n"
+"prima di cercare di eliminare ancora questa revisione."
 
 #: cmd_db.cc:167
 #, c-format
 msgid "applying changes from %s on the current workspace"
-msgstr ""
+msgstr "sto applicando i cambiamenti da ‘%s’ sullo spazio di lavoro attuale"
 
 # TODO: elimina è erase/delete, kill è più forte
 #: cmd_db.cc:186
@@ -710,7 +716,7 @@ msgstr "L'epoca deve essere di %s caratteri"
 
 #: cmd_db.cc:279
 msgid "This command modifies (or adds if it did not exist before) the variable named NAME, stored in the database, and sets it to the given value in VALUE.  The variable is placed in the domain DOMAIN."
-msgstr ""
+msgstr "Questo comando modifica (o aggiunge se non esisteva prima) la variabile chiamata NOME, immagazzinata nel database, e la setta al valore dato in VALORE . La variabile vien messa nel dominio DOMINIO."
 
 #: cmd_db.cc:297
 msgid "Unsets a database variable"
@@ -718,7 +724,7 @@ msgstr "Cancella una variabile dal database"
 
 #: cmd_db.cc:298
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
-msgstr ""
+msgstr "Questo comando rimuove il NOME della variabile dal dominio DOMINIO, che era precedentemente immagazzinato nel database"
 
 #: cmd_db.cc:311
 #, c-format
@@ -746,7 +752,7 @@ msgstr "Esegue un passo di migrazione sul database specificato"
 # successivo non dà l'idea di ordine temporale e non sintattico
 #: cmd_db.cc:368
 msgid "This command migrates the given database from the specified schema in SCHEMA to its successor."
-msgstr "Questo comando migra il database specificato dallo schema specificato in SCHEMA al suo successore."
+msgstr "Questo comando migra il database dato dallo schema specificato in SCHEMA al suo successore."
 
 #: cmd_diff_log.cc:122
 msgid "Deleted entries:"
@@ -902,7 +908,7 @@ msgstr "Stampa una copia annotata di un file"
 
 #: cmd_files.cc:125
 msgid "Calculates and prints an annotated copy of the given file from the specified REVISION."
-msgstr ""
+msgstr "Calcola e stampa una copia annotata del file dato dalla REVISION spcificata"
 
 #: cmd_files.cc:158
 #, c-format
@@ -1485,11 +1491,11 @@ msgstr "ALTRA-REVISIONE"
 
 #: cmd_merging.cc:618
 msgid "Merges a revision into the current workspace's base revision"
-msgstr ""
+msgstr "Unisce una revisione nella revisione base dello spazio di lavoro attuale"
 
 #: cmd_merging.cc:619
 msgid "Merges OTHER-REVISION into the current workspace's base revision, and update the current workspace with the result.  There can be no pending changes in the current workspace.  Both OTHER-REVISION and the workspace's base revision will be recorded as parents on commit.  The workspace's selected branch is not changed."
-msgstr ""
+msgstr "Unisce ALTRA-REVISIONE nella revisione base dello spazio di lavoro attuale, e aggiorna lo spazio di lavoro attuale col risultato. Non ci possono essere cambiamenti in sospeso nello spazio di lavoro attuale. Sia ALTRA-REVISIONE che la revisione base dello spazio di lavoro saranno registrate come genitori in commit. Il ramo dello spazio di lavoro selezionato non è cambiato."
 
 #: cmd_merging.cc:650
 #, c-format
@@ -1518,7 +1524,7 @@ msgstr "REV_SINISTRA REV_DESTRA RAMO_DESTINAZIONE"
 
 #: cmd_merging.cc:713
 msgid "Merges two explicitly given revisions"
-msgstr ""
+msgstr "Unisce due revisioni date esplicitamente"
 
 #: cmd_merging.cc:714
 msgid "The results of the merge are placed on the branch specified by DEST-BRANCH."
@@ -1541,7 +1547,7 @@ msgstr "REV REV"
 
 #: cmd_merging.cc:739
 msgid "Shows what conflicts need resolution between two revisions"
-msgstr ""
+msgstr "Mostra quali conflitti necessitano risoluzione tra due revisioni"
 
 #: cmd_merging.cc:740
 msgid "The conflicts are calculated based on the two revisions given in the REV parameters."
@@ -4314,12 +4320,12 @@ msgstr ""
 #: roster.cc:2313
 #, c-format
 msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
-msgstr ""
+msgstr "la restrizione include la cancellazione di ‘%s’ ma esclude la cancellazione di ‘%s’"
 
 #: roster.cc:2332
 #, c-format
 msgid "restriction excludes addition of '%s' but includes addition of '%s'"
-msgstr ""
+msgstr "la restrizione esclude l'aggiunta di ‘%s’ ma include l'aggiunta di ‘%s’"
 
 #: roster.cc:2360
 #, c-format
@@ -4970,7 +4976,7 @@ msgid ""
 "with versions of monotone older than %s.\n"
 "we apologize for the inconvenience."
 msgstr ""
-"i metadata dello spazio di lavoro sono nel formato 0. Per usare questo spazio di lavoro\n"
+"i metadati dello spazio di lavoro sono nel formato 0. Per usare questo spazio di lavoro\n"
 "con questa versione di monotone, devi prima cancellarlo e verificarlo\n"
 "di nuovo (convertire dal formato 0 non è possibile.\n"
 "una volta fatto ciò, non potrai più utilizzare questo lo spazio di lavoro\n"
@@ -4986,8 +4992,8 @@ msgid ""
 "once you have done this, you will not be able to use the workspace\n"
 "with versions of monotone older than %s."
 msgstr ""
-"per usare questo spazio di lavoro con questa versione di monotone, il suo metadata\n"
-"deve essere convertito dal formato %d al formato %d, usando il comando\n"
+"per usare questo spazio di lavoro con questa versione di monotone, i suoi metadati\n"
+"devono essere convertiti dal formato %d al formato %d, usando il comando\n"
 "'%s migrate_workspace'.\n"
 "una volta fatto questo, non potrai più usare lo spazio di lavoro\n"
 "con versioni di monotone più vecchie di ‘%s’."
@@ -5094,7 +5100,7 @@ msgstr "impossibile creare il file temporaneo ‘%s’: %s"
 #: unix/fs.cc:360
 #, c-format
 msgid "all %d possible temporary file names are in use"
-msgstr ""
+msgstr "tutti i %d possibili nomi di file temporanei sono in uso"
 
 #: unix/fs.cc:401
 #: win32/fs.cc:441
@@ -5180,12 +5186,12 @@ msgstr "problemi nel rinominare ‘%s’ in ‘%s’: %s (%d)"
 #: win32/fs.cc:389
 #, c-format
 msgid "cannot find a temporary file (tried %d possibilities)"
-msgstr ""
+msgstr "non è possibile trovare un file temporaneo (provate %d possibilità)"
 
 #: win32/fs.cc:416
 #, c-format
 msgid "%s will be accessible to all users of this computer\n"
-msgstr ""
+msgstr "‘%s’ sarà accessibile a tutti gli utenti di questo computer\n"
 
 #: win32/get_system_flavour.cc:156
 #, c-format
