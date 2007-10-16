@@ -138,14 +138,13 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
       
       if (!app.opts.ignore_suspend_certs)
         {
-          set<revision_id> visible_revs;
           suspended_in_branch s(app, branch_encoded);
-          for (std::set<revision_id>::iterator it = branch.second.begin();
-               it != branch.second.end(); it++)
-            if (!s(*it))
-              visible_revs.insert(*it);
-
-          swap(visible_revs, branch.second);
+          std::set<revision_id>::iterator it = branch.second.begin();
+          while (it != branch.second.end())
+            if (s(*it))
+              branch.second.erase(it++);
+            else
+              it++;
         }
       
       L(FL("found heads of branch %s (%s heads)")
