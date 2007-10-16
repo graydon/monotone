@@ -1,6 +1,6 @@
 /*************************************************
 * Division Algorithm Source File                 *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/numthry.h>
@@ -63,7 +63,7 @@ void divide(const BigInt& x, const BigInt& y_arg, BigInt& q, BigInt& r)
       q.get_reg().create(n - t + 1);
       if(n <= t)
          {
-         while(r > y) { r -= y; q++; }
+         while(r > y) { r -= y; ++q; }
          r >>= shifts;
          sign_fixup(x, y_arg, q, r);
          return;

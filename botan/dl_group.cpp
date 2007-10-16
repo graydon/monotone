@@ -1,6 +1,6 @@
 /*************************************************
 * Discrete Logarithm Parameters Source File      *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/dl_group.h>
@@ -28,14 +28,19 @@ DL_Group::DL_Group()
 *************************************************/
 DL_Group::DL_Group(const std::string& type)
    {
-   DataSource_Memory pem(global_config().get("dl", type));
+   std::string grp_contents = global_config().get("dl", type);
+
+   if(grp_contents == "")
+      throw Invalid_Argument("DL_Group: Unknown group " + type);
+
+   DataSource_Memory pem(grp_contents);
    PEM_decode(pem);
    }
 
 /*************************************************
 * DL_Group Constructor                           *
 *************************************************/
-DL_Group::DL_Group(u32bit pbits, PrimeType type)
+DL_Group::DL_Group(PrimeType type, u32bit pbits, u32bit qbits)
    {
    if(pbits < 512)
       throw Invalid_Argument("DL_Group: prime size " + to_string(pbits) +
@@ -51,7 +56,9 @@ DL_Group::DL_Group(u32bit pbits, PrimeType type)
       {
       if(type == Prime_Subgroup)
          {
-         const u32bit qbits = 2 * dl_work_factor(pbits);
+         if(!qbits)
+            qbits = 2 * dl_work_factor(pbits);
+
          q = random_prime(qbits);
          BigInt X;
          while(p.bits() != pbits || !is_prime(p))
@@ -61,7 +68,10 @@ DL_Group::DL_Group(u32bit pbits, PrimeType type)
             }
          }
       else
-         generate_dsa_primes(p, q, pbits);
+         {
+         qbits = qbits ? qbits : ((pbits == 1024) ? 160 : 256);
+         generate_dsa_primes(p, q, pbits, qbits);
+         }
 
       g = make_dsa_generator(p, q);
       }
@@ -72,9 +82,9 @@ DL_Group::DL_Group(u32bit pbits, PrimeType type)
 /*************************************************
 * DL_Group Constructor                           *
 *************************************************/
-DL_Group::DL_Group(const MemoryRegion<byte>& seed, u32bit pbits, u32bit start)
+DL_Group::DL_Group(const MemoryRegion<byte>& seed, u32bit pbits, u32bit qbits)
    {
-   if(!generate_dsa_primes(p, q, seed.begin(), seed.size(), pbits, start))
+   if(!generate_dsa_primes(p, q, pbits, qbits, seed))
       throw Invalid_Argument("DL_Group: The seed/counter given does not "
                              "generate a DSA group");
 

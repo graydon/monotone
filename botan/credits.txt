@@ -17,6 +17,11 @@ D: Binary file I/O support, allocator fixes
 N: Hany Greiss
 D: Windows porting
 
+N: Yves Jerschow
+E: Yves.Jerschow@uni-duesseldorf.de
+D: Optimizations for memory load/store and HMAC
+S: Germany
+
 N: Matt Johnston
 D: Allocator fixes and optimizations, decompressor fixes
 
@@ -33,9 +38,9 @@ E: lloyd@randombit.net
 W: http://www.randombit.net/
 P: 3F69 2E64 6D92 3BBE E7AE  9258 5C0F 96E8 4EC1 6D6B
 D: Original author
-S: Washington DC, USA
+S: New York NY, USA
 
 N: Luca Piccarreta
 E: luca.piccarreta@gmail.com
-D: MS Windows mutex module, x86/amd64 assembler
+D: x86/amd64 assembler, BigInt optimizations, Win32 mutex
 S: Italy

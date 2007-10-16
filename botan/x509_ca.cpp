@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Authority Source File        *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/x509_ca.h>
@@ -15,6 +15,7 @@
 #include <botan/util.h>
 #include <algorithm>
 #include <typeinfo>
+#include <iterator>
 #include <memory>
 #include <set>
 

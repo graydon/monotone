@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
@@ -78,14 +78,15 @@ class BigInt
       SecureVector<word>& get_reg() { return reg; }
       void grow_reg(u32bit) const;
 
-      word& operator[](u32bit index) { return reg[index]; }
-      word operator[](u32bit index) const { return reg[index]; }
+      word& operator[](u32bit);
+      word operator[](u32bit) const;
       void clear() { reg.clear(); }
 
       void randomize(u32bit = 0);
 
       void binary_encode(byte[]) const;
       void binary_decode(const byte[], u32bit);
+      void binary_decode(const MemoryRegion<byte>&);
       u32bit encoded_size(Base = Binary) const;
 
       static SecureVector<byte> encode(const BigInt&, Base = Binary);

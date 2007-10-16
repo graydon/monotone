@@ -1,6 +1,6 @@
 /*************************************************
 * Character Set Handling Source File             *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/charset.h>
@@ -92,7 +92,8 @@ char digit2char(byte b)
 *************************************************/
 bool caseless_cmp(char a, char b)
    {
-   return (std::tolower((unsigned char)a) == std::tolower((unsigned char)b));
+   return (std::tolower(static_cast<unsigned char>(a)) ==
+           std::tolower(static_cast<unsigned char>(b)));
    }
 
 }

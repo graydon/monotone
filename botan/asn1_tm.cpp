@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Time Types Source File                   *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -20,11 +20,7 @@ namespace {
 *************************************************/
 std::tm get_tm(u64bit timer)
    {
-   std::time_t time_val = (std::time_t)timer;
-
-   if((u64bit)time_val != timer)
-      throw Encoding_Error("X509_Time: time_t overflow with time value " +
-                           to_string(timer));
+   std::time_t time_val = static_cast<std::time_t>(timer);
 
    std::tm* tm_p = std::gmtime(&time_val);
    if(tm_p == 0)

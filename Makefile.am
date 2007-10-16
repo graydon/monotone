@@ -112,13 +112,13 @@ BOTAN_SOURCES = 							\
 	botan/ber_dec.cpp botan/big_base.cpp     \
 	botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
 	botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
-	botan/buf_filt.cpp botan/cbc.cpp botan/certstor.cpp        \
+	botan/buf_filt.cpp botan/cbc.cpp botan/cbc_mac.cpp botan/certstor.cpp \
 	botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
 	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
 	botan/data_snk.cpp botan/data_src.cpp \
 	botan/def_ops.cpp botan/defalloc.cpp \
 	botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
-	botan/dl_group.cpp \
+	botan/dl_group.cpp botan/dsa_gen.cpp \
 	botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
