@@ -648,7 +648,9 @@ char const migrate_to_binary_hashes[] =
   "UPDATE public_keys       SET hash=unhex(hash);"
   "UPDATE revision_certs    SET hash=unhex(hash), id=unhex(id);"
 
-  // we altered a comment on this table, thus we need to recreated it
+  // We altered a comment on this table, thus we need to recreated it.
+  // Additionally, this is the only schema change, so that we get another
+  // schema hash to upgrade to.
   "ALTER TABLE branch_epochs RENAME TO tmp;"
   "CREATE TABLE branch_epochs"
 	"  ( hash not null unique,         -- hash of remaining fields separated by \":\"\n"
@@ -657,6 +659,12 @@ char const migrate_to_binary_hashes[] =
 	"  );"
   "INSERT INTO branch_epochs SELECT unhex(hash), branch, unhex(epoch) FROM tmp;"
   "DROP TABLE tmp;"
+
+  // To be able to migrate from pre-roster era, we also need to convert
+  // these deprecated tables
+  "UPDATE manifests         SET id=unhex(id);"
+  "UPDATE manifest_deltas   SET id=unhex(id), base=unhex(base);"
+  "UPDATE manifest_certs    SET id=unhex(id), hash=unhex(hash);"
   ;
 
 // this is a function because it has to refer to the numeric constant

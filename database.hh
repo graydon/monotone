@@ -519,6 +519,10 @@ public:
   // --== Completion ==--
   //
 public:
+  void prefix_matching_constraint(std::string const & colname,
+                                   std::string const & prefix,
+                                   query & constraint);
+
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);
 

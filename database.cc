@@ -2321,7 +2321,7 @@ database::public_key_exists(hexenc<id> const & hash)
   results res;
   fetch(res, one_col, any_rows,
         query("SELECT id FROM public_keys WHERE hash = ?")
-        % text(hash()));
+        % blob(decode_hexenc(hash())));
   I((res.size() == 1) || (res.size() == 0));
   if (res.size() == 1)
     return true;
@@ -2349,7 +2349,7 @@ database::get_pubkey(hexenc<id> const & hash,
   results res;
   fetch(res, 2, one_row,
         query("SELECT id, keydata FROM public_keys WHERE hash = ?")
-        % text(hash()));
+        % blob(decode_hexenc(hash())));
   id = rsa_keypair_id(res[0][0]);
   encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
@@ -2388,7 +2388,7 @@ database::put_key(rsa_keypair_id const & pub_id,
   rsa_pub_key pub_key;
   decode_base64(pub_encoded, pub_key);
   execute(query("INSERT INTO public_keys VALUES(?, ?, ?)")
-          % text(thash())
+          % blob(decode_hexenc(thash()))
           % text(pub_id())
           % blob(pub_key()));
 
@@ -2786,20 +2786,62 @@ database::get_manifest_certs(cert_name const & name,
 
 // completions
 void
+database::prefix_matching_constraint(std::string const & colname,
+                                     std::string const & prefix,
+                                     query & constraint)
+{
+  L(FL("prefix_matching_constraint for '%s'") % prefix);
+
+  if (prefix.empty())
+    constraint = query("1");
+  else
+    {
+      string lower_bound(prefix);
+      string upper_bound(prefix);
+
+      string::reverse_iterator ity(upper_bound.rbegin());
+      ++(*ity);
+      while ((*ity == 0) && ity != upper_bound.rend())
+        {
+          ++ity;
+          ++(*ity);
+        }
+
+      if (ity == upper_bound.rend())
+        {
+          // no upper bound needed, as the lower bound is
+          // 0xffffff...
+          L(FL("prefix_matcher: only lower bound ('%s')")
+            % encode_hexenc(lower_bound));
+          constraint = query(colname + " > ?")
+                       % blob(lower_bound);
+        }
+      else
+        {
+          L(FL("prefix_matcher: lower bound ('%s') and upper bound ('%s')")
+            % encode_hexenc(lower_bound)
+            % encode_hexenc(upper_bound));
+          constraint = query(colname + " BETWEEN ? AND ?")
+                       % blob(lower_bound)
+                       % blob(upper_bound);
+        }
+    }
+}
+
+void
 database::complete(string const & partial,
                    set<revision_id> & completions)
 {
   results res;
   completions.clear();
+  query constraint;
 
-  string pattern = partial + "*";
-
+  prefix_matching_constraint("id", partial, constraint);
   fetch(res, 1, any_rows,
-        query("SELECT id FROM revisions WHERE id GLOB ?")
-        % text(pattern));
+        query("SELECT id FROM revisions WHERE " + constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 
@@ -2809,24 +2851,22 @@ database::complete(string const & partial,
 {
   results res;
   completions.clear();
+  query constraint;
 
-  string pattern = partial + "*";
-
+  prefix_matching_constraint("id", partial, constraint);
   fetch(res, 1, any_rows,
-        query("SELECT id FROM files WHERE id GLOB ?")
-        % text(pattern));
+        query("SELECT id FROM files WHERE " + constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(file_id(res[i][0]));
+    completions.insert(file_id(encode_hexenc(res[i][0])));
 
   res.clear();
 
   fetch(res, 1, any_rows,
-        query("SELECT id FROM file_deltas WHERE id GLOB ?")
-        % text(pattern));
+        query("SELECT id FROM file_deltas WHERE " + constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(file_id(res[i][0]));
+    completions.insert(file_id(encode_hexenc(res[i][0])));
 }
 
 void
@@ -2835,15 +2875,16 @@ database::complete(string const & partial,
 {
   results res;
   completions.clear();
+  query constraint;
 
-  string pattern = partial + "*";
-
+  prefix_matching_constraint("hash", partial, constraint);
   fetch(res, 2, any_rows,
-        query("SELECT hash, id FROM public_keys WHERE hash GLOB ?")
-        % text(pattern));
+        query("SELECT hash, id FROM public_keys WHERE "
+              + constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));
+    completions.insert(make_pair(key_id(encode_hexenc(res[i][0])),
+                                 utf8(res[i][1])));
 }
 
 using selectors::selector_type;
@@ -2918,13 +2959,18 @@ void database::complete(selector_type ty,
 
           if (i->first == selectors::sel_ident)
             {
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
-              lim % text(i->second + "*");
+              query constraint;
+              prefix_matching_constraint("id", i->second, constraint);
+              lim.sql_cmd += "SELECT id FROM revision_certs WHERE " +
+                             constraint.sql_cmd;
             }
           else if (i->first == selectors::sel_parent)
             {
-              lim.sql_cmd += "SELECT parent AS id FROM revision_ancestry WHERE child GLOB ?";
-              lim % text(i->second + "*"); 
+              query constraint;
+              prefix_matching_constraint("parent", i->second, constraint);
+              lim.sql_cmd += "SELECT parent AS id "
+                             "FROM revision_ancestry WHERE " +
+                             constraint.sql_cmd;
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -2990,12 +3036,12 @@ void database::complete(selector_type ty,
                 {
                   set<revision_id>::const_iterator r = heads.begin();
                   lim.sql_cmd += "?";
-                  lim % text(r->inner()());
+                  lim % blob(decode_hexenc(r->inner()()));
                   r++;
                   while (r != heads.end())
                     {
                       lim.sql_cmd += ", ?";
-                      lim % text(r->inner()());
+                      lim % blob(decode_hexenc(r->inner()()));
                       r++;
                     }
                 }
@@ -3075,13 +3121,10 @@ void database::complete(selector_type ty,
   fetch(res, one_col, any_rows, lim);
   for (size_t i = 0; i < res.size(); ++i)
     {
-      if (ty == selectors::sel_ident)
-        completions.insert(res[i][0]);
+      if (ty == selectors::sel_ident || ty == selectors::sel_parent)
+        completions.insert(encode_hexenc(res[i][0]));
       else
-        {
-          data row_decoded(res[i][0]);
-          completions.insert(row_decoded());
-        }
+        completions.insert(res[i][0]);
     }
 }
 
@@ -3097,7 +3140,8 @@ database::get_epochs(map<branch_name, epoch_data> & epochs)
     {
       branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
-      epochs.insert(make_pair(decoded, epoch_data(idx(*i, 1))));
+      epochs.insert(make_pair(decoded,
+                              epoch_data(encode_hexenc(idx(*i, 1)))));
     }
 }
 
@@ -3110,10 +3154,10 @@ database::get_epoch(epoch_id const & eid,
   fetch(res, 2, any_rows,
         query("SELECT branch, epoch FROM branch_epochs"
         " WHERE hash = ?")
-        % text(eid.inner()()));
+        % blob(decode_hexenc(eid.inner()())));
   I(res.size() == 1);
   branch = branch_name(idx(idx(res, 0), 0));
-  epo = epoch_data(idx(idx(res, 0), 1));
+  epo = epoch_data(encode_hexenc(idx(idx(res, 0), 1)));
 }
 
 bool
@@ -3122,7 +3166,7 @@ database::epoch_exists(epoch_id const & eid)
   results res;
   fetch(res, one_col, any_rows,
         query("SELECT hash FROM branch_epochs WHERE hash = ?")
-        % text(eid.inner()()));
+        % blob(decode_hexenc(eid.inner()())));
   I(res.size() == 1 || res.size() == 0);
   return res.size() == 1;
 }
@@ -3134,9 +3178,9 @@ database::set_epoch(branch_name const & branch, epoch_data const & epo)
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
   execute(query("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)")
-          % text(eid.inner()())
+          % blob(decode_hexenc(eid.inner()()))
           % blob(branch())
-          % text(epo.inner()()));
+          % blob(decode_hexenc(epo.inner()())));
 }
 
 void
