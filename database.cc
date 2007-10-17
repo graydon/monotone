@@ -2418,7 +2418,7 @@ database::cert_exists(cert const & t,
                   "AND value = ? "
                   "AND keypair = ? "
                   "AND signature = ?")
-    % text(decode_hexenc(t.ident()))
+    % blob(decode_hexenc(t.ident()))
     % text(t.name())
     % blob(value())
     % text(t.key())
