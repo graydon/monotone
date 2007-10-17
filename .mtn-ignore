@@ -49,6 +49,7 @@ tester_dir
 ^po/Rules-quot$
 ^po/insert-header.sin$
 ^aclocal\.m4$
+^package\.m4$
 ^m4/codeset\.m4$
 ^m4/gettext\.m4$
 ^m4/glibc21\.m4$

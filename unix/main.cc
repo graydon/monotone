@@ -14,9 +14,6 @@
 // to look at monotone.cc for cpp_main(), where the real program logic
 // begins.  The purpose of this file is to hide all the nastiness involved
 // in trapping and responding to operating-system-level hard error reports.
-// It is also responsible for a last-ditch catch(...) clause (which is not
-// _that_ different from what std::terminate() would do, but does get our
-// bug-report message printed.)
 //
 // On Unix, what we care about is signals.  Signals come in two varieties:
 // those that indicate a catastrophic program error (SIGSEGV etc) and those
@@ -107,9 +104,7 @@ interrupt_signal(int signo)
 
 // Signals that we handle can indicate either that there is a real bug
 // (bug_signal), or that we should cancel processing in response to an
-// external event (interrupt_signal).  NOTE: interrupt_signal returns,
-// and therefore it must not be used for any signal that means
-// processing cannot continue.
+// external event (interrupt_signal).
 static const int bug_signals[] = {
   SIGQUIT, SIGILL, SIGABRT, SIGFPE, SIGSEGV, SIGBUS, SIGSYS, SIGTRAP
 };
