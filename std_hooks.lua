@@ -507,7 +507,7 @@ mergers.diffutils = {
                     value = true
                 end
                 if type(option[name]) == "nil" then
-                    io.write(gettext("Invalid \"diffutils\" merger option \"" .. name .. "\"\n"))
+                    io.write("mtn: " .. string.format(gettext("invalid \"diffutils\" merger option \"%s\""), name) .. "\n")
                     return false
                 end
                 option[name] = value
@@ -535,29 +535,30 @@ mergers.diffutils = {
         if option.partial then
             --  partial batch/non-modal 3-way merge "resolution":
             --  simply merge content with help of conflict markers
-            io.write(gettext("performing 3-way merge, adding conflict markers\n"))
+            io.write("mtn: " .. gettext("3-way merge via GNU diffutils, resolving conflicts via conflict markers") .. "\n")
             local ret = execute_redirected("", string.gsub(tbl.outfile, "\\", "/"), "", unpack(diff3))
             if ret == 2 then
-                io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
+                io.write("mtn: " .. gettext("error running GNU diffutils 3-way difference/merge tool \"diff3\"") .. "\n")
                 return false
             end
             return tbl.outfile
         else
             --  real interactive/modal 3/2-way merge resolution:
             --  display 3-way merge conflict and perform 2-way merge resolution
+            io.write("mtn: " .. gettext("3-way merge via GNU diffutils, resolving conflicts via interactive prompt") .. "\n")
 
             --  display 3-way merge conflict (batch)
             io.write("\n")
-            io.write(gettext("---- CONFLICT SUMMARY ------------------------------------------------\n"))
+            io.write("mtn: " .. gettext("---- CONFLICT SUMMARY ------------------------------------------------") .. "\n")
             local ret = execute(unpack(diff3))
             if ret == 2 then
-                io.write(gettext("Error running GNU diffutils 3-way difference/merge tool 'diff3'\n"))
+                io.write("mtn: " .. gettext("error running GNU diffutils 3-way difference/merge tool \"diff3\"") .. "\n")
                 return false
             end
 
             --  perform 2-way merge resolution (interactive)
             io.write("\n")
-            io.write(gettext("---- CONFLICT RESOLUTION ---------------------------------------------\n"))
+            io.write("mtn: " .. gettext("---- CONFLICT RESOLUTION ---------------------------------------------") .. "\n")
             local sdiff = {
                 "sdiff",
                 "--diff-program=diff",
@@ -574,7 +575,7 @@ mergers.diffutils = {
             table.insert(sdiff, string.gsub(tbl.rfile, "\\", "/") .. "")
             local ret = execute(unpack(sdiff))
             if ret == 2 then
-                io.write(gettext("Error running GNU diffutils 2-way merging tool 'sdiff'\n"))
+                io.write("mtn: " .. gettext("error running GNU diffutils 2-way merging tool \"sdiff\"") .. "\n")
                 return false
             end
             return tbl.outfile
@@ -792,7 +793,7 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
       local cmd,mkey = get_preferred_merge3_command (tbl)
       if cmd ~=nil
       then
-         io.write (string.format(gettext("executing external 3-way merge command\n")))
+         io.write ("mtn: " .. string.format(gettext("executing external 3-way merge via \"%s\" merger\n"), mkey))
          ret = cmd (tbl)
          if not ret then
             ret = nil
