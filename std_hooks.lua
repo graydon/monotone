@@ -1112,3 +1112,66 @@ function get_remote_unix_socket_command(host)
     return "socat"
 end
 
+-- Netsync notifiers are tables containing 5 functions:
+-- start, revision_received, cert_received, pubkey_received and end
+-- Those functions take exactly the same arguments as the corresponding
+-- note_netsync functions, but return a different kind of value, a tuple
+-- composed of a return code and a value to be returned back to monotone.
+-- The codes are strings:
+-- "continue" and "stop"
+-- When the code "continue" is returned and there's another notifier, the
+-- second value is ignored and the next notifier is called.  Otherwise,
+-- the second value is returned immediately.
+netsync_notifiers = {}
+
+function _note_netsync_helper(f,...)
+   local s = "continue"
+   local v = nil
+   for _,n in pairs(netsync_notifiers) do
+      if n[f] then
+	 s,v = n[f](...)
+      end
+      if s ~= "continue" then
+	 break
+      end
+   end
+   return v
+end
+function note_netsync_start(...)
+   return _note_netsync_helper("start",...)
+end
+function note_netsync_revision_received(...)
+   return _note_netsync_helper("revision_received",...)
+end
+function note_netsync_cert_received(...)
+   return _note_netsync_helper("cert_received",...)
+end
+function note_netsync_pubkey_received(...)
+   return _note_netsync_helper("pubkey_received",...)
+end
+function note_netsync_end(...)
+   return _note_netsync_helper("end",...)
+end
+
+function add_netsync_notifier(notifier, precedence)
+   if type(notifier) ~= "table" or type(precedence) ~= "number" then
+      return false, "Invalid tyoe"
+   end
+   if netsync_notifiers[precedence] then
+      return false, "Precedence already taken"
+   end
+   local warning = nil
+   for n,f in pairs(notifier) do
+      if type(n) ~= "string" or n ~= "start"
+	 and n ~= "revision_received"
+	 and n ~= "cert_received"
+	 and n ~= "pubkey_received"
+	 and n ~= "end" then
+	 warning = "Unknown item found in notifier table"
+      elseif type(f) ~= "function" then
+	 return false, "Value for notifier item "..n.." isn't a function"
+      end
+   end
+   netsync_notifiers[precedence] = notifier
+   return true, warning
+end
