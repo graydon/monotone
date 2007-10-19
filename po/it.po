@@ -2105,7 +2105,7 @@ msgstr "Gestisce gli attributi dei file"
 
 #: cmd_ws_commit.cc:628
 msgid "This command is used to set, get or drop file attributes."
-msgstr ""
+msgstr "Questo comando serve a impostare, leggere o eliminare attributi dei file."
 
 #: cmd_ws_commit.cc:630
 #: cmd_ws_commit.cc:677
@@ -2138,7 +2138,7 @@ msgstr "Il percorso ‘%s’ non ha l'attributo ‘%s’"
 
 #: cmd_ws_commit.cc:678
 msgid "Gets the values of a file's attributes"
-msgstr ""
+msgstr "Lettura degli attributi di un file"
 
 #: cmd_ws_commit.cc:679
 msgid "If no attribute is specified, this command prints all attributes attached to the file given in PATH.  Otherwise it only prints the attribute specified in ATTR."
@@ -2168,7 +2168,7 @@ msgstr ""
 
 #: cmd_ws_commit.cc:782
 msgid "Prints all attributes for the specified path"
-msgstr ""
+msgstr "Stampa tutti gli attributi di uno specifico percorso"
 
 #: cmd_ws_commit.cc:899
 msgid "PATH KEY VALUE"
@@ -2176,7 +2176,7 @@ msgstr "PATH CHIAVE VALORE"
 
 #: cmd_ws_commit.cc:900
 msgid "Sets an attribute on a certain path"
-msgstr ""
+msgstr "Imposta un attributo su un determinato percorso"
 
 #: cmd_ws_commit.cc:943
 msgid "PATH [KEY]"
@@ -4100,12 +4100,12 @@ msgstr "pacchetto di tipo sconosciuto: ‘%s’"
 #: pcrewrap.cc:161
 #, c-format
 msgid "while compiling regex \"%s\": %s"
-msgstr ""
+msgstr "durante la compilazione dell'espressione regolare ‘%s’: %s"
 
 #: pcrewrap.cc:170
-#, fuzzy, c-format
+#, c-format
 msgid "error in regex \"%s\": %s"
-msgstr "impossibile aprire il file ‘%s’: %s"
+msgstr "errore nell'espressione regolare ‘%s’: %s"
 
 #: pcrewrap.cc:172
 #, c-format
@@ -4115,7 +4115,7 @@ msgstr ""
 #: pcrewrap.cc:186
 #, c-format
 msgid "while studying regex \"%s\": %s"
-msgstr ""
+msgstr "durante lo studio dell'espressione regolare ‘%s’: %s"
 
 #: pcrewrap.cc:204
 msgid "backtrack limit exceeded in regular expression matching"

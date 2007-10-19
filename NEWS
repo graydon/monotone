@@ -10,9 +10,9 @@
           easy re-committing afterwards
 
         - the "--brief" switch for mtn annotate has been renamed to
-	  "--revs-only" for clarity
+          "--revs-only" for clarity
 
-	- mtn help now lists the commands (and their aliases) available 
+        - mtn help now lists the commands (and their aliases) available 
           within a group, so its easier to get an overview which commands
           are available at all
 
@@ -21,7 +21,7 @@
           variable which can be used to control its behaviour
           through comma-separated "key[=value]" entries. Currently
           supported entries are "partial" for doing a partial
-          batch/non-modal 3-way merge "resolution" which uses
+          batch/non-modal 3-way merge conflict "resolution" which uses
           embedded content conflict markers and "diff3opts=[...]" and
           "sdiffopts=[...]" for passing arbitrary options to the used
           "diff3" and "sdiff" tools. When used in combination with "mtn
@@ -29,19 +29,19 @@
           CVS/SVN style non-modal workspace-based merging.
 
         - There is a new revision selector: "p:REV" selects the
-	  parent(s) of revision REV.  For example, if a revision has
-	  one parent,
+          parent(s) of revision REV.  For example, if a revision has
+          one parent,
 
              mtn diff -r p:REV -r REV
 
           will show the changes made in that revision.
 
         - Monotone now uses the Perl-Compatible Regular Expression
-	  (PCRE) library for all regular expressions, instead of the
-	  boost::regex library.  This means that external Boost
-	  libraries are no longer required to build or use Monotone.
-	  If building from source, you will still need the Boost headers
-	  available somewhere.  See INSTALL for details.
+          (PCRE) library for all regular expressions, instead of the
+          boost::regex library.  This means that external Boost
+          libraries are no longer required to build or use Monotone.
+          If building from source, you will still need the Boost headers
+          available somewhere.  See INSTALL for details.
 
           PCRE's syntax for regular expressions is a superset of
           boost::regex's syntax; it is unlikely that any existing
@@ -85,8 +85,8 @@
 
         - Internal use of regular expressions has been almost eliminated.
           (Regular expressions are still used for .mtn-ignore and the
-	  --show-encloser feature of mtn diff, and are still available to
-	  Lua hooks.)
+          --show-encloser feature of mtn diff, and are still available to
+          Lua hooks.)
 
 Fri Aug  3 06:08:36 UTC 2007
 
