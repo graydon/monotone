@@ -302,6 +302,28 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
   sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
 }
 
+static void
+sqlite3_unhex_fn(sqlite3_context *f, int nargs, sqlite3_value **args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unhex()", -1);
+      return;
+    }
+  data decoded;
+
+  try
+    {
+      decode_hexenc(hexenc<data>(string(sqlite3_value_cstr(args[0]))), decoded);
+    }
+  catch (informative_failure & e)
+    {
+      sqlite3_result_error(f, e.what(), -1);
+      return;
+    }
+  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+}
+
 // Here are all of the migration steps.  Almost all of them can be expressed
 // entirely as a series of SQL statements; those statements are packaged
 // into a long, continued string constant for the step.  One step requires a
@@ -615,7 +637,18 @@ char const migrate_add_heights_index[] =
   "CREATE INDEX heights__height ON heights (height);"
   ;
 
-char const migrate_rev_certs_index[] =
+char const migrate_to_binary_hashes[] =
+  "UPDATE files             SET id=unhex(id);"
+  "UPDATE file_deltas       SET id=unhex(id), base=unhex(base);"
+  "UPDATE revisions         SET id=unhex(id);"
+  "UPDATE revision_ancestry SET parent=unhex(parent), child=unhex(child);"
+  "UPDATE heights           SET revision=unhex(revision);"
+  "UPDATE rosters           SET id=unhex(id);"
+  "UPDATE roster_deltas     SET id=unhex(id), base=unhex(base);"
+  "UPDATE public_keys       SET hash=unhex(hash);"
+
+  // revision_certs also gets a new indices, so we recreate the
+  // table completely.
   "ALTER TABLE revision_certs RENAME TO tmp;\n"
   "CREATE TABLE revision_certs"
 	"  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
@@ -626,9 +659,28 @@ char const migrate_rev_certs_index[] =
 	"    signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
 	"    unique(name, value, id, keypair, signature)\n"
 	"  );"
-  "INSERT INTO revision_certs SELECT hash, id, name, value, keypair, signature FROM tmp;"
+  "INSERT INTO revision_certs SELECT unhex(hash), unhex(id), name, value, keypair, signature FROM tmp;"
   "DROP TABLE tmp;"
   "CREATE INDEX revision_certs__id ON revision_certs (id);";
+
+  // We altered a comment on this table, thus we need to recreated it.
+  // Additionally, this is the only schema change, so that we get another
+  // schema hash to upgrade to.
+  "ALTER TABLE branch_epochs RENAME TO tmp;"
+  "CREATE TABLE branch_epochs"
+	"  ( hash not null unique,         -- hash of remaining fields separated by \":\"\n"
+	"    branch not null unique,       -- joins with revision_certs.value\n"
+	"    epoch not null                -- random binary id\n"
+	"  );"
+  "INSERT INTO branch_epochs SELECT unhex(hash), branch, unhex(epoch) FROM tmp;"
+  "DROP TABLE tmp;"
+
+  // To be able to migrate from pre-roster era, we also need to convert
+  // these deprecated tables
+  "UPDATE manifests         SET id=unhex(id);"
+  "UPDATE manifest_deltas   SET id=unhex(id), base=unhex(base);"
+  "UPDATE manifest_certs    SET id=unhex(id), hash=unhex(hash);"
+  ;
 
 // this is a function because it has to refer to the numeric constant
 // defined in schema_migration.hh.
@@ -720,11 +772,11 @@ const migration_event migration_events[] = {
     migrate_add_heights_index, 0, upgrade_none },
 
   { "7ca81b45279403419581d7fde31ed888a80bd34e",
-    migrate_rev_certs_index, 0, upgrade_none },
+    FIXME: migrate_to_binary_hashes, 0, upgrade_none },
 
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-  { "84f2b5ab8a999a6593af35208aa9232b8e65573c", 0, 0, upgrade_none }
+  { "FIXME: determine the new, combined schema hashc", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
@@ -978,6 +1030,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 
     sql::create_function(db, "sha1", sqlite_sha1_fn);
     sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+    sql::create_function(db, "unhex", sqlite3_unhex_fn);
 
     P(F("migrating data..."));
 
