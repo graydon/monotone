@@ -661,7 +661,7 @@ char const migrate_to_binary_hashes[] =
 	"  );"
   "INSERT INTO revision_certs SELECT unhex(hash), unhex(id), name, value, keypair, signature FROM tmp;"
   "DROP TABLE tmp;"
-  "CREATE INDEX revision_certs__id ON revision_certs (id);";
+  "CREATE INDEX revision_certs__id ON revision_certs (id);"
 
   // We altered a comment on this table, thus we need to recreated it.
   // Additionally, this is the only schema change, so that we get another
@@ -772,11 +772,11 @@ const migration_event migration_events[] = {
     migrate_add_heights_index, 0, upgrade_none },
 
   { "7ca81b45279403419581d7fde31ed888a80bd34e",
-    FIXME: migrate_to_binary_hashes, 0, upgrade_none },
+    migrate_to_binary_hashes, 0, upgrade_none },
 
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-  { "FIXME: determine the new, combined schema hashc", 0, 0, upgrade_none }
+  { "212dd25a23bfd7bfe030ab910e9d62aa66aa2955", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
