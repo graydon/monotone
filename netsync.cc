@@ -2384,9 +2384,7 @@ call_server(protocol_role role,
 
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
-  // FIXME: split into labels and convert to ace here.
-
-  P(F("connecting to %s") % address());
+  P(F("connecting to %s") % address);
 
   shared_ptr<Netxx::StreamBase> server
     = build_stream_to_server(app,

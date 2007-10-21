@@ -24,11 +24,10 @@ void utf8_to_system_strict(utf8 const & utf, external & system);
 void utf8_to_system_strict(utf8 const & utf, std::string & system);
 void utf8_to_system_best_effort(utf8 const & utf, external & system);
 void utf8_to_system_best_effort(utf8 const & utf, std::string & system);
-void ace_to_utf8(ace const & ac, utf8 & utf);
-void utf8_to_ace(utf8 const & utf, ace & a);
 bool utf8_validate(utf8 const & utf);
 
 // Returns length in characters (not bytes).
+// Is not aware of combining and invisible characters.
 size_t display_width(utf8 const & utf);
 
 // Specific internal / external conversions for various vocab terms.
