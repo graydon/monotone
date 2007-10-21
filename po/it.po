@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-19 23:02+0100\n"
-"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
+"PO-Revision-Date: 2007-10-21 19:33+0100\n"
+"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -580,9 +580,9 @@ msgstr ""
 "tranne che da un comando definito con register_command()."
 
 #: cmd_automate.cc:436
-#, c-format
+#, fuzzy, c-format
 msgid "Bad input to mtn_automate() lua extension: command name is missing"
-msgstr ""
+msgstr "Input non valido dell'estensione lua mtn_automate(): manca il nome comando"
 
 #: cmd_automate.cc:454
 #, c-format
@@ -732,7 +732,7 @@ msgstr "Cancella una variabile dal database"
 #: cmd_db.cc:298
 #, fuzzy
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
-msgstr "Questo comando rimuove la variabile NOME dal dominio DOMINIO, precedentemente immagazzinato nel database."
+msgstr "Questo comando rimuove il NOME della variabile dal dominio DOMINIO, che era precedentemente immagazzinato nel database"
 
 #: cmd_db.cc:311
 #, c-format
@@ -805,10 +805,13 @@ msgid "Shows current differences"
 msgstr "Mostra le differenze attuali"
 
 #: cmd_diff_log.cc:479
+#, fuzzy
 msgid ""
 "Compares the current tree with the files in the repository and prints the differences on the standard output.\n"
 "If one revision is given, the diff between the workspace and that revision is shown.  If two revisions are given, the diff between them is given.  If no format is specified, unified is used by default."
 msgstr ""
+"Confronta l'albero corrente con i file in archivio e stampa le differenze in output standard.\n"
+"Se viene data una revisione, viene mostra la differenza tra lo spazio di lavoro e quella revisione. Se vengono date due revisioni, viene mostrata la differenza tra loro. Se non viene specificato nessun formato, per default ne viene usato uno unificato."
 
 #: cmd_diff_log.cc:490
 #, c-format
@@ -841,8 +844,9 @@ msgid "Prints history in reverse order"
 msgstr "Stampa la storia in ordine inverso"
 
 #: cmd_diff_log.cc:618
+#, fuzzy
 msgid "This command prints history in reverse order, filtering it by FILE if given.  If one or more revisions are given, uses them as a starting point."
-msgstr ""
+msgstr "Questo comando stampa lo storico in ordine inverso, filtrato da FILE se dato. Se vengono date una o più revisioni, usa quelle come punto di partenza."
 
 #: cmd_diff_log.cc:634
 #, c-format
@@ -947,8 +951,9 @@ msgid "Calculates the identity of a file or stdin"
 msgstr "Calcola l'identità di un file o di stdin"
 
 #: cmd_files.cc:193
+#, fuzzy
 msgid "If any PATH is given, calculates their identity; otherwise, the one from the standard input is calculated."
-msgstr ""
+msgstr "Se è dato qualche PATH, calcola le loro identità; altrimenti viene calcolato l'uno dall'input standard."
 
 #: cmd_files.cc:227
 msgid "Prints the file identifier of a file"
@@ -1740,12 +1745,14 @@ msgid "ADDRESS[:PORTNUMBER] [DIRECTORY]"
 msgstr "INDIRIZZO[:NUMERO-PORTA] [DIRECTORY]"
 
 #: cmd_netsync.cc:241
+#, fuzzy
 msgid "Checks out a revision from a remote database into a directory"
-msgstr ""
+msgstr "Checkout una revisione da un database remoto in una directory"
 
 #: cmd_netsync.cc:242
+#, fuzzy
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch supplied.  If no directory is given, the branch name will be used as directory"
-msgstr ""
+msgstr "Se viene data una revisione, sarà quella ad essere checkout. Altrimenti sarà fornita la testa del ramo. Se nessuna directory è data, il nome del ramo sarà usato come directory"
 
 #: cmd_netsync.cc:255
 #, c-format
@@ -1866,8 +1873,9 @@ msgid "Reads packets from files"
 msgstr "Legge pacchetti da file"
 
 #: cmd_packet.cc:136
+#, fuzzy
 msgid "If no files are provided, the standard input is used."
-msgstr ""
+msgstr "Se nessun file è fornito, si usa l'input standard."
 
 #: cmd_packet.cc:144
 #, c-format
@@ -1981,12 +1989,14 @@ msgid "failed to remove magic line; commit cancelled"
 msgstr "commit annullato: la linea di conferma non è stata rimossa"
 
 #: cmd_ws_commit.cc:147
+#, fuzzy
 msgid "Reverts files and/or directories"
-msgstr ""
+msgstr "Inverte file e/o directory"
 
 #: cmd_ws_commit.cc:148
+#, fuzzy
 msgid "In order to revert the entire workspace, specify \".\" as the file name."
-msgstr ""
+msgstr "Per invertire l'intero spazio di lavoro, specifica \".\" come nome file."
 
 #: cmd_ws_commit.cc:156
 #, c-format
@@ -2067,9 +2077,9 @@ msgid "Renames entries in the workspace"
 msgstr "Rinomina elementi dello spazio di lavoro"
 
 #: cmd_ws_commit.cc:465
-#, c-format
+#, fuzzy, c-format
 msgid "The specified target directory %s/ doesn't exist."
-msgstr ""
+msgstr "La directory specifica selezionata %s/ non esiste."
 
 #: cmd_ws_commit.cc:471
 msgid "NEW_ROOT PUT_OLD"
@@ -2096,8 +2106,9 @@ msgid "[DIRECTORY]"
 msgstr "[DIRECTORY]"
 
 #: cmd_ws_commit.cc:520
+#, fuzzy
 msgid "Checks out a revision from the database into a directory"
-msgstr ""
+msgstr "Checkout una revisione da un database remoto in una directory"
 
 #: cmd_ws_commit.cc:521
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch (given or implicit).  If no directory is given, the branch name will be used as directory."
@@ -2197,8 +2208,9 @@ msgid "PATH [KEY]"
 msgstr "PERCORSO [CHIAVE]"
 
 #: cmd_ws_commit.cc:944
+#, fuzzy
 msgid "Drops an attribute or all of them from a certain path"
-msgstr ""
+msgstr "Tralascia un attributo o tutti quelli di un certo path"
 
 #: cmd_ws_commit.cc:988
 msgid "Commits workspace changes to the database"
@@ -2294,8 +2306,9 @@ msgid "DIRECTORY"
 msgstr "DIRECTORY"
 
 #: cmd_ws_commit.cc:1260
+#, fuzzy
 msgid "Imports the contents of a directory into a branch"
-msgstr ""
+msgstr "Importa i contenuti di una directory in un ramo"
 
 #: cmd_ws_commit.cc:1272
 #, c-format
@@ -2431,9 +2444,9 @@ msgid "For information on a specific command, type 'mtn help <command_name> [sub
 msgstr ""
 
 #: commands.cc:726
-#, c-format
+#, fuzzy, c-format
 msgid "To see more details about the commands of a particular group, type 'mtn help <group_name>'."
-msgstr ""
+msgstr "Per vedere più dettagli su i comandi di un gruppo specifico, scrivi 'mtn help <group_name>'."
 
 #: commands.cc:729
 #, c-format
@@ -4121,9 +4134,9 @@ msgid "error in regex \"%s\": %s"
 msgstr "errore nell'espressione regolare ‘%s’: %s"
 
 #: pcrewrap.cc:172
-#, c-format
+#, fuzzy, c-format
 msgid "error near char %d of regex \"%s\": %s"
-msgstr ""
+msgstr "Errore alla riga %d carattere %d: %s"
 
 #: pcrewrap.cc:186
 #, c-format
@@ -4143,9 +4156,9 @@ msgid "invalid UTF-8 sequence found during regular expression matching"
 msgstr ""
 
 #: pcrewrap.cc:216
-#, c-format
+#, fuzzy, c-format
 msgid "pcre_match returned %d"
-msgstr ""
+msgstr "nessuna corrispondenza per la selezione ‘%s’"
 
 #: rcs_file.cc:353
 #, c-format
@@ -4255,7 +4268,7 @@ msgstr "ricostruisco %d nodi"
 #: revision.cc:1238
 #, c-format
 msgid "Directory %s for path %s cannot be added, as there is a file in the way"
-msgstr ""
+msgstr "La directory %s per il percorso %s non può essere aggiunta, dato che c'è già un file con lo stesso nome"
 
 #: revision.cc:1259
 #, c-format
@@ -5176,9 +5189,9 @@ msgid "could not determine configuration path"
 msgstr "non riesco a determinare il path della configurazione"
 
 #: win32/fs.cc:136
-#, c-format
+#, fuzzy, c-format
 msgid "%s: GetFileAttributes error: %s"
-msgstr ""
+msgstr "%s: errore durante il troncamento"
 
 #: win32/fs.cc:186
 #, c-format
