@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-21 19:33+0100\n"
+"PO-Revision-Date: 2007-10-21 20:28+0100\n"
 "Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -1088,7 +1088,7 @@ msgstr "Verifica se un ipotetico certificato sarebbe fidato"
 
 #: cmd_key_cert.cc:220
 msgid "The current settings are used to run the test."
-msgstr ""
+msgstr "Le impostazioni correnti sono ussate per fare il test."
 
 #: cmd_key_cert.cc:252
 #, c-format
@@ -1541,7 +1541,7 @@ msgstr "Unisce due revisioni date esplicitamente"
 
 #: cmd_merging.cc:714
 msgid "The results of the merge are placed on the branch specified by DEST-BRANCH."
-msgstr ""
+msgstr "I risultati dell'unione vengono messi nel ramo specificato da DEST-BRANCH."
 
 #: cmd_merging.cc:729
 #, c-format
@@ -1564,7 +1564,7 @@ msgstr "Mostra quali conflitti necessitano risoluzione tra due revisioni"
 
 #: cmd_merging.cc:740
 msgid "The conflicts are calculated based on the two revisions given in the REV parameters."
-msgstr ""
+msgstr "I conflitti sono calcolati sulla base delle due revisione date nei parametri REV."
 
 #: cmd_merging.cc:750
 #: cmd_merging.cc:752
@@ -2112,7 +2112,7 @@ msgstr "Checkout una revisione da un database remoto in una directory"
 
 #: cmd_ws_commit.cc:521
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch (given or implicit).  If no directory is given, the branch name will be used as directory."
-msgstr ""
+msgstr "Se viene data una revisione, sarà quella ad essere checkout. Altrimenti sarà la testa del ramo (data o implicita). Se nessuna directory è data, il nome del ramo sarà usato come directory"
 
 #: cmd_ws_commit.cc:583
 #, c-format
@@ -4905,7 +4905,7 @@ msgstr "il file sorgente ‘%s’ non è sotto controllo di versione"
 #: work.cc:1390
 #, c-format
 msgid "destination path's parent directory %s/ doesn't exist"
-msgstr ""
+msgstr "la directory genitore %s/ del percorso destinazione non esiste"
 
 #: work.cc:1400
 #, c-format
