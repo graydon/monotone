@@ -974,7 +974,7 @@ namespace commands {
                    std::string const & desc,
                    lua_State *L_st,
                    std::string const & func_name) :
-         command(primary_name, "", CMD_REF(user), false, params,
+         command(primary_name, "", CMD_REF(user), false, false, params,
                  abstract, desc, true, options::options_type() | options::opts::none, true),
                  st(L_st), f_name(func_name)
     {

@@ -147,6 +147,7 @@ namespace commands {
   command::command(std::string const & primary_name,
                    std::string const & other_names,
                    command * parent,
+                   bool is_group,
                    bool hidden,
                    std::string const & params,
                    std::string const & abstract,
@@ -156,6 +157,7 @@ namespace commands {
                    bool _allow_completion)
     : m_primary_name(utf8(primary_name)),
       m_parent(parent),
+      m_is_group(is_group),
       m_hidden(hidden),
       m_params(utf8(params)),
       m_abstract(utf8(abstract)),
@@ -232,6 +234,12 @@ namespace commands {
   command::parent(void) const
   {
     return m_parent;
+  }
+
+  bool
+  command::is_group(void) const
+  {
+    return m_is_group;
   }
 
   bool
@@ -743,7 +751,8 @@ namespace commands
     string visibleid = join_words(vector< utf8 >(ident.begin() + 1,
                                                  ident.end()))();
 
-    N(!(!cmd->is_leaf() && cmd->parent() == CMD_REF(__root__)),
+    I(cmd->is_leaf() || cmd->is_group());
+    N(!(cmd->is_group() && cmd->parent() == CMD_REF(__root__)),
       F("command '%s' is invalid; it is a group") % join_words(ident));
 
     N(!(!cmd->is_leaf() && args.empty()),
