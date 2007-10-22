@@ -18,10 +18,10 @@ monotone (0.31-90.1) unstable; urgency=low
     of your databases (except for the server database handled by the
     monotone-server package, for which this is done automatically):
 
-	mtn db migrate
-	# ... possibly other commands, depending on how old your previous
-	#     mtn version was
-	mtn db regenerate_caches
+        mtn db migrate
+        # ... possibly other commands, depending on how old your previous
+        #     mtn version was
+        mtn db regenerate_caches
 
     This does NOT affect remote participants of your projects, the
     changes are only local.
@@ -36,10 +36,10 @@ monotone (0.30-0.1) unstable; urgency=low
     server database handled by the monotone-server package, for which
     this is done automatically):
 
-	mtn db migrate
-	# ... possibly other commands, depending on how old your previous
-	#     mtn version was
-	mtn db regenerate_rosters
+        mtn db migrate
+        # ... possibly other commands, depending on how old your previous
+        #     mtn version was
+        mtn db regenerate_rosters
 
     This does NOT affect remote participants of your projects, the
     changes are only local.
