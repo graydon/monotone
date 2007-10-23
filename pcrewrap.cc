@@ -15,6 +15,7 @@
 // This dirty trick is necessary to prevent the 'pcre' typedef defined by
 // pcre.h from colliding with namespace pcre.
 #define pcre pcre_t
+#include "pcre_config.h"
 #include "pcre.h"
 #undef pcre
 
@@ -92,7 +93,7 @@ namespace pcre
     ed->match_limit_recursion = 2000;
     extradat = ed;
   }
-  
+
   regex::regex(char const * pattern, flags options)
   {
     this->init(pattern, options);
@@ -119,7 +120,7 @@ namespace pcre
     int startoffset = 0;
     if (startptr != string::const_iterator(0))
       startoffset = &*startptr - &*subject.data();
- 
+
     int rc = pcre_exec(basedat, extradat,
                        subject.data(), subject.size(),
                        startoffset, flags_to_internal(options), 0, 0);
@@ -127,7 +128,7 @@ namespace pcre
       return true;
     else if (rc == PCRE_ERROR_NOMATCH)
       return false;
-    else 
+    else
       pcre_match_error(rc);
   }
 } // namespace pcre
@@ -202,7 +203,7 @@ pcre_match_error(int errcode)
     case PCRE_ERROR_MATCHLIMIT:
       throw informative_failure
         (_("backtrack limit exceeded in regular expression matching"));
-      
+
     case PCRE_ERROR_RECURSIONLIMIT:
       throw informative_failure
         (_("recursion limit exceeded in regular expression matching"));

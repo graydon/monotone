@@ -40,17 +40,6 @@ namespace constants
   "0123456789abcdef"
   ;
 
-  // all the ASCII characters (bytes) which are legal in an ACE string
-  char const legal_ace_bytes[] =
-  // LDH characters
-  "abcdefghijklmnopqrstuvwxyz"
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-  "0123456789"
-  "-"
-  // label separators
-  ".@"
-  ;
-
   // all the ASCII characters (bytes) which can occur in cert names
   char const legal_cert_name_bytes[] =
   // LDH characters
