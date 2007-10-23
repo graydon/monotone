@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-21 17:08+0100\n"
+"PO-Revision-Date: 2007-10-23 09:33+0000\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -648,6 +648,7 @@ msgstr "Elimina una revisione dal database locale"
 msgid "revision %s already has children. We cannot kill it."
 msgstr "la revisione %s ha già dei figli, non possiamo eliminarla."
 
+#TODO: non committati, stringa troppo lunga?
 #: cmd_db.cc:160
 #, c-format
 msgid ""
@@ -659,11 +660,11 @@ msgid ""
 "before you try to kill this revision again."
 msgstr ""
 "Non è possibile eliminare la revisione %s,\n"
-"perché l'attuale spazio di lavoro rimarrebbe in uno stato\n"
-"invalido, dal quale monotone non può recuperare automaticamente visto che\n"
-"lo spazio di lavoro contiene cambiamenti non commit.\n"
-"Prendi in consiferazione l'aggiornamento del tuo spazio di lavoro ad altra revisione precedente,\n"
-"prima di cercare di eliminare ancora questa revisione."
+"perché l'attuale spazio di lavoro rimarrebbe in uno stato invalido,\n"
+"dal quale monotone non può recuperare automaticamente visto che\n"
+"lo spazio di lavoro contiene cambiamenti non committati.\n"
+"Prendi in considerazione l'aggiornamento del tuo spazio di lavoro ad altra revisione,\n"
+"prima di riprovare a eliminare questa revisione."
 
 #: cmd_db.cc:167
 #, c-format
@@ -717,7 +718,7 @@ msgstr "L'epoca deve essere di %s caratteri"
 #: cmd_db.cc:279
 #, fuzzy
 msgid "This command modifies (or adds if it did not exist before) the variable named NAME, stored in the database, and sets it to the given value in VALUE.  The variable is placed in the domain DOMAIN."
-msgstr "Questo comando modifica (o aggiunge se non esisteva prima) la variabile chiamata NOME, immagazzinata nel database, e la imposta al valore dato in VALORE. La variabile viene messa nel dominio DOMINIO."
+msgstr "Questo comando modifica (o aggiunge se non esisteva prima) la variabile chiamata NOME immagazzinata nel database e la imposta al valore dato in VALORE. La variabile viene messa nel dominio DOMINIO."
 
 #: cmd_db.cc:297
 msgid "Unsets a database variable"
@@ -725,7 +726,6 @@ msgstr "Cancella una variabile dal database"
 
 # TODO: non mi convince "immagazzinata nel database"
 #: cmd_db.cc:298
-#, fuzzy
 msgid "This command removes the variable NAME from domain DOMAIN, which was previously stored in the database."
 msgstr "Questo comando rimuove la variabile NOME dal dominio DOMINIO, precedentemente immagazzinato nel database."
 
@@ -941,9 +941,10 @@ msgstr "[PERCORSO]"
 msgid "Calculates the identity of a file or stdin"
 msgstr "Calcola l'identità di un file o di stdin"
 
+# TODO identità/identificatore
 #: cmd_files.cc:193
 msgid "If any PATH is given, calculates their identity; otherwise, the one from the standard input is calculated."
-msgstr ""
+msgstr "Calcola l'identificatore per i PATH specificati, o quella di stdin in caso non ne siano stati specificati."
 
 #: cmd_files.cc:227
 msgid "Prints the file identifier of a file"
@@ -2064,7 +2065,7 @@ msgstr "Rinomina elementi dello spazio di lavoro"
 #: cmd_ws_commit.cc:465
 #, c-format
 msgid "The specified target directory %s/ doesn't exist."
-msgstr ""
+msgstr "La cartella di destinazione specificata ‘%s/’ non esiste."
 
 #: cmd_ws_commit.cc:471
 msgid "NEW_ROOT PUT_OLD"
@@ -2079,6 +2080,8 @@ msgid ""
 "After this command, the directory that currently has the name NEW_ROOT will be the root directory, and the directory that is currently the root directory will have name PUT_OLD.\n"
 "Use of --bookkeep-only is NOT recommended."
 msgstr ""
+"Dopo l'esecuzione di questo comando, la directory che attualmente si chiama NUOVA_ROOT sarà la directory di root e la root attuale avrà il nome VECCHIA_ROOT.\n"
+"L'uso di ‘--bookkeep-only’ NON è raccomandato."
 
 #: cmd_ws_commit.cc:491
 msgid "Shows workspace's status information"
@@ -2423,12 +2426,12 @@ msgstr "Gruppi di comandi:"
 #: commands.cc:723
 #, c-format
 msgid "For information on a specific command, type 'mtn help <command_name> [subcommand_name ...]'."
-msgstr ""
+msgstr "Per informazioni su uno specifico comando, scrivi ‘mtn help <nome_comando> [nome_sottocomando …]’."
 
 #: commands.cc:726
 #, c-format
 msgid "To see more details about the commands of a particular group, type 'mtn help <group_name>'."
-msgstr ""
+msgstr "Per avere maggiori dettagli sui comandi di un particolare gruppo, scrivi ‘mtn help <nome_gruppo>’."
 
 #: commands.cc:729
 #, c-format
@@ -3429,29 +3432,29 @@ msgstr "controllo di ‘%s’ fallito"
 
 #: netsync.cc:760
 msgid "bytes in"
-msgstr "byte ↓"
+msgstr "byte in"
 
 #: netsync.cc:762
 msgid "bytes out"
-msgstr "byte ↑"
+msgstr "byte out"
 
 #: netsync.cc:766
 msgid "certs in"
-msgstr "cert. ↓"
+msgstr "cert. in"
 
 #: netsync.cc:768
 #: netsync.cc:781
 msgid "revs in"
-msgstr "rev. ↓"
+msgstr "rev. in"
 
 #: netsync.cc:773
 msgid "certs out"
-msgstr "cert. ↑"
+msgstr "cert. out"
 
 #: netsync.cc:775
 #: netsync.cc:783
 msgid "revs out"
-msgstr "rev. ↑"
+msgstr "rev. out"
 
 #: netsync.cc:889
 #, c-format
@@ -4125,22 +4128,25 @@ msgstr "errore vicino al carattere %d della regex ‘%s’: %s"
 msgid "while studying regex \"%s\": %s"
 msgstr "durante lo studio dell'espressione regolare ‘%s’: %s"
 
+# TODO: match
 #: pcrewrap.cc:204
 msgid "backtrack limit exceeded in regular expression matching"
-msgstr ""
+msgstr "superato il limite di backtrack nel match di espressioni regolari"
 
+# TODO: match
 #: pcrewrap.cc:208
 msgid "recursion limit exceeded in regular expression matching"
-msgstr ""
+msgstr "superato il limite di ricorsione match di espressioni regolari"
 
+# TODO: match?
 #: pcrewrap.cc:213
 msgid "invalid UTF-8 sequence found during regular expression matching"
-msgstr ""
+msgstr "trovata una sequenza UTF-8 non valida durante un match con espressione regolare"
 
 #: pcrewrap.cc:216
 #, c-format
 msgid "pcre_match returned %d"
-msgstr ""
+msgstr "pcre_match ha ritornato %d"
 
 #: rcs_file.cc:353
 #, c-format
@@ -4322,12 +4328,12 @@ msgstr ""
 #: roster.cc:2313
 #, c-format
 msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
-msgstr "la restrizione include la cancellazione di ‘%s’ ma esclude la cancellazione di ‘%s’"
+msgstr "le restrizioni includono la cancellazione di ‘%s’ ma esclude quella di ‘%s’"
 
 #: roster.cc:2332
 #, c-format
 msgid "restriction excludes addition of '%s' but includes addition of '%s'"
-msgstr "la restrizione esclude l'aggiunta di ‘%s’ ma include l'aggiunta di ‘%s’"
+msgstr "le restrizioni escludono l'aggiunta di ‘%s’ ma includono quella di ‘%s’"
 
 #: roster.cc:2360
 #, c-format
@@ -4911,7 +4917,7 @@ msgstr "la destinazione ‘%s’ esiste già nello spazio di lavoro, evito di ri
 #: work.cc:1461
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
-msgstr ""
+msgstr "‘%s’ non esiste nello spazio di lavoro e ‘%s’ esiste, evito il rename sul filesystem"
 
 #: work.cc:1481
 #, c-format
@@ -5109,8 +5115,8 @@ msgstr "impossibile scrivere sul file temporaneo ‘%s’: %s"
 #, c-format
 msgid "giving up after four zero-length writes to %s (%d byte written, %d left)"
 msgid_plural "giving up after four zero-length writes to %s (%d bytes written, %d left)"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "abbandono dopo quattro scritture a lunghezza zero su ‘%s’ (%d byte scritti, %d mancanti)"
+msgstr[1] "abbandono dopo quattro scritture a lunghezza zero su ‘%s’ (%d byte scritti, %d mancanti)"
 
 #: unix/os_strerror.cc:17
 #: win32/os_strerror.cc:23
@@ -5167,7 +5173,7 @@ msgstr "non riesco a determinare il path della configurazione"
 #: win32/fs.cc:136
 #, c-format
 msgid "%s: GetFileAttributes error: %s"
-msgstr ""
+msgstr "errore di GetFileAttributes su ‘%s’: %s"
 
 #: win32/fs.cc:186
 #, c-format
