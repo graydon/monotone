@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-23 16:57+0100\n"
-"Last-Translator: Roberta Lazzeri <ripley@lapo.it>\n"
+"PO-Revision-Date: 2007-10-24 10:21+0100\n"
+"Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
@@ -277,7 +277,7 @@ msgstr "Stampa dati della revisione in formato pacchetto"
 #: cmd_netsync.cc:359
 #: cmd_ws_commit.cc:559
 #: cmd_ws_commit.cc:1279
-#: commands.cc:899
+#: commands.cc:908
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisione %s non esiste"
@@ -948,7 +948,7 @@ msgstr "Calcola l'identità di un file o di stdin"
 # TODO identità/identificatore
 #: cmd_files.cc:193
 msgid "If any PATH is given, calculates their identity; otherwise, the one from the standard input is calculated."
-msgstr "Calcola l'identificatore per i PATH specificati, o quella di stdin in caso non ne siano stati specificati."
+msgstr "Se è specificato un PERCORSO (o più di uno), ne calcola l'identificatore, in caso contrario calcola quello di stdin."
 
 #: cmd_files.cc:227
 msgid "Prints the file identifier of a file"
@@ -976,7 +976,7 @@ msgstr "Stampa un file dal database"
 
 #: cmd_files.cc:287
 msgid "Fetches the given file FILENAME from the database and prints it to the standard output."
-msgstr "Prende il file dato NOMEFILE dal database e lo stampa in output standard"
+msgstr "Legge il file NOMEFILE dal database e lo stampa su stdout"
 
 #: cmd_files.cc:322
 msgid "Prints the contents of a file (given an identifier)"
@@ -986,14 +986,13 @@ msgstr "Stampa il contenuto di un file (dato un identificatore)"
 msgid "Prints the contents of a file (given a name)"
 msgstr "Stampa il contenuto di un dato file"
 
-# TODO: boh?
-#: cmd.hh:137
+#: cmd.hh:140
 #, c-format
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorata la directory di servizio ‘%s’"
 
 # TODO: sto interrompendo?
-#: cmd.hh:147
+#: cmd.hh:150
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
 msgstr "tutte le istruzioni passate erano relative a directory di servizio; sospendo"
@@ -1306,9 +1305,10 @@ msgstr ""
 msgid "Updates the workspace"
 msgstr "Aggiorna lo spazio di lavoro"
 
+#TODO: committati
 #: cmd_merging.cc:133
 msgid "This command modifies your workspace to be based off of a different revision, preserving uncommitted changes as it does so.  If a revision is given, update the workspace to that revision.  If not, update the workspace to the head of the branch."
-msgstr "Questo comando modifica il tuo spazio di lavoro come base di una revisione differente, preserva i cambiamti non commit mentre lo fa. Se è data una revisione, aggiorna lo spazio di lavoro a quella revisione. Se no,aggiorna lo spazio di lavoro alla testa del ramo."
+msgstr "Questo comando modifica il tuo spazio di lavoro come base di una revisione differente, preserva i cambiamenti non committati mentre lo fa.  Se è data una revisione, aggiorna lo spazio di lavoro a quella revisione. Altrimenti, aggiorna lo spazio di lavoro alla testa del ramo."
 
 #: cmd_merging.cc:156
 #, c-format
@@ -1611,7 +1611,7 @@ msgid ""
 "This command takes changes made at any point in history, and edits your current workspace to include those changes.  The end result is identical to 'mtn diff -r FROM -r TO | patch -p0', except that this command uses monotone's merger, and thus intelligently handles renames, conflicts, and so on.\n"
 "If one revision is given, applies the changes made in that revision compared to its parent.\n"
 "If two revisions are given, applies the changes made to get from the first revision to the second."
-msgstr "Questo comando mantiene i cambiamenti fatti in qualsiasi punto nello storico"
+msgstr ""
 
 #: cmd_merging.cc:804
 #, c-format
@@ -1984,14 +1984,12 @@ msgid "failed to remove magic line; commit cancelled"
 msgstr "commit annullato: la linea di conferma non è stata rimossa"
 
 #: cmd_ws_commit.cc:147
-#, fuzzy
 msgid "Reverts files and/or directories"
-msgstr "Inverte file e/o directory"
+msgstr "Recupera file e/o directory"
 
 #: cmd_ws_commit.cc:148
-#, fuzzy
 msgid "In order to revert the entire workspace, specify \".\" as the file name."
-msgstr "Per invertire l'intero spazio di lavoro, specifica \".\" come nome file."
+msgstr "Per recuperare l'intero spazio di lavoro, specifica ‘.’ come nome file."
 
 #: cmd_ws_commit.cc:156
 #, c-format
@@ -2103,9 +2101,8 @@ msgid "[DIRECTORY]"
 msgstr "[DIRECTORY]"
 
 #: cmd_ws_commit.cc:520
-#, fuzzy
 msgid "Checks out a revision from the database into a directory"
-msgstr "Checkout una revisione da un database remoto in una directory"
+msgstr "Estrae in una directory una revisione presente in database"
 
 #: cmd_ws_commit.cc:521
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch (given or implicit).  If no directory is given, the branch name will be used as directory."
@@ -2140,7 +2137,7 @@ msgstr "Elimina attributi da un file"
 
 #: cmd_ws_commit.cc:632
 msgid "If no attribute is specified, this command removes all attributes attached to the file given in PATH.  Otherwise only removes the attribute specified in ATTR."
-msgstr "Se non è specificato alcun attributo, questo comando rimuove tutti gli attributi del file dato in PERCORSO. Altrimenti rimuove solo l'attributo specificato in ATTR."
+msgstr "Se non è specificato alcun attributo, questo comando rimuove tutti gli attributi del file PERCORSO.  Altrimenti rimuove solo l'attributo specificato in ATTR."
 
 #: cmd_ws_commit.cc:648
 #: cmd_ws_commit.cc:695
@@ -2164,7 +2161,7 @@ msgstr "Lettura degli attributi di un file"
 
 #: cmd_ws_commit.cc:679
 msgid "If no attribute is specified, this command prints all attributes attached to the file given in PATH.  Otherwise it only prints the attribute specified in ATTR."
-msgstr "Se non è specificato alcun attributo, questo comando stampa tutti gli attributi del file dato in PERCORSO. Altrimenti stampa solo l'attributo specificato in ATTR."
+msgstr "Se non è specificato alcun attributo, questo comando stampa tutti gli attributi del file PERCORSO.  Altrimenti stampa solo l'attributo specificato in ATTR."
 
 #: cmd_ws_commit.cc:711
 #, c-format
@@ -2186,7 +2183,7 @@ msgstr "Imposta un attributo su un file"
 
 #: cmd_ws_commit.cc:730
 msgid "Sets the attribute given on ATTR to the value specified in VALUE for the file mentioned in PATH."
-msgstr "Imposta l'attributo dato in ATTR al valore specificato in VALORE per il file nominato in PERCORSO."
+msgstr "Imposta l'attributo dato in ATTR al valore specificato in VALORE per il file PERCORSO."
 
 #: cmd_ws_commit.cc:782
 msgid "Prints all attributes for the specified path"
@@ -2205,9 +2202,8 @@ msgid "PATH [KEY]"
 msgstr "PERCORSO [CHIAVE]"
 
 #: cmd_ws_commit.cc:944
-#, fuzzy
 msgid "Drops an attribute or all of them from a certain path"
-msgstr "Tralascia un attributo o tutti quelli di un certo path"
+msgstr "Elimina uno o tutti gli attributi di un certo percorso"
 
 #: cmd_ws_commit.cc:988
 msgid "Commits workspace changes to the database"
@@ -2390,119 +2386,120 @@ msgstr "Comandi che riguardano lo spazio di lavoro"
 msgid "Commands defined by the user"
 msgstr "Comandi definiti dall'utente"
 
-#: commands.cc:549
+#: commands.cc:557
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando ‘%s’ sconosciuto"
 
-#: commands.cc:559
+#: commands.cc:567
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "‘%s’ è ambiguo; può essere completato come:"
 
-#: commands.cc:654
+#: commands.cc:662
 #, c-format
 msgid "Commands in group '%s':"
 msgstr "Comandi nel gruppo ‘%s’:"
 
-#: commands.cc:660
+#: commands.cc:668
 #, c-format
 msgid "Subcommands of '%s %s':"
 msgstr "Sottocomandi di ‘%s %s’:"
 
-#: commands.cc:664
+#: commands.cc:672
 #, c-format
 msgid "Syntax specific to '%s %s':"
 msgstr "Sinstassi specifica di ‘%s %s’:"
 
-#: commands.cc:689
+#: commands.cc:697
 #, c-format
 msgid "Purpose of group '%s':"
 msgstr "Scopo del gruppo ‘%s’:"
 
-#: commands.cc:693
+#: commands.cc:701
 #, c-format
 msgid "Description for '%s %s':"
 msgstr "Descrizione di ‘%s %s’:"
 
-#: commands.cc:703
+#: commands.cc:711
 #, c-format
 msgid "Aliases: %s."
 msgstr "Alias: %s."
 
-#: commands.cc:720
+#: commands.cc:728
 #, c-format
 msgid "Command groups:"
 msgstr "Gruppi di comandi:"
 
-#: commands.cc:723
+#: commands.cc:731
 #, c-format
 msgid "For information on a specific command, type 'mtn help <command_name> [subcommand_name ...]'."
 msgstr "Per informazioni su uno specifico comando, scrivi ‘mtn help <nome_comando> [nome_sottocomando …]’."
 
-#: commands.cc:726
+#: commands.cc:734
 #, fuzzy, c-format
 msgid "To see more details about the commands of a particular group, type 'mtn help <group_name>'."
 msgstr "Per avere maggiori dettagli sui comandi di un particolare gruppo, scrivi ‘mtn help <nome_gruppo>’."
 
-#: commands.cc:729
+#: commands.cc:737
 #, c-format
 msgid "Note that you can always abbreviate a command name as long as it does not conflict with other names."
 msgstr "Ricorda che puoi sempre abbreviare il nome di un comando fintantantoché non collide con altri comandi."
 
-#: commands.cc:747
+#: commands.cc:756
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr "il commando ‘%s’ non è valido: è un gruppo"
 
-#: commands.cc:750
+#: commands.cc:759
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "nessun sottocomando specificato per ‘%s’"
 
-#: commands.cc:753
+#: commands.cc:762
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "impossibile identificare ‘%s’ come sottocomando di ‘%s’"
 
-#: commands.cc:774
+#: commands.cc:783
 msgid "command [ARGS...]"
 msgstr "comando [ARGOMENTI…]"
 
 # TODO: help=testo di aiuto?
-#: commands.cc:775
+#: commands.cc:784
 msgid "Displays help about commands and options"
 msgstr "Mostra l'help relativo a comandi e opzioni"
 
-#: commands.cc:792
+#TODO: innesca
+#: commands.cc:801
 msgid "Triggers the specified kind of crash"
-msgstr "Innesca il tipo di crac specificato"
+msgstr "Innesca il tipo di crash specificato"
 
-#: commands.cc:906
+#: commands.cc:915
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "espando la selezione ‘%s’"
 
-#: commands.cc:914
+#: commands.cc:923
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "nessuna corrispondenza per la selezione ‘%s’"
 
-#: commands.cc:921
+#: commands.cc:930
 #, c-format
 msgid "expanded to '%s'"
 msgstr "espanso in ‘%s’"
 
-#: commands.cc:938
+#: commands.cc:947
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "la selezione ‘%s’ ha espansioni multiple ambigue:"
 
-#: commands.cc:955
+#: commands.cc:964
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:956
+#: commands.cc:965
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2511,7 +2508,7 @@ msgstr ""
 "il ramo ‘%s’ ha più teste\n"
 "valuta l'uso di ‘%s merge’"
 
-#: commands.cc:971
+#: commands.cc:980
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "‘--message’ e ‘--message-file’ sono mutuamente esclusivi"
@@ -3031,7 +3028,7 @@ msgid ""
 msgstr ""
 "Hai dato una opzione database di: \n"
 "%s\n"
-"Cioè di fatto uno spazio di lavoro. Volevi dire: \n"
+"Che in realtà è uno spazio di lavoro.  Forse intendevi: \n"
 "%s"
 
 #: database.cc:3448
@@ -3872,7 +3869,7 @@ msgstr "stampa una versione breve dell'output"
 
 #: options_list.hh:82
 msgid "annotate using full revision ids only"
-msgstr ""
+msgstr "annota il file utilizzando solo gli id completi di revisione"
 
 #: options_list.hh:90
 msgid "set location of configuration directory"
@@ -4124,42 +4121,42 @@ msgstr "pacchetto non valido: troppi argomenti nell'intestazione"
 msgid "unknown packet type: '%s'"
 msgstr "pacchetto di tipo sconosciuto: ‘%s’"
 
-#: pcrewrap.cc:161
+#: pcrewrap.cc:162
 #, c-format
 msgid "while compiling regex \"%s\": %s"
 msgstr "durante la compilazione dell'espressione regolare ‘%s’: %s"
 
-#: pcrewrap.cc:170
+#: pcrewrap.cc:171
 #, c-format
 msgid "error in regex \"%s\": %s"
 msgstr "errore nell'espressione regolare ‘%s’: %s"
 
-#: pcrewrap.cc:172
+#: pcrewrap.cc:173
 #, c-format
 msgid "error near char %d of regex \"%s\": %s"
 msgstr "errore vicino al carattere %d della regex ‘%s’: %s"
 
-#: pcrewrap.cc:186
+#: pcrewrap.cc:187
 #, c-format
 msgid "while studying regex \"%s\": %s"
 msgstr "durante lo studio dell'espressione regolare ‘%s’: %s"
 
 # TODO: match
-#: pcrewrap.cc:204
+#: pcrewrap.cc:205
 msgid "backtrack limit exceeded in regular expression matching"
 msgstr "superato il limite di backtrack nel match di espressioni regolari"
 
 # TODO: match
-#: pcrewrap.cc:208
+#: pcrewrap.cc:209
 msgid "recursion limit exceeded in regular expression matching"
 msgstr "superato il limite di ricorsione match di espressioni regolari"
 
 # TODO: match?
-#: pcrewrap.cc:213
+#: pcrewrap.cc:214
 msgid "invalid UTF-8 sequence found during regular expression matching"
 msgstr "trovata una sequenza UTF-8 non valida durante un match con espressione regolare"
 
-#: pcrewrap.cc:216
+#: pcrewrap.cc:217
 #, c-format
 msgid "pcre_match returned %d"
 msgstr "pcre_match ha ritornato %d"
@@ -4892,7 +4889,7 @@ msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 #: work.cc:1406
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
-msgstr "non posso rinominare lo spazio di lavoro root (prova con ‘%s pivot_root’)"
+msgstr "non posso rinominare la root dello spazio di lavoro (usa invece ‘%s pivot_root’)"
 
 #: work.cc:1375
 #: work.cc:1409
