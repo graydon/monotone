@@ -86,6 +86,8 @@
 
         - Update Lua to 5.1.2 plus latest bug fixes.
 
+        - Update Botan to 1.5.10.
+
         - Internal use of regular expressions has been almost eliminated.
           (Regular expressions are still used for .mtn-ignore and the
           --show-encloser feature of mtn diff, and are still available to
