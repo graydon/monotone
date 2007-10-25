@@ -43,6 +43,7 @@ files added, by other contributing authors, including:
   Georg-W. Koltermann <Georg.Koltermann@mscsoftware.com>
   Matt Kraai <kraai@ftbfs.org>
   Richard Levitte <richard@levitte.org>
+  Lapo Luchini <lapo@lapo.it>
   Patrick Mauritz <oxygene@studentenbude.ath.cx>
   Roland McGrath <roland@redhat.com>
   Wojciech Miłkowski <wmilkowski@interia.pl>
@@ -67,7 +68,6 @@ files added, by other contributing authors, including:
   Julio M. Merino Vidal <jmmv@NetBSD.org>
   Vladimir Vukicevic <vladimirv@gmail.com>
   Zack Weinberg <zackw@panix.com>
-  Lapo Luchini <lapo@lapo.it>
 
 Several people have also contributed to the translation of monotone
 into non-English languages; their work is available in the po/

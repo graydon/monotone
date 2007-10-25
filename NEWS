@@ -72,6 +72,9 @@
           switch for the annotate command didn't match its actual
           behavior, this has been fixed
 
+        - documentation for the "ssh_agent_add" command was missing
+          and has been added
+
         Other
 
         - contrib/usher.cc has been removed. Please use the
@@ -87,6 +90,8 @@
           (Regular expressions are still used for .mtn-ignore and the
           --show-encloser feature of mtn diff, and are still available to
           Lua hooks.)
+
+
 
 Fri Aug  3 06:08:36 UTC 2007
 
