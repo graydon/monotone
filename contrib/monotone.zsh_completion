@@ -25,25 +25,25 @@ _mtn() {
   local extra
 
   _arguments -s : \
+    '--confdir=[set location of configuration directory]:dir:_files -/'\
+    {'(--db)-d+','(-d)--db='}'[set name of database]:file:_files'\
     '--debug[print debug log to stderr while running]'\
     '--dump=[file to dump debugging log to, on failure]:file:_files'\
-    '--log=[file to write the log to]:file:_files'\
-    '--quiet[suppress log and progress messages]'\
-    '--reallyquiet[suppress warning, verbose, informational and progress messages]'\
     {'-h','--help'}'[display help message]'\
-    '(- *)--version[print version number, then exit]'\
-    '(- *)--full-version[print detailed version number, then exit]'\
-    {'-@+','--xargs='}'[insert command line arguments taken from the given file]:file:_files'\
-    '--ticker=[set ticker style]:style:(count dot none)'\
-    '--nostd[do not load standard lua hooks]'\
-    '--norc[do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files]'\
-    '--rcfile=[load extra rc file]:file:_files'\
+    '--ignore-suspend-certs[do not ignore revisions marked as suspended]'\
     {'(--key)-k+','(-k)--key='}'[set key for signatures]:keys keys:_mtn_keys'\
-    {'(--db)-d+','(-d)--db='}'[set name of database]:file:_files'\
-    '--root=[limit search for working copy to specified root]:dir:_files -/'\
-    '--verbose[verbose completion output]'\
     '--keydir=[set location of key store]:dir:_files -/'\
-    '--confdir=[set location of configuration directory]:dir:_files -/'\
+    '--log=[file to write the log to]:file:_files'\
+    '--norc[do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files]'\
+    '--nostd[do not load standard lua hooks]'\
+    '--quiet[suppress log and progress messages]'\
+    '--rcfile=[load extra rc file]:file:_files'\
+    '--reallyquiet[suppress warning, verbose, informational and progress messages]'\
+    '--root=[limit search for working copy to specified root]:dir:_files -/'\
+    '--ssh-sign=[sign with ssh-agent]:ssh_sign:(yes no check)'\
+    '--ticker=[set ticker style]:style:(count dot none)'\
+    '(- *)--version[print version number, then exit]'\
+    {'-@+','--xargs='}'[insert command line arguments taken from the given file]:file:_files'\
     '*::monotone command:_mtn_command'
 }
 
@@ -53,15 +53,15 @@ _mtn() {
 _mtn_command() {
     (( $+_mtn_cmds )) || 
     _mtn_cmds=(
-	add annotate approve asciik attr automate cat cert checkout ci
-	clone co comment commit complete cvs_import db diff disapprove
-	drop dropkey explicit_merge fdiff fload fmerge genkey
-	get_roster heads help identify import list log ls merge
+	add annotate approve asciik attr au automate cat cert checkout
+	ci clone co comment commit complete cvs_import db diff
+	disapprove drop dropkey explicit_merge fdiff fload fmerge
+	genkey get_roster heads help identify import list log ls merge
 	merge_into_dir merge_into_workspace migrate_workspace mkdir mv
 	passphrase pivot_root pluck privkey propagate pubkey pull push
 	rcs_import read refresh_inodeprints rename revert rm serve set
 	setup show_conflicts ssh_agent_add ssh_agent_export status
-	sync tag testresult trusted unset update
+	suspend sync tag testresult trusted unset update version
     )
     
     local cmd="$words[1]"
@@ -117,6 +117,11 @@ _mtn_attr() {
 	local fname="$words[3]"
 	compadd -- $(mtn automate attributes $fname)
     fi
+}
+
+(( $+functions[_mtn_au] )) ||
+_mtn_au() {
+    _mtn_automate
 }
 
 (( $+functions[_mtn_automate] )) ||
@@ -417,6 +422,8 @@ _mtn_status() {
 	'*:file:_mtn_files_known'
 }
 
+# missing: suspend
+
 (( $+functions[_mtn_sync] )) ||
 _mtn_sync() {
     _arguments -s : \
@@ -449,6 +456,11 @@ _mtn_update() {
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'
 }
 
+(( $+functions[_mtn_version] )) ||
+_mtn_version() {
+    _arguments -s : \
+	'--full[print detailed version number]'
+}
 
 # define completion functions for files maintained by monotone.
 
