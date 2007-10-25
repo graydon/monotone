@@ -1,4 +1,4 @@
-monotone (0.37-1) UNRELEASED; urgency=low
+monotone (0.37-1) unstable; urgency=low
 
   * New upstream release.
   * Clarifications to debian/copyright and AUTHORS.
@@ -10,7 +10,7 @@ monotone (0.37-1) UNRELEASED; urgency=low
     to be so on powerpc.  Please file new FTBFS bugs for any remaining
     architectures that are broken.  (Closes: #439584)
 
- -- name email date
+ -- Richard Levitte <richard@levitte.org>  Fri, 26 Oct 2007 00:35:29 +0200
 
 monotone (0.36-2) unstable; urgency=low
 
