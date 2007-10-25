@@ -2664,11 +2664,13 @@ execution path of the remote shell environment.
 In the case of File URIs, @command{mtn} is run locally, so must be
 in your command execution path.
 
-In both cases, the database specified in the URI needs to exist
-already, and will be locked for the duration of the synchronization
-operation. Also note that monotone's default transport authentication
-is @emph{disabled} over these transports, to reduce the complexity of
-configuration and eliminate redundant protocol cost.
+In both cases, the database specified in the URI needs to exist already,
+and will be locked for the duration of the synchronization
+operation. Therefore, it must also be writable, even when monotone isn't
+going to modify it, as it is the case for @command{pull}.  Also note
+that monotone's default transport authentication is @emph{disabled} over
+these transports, to reduce the complexity of configuration and
+eliminate redundant protocol cost.
 
 Additional URI schemes can be supported by customization of the Lua
 hooks @code{get_netsync_connect_command} and
