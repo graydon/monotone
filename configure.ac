@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.36, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.37, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
