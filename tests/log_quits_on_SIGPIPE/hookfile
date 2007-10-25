@@ -8,7 +8,7 @@ if p1 == nil then
 end
 
 p2, e2 = io.open("fifo2", "w")
-if p1 == nil then 
+if p2 == nil then 
    io.stderr:write("(child) open fifo2: " .. e2 .. "\n")
    os.exit(1)
 end
