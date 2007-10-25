@@ -23,7 +23,6 @@ tester_dir
 ^Makefile\.in$
 ^texinfo.tex$
 ^version.texi$
-^views.h$
 ^stamp-
 /stamp-
 ^monotone\.info
