@@ -1,5 +1,6 @@
 # translation of it.po to Italiano
 # Lapo Luchini <lapo@lapo.it>, 2007.
+# Roberta Lazzeri <ripley@lapo.it>, 2007.
 msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
