@@ -93,7 +93,7 @@ _mtn_add() {
 _mtn_annotate() {
     _arguments -s : \
 	{'(--revision)-r+','(-r)--revision='}'[select revision id for operation]:revision:_mtn_selector_or_revision'\
-	'--brief[print a brief version of the normal output]'\
+	'--revs-only[annotate using full revision ids only]'\
 	'(*)*:file to annotate:_mtn_files_known'
 }
 
@@ -531,7 +531,8 @@ _mtn_selectors() {
 	'*d[date]:date:' \
 	'*e[earlier than]:date:' \
 	'*l[later than]:date:' \
-	'*i[revision id]:revision id:_mtn_revisions'
+	'*i[revision id]:revision id:_mtn_revisions' \
+	'*p[parent of]:revision_id:_mtn_revisions'
 }
 
 (( $+functions[_mtn_selector_or_revision] )) ||
