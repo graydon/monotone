@@ -1,6 +1,7 @@
 monotone (0.37-1) UNRELEASED; urgency=low
 
   * New upstream release.
+  * Clarifications to debian/copyright and AUTHORS.
   * No longer depends on any external Boost library modules.
     And there was much rejoicing.
   * Ensure sqlite I/O code sees a prototype for pread/pwrite, and make
