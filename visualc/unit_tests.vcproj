@@ -1099,10 +1099,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\views.h"
-				>
-			</File>
-			<File
 				RelativePath="..\vocab.hh"
 				>
 			</File>
