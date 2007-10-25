@@ -1,3 +1,6 @@
+-- WARNING: this feature is not available in the mainline yet
+-- you can find it in net.venge.monotone.ws_automate
+
 -- include this in your monotonerc file to gain the extra commands.
 
 -- Not all of the automate commands used by this lua code are committed

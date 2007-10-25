@@ -13,7 +13,6 @@
 
 ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
 ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
-ATOMIC(ace);                  // unknown string in ACE form
 ATOMIC(symbol);               // valid basic io symbol (alphanumeric or _ chars)
 
 ATOMIC_NOVERIFY(id);          // hash of data

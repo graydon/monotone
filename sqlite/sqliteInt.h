@@ -17,6 +17,40 @@
 #define _SQLITEINT_H_
 #include "sqliteLimit.h"
 
+/*
+** Note that "feature test" macros must, in general, be defined
+** before any system header is included or they will have no effect.
+*/
+
+/*
+** We need _XOPEN_SOURCE=500 defined for safe use of pread/pwrite.
+** However, it is reported to be unnecesary and cause trouble on
+** MacOS, so we don't define it there.
+*/
+#if !defined _XOPEN_SOURCE && !defined __MACOS__
+#  define _XOPEN_SOURCE 500
+#endif
+
+/*
+** These #defines should enable >2GB file support on Posix if the
+** underlying operating system supports it.  If the OS lacks
+** large file support, these should be no-ops.
+**
+** Large file support can be disabled using the -DSQLITE_DISABLE_LFS switch
+** on the compiler command line.  This is necessary if you are compiling
+** on a recent machine (ex: RedHat 7.2) but you want your code to work
+** on an older machine (ex: RedHat 6.0).  If you compile on RedHat 7.2
+** without this option, LFS is enable.  But LFS does not exist in the kernel
+** in RedHat 6.0, so the code won't work.  Hence, for maximum binary
+** portability you should omit LFS.
+*/
+#ifndef SQLITE_DISABLE_LFS
+# define _LARGE_FILE       1
+# ifndef _FILE_OFFSET_BITS
+#   define _FILE_OFFSET_BITS 64
+# endif
+# define _LARGEFILE_SOURCE 1
+#endif
 
 #if defined(SQLITE_TCL) || defined(TCLSH)
 # include <tcl.h>

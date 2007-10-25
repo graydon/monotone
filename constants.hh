@@ -89,9 +89,6 @@ namespace constants
   // all the ASCII characters (bytes) which are legal in a base64 blob
   extern char const legal_base64_bytes[];
 
-  // all the ASCII characters (bytes) which are legal in an ACE string
-  extern char const legal_ace_bytes[];
-
   // all the ASCII characters (bytes) which are legal in a SHA1 hex id
   extern char const legal_id_bytes[];
 
