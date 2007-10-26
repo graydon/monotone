@@ -371,13 +371,13 @@ void Gzip_Decompression::check_footer()
 
   tmpbuf.set(footer.begin(), 4);
   if (buf != tmpbuf)
-      throw Exception("Gzip_Decompression: Data integrity error - CRC32 error");
+      throw Decoding_Error("Gzip_Decompression: Data integrity error - CRC32 error");
 
    // Check the length matches - it is encoded LSB-first
    for (int i = 0; i < 4; i++)
       {
       if (footer.begin()[GZIP::FOOTER_LENGTH-1-i] != get_byte(i, datacount))
-         throw Exception("Gzip_Decompression: Data integrity error - incorrect length");
+         throw Decoding_Error("Gzip_Decompression: Data integrity error - incorrect length");
       }
 
    }
