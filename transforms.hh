@@ -22,8 +22,8 @@ namespace Botan {
   class Base64_Decoder;
   class Hex_Encoder;
   class Hex_Decoder;
-  class Zlib_Compression;
-  class Zlib_Decompression;
+  class Gzip_Compression;
+  class Gzip_Decompression;
 }
 
 // this generic template cannot actually be used, except with the
@@ -41,8 +41,8 @@ template<> std::string xform<Botan::Base64_Encoder>(std::string const &);
 template<> std::string xform<Botan::Base64_Decoder>(std::string const &);
 template<> std::string xform<Botan::Hex_Encoder>(std::string const &);
 template<> std::string xform<Botan::Hex_Decoder>(std::string const &);
-template<> std::string xform<Botan::Zlib_Compression>(std::string const &);
-template<> std::string xform<Botan::Zlib_Decompression>(std::string const &);
+template<> std::string xform<Botan::Gzip_Compression>(std::string const &);
+template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 // base64 encoding
 
@@ -75,16 +75,16 @@ inline std::string decode_hexenc(std::string const & in)
 
 template <typename T>
 void encode_gzip(T const & in, gzip<T> & out)
-{ out = gzip<T>(xform<Botan::Zlib_Compression>(in())); }
+{ out = gzip<T>(xform<Botan::Gzip_Compression>(in())); }
 
 template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
-{ out = T(xform<Botan::Zlib_Decompression>(in())); }
+{ out = T(xform<Botan::Gzip_Decompression>(in())); }
 
 // string variant for netsync
 template <typename T>
 void encode_gzip(std::string const & in, gzip<T> & out)
-{ out = xform<Botan::Zlib_Compression>(in); }
+{ out = xform<Botan::Gzip_Compression>(in); }
 
 // both at once (this is relatively common)
 // these are usable for T = data and T = delta

@@ -57,6 +57,7 @@ MOST_SOURCES = 								\
 	automate.cc							\
 	database_check.cc database_check.hh				\
 	epoch.cc epoch.hh						\
+	gzip.cc gzip.hh							\
 	inodeprint.cc inodeprint.hh					\
 	selectors.cc selectors.hh					\
 	annotate.cc annotate.hh						\
@@ -126,7 +127,7 @@ BOTAN_SOURCES = 							\
 	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
 	botan/fips140.cpp \
 	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
-	botan/zlib.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+	botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
 	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
 	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
 	botan/make_prm.cpp botan/mdx_hash.cpp       \
@@ -173,7 +174,7 @@ BOTAN_SOURCES = 							\
 	botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
 	botan/cfb.h botan/modebase.h    \
 	botan/pipe.h botan/x509_obj.h           \
-	botan/asn1_oid.h botan/eax.h botan/zlib.h      \
+	botan/asn1_oid.h botan/eax.h      \
 	botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
 	botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
 	botan/hex.h botan/pk_core.h botan/secqueue.h    \
@@ -332,7 +333,8 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
 	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
 	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
-	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)
+	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)		\
+	mtn-gzip.$(OBJEXT)
 
 # primaries
 
