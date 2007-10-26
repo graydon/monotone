@@ -1,6 +1,6 @@
 /*************************************************
 * Default Engine Algorithms Source File          *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/eng_def.h>
@@ -16,6 +16,7 @@
 #include <botan/sha160.h>
 #include <botan/sha256.h>
 
+#include <botan/cbc_mac.h>
 #include <botan/hmac.h>
 
 #include <botan/mode_pad.h>
@@ -131,6 +132,7 @@ Default_Engine::find_mac(const std::string& algo_spec) const
       return 0;
    const std::string algo_name = deref_alias(name[0]);
 
+   HANDLE_TYPE_ONE_STRING("CBC-MAC", CBC_MAC);
    HANDLE_TYPE_ONE_STRING("HMAC", HMAC);
 
    return 0;

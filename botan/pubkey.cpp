@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Base Source File                    *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/pubkey.h>
@@ -378,7 +378,8 @@ SymmetricKey PK_Key_Agreement::derive_key(u32bit key_len,
                                           const std::string& params) const
    {
    return derive_key(key_len, in, in_len,
-                     (const byte*)params.c_str(), params.length());
+                     reinterpret_cast<const byte*>(params.data()),
+                     params.length());
    }
 
 /*************************************************

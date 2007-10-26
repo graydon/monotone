@@ -1,6 +1,6 @@
 /*************************************************
 * Pooling Allocator Header File                  *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_POOLING_ALLOCATOR_H__
@@ -11,7 +11,6 @@
 #include <botan/mutex.h>
 #include <utility>
 #include <vector>
-#include <functional>
 
 namespace Botan {
 
@@ -38,39 +37,31 @@ class Pooling_Allocator : public Allocator
       class Memory_Block
          {
          public:
-            Memory_Block(void*, u32bit, u32bit);
+            Memory_Block(void*);
 
             static u32bit bitmap_size() { return BITMAP_SIZE; }
+            static u32bit block_size() { return BLOCK_SIZE; }
 
             bool contains(void*, u32bit) const throw();
             byte* alloc(u32bit) throw();
             void free(void*, u32bit) throw();
 
-            bool operator<(const void*) const;
-            bool operator>(const void*) const;
             bool operator<(const Memory_Block& other) const
-               { return (buffer < other.buffer); }
-            bool operator>(const Memory_Block& other) const
-               { return (buffer > other.buffer); }
+               {
+               if(buffer < other.buffer && other.buffer < buffer_end)
+                  return false;
+               return (buffer < other.buffer);
+               }
          private:
             typedef u64bit bitmap_type;
             static const u32bit BITMAP_SIZE = 8 * sizeof(bitmap_type);
+            static const u32bit BLOCK_SIZE = 64;
+
             bitmap_type bitmap;
             byte* buffer, *buffer_end;
-            u32bit block_size;
          };
 
-template <typename _first, typename _second>
-struct diff_less : public std::binary_function<_first,_second,bool>
-{
-  bool operator()(const _first& __x, const _second& __y) const { return __x < __y; }
-#if defined(_MSC_VER) && defined(_DEBUG)
-  bool operator()(const _second& __y, const _first& __x) const { return __x > __y; }
-  bool operator()(const _first& __x, const _first& __y) const { return __x < __y; }
-#endif
-};
-
-      const u32bit PREF_SIZE, BLOCK_SIZE;
+      const u32bit PREF_SIZE;
 
       std::vector<Memory_Block> blocks;
       std::vector<Memory_Block>::iterator last_used;

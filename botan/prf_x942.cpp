@@ -1,6 +1,6 @@
 /*************************************************
 * X9.42 PRF Source File                          *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/kdf.h>
@@ -21,9 +21,7 @@ namespace {
 MemoryVector<byte> encode_x942_int(u32bit n)
    {
    byte n_buf[4] = { 0 };
-   for(u32bit j = 0; j != 4; ++j)
-      n_buf[j] = get_byte(j, n);
-
+   store_be(n, n_buf);
    return DER_Encoder().encode(n_buf, 4, OCTET_STRING).get_contents();
    }
 

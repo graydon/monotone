@@ -102,7 +102,7 @@ Gzip_Compression::Gzip_Compression(u32bit l) :
    if(deflateInit2(&(zlib->stream), level, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY) != Z_OK)
       {
       delete zlib; zlib = 0;
-      throw Memory_Exhaustion();
+      throw Exception("Gzip_Compression: Memory allocation error");
       }
    }
 
@@ -144,7 +144,7 @@ void Gzip_Compression::write(const byte input[], u32bit length)
       zlib->stream.avail_out = buffer.size();
       int rc = deflate(&(zlib->stream), Z_NO_FLUSH);
       if (rc != Z_OK && rc != Z_STREAM_END)
-         throw Internal_Error("Gzip_Compression: deflate failed.");
+         throw Exception("Internal error in Gzip_Compression deflate.");
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
    }
@@ -164,7 +164,7 @@ void Gzip_Compression::end_msg()
       zlib->stream.avail_out = buffer.size();
       rc = deflate(&(zlib->stream), Z_FINISH);
       if (rc != Z_OK && rc != Z_STREAM_END)
-         throw Internal_Error("Gzip_Compression: finishing deflate failed.");
+         throw Exception("Internal error in Gzip_Compression finishing deflate.");
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       }
 
@@ -220,7 +220,7 @@ Gzip_Decompression::Gzip_Decompression() : buffer(DEFAULT_BUFFERSIZE),
    no_writes(true), pipe(new Hash_Filter("CRC32")), footer(0)
    {
    if (DEFAULT_BUFFERSIZE < sizeof(GZIP::GZIP_HEADER))
-      throw Invalid_Argument("DEFAULT_BUFFERSIZE is too small");
+      throw Exception("DEFAULT_BUFFERSIZE is too small");
 
    zlib = new Zlib_Stream;
 
@@ -229,7 +229,7 @@ Gzip_Decompression::Gzip_Decompression() : buffer(DEFAULT_BUFFERSIZE),
    if(inflateInit2(&(zlib->stream), -15) != Z_OK)
       {
       delete zlib; zlib = 0;
-      throw Memory_Exhaustion();
+      throw Exception("Gzip_Decompression: Memory allocation error");
       }
    }
 
@@ -248,7 +248,7 @@ Gzip_Decompression::~Gzip_Decompression()
 void Gzip_Decompression::start_msg()
    {
    if (!no_writes)
-      throw Invalid_State("Gzip_Decompression: start_msg after already writing");
+      throw Exception("Gzip_Decompression: start_msg after already writing");
 
    pipe.start_msg();
    datacount = 0;
@@ -309,8 +309,8 @@ void Gzip_Decompression::write(const byte input[], u32bit length)
          if(rc == Z_NEED_DICT)
             throw Decoding_Error("Gzip_Decompression: Need preset dictionary");
          if(rc == Z_MEM_ERROR)
-            throw Memory_Exhaustion();
-         throw Internal_Error("Gzip_Decompression: Unknown decompress error");
+            throw Exception("Gzip_Decompression: Memory allocation error");
+         throw Exception("Gzip_Decompression: Unknown decompress error");
          }
       send(buffer.begin(), buffer.size() - zlib->stream.avail_out);
       pipe.write(buffer.begin(), buffer.size() - zlib->stream.avail_out);
@@ -356,7 +356,7 @@ u32bit Gzip_Decompression::eat_footer(const byte input[], u32bit length)
 void Gzip_Decompression::check_footer()
    {
    if (footer.size() != GZIP::FOOTER_LENGTH)
-      throw Decoding_Error("Gzip_Decompression: footer wrong length");
+      throw Exception("Gzip_Decompression: Error finalizing decompression");
 
    pipe.end_msg();
    
@@ -371,13 +371,13 @@ void Gzip_Decompression::check_footer()
 
   tmpbuf.set(footer.begin(), 4);
   if (buf != tmpbuf)
-      throw Decoding_Error("Gzip_Decompression: Data integrity error - CRC32 error");
+      throw Exception("Gzip_Decompression: Data integrity error - CRC32 error");
 
    // Check the length matches - it is encoded LSB-first
    for (int i = 0; i < 4; i++)
       {
       if (footer.begin()[GZIP::FOOTER_LENGTH-1-i] != get_byte(i, datacount))
-         throw Decoding_Error("Gzip_Decompression: Data integrity error - incorrect length");
+         throw Exception("Gzip_Decompression: Data integrity error - incorrect length");
       }
 
    }
@@ -392,7 +392,7 @@ void Gzip_Decompression::end_msg()
    // read, clear() will reset no_writes
    if(no_writes) return;
 
-   throw Decoding_Error("Gzip_Decompression: didn't find footer");
+   throw Exception("Gzip_Decompression: didn't find footer");
 
    }
 

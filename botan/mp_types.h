@@ -1,6 +1,6 @@
 /*************************************************
 * Low Level MPI Types Header File                *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_MPI_TYPES_H__
@@ -22,8 +22,8 @@ namespace Botan {
   #error BOTAN_MP_WORD_BITS must be 8, 16, 32, or 64
 #endif
 
-const word MP_WORD_MASK = ~((word)0);
-const word MP_WORD_TOP_BIT = (word)1 << (8*sizeof(word) - 1);
+const word MP_WORD_MASK = ~static_cast<word>(0);
+const word MP_WORD_TOP_BIT = static_cast<word>(1) << (8*sizeof(word) - 1);
 const word MP_WORD_MAX = MP_WORD_MASK;
 
 }

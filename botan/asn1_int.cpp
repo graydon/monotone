@@ -1,6 +1,6 @@
 /*************************************************
 * ASN.1 Internals Source File                    *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_int.h>
@@ -43,8 +43,8 @@ SecureVector<byte> put_in_sequence(const MemoryRegion<byte>& contents)
 *************************************************/
 std::string to_string(const BER_Object& obj)
    {
-   std::string str((const char*)obj.value.begin(), obj.value.size());
-   return str;
+   return std::string(reinterpret_cast<const char*>(obj.value.begin()),
+                      obj.value.size());
    }
 
 /*************************************************

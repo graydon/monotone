@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Reading/Writing Source File               *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/pipe.h>
@@ -48,7 +48,7 @@ void Pipe::write(const MemoryRegion<byte>& input)
 *************************************************/
 void Pipe::write(const std::string& str)
    {
-   write((const byte*)str.c_str(), str.size());
+   write(reinterpret_cast<const byte*>(str.data()), str.size());
    }
 
 /*************************************************
@@ -122,7 +122,7 @@ std::string Pipe::read_all_as_string(u32bit msg)
       u32bit got = read(buffer, buffer.size(), msg);
       if(got == 0)
          break;
-      str.append((const char*)buffer.begin(), got);
+      str.append(reinterpret_cast<const char*>(buffer.begin()), got);
       }
 
    return str;
