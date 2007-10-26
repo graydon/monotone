@@ -20,7 +20,7 @@
 #include <boost/scoped_array.hpp>
 
 #include "botan/botan.h"
-#include "botan/gzip.h"
+#include "botan/zlib.h"
 #include "botan/sha160.h"
 
 #include "cleanup.hh"
@@ -132,8 +132,8 @@ SPECIALIZE_XFORM(Botan::Base64_Encoder,);
 SPECIALIZE_XFORM(Botan::Base64_Decoder, Botan::IGNORE_WS);
 SPECIALIZE_XFORM(Botan::Hex_Encoder, Botan::Hex_Encoder::Lowercase);
 SPECIALIZE_XFORM(Botan::Hex_Decoder, Botan::IGNORE_WS);
-SPECIALIZE_XFORM(Botan::Gzip_Compression,);
-SPECIALIZE_XFORM(Botan::Gzip_Decompression,);
+SPECIALIZE_XFORM(Botan::Zlib_Compression,);
+SPECIALIZE_XFORM(Botan::Zlib_Decompression,);
 
 template <typename T>
 void pack(T const & in, base64< gzip<T> > & out)
@@ -143,7 +143,7 @@ void pack(T const & in, base64< gzip<T> > & out)
 
   try
     {
-      Botan::Pipe pipe(new Botan::Gzip_Compression(),
+      Botan::Pipe pipe(new Botan::Zlib_Compression(),
                        new Botan::Base64_Encoder);
       pipe.process_msg(in());
       tmp = pipe.read_all_as_string();
@@ -164,7 +164,7 @@ void unpack(base64< gzip<T> > const & in, T & out)
   try
     {
       Botan::Pipe pipe(new Botan::Base64_Decoder(),
-                       new Botan::Gzip_Decompression());
+                       new Botan::Zlib_Decompression());
       pipe.process_msg(in());
       tmp = pipe.read_all_as_string();
       out = T(tmp);

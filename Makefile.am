@@ -126,7 +126,7 @@ BOTAN_SOURCES = 							\
 	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
 	botan/fips140.cpp \
 	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
-	botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+	botan/zlib.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
 	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
 	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
 	botan/make_prm.cpp botan/mdx_hash.cpp       \
@@ -173,7 +173,7 @@ BOTAN_SOURCES = 							\
 	botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
 	botan/cfb.h botan/modebase.h    \
 	botan/pipe.h botan/x509_obj.h           \
-	botan/asn1_oid.h botan/eax.h botan/gzip.h      \
+	botan/asn1_oid.h botan/eax.h botan/zlib.h      \
 	botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
 	botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
 	botan/hex.h botan/pk_core.h botan/secqueue.h    \
