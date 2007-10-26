@@ -12,6 +12,7 @@
  * being available. the Gzip Compressor would just be a subclass of
  * Zlib Compressor, with window_bits+=16 for deflateInit2(), etc */
 
+#include <base.hh>
 #include <gzip.hh>
 #include <botan/filters.h>
 #include <botan/bit_ops.h>
