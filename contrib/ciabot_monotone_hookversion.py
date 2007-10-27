@@ -17,25 +17,7 @@
 # To use:
 #   -- make a copy of it somewhere
 #   -- edit the configuration values below
-#   -- put the following in the server's monotonerc:
-# function note_netsync_revision_received(rid, rdat, certs)
-#    local branch, author, changelog
-#    for i, cert in pairs(certs)
-#    do
-#       if (cert.name == "branch") then
-#          branch = cert.value
-#       end
-#       if (cert.name == "author") then
-#          author = cert.value
-#       end
-#       if (cert.name == "changelog") then
-#          changelog = cert.value
-#       end
-#    end
-#    local exe = "/path/to/this/script"
-#    wait(spawn(exe, rid, branch, author, changelog, rdat))
-#    return
-# end
+#   -- include ciabot_monotone_hookversion.lua in the server's monotonerc:
 
 class config:
     def project_for_branch(self, branchname):
