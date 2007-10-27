@@ -159,7 +159,7 @@ BOTAN_SOURCES = 							\
 	botan/powm_mnt.cpp botan/mp_asm.cpp \
 	botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
 	botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
-	botan/x509_ext.cpp botan/x509stat.cpp \
+	botan/x509_ext.cpp botan/x509stat.cpp botan/dh.cpp \
 	\
 	botan/aes.h botan/botan.h botan/es_win32.h  \
 	botan/lookup.h botan/randpool.h botan/version.h \
@@ -199,7 +199,7 @@ BOTAN_SOURCES = 							\
 	botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
 	botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
 	botan/stl_util.h botan/x509_ext.h botan/x509stat.h \
-	botan/alg_id.h
+	botan/alg_id.h botan/cbc_mac.h botan/loadstor.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\
