@@ -1175,3 +1175,8 @@ function add_netsync_notifier(notifier, precedence)
    netsync_notifiers[precedence] = notifier
    return true, warning
 end
+
+function push_netsync_notifier(notifier)
+   local n = table.maxn(netsync_notifiers) + 1
+   return add_netsync_notifier(notifier, n)
+end
