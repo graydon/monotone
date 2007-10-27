@@ -19,15 +19,11 @@ elseif string.sub(ostype, 1, 6) == "CYGWIN" then
   local intl = getpathof("cygintl-3", ".dll")
   local intl8 = getpathof("cygintl-8", ".dll")
   local zlib = getpathof("cygz", ".dll")
-  local boostfile = getpathof("cygboost_filesystem-gcc-mt-1_33_1", ".dll")
-  local boostregex = getpathof("cygboost_regex-gcc-mt-1_33_1", ".dll")
   copy(cygwin, "cygwin1.dll")
   copy(iconv, "cygiconv-2.dll")
   copy(intl, "cygintl-3.dll")
   copy(intl8, "cygintl-8.dll")
   copy(zlib, "cygz.dll")
-  copy(boostfile, "cygboost_filesystem-gcc-mt-1_33_1.dll")
-  copy(boostregex, "cygboost_regex-gcc-mt-1_33_1.dll")
 end
 
 check(noenv_mtn("--help"), 0, false, false)

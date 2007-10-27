@@ -3,7 +3,8 @@
 -- except that the values for allow and deny must be real email
 -- addresses.
 --
--- Requires a "mail" executable
+-- This will splat out files in _base. Use the .sh file from
+-- cron to process those files
 --
 -- Copyright (c) 2007, Matthew Sackman (matthew at wellquite dot org)
 --                     LShift Ltd (http://www.lshift.net)
@@ -11,9 +12,8 @@
 --                     Whoever wrote the function "get_netsync_read_permitted"
 -- License: GPLv2 or later
 
-_outfile = "/tmp/processor-out"
-_errfile = "/tmp/processor-err"
 _from = "monotone@my.domain.please.change.me"
+_base = "/tmp/notify/"
 
 function get_notify_recipients(branch)
    local emailfile = io.open(get_confdir() .. "/notify", "r")
@@ -85,53 +85,78 @@ function note_netsync_revision_received (new_id, revision, certs, session_id)
         if cert["name"] == "branch" then
            rev_data["recipients"] = get_notify_recipients(cert["value"])
         end
-	if cert["name"] ~= nil then
+        if cert["name"] ~= nil then
            if nil == rev_data["certs"][cert["name"]] then
-	      rev_data["certs"][cert["name"]] = {}
-	   end
+              rev_data["certs"][cert["name"]] = {}
+           end
            table.insert(rev_data["certs"][cert["name"]], cert["value"])
         end
     end
     _emails_to_send[session_id][new_id] = rev_data
 end
 
-function note_netsync_end (session_id, status, bytes_in, bytes_out, certs_in, certs_out, revs_in, revs_out, keys_in, keys_out)
-    if _emails_to_send[session_id] == nil then
-        -- no session present
-        return
-    end
+do
+   local saved_note_netsync_end = note_netsync_end
 
-    if status ~= 200 then
-        -- some error occured, no further processing takes place
-        return
-    end
+   function note_netsync_end (session_id, status, bytes_in, bytes_out, certs_in, certs_out, revs_in, revs_out, keys_in, keys_out, ...)
+      if saved_note_netsync_end then
+         saved_note_netsync_end(session_id, status,
+                                bytes_in, bytes_out,
+                                certs_in, certs_out,
+                                revs_in, revs_out,
+                                keys_in, keys_out,
+                                unpack(arg))
+      end
 
-    if _emails_to_send[session_id] == "" then
-        -- we got no interesting revisions
-        return
-    end
-    
-    for rev_id,rev_data in pairs(_emails_to_send[session_id]) do
-       if # (rev_data["recipients"]) > 0 then
-	  file,filename = temp_file("notify")
-	  file:write(summarize_certs(rev_data))
-	  file:close()
-	  local subject = make_subject_line(rev_data)
-	  local reply_to = "Reply-To: "
-	  for j,auth in pairs(rev_data["certs"]["author"]) do
-	     reply_to = reply_to .. auth
-	     if j < # (rev_data["certs"]["author"]) then reply_to = reply_to .. ", " end
-	  end
 
-	  for j,addr in pairs(rev_data["recipients"]) do
-	     spawn_redirected(filename, _outfile, _errfile, "/usr/bin/mail", "-e", "-a", reply_to, "-a", "From: " .. _from, "-s", subject, addr)
-	  end
+      if _emails_to_send[session_id] == nil then
+         -- no session present
+         return
+      end
 
-	  os.remove(filename)
-       end
-    end
-     
-    _emails_to_send[session_id] = nil
+      if status ~= 200 then
+         -- some error occured, no further processing takes place
+         return
+      end
+
+      if _emails_to_send[session_id] == "" then
+         -- we got no interesting revisions
+         return
+      end
+
+      for rev_id,rev_data in pairs(_emails_to_send[session_id]) do
+         if # (rev_data["recipients"]) > 0 then
+            local subject = make_subject_line(rev_data)
+            local reply_to = ""
+            for j,auth in pairs(rev_data["certs"]["author"]) do
+               reply_to = reply_to .. auth
+               if j < # (rev_data["certs"]["author"]) then reply_to = reply_to .. ", " end
+            end
+
+            local now = os.time()
+
+            local outputFileRev = io.open(_base .. rev_data["revision"] .. now .. ".rev.txt", "w+")
+            local outputFileHdr = io.open(_base .. rev_data["revision"] .. now .. ".hdr.txt", "w+")
+
+            local to = ""
+            for j,addr in pairs(rev_data["recipients"]) do
+               to = to .. addr
+               if j < # (rev_data["recipients"]) then to = to .. ", " end
+            end
+
+            outputFileHdr:write("BCC: " .. to .. "\n")
+            outputFileHdr:write("From: " .. _from .. "\n")
+            outputFileHdr:write("Subject: " .. subject .. "\n")
+            outputFileHdr:write("Reply-To: " .. reply_to .. "\n")
+            outputFileHdr:close()
+
+            outputFileRev:write(summarize_certs(rev_data))
+            outputFileRev:close()
+         end
+      end
+
+      _emails_to_send[session_id] = nil
+   end
 end
 
 function summarize_certs(t)
@@ -140,10 +165,10 @@ function summarize_certs(t)
    for name,values in pairs(t["certs"]) do
       local formatted_value = ""
       for j,val in pairs(values) do
-	 formatted_value = formatted_value .. name .. ":"
-	 if string.match(val, "\n")
-	 then formatted_value = formatted_value .. "\n"
-	 else formatted_value = formatted_value .. (string.rep(" ", 20 - (# name))) end
+         formatted_value = formatted_value .. name .. ":"
+         if string.match(val, "\n")
+         then formatted_value = formatted_value .. "\n"
+         else formatted_value = formatted_value .. (string.rep(" ", 20 - (# name))) end
          formatted_value = formatted_value .. val .. "\n"
       end
       if name == "changelog" then changelog = formatted_value else str = str .. formatted_value end

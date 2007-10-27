@@ -2664,11 +2664,13 @@ execution path of the remote shell environment.
 In the case of File URIs, @command{mtn} is run locally, so must be
 in your command execution path.
 
-In both cases, the database specified in the URI needs to exist
-already, and will be locked for the duration of the synchronization
-operation. Also note that monotone's default transport authentication
-is @emph{disabled} over these transports, to reduce the complexity of
-configuration and eliminate redundant protocol cost.
+In both cases, the database specified in the URI needs to exist already,
+and will be locked for the duration of the synchronization
+operation. Therefore, it must also be writable, even when monotone isn't
+going to modify it, as it is the case for @command{pull}.  Also note
+that monotone's default transport authentication is @emph{disabled} over
+these transports, to reduce the complexity of configuration and
+eliminate redundant protocol cost.
 
 Additional URI schemes can be supported by customization of the Lua
 hooks @code{get_netsync_connect_command} and
@@ -2765,6 +2767,10 @@ syntax (see below)
 @item Identifier selection
 Uses selector type @code{i}. For example, @code{i:0f3a} matches
 revision IDs which begin with @code{0f3a}.
+@item Parent selection
+Uses selector type @code{p}. For example, @code{p:0f3a} matches the
+revision IDs which are the parent of the revision ID which begins with
+@code{0f3a}.
 @item Tag selection
 Uses selector type @code{t}. For example, @code{t:monotone-0.11} matches
 @code{tag} certs where the cert value begins with @code{monotone-0.11}.
@@ -3264,7 +3270,8 @@ in the future, but they will follow the patterns given above.
 @table @file
 @item .mtn-ignore
 Contains a list of regular expression patterns, one per line. If it exists,
-any file with a name matching one of these patterns is ignored.
+any file with a name matching one of these patterns is
+ignored. @xref{Regexps}, for the syntax of these regular expressions.
 @item _MTN/wanted-testresults
 Contains a list of testresult key names, one per line. If it exists, update
 will only select revisions that do not have regressions according to the given
@@ -4920,8 +4927,8 @@ construct by scanning backward from the first changed line in each
 hunk for a line that matches a regular expression.  The default
 regular expression is correct for many programming languages.  You can
 adjust the expression used with the Lua hook
-@code{get_encloser_pattern}; @ref{Hooks}.
-
+@code{get_encloser_pattern}; @ref{Hooks}.  For the regular expression
+syntax, @xref{Regexps}.
 
 @option{--unified} requests the ``unified diff'' format, the default.
 @option{--context} requests the ``context diff'' format (analogous to
@@ -5160,6 +5167,39 @@ key IDs, and it will tell you whether, under your current settings,
 Monotone would trust a cert on that revision with that value signed by
 those keys.
 
+@item mtn ssh_agent_add
+
+This command will add your monotone keys to your current ssh-agent session.
+You will be asked for the passphrase for each of your monotone private keys
+and they will be added to the ssh-agent. Once this is done you should be able
+to type @emph{ssh-add -l} and see your monotone key listed. When you
+subsequently use these keys through monotone it will use ssh-agent for signing
+without asking your for your passphrase.
+
+This command is mainly for use in a session script as monotone will automatically
+add your keys to ssh-agent on first use if it is available. For example the
+following two examples are equivalent:
+
+@smallexample
+@group
+$ mtn ssh_agent_add
+enter passphrase for key ID [user@@example.com]:
+$ mtn ci -m"Changed foo to bar"
+$ mtn push -k user@@example.com
+@end group
+@end smallexample
+
+@smallexample
+@group
+$ mtn ci -m"Changed foo to bar"
+enter passphrase for key ID [user@@example.com]:
+$ mtn push -k user@@example.com
+@end group
+@end smallexample
+
+In the second example, monotone automatically added the key to ssh-agent, making
+entering the passphrase not needed during the push.
+
 @item mtn ssh_agent_export @var{filename}
 
 This command will export your private key in a format that ssh-agent
@@ -5181,7 +5221,7 @@ $ ssh-add ~/.ssh/id_monotone
 Enter passphrase for /home/user/.ssh/id_monotone:
 Identity added: /home/user/.ssh/id_monotone (/home/user/.ssh/id_monotone)
 $ mtn ci -m"Changed foo to bar"
-$ mtn push
+$ mtn push -k user@@example.com
 @end group
 @end smallexample
 
@@ -8748,7 +8788,8 @@ languages; a few text authoring packages, like Texinfo, have special
 regular expressions that match their particular syntax.  If you have a
 better regular expression for some language, you can add it to this
 hook; and if you send it to the monotone developers, we will likely
-make it to the default for that language.
+make it the default for that language.  @xref{Regexps}, for the
+regular expression syntax.
 
 @item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
                      @var{diff_args}, @var{old_rev}, @var{new_rev})
@@ -9110,9 +9151,9 @@ The output table will be:
 @item regex.search(@var{regexp}, @var{string})
 
 Returns true if a match for @var{regexp} is found in @var{str}, return
-false otherwise.
+false otherwise.  @xref{Regexps}, for the syntax of @var{regexp}.
 
-@item register_command(@var{name}, @var{abstract}, @var{description}, @var{function})
+@item register_command(@var{name}, @var{params}, @var{abstract}, @var{description}, @var{function})
 
 Add a command named @var{name} to the @var{user} command group in monotone.  This function is
 normally called directly from a @file{monotonerc} file rather than a hook.  When the user issues the
@@ -9180,6 +9221,8 @@ specifics of how it works. Most users can ignore these sections.
 * Hash Integrity::              Notes on probability and failure.
 * Rebuilding ancestry::         In case of corruption.
 * Mark-Merge::                  The merging algorithm used by Monotone.
+* Regexps::                     The syntax of regular expressions 
+                                  used by Monotone.
 @end menu
 
 @page
@@ -10507,6 +10550,25 @@ Tim
 @end verbatim
 
 Replies and further discussion concerning this email can be found in the  @uref{http://thread.gmane.org/gmane.comp.version-control.revctrl/92, monotone-devel archives}.
+
+@node    Regexps
+@section Regular Expression Syntax
+
+Monotone expects user-provided regular expressions in
+@file{.mtn-ignore} files and as the result of the
+@code{get_encloser_pattern} Lua hook (for the @option{--show-encloser}
+option to @command{diff}).  User-written Lua hooks may also use the
+function @code{regex.search} as they see fit.  All these regular
+expressions should be written with the same syntax, which is that
+expected by the Perl-Compatible Regular Expression library (PCRE).
+
+@menu
+* Regexp Summary::  Quick reference to regular expression syntax.
+* Regexp Details::  Details of regular expression syntax and semantics.
+@end menu
+
+@include pcre/pcresyntax.texi
+@include pcre/pcrepattern.texi
 
 @node Default hooks
 @appendix Default hooks

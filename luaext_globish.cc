@@ -1,6 +1,5 @@
 #include "base.hh"
 #include "lua.hh"
-
 #include "globish.hh"
 #include "sanity.hh"
 
@@ -13,13 +12,9 @@ LUAEXT(match, globish)
 
   bool result = false;
   try {
-    string r(re);
-    string n;
-    string s(str);
-    result = globish_matcher(globish(r), globish(n))(s);
+    globish g(re);
+    result = g.matches(str);
   } catch (informative_failure & e) {
-    return luaL_error(L, e.what());
-  } catch (boost::bad_pattern & e) {
     return luaL_error(L, e.what());
   } catch (...) {
     return luaL_error(L, "Unknown error.");
@@ -27,8 +22,6 @@ LUAEXT(match, globish)
   lua_pushboolean(L, result);
   return 1;
 }
-
-
 
 // Local Variables:
 // mode: C++

@@ -701,26 +701,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\views.c"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAs="2"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\vocab.cc"
 				>
 			</File>
@@ -1114,10 +1094,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\views.h"
-				>
-			</File>
-			<File
 				RelativePath="..\vocab.hh"
 				>
 			</File>
@@ -1252,32 +1228,6 @@
 					CommandLine="copy &quot;$(ProjectDir)\..\_MTN\revision&quot; &quot;$(ProjectDir)\..\package_revision.txt&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\unknown_package.txt&quot; package_full_revision &gt;&quot;$(ProjectDir)\..\package_full_revision.cc&quot;&#x0D;&#x0A;&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\package_revision.txt&quot; package_revision &gt;&quot;$(ProjectDir)\..\package_revision.cc&quot;&#x0D;&#x0A;"
 					AdditionalDependencies="$(TargetDir)\txt2c.exe"
 					Outputs="package_full_revision.cc;package_revision.cc"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath="..\views.sql"
-			>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\views.c from $(ProjectDir)\..\views.sql"
-					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\views.sql&quot; views &gt;&quot;$(ProjectDir)\..\views.c&quot;&#x0D;&#x0A;"
-					AdditionalDependencies="&quot;$(TargetDir)\txt2c.exe&quot;"
-					Outputs="views.c"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCustomBuildTool"
-					Description="Generating $(ProjectDir)\..\views.c from $(ProjectDir)\..\views.sql"
-					CommandLine="&quot;$(TargetDir)\txt2c.exe&quot; --strip-trailing --no-static &quot;$(ProjectDir)\..\views.sql&quot; views &gt;&quot;$(ProjectDir)\..\views.c&quot;&#x0D;&#x0A;"
-					AdditionalDependencies="$(TargetDir)\txt2c.exe"
-					Outputs="views.c"
 				/>
 			</FileConfiguration>
 		</File>

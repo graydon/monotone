@@ -71,16 +71,6 @@ verify(hexenc<id> & val)
 }
 
 inline void
-verify_full(ace & val)
-{
-  string::size_type pos = val().find_first_not_of(constants::legal_ace_bytes);
-  N(pos == string::npos,
-    F("bad character '%c' in ace string '%s'") % val().at(pos) % val);
-
-  val.ok = true;
-}
-
-inline void
 verify_full(symbol & val)
 {
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)

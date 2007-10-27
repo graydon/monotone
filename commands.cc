@@ -147,6 +147,7 @@ namespace commands {
   command::command(std::string const & primary_name,
                    std::string const & other_names,
                    command * parent,
+                   bool is_group,
                    bool hidden,
                    std::string const & params,
                    std::string const & abstract,
@@ -156,6 +157,7 @@ namespace commands {
                    bool _allow_completion)
     : m_primary_name(utf8(primary_name)),
       m_parent(parent),
+      m_is_group(is_group),
       m_hidden(hidden),
       m_params(utf8(params)),
       m_abstract(utf8(abstract)),
@@ -235,6 +237,12 @@ namespace commands {
   }
 
   bool
+  command::is_group(void) const
+  {
+    return m_is_group;
+  }
+
+  bool
   command::hidden(void) const
   {
     return m_hidden;
@@ -256,6 +264,22 @@ namespace commands {
   command::desc() const
   {
     return abstract() + ".\n" + safe_gettext(m_desc().c_str());
+  }
+  
+  command::names_set
+  command::subcommands(void) const
+  {
+    names_set set;
+    init_children();
+    for (children_set::const_iterator i = m_children.begin();
+      i != m_children.end(); i++)
+      {
+        if ((*i)->hidden())
+          continue;
+        names_set const & other = (*i)->names();
+        set.insert(other.begin(), other.end());
+      }
+    return set;
   }
 
   options::options_type const &
@@ -569,7 +593,8 @@ namespace commands
   // to start, at the very least, two spaces after the tag's end position;
   // this is given by the colabstract parameter.
   static void describe(const string & tag, const string & abstract,
-                       size_t colabstract, ostream & out)
+                       const string & subcommands, size_t colabstract,
+                       ostream & out)
   {
     I(colabstract > 0);
 
@@ -579,7 +604,12 @@ namespace commands
 
     out << string(colabstract - col, ' ');
     col = colabstract;
-    out << format_text(abstract, colabstract, col) << '\n';
+    string desc(abstract);
+    if (subcommands.size() > 0)
+      {
+        desc += " (" + subcommands + ')';
+      }
+    out << format_text(desc, colabstract, col) << '\n';
   }
 
   static void explain_children(command::children_set const & children,
@@ -610,8 +640,12 @@ namespace commands
 
     for (vector< command const * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
-      describe(join_words((*i)->names(), ", ")(), (*i)->abstract(),
-               colabstract, out);
+      {
+        command const * child = *i;
+        describe(join_words(child->names(), ", ")(), child->abstract(),
+                 join_words(child->subcommands(), ", ")(),
+                 colabstract, out);
+      }
   }
 
   static void explain_cmd_usage(command_id const & ident, ostream & out)
@@ -697,13 +731,13 @@ namespace commands
             << format_text(F("For information on a specific command, type "
                            "'mtn help <command_name> [subcommand_name ...]'."))
             << "\n\n"
-            << format_text(F("To see the commands available within a group, "
-                           "type 'mtn help <group_name>'."))
+            << format_text(F("To see more details about the commands of a "
+                           "particular group, type 'mtn help <group_name>'."))
             << "\n\n"
             << format_text(F("Note that you can always abbreviate a command "
                            "name as long as it does not conflict with other "
                            "names."))
-            << "\n\n";
+            << "\n";
       }
     else
       explain_cmd_usage(ident, out);
@@ -717,7 +751,8 @@ namespace commands
     string visibleid = join_words(vector< utf8 >(ident.begin() + 1,
                                                  ident.end()))();
 
-    N(!(!cmd->is_leaf() && cmd->parent() == CMD_REF(__root__)),
+    I(cmd->is_leaf() || cmd->is_group());
+    N(!(cmd->is_group() && cmd->parent() == CMD_REF(__root__)),
       F("command '%s' is invalid; it is a group") % join_words(ident));
 
     N(!(!cmd->is_leaf() && args.empty()),

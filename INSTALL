@@ -16,7 +16,9 @@ building and installation process for monotone
     - automake.
     - gettext.
     - a supported C++ compiler: g++ 3.2 or later.
-    - an installed copy of boost 1.33.0 or later.
+    - boost 1.33.0 or later: either an installed copy or an extracted
+      tarball of its unbuilt sources somewhere in the file system are
+      supported.
     - zlib 1.1.4 or later.
     - libiconv if the iconv() function is missing.
 
@@ -25,19 +27,18 @@ building and installation process for monotone
            apt-get install autoconf
            apt-get install automake
            apt-get install gettext
-           apt-get install libboost-regex-dev
            apt-get install libboost-dev
            apt-get install libz-dev
            apt-get install g++
 
         on fedora: 
 
-           apt-get install autoconf
-           apt-get install automake
-           apt-get install gettext
-           apt-get install boost-devel 
-           apt-get install libz-devel
-           apt-get install g++
+           yum install autoconf
+           yum install automake
+           yum install gettext
+           yum install boost-devel 
+           yum install zlib-devel
+           yum install gcc-c++
 
         on Windows (incomplete):
 
@@ -49,45 +50,53 @@ building and installation process for monotone
            build some of these from source. if your package repository
            does not contain the libraries, see:
 
-                http://gcc.gnu.org      for g++
-                http://www.boost.org    for boost
+                http://gcc.gnu.org/      for g++
+                http://www.boost.org/    for boost
 
-1.1 building boost:
+1.1 using boost in the build process:
 
-  many people have reported difficulty building boost. the main
-  problem is that boost builds with an unorthodox build tool called
-  "bjam" which must, itself, be built or installed before boost can be
-  built. the bjam sources are contained within the boost distribution,
-  but somewhat hidden. there are instructions on
-  http://www.boost.org/more/getting_started.html, but we have
-  assembled this abbreviated bourne shell sequence for advanced users
-  who do not need all the preamble:
+  monotone uses the boost libraries in multiple parts of its code.
+  fortunately, it only uses the so-called header-only libraries: these
+  can be used very easily from other projects, as there is no need to
+  build them by hand prior usage.
 
-    wget http://internap.dl.sourceforge.net/sourceforge/boost/boost_1_33_1.tar.gz
-    tar -xzf boost_1_33_1.tar.gz
-    cd boost_1_33_1
-    (cd tools/build/jam_src && ./build.sh)
-    BJAM=`find tools/build/jam_src/ -name bjam -a -type f`
-    $BJAM "-sBUILD=release <threading>single <optimization>speed <runtime-link>static"
-    for i in `find bin -type d -a -name \*.a`; 
-      do for j in `find $i -type f -a -name \*.a`; 
-        do mv $j libs/`basename $i`; 
-      done; 
-    done
-    ranlib libs/*.a
+  therefore you can use an installed version of boost if shipped with your
+  distribution but, if you do not want to mess with the Boost.Build build
+  system (which is hard to deal with for beginners), you can simply use an
+  extracted copy of the boost sources.  the two procedures are detailed
+  below:
 
-  if this completes successfully, you will have a selection of boost
-  libraries in boost_1_33_1/libs and boost headers in
-  boost_1_33_1/boost. you can then either copy the .a files to your
-  standard library path and the directory "boost_1_33_1/boost" to your
-  standard include path, or you can pass additional configuration
-  options to your monotone configure build, such as:
+  * if your system already has the boost development libraries installed,
+    you must tell the compiler where to find them.  their location will
+    usually be somewhere under /usr/include.  try the following command:
 
-    ./configure CPPFLAGS="-Iboost_1_33_1" LDFLAGS="-Lboost_1_33_1/libs"
+      ls -d /usr/include/boost*
 
-  monotone does not use all of boost -- for instance, people often
-  have trouble building boost.python, which we do not use.  you don't
-  need to build any libraries that we don't use!
+    if the command shows a single directory named 'boost', you do not have
+    to take any extra steps.  configure will automatically find the
+    necessary files.  instead, if the command shows a directory name of the
+    form boost_1_33_1, boost-1.33.1 or similar, you will have to pass that
+    to the configure script.  do so as follows:
+
+      ./configure CPPFLAGS="-I/usr/include/boost-1.33.1"
+
+    if no directories are shown, look for prebuilt boost packages for your
+    system and install them.  if there aren't any, resort to the procedure
+    described in the following point.
+
+  * if you do not have boost already installed, and you cannot easily
+    install it from prebuilt packages, fetch a copy of the boost sources
+    from their site (see previous section) and unpack them somewhere in
+    your system -- for example, your home directory.  once done, tell the
+    configure script where the files are:
+
+      ./configure CPPFLAGS="-I${HOME}/boost-1.33.1"
+
+  it is important to note that, once monotone is built, you can get rid of
+  all the boost sources or boost development packages from your system.
+  the required header-only libraries will have been built into the final
+  binary, which will not rely on any binary boost library.  in some sense,
+  you can think of it as static linkage.
 
 2. configuring monotone:
 
@@ -111,19 +120,6 @@ building and installation process for monotone
        results.  however, you can force IPv6 detection by saying 'yes'
        or completely disable it using 'no'.
 
-     --enable-static-boost[=prefix]
-
-       this will attempt to link a "mostly static" version of monotone
-       using the .a files supplied with your installation of
-       boost. the resulting binary will be larger but more portable
-       than a normal (dynamic) link.
-
-       you can optionally pass a prefix to the option, which will be
-       used to look for the static libraries; otherwise a list of
-       predefined directories will be used.  for example:
-
-         ./configure --enable-static-boost=/usr/local/boost
-
      --disable-nls
 
        build a version of monotone without support for local message
@@ -134,20 +130,6 @@ building and installation process for monotone
 
        this will disable large file support from the builtin sqlite, to
        achieve maximum binary compatibility with old systems.
-
-     BOOST_SUFFIX=string
-
-       this variable, to be set on configure's command line, can be used
-       to specify a special string suffix to be appended to boost library
-       names.  many Linux distributions provide symlinks to hide this
-       suffix, but others do not.  therefore, you need to pass it to the
-       configure script through this variable for correct detection of
-       boost.  for example:
-
-         ./configure BOOST_SUFFIX=-gcc
-
-       note that, sometimes, the configure script will be able to guess
-       the correct suffix by itself.
 
      --enable-pch
 

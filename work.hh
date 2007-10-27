@@ -124,13 +124,6 @@ struct workspace
   // revision.
   void get_parent_rosters(parent_map & parents);
 
-  // Inspect the workspace and classify all the paths in it according to
-  // what ROS thinks of them.
-  void classify_roster_paths(roster_t const & ros,
-                             std::set<file_path> & unchanged,
-                             std::set<file_path> & changed,
-                             std::set<file_path> & missing);
-
   // This updates the file-content hashes in ROSTER, which is assumed to be
   // the "current" roster returned by one of the above get_*_roster_shape
   // functions.  If a node_restriction is provided, only the files matching

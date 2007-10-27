@@ -1,6 +1,6 @@
 /*************************************************
 * Base64 Encoder/Decoder Header File             *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_BASE64_H__
@@ -22,13 +22,14 @@ class Base64_Encoder : public Filter
       void write(const byte[], u32bit);
       void end_msg();
       // monotone wants breaks by default
-      Base64_Encoder(bool breaks = true, u32bit = 72);
+      Base64_Encoder(bool breaks = true, u32bit = 72, bool t_n = false);
    private:
       void encode_and_send(const byte[], u32bit);
       void do_output(const byte[], u32bit);
       static const byte BIN_TO_BASE64[64];
 
       const u32bit line_length;
+      const bool trailing_newline;
       SecureVector<byte> in, out;
       u32bit position, counter;
    };

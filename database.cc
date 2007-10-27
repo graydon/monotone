@@ -46,6 +46,7 @@
 #include "roster_delta.hh"
 #include "rev_height.hh"
 #include "vocab_hash.hh"
+#include "globish.hh"
 
 // defined in schema.c, generated from schema.sql:
 extern char const schema_constant[];
@@ -2267,22 +2268,29 @@ database::delete_tag_named(cert_value const & tag)
 // crypto key management
 
 void
-database::get_key_ids(string const & pattern,
+database::get_key_ids(vector<rsa_keypair_id> & pubkeys)
+{
+  pubkeys.clear();
+  results res;
+
+  fetch(res, one_col, any_rows, query("SELECT id FROM public_keys"));
+
+  for (size_t i = 0; i < res.size(); ++i)
+    pubkeys.push_back(rsa_keypair_id(res[i][0]));
+}
+
+void
+database::get_key_ids(globish const & pattern,
                       vector<rsa_keypair_id> & pubkeys)
 {
   pubkeys.clear();
   results res;
 
-  if (pattern != "")
-    fetch(res, one_col, any_rows,
-          query("SELECT id FROM public_keys WHERE id GLOB ?")
-          % text(pattern));
-  else
-    fetch(res, one_col, any_rows,
-          query("SELECT id FROM public_keys"));
+  fetch(res, one_col, any_rows, query("SELECT id FROM public_keys"));
 
   for (size_t i = 0; i < res.size(); ++i)
-    pubkeys.push_back(rsa_keypair_id(res[i][0]));
+    if (pattern.matches(res[i][0]))
+      pubkeys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -2866,6 +2874,7 @@ static void selector_to_certname(selector_type ty,
     case selectors::sel_ident:
     case selectors::sel_cert:
     case selectors::sel_unknown:
+    case selectors::sel_parent:
       I(false); // don't do this.
       break;
     }
@@ -2905,6 +2914,11 @@ void database::complete(selector_type ty,
             {
               lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
               lim % text(i->second + "*");
+            }
+          else if (i->first == selectors::sel_parent)
+            {
+              lim.sql_cmd += "SELECT parent AS id FROM revision_ancestry WHERE child GLOB ?";
+              lim % text(i->second + "*"); 
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -3025,7 +3039,7 @@ void database::complete(selector_type ty,
   // will complete either some idents, or cert values, or "unknown"
   // which generally means "author, tag or branch"
 
-  if (ty == selectors::sel_ident)
+  if (ty == selectors::sel_ident || ty == selectors::sel_parent)
     {
       lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
     }
@@ -3210,16 +3224,17 @@ database::get_branches(vector<string> & names)
 }
 
 outdated_indicator
-database::get_branches(string const & glob,
+database::get_branches(globish const & glob,
                        vector<string> & names)
 {
     results res;
-    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ? AND CAST(value AS TEXT) glob ?");
+    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ?");
     string cert_name = "branch";
-    fetch(res, one_col, any_rows, q % text(cert_name) % text(glob));
+    fetch(res, one_col, any_rows, q % text(cert_name));
     for (size_t i = 0; i < res.size(); ++i)
       {
-        names.push_back(res[i][0]);
+        if (glob.matches(res[i][0]))
+          names.push_back(res[i][0]);
       }
     return cert_stamper.get_indicator();
 }

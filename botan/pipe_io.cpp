@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe I/O Source File                           *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/pipe.h>
@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& stream, Pipe& pipe)
    while(stream.good() && pipe.remaining())
       {
       u32bit got = pipe.read(buffer, buffer.size());
-      stream.write((const char*)buffer.begin(), got);
+      stream.write(reinterpret_cast<const char*>(buffer.begin()), got);
       }
    if(!stream.good())
       throw Stream_IO_Error("Pipe output operator (iostream) has failed");
@@ -32,7 +32,7 @@ std::istream& operator>>(std::istream& stream, Pipe& pipe)
    SecureVector<byte> buffer(DEFAULT_BUFFERSIZE);
    while(stream.good())
       {
-      stream.read((char*)buffer.begin(), buffer.size());
+      stream.read(reinterpret_cast<char*>(buffer.begin()), buffer.size());
       pipe.write(buffer, stream.gcount());
       }
    if(stream.bad() || (stream.fail() && !stream.eof()))

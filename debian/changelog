@@ -1,3 +1,17 @@
+monotone (0.37-1) unstable; urgency=low
+
+  * New upstream release.
+  * Clarifications to debian/copyright and AUTHORS.
+  * No longer depends on any external Boost library modules.
+    And there was much rejoicing.
+  * Ensure sqlite I/O code sees a prototype for pread/pwrite, and make
+    it enable large file support correctly.  This is believed to be
+    the cause of the multi-platform FTBFS, but has only been confirmed
+    to be so on powerpc.  Please file new FTBFS bugs for any remaining
+    architectures that are broken.  (Closes: #439584)
+
+ -- Richard Levitte <richard@levitte.org>  Fri, 26 Oct 2007 00:35:29 +0200
+
 monotone (0.36-2) unstable; urgency=low
 
   * Bump boost build-deps to (>= 1.34.1-2) for packaging changes that make

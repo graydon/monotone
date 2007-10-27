@@ -42,7 +42,7 @@ parsed = parse_basic_io(readfile("stdout"))
 index = 1
 
 index = check_inventory (parsed, index,
-{path = ".",
+{path = "",
  old_type = "directory",
  new_type = "directory",
  fs_type = "directory",

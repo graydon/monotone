@@ -23,6 +23,7 @@
 struct uri;
 class app_state;
 struct lua_State;
+struct globish;
 
 extern app_state* get_app_state(lua_State *L);
 

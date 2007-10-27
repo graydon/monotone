@@ -57,6 +57,7 @@ MOST_SOURCES = 								\
 	automate.cc							\
 	database_check.cc database_check.hh				\
 	epoch.cc epoch.hh						\
+	gzip.cc gzip.hh							\
 	inodeprint.cc inodeprint.hh					\
 	selectors.cc selectors.hh					\
 	annotate.cc annotate.hh						\
@@ -69,6 +70,7 @@ MOST_SOURCES = 								\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
+	pcrewrap.cc pcrewrap.hh						\
 	rev_height.cc rev_height.hh					\
 	asciik.cc asciik.hh						\
 	dates.cc dates.hh						\
@@ -111,13 +113,13 @@ BOTAN_SOURCES = 							\
 	botan/ber_dec.cpp botan/big_base.cpp     \
 	botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
 	botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
-	botan/buf_filt.cpp botan/cbc.cpp botan/certstor.cpp        \
+	botan/buf_filt.cpp botan/cbc.cpp botan/cbc_mac.cpp botan/certstor.cpp \
 	botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
 	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
 	botan/data_snk.cpp botan/data_src.cpp \
 	botan/def_ops.cpp botan/defalloc.cpp \
 	botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
-	botan/dl_group.cpp \
+	botan/dl_group.cpp botan/dsa_gen.cpp \
 	botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
@@ -125,7 +127,7 @@ BOTAN_SOURCES = 							\
 	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
 	botan/fips140.cpp \
 	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
-	botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+	botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
 	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
 	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
 	botan/make_prm.cpp botan/mdx_hash.cpp       \
@@ -172,7 +174,7 @@ BOTAN_SOURCES = 							\
 	botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
 	botan/cfb.h botan/modebase.h    \
 	botan/pipe.h botan/x509_obj.h           \
-	botan/asn1_oid.h botan/eax.h botan/gzip.h      \
+	botan/asn1_oid.h botan/eax.h      \
 	botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
 	botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
 	botan/hex.h botan/pk_core.h botan/secqueue.h    \
@@ -272,6 +274,18 @@ IDNA_SOURCES =								\
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+PCRE_SOURCES =								\
+	pcre/pcre_chartables.c pcre/pcre_compile.c pcre/pcre_config.c	\
+	pcre/pcre_dfa_exec.c pcre/pcre_exec.c pcre/pcre_fullinfo.c	\
+	pcre/pcre_get.c pcre/pcre_globals.c pcre/pcre_info.c		\
+	pcre/pcre_maketables.c pcre/pcre_newline.c			\
+	pcre/pcre_ord2utf8.c pcre/pcre_refcount.c pcre/pcre_study.c	\
+	pcre/pcre_tables.c pcre/pcre_try_flipped.c			\
+	pcre/pcre_ucp_searchfuncs.c pcre/pcre_valid_utf8.c		\
+	pcre/pcre_version.c pcre/pcre_xclass.c pcre/pcre_config.h	\
+	pcre/pcre.h pcre/pcre_internal.h pcre/ucp.h pcre/ucpinternal.h	\
+	pcre/ucptable.h
+
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
@@ -319,7 +333,8 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
 	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
 	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
-	mtn-work_migration.$(OBJEXT)
+	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)		\
+	mtn-gzip.$(OBJEXT)
 
 # primaries
 
@@ -337,7 +352,8 @@ unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 tester_SOURCES = tester.cc
 nodist_tester_SOURCES = testlib.c
 tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
-		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES))))
+		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) \
+		 	  	pcrewrap.cc)))
 
 txt2c_SOURCES = txt2c.cc
 
@@ -349,6 +365,10 @@ lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+
+if INCLUDED_PCRE
+lib3rdparty_a_SOURCES += $(PCRE_SOURCES)
+endif
 
 htmldir = $(datadir)/doc/monotone
 html_DATA = monotone.html
@@ -408,6 +428,21 @@ tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
 tester_LDADD += libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
+if INCLUDED_PCRE
+  lib3rdparty_a_CPPFLAGS += -I$(top_srcdir)/pcre
+  mtn_CPPFLAGS += -I$(top_srcdir)/pcre
+  unit_tester_CPPFLAGS += -I$(top_srcdir)/pcre
+  tester_CPPFLAGS += -I$(top_srcdir)/pcre
+else
+  mtn_CPPFLAGS += $(PCRE_CFLAGS)
+  unit_tester_CPPFLAGS += $(PCRE_CFLAGS)
+  tester_CPPFLAGS += $(PCRE_CFLAGS)
+
+  mtn_LDADD += $(PCRE_LIBS)
+  unit_tester_LDADD += $(PCRE_LIBS)
+  tester_LDADD += $(PCRE_LIBS)
+endif
+
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   mtn_SOURCES += win32/main.cc
@@ -463,6 +498,7 @@ PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf			\
 
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
+TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
@@ -482,15 +518,18 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	$(wildcard $(srcdir)/examples/*)				\
 	win32/monotone.iss win32/modpath.iss $(wildcard			\
 	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
-	mac/monotone.pmproj mac/package-intro.rtf audit-includes
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes	\
+	$(TEXI_FRAGMENTS)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.info: monotone.texi version.texi std_hooks.lua
+monotone.info: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS)
 
-monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(PDF_FIGURES)
 
-monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv -f $< $@
@@ -625,8 +664,7 @@ DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-bundled-sqlite \
-	--with-bundled-lua \
-	--enable-static-boost
+	--with-bundled-lua
 
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source
@@ -751,7 +789,7 @@ package_full_revision.txt: package_full_revision_raw.txt package_full_revision_d
 # then if that fails fall back on the distributed versions.  This
 # means that 'distclean' should _not_ remove those files, since they
 # are distributed, yet building the package will generate those files,
-# those automake thinks that 'distclean' _should_ remove those files,
+# thus automake thinks that 'distclean' _should_ remove those files,
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
 distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
@@ -759,7 +797,7 @@ distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -
 # the distcheck-hook checks for errors in the use of base.hh
 distcheck-hook:
 	cd $(srcdir) && $(SHELL) audit-includes \
-		$(sort $(mtn_SOURCES) $(unit_tests_SOURCES) $(tester_SOURCES) \
+		$(sort $(mtn_SOURCES) $(unit_tester_SOURCES) $(tester_SOURCES) \
                        $(UNIX_PLATFORM_SOURCES) $(WIN32_PLATFORM_SOURCES) \
                        win32/main.cc unix/main.cc)
 
@@ -771,7 +809,8 @@ CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.
 apidocs:
 	doxygen doxygen.cfg
 
-monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
+monotone.html: monotone.texi version.texi $(TEXI_FRAGMENTS) \
+	       std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp -r $(srcdir)/figures .; \
 		cp $(srcdir)/texinfo.css .; \

@@ -1,0 +1,62 @@
+.mtn-ignore:1: warning: error near char 2 of regex "\": \ at end of pattern
+	- skipping this regex for all remaining files.
+.mtn-ignore:2: warning: error near char 3 of regex "\c": \c at end of pattern
+	- skipping this regex for all remaining files.
+.mtn-ignore:3: warning: error near char 6 of regex "x{3,1}": numbers out of order in {} quantifier
+	- skipping this regex for all remaining files.
+.mtn-ignore:4: warning: error near char 8 of regex "x{99999}": number too big in {} quantifier
+	- skipping this regex for all remaining files.
+.mtn-ignore:5: warning: error near char 5 of regex "[abc": missing terminating ] for character class
+	- skipping this regex for all remaining files.
+.mtn-ignore:6: warning: error near char 4 of regex "[z-a]": range out of order in character class
+	- skipping this regex for all remaining files.
+.mtn-ignore:7: warning: error near char 1 of regex "*": nothing to repeat
+	- skipping this regex for all remaining files.
+.mtn-ignore:8: warning: error near char 3 of regex "(?h)": unrecognized character after (?
+	- skipping this regex for all remaining files.
+.mtn-ignore:9: warning: error near char 1 of regex "[:alpha:]": POSIX named classes are supported only within a class
+	- skipping this regex for all remaining files.
+.mtn-ignore:10: warning: error near char 5 of regex "(abc": missing )
+	- skipping this regex for all remaining files.
+.mtn-ignore:11: warning: error near char 6 of regex "abc\3": reference to non-existent subpattern
+	- skipping this regex for all remaining files.
+.mtn-ignore:12: warning: error near char 7 of regex "(?#abc": missing ) after comment
+	- skipping this regex for all remaining files.
+.mtn-ignore:13: warning: error near char 1 of regex ")": unmatched parentheses
+	- skipping this regex for all remaining files.
+.mtn-ignore:14: warning: error near char 5 of regex "(?<x)y": syntax error in subpattern name (missing terminator)
+	- skipping this regex for all remaining files.
+.mtn-ignore:15: warning: error near char 7 of regex "(?<=a*)y": lookbehind assertion is not fixed length
+	- skipping this regex for all remaining files.
+.mtn-ignore:16: warning: error near char 4 of regex "(?()abc)": assertion expected after (?(
+	- skipping this regex for all remaining files.
+.mtn-ignore:17: warning: error near char 21 of regex "(xy)(?(1)abc|def|ghi)": conditional group contains more than two branches
+	- skipping this regex for all remaining files.
+.mtn-ignore:18: warning: error near char 4 of regex "(?(*))": assertion expected after (?(
+	- skipping this regex for all remaining files.
+.mtn-ignore:19: warning: error near char 4 of regex "(?R*)": (?R or (?[+-]digits must be followed by )
+	- skipping this regex for all remaining files.
+.mtn-ignore:20: warning: error near char 4 of regex "[[:fnord:]]": unknown POSIX class name
+	- skipping this regex for all remaining files.
+.mtn-ignore:21: warning: error near char 11 of regex "\\x{123456}": number too big in {} quantifier
+	- skipping this regex for all remaining files.
+.mtn-ignore:22: warning: error near char 6 of regex "(?(0))": invalid condition (?(0)
+	- skipping this regex for all remaining files.
+.mtn-ignore:23: warning: error near char 7 of regex "(?<=\C)": \C not allowed in lookbehind assertion
+	- skipping this regex for all remaining files.
+.mtn-ignore:24: warning: error near char 2 of regex "\l": PCRE does not support \L, \l, \N, \U, or \u
+	- skipping this regex for all remaining files.
+.mtn-ignore:25: warning: error near char 7 of regex "(?C256)": number after (?C is > 255
+	- skipping this regex for all remaining files.
+.mtn-ignore:26: warning: error near char 5 of regex "(?C1": closing ) for (?C expected
+	- skipping this regex for all remaining files.
+.mtn-ignore:27: warning: error near char 4 of regex "(?R)": recursive call could loop indefinitely
+	- skipping this regex for all remaining files.
+.mtn-ignore:28: warning: error near char 4 of regex "(?P*)": unrecognized character after (?P
+	- skipping this regex for all remaining files.
+.mtn-ignore:29: warning: error near char 5 of regex "(?P<*>x)": syntax error in subpattern name (missing terminator)
+	- skipping this regex for all remaining files.
+.mtn-ignore:30: warning: error near char 38 of regex "(?P<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>)": subpattern name is too long (maximum 32 characters)
+	- skipping this regex for all remaining files.
+.mtn-ignore:31: warning: error near char 4 of regex "\777": octal value is greater than \377 (not in UTF-8 mode)
+	- skipping this regex for all remaining files.

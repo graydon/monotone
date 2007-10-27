@@ -58,6 +58,7 @@ numeric_vocab.hh
 options_list.hh
 packet.cc
 packet.hh
+pcrewrap.cc
 platform.hh
 quick_alloc.hh
 randomfile.hh

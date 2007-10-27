@@ -21,7 +21,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind.hpp>
-#include <boost/regex.hpp>
 
 #include "app_state.hh"
 #include "cert.hh"
@@ -529,8 +528,10 @@ session::session(protocol_role role,
   remote_peer_key_hash(""),
   remote_peer_key_name(""),
   session_key(constants::netsync_key_initializer),
-  read_hmac(constants::netsync_key_initializer, app.opts.use_transport_auth),
-  write_hmac(constants::netsync_key_initializer, app.opts.use_transport_auth),
+  read_hmac(netsync_session_key(constants::netsync_key_initializer),
+            app.opts.use_transport_auth),
+  write_hmac(netsync_session_key(constants::netsync_key_initializer),
+             app.opts.use_transport_auth),
   authenticated(false),
   last_io_time(::time(NULL)),
   byte_in_ticker(NULL),
@@ -2337,12 +2338,13 @@ build_stream_to_server(app_state & app,
   shared_ptr<Netxx::StreamBase> server;
   uri u;
   vector<string> argv;
-  if (parse_uri(address(), u)
-      && app.lua.hook_get_netsync_connect_command(u,
-                                                  include_pattern,
-                                                  exclude_pattern,
-                                                  global_sanity.debug_p(),
-                                                  argv))
+
+  parse_uri(address(), u);
+  if (app.lua.hook_get_netsync_connect_command(u,
+                                               include_pattern,
+                                               exclude_pattern,
+                                               global_sanity.debug_p(),
+                                               argv))
     {
       I(argv.size() > 0);
       string cmd = argv[0];
@@ -2382,9 +2384,7 @@ call_server(protocol_role role,
 
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
-  // FIXME: split into labels and convert to ace here.
-
-  P(F("connecting to %s") % address());
+  P(F("connecting to %s") % address);
 
   shared_ptr<Netxx::StreamBase> server
     = build_stream_to_server(app,

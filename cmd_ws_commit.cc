@@ -990,10 +990,12 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
   app.work.update_any_attrs();
 }
 
-static void
-commit(app_state & app, commands::command_id const & execid,
-          args_vector const & args, std::ostream & output,
-          bool automate)
+CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
+    N_("Commits workspace changes to the database"),
+    "",
+    options::opts::branch | options::opts::message | options::opts::msgfile
+    | options::opts::date | options::opts::author | options::opts::depth
+    | options::opts::exclude)
 {
   utf8 log_message("");
   bool log_message_given;
@@ -1051,10 +1053,7 @@ commit(app_state & app, commands::command_id const & execid,
       app.opts.branchname = branchname;
     }
 
-  if (automate)
-    output << app.opts.branchname << "\n";
-  else
-    P(F("beginning commit on branch '%s'") % app.opts.branchname);
+  P(F("beginning commit on branch '%s'") % app.opts.branchname);
 
   L(FL("new manifest '%s'\n"
        "new revision '%s'\n")
@@ -1203,10 +1202,7 @@ commit(app_state & app, commands::command_id const & execid,
 
   // small race condition here...
   app.work.put_work_rev(remaining);
-  if (automate)
-    output << restricted_rev_id << "\n";
-  else
-    P(F("committed revision %s") % restricted_rev_id);
+  P(F("committed revision %s") % restricted_rev_id);
 
   app.work.blank_user_log();
 
@@ -1240,29 +1236,6 @@ commit(app_state & app, commands::command_id const & execid,
     app.db.get_revision(restricted_rev_id, rdat);
     app.lua.hook_note_commit(restricted_rev_id, rdat, certs);
   }
-}
-
-CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
-    N_("Commits workspace changes to the database"),
-    "",
-    options::opts::branch | options::opts::message | options::opts::msgfile
-    | options::opts::date | options::opts::author | options::opts::depth
-    | options::opts::exclude)
-{
-  commit(app, execid, args, std::cout, false);
-}
-
-// outputs the branch followed a newline followed by the new revision id:
-// net.venge.monotone\n
-// d2510c2eca90359794ba34989314f97a623566bc\n
-CMD_AUTOMATE(commit,
-    N_("[PATH]..."),
-    N_("Commits workspace changes to the database"), "",
-    options::opts::branch | options::opts::message | options::opts::msgfile
-    | options::opts::date | options::opts::author | options::opts::depth
-    | options::opts::exclude)
-{
-  commit(app, execid, args, output, true);
 }
 
 CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),

@@ -6,12 +6,11 @@
 #include "globish.hh"
 #include "sanity.hh"
 #include "platform.hh"
+#include "pcrewrap.hh"
 
 #include <set>
 #include "vector.hh"
 #include <utility>
-
-#include <boost/regex.hpp>
 
 using std::pair;
 using std::set;
@@ -497,15 +496,13 @@ LUAEXT(search, regex)
 {
   const char *re = luaL_checkstring(L, -2);
   const char *str = luaL_checkstring(L, -1);
-  boost::cmatch what;
 
   bool result = false;
   try {
-    result = boost::regex_search(str, what, boost::regex(re));
-  } catch (boost::bad_pattern e) {
+    result = pcre::regex(re).match(str);
+  } catch (informative_failure & e) {
     lua_pushstring(L, e.what());
-    lua_error(L);
-    return 0;
+    return lua_error(L);
   }
   lua_pushboolean(L, result);
   return 1;
@@ -548,17 +545,17 @@ namespace
   {
     record_if_matches(string const & b, char const * p,
                       vector<string> & t)
-      : base(b + "/"), glob(globish(p), globish()), target(t)
+      : base(b + "/"), glob(p), target(t)
     { target.clear(); }
 
     virtual void consume(const char * component)
     {
-      if (glob(component))
+      if (glob.matches(component))
         target.push_back(base + component);
     }
   private:
     string base;
-    globish_matcher glob;
+    globish glob;
     vector<string> & target;
   };
 }

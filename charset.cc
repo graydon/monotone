@@ -307,22 +307,22 @@ decode_idna_error(int err)
   return "unknown error";
 }
 
-void
-ace_to_utf8(ace const & a, utf8 & utf)
+static void
+ace_to_utf8(string const & a, utf8 & utf)
 {
   char *out = NULL;
-  L(FL("converting %d bytes from IDNA ACE to UTF-8") % a().size());
-  int res = idna_to_unicode_8z8z(a().c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
+  L(FL("converting %d bytes from IDNA ACE to UTF-8") % a.size());
+  int res = idna_to_unicode_8z8z(a.c_str(), &out, IDNA_USE_STD3_ASCII_RULES);
   N(res == IDNA_SUCCESS || res == IDNA_NO_ACE_PREFIX,
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
-    % a().size()
+    % a.size()
     % decode_idna_error(res));
   utf = utf8(string(out));
   free(out);
 }
 
-void
-utf8_to_ace(utf8 const & utf, ace & a)
+static void
+utf8_to_ace(utf8 const & utf, string & a)
 {
   char *out = NULL;
   L(FL("converting %d bytes from UTF-8 to IDNA ACE") % utf().size());
@@ -331,16 +331,16 @@ utf8_to_ace(utf8 const & utf, ace & a)
     F("error converting %d UTF-8 bytes to IDNA ACE: %s")
     % utf().size()
     % decode_idna_error(res));
-  a = ace(string(out));
+  a = string(out);
   free(out);
 }
 
 void
 internalize_cert_name(utf8 const & utf, cert_name & c)
 {
-  ace a;
+  string a;
   utf8_to_ace(utf, a);
-  c = cert_name(a());
+  c = cert_name(a);
 }
 
 void
@@ -366,9 +366,9 @@ internalize_rsa_keypair_id(utf8 const & utf, rsa_keypair_id & key)
         tmp += *i;
       else
         {
-          ace a;
+          string a;
           utf8_to_ace(utf8(*i), a);
-          tmp += a();
+          tmp += a;
         }
       if (*i == "@")
         in_domain = true;
@@ -399,9 +399,8 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, utf8 & utf)
         tmp += *i;
       else
         {
-          ace a(*i);
           utf8 u;
-          ace_to_utf8(a, u);
+          ace_to_utf8(*i, u);
           tmp += u();
         }
       if (*i == "@")
@@ -421,9 +420,9 @@ externalize_rsa_keypair_id(rsa_keypair_id const & key, external & ext)
 void
 internalize_var_domain(utf8 const & utf, var_domain & d)
 {
-  ace a;
+  string a;
   utf8_to_ace(utf, a);
-  d = var_domain(a());
+  d = var_domain(a);
 }
 
 void
@@ -437,7 +436,7 @@ internalize_var_domain(external const & ext, var_domain & d)
 void
 externalize_var_domain(var_domain const & d, utf8 & utf)
 {
-  ace_to_utf8(ace(d()), utf);
+  ace_to_utf8(d(), utf);
 }
 
 void
@@ -459,185 +458,146 @@ externalize_var_domain(var_domain const & d, external & ext)
 struct
 idna
 {
-  char *name;
-  size_t inlen;
-  u32 in[100];
-  char *out;
-  int allowunassigned;
-  int usestd3asciirules;
-  int toasciirc;
-  int tounicoderc;
-} idna_vec[] =
+  char const * name;
+  char const * utf;
+  char const * ace;
+} const idna_vec[] =
   {
+    // In C, \x escapes consume an unbounded number of hexadecimal digits,
+    // and if the resulting number is too big for a byte it is a semantic
+    // error.  However, if a string constant is composed of more than one
+    // string literal, they do not extend across a boundary between string
+    // literals.  Thus, in some places in this array, string literals have
+    // been split solely to end \x escapes after two hex digits.
     {
-      "Arabic (Egyptian)", 17,
-      {
-        0x0644, 0x064A, 0x0647, 0x0645, 0x0627, 0x0628, 0x062A, 0x0643,
-        0x0644, 0x0645, 0x0648, 0x0634, 0x0639, 0x0631, 0x0628, 0x064A,
-        0x061F},
-      IDNA_ACE_PREFIX "egbpdaj6bu4bxfgehfvwxn", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Arabic (Egyptian)",
+      "\xd9\x84\xd9\x8a\xd9\x87\xd9\x85\xd8\xa7\xd8\xa8\xd8\xaa\xd9\x83\xd9"
+      "\x84\xd9\x85\xd9\x88\xd8\xb4\xd8\xb9\xd8\xb1\xd8\xa8\xd9\x8a\xd8\x9f",
+      IDNA_ACE_PREFIX "egbpdaj6bu4bxfgehfvwxn" },
     {
-      "Chinese (simplified)", 9,
-      {
-        0x4ED6, 0x4EEC, 0x4E3A, 0x4EC0, 0x4E48, 0x4E0D, 0x8BF4, 0x4E2D, 0x6587},
-      IDNA_ACE_PREFIX "ihqwcrb4cv8a8dqg056pqjye", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Chinese (simplified)",
+      "\xe4\xbb\x96\xe4\xbb\xac\xe4\xb8\xba\xe4\xbb\x80\xe4\xb9\x88\xe4\xb8"
+      "\x8d\xe8\xaf\xb4\xe4\xb8\xad\xe6\x96\x87",
+      IDNA_ACE_PREFIX "ihqwcrb4cv8a8dqg056pqjye" },
     {
-      "Chinese (traditional)", 9,
-      {
-        0x4ED6, 0x5011, 0x7232, 0x4EC0, 0x9EBD, 0x4E0D, 0x8AAA, 0x4E2D, 0x6587},
-      IDNA_ACE_PREFIX "ihqwctvzc91f659drss3x8bo0yb", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Chinese (traditional)",
+      "\xe4\xbb\x96\xe5\x80\x91\xe7\x88\xb2\xe4\xbb\x80\xe9\xba\xbd\xe4\xb8"
+      "\x8d\xe8\xaa\xaa\xe4\xb8\xad\xe6\x96\x87",
+      IDNA_ACE_PREFIX "ihqwctvzc91f659drss3x8bo0yb" },
     {
-      "Czech", 22,
-      {
-        0x0050, 0x0072, 0x006F, 0x010D, 0x0070, 0x0072, 0x006F, 0x0073,
-        0x0074, 0x011B, 0x006E, 0x0065, 0x006D, 0x006C, 0x0075, 0x0076,
-        0x00ED, 0x010D, 0x0065, 0x0073, 0x006B, 0x0079},
-      IDNA_ACE_PREFIX "Proprostnemluvesky-uyb24dma41a", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Czech",
+      "Pro\xc4\x8dprost\xc4\x9bnemluv\xc3\xad\xc4\x8d""esky",
+      IDNA_ACE_PREFIX "Proprostnemluvesky-uyb24dma41a"},
     {
-      "Hebrew", 22,
-      {
-        0x05DC, 0x05DE, 0x05D4, 0x05D4, 0x05DD, 0x05E4, 0x05E9, 0x05D5,
-        0x05D8, 0x05DC, 0x05D0, 0x05DE, 0x05D3, 0x05D1, 0x05E8, 0x05D9,
-        0x05DD, 0x05E2, 0x05D1, 0x05E8, 0x05D9, 0x05EA},
-      IDNA_ACE_PREFIX "4dbcagdahymbxekheh6e0a7fei0b", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Hebrew",
+      "\xd7\x9c\xd7\x9e\xd7\x94\xd7\x94\xd7\x9d\xd7\xa4\xd7\xa9\xd7\x95\xd7"
+      "\x98\xd7\x9c\xd7\x90\xd7\x9e\xd7\x93\xd7\x91\xd7\xa8\xd7\x99\xd7\x9d"
+      "\xd7\xa2\xd7\x91\xd7\xa8\xd7\x99\xd7\xaa",
+      IDNA_ACE_PREFIX "4dbcagdahymbxekheh6e0a7fei0b"},
     {
-      "Hindi (Devanagari)", 30,
-      {
-        0x092F, 0x0939, 0x0932, 0x094B, 0x0917, 0x0939, 0x093F, 0x0928,
-        0x094D, 0x0926, 0x0940, 0x0915, 0x094D, 0x092F, 0x094B, 0x0902,
-        0x0928, 0x0939, 0x0940, 0x0902, 0x092C, 0x094B, 0x0932, 0x0938,
-        0x0915, 0x0924, 0x0947, 0x0939, 0x0948, 0x0902},
-      IDNA_ACE_PREFIX "i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Hindi (Devanagari)",
+      "\xe0\xa4\xaf\xe0\xa4\xb9\xe0\xa4\xb2\xe0\xa5\x8b\xe0\xa4\x97\xe0\xa4"
+      "\xb9\xe0\xa4\xbf\xe0\xa4\xa8\xe0\xa5\x8d\xe0\xa4\xa6\xe0\xa5\x80\xe0"
+      "\xa4\x95\xe0\xa5\x8d\xe0\xa4\xaf\xe0\xa5\x8b\xe0\xa4\x82\xe0\xa4\xa8"
+      "\xe0\xa4\xb9\xe0\xa5\x80\xe0\xa4\x82\xe0\xa4\xac\xe0\xa5\x8b\xe0\xa4"
+      "\xb2\xe0\xa4\xb8\xe0\xa4\x95\xe0\xa4\xa4\xe0\xa5\x87\xe0\xa4\xb9\xe0"
+      "\xa5\x88\xe0\xa4\x82",
+      IDNA_ACE_PREFIX "i1baa7eci9glrd9b2ae1bj0hfcgg6iyaf8o0a1dig0cd"},
     {
-      "Japanese (kanji and hiragana)", 18,
-      {
-        0x306A, 0x305C, 0x307F, 0x3093, 0x306A, 0x65E5, 0x672C, 0x8A9E,
-        0x3092, 0x8A71, 0x3057, 0x3066, 0x304F, 0x308C, 0x306A, 0x3044,
-        0x306E, 0x304B},
-      IDNA_ACE_PREFIX "n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese (kanji and hiragana)",
+      "\xe3\x81\xaa\xe3\x81\x9c\xe3\x81\xbf\xe3\x82\x93\xe3\x81\xaa\xe6\x97"
+      "\xa5\xe6\x9c\xac\xe8\xaa\x9e\xe3\x82\x92\xe8\xa9\xb1\xe3\x81\x97\xe3"
+      "\x81\xa6\xe3\x81\x8f\xe3\x82\x8c\xe3\x81\xaa\xe3\x81\x84\xe3\x81\xae"
+      "\xe3\x81\x8b",
+      IDNA_ACE_PREFIX "n8jok5ay5dzabd5bym9f0cm5685rrjetr6pdxa"},
     {
-      "Russian (Cyrillic)", 28,
-      {
-        0x043F, 0x043E, 0x0447, 0x0435, 0x043C, 0x0443, 0x0436, 0x0435,
-        0x043E, 0x043D, 0x0438, 0x043D, 0x0435, 0x0433, 0x043E, 0x0432,
-        0x043E, 0x0440, 0x044F, 0x0442, 0x043F, 0x043E, 0x0440, 0x0443,
-        0x0441, 0x0441, 0x043A, 0x0438},
-      IDNA_ACE_PREFIX "b1abfaaepdrnnbgefbadotcwatmq2g4l", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Russian (Cyrillic)",
+      "\xd0\xbf\xd0\xbe\xd1\x87\xd0\xb5\xd0\xbc\xd1\x83\xd0\xb6\xd0\xb5\xd0"
+      "\xbe\xd0\xbd\xd0\xb8\xd0\xbd\xd0\xb5\xd0\xb3\xd0\xbe\xd0\xb2\xd0\xbe"
+      "\xd1\x80\xd1\x8f\xd1\x82\xd0\xbf\xd0\xbe\xd1\x80\xd1\x83\xd1\x81\xd1"
+      "\x81\xd0\xba\xd0\xb8",
+      IDNA_ACE_PREFIX "b1abfaaepdrnnbgefbadotcwatmq2g4l"},
     {
-      "Spanish", 40,
-      {
-        0x0050, 0x006F, 0x0072, 0x0071, 0x0075, 0x00E9, 0x006E, 0x006F,
-        0x0070, 0x0075, 0x0065, 0x0064, 0x0065, 0x006E, 0x0073, 0x0069,
-        0x006D, 0x0070, 0x006C, 0x0065, 0x006D, 0x0065, 0x006E, 0x0074,
-        0x0065, 0x0068, 0x0061, 0x0062, 0x006C, 0x0061, 0x0072, 0x0065,
-        0x006E, 0x0045, 0x0073, 0x0070, 0x0061, 0x00F1, 0x006F, 0x006C},
-      IDNA_ACE_PREFIX "PorqunopuedensimplementehablarenEspaol-fmd56a", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Spanish",
+      "Porqu\xc3\xa9nopuedensimplementehablarenEspa\xc3\xb1ol",
+      IDNA_ACE_PREFIX "PorqunopuedensimplementehablarenEspaol-fmd56a"},
     {
-      "Vietnamese", 31,
-      {
-        0x0054, 0x1EA1, 0x0069, 0x0073, 0x0061, 0x006F, 0x0068, 0x1ECD,
-        0x006B, 0x0068, 0x00F4, 0x006E, 0x0067, 0x0074, 0x0068, 0x1EC3,
-        0x0063, 0x0068, 0x1EC9, 0x006E, 0x00F3, 0x0069, 0x0074, 0x0069,
-        0x1EBF, 0x006E, 0x0067, 0x0056, 0x0069, 0x1EC7, 0x0074},
-      IDNA_ACE_PREFIX "TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Vietnamese",
+      "T\xe1\xba\xa1isaoh\xe1\xbb\x8dkh\xc3\xb4ngth\xe1\xbb\x83""ch\xe1\xbb"
+      "\x89n\xc3\xb3iti\xe1\xba\xbfngVi\xe1\xbb\x87t",
+      IDNA_ACE_PREFIX "TisaohkhngthchnitingVit-kjcr8268qyxafd2f1b9g"},
     {
-      "Japanese", 8,
-      {
-        0x0033, 0x5E74, 0x0042, 0x7D44, 0x91D1, 0x516B, 0x5148, 0x751F},
-      IDNA_ACE_PREFIX "3B-ww4c5e180e575a65lsy2b", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "3\xe5\xb9\xb4""B\xe7\xb5\x84\xe9\x87\x91\xe5\x85\xab\xe5\x85\x88\xe7"
+      "\x94\x9f",
+      IDNA_ACE_PREFIX "3B-ww4c5e180e575a65lsy2b"},
     {
-      "Japanese", 24,
-      {
-        0x5B89, 0x5BA4, 0x5948, 0x7F8E, 0x6075, 0x002D, 0x0077, 0x0069,
-        0x0074, 0x0068, 0x002D, 0x0053, 0x0055, 0x0050, 0x0045, 0x0052,
-        0x002D, 0x004D, 0x004F, 0x004E, 0x004B, 0x0045, 0x0059, 0x0053},
-      IDNA_ACE_PREFIX "-with-SUPER-MONKEYS-pc58ag80a8qai00g7n9n", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "\xe5\xae\x89\xe5\xae\xa4\xe5\xa5\x88\xe7\xbe\x8e\xe6\x81\xb5-with-"
+      "SUPER-MONKEYS",
+      IDNA_ACE_PREFIX "-with-SUPER-MONKEYS-pc58ag80a8qai00g7n9n"},
     {
-      "Japanese", 25,
-      {
-        0x0048, 0x0065, 0x006C, 0x006C, 0x006F, 0x002D, 0x0041, 0x006E,
-        0x006F, 0x0074, 0x0068, 0x0065, 0x0072, 0x002D, 0x0057, 0x0061,
-        0x0079, 0x002D, 0x305D, 0x308C, 0x305E, 0x308C, 0x306E, 0x5834,
-        0x6240},
-      IDNA_ACE_PREFIX "Hello-Another-Way--fc4qua05auwb3674vfr0b", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "Hello-Another-Way-\xe3\x81\x9d\xe3\x82\x8c\xe3\x81\x9e\xe3\x82\x8c"
+      "\xe3\x81\xae\xe5\xa0\xb4\xe6\x89\x80",
+      IDNA_ACE_PREFIX "Hello-Another-Way--fc4qua05auwb3674vfr0b"},
     {
-      "Japanese", 8,
-      {
-        0x3072, 0x3068, 0x3064, 0x5C4B, 0x6839, 0x306E, 0x4E0B, 0x0032},
-      IDNA_ACE_PREFIX "2-u9tlzr9756bt3uc0v", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "\xe3\x81\xb2\xe3\x81\xa8\xe3\x81\xa4\xe5\xb1\x8b\xe6\xa0\xb9\xe3\x81"
+      "\xae\xe4\xb8\x8b""2",
+      IDNA_ACE_PREFIX "2-u9tlzr9756bt3uc0v"},
     {
-      "Japanese", 13,
-      {
-        0x004D, 0x0061, 0x006A, 0x0069, 0x3067, 0x004B, 0x006F, 0x0069,
-        0x3059, 0x308B, 0x0035, 0x79D2, 0x524D},
-      IDNA_ACE_PREFIX "MajiKoi5-783gue6qz075azm5e", 0, 0, 
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "Maji\xe3\x81\xa7Koi\xe3\x81\x99\xe3\x82\x8b""5\xe7\xa7\x92\xe5\x89\x8d",
+      IDNA_ACE_PREFIX "MajiKoi5-783gue6qz075azm5e"},
     {
-      "Japanese", 9,
-      {
-        0x30D1, 0x30D5, 0x30A3, 0x30FC, 0x0064, 0x0065, 0x30EB, 0x30F3, 0x30D0},
-      IDNA_ACE_PREFIX "de-jg4avhby1noc0d", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "\xe3\x83\x91\xe3\x83\x95\xe3\x82\xa3\xe3\x83\xbc""de\xe3\x83\xab\xe3\x83"
+      "\xb3\xe3\x83\x90",
+      IDNA_ACE_PREFIX "de-jg4avhby1noc0d"},
     {
-      "Japanese", 7,
-      {
-        0x305D, 0x306E, 0x30B9, 0x30D4, 0x30FC, 0x30C9, 0x3067},
-      IDNA_ACE_PREFIX "d9juau41awczczp", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
+      "Japanese",
+      "\xe3\x81\x9d\xe3\x81\xae\xe3\x82\xb9\xe3\x83\x94\xe3\x83\xbc\xe3\x83"
+      "\x89\xe3\x81\xa7",
+      IDNA_ACE_PREFIX "d9juau41awczczp"},
     {
-      "Greek", 8,
-      {0x03b5, 0x03bb, 0x03bb, 0x03b7, 0x03bd, 0x03b9, 0x03ba, 0x03ac},
-      IDNA_ACE_PREFIX "hxargifdar", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
+      "Greek",
+      "\xce\xb5\xce\xbb\xce\xbb\xce\xb7\xce\xbd\xce\xb9\xce\xba\xce\xac",
+      IDNA_ACE_PREFIX "hxargifdar"},
     {
-      "Maltese (Malti)", 10,
-      {0x0062, 0x006f, 0x006e, 0x0121, 0x0075, 0x0073, 0x0061, 0x0127,
-       0x0127, 0x0061},
-      IDNA_ACE_PREFIX "bonusaa-5bb1da", 0, 0, IDNA_SUCCESS, IDNA_SUCCESS},
+      "Maltese (Malti)",
+      "bon\xc4\xa1usa\xc4\xa7\xc4\xa7""a",
+      IDNA_ACE_PREFIX "bonusaa-5bb1da"},
     {
-      "Russian (Cyrillic)", 28,
-      {0x043f, 0x043e, 0x0447, 0x0435, 0x043c, 0x0443, 0x0436, 0x0435,
-       0x043e, 0x043d, 0x0438, 0x043d, 0x0435, 0x0433, 0x043e, 0x0432,
-       0x043e, 0x0440, 0x044f, 0x0442, 0x043f, 0x043e, 0x0440, 0x0443,
-       0x0441, 0x0441, 0x043a, 0x0438},
-      IDNA_ACE_PREFIX "b1abfaaepdrnnbgefbadotcwatmq2g4l", 0, 0,
-      IDNA_SUCCESS, IDNA_SUCCESS},
+      "Russian (Cyrillic)",
+      "\xd0\xbf\xd0\xbe\xd1\x87\xd0\xb5\xd0\xbc\xd1\x83\xd0\xb6\xd0\xb5\xd0"
+      "\xbe\xd0\xbd\xd0\xb8\xd0\xbd\xd0\xb5\xd0\xb3\xd0\xbe\xd0\xb2\xd0\xbe"
+      "\xd1\x80\xd1\x8f\xd1\x82\xd0\xbf\xd0\xbe\xd1\x80\xd1\x83\xd1\x81\xd1"
+      "\x81\xd0\xba\xd0\xb8",
+      IDNA_ACE_PREFIX "b1abfaaepdrnnbgefbadotcwatmq2g4l"},
   };
 
 UNIT_TEST(charset, idna_encoding)
 {
-  putenv("CHARSET=UTF-8");
+  // putenv takes a char*, not a const char*, there is nothing we can do.
+  putenv(const_cast<char *>("CHARSET=UTF-8"));
 
   for (size_t i = 0; i < sizeof(idna_vec) / sizeof(struct idna); ++i)
     {
-      UNIT_TEST_CHECKPOINT(("IDNA language: " + string(idna_vec[i].name)).c_str());
+      UNIT_TEST_CHECKPOINT(("IDNA language: "
+                            + string(idna_vec[i].name)).c_str());
 
-      size_t p, q;
-      char *uc = stringprep_ucs4_to_utf8(idna_vec[i].in,
-                                         idna_vec[i].inlen,
-                                         &p, &q);
-      utf8 utf = utf8(uc);
+      string u = lowercase(idna_vec[i].utf);
+      string a = lowercase(idna_vec[i].ace);
+      string tace;
+      utf8_to_ace(utf8(u), tace);
+      L(FL("ACE-encoded %s: '%s'") % idna_vec[i].name % tace);
+      UNIT_TEST_CHECK(a == lowercase(tace));
+
       utf8 tutf;
-      free(uc);
-
-      ace a = ace(idna_vec[i].out);
-      ace tace;
-      utf8_to_ace(utf, tace);
-      L(FL("ACE-encoded %s: '%s'") % idna_vec[i].name % tace());
-      UNIT_TEST_CHECK(lowercase(a()) == lowercase(tace()));
       ace_to_utf8(a, tutf);
-      UNIT_TEST_CHECK(lowercase(utf()) == lowercase(tutf()));
+      L(FL("UTF-encoded %s: '%s'") % idna_vec[i].name % tutf);
+      UNIT_TEST_CHECK(u == lowercase(tutf()));
     }
 }
 
@@ -648,11 +608,27 @@ UNIT_TEST(charset, utf8_validation)
   // example files.
   const char* good_strings[] = {
     "this is a valid but boring ASCII string",
-    "\x28\x28\x56\xe2\x8d\xb3\x56\x29\x3d\xe2\x8d\xb3\xe2\x8d\xb4\x56\x29\x2f\x56\xe2\x86\x90\x2c\x56\x20\x20\x20\x20\xe2\x8c\xb7\xe2\x86\x90\xe2\x8d\xb3\xe2\x86\x92\xe2\x8d\xb4\xe2\x88\x86\xe2\x88\x87\xe2\x8a\x83\xe2\x80\xbe\xe2\x8d\x8e\xe2\x8d\x95\xe2\x8c\x88",
-    "\xe2\x80\x98\x73\x69\x6e\x67\x6c\x65\xe2\x80\x99\x20\x61\x6e\x64\x20\xe2\x80\x9c\x64\x6f\x75\x62\x6c\x65\xe2\x80\x9d\x20\x71\x75\x6f\x74\x65\x73",
-    "\xe2\x80\xa2\x20\x43\x75\x72\x6c\x79\x20\x61\x70\x6f\x73\x74\x72\x6f\x70\x68\x65\x73\x3a\x20\xe2\x80\x9c\x57\x65\xe2\x80\x99\x76\x65\x20\x62\x65\x65\x6e\x20\x68\x65\x72\x65\xe2\x80\x9d",
-    "\xe2\x80\x9a\x64\x65\x75\x74\x73\x63\x68\x65\xe2\x80\x98\x20\xe2\x80\x9e\x41\x6e\x66\xc3\xbc\x68\x72\x75\x6e\x67\x73\x7a\x65\x69\x63\x68\x65\x6e\xe2\x80\x9c",
-    "\xe2\x80\xa0\x2c\x20\xe2\x80\xa1\x2c\x20\xe2\x80\xb0\x2c\x20\xe2\x80\xa2\x2c\x20\x33\xe2\x80\x93\x34\x2c\x20\xe2\x80\x94\x2c\x20\xe2\x88\x92\x35\x2f\x2b\x35\x2c\x20\xe2\x84\xa2\x2c\x20\xe2\x80\xa6",
+
+    "\x28\x28\x56\xe2\x8d\xb3\x56\x29\x3d\xe2\x8d\xb3\xe2\x8d\xb4\x56\x29\x2f"
+    "\x56\xe2\x86\x90\x2c\x56\x20\x20\x20\x20\xe2\x8c\xb7\xe2\x86\x90\xe2\x8d"
+    "\xb3\xe2\x86\x92\xe2\x8d\xb4\xe2\x88\x86\xe2\x88\x87\xe2\x8a\x83\xe2\x80"
+    "\xbe\xe2\x8d\x8e\xe2\x8d\x95\xe2\x8c\x88",
+
+    "\xe2\x80\x98\x73\x69\x6e\x67\x6c\x65\xe2\x80\x99\x20\x61\x6e\x64\x20\xe2"
+    "\x80\x9c\x64\x6f\x75\x62\x6c\x65\xe2\x80\x9d\x20\x71\x75\x6f\x74\x65\x73",
+
+    "\xe2\x80\xa2\x20\x43\x75\x72\x6c\x79\x20\x61\x70\x6f\x73\x74\x72\x6f\x70"
+    "\x68\x65\x73\x3a\x20\xe2\x80\x9c\x57\x65\xe2\x80\x99\x76\x65\x20\x62\x65"
+    "\x65\x6e\x20\x68\x65\x72\x65\xe2\x80\x9d",
+
+    "\xe2\x80\x9a\x64\x65\x75\x74\x73\x63\x68\x65\xe2\x80\x98\x20\xe2\x80\x9e"
+    "\x41\x6e\x66\xc3\xbc\x68\x72\x75\x6e\x67\x73\x7a\x65\x69\x63\x68\x65\x6e"
+    "\xe2\x80\x9c",
+
+    "\xe2\x80\xa0\x2c\x20\xe2\x80\xa1\x2c\x20\xe2\x80\xb0\x2c\x20\xe2\x80\xa2"
+    "\x2c\x20\x33\xe2\x80\x93\x34\x2c\x20\xe2\x80\x94\x2c\x20\xe2\x88\x92\x35"
+    "\x2f\x2b\x35\x2c\x20\xe2\x84\xa2\x2c\x20\xe2\x80\xa6",
+
     "\xc2\xa9\xc2\xa9\xc2\xa9",
     "\xe2\x89\xa0\xe2\x89\xa0",
     "\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5",
