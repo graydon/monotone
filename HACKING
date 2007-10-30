@@ -201,6 +201,15 @@ number in parentheses.  Or, if using gdb, try setting a breakpoint on
 theboost::unit_test::first_failed_assertion function (see
 results_collector.hpp).
 
+Documenting large, user visible or otherwise important changes
+--------------------------------------------------------------
+
+There are changes that are more than mere bug fixes.  Those should be
+documented briefly in the NEWS file.  Please follow the examples from
+earlier releases in that file.
+Please add the entries in NEWS as part of the change in question, or
+as soon after the change has been committed as possible.  That will
+save the release master a lot of hassle at the time of release.
 
 Single-character macros
 -----------------------
