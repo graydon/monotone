@@ -565,7 +565,7 @@ sub generate_diff
 		    print OUTPUT "\@\@ -0,0 +1,",list_size(@file)," \@\@\n";
 		    map { print OUTPUT "+" . $_ } @file;
 		} else {
-		    print OUTPUT "monotone --db={your.database} automate get_file $id\n";
+		    print OUTPUT "$monotone --db={your.database} automate get_file $id\n";
 		}
 	    }
 	}
