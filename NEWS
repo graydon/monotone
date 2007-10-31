@@ -8,6 +8,9 @@
           Monotone extension commands to contrib/command/:
           "mtn base", "mtn fuse", "mtn revision", "mtn conflicts".
 
+        - mtn log now prints a single dot for a project's root
+          directory instead of an empty string.
+
         Internal
 
         - Update Botan to 1.7.2.
