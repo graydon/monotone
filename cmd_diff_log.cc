@@ -101,7 +101,9 @@ print_indented_set(ostream & os,
   for (set<file_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const string str = lexical_cast<string>(*i);
+      string str = lexical_cast<string>(*i);
+      if (str.empty())
+        str = "."; // project root
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
