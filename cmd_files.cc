@@ -124,7 +124,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     N_("Prints an annotated copy of a file"),
     N_("Calculates and prints an annotated copy of the given file from "
        "the specified REVISION."),
-    options::opts::revision | options::opts::brief)
+    options::opts::revision | options::opts::revs_only)
 {
   revision_id rid;
 
@@ -185,7 +185,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.brief);
+  do_annotate(app, file_node, rid, app.opts.revs_only);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),

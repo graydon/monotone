@@ -19,27 +19,6 @@
 /* #define SQLITE_ENABLE_LOCKING_STYLE 0 */
 
 /*
-** These #defines should enable >2GB file support on Posix if the
-** underlying operating system supports it.  If the OS lacks
-** large file support, these should be no-ops.
-**
-** Large file support can be disabled using the -DSQLITE_DISABLE_LFS switch
-** on the compiler command line.  This is necessary if you are compiling
-** on a recent machine (ex: RedHat 7.2) but you want your code to work
-** on an older machine (ex: RedHat 6.0).  If you compile on RedHat 7.2
-** without this option, LFS is enable.  But LFS does not exist in the kernel
-** in RedHat 6.0, so the code won't work.  Hence, for maximum binary
-** portability you should omit LFS.
-*/
-#ifndef SQLITE_DISABLE_LFS
-# define _LARGE_FILE       1
-# ifndef _FILE_OFFSET_BITS
-#   define _FILE_OFFSET_BITS 64
-# endif
-# define _LARGEFILE_SOURCE 1
-#endif
-
-/*
 ** standard include files.
 */
 #include <sys/types.h>
@@ -376,12 +355,12 @@ static Hash openHash = {SQLITE_HASH_BINARY, 0, 0, 0,
 **   file systems that are known to be unsupported
 */
 typedef enum {
-	posixLockingStyle = 0,       /* standard posix-advisory locks */
-	afpLockingStyle,             /* use afp locks */
-	flockLockingStyle,           /* use flock() */
-	dotlockLockingStyle,         /* use <file>.lock files */
-	noLockingStyle,              /* useful for read-only file system */
-	unsupportedLockingStyle      /* indicates unsupported file system */
+        posixLockingStyle = 0,       /* standard posix-advisory locks */
+        afpLockingStyle,             /* use afp locks */
+        flockLockingStyle,           /* use flock() */
+        dotlockLockingStyle,         /* use <file>.lock files */
+        noLockingStyle,              /* useful for read-only file system */
+        unsupportedLockingStyle      /* indicates unsupported file system */
 } sqlite3LockingStyle;
 #endif /* SQLITE_ENABLE_LOCKING_STYLE */
 
@@ -601,7 +580,7 @@ static sqlite3LockingStyle sqlite3DetectLockingStyle(const char *filePath,
   
   if( (!strcmp(fsInfo.f_fstypename, "hfs")) ||
     (!strcmp(fsInfo.f_fstypename, "ufs")) )
-		return posixLockingStyle;
+                return posixLockingStyle;
   
   if(!strcmp(fsInfo.f_fstypename, "afpfs"))
     return afpLockingStyle;
@@ -918,15 +897,19 @@ static int unixOpenDirectory(
   OsFile *id,
   const char *zDirname
 ){
+  int h;
   unixFile *pFile = (unixFile*)id;
   assert( pFile!=0 );
   SET_THREADID(pFile);
   assert( pFile->dirfd<0 );
-  pFile->dirfd = open(zDirname, O_RDONLY|O_BINARY, 0);
-  if( pFile->dirfd<0 ){
+  pFile->dirfd = h = open(zDirname, O_RDONLY|O_BINARY, 0);
+  if( h<0 ){
     return SQLITE_CANTOPEN; 
   }
-  OSTRACE3("OPENDIR %-3d %s\n", pFile->dirfd, zDirname);
+#ifdef FD_CLOEXEC
+  fcntl(h, F_SETFD, fcntl(h, F_GETFD, 0) | FD_CLOEXEC);
+#endif
+  OSTRACE3("OPENDIR %-3d %s\n", h, zDirname);
   return SQLITE_OK;
 }
 
@@ -1271,7 +1254,7 @@ int sqlite3UnixSyncDirectory(const char *zDirname){
 static int unixTruncate(OsFile *id, i64 nByte){
   int rc;
   assert( id );
-  rc = ftruncate(((unixFile*)id)->h, nByte);
+  rc = ftruncate(((unixFile*)id)->h, (off_t)nByte);
   SimulateIOError( rc=1 );
   if( rc ){
     return SQLITE_IOERR_TRUNCATE;
@@ -1710,7 +1693,7 @@ struct ByteRangeLockPB2
   int fd;                           /* file desc to assoc this lock with */
 };
 
-#define afpfsByteRangeLock2FSCTL	_IOWR('z', 23, struct ByteRangeLockPB2)
+#define afpfsByteRangeLock2FSCTL        _IOWR('z', 23, struct ByteRangeLockPB2)
 
 /* return 0 on success, 1 on failure.  To match the behavior of the 
   normal posix file locking (used in unixLock for example), we should 
@@ -1719,7 +1702,7 @@ struct ByteRangeLockPB2
 static int _AFPFSSetLock(const char *path, int fd, unsigned long long offset, 
                          unsigned long long length, int setLockFlag)
 {
-  struct ByteRangeLockPB2	pb;
+  struct ByteRangeLockPB2       pb;
   int                     err;
   
   pb.unLockFlag = setLockFlag ? 0 : 1;
@@ -2577,6 +2560,9 @@ static int allocateUnixFile(
   unixFile f;
   int rc;
 
+#ifdef FD_CLOEXEC
+  fcntl(h, F_SETFD, fcntl(h, F_GETFD, 0) | FD_CLOEXEC);
+#endif
   memset(&f, 0, sizeof(f));
   sqlite3OsEnterMutex();
   rc = findLockInfo(h, &f.pLock, &f.pOpen);

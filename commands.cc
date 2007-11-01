@@ -90,6 +90,9 @@ CMD_GROUP(variables, "variables", "", CMD_REF(__root__),
 CMD_GROUP(workspace, "workspace", "", CMD_REF(__root__),
           N_("Commands that deal with the workspace"),
           "");
+CMD_GROUP(user, "user", "", CMD_REF(__root__),
+          N_("Commands defined by the user"),
+          "");
 
 // this file defines the task-oriented "top level" commands which can be
 // issued as part of a monotone command line. the command line can only
@@ -144,6 +147,7 @@ namespace commands {
   command::command(std::string const & primary_name,
                    std::string const & other_names,
                    command * parent,
+                   bool is_group,
                    bool hidden,
                    std::string const & params,
                    std::string const & abstract,
@@ -153,6 +157,7 @@ namespace commands {
                    bool _allow_completion)
     : m_primary_name(utf8(primary_name)),
       m_parent(parent),
+      m_is_group(is_group),
       m_hidden(hidden),
       m_params(utf8(params)),
       m_abstract(utf8(abstract)),
@@ -218,10 +223,23 @@ namespace commands {
     return m_names;
   }
 
+  void
+  command::add_alias(const utf8 &new_name)
+  {
+    m_names.insert(new_name);
+  }
+
+
   command *
   command::parent(void) const
   {
     return m_parent;
+  }
+
+  bool
+  command::is_group(void) const
+  {
+    return m_is_group;
   }
 
   bool
@@ -246,6 +264,22 @@ namespace commands {
   command::desc() const
   {
     return abstract() + ".\n" + safe_gettext(m_desc().c_str());
+  }
+  
+  command::names_set
+  command::subcommands(void) const
+  {
+    names_set set;
+    init_children();
+    for (children_set::const_iterator i = m_children.begin();
+      i != m_children.end(); i++)
+      {
+        if ((*i)->hidden())
+          continue;
+        names_set const & other = (*i)->names();
+        set.insert(other.begin(), other.end());
+      }
+    return set;
   }
 
   options::options_type const &
@@ -299,6 +333,31 @@ namespace commands {
   command::find_command(command_id const & id) const
   {
     command const * cmd;
+
+    if (id.empty())
+      cmd = this;
+    else
+      {
+        utf8 component = *(id.begin());
+        command const * match = find_child_by_name(component);
+
+        if (match != NULL)
+          {
+            command_id remaining(id.begin() + 1, id.end());
+            I(remaining.size() == id.size() - 1);
+            cmd = match->find_command(remaining);
+          }
+        else
+          cmd = NULL;
+      }
+
+    return cmd;
+  }
+
+  command *
+  command::find_command(command_id const & id)
+  {
+    command * cmd;
 
     if (id.empty())
       cmd = this;
@@ -534,7 +593,8 @@ namespace commands
   // to start, at the very least, two spaces after the tag's end position;
   // this is given by the colabstract parameter.
   static void describe(const string & tag, const string & abstract,
-                       size_t colabstract, ostream & out)
+                       const string & subcommands, size_t colabstract,
+                       ostream & out)
   {
     I(colabstract > 0);
 
@@ -544,7 +604,12 @@ namespace commands
 
     out << string(colabstract - col, ' ');
     col = colabstract;
-    out << format_text(abstract, colabstract, col) << '\n';
+    string desc(abstract);
+    if (subcommands.size() > 0)
+      {
+        desc += " (" + subcommands + ')';
+      }
+    out << format_text(desc, colabstract, col) << '\n';
   }
 
   static void explain_children(command::children_set const & children,
@@ -575,8 +640,12 @@ namespace commands
 
     for (vector< command const * >::const_iterator i = sorted.begin();
          i != sorted.end(); i++)
-      describe(join_words((*i)->names(), ", ")(), (*i)->abstract(),
-               colabstract, out);
+      {
+        command const * child = *i;
+        describe(join_words(child->names(), ", ")(), child->abstract(),
+                 join_words(child->subcommands(), ", ")(),
+                 colabstract, out);
+      }
   }
 
   static void explain_cmd_usage(command_id const & ident, ostream & out)
@@ -590,17 +659,17 @@ namespace commands
                                                  ident.end()))();
 
     if (visibleid.empty())
-      out << format_text(F(safe_gettext("Commands in group '%s':")) %
+      out << format_text(F("Commands in group '%s':") %
                          join_words(ident)())
           << "\n\n";
     else
       {
         if (cmd->children().size() > 0)
-          out << format_text(F(safe_gettext("Subcommands of '%s %s':")) %
+          out << format_text(F("Subcommands of '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
         else
-          out << format_text(F(safe_gettext("Syntax specific to '%s %s':")) %
+          out << format_text(F("Syntax specific to '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
       }
@@ -625,11 +694,11 @@ namespace commands
 
     // Print command description.
     if (visibleid.empty())
-      out << format_text(F(safe_gettext("Purpose of group '%s':")) %
+      out << format_text(F("Purpose of group '%s':") %
                          join_words(ident)())
           << "\n\n";
     else
-      out << format_text(F(safe_gettext("Description for '%s %s':")) %
+      out << format_text(F("Description for '%s %s':") %
                          ui.prog_name % visibleid)
           << "\n\n";
     out << format_text(cmd->desc(), 2) << "\n\n";
@@ -656,19 +725,19 @@ namespace commands
 
     if (ident.empty())
       {
-        out << format_text("Command groups:") << "\n\n";
+        out << format_text(F("Command groups:")) << "\n\n";
         explain_children(CMD_REF(__root__)->children(), out);
         out << '\n'
-            << format_text("For information on a specific command, type "
-                           "'mtn help <command_name> [subcommand_name ...]'.")
-            << '\n'
-            << format_text("To see the commands available within a group, "
-                           "type 'mtn help <group_name>'.")
-            << '\n'
-            << format_text("Note that you can always abbreviate a command "
+            << format_text(F("For information on a specific command, type "
+                           "'mtn help <command_name> [subcommand_name ...]'."))
+            << "\n\n"
+            << format_text(F("To see more details about the commands of a "
+                           "particular group, type 'mtn help <group_name>'."))
+            << "\n\n"
+            << format_text(F("Note that you can always abbreviate a command "
                            "name as long as it does not conflict with other "
-                           "names.")
-            << "\n\n";
+                           "names."))
+            << "\n";
       }
     else
       explain_cmd_usage(ident, out);
@@ -682,7 +751,8 @@ namespace commands
     string visibleid = join_words(vector< utf8 >(ident.begin() + 1,
                                                  ident.end()))();
 
-    N(!(!cmd->is_leaf() && cmd->parent() == CMD_REF(__root__)),
+    I(cmd->is_leaf() || cmd->is_group());
+    N(!(cmd->is_group() && cmd->parent() == CMD_REF(__root__)),
       F("command '%s' is invalid; it is a group") % join_words(ident));
 
     N(!(!cmd->is_leaf() && args.empty()),

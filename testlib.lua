@@ -1,20 +1,16 @@
-tests = {} -- list of all tests, not visible when running tests
-test = {} -- table of per-test values
-
 -- misc global values
-
 -- where the main testsuite file is
 srcdir = get_source_dir()
 -- where the individual test dirs are
 -- most paths will be testdir.."/something"
+-- normally reset by the main testsuite file
 testdir = srcdir
 -- was the -d switch given?
 debugging = false
 
--- combined logfile
-logfile = io.open("tester.log", "w")
--- logfiles of failed tests; append these to the main logfile
-failed_testlogs = {}
+-- combined logfile; tester.cc will reset this to a filename, which is
+-- then opened in run_tests
+logfile = nil
 
 -- This is for redirected output from local implementations
 -- of shellutils type stuff (ie, grep).
@@ -22,7 +18,11 @@ failed_testlogs = {}
 -- for this (at least on Windows).
 files = {stdout = nil, stdin = nil, stderr = nil}
 
+-- for convenience, this is the first word of what get_ostype() returns.
+ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
 
+-- table of per-test values
+test = {}
 -- misc per-test values
 test.root = nil
 test.name = nil
@@ -39,11 +39,19 @@ test.bglist = {}
 
 test.log = nil -- logfile for this test
 
+-- hook to be overridden by the main testsuite file, if necessary;
+-- called after determining the set of tests to run.
+-- P may be used to write messages to the user's tty.
+function prepare_to_run_tests(P)
+   return 0
+end
 
-function P(...)
-  io.write(unpack(arg))
-  io.flush()
-  logfile:write(unpack(arg))
+-- hook to be overridden by the main testsuite file, if necessary;
+-- called after opening the master logfile, but _before_ parsing
+-- arguments or determining the set of tests to run.
+-- P may be used to write messages to the user's tty.
+function prepare_to_enumerate_tests(P)
+   return 0
 end
 
 function L(...)
@@ -93,22 +101,22 @@ function err(what, level)
 end
 
 do -- replace some builtings with logged versions
-  old_mtime = mtime
+  unlogged_mtime = mtime
   mtime = function(name)
-    local x = old_mtime(name)
+    local x = unlogged_mtime(name)
     L(locheader(), "mtime(", name, ") = ", tostring(x), "\n")
     return x
   end
 
-  old_mkdir = mkdir
+  unlogged_mkdir = mkdir
   mkdir = function(name)
     L(locheader(), "mkdir ", name, "\n")
-    old_mkdir(name)
+    unlogged_mkdir(name)
   end
 
-  old_existsonpath = existsonpath
+  unlogged_existsonpath = existsonpath
   existsonpath = function(name)
-    local r = (old_existsonpath(name) == 0)
+    local r = (unlogged_existsonpath(name) == 0)
     local what
     if r then
       what = "exists"
@@ -156,6 +164,23 @@ end
 
 function readstdfile(filename)
   return readfile(testdir.."/"..filename)
+end
+
+-- Return all but the first N lines of FILENAME.
+-- Note that (unlike readfile()) the result will
+-- end with a \n whether or not the file did.
+function tailfile(filename, n)
+  L(locheader(), "tailfile ", filename, ", ", n, "\n")
+  local i = 1
+  local t = {}
+  for l in io.lines(filename) do
+    if i > n then
+      table.insert(t, l)
+    end
+    i = i + 1
+  end
+  table.insert(t, "")
+  return table.concat(t, "\n")
 end
 
 function writefile_q(filename, dat)
@@ -269,6 +294,45 @@ function trim(str)
   return string.gsub(str, "^%s*(.-)%s*$", "%1")
 end
 
+function getpathof(exe, ext)
+  local function gotit(now)
+    if test.log == nil then
+      logfile:write(exe, " found at ", now, "\n")
+    else
+      test.log:write(exe, " found at ", now, "\n")
+    end
+    return now
+  end
+  local path = os.getenv("PATH")
+  local char
+  if ostype == "Windows" then
+    char = ';'
+  else
+    char = ':'
+  end
+  if ostype == "Windows" then
+    if ext == nil then ext = ".exe" end
+  else
+    if ext == nil then ext = "" end
+  end
+  local now = initial_dir.."/"..exe..ext
+  if exists(now) then return gotit(now) end
+  for x in string.gmatch(path, "[^"..char.."]*"..char) do
+    local dir = string.sub(x, 0, -2)
+    if string.find(dir, "[\\/]$") then
+      dir = string.sub(dir, 0, -2)
+    end
+    local now = dir.."/"..exe..ext
+    if exists(now) then return gotit(now) end
+  end
+  if test.log == nil then
+    logfile:write("Cannot find ", exe, "\n")
+  else
+    test.log:write("Cannot find ", exe, "\n")
+  end
+  return nil
+end
+
 function prepare_redirect(fin, fout, ferr)
   local cwd = chdir(".").."/"
   redir = {fin = cwd..fin, fout = cwd..fout, ferr = cwd..ferr}
@@ -338,17 +402,21 @@ function runcmd(cmd, prefix, bgnd)
   else
     L(locheader(), cmd_as_str(cmd), "\n")
   end
+
+  local oldexec = execute
+  if bgnd then
+     execute = spawn
+  end
   if type(cmd[1]) == "function" then
     result = {pcall(unpack(cmd))}
   elseif type(cmd[1]) == "string" then
-    if bgnd then
-      result = {pcall(spawn, unpack(cmd))}
-    else
-      result = {pcall(execute, unpack(cmd))}
-    end
+     result = {pcall(execute, unpack(cmd))}
   else
-    err("runcmd called with bad command table")
-  end
+     execute = oldexec
+    err("runcmd called with bad command table " ..
+	"(first entry is a " .. type(cmd[1]) ..")")
+ end
+ execute = oldexec
   
   if local_redir then
     files.stdin:close()
@@ -359,23 +427,16 @@ function runcmd(cmd, prefix, bgnd)
 end
 
 function samefile(left, right)
-  local ldat = nil
-  local rdat = nil
-  if left == "-" then
-    ldat = io.input:read("*a")
-    rdat = readfile(right)
-  elseif right == "-" then
-    rdat = io.input:read("*a")
-    ldat = readfile(left)
-  else
-    if fsize(left) ~= fsize(right) then
-      return false
-    else
-      ldat = readfile(left)
-      rdat = readfile(right)
-    end
+  if left == "-" or right == "-" then 
+    err("tests may not rely on standard input") 
   end
-  return ldat == rdat
+  if fsize(left) ~= fsize(right) then
+    return false
+  else
+    local ldat = readfile(left)
+    local rdat = readfile(right)
+    return ldat == rdat
+ end
 end
 
 function samelines(f, t)
@@ -628,6 +689,9 @@ function bg(torun, ret, stdout, stderr, stdin)
                 local res
                 obj.retval, res = timed_wait(obj.pid, timeout)
                 if (res == -1) then
+                  if (obj.retval ~= 0) then
+                    L(locheader(), "error in timed_wait ", obj.retval, "\n")
+                  end
                   kill(obj.pid, 15) -- TERM
                   obj.retval, res = timed_wait(obj.pid, 2)
                   if (res == -1) then
@@ -638,7 +702,7 @@ function bg(torun, ret, stdout, stderr, stdin)
                 
                 test.bglist[obj.id] = nil
                 L(locheader(), "checking background command from ", out.locstr,
-                  table.concat(out.cmd, " "), "\n")
+		  cmd_as_str(out.cmd), "\n")
                 post_cmd(obj.retval, out.expret, out.expout, out.experr, obj.prefix)
                 return true
               end
@@ -762,10 +826,61 @@ function log_error(e)
   end
 end
 
-function run_tests(args)
+function run_tests(debugging, list_only, run_dir, logname, args, progress)
   local torun = {}
   local run_all = true
-  local list_only = false
+
+  local function P(...)
+     progress(unpack(arg))
+     logfile:write(unpack(arg))
+  end
+
+  -- NLS nuisances.
+  for _,name in pairs({  "LANG",
+			 "LANGUAGE",
+			 "LC_ADDRESS",
+			 "LC_ALL",
+			 "LC_COLLATE",
+			 "LC_CTYPE",
+			 "LC_IDENTIFICATION",
+			 "LC_MEASUREMENT",
+			 "LC_MESSAGES",
+			 "LC_MONETARY",
+			 "LC_NAME",
+			 "LC_NUMERIC",
+			 "LC_PAPER",
+			 "LC_TELEPHONE",
+			 "LC_TIME"  }) do
+     set_env(name,"C")
+  end
+
+  -- no test suite should touch the user's ssh agent
+  unset_env("SSH_AUTH_SOCK")
+
+  logfile = io.open(logname, "w")
+  chdir(run_dir);
+
+  do
+     local s = prepare_to_enumerate_tests(P)
+     if s ~= 0 then
+	P("Enumeration of tests failed.\n")
+	return s
+     end
+  end
+
+  -- testdir is set by the testsuite definition
+  -- any directory in testdir with a __driver__.lua inside is a test case
+  local tests = {}
+  for _,candidate in ipairs(read_directory(testdir)) do
+     -- n.b. it is not necessary to throw out directories before doing
+     -- this check, because exists(nondirectory/__driver__.lua) will
+     -- never be true.
+     if exists(testdir .. "/" .. candidate .. "/__driver__.lua") then
+	table.insert(tests, candidate)
+     end
+  end
+  table.sort(tests)
+
   for i,a in pairs(args) do
     local _1,_2,l,r = string.find(a, "^(-?%d+)%.%.(-?%d+)$")
     if _1 then
@@ -775,38 +890,50 @@ function run_tests(args)
       if r < 1 then r = table.getn(tests) + r + 1 end
       if l > r then l,r = r,l end
       for j = l,r do
-        torun[j]=j
+        torun[j] = tests[j]
       end
       run_all = false
     elseif string.find(a, "^-?%d+$") then
       r = a + 0
       if r < 1 then r = table.getn(tests) + r + 1 end
-      torun[r] = r
+      torun[r] = tests[r]
       run_all = false
-    elseif a == "-d" then
-      debugging = true
-    elseif a == "-l" then
-      list_only = true
     else
       -- pattern
+      run_all = false
       local matched = false
       for i,t in pairs(tests) do
         if regex.search(a, t) then
-          torun[i] = i
+          torun[i] = t
           matched = true
         end
       end
-      if matched then
-        run_all = false
-      else
+      if not matched then
         print(string.format("Warning: pattern '%s' does not match any tests.", a))
       end
     end
   end
-  if not list_only then
-    logfile:write("Running on ", get_ostype(), "\n\n")
-    P("Running tests...\n")
+
+  if run_all then torun = tests end
+
+  if list_only then
+    for i,t in pairs(torun) do
+      if i < 10 then P(" ") end
+      if i < 100 then P(" ") end
+      P(i .. " " .. t .. "\n")
+    end
+    logfile:close()
+    return 0
   end
+
+  logfile:write("Running on ", get_ostype(), "\n\n")
+  local s = prepare_to_run_tests(P)
+  if s ~= 0 then
+    P("Test suite preparation failed.\n")
+    return s 
+  end
+  P("Running tests...\n")
+
   local counts = {}
   counts.success = 0
   counts.skip = 0
@@ -816,169 +943,76 @@ function run_tests(args)
   counts.total = 0
   counts.of_interest = 0
   local of_interest = {}
+  local failed_testlogs = {}
 
-  local function runtest(i, tname)
-    save_env()
-    local env = {}
-    local genv = getfenv(0)
-    for x,y in pairs(genv) do
-      env[x] = y
-      -- we want changes to globals in a test to be visible to
-      -- already-defined functions
-      if type(y) == "function" then
-        pcall(setfenv, y, env)
-      end
-    end
-    env.tests = nil -- don't let them mess with this
-    
-    test.bgid = 0
-    test.name = tname
-    test.wanted_fail = false
-    test.partial_skip = false
-    local shortname = nil
-    test.root, shortname = go_to_test_dir(tname)
-    if shortname == nil or test.root == nil then
-      P("ERROR: could not enter scratch dir for test '", tname, "'\n")
-      error("")
-    end
-    test.errfile = ""
-    test.errline = -1
-    test.bglist = {}
-    
-    local test_header = ""
-    if i < 100 then test_header = test_header .. " " end
-    if i < 10 then test_header = test_header .. " " end
-    test_header = test_header .. i .. " " .. shortname .. " "
-    local spacelen = 45 - string.len(shortname)
-    local spaces = string.rep(" ", 50)
-    if spacelen > 0 then
-      test_header = test_header .. string.sub(spaces, 1, spacelen)
-    end
-    P(test_header)
+  -- exit codes which indicate failure at a point in the process-spawning
+  -- code where it is impossible to give more detailed diagnostics
+  local magic_exit_codes = {
+     [121] = "error creating test directory",
+     [122] = "error spawning test process",
+     [123] = "error entering test directory",
+     [124] = "unhandled exception in child process"
+  }
 
-    local tlog = test.root .. "/tester.log"
-    test.log = io.open(tlog, "w")
-    L("Test number ", i, ", ", shortname, "\n")
+  -- callback closure passed to run_tests_in_children
+  local function report_one_test(tno, tname, status)
+     local tdir = run_dir .. "/" .. tname
+     local test_header = string.format("%3d %-45s ", tno, tname)
+     local what
+     local can_delete
+     -- the child should always exit successfully, just to avoid
+     -- headaches.  if we get any other code we report it as a failure.
+     if status ~= 0 then
+	if status < 0 then
+	   what = string.format("FAIL (signal %d)", -status)
+	elseif magic_exit_codes[status] ~= nil then
+	   what = string.format("FAIL (%s)", magic_exit_codes[status])
+	else
+	   what = string.format("FAIL (exit %d)", status)
+	end
+     else
+	local wfile, err = io.open(tdir .. "/STATUS", "r")
+	if wfile ~= nil then
+	   what = string.gsub(wfile:read("*a"), "\n$", "")
+	   wfile:close()
+	else
+	   what = string.format("FAIL (status file: %s)", err)
+	end
+     end
+     if what == "unexpected success" then
+	counts.noxfail = counts.noxfail + 1
+	counts.of_interest = counts.of_interest + 1
+	table.insert(of_interest, test_header .. "unexpected success")
+	can_delete = false
+     elseif what == "partial skip" or what == "ok" then
+	counts.success = counts.success + 1
+	can_delete = true
+     elseif string.find(what, "skipped ") == 1 then
+	counts.skip = counts.skip + 1
+	can_delete = true
+     elseif string.find(what, "expected failure ") == 1 then
+	counts.xfail = counts.xfail + 1
+	can_delete = false
+     elseif string.find(what, "FAIL ") == 1 then
+	counts.fail = counts.fail + 1
+	table.insert(of_interest, test_header .. what)
+	table.insert(failed_testlogs, tdir .. "/tester.log")
+	can_delete = false
+     else
+	counts.fail = counts.fail + 1
+	what = "FAIL (gobbledygook: " .. what .. ")"
+	table.insert(of_interest, test_header .. what)
+	table.insert(failed_testlogs, tdir .. "/tester.log")
+	can_delete = false
+     end
 
-    local driverfile = testdir .. "/" .. test.name .. "/__driver__.lua"
-    local driver, e = loadfile(driverfile)
-    local r
-    if driver == nil then
-      r = false
-      e = "Could not load driver file " .. driverfile .. " .\n" .. e
-    else
-      setfenv(driver, env)
-      local oldmask = posix_umask(0)
-      posix_umask(oldmask)
-      r,e = xpcall(driver, debug.traceback)
-      local errline = test.errline
-      for i,b in pairs(test.bglist) do
-        local a,x = pcall(function () b:finish(0) end)
-        if r and not a then
-          r = a
-          e = x
-        elseif not a then
-          L("Error cleaning up background processes: ", tostring(b.locstr), "\n")
-        end
-      end
-      if type(env.cleanup) == "function" then
-        local a,b = pcall(env.cleanup)
-        if r and not a then
-          r = a
-          e = b
-        end
-      end
-      test.errline = errline
-      posix_umask(oldmask)
-    end
-    
-    -- set our functions back to the proper environment
-    local genv = getfenv(0)
-    for x,y in pairs(genv) do
-      if type(y) == "function" then
-        pcall(setfenv, y, genv)
-      end
-    end
-    
-    if r then
-      if test.wanted_fail then
-        P("unexpected success\n")
-        test.log:close()
-        leave_test_dir()
-        counts.noxfail = counts.noxfail + 1
-        counts.of_interest = counts.of_interest + 1
-        table.insert(of_interest, test_header .. "unexpected success")
-      else
-        if test.partial_skip then
-          P("partial skip\n")
-        else
-          P("ok\n")
-        end
-        test.log:close()
-        if not debugging then clean_test_dir(tname) end
-        counts.success = counts.success + 1
-      end
-    else
-      if test.errline == nil then test.errline = -1 end
-      if type(e) ~= "table" then
-        local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
-        e = tbl
-      end
-      if e.e == true then
-        P(string.format("skipped (line %i)\n", test.errline))
-        test.log:close()
-        if not debugging then clean_test_dir(tname) end
-        counts.skip = counts.skip + 1
-      elseif e.e == false then
-        P(string.format("expected failure (line %i)\n", test.errline))
-        test.log:close()
-        leave_test_dir()
-        counts.xfail = counts.xfail + 1
-      else
-        result = string.format("FAIL (line %i)", test.errline)
-        P(result, "\n")
-        log_error(e)
-        table.insert(failed_testlogs, tlog)
-        test.log:close()
-        leave_test_dir()
-        counts.fail = counts.fail + 1
-        counts.of_interest = counts.of_interest + 1
-        table.insert(of_interest, test_header .. result)
-      end
-    end
-    counts.total = counts.total + 1
-    restore_env()
+     counts.total = counts.total + 1
+     P(string.format("%s%s\n", test_header, what))
+     return (can_delete and not debugging)
   end
 
-  if run_all then
-    for i,t in pairs(tests) do
-      if list_only then
-        if i < 10 then P(" ") end
-        if i < 100 then P(" ") end
-        P(i .. " " .. t .. "\n")
-      else
-        runtest(i, t)
-      end
-    end
-  else
-    for i,t in pairs(tests) do
-      if torun[i] == i then
-        if list_only then
-          if i < 10 then P(" ") end
-          if i < 100 then P(" ") end
-          P(i .. " " .. t .. "\n")
-        else
-          runtest(i, t)
-        end
-      end
-    end
-  end
-  
-  if list_only then
-    logfile:close()
-    return 0
-  end
-  
+  run_tests_in_children(torun, report_one_test)
+
   if counts.of_interest ~= 0 and (counts.total / counts.of_interest) > 4 then
    P("\nInteresting tests:\n")
    for i,x in ipairs(of_interest) do
@@ -986,12 +1020,6 @@ function run_tests(args)
    end
   end
   P("\n")
-  P(string.format("Of %i tests run:\n", counts.total))
-  P(string.format("\t%i succeeded\n", counts.success))
-  P(string.format("\t%i failed\n", counts.fail))
-  P(string.format("\t%i had expected failures\n", counts.xfail))
-  P(string.format("\t%i succeeded unexpectedly\n", counts.noxfail))
-  P(string.format("\t%i were skipped\n", counts.skip))
 
   for i,log in pairs(failed_testlogs) do
     local tlog = io.open(log, "r")
@@ -1002,11 +1030,105 @@ function run_tests(args)
       logfile:write(dat)
     end
   end
-  logfile:close()
 
+  -- Write out this summary in one go so that it does not get interrupted
+  -- by concurrent test suites' summaries.
+  P(string.format("Of %i tests run:\n"..
+		  "\t%i succeeded\n"..
+		  "\t%i failed\n"..
+		  "\t%i had expected failures\n"..
+		  "\t%i succeeded unexpectedly\n"..
+		  "\t%i were skipped\n",
+		  counts.total, counts.success, counts.fail,
+		  counts.xfail, counts.noxfail, counts.skip))
+
+  logfile:close()
   if counts.success + counts.skip + counts.xfail == counts.total then
     return 0
   else
     return 1
   end
+end
+
+function run_one_test(tname)
+   test.bgid = 0
+   test.name = tname
+   test.wanted_fail = false
+   test.partial_skip = false
+   test.root = chdir(".")
+   test.errfile = ""
+   test.errline = -1
+   test.bglist = {}
+   test.log = io.open("tester.log", "w")
+
+   L("Test ", test.name, "\n")
+
+   local driverfile = testdir .. "/" .. test.name .. "/__driver__.lua"
+   local driver, e = loadfile(driverfile)
+   local r
+   if driver == nil then
+      r = false
+      e = "Could not load driver file " .. driverfile .. ".\n" .. e
+   else
+      local oldmask = posix_umask(0)
+      posix_umask(oldmask)
+      r,e = xpcall(driver, debug.traceback)
+      local errline = test.errline
+      for i,b in pairs(test.bglist) do
+	 local a,x = pcall(function () b:finish(0) end)
+	 if r and not a then
+	    r = a
+	    e = x
+	 elseif not a then
+	    L("Error cleaning up background processes: ",
+	      tostring(b.locstr), "\n")
+	 end
+      end
+      if type(cleanup) == "function" then
+	 local a,b = pcall(cleanup)
+	 if r and not a then
+	    r = a
+	    e = b
+	 end
+      end
+      test.errline = errline
+      posix_umask(oldmask)
+   end
+
+   if not r then
+      if test.errline == nil then test.errline = -1 end
+      if type(e) ~= "table" then
+	 local tbl = {e = e, bt = {"no backtrace; type(err) = "..type(e)}}
+	 e = tbl
+      end
+      if type(e.e) ~= "boolean" then
+	 log_error(e)
+      end
+   end
+   test.log:close()
+    
+   -- record the short status where report_one_test can find it
+   local s = io.open(test.root .. "/STATUS", "w")
+   if r then
+      if test.wanted_fail then
+	 s:write("unexpected success\n")
+      else
+	 if test.partial_skip then
+	    s:write("partial skip\n")
+	 else
+	    s:write("ok\n")
+	 end
+      end
+   else
+      if e.e == true then
+	 s:write(string.format("skipped (line %i)\n", test.errline))
+      elseif e.e == false then
+	 s:write(string.format("expected failure (line %i)\n",
+			       test.errline))
+      else
+	 s:write(string.format("FAIL (line %i)\n", test.errline))
+      end
+   end
+   s:close()
+   return 0
 end

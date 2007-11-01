@@ -239,11 +239,26 @@ int process_wait(pid_t pid, int *res, int timeout)
   for (r = 0; r == 0 && timeout >= 0; --timeout)
     {
       r = waitpid(pid, &status, flags);
+      if (r == -1)
+        {
+          *res = errno;
+          if (errno == EINTR)
+            {
+              timeout++;
+              r = 0;
+              continue;
+            }
+          else
+            return -1;
+        }
       if (r == 0 && timeout > 0)
         process_sleep(1);
     }
   if (r == 0)
-    return -1;
+    {
+      *res = 0;
+      return -1;
+    }
   if (WIFEXITED(status))    
     *res = WEXITSTATUS(status);
   else

@@ -34,46 +34,16 @@ OPT(automate_stdio_size, "automate-stdio-size", size_t, 32768,
 #endif
 
 OPTSET(bind_opts)
-OPTVAR(bind, utf8, bind_address, )
-OPTVAR(bind, utf8, bind_port, )
-OPTVAR(bind, bool, bind_stdio, false)
-OPTVAR(bind, bool, use_transport_auth, true)
+OPTVAR(bind_opts, std::list<utf8>, bind_uris, )
+OPTVAR(bind_opts, bool, bind_stdio, false)
+OPTVAR(bind_opts, bool, use_transport_auth, true)
 
 OPTION(bind_opts, bind, true, "bind",
        gettext_noop("address:port to listen on (default :4691)"))
 #ifdef option_bodies
 {
-  string addr_part, port_part;
-  size_t l_colon = arg.find(':');
-  size_t r_colon = arg.rfind(':');
-
-  // not an ipv6 address, as that would have at least two colons
-  if (l_colon == r_colon)
-    {
-      addr_part = (r_colon == string::npos ? arg : arg.substr(0, r_colon));
-      port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-    }
-  else
-    {
-      // IPv6 addresses have a port specified in the style: [2001:388:0:13::]:80
-      size_t squareb = arg.rfind(']');
-      if ((arg.find('[') == 0) && (squareb != string::npos))
-        {
-          if (squareb < r_colon)
-            port_part = (r_colon == string::npos ? "" :  arg.substr(r_colon+1, arg.size() - r_colon));
-          else
-            port_part = "";
-          addr_part = (squareb == string::npos ? arg.substr(1, arg.size()) : arg.substr(1, squareb-1));
-        }
-      else
-        {
-          addr_part = arg;
-          port_part = "";
-        }
-    }
+  bind_uris.push_back(utf8(arg));
   bind_stdio = false;
-  bind_address = utf8(addr_part);
-  bind_port = utf8(port_part);
 }
 #endif
 OPTION(bind_opts, no_transport_auth, false, "no-transport-auth",
@@ -105,6 +75,14 @@ OPT(brief, "brief", bool, false,
 #ifdef option_bodies
 {
   brief = true;
+}
+#endif
+
+OPT(revs_only, "revs-only", bool, false,
+     gettext_noop("annotate using full revision ids only"))
+#ifdef option_bodies
+{
+  revs_only = true;
 }
 #endif
 
@@ -229,7 +207,7 @@ OPTION(globals, dump, true, "dump",
         gettext_noop("file to dump debugging log to, on failure"))
 #ifdef option_bodies
 {
-  global_sanity.filename = system_path(arg).as_external();
+  global_sanity.set_dump_path(system_path(arg).as_external());
 }
 #endif
 
@@ -281,6 +259,15 @@ OPTION(include, include, true, "include",
   include_patterns.push_back(arg_type(arg));
 }
 #endif
+
+GOPT(ignore_suspend_certs, "ignore-suspend-certs", bool, false,
+     gettext_noop("do not ignore revisions marked as suspended"))
+#ifdef option_bodies
+{
+  ignore_suspend_certs = true;
+}
+#endif
+
 
 OPTVAR(key, rsa_keypair_id, signing_key, )
 OPTION(globals, key, true, "key,k", gettext_noop("set key for signatures"))
@@ -424,7 +411,7 @@ GOPT(quiet, "quiet", bool, false,
 {
   quiet = true;
   global_sanity.set_quiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -442,7 +429,7 @@ gettext_noop("suppress warning, verbose, informational and progress messages"))
 {
   reallyquiet = true;
   global_sanity.set_reallyquiet();
-  ui.set_tick_writer(new tick_write_nothing);
+  ui.set_tick_write_nothing();
 }
 #endif
 
@@ -484,12 +471,12 @@ GOPT(ticker, "ticker", std::string, ,
 #ifdef option_bodies
 {
   ticker = arg;
-  if (ticker == "none" || global_sanity.quiet)
-    ui.set_tick_writer(new tick_write_nothing);
+  if (ticker == "none" || global_sanity.quiet_p())
+    ui.set_tick_write_nothing();
   else if (ticker == "dot")
-    ui.set_tick_writer(new tick_write_dot);
+    ui.set_tick_write_dot();
   else if (ticker == "count")
-    ui.set_tick_writer(new tick_write_count);
+    ui.set_tick_write_count();
   else
     throw bad_arg_internal(F("argument must be 'none', 'dot', or 'count'").str());
 }

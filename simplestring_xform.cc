@@ -5,6 +5,7 @@
 
 #include <set>
 #include <sstream>
+#include <iterator>
 
 using std::set;
 using std::string;
@@ -190,7 +191,7 @@ trim_ws(string const & s)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include <stdlib.h>
+#include "vocab.hh"
 
 UNIT_TEST(simplestring_xform, caseconv)
 {

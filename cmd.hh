@@ -34,6 +34,7 @@ namespace commands
     utf8 m_primary_name;
     names_set m_names;
     command * m_parent;
+    bool m_is_group;
     bool m_hidden;
     utf8 m_params;
     utf8 m_abstract;
@@ -53,6 +54,7 @@ namespace commands
     command(std::string const & primary_name,
             std::string const & other_names,
             command * parent,
+            bool is_group,
             bool hidden,
             std::string const & params,
             std::string const & abstract,
@@ -67,11 +69,14 @@ namespace commands
 
     utf8 const & primary_name(void) const;
     names_set const & names(void) const;
+    void add_alias(const utf8 &new_name);
     command * parent(void) const;
+    bool is_group(void) const;
     bool hidden(void) const;
     virtual std::string params(void) const;
     virtual std::string abstract(void) const;
     virtual std::string desc(void) const;
+    virtual names_set subcommands(void) const;
     options::options_type const & opts(void) const;
     bool use_workspace_options(void) const;
     children_set & children(void);
@@ -86,6 +91,7 @@ namespace commands
 
     bool has_name(utf8 const & name) const;
     command const * find_command(command_id const & id) const;
+    command * find_command(command_id const & id);
     std::set< command_id >
       complete_command(command_id const & id,
                        command_id completed = command_id(),
@@ -112,6 +118,11 @@ namespace commands
              std::string const & abstract,
              std::string const & desc,
              options::options_type const & opts);
+
+    void exec(app_state & app,
+              command_id const & execid,
+              args_vector const & args,
+              std::ostream & output) const;
 
     void exec(app_state & app,
               command_id const & execid,
@@ -178,8 +189,8 @@ namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(name, aliases, parent, hidden, params,     \
-                          abstract, desc, true,                      \
+    cmd_ ## C() : command(name, aliases, parent, false, hidden,      \
+                          params, abstract, desc, true,              \
                           options::options_type() | opts, true)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -203,8 +214,8 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(name, aliases, parent, false, "", abstract,\
-                          desc, true,                                \
+    cmd_ ## C() : command(name, aliases, parent, true, false, "",    \
+                          abstract, desc, true,                      \
                           options::options_type(), cmpl)             \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -235,8 +246,8 @@ namespace commands {                                                 \
   class cmd_ ## C : public command                                   \
   {                                                                  \
   public:                                                            \
-    cmd_ ## C() : command(name, aliases, parent, false, params,      \
-                          abstract, desc, false,                     \
+    cmd_ ## C() : command(name, aliases, parent, false, false,       \
+                          params, abstract, desc, false,             \
                           options::options_type() | opts, true)      \
     {}                                                               \
     virtual void exec(app_state & app,                               \
@@ -288,6 +299,7 @@ CMD_FWD_DECL(review);
 CMD_FWD_DECL(tree);
 CMD_FWD_DECL(variables);
 CMD_FWD_DECL(workspace);
+CMD_FWD_DECL(user);
 
 // Local Variables:
 // mode: C++

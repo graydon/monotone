@@ -16,6 +16,7 @@
 #include <set>
 #include <map>
 #include <fstream>
+#include <iostream>
 
 #include "lua.hh"
 
@@ -27,6 +28,9 @@
 #include "transforms.hh"
 #include "paths.hh"
 #include "uri.hh"
+#include "cmd.hh"
+#include "commands.hh"
+#include "globish.hh"
 
 // defined in {std,test}_hooks.lua, converted to {std,test}_hooks.c respectively
 extern char const std_hooks_constant[];
@@ -73,6 +77,16 @@ extern "C"
   }
 }
 
+app_state*
+get_app_state(lua_State *L)
+{
+  map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
+  if (i != map_of_lua_to_app.end())
+    return i->second;
+  else
+    return NULL;
+}
+
 lua_hooks::lua_hooks()
 {
   st = luaL_newstate();
@@ -115,7 +129,11 @@ lua_hooks::set_app(app_state *_app)
   map_of_lua_to_app.insert(make_pair(st, _app));
 }
 
-
+bool
+lua_hooks::check_lua_state(lua_State * p_st) const
+{
+  return (p_st == st);
+}
 
 #ifdef BUILD_UNIT_TESTS
 void
@@ -937,14 +955,97 @@ lua_hooks::hook_note_mtn_startup(args_vector const & args)
 
   ll.func("note_mtn_startup");
 
-  int n=0;
-  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i, ++n)
+  for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     ll.push_str((*i)());
 
-  ll.call(n, 0);
+  ll.call(args.size(), 0);
   return ll.ok();
 }
 
+namespace commands {
+  class cmd_lua : public command
+  {
+    lua_State *st;
+    std::string const f_name;
+  public:
+    cmd_lua(std::string const & primary_name,
+                   std::string const & params,
+                   std::string const & abstract,
+                   std::string const & desc,
+                   lua_State *L_st,
+                   std::string const & func_name) :
+         command(primary_name, "", CMD_REF(user), false, false, params,
+                 abstract, desc, true, options::options_type() | options::opts::none, true),
+                 st(L_st), f_name(func_name)
+    {
+      // because user commands are inserted after the normal initialisation process
+      CMD_REF(user)->children().insert(this);
+    }
+
+    void exec(app_state & app, command_id const & execid, args_vector const & args) const;
+  };
+}
+
+void commands::cmd_lua::exec(app_state & app,
+                               command_id const & execid,
+                               args_vector const & args) const
+{
+  I(st);
+  I(app.lua.check_lua_state(st));
+  
+  app_state* app_p = get_app_state(st);
+  I(app_p == & app);
+
+  Lua ll(st);
+  ll.func(f_name);
+  
+  for (args_vector::const_iterator it = args.begin(); it != args.end(); ++it)
+    ll.push_str((*it)());
+
+  app.mtn_automate_allowed = true;
+
+  ll.call(args.size(),0);
+
+  app.mtn_automate_allowed = false;
+
+  E(ll.ok(), F("Call to user command %s (lua command: %s) failed.") % primary_name() % f_name);
+}
+
+LUAEXT(alias_command, )
+{
+  const char *old_cmd = luaL_checkstring(L, -2);
+  const char *new_cmd = luaL_checkstring(L, -1);
+  N(old_cmd && new_cmd,
+    F("%s called with an invalid parameter") % "alias_command");
+
+  args_vector args;
+  args.push_back(arg_type(old_cmd));
+  commands::command_id id = commands::complete_command(args);
+  commands::command *old_cmd_p = CMD_REF(__root__)->find_command(id);
+
+  old_cmd_p->add_alias(utf8(new_cmd));
+
+  lua_pushboolean(L, true);
+  return 1;
+}
+
+
+LUAEXT(register_command, )
+{
+  const char *cmd_name = luaL_checkstring(L, -5);
+  const char *cmd_params = luaL_checkstring(L, -4);
+  const char *cmd_abstract = luaL_checkstring(L, -3);
+  const char *cmd_desc = luaL_checkstring(L, -2);
+  const char *cmd_func = luaL_checkstring(L, -1);
+  
+  N(cmd_name && cmd_params && cmd_abstract && cmd_desc && cmd_func,
+    F("%s called with an invalid parameter") % "register_command");
+  
+  new commands::cmd_lua(cmd_name, cmd_params, cmd_abstract, cmd_desc, L, cmd_func);  // leak this - commands can't be removed anyway
+  
+  lua_pushboolean(L, true);
+  return 1;
+}
 
 // Local Variables:
 // mode: C++

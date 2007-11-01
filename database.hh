@@ -15,7 +15,7 @@ struct sqlite3_stmt;
 struct cert;
 int sqlite3_finalize(sqlite3_stmt *);
 
-#include <vector>
+#include "vector.hh"
 #include <set>
 #include <map>
 
@@ -75,6 +75,7 @@ class app_state;
 struct revision_t;
 struct query;
 class rev_height;
+struct globish;
 
 class database
 {
@@ -371,7 +372,8 @@ private:
 private:
   void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 public:
-  void get_key_ids(std::string const & pattern,
+  void get_key_ids(std::vector<rsa_keypair_id> & pubkeys);
+  void get_key_ids(globish const & pattern,
                    std::vector<rsa_keypair_id> & pubkeys);
 
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
@@ -560,7 +562,7 @@ private:
 public:
     // branches
   outdated_indicator get_branches(std::vector<std::string> & names);
-  outdated_indicator get_branches(std::string const & glob,
+  outdated_indicator get_branches(globish const & glob,
                                   std::vector<std::string> & names);
 
   bool check_integrity();

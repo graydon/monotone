@@ -5,11 +5,14 @@ tester_dir
 \.dirstamp
 ^txt2c$
 ^unit_tests$
+^unit_tests\.log$
 ^mtn$
 ^testsuite$
 ^testsuite\.log$
 ^tester$
 ^tester\.h$
+^run_lua_tests$
+^run_tester_tests$
 ^package_full_revision(\.c|\.txt|_dist\.txt|_raw\.txt)$
 ^package_revision_raw.txt$
 ^config\.
@@ -20,7 +23,6 @@ tester_dir
 ^Makefile\.in$
 ^texinfo.tex$
 ^version.texi$
-^views.h$
 ^stamp-
 /stamp-
 ^monotone\.info
@@ -46,6 +48,7 @@ tester_dir
 ^po/Rules-quot$
 ^po/insert-header.sin$
 ^aclocal\.m4$
+^package\.m4$
 ^m4/codeset\.m4$
 ^m4/gettext\.m4$
 ^m4/glibc21\.m4$

@@ -40,7 +40,7 @@
 #     define OS_WIN 1
 #     define OS_UNIX 0
 #     define OS_OS2 0
-#   elif defined(_EMX_) || defined(_OS2) || defined(OS2) || defined(_OS2_) || defined(__OS2__)
+#   elif defined(__EMX__) || defined(_OS2) || defined(OS2) || defined(_OS2_) || defined(__OS2__)
 #     define OS_WIN 0
 #     define OS_UNIX 0
 #     define OS_OS2 1
@@ -67,11 +67,15 @@
 # include <windows.h>
 # define SQLITE_TEMPNAME_SIZE (MAX_PATH+50)
 #elif OS_OS2
+# if (__GNUC__ > 3 || __GNUC__ == 3 && __GNUC_MINOR__ >= 3) && defined(OS2_HIGH_MEMORY)
+#  include <os2safe.h> /* has to be included before os2.h for linking to work */
+# endif
 # define INCL_DOSDATETIME
 # define INCL_DOSFILEMGR
 # define INCL_DOSERRORS
 # define INCL_DOSMISC
 # define INCL_DOSPROCESS
+# define INCL_DOSMODULEMGR
 # include <os2.h>
 # define SQLITE_TEMPNAME_SIZE (CCHMAXPATHCOMP)
 #else

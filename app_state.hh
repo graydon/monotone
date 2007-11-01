@@ -14,7 +14,7 @@ class app_state;
 class lua_hooks;
 
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 
@@ -55,6 +55,7 @@ public:
 
   bool found_workspace;
   bool branch_is_sticky;
+  bool mtn_automate_allowed;
 
   // These are used to cache signers/verifiers (if the hook allows).
   // They can't be function-static variables in key.cc, since they

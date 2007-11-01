@@ -1,4 +1,4 @@
-// Copyright (C) 2004 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -12,10 +12,11 @@
 #include <iterator>
 #include <sstream>
 #include <unistd.h>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
@@ -24,7 +25,9 @@
 #include "cmd.hh"
 #include "commands.hh"
 #include "constants.hh"
+#include "inodeprint.hh"
 #include "keys.hh"
+#include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
@@ -69,12 +72,19 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  if (args.size() ==1 ) {
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+  app.work.get_ws_options(database_option, branch_option,
+                          key_option, keydir_option);
+
+  if (args.size() == 1 ) {
     // branchname was explicitly given, use that
-    app.opts.branchname = branch_name(idx(args, 0)());
+    branch_option = branch_name(idx(args, 0)());
   }
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(branch_option, heads);
   for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
     output << (*i).inner()() << '\n';
 }
@@ -95,7 +105,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 {
   N(args.size() > 0,
     F("wrong argument count"));
-  
+
   set<revision_id> ancestors;
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -259,7 +269,7 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
 {
   N(args.size() > 0,
     F("wrong argument count"));
-    
+
   revision_id a;
   set<revision_id> bs;
   args_vector::const_iterator i = args.begin();
@@ -359,7 +369,7 @@ CMD_AUTOMATE(parents, N_("REV"),
 {
   N(args.size() == 1,
     F("wrong argument count"));
-  
+
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> parents;
@@ -387,7 +397,7 @@ CMD_AUTOMATE(children, N_("REV"),
 {
   N(args.size() == 1,
     F("wrong argument count"));
-  
+
   revision_id rid(idx(args, 0)());
   N(app.db.revision_exists(rid), F("No such revision %s") % rid);
   set<revision_id> children;
@@ -485,307 +495,446 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
     output << *i << '\n';
 }
 
-// consider a changeset with the following
-//
-// deletions
-// renames from to
-// additions
-//
-// pre-state  corresponds to deletions and the "from" side of renames
-// post-state corresponds to the "to" side of renames and additions
-// node-state corresponds to the state of the node with the given name
-//
-// pre/post state are related to the path rearrangement in _MTN/work
-// node state is related to the details of the resulting path
+struct node_info
+{
+  bool exists;
+  // true if node_id is present in corresponding roster with the inventory map file_path
+  // false if not present, or present with a different file_path
+  // rest of data in this struct is invalid if false.
+  node_id id;
+  path::status type;
+  file_id ident;
+  full_attr_map_t attrs;
+
+  node_info() : exists(false), type(path::nonexistent) {}
+};
+
+static void
+get_node_info(node_t const & node, node_info & info)
+{
+  info.exists = true;
+  info.id = node->self;
+  info.attrs = node->attrs;
+  if (is_file_t(node))
+    {
+      info.type = path::file;
+      info.ident = downcast_to_file_t(node)->content;
+    }
+  else if (is_dir_t(node))
+    info.type = path::directory;
+  else
+    I(false);
+}
 
 struct inventory_item
 {
-  // pre/post rearrangement state
-  enum pstate
-    { UNCHANGED_PATH, ADDED_PATH, DROPPED_PATH, RENAMED_PATH }
-    pre_state, post_state;
+  // Records information about a pair of nodes with the same node_id in the
+  // old roster and new roster, and the corresponding path in the
+  // filesystem.
+  node_info old_node;
+  node_info new_node;
+  file_path old_path;
+  file_path new_path;
 
-  enum nstate
-    { UNCHANGED_NODE, PATCHED_NODE, MISSING_NODE,
-      UNKNOWN_NODE, IGNORED_NODE }
-    node_state;
+  path::status fs_type;
+  file_id fs_ident;
 
-  size_t pre_id, post_id;
-
-  inventory_item():
-    pre_state(UNCHANGED_PATH), post_state(UNCHANGED_PATH),
-    node_state(UNCHANGED_NODE),
-    pre_id(0), post_id(0) {}
+  inventory_item() : fs_type(path::nonexistent) {}
 };
 
-typedef map<file_path, inventory_item> inventory_map;
-typedef map<file_path, file_path> rename_map; // this might be good in cset.hh
-typedef map<file_path, file_id> addition_map;  // ditto
+typedef std::map<file_path, inventory_item> inventory_map;
+// file_path will typically be an existing filesystem file, but in the case
+// of a dropped or rename_source file it is only in the old roster, and in
+// the case of a file added --bookkeep_only or rename_target
+// --bookkeep_only, it is only in the new roster.
 
 static void
-inventory_pre_state(inventory_map & inventory,
-                    set<file_path> const & paths,
-                    inventory_item::pstate pre_state,
-                    size_t rename_id)
+inventory_rosters(roster_t const & old_roster,
+                  roster_t const & new_roster,
+                  node_restriction const & mask,
+                  inventory_map & inventory)
 {
-  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
+  std::map<int, file_path> old_paths;
+  std::map<int, file_path> new_paths;
+
+  node_map const & old_nodes = old_roster.all_nodes();
+  for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
-      L(FL("%d %d %s") % inventory[*i].pre_state % pre_state % *i);
-      I(inventory[*i].pre_state == inventory_item::UNCHANGED_PATH);
-      inventory[*i].pre_state = pre_state;
-      if (rename_id != 0)
+      if (mask.includes(old_roster, i->first))
         {
-          I(inventory[*i].pre_id == 0);
-          inventory[*i].pre_id = rename_id;
+          file_path fp;
+          old_roster.get_name(i->first, fp);
+          get_node_info(old_roster.get_node(i->first), inventory[fp].old_node);
+          old_paths[inventory[fp].old_node.id] = fp;
+        }
+    }
+
+  node_map const & new_nodes = new_roster.all_nodes();
+  for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
+    {
+      if (mask.includes(new_roster, i->first))
+        {
+          file_path fp;
+          new_roster.get_name(i->first, fp);
+          get_node_info(new_roster.get_node(i->first), inventory[fp].new_node);
+          new_paths[inventory[fp].new_node.id] = fp;
+        }
+    }
+
+  std::map<int, file_path>::iterator i;
+  for (i = old_paths.begin(); i != old_paths.end(); ++i)
+    {
+      if (new_paths.find(i->first) == new_paths.end())
+        {
+          // There is no new node available; this is either a drop or a
+          // rename to outside the current path restriction.
+
+          if (new_roster.has_node (i->first))
+            {
+              // record rename to outside restriction
+              new_roster.get_name (i->first, inventory[i->second].new_path);
+              continue;
+            }
+          else
+            // drop; no new path
+            continue;
+        }
+
+      file_path old_path(i->second);
+      file_path new_path(new_paths[i->first]);
+
+      // both paths are identical, no rename
+      if (old_path == new_path)
+        continue;
+
+      // record rename
+      inventory[new_path].old_path = old_path;
+      inventory[old_path].new_path = new_path;
+    }
+
+  // Now look for new_paths that are renames from outside the current
+  // restriction, and thus are not in old_paths.
+  // FIXME: only need this if restriction is not null
+  for (i = new_paths.begin(); i != new_paths.end(); ++i)
+    {
+      if (old_paths.find(i->first) == old_paths.end())
+        {
+          // There is no old node available; this is either added or a
+          // rename from outside the current path restriction.
+
+          if (old_roster.has_node (i->first))
+            {
+              // record rename from outside restriction
+              old_roster.get_name (i->first, inventory[i->second].old_path);
+            }
+          else
+            // added; no old path
+            continue;
+        }
+    }
+}
+
+struct inventory_itemizer : public tree_walker
+{
+  path_restriction const & mask;
+  inventory_map & inventory;
+  app_state & app;
+  inodeprint_map ipm;
+
+  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) :
+    mask(m), inventory(i), app(a)
+  {
+    if (app.work.in_inodeprints_mode())
+      {
+        data dat;
+        app.work.read_inodeprints(dat);
+        read_inodeprint_map(dat, ipm);
+      }
+  }
+  virtual bool visit_dir(file_path const & path);
+  virtual void visit_file(file_path const & path);
+};
+
+bool
+inventory_itemizer::visit_dir(file_path const & path)
+{
+  if(mask.includes(path))
+    {
+      inventory[path].fs_type = path::directory;
+    }
+  // always recurse into subdirectories
+  return true;
+}
+
+void
+inventory_itemizer::visit_file(file_path const & path)
+{
+  if (mask.includes(path))
+    {
+      inventory_item & item = inventory[path];
+
+      item.fs_type = path::file;
+
+      if (item.new_node.exists)
+        {
+          if (inodeprint_unchanged(ipm, path))
+            item.fs_ident = item.old_node.ident;
+          else
+            ident_existing_file(path, item.fs_ident);
         }
     }
 }
 
 static void
-inventory_post_state(inventory_map & inventory,
-                     set<file_path> const & paths,
-                     inventory_item::pstate post_state,
-                     size_t rename_id)
+inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
 {
-  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
+  inventory_itemizer itemizer(mask, inventory, app);
+  file_path const root;
+  // The constructor file_path() returns ""; the root directory. walk_tree
+  // does not visit that node, so set fs_type now, if it meets the
+  // restriction.
+  if (mask.includes(root))
     {
-      L(FL("%d %d %s") % inventory[*i].post_state % post_state % *i);
-      I(inventory[*i].post_state == inventory_item::UNCHANGED_PATH);
-      inventory[*i].post_state = post_state;
-      if (rename_id != 0)
+      inventory[root].fs_type = path::directory;
+    }
+  walk_tree(root, itemizer);
+}
+
+namespace
+{
+  namespace syms
+  {
+    symbol const path("path");
+    symbol const old_type("old_type");
+    symbol const new_type("new_type");
+    symbol const fs_type("fs_type");
+    symbol const old_path("old_path");
+    symbol const new_path("new_path");
+    symbol const status("status");
+    symbol const changes("changes");
+  }
+}
+
+static void
+inventory_print_states(app_state & app, file_path const & fs_path,
+                       inventory_item const & item, roster_t const & old_roster,
+                       roster_t const & new_roster, basic_io::stanza & st)
+{
+  std::vector<std::string> states;
+
+  // if both nodes exist, the only interesting case is
+  // when the node ids aren't equal (so we have different nodes
+  // with one and the same path in the old and the new roster)
+  if (item.old_node.exists &&
+      item.new_node.exists &&
+      item.old_node.id != item.new_node.id)
+    {
+        if (new_roster.has_node(item.old_node.id))
+          states.push_back("rename_source");
+        else
+          states.push_back("dropped");
+
+        if (old_roster.has_node(item.new_node.id))
+          states.push_back("rename_target");
+        else
+          states.push_back("added");
+    }
+  // this can be either a drop or a renamed item
+  else if (item.old_node.exists &&
+          !item.new_node.exists)
+    {
+      if (new_roster.has_node(item.old_node.id))
+        states.push_back("rename_source");
+      else
+        states.push_back("dropped");
+    }
+  // this can be either an add or a renamed item
+  else if (!item.old_node.exists &&
+            item.new_node.exists)
+    {
+      if (old_roster.has_node(item.new_node.id))
+        states.push_back("rename_target");
+      else
+        states.push_back("added");
+    }
+
+  // check the state of the file system item
+  if (item.fs_type == path::nonexistent)
+    {
+      if (item.new_node.exists)
+        states.push_back("missing");
+    }
+  else // exists on filesystem
+    {
+      if (!item.new_node.exists)
         {
-          I(inventory[*i].post_id == 0);
-          inventory[*i].post_id = rename_id;
+          if (app.lua.hook_ignore_file(fs_path))
+            states.push_back("ignored");
+          else
+            states.push_back("unknown");
         }
+      else if (item.new_node.type != item.fs_type)
+        states.push_back("invalid");
+      else
+        states.push_back("known");
     }
+
+  st.push_str_multi(syms::status, states);
 }
 
 static void
-inventory_node_state(inventory_map & inventory,
-                     set<file_path> const & paths,
-                     inventory_item::nstate node_state)
+inventory_print_changes(inventory_item const & item, roster_t const & old_roster,
+                        basic_io::stanza & st)
 {
-  for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); i++)
+  // old nodes do not have any recorded content changes and attributes,
+  // so we can't print anything for them here
+  if (!item.new_node.exists) return;
+
+  std::vector<string> changes;
+
+  // this is an existing item
+  if (old_roster.has_node(item.new_node.id))
     {
-      L(FL("%d %d %s") % inventory[*i].node_state
-        % node_state % *i);
-      I(inventory[*i].node_state == inventory_item::UNCHANGED_NODE);
-      inventory[*i].node_state = node_state;
+      // check if the content has changed - this makes only sense for files
+      // for which we can get the content id of both new and old nodes.
+      if (item.new_node.type == path::file && item.fs_type != path::nonexistent)
+        {
+          file_t old_file = downcast_to_file_t(old_roster.get_node(item.new_node.id));
+
+          switch (item.old_node.type)
+            {
+            case path::file:
+            case path::nonexistent:
+              // A file can be nonexistent due to mtn drop, user delete, mtn
+              // rename, or user rename. If it was drop or delete, it would
+              // not be in the new roster, and we would not get here. So
+              // it's a rename, and we can get the content. This lets us
+              // check if a user has edited a file after renaming it.
+              if (item.fs_ident != old_file->content)
+                changes.push_back("content");
+              break;
+
+            case path::directory:
+              break;
+            }
+        }
+
+      // now look for changed attributes
+      node_t old_node = old_roster.get_node(item.new_node.id);
+      if (old_node->attrs != item.new_node.attrs)
+        changes.push_back("attrs");
     }
-}
-
-static void
-inventory_renames(inventory_map & inventory,
-                  rename_map const & renames)
-{
-  set<file_path> old_name;
-  set<file_path> new_name;
-
-  static size_t rename_id = 1;
-
-  for (rename_map::const_iterator i = renames.begin();
-       i != renames.end(); i++)
+  else
     {
-      old_name.clear();
-      new_name.clear();
+      // FIXME: paranoia: shall we I(new_roster.has_node(item.new_node.id)) here?
 
-      old_name.insert(i->first);
-      new_name.insert(i->second);
+      // this is apparently a new item, if it is a file it gets at least
+      // the "content" marker and we also check for recorded attributes
+      if (item.new_node.type == path::file)
+        changes.push_back("content");
 
-      inventory_pre_state(inventory, old_name,
-                          inventory_item::RENAMED_PATH, rename_id);
-      inventory_post_state(inventory, new_name,
-                           inventory_item::RENAMED_PATH, rename_id);
-
-      rename_id++;
+      if (item.new_node.attrs.size() > 0)
+        changes.push_back("attrs");
     }
-}
 
-static void
-extract_added_file_paths(addition_map const & additions,
-                         set<file_path> & paths)
-{
-  for (addition_map::const_iterator i = additions.begin();
-       i != additions.end(); ++i)
-    {
-      paths.insert(i->first);
-    }
+  if (!changes.empty())
+    st.push_str_multi(syms::changes, changes);
 }
-
 
 // Name: inventory
-// Arguments: none
+// Arguments: [PATH]...
 // Added in: 1.0
+// Modified to basic_io in: 4.1
 
-// Purpose: Prints a summary of every file found in the workspace or its
-//   associated base manifest. Each unique path is listed on a line
-//   prefixed by three status characters and two numeric values used
-//   for identifying renames. The three status characters are as
-//   follows.
-//
-//   column 1 pre-state
-//         ' ' the path was unchanged in the pre-state
-//         'D' the path was deleted from the pre-state
-//         'R' the path was renamed from the pre-state name
-//   column 2 post-state
-//         ' ' the path was unchanged in the post-state
-//         'R' the path was renamed to the post-state name
-//         'A' the path was added to the post-state
-//   column 3 node-state
-//         ' ' the node is unchanged from the current roster
-//         'P' the node is patched to a new version
-//         'U' the node is unknown and not included in the roster
-//         'I' the node is ignored and not included in the roster
-//         'M' the node is missing but is included in the roster
-//
-// Output format: Each path is printed on its own line, prefixed by three
-//   status characters as described above. The status is followed by a
-//   single space and two numbers, each separated by a single space,
-//   used for identifying renames.  The numbers are followed by a
-//   single space and then the pathname, which includes the rest of
-//   the line. Directory paths are identified as ending with the "/"
-//   character, file paths do not end in this character.
+// Purpose: Prints a summary of every file or directory found in the
+//   workspace or its associated base manifest.
+
+// See monotone.texi for output format description.
 //
 // Error conditions: If no workspace book keeping _MTN directory is found,
 //   prints an error message to stderr, and exits with status 1.
 
-CMD_AUTOMATE(inventory, "",
+CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              N_("Prints a summary of files found in the workspace"),
              "",
-             options::opts::none)
+             options::opts::depth | options::opts::exclude)
 {
-  N(args.size() == 0,
-    F("no arguments needed"));
-
   app.require_workspace();
 
-  temp_node_id_source nis;
-  roster_t curr, base;
-  revision_t rev;
-  inventory_map inventory;
-  cset cs; MM(cs);
-  set<file_path> unchanged, changed, missing, unknown, ignored;
-
-  app.work.get_current_roster_shape(curr, nis);
-  app.work.get_work_rev(rev);
-  N(rev.edges.size() == 1,
+  parent_map parents;
+  app.work.get_parent_rosters(parents);
+  // for now, until we've figured out what the format could look like
+  // and what conceptional model we can implement
+  // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
+  N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
-  cs = edge_changes(rev.edges.begin());
-  app.db.get_roster(edge_old_revision(rev.edges.begin()), base);
+  roster_t new_roster, old_roster = parent_roster(parents.begin());
+  temp_node_id_source nis;
 
-  // The current roster (curr) has the complete set of registered nodes
-  // conveniently with unchanged sha1 hash values.
+  app.work.get_current_roster_shape(new_roster, nis);
 
-  // The cset (cs) has the list of drops/renames/adds that have
-  // occurred between the two rosters along with an empty list of
-  // deltas.  this list is empty only because the current roster used
-  // to generate the cset does not have current hash values as
-  // recorded on the filesystem (because get_..._shape was used to
-  // build it).
+  inventory_map inventory;
+  vector<file_path> includes = args_to_paths(args);
+  vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
-  set<file_path> nodes_added(cs.dirs_added);
-  extract_added_file_paths(cs.files_added, nodes_added);
+  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
+  inventory_rosters(old_roster, new_roster, nmask, inventory);
 
-  inventory_pre_state(inventory, cs.nodes_deleted,
-                      inventory_item::DROPPED_PATH, 0);
-  inventory_renames(inventory, cs.nodes_renamed);
-  inventory_post_state(inventory, nodes_added,
-                       inventory_item::ADDED_PATH, 0);
+  path_restriction pmask(includes, excludes, app.opts.depth, app);
+  inventory_filesystem(pmask, inventory, app);
 
-  path_restriction mask;
-  vector<file_path> roots;
-  roots.push_back(file_path());
+  basic_io::printer pr;
 
-  app.work.classify_roster_paths(curr, unchanged, changed, missing);
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
-
-  inventory_node_state(inventory, unchanged,
-                       inventory_item::UNCHANGED_NODE);
-
-  inventory_node_state(inventory, changed,
-                       inventory_item::PATCHED_NODE);
-
-  inventory_node_state(inventory, missing,
-                       inventory_item::MISSING_NODE);
-
-  inventory_node_state(inventory, unknown,
-                       inventory_item::UNKNOWN_NODE);
-
-  inventory_node_state(inventory, ignored,
-                       inventory_item::IGNORED_NODE);
-
-  // FIXME: do we want to report on attribute changes here?!?
-
-  for (inventory_map::const_iterator i = inventory.begin();
-       i != inventory.end(); ++i)
+  for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end();
+       ++i)
     {
-      string path_suffix;
+      basic_io::stanza st;
+      inventory_item const & item = i->second;
 
-      // ensure that directory nodes always get a trailing slash even
-      // if they're missing from the workspace or have been deleted
-      // but skip the root node which do not get this trailing slash appended
-      if (curr.has_node(i->first))
+      st.push_file_pair(syms::path, i->first);
+
+      if (item.old_node.exists)
         {
-          node_t n = curr.get_node(i->first);
-          if (is_root_dir_t(n)) continue;
-          if (is_dir_t(n)) path_suffix = "/";
-        }
-      else if (base.has_node(i->first))
-        {
-          node_t n = base.get_node(i->first);
-          if (is_root_dir_t(n)) continue;
-          if (is_dir_t(n)) path_suffix = "/";
-        }
-      else if (directory_exists(i->first))
-        {
-          path_suffix = "/";
+          switch (item.old_node.type)
+            {
+            case path::file: st.push_str_pair(syms::old_type, "file"); break;
+            case path::directory: st.push_str_pair(syms::old_type, "directory"); break;
+            case path::nonexistent: I(false);
+            }
+
+          if (item.new_path.as_internal().length() > 0)
+            // new_path is only present if different from either inventory map path or old_path
+            st.push_file_pair(syms::new_path, item.new_path);
         }
 
-      switch (i->second.pre_state)
+      if (item.new_node.exists)
         {
-        case inventory_item::UNCHANGED_PATH: output << ' '; break;
-        case inventory_item::DROPPED_PATH: output << 'D'; break;
-        case inventory_item::RENAMED_PATH: output << 'R'; break;
-        default: I(false); // invalid pre_state
+          switch (item.new_node.type)
+            {
+            case path::file: st.push_str_pair(syms::new_type, "file"); break;
+            case path::directory: st.push_str_pair(syms::new_type, "directory"); break;
+            case path::nonexistent: I(false);
+            }
+
+          if (item.old_path.as_internal().length() > 0)
+            st.push_file_pair(syms::old_path, item.old_path);
         }
 
-      switch (i->second.post_state)
+      switch (item.fs_type)
         {
-        case inventory_item::UNCHANGED_PATH: output << ' '; break;
-        case inventory_item::RENAMED_PATH: output << 'R'; break;
-        case inventory_item::ADDED_PATH:   output << 'A'; break;
-        default: I(false); // invalid post_state
+        case path::file: st.push_str_pair(syms::fs_type, "file"); break;
+        case path::directory: st.push_str_pair(syms::fs_type, "directory"); break;
+        case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      switch (i->second.node_state)
-        {
-        case inventory_item::UNCHANGED_NODE:
-          if (i->second.post_state == inventory_item::ADDED_PATH)
-            output << 'P';
-          else
-            output << ' ';
-          break;
-        case inventory_item::PATCHED_NODE: output << 'P'; break;
-        case inventory_item::UNKNOWN_NODE: output << 'U'; break;
-        case inventory_item::IGNORED_NODE: output << 'I'; break;
-        case inventory_item::MISSING_NODE: output << 'M'; break;
-        default: I(false); // invalid node_state
-        }
+      inventory_print_states(app, i->first, item, old_roster, new_roster, st);
+      inventory_print_changes(item, old_roster, st);
 
-      output << ' ' << i->second.pre_id
-             << ' ' << i->second.post_id
-             << ' ' << i->first;
-
-      // FIXME: it's possible that a directory was deleted and a file
-      // was added in it's place (or vice-versa) so we need something
-      // like pre/post node type indicators rather than a simple path
-      // suffix! ugh.
-
-      output << path_suffix;
-
-      output << '\n';
+      pr.print_stanza(st);
     }
+
+  output.write(pr.buf.data(), pr.buf.size());
 }
 
 // Name: get_revision
@@ -1295,18 +1444,17 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
 
   globish incl("*");
   bool filtering(false);
-  
+
   if (args.size() == 1) {
     incl = globish(idx(args, 0)());
     filtering = true;
   }
 
-  globish_matcher match(incl, globish());
   basic_io::printer prt;
   basic_io::stanza stz;
   stz.push_str_pair(symbol("format_version"), "1");
   prt.print_stanza(stz);
-  
+
   set<tag_t> tags;
   app.get_project().get_tags(tags);
 
@@ -1315,7 +1463,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
     {
       set<branch_name> branches;
       app.get_project().get_revision_branches(tag->ident, branches);
-    
+
       bool show(!filtering);
       vector<string> branch_names;
 
@@ -1324,8 +1472,8 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
         {
           if (app.lua.hook_ignore_branch(*branch))
             continue;
-      
-          if (!show && match((*branch)()))
+
+          if (!show && incl.matches((*branch)()))
             show = true;
           branch_names.push_back((*branch)());
         }
@@ -1404,7 +1552,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   keypair kp;
   P(F("generating key-pair '%s'") % ident);
   generate_key_pair(kp, passphrase);
-  P(F("storing key-pair '%s' in %s/") 
+  P(F("storing key-pair '%s' in %s/")
     % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 
@@ -1461,7 +1609,7 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
   string opt = args[0]();
 
   if (opt == "database")
-    output << database_option << '\n'; 
+    output << database_option << '\n';
   else if (opt == "branch")
     output << branch_option << '\n';
   else if (opt == "key")
@@ -1477,12 +1625,12 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
 //   1: a revision ID
 //   2: a file name
 // Added in: 3.1
-// Purpose: Returns a list of revision IDs in which the content 
-// was most recently changed, relative to the revision ID specified 
-// in argument 1. This equates to a content mark following 
+// Purpose: Returns a list of revision IDs in which the content
+// was most recently changed, relative to the revision ID specified
+// in argument 1. This equates to a content mark following
 // the *-merge algorithm.
 //
-// Output format: Zero or more basic_io stanzas, each specifying a 
+// Output format: Zero or more basic_io stanzas, each specifying a
 // revision ID for which a content mark is set.
 //
 //   Each stanza has exactly one entry:
@@ -1536,15 +1684,15 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
 //   2: a file name (in the source revision)
 //   3: a target revision ID
 // Added in: 3.1
-// Purpose: Given a the file name in the source revision, a filename 
-// will if possible be returned naming the file in the target revision. 
-// This allows the same file to be matched between revisions, accounting 
+// Purpose: Given a the file name in the source revision, a filename
+// will if possible be returned naming the file in the target revision.
+// This allows the same file to be matched between revisions, accounting
 // for renames and other changes.
 //
-// Output format: Zero or one basic_io stanzas. Zero stanzas will be 
-// output if the file does not exist within the target revision; this is 
+// Output format: Zero or one basic_io stanzas. Zero stanzas will be
+// output if the file does not exist within the target revision; this is
 // not considered an error.
-// If the file does exist in the target revision, a single stanza with the 
+// If the file does exist in the target revision, a single stanza with the
 // following details is output.
 //
 //   The stanza has exactly one entry:
@@ -1619,7 +1767,7 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
     {
       file_data dat(idx(args, 0)());
       calculate_ident(dat, sha1sum);
-      
+
       app.db.put_file(sha1sum, dat);
     }
   else if (args.size() == 2)
@@ -1755,7 +1903,7 @@ CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
 {
   N(args.size() == 3,
     F("wrong argument count"));
-  
+
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
   utf8 value = idx(args, 2);

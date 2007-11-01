@@ -15,7 +15,7 @@
 #include <list>
 #include <set>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <string.h>
 
@@ -46,6 +46,7 @@
 #include "roster_delta.hh"
 #include "rev_height.hh"
 #include "vocab_hash.hh"
+#include "globish.hh"
 
 // defined in schema.c, generated from schema.sql:
 extern char const schema_constant[];
@@ -770,13 +771,13 @@ database::fetch(results & res,
   I(params == int(query.args.size()));
 
   // profiling finds this logging to be quite expensive
-  if (global_sanity.debug)
+  if (global_sanity.debug_p())
     L(FL("binding %d parameters for %s") % params % query.sql_cmd);
 
   for (int param = 1; param <= params; param++)
     {
       // profiling finds this logging to be quite expensive
-      if (global_sanity.debug)
+      if (global_sanity.debug_p())
         {
           string log;
           switch (query.args[param-1].type)
@@ -1900,6 +1901,9 @@ database::get_revision(revision_id const & id,
   dat = revision_data(rdat);
 }
 
+typedef std::map<revision_id, rev_height> height_map;
+static height_map height_cache;
+
 void
 database::get_rev_height(revision_id const & id,
                          rev_height & height)
@@ -1910,14 +1914,24 @@ database::get_rev_height(revision_id const & id,
       return;
     }
 
-  results res;
-  fetch(res, one_col, one_row,
-        query("SELECT height FROM heights WHERE revision = ?")
-        % text(id.inner()()));
+  height_map::const_iterator i = height_cache.find(id);
+  if (i == height_cache.end())
+    {
+      results res;
+      fetch(res, one_col, one_row,
+            query("SELECT height FROM heights WHERE revision = ?")
+            % text(id.inner()()));
 
-  I(res.size() == 1);
-  
-  height = rev_height(res[0][0]);
+      I(res.size() == 1);
+
+      height = rev_height(res[0][0]);
+      height_cache.insert(make_pair(id, height));
+    }
+  else
+    {
+      height = i->second;
+    }
+
   I(height.valid());
 }
 
@@ -1928,6 +1942,8 @@ database::put_rev_height(revision_id const & id,
   I(!null_id(id));
   I(revision_exists(id));
   I(height.valid());
+  
+  height_cache.erase(id);
   
   execute(query("INSERT INTO heights VALUES(?, ?)")
           % text(id.inner()())
@@ -2073,9 +2089,19 @@ database::put_revision(revision_id const & new_id,
     }
 
   // Phase 3: Construct and write the roster (which also checks the manifest
-  // id as it goes)
+  // id as it goes), but only if the roster does not already exist in the db
+  // (i.e. because it was left over by a kill_rev_locally)
+  // FIXME: there is no knowledge yet on speed implications for commands which
+  // put a lot of revisions in a row (i.e. tailor or cvs_import)!
 
-  put_roster_for_revision(new_id, rev);
+  if (!roster_version_exists(new_id))
+    {
+      put_roster_for_revision(new_id, rev);
+    }
+  else
+    {
+      L(FL("roster for revision '%s' already exists in db") % new_id);
+    }
 
   // Phase 4: rewrite any files that need deltas added
 
@@ -2242,22 +2268,29 @@ database::delete_tag_named(cert_value const & tag)
 // crypto key management
 
 void
-database::get_key_ids(string const & pattern,
+database::get_key_ids(vector<rsa_keypair_id> & pubkeys)
+{
+  pubkeys.clear();
+  results res;
+
+  fetch(res, one_col, any_rows, query("SELECT id FROM public_keys"));
+
+  for (size_t i = 0; i < res.size(); ++i)
+    pubkeys.push_back(rsa_keypair_id(res[i][0]));
+}
+
+void
+database::get_key_ids(globish const & pattern,
                       vector<rsa_keypair_id> & pubkeys)
 {
   pubkeys.clear();
   results res;
 
-  if (pattern != "")
-    fetch(res, one_col, any_rows,
-          query("SELECT id FROM public_keys WHERE id GLOB ?")
-          % text(pattern));
-  else
-    fetch(res, one_col, any_rows,
-          query("SELECT id FROM public_keys"));
+  fetch(res, one_col, any_rows, query("SELECT id FROM public_keys"));
 
   for (size_t i = 0; i < res.size(); ++i)
-    pubkeys.push_back(rsa_keypair_id(res[i][0]));
+    if (pattern.matches(res[i][0]))
+      pubkeys.push_back(rsa_keypair_id(res[i][0]));
 }
 
 void
@@ -2841,6 +2874,7 @@ static void selector_to_certname(selector_type ty,
     case selectors::sel_ident:
     case selectors::sel_cert:
     case selectors::sel_unknown:
+    case selectors::sel_parent:
       I(false); // don't do this.
       break;
     }
@@ -2880,6 +2914,11 @@ void database::complete(selector_type ty,
             {
               lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
               lim % text(i->second + "*");
+            }
+          else if (i->first == selectors::sel_parent)
+            {
+              lim.sql_cmd += "SELECT parent AS id FROM revision_ancestry WHERE child GLOB ?";
+              lim % text(i->second + "*"); 
             }
           else if (i->first == selectors::sel_cert)
             {
@@ -2926,6 +2965,8 @@ void database::complete(selector_type ty,
                 {
                   __app->get_project().get_branch_list(globish(i->second), branch_names);
                 }
+
+                L(FL("found %d matching branches") % branch_names.size());
 
               // for each branch name, get the branch heads
               set<revision_id> heads;
@@ -2998,7 +3039,7 @@ void database::complete(selector_type ty,
   // will complete either some idents, or cert values, or "unknown"
   // which generally means "author, tag or branch"
 
-  if (ty == selectors::sel_ident)
+  if (ty == selectors::sel_ident || ty == selectors::sel_parent)
     {
       lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
     }
@@ -3183,16 +3224,17 @@ database::get_branches(vector<string> & names)
 }
 
 outdated_indicator
-database::get_branches(string const & glob,
+database::get_branches(globish const & glob,
                        vector<string> & names)
 {
     results res;
-    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ? AND CAST(value AS TEXT) glob ?");
+    query q("SELECT DISTINCT value FROM revision_certs WHERE name = ?");
     string cert_name = "branch";
-    fetch(res, one_col, any_rows, q % text(cert_name) % text(glob));
+    fetch(res, one_col, any_rows, q % text(cert_name));
     for (size_t i = 0; i < res.size(); ++i)
       {
-        names.push_back(res[i][0]);
+        if (glob.matches(res[i][0]))
+          names.push_back(res[i][0]);
       }
     return cert_stamper.get_indicator();
 }

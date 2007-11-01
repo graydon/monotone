@@ -1,3 +1,100 @@
+Fri Oct 25 22:35:33 UTC 2007
+
+        0.37 release.
+
+        Changes
+
+        - mtn db kill_rev_locally now checks for an existing workspace
+          before the revision is killed and tries to apply the changes
+          of this particular revision back to the workspace to allow
+          easy re-committing afterwards
+
+        - the "--brief" switch for mtn annotate has been renamed to
+          "--revs-only" for clarity
+
+        - mtn help now lists the commands (and their aliases) available
+          within a group, so its easier to get an overview which commands
+          are available at all
+
+        - the "MTN_MERGE=diffutils" merger (provided by std_hooks.lua)
+          was improved. It now accepts a MTN_MERGE_DIFFUTILS environment
+          variable which can be used to control its behaviour
+          through comma-separated "key[=value]" entries. Currently
+          supported entries are "partial" for doing a partial
+          batch/non-modal 3-way merge conflict "resolution" which uses
+          embedded content conflict markers and "diff3opts=[...]" and
+          "sdiffopts=[...]" for passing arbitrary options to the used
+          "diff3" and "sdiff" tools. When used in combination with "mtn
+          merge_into_workspace" this way one especially can achieve a
+          CVS/SVN style non-modal workspace-based merging.
+
+        - There is a new revision selector: "p:REV" selects the
+          parent(s) of revision REV.  For example, if a revision has
+          one parent,
+
+             mtn diff -r p:REV -r REV
+
+          will show the changes made in that revision.
+
+        - Monotone now uses the Perl-Compatible Regular Expression
+          (PCRE) library for all regular expressions, instead of the
+          boost::regex library.  This means that external Boost
+          libraries are no longer required to build or use Monotone.
+          If building from source, you will still need the Boost headers
+          available somewhere.  See INSTALL for details.
+
+          PCRE's syntax for regular expressions is a superset of
+          boost::regex's syntax; it is unlikely that any existing
+          .mtn-ignore files or other user uses of regexps will break.
+          The manual now contains detailed documentation of the regexp
+          syntax, borrowed from PCRE itself.
+
+        - the format of "mtn automate inventory" has changed to basic_io.
+          This fixes a couple of corner cases where the old format
+          returned wrong information and introduces new capabilities like
+          restricted output, recognized attribute changes, and more.
+          For a complete overview on the new format, please take a look
+          in the appropriate manual section.
+
+        Bugs fixed
+
+        - mtn automate heads called without a branch argument now properly
+          returns the head revisions of the workspace's branch if called
+          over mtn automate stdio
+
+        - mtn commit no longer crashes if it creates a revision whose
+          roster already exists, i.e. was left behind by the command
+          `mtn db kill_rev_locally REV` (savannah #18990)
+
+        Documentation changes
+
+        - the documentation of the "--revs-only" (formerly "--brief")
+          switch for the annotate command didn't match its actual
+          behavior, this has been fixed
+
+        - documentation for the "ssh_agent_add" command was missing
+          and has been added
+
+        Other
+
+        - contrib/usher.cc has been removed. Please use the
+          net.venge.monotone.contrib.usher branch instead.
+
+        Internal
+
+        - Update SQLite to 3.4.1.
+
+        - Update Lua to 5.1.2 plus latest bug fixes.
+
+        - Update Botan to 1.5.10.
+
+        - Internal use of regular expressions has been almost eliminated.
+          (Regular expressions are still used for .mtn-ignore and the
+          --show-encloser feature of mtn diff, and are still available to
+          Lua hooks.)
+
+
+
 Fri Aug  3 06:08:36 UTC 2007
 
         0.36 release.
@@ -260,11 +357,11 @@ Wed Feb 28 22:02:43 UTC 2007
 
         - update will detect directories with unversioned files before
           attempting to drop them and will refuse to run rather than
-          corrupting the workspace. such unversioned files must be 
+          corrupting the workspace. such unversioned files must be
           removed manually.
 
-        - the character set and line separator conversion hooks 
-          (get_system_linesep, get_charset_conv and get_linesep_conv) 
+        - the character set and line separator conversion hooks
+          (get_system_linesep, get_charset_conv and get_linesep_conv)
           have been removed. Similar functionality (probably based on
           file type attributes) is planned and will be added in a future
           release.
@@ -338,7 +435,7 @@ Wed Dec 27 09:57:48 UTC 2006
         - "mtn serve" no longer takes patterns on the command line.
           Use the permissions hooks instead.
 
-        - the name of the option that denoted the revision from which 
+        - the name of the option that denoted the revision from which
           "mtn log" should start logging was renamed from "--revision"
           to "--from"
 
@@ -374,7 +471,7 @@ Wed Dec 27 09:57:48 UTC 2006
 
         - "mtn automate content_diff"
 
-        - "mtn automate get_file_of" (same as get_file, but expects 
+        - "mtn automate get_file_of" (same as get_file, but expects
           a file path and optionally a revision)
 
         - "mtn import" command
@@ -521,7 +618,7 @@ Sun Sep 17 12:27:08 PDT 2006
           faster, but also 'mtn commit', 'mtn update', and other
           commands, which were spending most of their time in this
           code.
-        
+
         - The format used in the database to store the roster cache
           was rewritten.  This makes initial pull approximately twice
           as fast, and somewhat improves the speed of restricted log,
@@ -560,7 +657,7 @@ Sun Sep 17 12:27:08 PDT 2006
 
         - The output of 'mtn annotate' and 'mtn annotate --brief' has
           been switched.  The more human-readable output is now the
-          default.        
+          default.
 
         - 'mtn pluck' now gives an error message if the requested
           operation would have no effect.
@@ -671,7 +768,7 @@ Sun Aug 20 15:58:08 PDT 2006
 
         - If, during an update, two files both had conflicts, which,
           when resolved, resulting the two files becoming identical, the
-          update would error out.  This has been fixed.        
+          update would error out.  This has been fixed.
 
         - If _MTN/log exists and does not end in a newline, we now add a
           newline before using the log message.  This removes a problem
@@ -797,7 +894,7 @@ Sat Jun 17 14:43:12 PDT 2006
             for more details.
 
         Minor new features:
-        
+
         - Selectors now support escaping, e.g., b:foo\/bar can be used
           to refer to a branch with name "foo/bar" (normally / is a
           metacharacter that separates multiple selectors).
@@ -814,8 +911,8 @@ Sat Jun 17 14:43:12 PDT 2006
         - Bug in select() loop fixed, server should no longer pause in
           processing other clients while busy with one, but multiplex
           fairly.
-        - The database has a new write buffer which gives significant 
-          speed improvements in initial pulls by cancelling redundant 
+        - The database has a new write buffer which gives significant
+          speed improvements in initial pulls by cancelling redundant
           database writes.
         - There's been a fair bit of performance tuning all around.
 
@@ -871,7 +968,7 @@ Sat Apr  8 19:33:35 PDT 2006
         individually.
 
         Major changes since 0.25:
-        
+
         - The most user-visible change is that the default name of the
           monotone binary has changed to 'mtn'.  So, for example, you
           would now run 'mtn checkout', 'mtn diff', 'mtn commit',
@@ -904,7 +1001,7 @@ Sat Apr  8 19:33:35 PDT 2006
           It's mostly useful to know that when someone says something
           about 'roster-enabled monotone' or the like, they're
           referring to this body of new code.
-          
+
           This change has a number of consequences:
           - The textual format for revisions and manifests changed.
             There is no conceptual change, they still contain the same
@@ -1023,7 +1120,7 @@ Sat Apr  8 19:33:35 PDT 2006
 
         - Translations updated, and 3 new translations added (de, it,
           sv).
-          
+
         Reliability considerations:
 
         - This new codebase has received much less testing under real
@@ -1056,7 +1153,7 @@ Wed Mar 29 05:20:10 PST 2006
         chance!
 
         Major changes since 0.26pre2:
-          
+
         - The name of the monotone binary has changed to 'mtn'.
           - Similarly, the name of the bookkeeping directory in
             workspaces has changed from 'MT' to '_MTN' (if you have an
@@ -1117,7 +1214,7 @@ Wed Mar 29 05:20:10 PST 2006
         - Monotone's "dumb server" support (repo distribution over
           HTTP/FTP/SFTP etc.) has been ported to 0.26, a first command
           line version written, etc.
-        - The 'usher' netsync proxy used for hosting many databases on 
+        - The 'usher' netsync proxy used for hosting many databases on
           a single machine has received significant cleanups, and the
           'webhost' project to provide a simple interface to shared
           monotone hosting providers has received even more work.
@@ -1221,7 +1318,7 @@ Sun Jan  8 01:08:56 PST 2006
 
         Let's say that again in caps: THIS CODE IS PROBABLY BUGGY, DO
         NOT USE IT IN PRODUCTION UNLESS YOU WANT TO BE A DAREDEVIL.
-        
+
         However, testing of this version with real databases is a good
         idea, and we'd very much appreciate hearing about your
         experiences.
@@ -1843,10 +1940,10 @@ Sun Nov  7 14:06:03 EST 2004
 
 	0.15 release. major changes.
 
-	- overhauled the internal representation of changes. see 
+	- overhauled the internal representation of changes. see
 	  README.changesets for details
-	- fixed bugs in merkle trie synchronization code 
-	- fixed echoing and progress UI bugs 
+	- fixed bugs in merkle trie synchronization code
+	- fixed echoing and progress UI bugs
 	  (helps when using in emacs)
 	- upgraded cryptopp to 5.2.1
 	- fixed bug 8715, diff hunk coordinate reporting
@@ -1869,7 +1966,7 @@ Sat Jul 31 15:38:02 EDT 2004
 	- several critical rename-merging bugs fixed
 		- renames vs. deletes
 		- renames vs. deltas
-		- parallel renames 
+		- parallel renames
 	- bugs fixed from savannah bug tracker:
 		- 9223 argv overflow
 		- 9075 empty commits
@@ -1889,7 +1986,7 @@ Thu May 20 22:26:27 EDT 2004
 
 	- remove (file|manifest) in several commands
 	- "list missing" command
-	- fixed bugs: 
+	- fixed bugs:
 		- (critical) empty data netsync crash
 		- mkstemp, platform lua
 		- runtime error reporting chatter
@@ -1916,7 +2013,7 @@ Sun May  2 21:03:38 EDT 2004
 
 Sun Mar 28 12:41:07 EST 2004
 
-	0.11 release. bug fixes and optimizations. 
+	0.11 release. bug fixes and optimizations.
 
 	NOTE: this release expands the sqlite page size. YOU WILL NEED
 	to dump existing databases before upgrading and reload it
@@ -1932,23 +2029,23 @@ Sun Mar 28 12:41:07 EST 2004
 
 	- fixed bugs:
 		- aliasing bug on debian (-O2 now works)
-		- netsync ppc portability / checksums 
+		- netsync ppc portability / checksums
 		- sha1 whitespace bug
 		- netsync broken formatter
 		- broken symlink handling
-		- merger execution pessimism	
+		- merger execution pessimism
 		- LCA bitset calculation pessimism
 		- static object initialization order
 		- CVS single-version import
 		- CVS first-version changelog
 		- CVS branch inference and topology
-	- cryptographic SSE2 paths enabled on linux/x86. 
-	- builds against boost 1.31.0. 
+	- cryptographic SSE2 paths enabled on linux/x86.
+	- builds against boost 1.31.0.
 	- removed boost::socket
-	- removed documentation about old networking system. 
-	- "officially" deprecated old networking system. 
+	- removed documentation about old networking system.
+	- "officially" deprecated old networking system.
 	- enable building with system-local libraries.
-	- upgraded bundled sqlite. 
+	- upgraded bundled sqlite.
 	- changed sqlite page size from 1k -> 8k
 
 Mon Mar  1 00:32:07 EST 2004
@@ -2025,7 +2122,7 @@ Mon Aug 25 18:00:37 EDT 2003
 	cleaned up command line processing. expanded testsuite. improved
 	user-friendly error reporting.
 
-Fri Aug  8 10:20:01 EDT 2003 
+Fri Aug  8 10:20:01 EDT 2003
 
 	0.2 release. database compatibility broken. dropped many
 	library dependencies. hand-reimplemented xdelta, parts of
@@ -2035,6 +2132,6 @@ Fri Aug  8 10:20:01 EDT 2003
 	scalability tests against real world CVS archives show
 	performance gap with CVS closing, but still present.
 
-Sun Apr 6 20:20:42 EDT 2003 
+Sun Apr 6 20:20:42 EDT 2003
 
 	initial release

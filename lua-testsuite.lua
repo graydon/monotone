@@ -1,86 +1,14 @@
 #!./tester
 
--- We have a bunch of tests that depend on being able to create files or
--- directories that we cannot read or write (mostly to test error handling
--- behavior).
-require_not_root()
-
-ostype = string.sub(get_ostype(), 1, string.find(get_ostype(), " ")-1)
-
--- maybe this should go in tester.lua instead?
-function getpathof(exe, ext)
-  local function gotit(now)
-    if test.log == nil then
-      logfile:write(exe, " found at ", now, "\n")
-    else
-      test.log:write(exe, " found at ", now, "\n")
-    end
-    return now
-  end
-  local path = os.getenv("PATH")
-  local char
-  if ostype == "Windows" then
-    char = ';'
-  else
-    char = ':'
-  end
-  if ostype == "Windows" then
-    if ext == nil then ext = ".exe" end
-  else
-    if ext == nil then ext = "" end
-  end
-  local now = initial_dir.."/"..exe..ext
-  if exists(now) then return gotit(now) end
-  for x in string.gmatch(path, "[^"..char.."]*"..char) do
-    local dir = string.sub(x, 0, -2)
-    if string.find(dir, "[\\/]$") then
-      dir = string.sub(dir, 0, -2)
-    end
-    local now = dir.."/"..exe..ext
-    if exists(now) then return gotit(now) end
-  end
-  if test.log == nil then
-    logfile:write("Cannot find ", exe, "\n")
-  else
-    test.log:write("Cannot find ", exe, "\n")
-  end
-  return nil
-end
-
-monotone_path = getpathof("mtn")
-if monotone_path == nil then monotone_path = "mtn" end
-set_env("mtn", monotone_path)
-
-writefile_q("in", nil)
-prepare_redirect("in", "out", "err")
-execute(monotone_path, "--full-version")
-logfile:write(readfile_q("out"))
-unlogged_remove("in")
-unlogged_remove("out")
-unlogged_remove("err")
-
--- NLS nuisances.
-for _,name in pairs({  "LANG",
-                       "LANGUAGE",
-                       "LC_ADDRESS",
-                       "LC_ALL",
-                       "LC_COLLATE",
-                       "LC_CTYPE",
-                       "LC_IDENTIFICATION",
-                       "LC_MEASUREMENT",
-                       "LC_MESSAGES",
-                       "LC_MONETARY",
-                       "LC_NAME",
-                       "LC_NUMERIC",
-                       "LC_PAPER",
-                       "LC_TELEPHONE",
-                       "LC_TIME"  }) do
-   set_env(name,"C")
-end
-unset_env("SSH_AUTH_SOCK")
-       
+monotone_path = nil
 
 function safe_mtn(...)
+  if monotone_path == nil then
+    monotone_path = os.getenv("mtn")
+    if monotone_path == nil then
+      err("'mtn' environment variable not set")
+    end
+  end
   return {monotone_path, "--norc", "--root=" .. test.root,
           "--confdir="..test.root, unpack(arg)}
 end
@@ -186,6 +114,12 @@ function addfile(filename, contents, mt)
   if contents ~= nil then writefile(filename, contents) end
   if mt == nil then mt = mtn end
   check(mt("add", filename), 0, false, false)
+end
+
+function adddir(dirname, mt)
+  if not isdir(dirname) then mkdir(dirname) end
+  if mt == nil then mt = mtn end
+  check(mt("add", dirname), 0, false, false)
 end
 
 function revert_to(rev, branch, mt)
@@ -364,15 +298,47 @@ end
 ------------------------------------------------------------------------
 testdir = srcdir.."/tests"
 
--- any directory in testdir with a __driver__.lua inside is a test case
--- perhaps this should be in tester.lua?
+function prepare_to_run_tests (P)
+   -- We have a bunch of tests that depend on being able to create
+   -- files or directories that we cannot read or write (mostly to
+   -- test error handling behavior).
+   require_not_root()
 
-for _,candidate in ipairs(read_directory(testdir)) do
-   -- n.b. it is not necessary to throw out directories before doing
-   -- this check, because exists(nondirectory/__driver__.lua) will
-   -- never be true.
-   if exists(testdir .. "/" .. candidate .. "/__driver__.lua") then
-      table.insert(tests, candidate)
+   -- Several tests require the ability to create temporary
+   -- directories outside the workspace.
+   local d = make_temp_dir()
+   if d == nil then
+      P("This test suite requires the ability to create files\n"..
+        "in the system-wide temporary directory.  Please correct the\n"..
+        "access permissions on this directory and try again.\n")
+      return 1
    end
+   unlogged_remove(d)
+
+   monotone_path = getpathof("mtn")
+   if monotone_path == nil then monotone_path = "mtn" end
+   set_env("mtn", monotone_path)
+
+   writefile_q("in", nil)
+   prepare_redirect("in", "out", "err")
+
+   local status = execute(monotone_path, "version", "--full")
+   local out = readfile_q("out")
+   local err = readfile_q("err")
+
+   if status == 0 and err == "" and out ~= "" then
+      logfile:write(out)
+   else
+      P(string.format("mtn version --full: exit %d\nstdout:\n", status))
+      P(out)
+      P("stderr:\n")
+      P(err)
+
+      if status == 0 then status = 1 end
+   end
+
+   unlogged_remove("in")
+   unlogged_remove("out")
+   unlogged_remove("err")
+   return status
 end
-table.sort(tests)

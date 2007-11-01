@@ -12,11 +12,10 @@
 #include <algorithm>
 #include <iterator>
 #include <map>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/regex.hpp>
 #include "diff_patch.hh"
 #include "interner.hh"
 #include "lcs.hh"
@@ -30,6 +29,7 @@
 #include "constants.hh"
 #include "file_io.hh"
 #include "app_state.hh"
+#include "pcrewrap.hh"
 
 using std::make_pair;
 using std::map;
@@ -235,6 +235,11 @@ void normalize_extents(vector<extent> & a_b_map,
 
             swap(a_b_map.at(j-1).len, a_b_map.at(j).len);
             swap(a_b_map.at(j-1).type, a_b_map.at(j).type);
+
+            // Adjust position of the later, preserved extent. It should
+            // better point to the second 'a' in the above example.
+            a_b_map.at(j).pos = a_b_map.at(j-1).pos + a_b_map.at(j-1).len;
+
             --j;
           }
       }
@@ -784,7 +789,7 @@ struct hunk_consumer
   vector<string> const & b;
   size_t ctx;
   ostream & ost;
-  boost::scoped_ptr<boost::regex const> encloser_re;
+  boost::scoped_ptr<pcre::regex const> encloser_re;
   size_t a_begin, b_begin, a_len, b_len;
   long skew;
 
@@ -807,7 +812,7 @@ struct hunk_consumer
       encloser_last_match(a.rend()), encloser_last_search(a.rend())
   {
     if (encloser_pattern != "")
-      encloser_re.reset(new boost::regex(encloser_pattern));
+      encloser_re.reset(new pcre::regex(encloser_pattern));
   }
 };
 
@@ -837,7 +842,7 @@ hunk_consumer::find_encloser(size_t pos, string & encloser)
 
   // i is a reverse_iterator, so this loop goes backward through the vector.
   for (; i != last; i++)
-    if (boost::regex_search (*i, *encloser_re))
+    if (encloser_re->match(*i))
       {
         encloser_last_match = i;
         break;

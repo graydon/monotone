@@ -2,11 +2,12 @@
 #define __KEY_STORE_H__
 
 #include <map>
-#include <vector>
+#include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
 
 class app_state;
+class globish;
 
 class key_store
 {
@@ -29,10 +30,9 @@ public:
   void ensure_in_database(rsa_keypair_id const & ident);
   bool try_ensure_in_db(hexenc<id> const & hash);
 
-  void get_key_ids(std::string const & pattern,
+  void get_key_ids(std::vector<rsa_keypair_id> & priv);
+  void get_key_ids(globish const & pattern,
                    std::vector<rsa_keypair_id> & priv);
-
-  void get_keys(std::vector<rsa_keypair_id> & priv);
 
   bool key_pair_exists(rsa_keypair_id const & ident);
 

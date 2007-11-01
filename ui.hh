@@ -14,13 +14,8 @@
 // interface. the global user_interface object 'ui' owns cerr, so
 // no writing to it directly!
 
-#include <map>
-#include <set>
-
-#include "paths.hh"
-#include "sanity.hh"
-
-struct user_interface;
+struct i18n_format;
+class system_path;
 
 struct ticker
 {
@@ -43,45 +38,9 @@ struct ticker
   ~ticker();
 };
 
-struct tick_writer
-{
-public:
-  tick_writer() {}
-  virtual ~tick_writer() {}
-  virtual void write_ticks() = 0;
-  virtual void clear_line() = 0;
-};
-
-struct tick_write_count : virtual public tick_writer
-{
-public:
-  tick_write_count();
-  ~tick_write_count();
-  void write_ticks();
-  void clear_line();
-private:
-  std::vector<size_t> last_tick_widths;
-  size_t last_tick_len;
-};
-
-struct tick_write_dot : virtual public tick_writer
-{
-public:
-  tick_write_dot();
-  ~tick_write_dot();
-  void write_ticks();
-  void clear_line();
-private:
-  std::map<std::string,size_t> last_ticks;
-  unsigned int chars_on_line;
-};
-
-struct tick_write_nothing : virtual public tick_writer
-{
-public:
-  void write_ticks() {}
-  void clear_line() {}
-};
+struct tick_writer;
+struct tick_write_count;
+struct tick_write_dot;
 
 struct user_interface
 {
@@ -99,7 +58,9 @@ public:
   void fatal_exception(std::exception const & ex);
   void fatal_exception();
   void set_tick_trailer(std::string const & trailer);
-  void set_tick_writer(tick_writer * t_writer);
+  void set_tick_write_dot();
+  void set_tick_write_count();
+  void set_tick_write_nothing();
   void ensure_clean_line();
   void redirect_log_to(system_path const & filename);
 
@@ -107,19 +68,15 @@ public:
   std::string prog_name;
 
 private:
-  std::set<std::string> issued_warnings;
-
-  bool some_tick_is_dirty;    // At least one tick needs being printed
-  bool last_write_was_a_tick;
-  std::map<std::string,ticker *> tickers;
-  tick_writer * t_writer;
   void finish_ticking();
   void write_ticks();
-  std::string tick_trailer;
 
-  friend struct tick_write_dot;
-  friend struct tick_write_count;
+  struct impl;
+  impl * imp;
+
   friend struct ticker;
+  friend struct tick_write_count;
+  friend struct tick_write_dot;
 };
 
 extern struct user_interface ui;

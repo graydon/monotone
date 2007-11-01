@@ -10,7 +10,7 @@
 #include "base.hh"
 #include <limits>
 #include <sstream>
-#include <vector>
+#include "vector.hh"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
@@ -455,7 +455,7 @@ get_user_key(rsa_keypair_id & key, app_state & app)
     return;
 
   vector<rsa_keypair_id> all_privkeys;
-  app.keys.get_keys(all_privkeys);
+  app.keys.get_key_ids(all_privkeys);
   N(!all_privkeys.empty(), 
     F("you have no private key to make signatures with\n"
       "perhaps you need to 'genkey <your email>'"));
@@ -539,6 +539,15 @@ cert_revision_in_branch(revision_id const & rev,
                         app_state & app)
 {
   put_simple_revision_cert (rev, branch_cert_name, cert_value(branch()),
+                            app);
+}
+
+void
+cert_revision_suspended_in_branch(revision_id const & rev,
+                        branch_name const & branch,
+                        app_state & app)
+{
+  put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
                             app);
 }
 

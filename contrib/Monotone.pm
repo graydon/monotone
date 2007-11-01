@@ -15,7 +15,7 @@ our %EXPORT_TAGS = ( 'all' => [ qw() ] );
 our @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 our @EXPORT = qw( );
  
-our $VERSION = '0.01';
+our $VERSION = '0.03';
 
 #constructor
 sub new {
@@ -33,6 +33,7 @@ sub new {
 sub open ($$) {
     my ( $self, $db, $workspace ) = @_;
     local (*READ, *WRITE);
+    die("Monotone automate session already running!") if (defined($self->{PID}) && $self->{PID});
     if (defined($db) && defined($workspace)) {
         $self->{PID} = open2(\*READ, \*WRITE, "mtn --db=$db --root=$workspace automate stdio" );
     } elsif (defined($workspace)) {
@@ -40,38 +41,81 @@ sub open ($$) {
     } else {
         $self->{PID} = open2(\*READ, \*WRITE, "mtn automate stdio" );
     }
+    die("Unable to start mtn automate stdio session") if (!(defined($self->{PID}) && $self->{PID}));
     $self->{In} = *READ;
     $self->{Out} = *WRITE;
     $self->{CmdNum} = 0;
+
+    # my ($out, $err) = $self->call("interface_version");
+    # die("Wrong monotone interface version: $out") if ($out != 5.0 || $err ne "");
 }
 
-sub call {
+sub open_args ($) {
+    my $self=shift;
+    local (*READ, *WRITE);
+    die("Monotone automate session already running!") if (defined($self->{PID}) && $self->{PID});
+    my $cmd = "mtn automate stdio";
+    while (my $arg=shift) {
+        $cmd = $cmd." $arg";
+    }
+    $self->{PID} = open2(\*READ, \*WRITE, $cmd );
+    die("Unable to start mtn automate stdio session") if (!(defined($self->{PID}) && $self->{PID}));
+    $self->{In} = *READ;
+    $self->{Out} = *WRITE;
+    $self->{CmdNum} = 0;
+
+    # my ($out, $err) = $self->call("interface_version");
+    # die("Wrong monotone interface version: $out") if ($out != 5.0 || $err ne "");
+}
+
+sub setOpts {
     my $self = shift;
-    
-    return if !defined($self->{PID});
-    
+
+    die("mtn automate stdio session not running") if !defined($self->{PID});
+    my $numargs = @_;
+    die("No arguments in Monotone->setOpts() call!?!") if ($numargs == 0);
+    die("Uneven number of arguments to Monotone->setOpts()!") if ($numargs-2*int($numargs/2) == 1);
+
     my $read = $self->{In};
     my $write = $self->{Out};
-        
-    print $write "l";
-    
-    my $arg;    
-    while (defined($arg = shift)) {
+
+    print $write "o";
+
+    foreach my $arg (@_) {
         my $arglen = length $arg;
-        # print "Arg: " . $arg . " with len: " . $arglen . "\n";
         print $write $arglen;
         print $write ":";
         print $write $arg;
     }
     print $write "e";
-    my $count=0;
+}
+
+sub call {
+    my $self = shift;
+
+    die("mtn automate stdio session not running") if !defined($self->{PID});
+    die("No arguments in Monotone->call() call!?!") if (@_ == 0);
+
+    my $read = $self->{In};
+    my $write = $self->{Out};
+
+    print $write "l";
+
+    foreach my $arg (@_) {
+        my $arglen = length $arg;
+        print $write $arglen;
+        print $write ":";
+        print $write $arg;
+    }
+    print $write "e";
+
     my @ret = ("", "");
     my $last;
-    
+
     do {
         my $numString = "";
         my $ch;
-        while (($ch = getc($read)) ne ':') {
+        while (($ch = getc($read)) ne ':' && ! eof $read) {
             $numString = $numString . $ch;
         }
         die("Got wrong command number from monotone: ". $numString . ".") if ($numString != $self->{CmdNum});
@@ -82,15 +126,14 @@ sub call {
         die("Parser confused.") if ($last ne 'l' && $last ne 'm');
         die("Parser confused.") if (getc($read) ne ':');
         $numString = "";
-        while (($ch = getc($read)) ne ':') {
+        while (($ch = getc($read)) ne ':' && ! eof $read) {
             $numString = $numString . $ch;
         }
         my $input = "";
-        while ($numString > 0) {
+        while ($numString > 0 && ! eof $read) {
             $input = $input . getc($read);
             $numString--;
         }
-        # print "Got input: " . $input;
         if ($err eq '1') {
             die("Syntax error in Monotone stdio");
         } elsif ($err eq '2') {
@@ -98,22 +141,22 @@ sub call {
         } elsif ($err eq '0') {
             $ret[0] = $ret[0] . $input;
         }
-    } while ($last eq 'm');
-    
+    } while ($last eq 'm' && ! eof $read);
+
     die("Parser confused.") if ($last ne 'l');
-    
+
     $self->{CmdNum} += 1;
     return @ret;
 }
 
 sub close {
     my $self = shift;
-    
+
     close $self->{Out} if defined($self->{Out});
     $self->{Out} = undef;
     close $self->{In} if defined($self->{In});
     $self->{In} = undef;
-    waitpid($self->{PID}, 0);
+    waitpid($self->{PID}, 0) if defined($self->{PID});
     $self->{PID} = undef;
 }
 

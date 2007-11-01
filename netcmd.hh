@@ -10,7 +10,8 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <vector>
+#include "vector.hh"
+#include <list>
 #include <utility>
 
 #include "merkle_tree.hh"
@@ -18,6 +19,8 @@
 #include "vocab.hh"
 #include "hmac.hh"
 #include "string_queue.hh"
+
+struct globish;
 
 typedef enum
   {
@@ -171,7 +174,7 @@ public:
 class app_state;
 void run_netsync_protocol(protocol_voice voice,
                           protocol_role role,
-                          utf8 const & addr,
+                          std::list<utf8> const & addrs,
                           globish const & include_pattern,
                           globish const & exclude_pattern,
                           app_state & app);

@@ -13,7 +13,7 @@
 #include <deque>
 #include <map>
 #include <set>
-#include <vector>
+#include "vector.hh"
 
 #include "vocab.hh"
 class app_state;

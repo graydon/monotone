@@ -1,0 +1,19 @@
+function check_head(...)
+    mtn_automate("get_option", "branch")	-- make sure we have a valid workspace
+    ok, heads = mtn_automate("heads")
+    if not ok then
+      print("automate call failed")
+      return
+    end
+    arghead = unpack(arg)
+    heads = heads:gsub("^%s*(.-)%s*$", "%1")	-- trim leading and trailing whitespace
+    if (heads == arghead) then
+        print("heads are equal")
+    end
+    print("end of command")
+end
+
+
+register_command("check_head", "", "Check that the heads of the branch are what is passed in",
+      "This is a bogus command used to demonstrate user commands.", "check_head")
+

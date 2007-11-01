@@ -158,9 +158,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
 {
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
-  string pattern;
+  globish pattern("*");
   if (args.size() == 1)
-    pattern = idx(args, 0)();
+    pattern = globish(idx(args, 0)());
   else if (args.size() > 1)
     throw usage(execid);
 
@@ -251,26 +251,19 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
     options::opts::depth | options::opts::exclude)
 {
   globish inc("*");
-  globish exc;
   if (args.size() == 1)
     inc = globish(idx(args,0)());
   else if (args.size() > 1)
     throw usage(execid);
-  vector<globish> excludes;
-  typecast_vocab_container(app.opts.exclude_patterns, excludes);
-  combine_and_check_globish(excludes, exc);
-  globish_matcher match(inc, exc);
+
+  globish exc(app.opts.exclude_patterns);
   set<branch_name> names;
-  app.get_project().get_branch_list(names);
+  app.get_project().get_branch_list(inc, names);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    {
-      if (match((*i)()) && !app.lua.hook_ignore_branch(*i))
-        {
-          cout << *i << '\n';
-        }
-    }
+    if (!exc.matches((*i)()) && !app.lua.hook_ignore_branch(*i))
+      cout << *i << '\n';
 }
 
 CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
@@ -564,10 +557,10 @@ CMD_AUTOMATE(keys, "",
   if (app.db.database_specified())
     {
       transaction_guard guard(app.db, false);
-      app.db.get_key_ids("", dbkeys);
+      app.db.get_key_ids(dbkeys);
       guard.commit();
     }
-  app.keys.get_key_ids("", kskeys);
+  app.keys.get_key_ids(kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
        i != dbkeys.end(); i++)

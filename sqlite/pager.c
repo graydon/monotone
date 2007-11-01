@@ -18,7 +18,7 @@
 ** file simultaneously, or one process from reading the database while
 ** another is writing.
 **
-** @(#) $Id: pager.c,v 1.348 2007/06/18 17:25:18 drh Exp $
+** @(#) $Id: pager.c,v 1.355 2007/08/11 00:26:21 drh Exp $
 */
 #ifndef SQLITE_OMIT_DISKIO
 #include "sqliteInt.h"
@@ -551,17 +551,6 @@ static int write32bits(OsFile *fd, u32 val){
 }
 
 /*
-** Read a 32-bit integer at offset 'offset' from the page identified by
-** page header 'p'.
-*/
-static u32 retrieve32bits(PgHdr *p, int offset){
-  unsigned char *ac;
-  ac = &((unsigned char*)PGHDR_TO_DATA(p))[offset];
-  return sqlite3Get4byte(ac);
-}
-
-
-/*
 ** This function should be called when an error occurs within the pager
 ** code. The first argument is a pointer to the pager structure, the
 ** second the error-code about to be returned by a pager API function. 
@@ -573,7 +562,11 @@ static u32 retrieve32bits(PgHdr *p, int offset){
 */
 static int pager_error(Pager *pPager, int rc){
   int rc2 = rc & 0xff;
-  assert( pPager->errCode==SQLITE_FULL || pPager->errCode==SQLITE_OK );
+  assert(
+       pPager->errCode==SQLITE_FULL ||
+       pPager->errCode==SQLITE_OK ||
+       (pPager->errCode & 0xff)==SQLITE_IOERR
+  );
   if(
     rc2==SQLITE_FULL ||
     rc2==SQLITE_IOERR ||
@@ -1462,10 +1455,15 @@ static int pager_playback(Pager *pPager, int isHot){
     }
 
     /* If nRec is 0 and this rollback is of a transaction created by this
-    ** process. In this case the rest of the journal file consists of
-    ** journalled copies of pages that need to be read back into the cache.
+    ** process and if this is the final header in the journal, then it means
+    ** that this part of the journal was being filled but has not yet been
+    ** synced to disk.  Compute the number of pages based on the remaining
+    ** size of the file.
+    **
+    ** The third term of the test was added to fix ticket #2565.
     */
-    if( nRec==0 && !isHot ){
+    if( nRec==0 && !isHot &&
+        pPager->journalHdr+JOURNAL_HDR_SZ(pPager)==pPager->journalOff ){
       nRec = (szJ - pPager->journalOff) / JOURNAL_PG_SZ(pPager);
     }
 
@@ -2766,7 +2764,7 @@ int sqlite3PagerReleaseMemory(int nReq){
           pTmp->pNextAll = pPg->pNextAll;
         }
         nReleased += sqliteAllocSize(pPg);
-        IOTRACE(("PGFREE %p %d\n", pPager, pPg->pgno));
+        IOTRACE(("PGFREE %p %d *\n", pPager, pPg->pgno));
         PAGER_INCR(sqlite3_pager_pgfree_count);
         sqliteFree(pPg);
       }
@@ -2778,7 +2776,11 @@ int sqlite3PagerReleaseMemory(int nReq){
         ** The error will be returned to the user (or users, in the case 
         ** of a shared pager cache) of the pager for which the error occured.
         */
-        assert( (rc&0xff)==SQLITE_IOERR || rc==SQLITE_FULL );
+        assert(
+            (rc&0xff)==SQLITE_IOERR ||
+            rc==SQLITE_FULL ||
+            rc==SQLITE_BUSY
+        );
         assert( pPager->state>=PAGER_RESERVED );
         pager_error(pPager, rc);
       }
@@ -2867,8 +2869,8 @@ static int pagerSharedLock(Pager *pPager){
         ** a write lock, so there is never any chance of two or more
         ** processes opening the journal at the same time.
         **
-	** Open the journal for read/write access. This is because in 
-	** exclusive-access mode the file descriptor will be kept open and
+        ** Open the journal for read/write access. This is because in 
+        ** exclusive-access mode the file descriptor will be kept open and
         ** possibly used for a transaction later on. On some systems, the
         ** OsTruncate() call used in exclusive-access mode also requires
         ** a read/write file handle.
@@ -3590,7 +3592,7 @@ static int pager_write(PgHdr *pPg){
                PAGERID(pPager), pPg->pgno, pPg->needSync, pager_pagehash(pPg));
           *(u32*)pEnd = saved;
 
-	  /* An error has occured writing to the journal file. The 
+          /* An error has occured writing to the journal file. The 
           ** transaction will be rolled back by the layer above.
           */
           if( rc!=SQLITE_OK ){
@@ -3872,13 +3874,10 @@ static int pager_incr_changecounter(Pager *pPager){
     rc = sqlite3PagerWrite(pPgHdr);
     if( rc!=SQLITE_OK ) return rc;
   
-    /* Read the current value at byte 24. */
-    change_counter = retrieve32bits(pPgHdr, 24);
-  
     /* Increment the value just read and write it back to byte 24. */
+    change_counter = sqlite3Get4byte((u8*)pPager->dbFileVers);
     change_counter++;
     put32bits(((char*)PGHDR_TO_DATA(pPgHdr))+24, change_counter);
-  
     /* Release the page reference. */
     sqlite3PagerUnref(pPgHdr);
     pPager->changeCountDone = 1;

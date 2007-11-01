@@ -7,11 +7,10 @@ CMD_SOURCES =								\
 	cmd_othervcs.cc cmd_automate.cc cmd_files.cc
 
 SANITY_CORE_SOURCES =							\
-	sanity.cc sanity.hh quick_alloc.hh base.hh			\
+	sanity.cc sanity.hh quick_alloc.hh vector.hh base.hh		\
 	simplestring_xform.cc simplestring_xform.hh 			\
 	constants.cc constants.hh numeric_vocab.hh 			\
 	platform.hh numeric_vocab.cc
-
 
 LUAEXT_SOURCES = 							\
 	vocab.hh vocab.cc vocab_terms.hh vocab_macros.hh vocab_cast.hh  \
@@ -70,6 +69,7 @@ MOST_SOURCES = 								\
 	graph.cc graph.hh						\
 	roster_delta.cc roster_delta.hh					\
 	sha1.hh sha1.cc sha1_engine.hh                                  \
+	pcrewrap.cc pcrewrap.hh						\
 	rev_height.cc rev_height.hh					\
 	asciik.cc asciik.hh						\
 	dates.cc dates.hh						\
@@ -229,7 +229,7 @@ SQLITE_SOURCES =							\
 	sqlite/parse.h sqlite/sqlite3.h	sqlite/sqlite3ext.h		\
 	sqlite/sqliteInt.h						\
 	sqlite/vdbe.h sqlite/vdbeInt.h					\
-	sqlite/pager.h sqlite/btreeInt.h sqlite/limits.h
+	sqlite/pager.h sqlite/btreeInt.h sqlite/sqliteLimit.h
 
 LUA_SOURCES =								\
 	lua/lapi.cc lua/lapi.h						\
@@ -273,44 +273,100 @@ IDNA_SOURCES =								\
 	idna/gunicomp.h idna/idna.c idna/idn-int.h idna/profiles.c	\
 	idna/punycode.h idna/stringprep.c idna/toutf8.c
 
+PCRE_SOURCES =								\
+	pcre/pcre_chartables.c pcre/pcre_compile.c pcre/pcre_config.c	\
+	pcre/pcre_dfa_exec.c pcre/pcre_exec.c pcre/pcre_fullinfo.c	\
+	pcre/pcre_get.c pcre/pcre_globals.c pcre/pcre_info.c		\
+	pcre/pcre_maketables.c pcre/pcre_newline.c			\
+	pcre/pcre_ord2utf8.c pcre/pcre_refcount.c pcre/pcre_study.c	\
+	pcre/pcre_tables.c pcre/pcre_try_flipped.c			\
+	pcre/pcre_ucp_searchfuncs.c pcre/pcre_valid_utf8.c		\
+	pcre/pcre_version.c pcre/pcre_xclass.c pcre/pcre_config.h	\
+	pcre/pcre.h pcre/pcre_internal.h pcre/ucp.h pcre/ucpinternal.h	\
+	pcre/ucptable.h
+
 UNIX_PLATFORM_SOURCES =							\
 	unix/read_password.cc unix/get_system_flavour.cc		\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
 	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
-	unix/cputime.cc unix/ssh_agent_platform.cc	\
-	unix/ssh_agent_platform.hh
+	unix/cputime.cc unix/ssh_agent_platform.cc			\
+	unix/ssh_agent_platform.hh unix/tester-plaf.cc
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
-	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc        \
-	win32/cputime.cc win32/ssh_agent_platform.cc \
-	win32/ssh_agent_platform.hh
+	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc	\
+	win32/cputime.cc win32/ssh_agent_platform.cc			\
+	win32/ssh_agent_platform.hh win32/tester-plaf.cc
+
+# these files contain unit tests
+UNIT_TEST_SOURCES =							\
+	basic_io.cc charset.cc commands.cc crypto_tests.cc cset.cc	\
+	dates.cc diff_patch.cc globish.cc graph.cc keys.cc netcmd.cc	\
+	netxx_pipe.cc numeric_vocab.cc option.cc outdated_indicator.cc	\
+	packet.cc paths.cc refiner.cc restrictions.cc rev_height.cc	\
+	revision.cc roster.cc roster_merge.cc simplestring_xform.cc	\
+	string_queue.cc transforms.cc unit_tests.cc uri.cc vocab.cc	\
+	xdelta.cc
+
+# these files do not contain unit tests, but are required for unit testing
+# and must be recompiled for that purpose
+UNIT_TEST_SRC_SUPPORT =							\
+	lua_hooks.cc roster_delta.cc
+
+# these files do not contain unit tests; they are required for unit
+# testing, but can be used "as is" from the main build.  (many of
+# these _should_ have unit tests, but they haven't been written yet.)
+UNIT_TEST_OBJ_SUPPORT =							\
+	mtn-app_state.$(OBJEXT) mtn-cert.$(OBJEXT)			\
+	mtn-constants.$(OBJEXT) mtn-database.$(OBJEXT)			\
+	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-hmac.$(OBJEXT)	\
+	mtn-inodeprint.$(OBJEXT) mtn-key_store.$(OBJEXT)		\
+	mtn-lcs.$(OBJEXT) mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT)	\
+	mtn-merkle_tree.$(OBJEXT) mtn-mt_version.$(OBJEXT)		\
+	mtn-mtn-sanity.$(OBJEXT) mtn-options.$(OBJEXT)			\
+	mtn-package_full_revision.$(OBJEXT)				\
+	mtn-package_revision.$(OBJEXT) mtn-project.$(OBJEXT)		\
+	mtn-randomizer.$(OBJEXT) mtn-sanity.$(OBJEXT)			\
+	mtn-schema.$(OBJEXT) mtn-schema_migration.$(OBJEXT)		\
+	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
+	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
+	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
+	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)
 
 # primaries
 
 bin_PROGRAMS = mtn
 noinst_PROGRAMS = txt2c
-EXTRA_PROGRAMS = usher
+EXTRA_PROGRAMS =
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
-usher_SOURCES = contrib/usher.cc
-unit_tests_SOURCES = $(MOST_SOURCES) unit_tests.cc crypto_tests.cc
-nodist_unit_tests_SOURCES = std_hooks.c test_hooks.c schema.c
-tester_SOURCES = $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) tester.cc
+
+unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
+nodist_unit_tester_SOURCES = test_hooks.c
+unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
+
+tester_SOURCES = tester.cc
 nodist_tester_SOURCES = testlib.c
+tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
+		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) \
+		 	  	pcrewrap.cc)))
 
 txt2c_SOURCES = txt2c.cc
 
-noinst_LIBRARIES = libplatform.a lib3rdparty.a 
-libplatform_a_SOURCES = platform.hh
+noinst_LIBRARIES = libplatform.a lib3rdparty.a
+libplatform_a_SOURCES = platform.hh tester-plaf.hh
 lib3rdparty_a_SOURCES = $(BOOST_SANDBOX_SOURCES) \
 			$(BOTAN_SOURCES) \
 			$(IDNA_SOURCES) \
 			$(NETXX_SOURCES) \
 			$(LUA_SOURCES) \
 			$(SQLITE_SOURCES)
+
+if INCLUDED_PCRE
+lib3rdparty_a_SOURCES += $(PCRE_SOURCES)
+endif
 
 htmldir = $(datadir)/doc/monotone
 html_DATA = monotone.html
@@ -347,34 +403,49 @@ SUFFIXES = .gch
 AM_CPPFLAGS =
 AM_CFLAGS = $(AM_CPPFLAGS) -DTEMP_STORE=1 -DNDEBUG -DSQLITE_OMIT_CURSOR -DSQLITE_OMIT_LOAD_EXTENSION -DTHREADSAFE=0 -DSQLITE_THREAD_OVERRIDE_LOCK=-1 $(SQLITE_CPPFLAGS)
 AM_CXXFLAGS = $(AM_CPPFLAGS)
-AM_LDFLAGS = 
+AM_LDFLAGS =
 
 lib3rdparty_a_CPPFLAGS =
 lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
 lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
 
-mtn_LDFLAGS = 
+mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua
 mtn_CFLAGS = $(AM_CFLAGS) $(MTN_CFLAGS)
 mtn_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS) $(MTN_CXXFLAGS)
-mtn_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
+mtn_LDADD = libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
-unit_tests_LDFLAGS = 
-unit_tests_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
-unit_tests_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
-unit_tests_LDADD = lib3rdparty.a $(BOOSTLIBS) \
-		   libplatform.a $(LIBICONV) $(LIBINTL)
+unit_tester_LDFLAGS =
+unit_tester_CPPFLAGS = -DBUILD_UNIT_TESTS -I$(top_srcdir)/lua
+unit_tester_CXXFLAGS = $(AM_CXXFLAGS) $(PCH_FLAGS)
+unit_tester_LDADD += libplatform.a lib3rdparty.a \
+		     $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
 
-tester_LDFLAGS = 
+tester_LDFLAGS =
 tester_CPPFLAGS = -I$(top_srcdir)/lua
 tester_CXXFLAGS = $(AM_CXXFLAGS)
-tester_LDADD = lib3rdparty.a $(BOOSTLIBS) libplatform.a $(LIBICONV) $(LIBINTL)
+tester_LDADD += libplatform.a lib3rdparty.a $(BOOSTLIBS) $(LIBICONV) $(LIBINTL)
+
+if INCLUDED_PCRE
+  lib3rdparty_a_CPPFLAGS += -I$(top_srcdir)/pcre
+  mtn_CPPFLAGS += -I$(top_srcdir)/pcre
+  unit_tester_CPPFLAGS += -I$(top_srcdir)/pcre
+  tester_CPPFLAGS += -I$(top_srcdir)/pcre
+else
+  mtn_CPPFLAGS += $(PCRE_CFLAGS)
+  unit_tester_CPPFLAGS += $(PCRE_CFLAGS)
+  tester_CPPFLAGS += $(PCRE_CFLAGS)
+
+  mtn_LDADD += $(PCRE_LIBS)
+  unit_tester_LDADD += $(PCRE_LIBS)
+  tester_LDADD += $(PCRE_LIBS)
+endif
 
 if WIN32_PLATFORM
   libplatform_a_SOURCES += $(WIN32_PLATFORM_SOURCES)
   mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
-  unit_tests_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
+  unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
 else
@@ -385,18 +456,18 @@ endif
 if MISSING_INET_PTON
   lib3rdparty_a_SOURCES += netxx/inet_pton.cxx netxx/inet_pton.h
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_PTON
-endif    
+endif
 
 if MISSING_INET_NTOP
   lib3rdparty_a_SOURCES += netxx/inet_ntop.cxx netxx/inet_ntop.h
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_NTOP
-endif    
+endif
 
 if MISSING_GETADDRINFO
   lib3rdparty_a_SOURCES += netxx/resolve_gethostbyname.cxx netxx/resolve_getservbyname.cxx
 else
   lib3rdparty_a_SOURCES += netxx/resolve_getaddrinfo.cxx
-endif    
+endif
 
 if MISSING_INET6
   lib3rdparty_a_CPPFLAGS += -DNETXX_NO_INET6
@@ -411,45 +482,52 @@ DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
 
 # extra files
 
-PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf				\
-	figures/difference-between-versions.pdf					\
-	figures/file-id-manifest-id.pdf figures/fork.pdf			\
-	figures/general-workflow.pdf figures/linear-history.pdf			\
-	figures/local-workflow.pdf figures/manifest.pdf figures/merge.pdf	\
-	figures/network-workflow.pdf figures/parent-child-hashes.pdf		\
-	figures/parent-child-names-hashes.pdf figures/parent-child.pdf		\
-	figures/revision-chaining.pdf figures/revision.pdf			\
-	figures/statement.pdf figures/three-versions.pdf			\
+PDF_FIGURES= figures/branch-heads.pdf figures/cert.pdf			\
+	figures/difference-between-versions.pdf				\
+	figures/file-id-manifest-id.pdf figures/fork.pdf		\
+	figures/general-workflow.pdf figures/linear-history.pdf		\
+	figures/local-workflow.pdf figures/manifest.pdf			\
+	figures/merge.pdf figures/network-workflow.pdf			\
+	figures/parent-child-hashes.pdf					\
+	figures/parent-child-names-hashes.pdf figures/parent-child.pdf	\
+	figures/revision-chaining.pdf figures/revision.pdf		\
+	figures/statement.pdf figures/three-versions.pdf		\
 	figures/two-branches.pdf
 
 PNG_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.png)))
 EPS_FIGURES=$(addprefix $(top_builddir)/figures/,$(notdir $(PDF_FIGURES:.pdf=.eps)))
+TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 
 info_TEXINFOS = monotone.texi
-EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL				\
-	README.changesets UPGRADE monotone.spec monotone.html			\
-	texinfo.css schema.sql std_hooks.lua test_hooks.lua testlib.lua		\
-	testsuite.lua $(srcdir)/tests tester-testsuite.lua			\
-	$(srcdir)/tester-tests package.m4 package_revision.txt			\
-	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)		\
-	sqlite/keywordhash.h contrib/README contrib/monoprof.sh			\
-	contrib/monotone-notify.pl						\
-	contrib/ciabot_monotone.py contrib/monotone.el				\
-	contrib/monotone-nav.el contrib/monotone.bash_completion		\
-	contrib/monotone.zsh_completion contrib/mtbrowse.sh			\
-	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf		\
-	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py		\
-	$(wildcard $(srcdir)/contrib/*.lua) contrib/usher.cc $(wildcard		\
-	$(srcdir)/examples/*) win32/monotone.iss win32/modpath.iss		\
-	$(wildcard $(srcdir)/debian/*) audit-includes
+EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
+	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
+	std_hooks.lua test_hooks.lua testlib.lua lua-testsuite.lua	\
+	$(srcdir)/tests tester-testsuite.lua $(srcdir)/tester-tests	\
+	unit-testsuite.lua package.m4 package_revision.txt		\
+	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
+	sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
+	contrib/monotone-notify.pl contrib/ciabot_monotone.py		\
+	contrib/monotone.el contrib/monotone-nav.el			\
+	contrib/monotone.bash_completion				\
+	contrib/monotone.zsh_completion contrib/mtbrowse.sh		\
+	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
+	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
+	contrib/Monotone.pm $(wildcard $(srcdir)/contrib/*.lua)		\
+	$(wildcard $(srcdir)/examples/*)				\
+	win32/monotone.iss win32/modpath.iss $(wildcard			\
+	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
+	mac/monotone.pmproj mac/package-intro.rtf audit-includes	\
+	$(TEXI_FRAGMENTS)
 
 MAKEINFOFLAGS=-I $(top_builddir)
 
-monotone.info: monotone.texi version.texi std_hooks.lua
+monotone.info: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS)
 
-monotone.pdf: monotone.texi version.texi std_hooks.lua $(PDF_FIGURES)
+monotone.pdf: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(PDF_FIGURES)
 
-monotone.dvi: monotone.texi version.texi std_hooks.lua $(EPS_FIGURES)
+monotone.dvi: monotone.texi version.texi std_hooks.lua $(TEXI_FRAGMENTS) \
+              $(EPS_FIGURES)
 
 #%.eps: %.epsi
 #	mv -f $< $@
@@ -479,7 +557,8 @@ monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
 	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
 		< monotone-xml.pmproj.in > monotone-xml.pmproj
 	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
-		$(srcdir)/COPYING.txt .
+		$(srcdir)/COPYING .
+	mv COPYING COPYING.txt
 	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
 	sudo chown -R root:wheel $(PKG_INST_ROOT)/usr
 	sudo chown -R root:admin $(PKG_INST_ROOT)/Developer
@@ -498,26 +577,92 @@ monotone-$(PACKAGE_VERSION).dmg: monotone-$(PACKAGE_VERSION).pkg
 		"$@" -format UDZO -scrub -imagekey zlib-level=9 \
 		-volname monotone-$(PACKAGE_VERSION)
 
-# testsuite stuff (could this possibly be more ugly?)
+# testsuite stuff (could this possibly be more ugly?)  To get
+# parallelism, we cannot use Automake's TESTS feature at all.  The
+# shell script embedded in the 'check-local' rule is partially
+# borrowed from automake 1.9's check.am
 
+check-local: tester_tests.status unit_tests.status lua_tests.status
+	@all=0; failed=0; error=0;					       \
+	for f in $^; do							       \
+	  all=`expr $$all + 1`;						       \
+	  if test -f $$f; then						       \
+	    s=`cat $$f`;						       \
+	    if test "$$s" = 0; then					       \
+	      :;							       \
+	    elif test "$$s" = 1; then					       \
+	      failed=`expr $$failed + 1`;				       \
+	    else							       \
+	      error=`expr $$error + 1`;					       \
+	    fi;								       \
+	  else								       \
+	    error=`expr $$error + 1`;					       \
+	  fi;								       \
+	done;								       \
+	if test "$$failed" = 0 && test "$$error" = 0; then		       \
+	  exit=0;							       \
+	  report="";							       \
+	  banner="All $$all tests passed";				       \
+	else								       \
+	  exit=1;							       \
+	  report="Please report to $(PACKAGE_BUGREPORT)";		       \
+	  if test "$$error" = 0; then					       \
+	    banner="$$failed of $$all tests failed";			       \
+	  elif test "$$failed" = 0; then				       \
+	    banner="$$error of $$all tests malfunctioned";		       \
+	  else								       \
+	    banner="$$failed of $$all tests failed and $$error malfunctioned"; \
+	  fi;								       \
+	fi;								       \
+	rl=`echo $$report | wc -c`;					       \
+	bl=`echo $$banner | wc -c`;					       \
+	if test $$rl -gt $$bl; then					       \
+	  dashes=`echo "$$report" | sed s/./=/g`;			       \
+	else								       \
+	  dashes=`echo "$$banner" | sed s/./=/g`;			       \
+	fi;								       \
+	echo $$dashes;							       \
+	echo $$banner;							       \
+	test -z "$$report" || echo "$$report";				       \
+	exit $$exit
 
-check_PROGRAMS = unit_tests tester
-TESTS = unit_tests run_tester_tests run_lua_tests
+run_%_tests: Makefile
+	{ echo '#!/bin/sh';						  \
+	  echo 'PATH=$(top_builddir):$$PATH';				  \
+	  echo '$(top_builddir)/tester $(srcdir)/$*-testsuite.lua "$$@"'; \
+	  echo 'echo $$? > $*_tests.status';				  \
+	  echo 'exit 0'; } > $@
+	chmod 755 $@
 
+# The leading + causes Make to treat this as a recursive invocation,
+# allowing it to participate in the jobserver protocol.
+%_tests.status: run_%_tests %-testsuite.lua tester$(EXEEXT) FORCE
+	+./run_$*_tests
 
-TESTS_ENVIRONMENT=AUTOTEST_PATH="."
+unit_tests.status : unit_tester
+lua_tests.status : mtn
+check_PROGRAMS = unit_tester tester
+
+# We want the tests re-run even if the .status files already exist.
+# .PHONY does not work for that (bad interaction with pattern rules),
+# but the FORCE hack does.
+.PHONY: check-local FORCE
+FORCE:
+.PRECIOUS: run_tester_tests run_unit_tests run_lua_tests
 
 mostlyclean-local:
-	rm -rf tester_dir package_full_revision.txt
+	rm -rf tester_dir unit-tests package_full_revision.txt
 
-DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep run_tester_tests run_lua_tests unit_tests.log
+DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
+	run_tester_tests run_unit_tests run_lua_tests		\
+	report_tester_tests report_unit_tests report_lua_tests	\
+	tester_tests.status unit_tests.status lua_tests.status
 
 # distcheck stuff
 
 DISTCHECK_CONFIGURE_FLAGS = \
 	--with-bundled-sqlite \
-	--with-bundled-lua \
-	--enable-static-boost
+	--with-bundled-lua
 
 # note: these targets are all in srcdir; they are *not* built during
 # the VPATH build part of distcheck (with non-writable source
@@ -533,19 +678,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	  echo 'm4_define([AT_PACKAGE_BUGREPORT], [@PACKAGE_BUGREPORT@])'; \
 	} >$(srcdir)/package.m4
 
-run_lua_tests: Makefile
-	echo '#!/bin/sh' > $@ ; \
-	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/testsuite.lua "$$@"' >> $@ ; \
-	chmod 755 $@
-
-run_tester_tests: Makefile
-	echo '#!/bin/sh' > $@ ; \
-	echo 'PATH=$(top_builddir):$$PATH' >> $@ ; \
-	echo 'exec $(top_builddir)/tester $(srcdir)/tester-testsuite.lua "$$@"' >> $@ ; \
-	chmod 755 $@
-
-# we generate some source files to copy data into the executable 
+# we generate some source files to copy data into the executable
 # note that the only things that should go in BUILT_SOURCES are things
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
@@ -599,6 +732,9 @@ package_revision.txt: package_revision_raw.txt
 	if [ -f $< ]; then \
 	  cp $< $@; \
 	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
+	fi
 	[ -f $@ ] || echo "unknown" > $@
 
 # To avoid a dependency loop here, what we do is:
@@ -607,7 +743,7 @@ package_revision.txt: package_revision_raw.txt
 #      package_full_revision_raw.txt
 #              |                \  <-- add "generated from cached data" text
 #              |      package_full_revision_dist.txt
-#              |           /        
+#              |           /
 #          package_full_revision.txt
 
 # See above comment.
@@ -631,6 +767,9 @@ package_full_revision_dist.txt: package_full_revision_raw.txt
 	      echo '  Generated from data cached in the distribution;'; \
 	      echo '  further changes may have been made.') >> $@; \
 	fi
+	if [ ! -f $@ -a -f $(srcdir)/$@ ]; then \
+	  cp $(srcdir)/$@ $@; \
+	fi
 	[ -f $@ ] || echo "unknown" > $@
 # The raw file may not exist, but the dist file definitely does; we
 # just take the first dependency that exists.
@@ -648,7 +787,7 @@ package_full_revision.txt: package_full_revision_raw.txt package_full_revision_d
 # then if that fails fall back on the distributed versions.  This
 # means that 'distclean' should _not_ remove those files, since they
 # are distributed, yet building the package will generate those files,
-# those automake thinks that 'distclean' _should_ remove those files,
+# thus automake thinks that 'distclean' _should_ remove those files,
 # and 'distcheck' gets cranky if we don't.  So basically what this
 # line does is tell 'distcheck' to shut up and ignore those two files.
 distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -name package_full_revision_dist.txt
@@ -656,7 +795,7 @@ distcleancheck_listfiles = find . -type f -a ! -name package_revision.txt -a ! -
 # the distcheck-hook checks for errors in the use of base.hh
 distcheck-hook:
 	cd $(srcdir) && $(SHELL) audit-includes \
-		$(sort $(mtn_SOURCES) $(unit_tests_SOURCES) $(tester_SOURCES) \
+		$(sort $(mtn_SOURCES) $(unit_tester_SOURCES) $(tester_SOURCES) \
                        $(UNIX_PLATFORM_SOURCES) $(WIN32_PLATFORM_SOURCES) \
                        win32/main.cc unix/main.cc)
 
@@ -668,7 +807,8 @@ CHECK_SRCDIR_EQ_BUILDDIR=[ "`cd \"$(srcdir)\"; pwd`" = "`pwd`" -a -f ./monotone.
 apidocs:
 	doxygen doxygen.cfg
 
-monotone.html: monotone.texi version.texi std_hooks.lua texinfo.css
+monotone.html: monotone.texi version.texi $(TEXI_FRAGMENTS) \
+	       std_hooks.lua texinfo.css
 	if $(CHECK_SRCDIR_EQ_BUILDDIR); then :; else \
 		cp -r $(srcdir)/figures .; \
 		cp $(srcdir)/texinfo.css .; \

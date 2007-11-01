@@ -176,7 +176,7 @@ _monotone() {
 		--ticker )
 		    COMPREPLY=( $(compgen -W 'count dot none' -- $cur ) )
 		    ;;
-		--revision | -r )
+		--from | --to | --revision | -r )
 		    _monotone_complete revision
 		    ;;
 		db )
@@ -186,20 +186,27 @@ _monotone() {
                       kill_tag_locally check changesetify rosterify
                       regenerate_caches set_epoch' -- $cur ) )
 		    ;;
-		cdiff | diff | annotate )
-		    COMPREPLY=( $(compgen -W '--revision -r' -- $cur ) )
+		diff )
+		    COMPREPLY=( $(compgen -W '--context --depth --diff-args
+                      --exclude --external --no-show-encloser --unified
+                      --revision -r' -- $cur ) )
+		    _filedir
+		    ;;
+		annotate )
+		    COMPREPLY=( $(compgen -W '--brief --revision -r' -- $cur ) )
 		    _filedir
 		    ;;
 		log )
-		    COMPREPLY=( $(compgen -W '--brief --diffs --last --next
-                      --no-files --no-merges --revision -r' -- $cur ) )
+		    COMPREPLY=( $(compgen -W '--brief --diffs --from --last
+                      --next --no-files --no-graph --no-merges --to' -- $cur ) )
 		    _filedir
 		    ;;
 		approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
 		    _monotone_complete revision
 		    ;;
 		ls | list )
-		    COMPREPLY=( $(compgen -W 'certs keys branches epochs tags vars known unknown ignored missing' -- $cur ) )
+		    COMPREPLY=( $(compgen -W 'branches certs changed epochs
+                      keys known missing tags ignored unknown vars' -- $cur ) )
 		    ;;
 		attr )
 		    COMPREPLY=( $(compgen -W 'get set drop' -- $cur ) )
@@ -215,7 +222,7 @@ _monotone() {
 		    COMPREPLY=( $(compgen -W 'revision manifest file key' -- $cur) )
 		    ;;
 		cat )
-		    COMPREPLY=( $(compgen -W 'file manifest revision' -- $cur) )
+		    _filedir
 		    ;;
 		push | pull | serve | sync )
 		    COMPREPLY=( $(compgen -A hostname -- $cur) )
@@ -233,14 +240,11 @@ _monotone() {
 		    if (( $COMP_CWORD >= 2 )) ; then
 			local prev2=${COMP_WORDS[COMP_CWORD-2]}
 			case "$prev2" in
-			    cdiff | diff | explicit_merge )
+			    diff | explicit_merge )
 				_monotone_complete revision
 				;;
 			    co | checkout | rename | mv | annotate )
 				_filedir
-				;;
-			    cat )
-				_monotone_complete "$prev"
 				;;
 			    attr )
 				_filedir

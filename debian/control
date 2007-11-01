@@ -4,9 +4,9 @@ Priority: optional
 Maintainer: Debian Maintainers for Monotone <monotone-debian@nongnu.org>
 Uploaders: Richard Levitte <richard@levitte.org>, Zack Weinberg <zackw@panix.com>, Ludovic Brenta <lbrenta@debian.org>
 Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.2.0), autotools-dev,
- libboost-regex-dev (>= 1.34.1-2), libboost-dev (>= 1.34.1-2), libz-dev,
- ps2eps, texlive-base, texlive-generic-recommended, texlive-latex-base,
- texinfo, xpdf-utils, po-debconf, patch
+ libboost-dev (>= 1.34.1-2), libz-dev, ps2eps, texlive-base,
+ texlive-generic-recommended, texlive-latex-base, texinfo, xpdf-utils, 
+ po-debconf, patch
 Standards-Version: 3.7.2.2
 
 Package: monotone

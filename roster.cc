@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <stack>
 #include <set>
-#include <vector>
+#include "vector.hh"
 #include <sstream>
 
 #include "app_state.hh"

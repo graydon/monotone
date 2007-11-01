@@ -9,15 +9,20 @@
 
 #include "base.hh"
 #include <iostream>
+#include <sstream>
 #include <map>
 
 #include "cmd.hh"
 #include "app_state.hh"
+#include "ui.hh"
+#include "lua.hh"
+#include "lua_hooks.hh"
 
 using std::istream;
 using std::make_pair;
 using std::map;
 using std::ostream;
+using std::ostringstream;
 using std::pair;
 using std::set;
 using std::string;
@@ -33,7 +38,7 @@ namespace commands {
                      string const & abstract,
                      string const & desc,
                      options::options_type const & opts) :
-    command(name, "", CMD_REF(automate), false, params, abstract,
+    command(name, "", CMD_REF(automate), false, false, params, abstract,
             desc, true, opts, false)
   {
   }
@@ -41,14 +46,23 @@ namespace commands {
   void
   automate::exec(app_state & app,
                  command_id const & execid,
-                 args_vector const & args) const
+                 args_vector const & args,
+                 std::ostream & output) const
   {
     make_io_binary();
-    exec_from_automate(args, execid, app, std::cout);
+    exec_from_automate(args, execid, app, output);
+  }
+
+  void
+  automate::exec(app_state & app,
+                 command_id const & execid,
+                 args_vector const & args) const
+  {
+    exec(app, execid, args, std::cout);
   }
 }
 
-static string const interface_version = "5.0";
+static string const interface_version = "6.0";
 
 // Name: interface_version
 // Arguments: none
@@ -183,7 +197,7 @@ class automate_reader
       case 'o': loc = opt; break;
       case 'l': loc = cmd; break;
       default:
-        E(false, 
+        E(false,
             F("Bad input to automate stdio: unknown start token '%c'") % c);
       }
   }
@@ -245,26 +259,26 @@ public:
   }
   ~automate_streambuf()
   {}
-  
+
   void set_err(int e)
   {
     sync();
     err = e;
   }
-  
+
   void end_cmd()
   {
     _M_sync(true);
     ++cmdnum;
     err = 0;
   }
-  
+
   virtual int sync()
   {
     _M_sync();
     return 0;
   }
-  
+
   void _M_sync(bool end = false)
   {
     if (!out)
@@ -295,26 +309,25 @@ public:
 struct automate_ostream : public std::ostream
 {
   automate_streambuf _M_autobuf;
-  
+
   automate_ostream(std::ostream &out, size_t blocksize)
     : std::ostream(NULL),
       _M_autobuf(out, blocksize)
   { this->init(&_M_autobuf); }
-  
+
   ~automate_ostream()
   {}
-  
+
   automate_streambuf *
   rdbuf() const
   { return const_cast<automate_streambuf *>(&_M_autobuf); }
-  
+
   void set_err(int e)
   { _M_autobuf.set_err(e); }
-  
+
   void end_cmd()
   { _M_autobuf.end_cmd(); }
 };
-
 
 CMD_AUTOMATE(stdio, "",
              N_("Automates several commands in one run"),
@@ -325,7 +338,7 @@ CMD_AUTOMATE(stdio, "",
     F("no arguments needed"));
 
     // initialize the database early so any calling process is notified
-    // immediately if a version discrepancy exists 
+    // immediately if a version discrepancy exists
   app.db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
@@ -395,6 +408,102 @@ CMD_AUTOMATE(stdio, "",
         }
       os.end_cmd();
     }
+}
+
+LUAEXT(mtn_automate, )
+{
+  args_vector args;
+  std::stringstream output;
+  bool result = true;
+  std::stringstream & os = output;
+
+  try
+    {
+      app_state* app_p = get_app_state(L);
+      I(app_p != NULL);
+      I(app_p->lua.check_lua_state(L));
+      E(app_p->mtn_automate_allowed,
+          F("It is illegal to call the mtn_automate() lua extension,\n"
+            "unless from a command function defined by register_command()."));
+
+      // don't allow recursive calls
+      app_p->mtn_automate_allowed = false;
+
+      // automate_ostream os(output, app_p->opts.automate_stdio_size);
+
+      int n = lua_gettop(L);
+
+      E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
+
+      app_p->db.ensure_open();
+
+      L(FL("Starting call to mtn_automate lua hook"));
+
+      for (int i=1; i<=n; i++)
+        {
+          arg_type next_arg(luaL_checkstring(L, i));
+          L(FL("arg: %s")%next_arg());
+          args.push_back(next_arg);
+        }
+
+      commands::command_id id;
+      for (args_vector::const_iterator iter = args.begin();
+           iter != args.end(); iter++)
+        id.push_back(utf8((*iter)()));
+
+      E(!id.empty(), F("no command found"));
+
+      set< commands::command_id > matches =
+        CMD_REF(automate)->complete_command(id);
+
+      if (matches.size() == 0)
+        {
+          N(false, F("no completions for this command"));
+        }
+      else if (matches.size() > 1)
+        {
+          N(false, F("multiple completions possible for this command"));
+        }
+
+      id = *matches.begin();
+
+      I(args.size() >= id.size());
+      for (commands::command_id::size_type i = 0; i < id.size(); i++)
+        args.erase(args.begin());
+
+      commands::command const * cmd = CMD_REF(automate)->find_command(id);
+      I(cmd != NULL);
+      commands::automate const * acmd = reinterpret_cast< commands::automate const * >(cmd);
+
+      acmd->exec(*app_p, id, args, os);
+
+      // allow further calls
+      app_p->mtn_automate_allowed = true;
+    }
+  catch(informative_failure & f)
+    {
+      // informative failures are passed back to the caller
+      result = false;
+      L(FL("Informative failure caught inside lua call to mtn_automate: %s") % f.what());
+      os.flush();
+      output.flush();
+      output.str().clear();
+      os << f.what();
+    }
+  catch (std::logic_error & e)
+    {
+      // invariant failures are permanent
+      result = false;
+      ui.fatal(e.what());
+      lua_pushstring(L, e.what());
+      lua_error(L);
+    }
+
+  os.flush();
+
+  lua_pushboolean(L, result);
+  lua_pushstring(L, output.str().c_str());
+  return 2;
 }
 
 // Local Variables:

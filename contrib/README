@@ -1,6 +1,10 @@
 This directory contains various things that we're not quite sure what
-to do with, but that someone may find useful.  See individual files for
-licenses.
+to do with, but that someone may find useful.
+
+Unlike the rest of monotone, the code in this directory is _not_ tested,
+and may not even work with the current version of monotone.
+
+See individual files for licenses.
 
   -- monotone.bash_completion: command line completion code for bash.
   -- monotone.zsh_completion: command line completion code for zsh.
@@ -54,3 +58,16 @@ licenses.
 
   -- monotone-cluster-push.lua: A simple script to push changes to other
      servers upon receiving them.  This will only work on a server instance.
+
+  -- extra-commands.lua: Some simple lua user commands to automate common
+     command sequences.  The lua code should be copied to a monotonerc file
+     for use.
+
+  -- monotone-mail-notify.lua: a mail notification script which offers an
+     individual per-branch recipient configuration with a syntax similar
+     to the one found in ~/.monotone/read-permissions.
+     It writes out details of each revision received to files which are then
+     picked up by the monotone-mail-notify.sh script which requires shell,
+     source-highlight and mime-construct to build nicely structured emails
+     with summaries of the revision and its diffs.
+
