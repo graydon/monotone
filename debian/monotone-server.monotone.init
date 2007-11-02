@@ -2,9 +2,7 @@
 #
 # monotone     Monotone server init script.
 #
-# Author:      Matthew A. Nicholson <address@hidden>.
-#
-# Version:     v0.0.1  March 29, 2005  address@hidden
+# Author:      Matthew A. Nicholson <matt@matt-land.com>.
 #
 ### BEGIN INIT INFO
 # Provides: monotone
@@ -27,16 +25,19 @@ SCRIPTNAME=/etc/init.d/$NAME
 MAINLOG=/var/log/$NAME/$EXECNAME.log
 ERRORLOG=/var/log/$NAME/error.log
 
+# defaults for /etc/default/monotone
+START=1
+ADDRESS=0.0.0.0
 MTN_HOME=/var/lib/monotone
 MTN_CONFDIR=/etc/monotone
 MTN_KEYDIR=$MTN_HOME/keys
 MTN_DB=$MTN_HOME/default.mtn
 
-START=1
-ADDRESS=0.0.0.0
-
 # Gracefully exit if the package has been removed.
 test -x $DAEMON || exit 0
+
+# Get the logging helpers.
+. /lib/lsb/init-functions
 
 # Read config file 
 if [ -r /etc/default/$NAME ]; then
@@ -44,85 +45,61 @@ if [ -r /etc/default/$NAME ]; then
 fi
 
 
-#
-#      Function that starts the daemon/service.
-#
-d_start() {
-       if [ "$START" -ne 1 ]; then
-          echo -ne "\n$NAME configured in /etc/default/$NAME not to start"
-          return 0
-       fi
+# Function that starts the daemon.
+d_start()
+{
+    if [ "$START" -ne 1 ]; then
+	log_action_msg "$NAME configured in /etc/default/$NAME not to start"
+        return 0
+    fi
 
-       start-stop-daemon --start --quiet --pidfile $PIDFILE --background \
-          --exec $DAEMON --chuid monotone --chdir $MTN_HOME -- \
-          --confdir=$MTN_CONFDIR --db=$MTN_DB --norc --pid-file=$PIDFILE \
-          --log=$MAINLOG --dump=$ERRORLOG \
-          --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
-          --bind=$ADDRESS serve
+    log_daemon_msg "Starting $DESC" "$NAME"
+
+    if start-stop-daemon --start --quiet --oknodo --background \
+        --pidfile $PIDFILE --exec $DAEMON --chuid monotone --chdir $MTN_HOME \
+	-- \
+        --confdir=$MTN_CONFDIR --db=$MTN_DB --norc --pid-file=$PIDFILE \
+        --log=$MAINLOG --dump=$ERRORLOG \
+        --rcfile=$MTN_CONFDIR/hooks.lua --keydir=$MTN_KEYDIR --quiet \
+        --bind=$ADDRESS serve
+
+    then log_end_msg 0
+    else log_end_msg 1
+    fi
 }
 
-#
-#      Function that stops the daemon/service.
-#
-d_stop() {
-       start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-               --name $EXECNAME --user monotone \
-          && rm $PIDFILE
-       
+# Function that stops the daemon.
+d_stop()
+{
+    if [ "$START" -ne 1 ]; then
+        return 0
+    fi
+    
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    if start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE \
+        --name $EXECNAME --user monotone
 
-#       kill `ps x | grep monotone.*serve | grep -v grep | awk -- '{print $1}'` &> /dev/null \
-#       or echo "Failed: monotone not running"
-        
+    then
+	rm -f $PIDFILE
+	log_end_msg 0
+    else
+	log_end_msg 1
+    fi
 }
-
-#
-#      Function that sends a SIGHUP to the daemon/service.
-#
-#d_reload() {
-#      start-stop-daemon --stop --quiet --pidfile $PIDFILE \
-#              --name $NAME --signal 1
-#}
 
 case "$1" in
-  start)
-       echo -n "Starting $DESC: $NAME"
-       d_start || echo -n ...failed 
-       echo "."
-       ;;
-  stop)
-       echo -n "Stopping $DESC: $NAME"
-       d_stop || echo -n ...failed
-       echo "."
-       ;;
-  #reload)
-       #
-       #       If the daemon can reload its configuration without
-       #       restarting (for example, when it is sent a SIGHUP),
-       #       then implement that here.
-       #
-       #       If the daemon responds to changes in its config file
-       #       directly anyway, make this an "exit 0".
-       #
-       # echo -n "Reloading $DESC configuration..."
-       # d_reload
-       # echo "done."
-  #;;
-  restart|force-reload)
-       #
-       #       If the "reload" option is implemented, move the "force-reload"
-       #       option to the "reload" entry above. If not, "force-reload" is
-       #       just the same as "restart".
-       #
-       echo -n "Stopping $DESC: $NAME"
-       d_stop || echo -n ...failed
-       echo "."
-       echo -n "Starting $DESC: $NAME"
-       d_start || echo -n ...failed 
-       echo "."
-       ;;
-  *)
-       # echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
-       echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
-       exit 1
-       ;;
+    start)
+	d_start
+	;;
+    stop)
+	d_stop
+	;;
+    restart|force-reload)
+	d_stop
+	d_start
+	;;
+    *)
+	echo "Usage: $SCRIPTNAME {start|stop|restart|force-reload}" >&2
+	exit 1
+	;;
 esac
