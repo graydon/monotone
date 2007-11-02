@@ -22,7 +22,8 @@ Description: A distributed version (revision) control system
 
 Package: monotone-server
 Architecture: all
-Depends: monotone (>= ${source:Version}), adduser, ucf (>= 0.28), ${misc:Depends}
+Depends: monotone (>= ${source:Version}), adduser, ucf (>= 0.28), 
+ lsb-base (>= 3.0-6), ${misc:Depends}
 Description: A distributed version (revision) control system
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
