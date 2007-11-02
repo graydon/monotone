@@ -31,7 +31,7 @@ using std::cout;
 using std::ostringstream;
 using std::string;
 
-CMD(version, "version", "", CMD_REF(informative), "",
+CMD_NO_WORKSPACE(version, "version", "", CMD_REF(informative), "",
     N_("Shows the program version"),
     "",
     options::opts::full)
