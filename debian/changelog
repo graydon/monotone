@@ -261,6 +261,21 @@ monotone (0.28-0.1) unstable; urgency=low
 
  -- Nathaniel Smith <njs@pobox.com>  Fri, 21 Jul 2006 23:02:59 -0700
 
+monotone (0.27-1.1) unstable; urgency=low
+
+  * NMU to fix Failure to Build From Source.  Fixed debian/rules applying the
+    patch suggested by Adeodato, fixed debian/control by not specifying a
+    special compiler for any arches. (Closes: #377781)
+
+ -- Margarita Manterola <marga@debian.org>  Thu, 20 Jul 2006 16:22:18 -0300
+
+monotone (0.27-1) unstable; urgency=low
+
+  * Built (with pdebuild) for upload to debian archive.
+  * Closes: #374659: New upstream version (0.27)
+
+ -- Tomas Fasth <tomfa@debian.org>  Mon, 10 Jul 2006 12:32:00 +0000
+
 monotone (0.27-0.1) unstable; urgency=low
 
   * New upstream release.
