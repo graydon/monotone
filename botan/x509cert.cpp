@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificates Source File                 *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/x509cert.h>
@@ -313,8 +313,8 @@ X509_DN create_dn(const Data_Store& info)
             }
       };
 
-   std::multimap<std::string, std::string> names
-      = info.search_with(DN_Matcher());
+   std::multimap<std::string, std::string> names =
+      info.search_with(DN_Matcher());
 
    X509_DN dn;
 
@@ -335,7 +335,7 @@ AlternativeName create_alt_name(const Data_Store& info)
       public:
          bool operator()(const std::string& key, const std::string&) const
             {
-            for(u32bit j = 0; j != matches.size(); j++)
+            for(u32bit j = 0; j != matches.size(); ++j)
                if(key.compare(matches[j]) == 0)
                   return true;
             return false;
@@ -349,8 +349,8 @@ AlternativeName create_alt_name(const Data_Store& info)
          std::vector<std::string> matches;
       };
 
-   std::multimap<std::string, std::string> names
-      = info.search_with(AltName_Matcher("RFC882/DNS/URI"));
+   std::multimap<std::string, std::string> names =
+      info.search_with(AltName_Matcher("RFC822/DNS/URI"));
 
    AlternativeName alt_name;
 

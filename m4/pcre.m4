@@ -46,7 +46,7 @@ AC_DEFUN([MTN_FIND_PCRE],
        # automatically.
        PCRE_LIBS="`pcre-config --libs | \
                    sed -e 's:-L */usr/lib/*::' -e 's:-R */usr/lib/*::' \
-                       -e 's:-L */lib/*:: -e 's:-R */lib/*::'`"
+                       -e 's:-L */lib/*::' -e 's:-R */lib/*::'`"
        found_libpcre=yes
        AC_MSG_RESULT([yes])
      fi

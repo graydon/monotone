@@ -15,7 +15,6 @@
 // This dirty trick is necessary to prevent the 'pcre' typedef defined by
 // pcre.h from colliding with namespace pcre.
 #define pcre pcre_t
-#include "pcre_config.h"
 #include "pcre.h"
 #undef pcre
 

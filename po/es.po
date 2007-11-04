@@ -68,8 +68,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-19 20:30-0400\n"
-"PO-Revision-Date: 2007-10-19 20:37-0400\n"
+"POT-Creation-Date: 2007-10-28 18:37-0400\n"
+"PO-Revision-Date: 2007-10-28 19:01-0400\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -256,7 +256,7 @@ msgstr "Imprime los datos de una revisión en formato paquetizado"
 #: automate.cc:1879 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
 #: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:359
-#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1279 commands.cc:899
+#: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1279 commands.cc:908
 #, c-format
 msgid "no such revision '%s'"
 msgstr "la revisión '%s' no existe"
@@ -1006,12 +1006,12 @@ msgstr "Imprime los contenidos de un archivo (dado un identificador)"
 msgid "Prints the contents of a file (given a name)"
 msgstr "Imprime los contenidos de un archivo (dado un nombre)"
 
-#: cmd.hh:137
+#: cmd.hh:140
 #, c-format
 msgid "ignored bookkeeping path '%s'"
 msgstr "ignorado el camino al directorio de servicio '%s'"
 
-#: cmd.hh:147
+#: cmd.hh:150
 #, c-format
 msgid "all arguments given were bookkeeping paths; aborting"
 msgstr ""
@@ -2456,52 +2456,52 @@ msgstr "Comandos que lidian con el área de trabajo"
 msgid "Commands defined by the user"
 msgstr "Comandos definidos por el usuario"
 
-#: commands.cc:549
+#: commands.cc:557
 #, c-format
 msgid "unknown command '%s'"
 msgstr "comando desconocido '%s'"
 
-#: commands.cc:559
+#: commands.cc:567
 #, c-format
 msgid "'%s' is ambiguous; possible completions are:"
 msgstr "'%s' es ambiguo; posibles completaciones son:"
 
-#: commands.cc:654
+#: commands.cc:662
 #, c-format
 msgid "Commands in group '%s':"
 msgstr "Comandos en el grupo '%s'"
 
-#: commands.cc:660
+#: commands.cc:668
 #, c-format
 msgid "Subcommands of '%s %s':"
 msgstr "Subcomandos de '%s %s'"
 
-#: commands.cc:664
+#: commands.cc:672
 #, c-format
 msgid "Syntax specific to '%s %s':"
 msgstr "Sintaxis especifica de '%s %s':"
 
-#: commands.cc:689
+#: commands.cc:697
 #, c-format
 msgid "Purpose of group '%s':"
 msgstr "Propósito del grupo '%s'"
 
-#: commands.cc:693
+#: commands.cc:701
 #, c-format
 msgid "Description for '%s %s':"
 msgstr "Descripción para '%s %s':"
 
-#: commands.cc:703
+#: commands.cc:711
 #, c-format
 msgid "Aliases: %s."
 msgstr "Alias: %s."
 
-#: commands.cc:720
+#: commands.cc:728
 #, c-format
 msgid "Command groups:"
 msgstr "Grupos de comandos:"
 
-#: commands.cc:723
+#: commands.cc:731
 #, c-format
 msgid ""
 "For information on a specific command, type 'mtn help <command_name> "
@@ -2510,7 +2510,7 @@ msgstr ""
 "Para información sobre un comando específico, escriba 'mtn help "
 "<nombre_comando> [nomber_subcomando ...]'."
 
-#: commands.cc:726
+#: commands.cc:734
 #, c-format
 msgid ""
 "To see more details about the commands of a particular group, type 'mtn help "
@@ -2519,7 +2519,7 @@ msgstr ""
 "Para ver mas detalles sobre los comandos de un grupo en particular, escriba "
 "'mtn help <nombre_grupo>'."
 
-#: commands.cc:729
+#: commands.cc:737
 #, c-format
 msgid ""
 "Note that you can always abbreviate a command name as long as it does not "
@@ -2528,58 +2528,58 @@ msgstr ""
 "Tenga en cuenta que Ud. siempre puede abreviar el nombre del comando siempre "
 "y cuando no entre en conflicto con otros nombres."
 
-#: commands.cc:747
+#: commands.cc:756
 #, c-format
 msgid "command '%s' is invalid; it is a group"
 msgstr "comando '%s' es inválido; es un grupo"
 
-#: commands.cc:750
+#: commands.cc:759
 #, c-format
 msgid "no subcommand specified for '%s'"
 msgstr "no se ha especificado subcomando para '%s'"
 
-#: commands.cc:753
+#: commands.cc:762
 #, c-format
 msgid "could not match '%s' to a subcommand of '%s'"
 msgstr "'%s' no concuerda como un subcomando de '%s'"
 
-#: commands.cc:774
+#: commands.cc:783
 msgid "command [ARGS...]"
 msgstr "comando [ARGUMENTOS...]"
 
-#: commands.cc:775
+#: commands.cc:784
 msgid "Displays help about commands and options"
 msgstr "Muestra ayuda sobre comandos y opciones"
 
-#: commands.cc:792
+#: commands.cc:801
 msgid "Triggers the specified kind of crash"
 msgstr "Dispara el tipo de falla especificado"
 
-#: commands.cc:906
+#: commands.cc:915
 #, c-format
 msgid "expanding selection '%s'"
 msgstr "expandiendo selección '%s'"
 
-#: commands.cc:914
+#: commands.cc:923
 #, c-format
 msgid "no match for selection '%s'"
 msgstr "no hay concordancia para la selección '%s'"
 
-#: commands.cc:921
+#: commands.cc:930
 #, c-format
 msgid "expanded to '%s'"
 msgstr "expandido a '%s'"
 
-#: commands.cc:938
+#: commands.cc:947
 #, c-format
 msgid "selection '%s' has multiple ambiguous expansions:"
 msgstr "selección '%s' tiene múltiple expansiones ambiguas:"
 
-#: commands.cc:955
+#: commands.cc:964
 msgid "note: "
 msgstr "nota: "
 
-#: commands.cc:956
+#: commands.cc:965
 #, c-format
 msgid ""
 "branch '%s' has multiple heads\n"
@@ -2588,7 +2588,7 @@ msgstr ""
 "rama '%s' tiene múltiples cabezas\n"
 "considere utilizar '%s merge'"
 
-#: commands.cc:971
+#: commands.cc:980
 #, c-format
 msgid "--message and --message-file are mutually exclusive"
 msgstr "'--message' y '--message-file' son mutuamente exclusivos"
@@ -2610,7 +2610,7 @@ msgstr "rosters"
 msgid "markings"
 msgstr "marcas"
 
-#: database_check.cc:312 netsync.cc:3119 rcs_import.cc:1238
+#: database_check.cc:312 netsync.cc:3117 rcs_import.cc:1238
 msgid "revisions"
 msgstr "revisiones"
 
@@ -2618,7 +2618,7 @@ msgstr "revisiones"
 msgid "ancestry"
 msgstr "ascendencia"
 
-#: database_check.cc:440 netsync.cc:3123
+#: database_check.cc:440 netsync.cc:3121
 msgid "keys"
 msgstr "llaves"
 
@@ -3746,7 +3746,7 @@ msgstr "destino"
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "bufer de entrada para el peer %s está rebasado despues del netcmd 'dispatch'"
 
-#: netsync.cc:2316 netsync.cc:2418
+#: netsync.cc:2316 netsync.cc:2416
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "error de protocolo procesando el peer %s: '%s'"
@@ -3756,151 +3756,151 @@ msgstr "error de protocolo procesando el peer %s: '%s'"
 msgid "error: %s"
 msgstr "error: %s"
 
-#: netsync.cc:2389 netsync.cc:2847
+#: netsync.cc:2387 netsync.cc:2845
 #, c-format
 msgid "connecting to %s"
 msgstr "conectandose a %s"
 
-#: netsync.cc:2433
+#: netsync.cc:2431
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "tiempo expiró esperando or E/S con el peer %s, desconectando"
 
-#: netsync.cc:2456
+#: netsync.cc:2454
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "falla de procesamiento hablando con peer %s, desconectando"
 
-#: netsync.cc:2473
+#: netsync.cc:2471
 #, c-format
 msgid "successful exchange with %s"
 msgstr "intercambio exitoso con %s"
 
-#: netsync.cc:2479
+#: netsync.cc:2477
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "peer %s desconectado despues de ser informado de error"
 
-#: netsync.cc:2484
+#: netsync.cc:2482
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "falla de E/S hablando con el peer %s, desconectando"
 
-#: netsync.cc:2552
+#: netsync.cc:2550
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr ""
 "error de protocolo mientras se procesaba peer %s: '%s', marcado como "
 "incorrecto"
 
-#: netsync.cc:2584
+#: netsync.cc:2582
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "nueva conexión de cliente aceptada desde %s : %s"
 
-#: netsync.cc:2621
+#: netsync.cc:2619
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "error de protocolo mientras se procesaba peer %s: '%s', desconectando"
 
-#: netsync.cc:2632
+#: netsync.cc:2630
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "lectura del peer %s falló en estado 'working' (error)"
 
-#: netsync.cc:2637
+#: netsync.cc:2635
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
 msgstr ""
 "lectura del peer %s falló en estado 'shutdown' (posiblemente el cliente "
 "reportó incorrectamente un error)"
 
-#: netsync.cc:2643
+#: netsync.cc:2641
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "lectura del peer %s falló en estado 'confirmed' (éxito)"
 
-#: netsync.cc:2664
+#: netsync.cc:2662
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "escritura del peer '%s' falló en estado 'working' (error)"
 
-#: netsync.cc:2669
+#: netsync.cc:2667
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
 msgstr ""
 "escritura del peer %s falló en estado 'shutdown' (posiblemente el cliente "
 "reportó incorrectamente el error)"
 
-#: netsync.cc:2675
+#: netsync.cc:2673
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "escritura del peer %s falló en estado 'confirmed' (éxito)"
 
-#: netsync.cc:2702
+#: netsync.cc:2700
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "procesado del peer %s concluido, desconectando"
 
-#: netsync.cc:2724
+#: netsync.cc:2722
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (peer %s) inactivo por demasiado tiempo, desconectando"
 
-#: netsync.cc:2810
+#: netsync.cc:2808
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "comenzando servicio en %s :  %s"
 
-#: netsync.cc:2811
+#: netsync.cc:2809
 msgid "<all interfaces>"
 msgstr "<todas las interfaces>"
 
-#: netsync.cc:2825
+#: netsync.cc:2823
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr "limite de sesiones %d alcanzado, algunas conexiones serán rechazadas"
 
-#: netsync.cc:2874
+#: netsync.cc:2872
 #, c-format
 msgid "Network error: %s"
 msgstr "Error de red: %s"
 
-#: netsync.cc:2935
+#: netsync.cc:2933
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "error de red en el peer %s, desconectando"
 
-#: netsync.cc:2941
+#: netsync.cc:2939
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "OOB recibido del peer %s, desconectando"
 
-#: netsync.cc:3001
+#: netsync.cc:2999
 #, c-format
 msgid "beginning service on %s"
 msgstr "comenzando servicio en %s"
 
-#: netsync.cc:3064
+#: netsync.cc:3062
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "data OOB recibida via el fd %d (peer %s), desconectando"
 
-#: netsync.cc:3113
+#: netsync.cc:3111
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "buscando items que sincronizar:"
 
-#: netsync.cc:3121
+#: netsync.cc:3119
 msgid "certificates"
 msgstr "certificados"
 
-#: netsync.cc:3230
+#: netsync.cc:3228
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "No puedo encontrar llave '%s'"
 
-#: netsync.cc:3270
+#: netsync.cc:3268
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3909,7 +3909,7 @@ msgstr ""
 "patrón de inclusión de rama contiene comillas:\n"
 "%s"
 
-#: netsync.cc:3276
+#: netsync.cc:3274
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3918,7 +3918,7 @@ msgstr ""
 "patrón de exclusión de rama contiene comillas:\n"
 "%s"
 
-#: netsync.cc:3311 netsync.cc:3315
+#: netsync.cc:3309 netsync.cc:3313
 #, c-format
 msgid "network error: %s"
 msgstr "error de red: %s"
@@ -4054,8 +4054,8 @@ msgid "include anything described by its argument"
 msgstr "incluye tod lo descrito por este argumento"
 
 #: options_list.hh:264
-msgid "Do not ignore revisions marked as suspended"
-msgstr "No ignora revisiones marcadas como suspendidas"
+msgid "do not ignore revisions marked as suspended"
+msgstr "no ignora revisiones marcadas como suspendidas"
 
 #: options_list.hh:273
 msgid "set key for signatures"
@@ -4245,7 +4245,9 @@ msgstr "excedido el límite de recursión al tratar de concordar la expresión r
 
 #: pcrewrap.cc:213
 msgid "invalid UTF-8 sequence found during regular expression matching"
-msgstr "encontrada secuencia UTF-8 inválida al tratar de concordar la expresión regular"
+msgstr ""
+"encontrada secuencia UTF-8 inválida al tratar de concordar la expresión "
+"regular"
 
 #: pcrewrap.cc:216
 #, c-format
@@ -4770,33 +4772,27 @@ msgstr "tamaño del ID '%s' hexadecimal != %d"
 msgid "bad character '%c' in id name '%s'"
 msgstr "caracter invalido '%c' en el nombre id '%s'"
 
-# TODO: que es un 'ace string'
-#: vocab.cc:78
-#, c-format
-msgid "bad character '%c' in ace string '%s'"
-msgstr "caracter inválido '%c' en cadena de caracteres 'ace' '%s'"
-
-#: vocab.cc:89
+#: vocab.cc:79
 #, c-format
 msgid "bad character '%c' in symbol '%s'"
 msgstr "caracter inválido '%c' en el simbolo '%s'"
 
-#: vocab.cc:100
+#: vocab.cc:90
 #, c-format
 msgid "bad character '%c' in cert name '%s'"
 msgstr "caracter inválido '%c' en el nombre de certificado '%s'"
 
-#: vocab.cc:110
+#: vocab.cc:100
 #, c-format
 msgid "bad character '%c' in key name '%s'"
 msgstr "caracter inválido '%c' en nombre de llave '%s'"
 
-#: vocab.cc:125
+#: vocab.cc:115
 #, c-format
 msgid "Invalid key length of %d bytes"
 msgstr "Longitud de llave inválida: %d bytes"
 
-#: vocab.cc:140
+#: vocab.cc:130
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr "Longitud del HMAC inválida: %d bytes"

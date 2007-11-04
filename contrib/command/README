@@ -1,0 +1,4 @@
+
+These are Lua scripts which implement additional Monotone commands. 
+A script in file <command>.lua usually implements "mtn <command> [...]".
+

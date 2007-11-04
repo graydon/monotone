@@ -1,6 +1,6 @@
 /*************************************************
 * X509_DN Source File                            *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/asn1_obj.h>
@@ -142,7 +142,7 @@ void X509_DN::do_decode(const MemoryRegion<byte>& bits)
 /*************************************************
 * Return the BER encoded data, if any            *
 *************************************************/
-SecureVector<byte> X509_DN::get_bits() const
+MemoryVector<byte> X509_DN::get_bits() const
    {
    return dn_bits;
    }

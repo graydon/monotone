@@ -1,6 +1,6 @@
 /*************************************************
 * KDF1/KDF2 Source File                          *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/kdf.h>
@@ -19,7 +19,8 @@ SecureVector<byte> KDF::derive_key(u32bit key_len,
                                    const std::string& salt) const
    {
    return derive_key(key_len, secret, secret.size(),
-                     (const byte*)salt.c_str(), salt.length());
+                     reinterpret_cast<const byte*>(salt.data()),
+                     salt.length());
    }
 
 /*************************************************
@@ -52,7 +53,8 @@ SecureVector<byte> KDF::derive_key(u32bit key_len,
                                    const std::string& salt) const
    {
    return derive_key(key_len, secret, secret_len,
-                     (const byte*)salt.c_str(), salt.length());
+                     reinterpret_cast<const byte*>(salt.data()),
+                     salt.length());
    }
 
 /*************************************************
@@ -99,7 +101,7 @@ SecureVector<byte> KDF2::derive(u32bit out_len,
    u32bit counter = 1;
 
    std::auto_ptr<HashFunction> hash(get_hash(hash_name));
-   while(out_len)
+   while(out_len && counter)
       {
       hash->update(secret, secret_len);
       for(u32bit j = 0; j != 4; ++j)

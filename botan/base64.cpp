@@ -1,6 +1,6 @@
 /*************************************************
 * Base64 Encoder/Decoder Source File             *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/base64.h>
@@ -12,8 +12,8 @@ namespace Botan {
 /*************************************************
 * Base64_Encoder Constructor                     *
 *************************************************/
-Base64_Encoder::Base64_Encoder(bool breaks, u32bit length) :
-   line_length(breaks ? length : 0)
+Base64_Encoder::Base64_Encoder(bool breaks, u32bit length, bool t_n) :
+   line_length(breaks ? length : 0), trailing_newline(t_n)
    {
    in.create(48);
    out.create(4);
@@ -120,7 +120,7 @@ void Base64_Encoder::end_msg()
 
    // Monotone requires a trailing in newline in 
    // all cases, for crypto++ compatibility.
-   // if(counter && line_length)
+   // if(trailing_newline || (counter && line_length))
    //   send('\n');
    send('\n');
 
@@ -150,9 +150,9 @@ bool Base64_Decoder::is_valid(byte in)
 *************************************************/
 void Base64_Decoder::decode(const byte in[4], byte out[3])
    {
-   out[0] = (byte)((BASE64_TO_BIN[in[0]] << 2) | (BASE64_TO_BIN[in[1]] >> 4));
-   out[1] = (byte)((BASE64_TO_BIN[in[1]] << 4) | (BASE64_TO_BIN[in[2]] >> 2));
-   out[2] = (byte)((BASE64_TO_BIN[in[2]] << 6) | (BASE64_TO_BIN[in[3]]));
+   out[0] = ((BASE64_TO_BIN[in[0]] << 2) | (BASE64_TO_BIN[in[1]] >> 4));
+   out[1] = ((BASE64_TO_BIN[in[1]] << 4) | (BASE64_TO_BIN[in[2]] >> 2));
+   out[2] = ((BASE64_TO_BIN[in[2]] << 6) | (BASE64_TO_BIN[in[3]]));
    }
 
 /*************************************************
@@ -179,7 +179,8 @@ void Base64_Decoder::handle_bad_char(byte c)
       return;
 
    throw Decoding_Error(
-      std::string("Base64_Decoder: Invalid base64 character '") + char(c) + "'"
+      std::string("Base64_Decoder: Invalid base64 character '") +
+      static_cast<char>(c) + "'"
       );
    }
 
