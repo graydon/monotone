@@ -127,17 +127,17 @@ case "$1" in
 	       adduser --system --group --home $MTN_HOME \
 	       --no-create-home --disabled-password --quiet        \
 	       --gecos "Monotone" monotone
-	       
-	       chown monotone:monotone $MTN_HOME
-               chown monotone:monotone $MTN_CONFDIR
-               chown monotone:monotone $MTN_KEYDIR
-               chown monotone:monotone /var/log/monotone
-               chown monotone:monotone /var/run/monotone
-
-               chmod 0750 $MTN_HOME
-               chmod 0750 $MTN_CONFDIR
-               chmod 0750 $MTN_KEYDIR
            fi
+
+           chown monotone:monotone $MTN_HOME
+           chown monotone:monotone $MTN_CONFDIR
+           chown monotone:monotone $MTN_KEYDIR
+           chown monotone:monotone /var/log/monotone
+           chown monotone:monotone /var/run/monotone
+
+           chmod 0750 $MTN_HOME
+           chmod 0750 $MTN_CONFDIR
+           chmod 0750 $MTN_KEYDIR
 
            chown monotone:monotone /etc/monotone/write-permissions
            chown monotone:monotone /etc/monotone/read-permissions
