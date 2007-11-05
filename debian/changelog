@@ -1,3 +1,28 @@
+monotone (0.37-2) unstable; urgency=low
+
+  * Do not error out if $HOME exists but is inaccessible.  Should fix
+    mips(el) FTBFS.
+  * Fix bashisms in monotone-server scripts.  Thanks to Glen Ditchfield
+    for finding this problem and providing part of the fix.
+  * In monotone-server.postinst, set permissions and ownership of
+    just-created directories whether or not we created the monotone
+    user.  Thanks to Michael Berg for doing almost all the work on
+    this bug.  (Closes: #437978)
+  * Reincorporate debian/changelog entries for versions 0.27-1 and
+    0.27-1.1.  These versions were once uploaded to Debian but their
+    entries got lost from the official changelog somehow.
+  * Switch from cdbs to a handwritten rules file based on debhelper
+    examples.  Restore Build-Depends/Build-Depends-Indep distinction
+    and monkey with the rules so that dpkg-buildpackage -B doesn't
+    build the documentation.  This gets us out from under the present
+    nonavailability of some of the B-D-Is on some of the buildds.
+  * Info files moved to monotone-doc.  Other cleanups to that package.
+  * Do not install the boilerplate ABOUT-NLS file in any of the
+    packages' documentation directories.
+  * Improve short descriptions.
+
+ -- Zack Weinberg <zackw@panix.com>  Sun, 04 Nov 2007 11:53:17 -0800
+
 monotone (0.37-1) unstable; urgency=low
 
   * New upstream release.
