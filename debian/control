@@ -3,10 +3,10 @@ Section: devel
 Priority: optional
 Maintainer: Debian Maintainers for Monotone <monotone-debian@nongnu.org>
 Uploaders: Richard Levitte <richard@levitte.org>, Zack Weinberg <zackw@panix.com>, Ludovic Brenta <lbrenta@debian.org>
-Build-Depends: cdbs (>= 0.4.28), debhelper (>= 4.2.0), autotools-dev,
- libboost-dev (>= 1.34.1-2), libz-dev, ps2eps, texlive-base,
- texlive-generic-recommended, texlive-latex-base, texinfo, xpdf-utils, 
- po-debconf, patch
+Build-Depends: debhelper (>= 4.2.0), autotools-dev, libz-dev, po-debconf,
+ libboost-dev (>= 1.34.1-2), patch
+Build-Depends-Indep: ps2eps, texlive-base, texlive-generic-recommended,
+ texlive-latex-base, texinfo, xpdf-utils
 Standards-Version: 3.7.2.2
 
 Package: monotone
@@ -24,7 +24,7 @@ Package: monotone-server
 Architecture: all
 Depends: monotone (>= ${source:Version}), adduser, ucf (>= 0.28), 
  lsb-base (>= 3.0-6), ${misc:Depends}
-Description: A distributed version (revision) control system
+Description: A distributed version (revision) control system - server scripts
  Monotone is a free, distributed version control system. It provides
  fully disconnected operation, manages complete tree versions, keeps
  its state in a local transactional database, supports overlapping
@@ -37,6 +37,6 @@ Description: A distributed version (revision) control system
 Package: monotone-doc
 Section: doc
 Architecture: all
-Description: A distributed version (revision) control system
- This package contains the documentation for monotone in HTML and PDF
+Description: A distributed version (revision) control system - documentation
+ This package contains the documentation for monotone in Info, HTML, and PDF
  formats. See the description of the package monotone for more details.
