@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-10-25 23:13+0200\n"
-"PO-Revision-Date: 2007-10-25 23:14+0200\n"
+"POT-Creation-Date: 2007-11-06 14:02+0100\n"
+"PO-Revision-Date: 2007-11-06 14:03+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -280,7 +280,7 @@ msgstr "Skriver ut den fullständiga föräldragrafen"
 msgid "Lists the revisions that match a selector"
 msgstr "Visar revisionerna som matchar en väljare"
 
-#: automate.cc:857 cmd_diff_log.cc:477 cmd_ws_commit.cc:146
+#: automate.cc:857 cmd_diff_log.cc:479 cmd_ws_commit.cc:146
 #: cmd_ws_commit.cc:370 cmd_ws_commit.cc:405 cmd_ws_commit.cc:490
 #: cmd_ws_commit.cc:987
 msgid "[PATH]..."
@@ -332,8 +332,8 @@ msgid "Prints the revision data in packet format"
 msgstr "Skriv ut datapaket för revision till stdout"
 
 #: automate.cc:1205 automate.cc:1235 automate.cc:1296 automate.cc:1298
-#: automate.cc:1879 cmd_db.cc:127 cmd_diff_log.cc:398 cmd_diff_log.cc:427
-#: cmd_diff_log.cc:429 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
+#: automate.cc:1879 cmd_db.cc:127 cmd_diff_log.cc:400 cmd_diff_log.cc:429
+#: cmd_diff_log.cc:431 cmd_files.cc:174 cmd_files.cc:264 cmd_merging.cc:186
 #: cmd_merging.cc:800 cmd_merging.cc:815 cmd_merging.cc:818 cmd_netsync.cc:359
 #: cmd_ws_commit.cc:559 cmd_ws_commit.cc:1279 commands.cc:908
 #, c-format
@@ -830,36 +830,36 @@ msgstr ""
 "Detta kommando migrerar den givna databasen från ett specifikt schema i "
 "SCHEMA till dess efterföljare."
 
-#: cmd_diff_log.cc:122
+#: cmd_diff_log.cc:124
 msgid "Deleted entries:"
 msgstr "Borttagna objekt:"
 
-#: cmd_diff_log.cc:128
+#: cmd_diff_log.cc:130
 msgid "Renamed entries:"
 msgstr "Omnämnda objekt:"
 
-#: cmd_diff_log.cc:143
+#: cmd_diff_log.cc:145
 msgid "Added files:"
 msgstr "Adderade filer:"
 
-#: cmd_diff_log.cc:149
+#: cmd_diff_log.cc:151
 msgid "Added directories:"
 msgstr "Adderade kataloger:"
 
-#: cmd_diff_log.cc:160
+#: cmd_diff_log.cc:162
 msgid "Modified files:"
 msgstr "Ändrade filer:"
 
-#: cmd_diff_log.cc:177
+#: cmd_diff_log.cc:179
 msgid "Modified attrs:"
 msgstr "Ändrade attribut:"
 
-#: cmd_diff_log.cc:357
+#: cmd_diff_log.cc:359
 #, c-format
 msgid "more than two revisions given"
 msgstr "fler än två revisioner angivna"
 
-#: cmd_diff_log.cc:369
+#: cmd_diff_log.cc:371
 #, c-format
 msgid ""
 "this workspace has more than one parent\n"
@@ -868,11 +868,11 @@ msgstr ""
 "denna arbetskopia har mer än en förälder\n"
 "(ange en revision att se skillnader emot med --revision)"
 
-#: cmd_diff_log.cc:478
+#: cmd_diff_log.cc:480
 msgid "Shows current differences"
 msgstr "Visa nuvarande skillnader"
 
-#: cmd_diff_log.cc:479
+#: cmd_diff_log.cc:481
 msgid ""
 "Compares the current tree with the files in the repository and prints the "
 "differences on the standard output.\n"
@@ -886,7 +886,7 @@ msgstr ""
 "revisionen. Om två revisioner anges visas skillnaden mellan dem. Om\n"
 "inget format anges används unified."
 
-#: cmd_diff_log.cc:490
+#: cmd_diff_log.cc:492
 #, c-format
 msgid ""
 "--diff-args requires --external\n"
@@ -895,27 +895,27 @@ msgstr ""
 "--diff-args kräver att även --external anges\n"
 "lägg till --external eller ta bort --diff-args?"
 
-#: cmd_diff_log.cc:514
+#: cmd_diff_log.cc:516
 msgid "no changes"
 msgstr "inga ändringar"
 
-#: cmd_diff_log.cc:539
+#: cmd_diff_log.cc:541
 msgid "[FILE [...]]"
 msgstr "[FIL [...]]"
 
-#: cmd_diff_log.cc:540
+#: cmd_diff_log.cc:542
 msgid "Calculates diffs of files"
 msgstr "Räknar ut skillnaden mellan filerna"
 
-#: cmd_diff_log.cc:616
+#: cmd_diff_log.cc:618
 msgid "[FILE] ..."
 msgstr "[FIL] ..."
 
-#: cmd_diff_log.cc:617
+#: cmd_diff_log.cc:619
 msgid "Prints history in reverse order"
 msgstr "Skriver ut historien i omvänd ordning"
 
-#: cmd_diff_log.cc:618
+#: cmd_diff_log.cc:620
 msgid ""
 "This command prints history in reverse order, filtering it by FILE if "
 "given.  If one or more revisions are given, uses them as a starting point."
@@ -924,12 +924,12 @@ msgstr ""
 "arbetskatalogen om inga filer angivits. Om en eller flera revisioner har "
 "angivits används de som utgångspunkter."
 
-#: cmd_diff_log.cc:634
+#: cmd_diff_log.cc:636
 #, c-format
 msgid "only one of --last/--next allowed"
 msgstr "enbart en av --last eller --next tillåten"
 
-#: cmd_diff_log.cc:934
+#: cmd_diff_log.cc:936
 #, c-format
 msgid "(Revision: %s)"
 msgstr "(Revision: %s)"
@@ -2669,7 +2669,7 @@ msgstr "listor"
 msgid "markings"
 msgstr "markeringar"
 
-#: database_check.cc:312 netsync.cc:3117 rcs_import.cc:1238
+#: database_check.cc:312 netsync.cc:3120 rcs_import.cc:1238
 msgid "revisions"
 msgstr "revisioner"
 
@@ -2677,7 +2677,7 @@ msgstr "revisioner"
 msgid "ancestry"
 msgstr "föräldraskap"
 
-#: database_check.cc:440 netsync.cc:3121
+#: database_check.cc:440 netsync.cc:3124
 msgid "keys"
 msgstr "nycklar"
 
@@ -3781,94 +3781,99 @@ msgstr ""
 "kontrollsummering misslyckades för den publika nyckeln '%s' (%s); ville ha '%"
 "s' men fick '%s'"
 
-#: netsync.cc:1967
+#: netsync.cc:1959
+#, c-format
+msgid "Received duplicate key %s"
+msgstr "Fick en till nyckel med identiteten %s"
+
+#: netsync.cc:1970
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "kontrollsummering misslyckades för revisionscertet '%s'"
 
-#: netsync.cc:2029
+#: netsync.cc:2032
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Fick varning från usher: %s"
 
-#: netsync.cc:2116 netsync.cc:2147
+#: netsync.cc:2119 netsync.cc:2150
 msgid "source and sink"
 msgstr "källa och mottagare"
 
-#: netsync.cc:2117 netsync.cc:2148
+#: netsync.cc:2120 netsync.cc:2151
 msgid "source"
 msgstr "källa"
 
-#: netsync.cc:2117 netsync.cc:2148
+#: netsync.cc:2120 netsync.cc:2151
 msgid "sink"
 msgstr "mottagare"
 
-#: netsync.cc:2304
+#: netsync.cc:2307
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "indatabuffert för %s är överfull"
 
-#: netsync.cc:2316 netsync.cc:2416
+#: netsync.cc:2319 netsync.cc:2419
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "protokollfel vid behandling av %s: '%s'"
 
-#: netsync.cc:2322
+#: netsync.cc:2325
 #, c-format
 msgid "error: %s"
 msgstr "fel: %s"
 
-#: netsync.cc:2387 netsync.cc:2845
+#: netsync.cc:2390 netsync.cc:2848
 #, c-format
 msgid "connecting to %s"
 msgstr "ansluter till %s"
 
-#: netsync.cc:2431
+#: netsync.cc:2434
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "att vänta på I/O från %s tog för lång tid, kopplar ifrån"
 
-#: netsync.cc:2454
+#: netsync.cc:2457
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "tar hand om misslyckande i samtal med %s, kopplar ifrån"
 
-#: netsync.cc:2471
+#: netsync.cc:2474
 #, c-format
 msgid "successful exchange with %s"
 msgstr "lyckat utbyte med %s"
 
-#: netsync.cc:2477
+#: netsync.cc:2480
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "%s kopplade ifrån efter att vi informerade den om ett fel"
 
-#: netsync.cc:2482
+#: netsync.cc:2485
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "I/O-fel i samtal med %s, kopplar ifrån"
 
-#: netsync.cc:2550
+#: netsync.cc:2553
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr "protokollfel i samtal med %s: '%s', markerar det som felaktigt"
 
-#: netsync.cc:2582
+#: netsync.cc:2585
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "tar emot ny klientanslutning från %s: %s"
 
-#: netsync.cc:2619
+#: netsync.cc:2622
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "protokollfel i samtal med %s: '%s', kopplar ifrån"
 
-#: netsync.cc:2630
+#: netsync.cc:2633
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "läsning från %s fallerade i tillståndet \"working\" (fel)"
 
-#: netsync.cc:2635
+#: netsync.cc:2638
 #, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)"
@@ -3876,17 +3881,17 @@ msgstr ""
 "läsning från %s fallerade i tillståndet \"shutdown\" (klienten kan felaktigt "
 "ha rapporterat ett fel)"
 
-#: netsync.cc:2641
+#: netsync.cc:2644
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "läsning från %s fallerade i tillståndet \"confirmed\" (framgång)"
 
-#: netsync.cc:2662
+#: netsync.cc:2665
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "skrivning till %s fallerade i tillståndet \"working\" (fel)"
 
-#: netsync.cc:2667
+#: netsync.cc:2670
 #, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)"
@@ -3894,77 +3899,77 @@ msgstr ""
 "skrivning till %s fallerade i tillståndet \"shutdown\" (klienten kan "
 "felaktigt ha rapporterat ett fel)"
 
-#: netsync.cc:2673
+#: netsync.cc:2676
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "skrivning till %s fallerade i tillståndet \"confirmed\" (framgång)"
 
-#: netsync.cc:2700
+#: netsync.cc:2703
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "behandling av %s slutförd, kopplar ifrån"
 
-#: netsync.cc:2722
+#: netsync.cc:2725
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (%s) har varit inaktiv för länge, kopplar ifrån"
 
-#: netsync.cc:2808
+#: netsync.cc:2811
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "startar tjänst på %s : %s"
 
-#: netsync.cc:2809
+#: netsync.cc:2812
 msgid "<all interfaces>"
 msgstr "<alla gränssnitt>"
 
-#: netsync.cc:2823
+#: netsync.cc:2826
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr ""
 "gränsen för antalet sessioner, %d, är nådd, en del uppkopplingar kommer att "
 "nekas"
 
-#: netsync.cc:2872
+#: netsync.cc:2875
 #, c-format
 msgid "Network error: %s"
 msgstr "Nätverksfel: %s"
 
-#: netsync.cc:2933
+#: netsync.cc:2936
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Nätverksfel för %s, kopplar ifrån"
 
-#: netsync.cc:2939
+#: netsync.cc:2942
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "fick OOB-data från %s, kopplar ifrån"
 
-#: netsync.cc:2999
+#: netsync.cc:3002
 #, c-format
 msgid "beginning service on %s"
 msgstr "startar tjänst på %s"
 
-#: netsync.cc:3062
+#: netsync.cc:3065
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "fick OOB-data på fildeskriptor %d (från %s), kopplar ifrån"
 
-#: netsync.cc:3111
+#: netsync.cc:3114
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "letar efter saker att synkronisera:"
 
-#: netsync.cc:3119
+#: netsync.cc:3122
 msgid "certificates"
 msgstr "certifikat"
 
-#: netsync.cc:3228
+#: netsync.cc:3231
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Kan inte hitta nyckeln '%s'"
 
-#: netsync.cc:3268
+#: netsync.cc:3271
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3973,7 +3978,7 @@ msgstr ""
 "grenmönstret givet med --include innehåller ett citattecken:\n"
 "%s"
 
-#: netsync.cc:3274
+#: netsync.cc:3277
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3982,7 +3987,7 @@ msgstr ""
 "grenmönstret givet med --exclude innehåller ett citattecken:\n"
 "%s"
 
-#: netsync.cc:3309 netsync.cc:3313
+#: netsync.cc:3312 netsync.cc:3316
 #, c-format
 msgid "network error: %s"
 msgstr "nätverksfel: %s"
@@ -4275,39 +4280,39 @@ msgstr "otydbart paket: för många argument i headern"
 msgid "unknown packet type: '%s'"
 msgstr "okänd pakettyp: '%s'"
 
-#: pcrewrap.cc:162
+#: pcrewrap.cc:161
 #, c-format
 msgid "while compiling regex \"%s\": %s"
 msgstr "medans regexen \"%s\" kompilerades: %s"
 
-#: pcrewrap.cc:171
+#: pcrewrap.cc:170
 #, c-format
 msgid "error in regex \"%s\": %s"
 msgstr "fel i regexen \"%s\": %s"
 
-#: pcrewrap.cc:173
+#: pcrewrap.cc:172
 #, c-format
 msgid "error near char %d of regex \"%s\": %s"
 msgstr "fel nära tecken nummer %d i regexen \"%s\": %s"
 
-#: pcrewrap.cc:187
+#: pcrewrap.cc:186
 #, c-format
 msgid "while studying regex \"%s\": %s"
 msgstr "medans regexen \"%s\" studerades: %s"
 
-#: pcrewrap.cc:205
+#: pcrewrap.cc:204
 msgid "backtrack limit exceeded in regular expression matching"
 msgstr "bakåtspårningsnivån har nått sin gräns under jämförelse av regex"
 
-#: pcrewrap.cc:209
+#: pcrewrap.cc:208
 msgid "recursion limit exceeded in regular expression matching"
 msgstr "rekursionen har nått sin gräns under jämförelse av regex"
 
-#: pcrewrap.cc:214
+#: pcrewrap.cc:213
 msgid "invalid UTF-8 sequence found during regular expression matching"
 msgstr "ogiltig UTF8-sekvens funnen under jämförelsen av regex"
 
-#: pcrewrap.cc:217
+#: pcrewrap.cc:216
 #, c-format
 msgid "pcre_match returned %d"
 msgstr "pcre_match gav tillbaka %d"
