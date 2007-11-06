@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-10-24 10:21+0100\n"
+"PO-Revision-Date: 2007-10-28 15:18+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -29,7 +29,7 @@ msgstr "directory non valida ‘’"
 #: app_state.cc:142
 #, c-format
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
-msgstr "la directory di servizio di monotone ‘%s’ esiste già in ‘%s’"
+msgstr "la directory di servizio di monotone ‘%s’ esiste già in %s"
 
 #: asciik.cc:369
 #: automate.cc:477
@@ -1748,7 +1748,7 @@ msgstr "Checkout una revisione da un database remoto in una directory"
 #: cmd_netsync.cc:242
 #, fuzzy
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch supplied.  If no directory is given, the branch name will be used as directory"
-msgstr "Se viene data una revisione, sarà quella ad essere checkout. Altrimenti sarà fornita la testa del ramo. Se nessuna directory è data, il nome del ramo sarà usato come directory"
+msgstr "Se viene specificata una revisione, sarà quella ad essere checkout. Altrimenti sarà fornita la testa del ramo. Se nessuna directory è data, il nome del ramo sarà usato come directory"
 
 #: cmd_netsync.cc:255
 #, c-format
@@ -1869,9 +1869,8 @@ msgid "Reads packets from files"
 msgstr "Legge pacchetti da file"
 
 #: cmd_packet.cc:136
-#, fuzzy
 msgid "If no files are provided, the standard input is used."
-msgstr "Se nessun file è fornito, si usa l'input standard."
+msgstr "Se non è specificato alcun file, viene utilizzato stdin."
 
 #: cmd_packet.cc:144
 #, c-format
@@ -2300,7 +2299,6 @@ msgid "DIRECTORY"
 msgstr "DIRECTORY"
 
 #: cmd_ws_commit.cc:1260
-#, fuzzy
 msgid "Imports the contents of a directory into a branch"
 msgstr "Importa i contenuti di una directory in un ramo"
 
@@ -2438,7 +2436,7 @@ msgid "For information on a specific command, type 'mtn help <command_name> [sub
 msgstr "Per informazioni su uno specifico comando, scrivi ‘mtn help <nome_comando> [nome_sottocomando …]’."
 
 #: commands.cc:734
-#, fuzzy, c-format
+#, c-format
 msgid "To see more details about the commands of a particular group, type 'mtn help <group_name>'."
 msgstr "Per avere maggiori dettagli sui comandi di un particolare gruppo, scrivi ‘mtn help <nome_gruppo>’."
 
