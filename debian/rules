@@ -68,7 +68,7 @@ build-indep-stamp: config.status
 clean:
 	dh_testdir
 	dh_testroot
-	-$(MAKE) distclean
+	[ ! -f Makefile ] || $(MAKE) distclean
 	rm -f build-arch-stamp build-indep-stamp
 	dh_clean
 
