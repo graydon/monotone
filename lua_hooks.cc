@@ -187,7 +187,23 @@ void
 lua_hooks::load_rcfile(any_path const & rc, bool required)
 {
   I(st);
-  if (path_exists(rc))
+  bool exists;
+  try
+    {
+      exists = path_exists(rc);
+    }
+  catch (informative_failure & e)
+    {
+      if (!required)
+        {
+          L(FL("skipping rcfile '%s': %s") % rc % e.what());
+          return;
+        }
+      else
+        throw;
+    }
+
+  if (exists)
     {
       L(FL("opening rcfile '%s'") % rc);
       N(run_file(st, rc.as_external().c_str()),

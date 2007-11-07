@@ -128,15 +128,16 @@ _mtn_au() {
 _mtn_automate() {
     (( $+_mtn_automate_cmds )) ||
     _mtn_automate_cmds=(
-	ancestors ancestry_difference attributes branches cert certs
-	children common_ancestors content_diff db_get db_set
-	descendents erase_ancestors genkey get_base_revision_id
-	get_content_changed get_corresponding_path
-	get_current_revision_id get_file get_file_of get_manifest_of
-	get_option get_revision graph heads identify interface_version
-	inventory keys leaves packet_for_fdata packet_for_fdelta
-	packet_for_rdata packets_for_certs parents put_file
-	put_revision select stdio tags toposort
+	ancestors ancestry_difference branches cert certs children
+	common_ancestors content_diff db_get db_set descendents
+	drop_attribute erase_ancestors genkey get_attributes
+	get_base_revision_id get_content_changed
+	get_corresponding_path get_current_revision_id get_file
+	get_file_of get_manifest_of get_option get_revision graph
+	heads identify interface_version inventory keys leaves
+	packet_for_fdata packet_for_fdelta packet_for_rdata
+	packets_for_certs parents put_file put_revision roots select
+	set_attribute stdio tags toposort
     )
     if (( CURRENT == 2 )) ; then
 	compadd -a _mtn_automate_cmds

@@ -31,7 +31,7 @@ do
 				  end
 				  wait(spawn(exe, rid,
 					     branch, author, changelog, rdat))
-				  return
+				  return "continue",nil
 			       end
 			 })
 end

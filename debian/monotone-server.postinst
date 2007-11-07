@@ -25,7 +25,7 @@ set -e
 
 MTN=/usr/bin/mtn
 
-function monotone_check_minimum_previous_version ()
+monotone_check_minimum_previous_version ()
 {
     if dpkg --compare-versions "$MTN_VERSION" lt "0.17"; then 
 	# monotone version to old to automatically upgrade
@@ -38,7 +38,7 @@ function monotone_check_minimum_previous_version ()
     fi
 }
 
-function monotone_migrate ()
+monotone_migrate ()
 {
     if dpkg --compare-versions "$MTN_VERSION" lt "0.33-90.1"; then 
 	# upgradable version of monotone
@@ -62,7 +62,7 @@ function monotone_migrate ()
     fi
 }
 
-function monotone_rosterify ()
+monotone_rosterify ()
 {
     if dpkg --compare-versions "$MTN_VERSION" lt "0.26"; then 
 	# now we need to rosterify
@@ -83,7 +83,7 @@ function monotone_rosterify ()
     fi
 }
 
-function monotone_regenerate_caches ()
+monotone_regenerate_caches ()
 {
     if dpkg --compare-versions "$MTN_VERSION" lt "0.31-90.1"; then
 	# now we need to regenerate caches
@@ -127,17 +127,17 @@ case "$1" in
 	       adduser --system --group --home $MTN_HOME \
 	       --no-create-home --disabled-password --quiet        \
 	       --gecos "Monotone" monotone
-	       
-	       chown monotone:monotone $MTN_HOME
-               chown monotone:monotone $MTN_CONFDIR
-               chown monotone:monotone $MTN_KEYDIR
-               chown monotone:monotone /var/log/monotone
-               chown monotone:monotone /var/run/monotone
-
-               chmod 0750 $MTN_HOME
-               chmod 0750 $MTN_CONFDIR
-               chmod 0750 $MTN_KEYDIR
            fi
+
+           chown monotone:monotone $MTN_HOME
+           chown monotone:monotone $MTN_CONFDIR
+           chown monotone:monotone $MTN_KEYDIR
+           chown monotone:monotone /var/log/monotone
+           chown monotone:monotone /var/run/monotone
+
+           chmod 0750 $MTN_HOME
+           chmod 0750 $MTN_CONFDIR
+           chmod 0750 $MTN_KEYDIR
 
            chown monotone:monotone /etc/monotone/write-permissions
            chown monotone:monotone /etc/monotone/read-permissions

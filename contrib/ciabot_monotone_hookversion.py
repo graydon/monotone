@@ -29,7 +29,7 @@ class config:
         #    return "monotone-viz"
         #elif branchname.startswith("net.venge.monotone.contrib.monotree"):
         #    return "monotree"
-        #else:
+        #elif branchname.startswith("net.venge.monotone"):
         #    return "monotone"
         return "FIXME"
 

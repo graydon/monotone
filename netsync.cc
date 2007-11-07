@@ -1954,6 +1954,9 @@ session::process_data_cmd(netcmd_item_type type,
                            % hitem % keyid % hitem % tmp);
         if (app.db.put_key(keyid, pub))
           written_keys.push_back(keyid);
+        else
+          error(partial_transfer,
+                (F("Received duplicate key %s") % keyid).str());
       }
       break;
 
