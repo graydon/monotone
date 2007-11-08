@@ -23,43 +23,61 @@ using std::string;
 bool
 roster_merge_result::is_clean() const
 {
-  return is_clean_except_for_content()
-    && file_content_conflicts.empty();
+  return !has_non_content_conflicts()
+    && !has_content_conflicts();
+}
+
+// possibly split this into
+//
+// has_structure_conflicts
+// has_attribute_conflicts
+// has_content_conflicts
+//
+// and resolve them in that order
+
+bool
+roster_merge_result::has_content_conflicts() const
+{
+  return file_content_conflicts.size() > 0;
 }
 
 bool
-roster_merge_result::is_clean_except_for_content() const
+roster_merge_result::has_non_content_conflicts() const
 {
-  return node_name_conflicts.empty()
-    && node_attr_conflicts.empty()
-    && orphaned_node_conflicts.empty()
-    && rename_target_conflicts.empty()
-    && directory_loop_conflicts.empty()
-    && illegal_name_conflicts.empty()
-    && !missing_root_dir;
+  return !divergent_name_conflicts.empty()
+    || !node_attr_conflicts.empty()
+    || !orphaned_node_conflicts.empty()
+    || !convergent_name_conflicts.empty()
+    || !directory_loop_conflicts.empty()
+    || !illegal_name_conflicts.empty()
+    || missing_root_dir;
 }
 
 static void
 debug_describe_conflicts(roster_merge_result const & result, string & out)
 {
-  out = (FL("unclean roster_merge: %d name conflicts, %d content conflicts, %d attr conflicts, "
+  // file content conflicts first
+
+  out = (FL("unclean roster_merge: %d divergent name conflicts, %d content conflicts, %d attr conflicts, "
             "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n")
-         % result.node_name_conflicts.size()
+         % result.divergent_name_conflicts.size()
          % result.file_content_conflicts.size()
          % result.node_attr_conflicts.size()
          % result.orphaned_node_conflicts.size()
-         % result.rename_target_conflicts.size()
+         % result.convergent_name_conflicts.size()
          % result.directory_loop_conflicts.size())
     .str();
 
-  for (size_t i = 0; i < result.node_name_conflicts.size(); ++i)
+  for (size_t i = 0; i < result.divergent_name_conflicts.size(); ++i)
     out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
-            % result.node_name_conflicts[i].nid
-            % result.node_name_conflicts[i].left.first
-            % result.node_name_conflicts[i].left.second
-            % result.node_name_conflicts[i].right.first
-            % result.node_name_conflicts[i].right.second)
+            % result.divergent_name_conflicts[i].nid
+            % result.divergent_name_conflicts[i].left.first
+            % result.divergent_name_conflicts[i].left.second
+            % result.divergent_name_conflicts[i].right.first
+            % result.divergent_name_conflicts[i].right.second)
       .str();
+
+  // put this first
 
   for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
     out += (FL("content conflict on node %d: [%s] vs. [%s]")
@@ -85,12 +103,12 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
             % result.orphaned_node_conflicts[i].parent_name.second)
       .str();
 
-  for (size_t i = 0; i < result.rename_target_conflicts.size(); ++i)
+  for (size_t i = 0; i < result.convergent_name_conflicts.size(); ++i)
     out += (FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
-            % result.rename_target_conflicts[i].nid1
-            % result.rename_target_conflicts[i].nid2
-            % result.rename_target_conflicts[i].parent_name.first
-            % result.rename_target_conflicts[i].parent_name.second)
+            % result.convergent_name_conflicts[i].nid1
+            % result.convergent_name_conflicts[i].nid2
+            % result.convergent_name_conflicts[i].parent_name.first
+            % result.convergent_name_conflicts[i].parent_name.second)
       .str();
 
   for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
@@ -106,6 +124,10 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
             % result.illegal_name_conflicts[i].parent_name.first
             % result.illegal_name_conflicts[i].parent_name.second)
       .str();
+
+  if (result.missing_root_dir)
+    out += (FL("missing root conflict: root directory has been removed")).str();
+
 }
 
 template <> void
@@ -127,59 +149,160 @@ roster_merge_result::log_conflicts() const
 }
 
 void
-roster_merge_result::warn_non_content_conflicts() const
+roster_merge_result::warn_non_content_conflicts(roster_t const & left,
+                                                roster_t const & right) const
 {
-  for (size_t i = 0; i < node_name_conflicts.size(); ++i)
-    W(F("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
-      % node_name_conflicts[i].nid
-      % node_name_conflicts[i].left.first
-      % node_name_conflicts[i].left.second
-      % node_name_conflicts[i].right.first
-      % node_name_conflicts[i].right.second);
+  // TODO:
+  // - distinguish files and dirs from generic nodes
+  // - don't include node ids
+  // - W on each conflict type and then P further details
+  // - get "ancestral" names (if that's reasonable)
+  // - ensure "left" *is* from the left and "right" *is* from the right
+  // - add a better error macro (D?) for these multiple problem cases
+
+  for (size_t i = 0; i < divergent_name_conflicts.size(); ++i)
+    {
+      file_path left_name, right_name;
+      left.get_name(divergent_name_conflicts[i].nid, left_name);
+      right.get_name(divergent_name_conflicts[i].nid, right_name);
+
+      /*
+        mtn: error: divergent name conflict
+        mtn: file/dir ... in BASE
+        mtn: renamed to ... on the left
+        mtn: renamed to ... on the right
+      */
+
+      W(F("divergent name conflict: one node (%d) wants two names ('%s' and '%s')")
+        % divergent_name_conflicts[i].nid
+        % left_name
+        % right_name);
+    }
 
   for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
-    W(F("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]")
-      % node_attr_conflicts[i].nid
-      % node_attr_conflicts[i].key
-      % node_attr_conflicts[i].left.first
-      % node_attr_conflicts[i].left.second
-      % node_attr_conflicts[i].right.first
-      % node_attr_conflicts[i].right.second);
+    {
+      file_path left_name, right_name;
+      left.get_name(node_attr_conflicts[i].nid, left_name);
+      right.get_name(node_attr_conflicts[i].nid, right_name);
+
+      /*
+        mtn: error: attribute conflict
+        mtn: file/dir ... in base (base/left/right?)
+        mtn: ... deleted/set to ... on the left
+        mtn: ... deleted/set to ... on the right
+      */
+
+      if (left_name == right_name)
+        W(F("attribute conflict: attribute '%s' on '%s' (node %d) wants two values ('%s' and '%s')")
+          % node_attr_conflicts[i].key
+          % left_name
+          % node_attr_conflicts[i].nid
+          % node_attr_conflicts[i].left.second
+          % node_attr_conflicts[i].right.second);
+      else
+        W(F("attribute conflict: attribute '%s' between '%s' and '%s' (node %d) wants two values ('%s' and '%s')")
+          % node_attr_conflicts[i].key
+          % left_name
+          % right_name
+          % node_attr_conflicts[i].nid
+          % node_attr_conflicts[i].left.second
+          % node_attr_conflicts[i].right.second);
+    }
+
 
   for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
-    W(F("orphaned node conflict on node %d, dead parent %d, name %s")
-      % orphaned_node_conflicts[i].nid
-      % orphaned_node_conflicts[i].parent_name.first
-      % orphaned_node_conflicts[i].parent_name.second);
+    {
+      file_path fp;
+      if (left.has_node(orphaned_node_conflicts[i].nid))
+        left.get_name(orphaned_node_conflicts[i].nid, fp);
+      else
+        right.get_name(orphaned_node_conflicts[i].nid, fp);
 
-  for (size_t i = 0; i < rename_target_conflicts.size(); ++i)
-    W(F("rename target conflict: nodes %d, %d, both want parent %d, name %s")
-      % rename_target_conflicts[i].nid1
-      % rename_target_conflicts[i].nid2
-      % rename_target_conflicts[i].parent_name.first
-      % rename_target_conflicts[i].parent_name.second);
+      /*
+        mtn: error: orphaned file/directory conflict
+        mtn: file/dir ... in base (base/left/right?)
+        mtn : ...more...
+      */
+
+      W(F("orphaned node conflict: parent of '%s' was removed (node %d parent %d)")
+        % fp
+        % orphaned_node_conflicts[i].nid
+        % orphaned_node_conflicts[i].parent_name.first);
+    }
+
+  for (size_t i = 0; i < convergent_name_conflicts.size(); ++i)
+    {
+      file_path left_name, right_name;
+      left.get_name(convergent_name_conflicts[i].nid2, left_name);
+      right.get_name(convergent_name_conflicts[i].nid1, right_name);
+
+      I(left_name == right_name);
+
+      /*
+        mtn: error: convergent name conflict
+        mtn: ... 4 different sub cases ...
+      */
+
+      W(F("convergent name conflict: two nodes (%d and %d) want one name ('%s')")
+        % convergent_name_conflicts[i].nid2
+        % convergent_name_conflicts[i].nid1
+        % left_name);
+    }
 
   for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
-    W(F("directory loop conflict: node %d, wanted parent %d, name %s")
-      % directory_loop_conflicts[i].nid
-      % directory_loop_conflicts[i].parent_name.first
-      % directory_loop_conflicts[i].parent_name.second);
+    {
+      file_path left_name, right_name;
+      left.get_name(directory_loop_conflicts[i].nid, left_name);
+      right.get_name(directory_loop_conflicts[i].parent_name.first, right_name);
+
+      /*
+        mtn: error: directory loop conflict
+        mtn: ...
+      */
+
+      W(F("directory loop conflict: between '%s' (node %d) and '%s' (node %d)")
+        % left_name
+        % directory_loop_conflicts[i].nid
+        % right_name
+        % directory_loop_conflicts[i].parent_name.first);
+    }
 
   for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
-    W(F("illegal name conflict: node %d, wanted parent %d, name %s")
-      % illegal_name_conflicts[i].nid
-      % illegal_name_conflicts[i].parent_name.first
-      % illegal_name_conflicts[i].parent_name.second);
+    {
+      file_path left_name, right_name;
+      left.get_name(illegal_name_conflicts[i].nid, left_name);
+      right.get_name(illegal_name_conflicts[i].parent_name.first, right_name);
+
+      /*
+        mtn: error: invalid name conflict
+        mtn: ...
+      */
+
+      W(F("illegal name conflict: between '%s' (node %d) and '%s' (node %d)")
+        % left_name
+        % illegal_name_conflicts[i].nid
+        % right_name
+        % illegal_name_conflicts[i].parent_name.first);
+    }
+
+  if (missing_root_dir)
+    {
+      /*
+        mtn: error: root directory conflict
+        mtn: ...
+      */
+      W(F("missing root conflict: root directory has been removed"));
+    }
 }
 
 void
 roster_merge_result::clear()
 {
-  node_name_conflicts.clear();
-  file_content_conflicts.clear();
+  divergent_name_conflicts.clear();
+  file_content_conflicts.clear(); // first
   node_attr_conflicts.clear();
   orphaned_node_conflicts.clear();
-  rename_target_conflicts.clear();
+  convergent_name_conflicts.clear();
   directory_loop_conflicts.clear();
   illegal_name_conflicts.clear();
   missing_root_dir = false;
@@ -310,12 +433,12 @@ namespace
         if (result.roster.has_root())
           {
             // see comments below about name collisions.
-            rename_target_conflict c;
+            convergent_name_conflict c;
             c.nid1 = nid;
             c.nid2 = result.roster.root()->self;
             c.parent_name = make_pair(parent, name);
             result.roster.detach_node(file_path());
-            result.rename_target_conflicts.push_back(c);
+            result.convergent_name_conflicts.push_back(c);
             return;
           }
       }
@@ -344,12 +467,14 @@ namespace
         // "poisoned locations" or anything.
         if (p->has_child(name))
           {
-            rename_target_conflict c;
+            // is this consistently nid1 from right and nid2 from left?!?
+
+            convergent_name_conflict c;
             c.nid1 = nid;
             c.nid2 = p->get_child(name)->self;
             c.parent_name = make_pair(parent, name);
             p->detach_child(name);
-            result.rename_target_conflicts.push_back(c);
+            result.convergent_name_conflicts.push_back(c);
             return;
           }
 
@@ -483,7 +608,7 @@ roster_merge(roster_t const & left_parent,
               // merge name
               {
                 pair<node_id, path_component> new_name;
-                node_name_conflict conflict(new_n->self);
+                divergent_name_conflict conflict(new_n->self);
                 if (merge_scalar(make_pair(left_n->parent, left_n->name),
                                  left_marking.parent_name,
                                  left_uncommon_ancestors,
@@ -499,7 +624,7 @@ roster_merge(roster_t const & left_parent,
                   {
                     // unsuccessful merge; leave node detached and save
                     // conflict object
-                    result.node_name_conflicts.push_back(conflict);
+                    result.divergent_name_conflicts.push_back(conflict);
                   }
               }
               // if a file, merge content
@@ -862,7 +987,7 @@ struct name_shared_stuff : public virtual base_scalar
         }
         break;
       case scalar_conflict:
-        node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+        divergent_name_conflict const & c = idx(result.divergent_name_conflicts, 0);
         I(c.nid == thing_nid);
         I(c.left == make_pair(parent_for(left_val), pc_for(left_val)));
         I(c.right == make_pair(parent_for(right_val), pc_for(right_val)));
@@ -872,7 +997,7 @@ struct name_shared_stuff : public virtual base_scalar
         // that this was the only conflict signaled
         // attach implicitly checks that we were already detached
         result.roster.attach_node(thing_nid, file_path_internal("thing"));
-        result.node_name_conflicts.pop_back();
+        result.divergent_name_conflicts.pop_back();
         break;
       }
     // by now, the merge should have been resolved cleanly, one way or another
@@ -1405,7 +1530,7 @@ struct structural_conflict_helper
 };
 
 // two diff nodes with same name
-struct simple_rename_target_conflict : public structural_conflict_helper
+struct simple_convergent_name_conflict : public structural_conflict_helper
 {
   node_id left_nid, right_nid;
   virtual void setup()
@@ -1419,14 +1544,14 @@ struct simple_rename_target_conflict : public structural_conflict_helper
   virtual void check()
   {
     I(!result.is_clean());
-    rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
+    convergent_name_conflict const & c = idx(result.convergent_name_conflicts, 0);
     I((c.nid1 == left_nid && c.nid2 == right_nid)
       || (c.nid1 == right_nid && c.nid2 == left_nid));
     I(c.parent_name == make_pair(root_nid, path_component("thing")));
     // this tests that they were detached, implicitly
     result.roster.attach_node(left_nid, file_path_internal("left"));
     result.roster.attach_node(right_nid, file_path_internal("right"));
-    result.rename_target_conflicts.pop_back();
+    result.convergent_name_conflicts.pop_back();
     I(result.is_clean());
     result.roster.check_sane();
   }
@@ -1582,7 +1707,7 @@ struct simple_missing_root_dir : public structural_conflict_helper
 UNIT_TEST(roster_merge, simple_structural_conflicts)
 {
   {
-    simple_rename_target_conflict t;
+    simple_convergent_name_conflict t;
     t.test();
   }
   {
@@ -1603,12 +1728,12 @@ UNIT_TEST(roster_merge, simple_structural_conflicts)
   }
 }
 
-struct node_name_plus_helper : public structural_conflict_helper
+struct divergent_name_plus_helper : public structural_conflict_helper
 {
   node_id name_conflict_nid;
   node_id left_parent, right_parent;
   path_component left_name, right_name;
-  void make_nn_conflict(string const & left, string const & right)
+  void make_dn_conflict(string const & left, string const & right)
   {
     file_path left_path = file_path_internal(left);
     file_path right_path = file_path_internal(right);
@@ -1620,21 +1745,21 @@ struct node_name_plus_helper : public structural_conflict_helper
     right_parent = right_roster.get_node(right_path)->parent;
     right_name = right_roster.get_node(right_path)->name;
   }
-  void check_nn_conflict()
+  void check_dn_conflict()
   {
     I(!result.is_clean());
-    node_name_conflict const & c = idx(result.node_name_conflicts, 0);
+    divergent_name_conflict const & c = idx(result.divergent_name_conflicts, 0);
     I(c.nid == name_conflict_nid);
     I(c.left == make_pair(left_parent, left_name));
     I(c.right == make_pair(right_parent, right_name));
     result.roster.attach_node(name_conflict_nid, file_path_internal("totally_other_name"));
-    result.node_name_conflicts.pop_back();
+    result.divergent_name_conflicts.pop_back();
     I(result.is_clean());
     result.roster.check_sane();
   }
 };
 
-struct node_name_plus_rename_target : public node_name_plus_helper
+struct divergent_name_plus_convergent_name : public divergent_name_plus_helper
 {
   node_id a_nid, b_nid;
 
@@ -1642,7 +1767,7 @@ struct node_name_plus_rename_target : public node_name_plus_helper
   {
     a_nid = nis.next();
     b_nid = nis.next();
-    make_nn_conflict("a", "b");
+    make_dn_conflict("a", "b");
     make_dir(left_roster, left_markings, left_rid, left_rid, "b", b_nid);
     make_dir(right_roster, right_markings, right_rid, right_rid, "a", a_nid);
   }
@@ -1653,11 +1778,11 @@ struct node_name_plus_rename_target : public node_name_plus_helper
     // b should have landed fine
     I(result.roster.get_node(file_path_internal("a"))->self == a_nid);
     I(result.roster.get_node(file_path_internal("b"))->self == b_nid);
-    check_nn_conflict();
+    check_dn_conflict();
   }
 };
 
-struct node_name_plus_orphan : public node_name_plus_helper
+struct divergent_name_plus_orphan : public divergent_name_plus_helper
 {
   node_id a_nid, b_nid;
 
@@ -1667,17 +1792,17 @@ struct node_name_plus_orphan : public node_name_plus_helper
     b_nid = nis.next();
     make_dir(left_roster, left_markings, old_rid, left_rid, "a", a_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "b", b_nid);
-    make_nn_conflict("a/foo", "b/foo");
+    make_dn_conflict("a/foo", "b/foo");
   }
 
   virtual void check()
   {
     I(result.roster.all_nodes().size() == 2);
-    check_nn_conflict();
+    check_dn_conflict();
   }
 };
 
-struct node_name_plus_directory_loop : public node_name_plus_helper
+struct divergent_name_plus_directory_loop : public divergent_name_plus_helper
 {
   node_id a_nid, b_nid;
 
@@ -1687,7 +1812,7 @@ struct node_name_plus_directory_loop : public node_name_plus_helper
     b_nid = nis.next();
     make_dir(left_roster, left_markings, old_rid, old_rid, "a", a_nid);
     make_dir(right_roster, right_markings, old_rid, old_rid, "b", b_nid);
-    make_nn_conflict("a/foo", "b/foo");
+    make_dn_conflict("a/foo", "b/foo");
     make_dir(left_roster, left_markings, old_rid, left_rid, "a/foo/b", b_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "b/foo/a", a_nid);
   }
@@ -1695,11 +1820,11 @@ struct node_name_plus_directory_loop : public node_name_plus_helper
   virtual void check()
   {
     I(downcast_to_dir_t(result.roster.get_node(name_conflict_nid))->children.size() == 2);
-    check_nn_conflict();
+    check_dn_conflict();
   }
 };
 
-struct node_name_plus_illegal_name : public node_name_plus_helper
+struct divergent_name_plus_illegal_name : public divergent_name_plus_helper
 {
   node_id new_root_nid;
 
@@ -1710,18 +1835,18 @@ struct node_name_plus_illegal_name : public node_name_plus_helper
     right_roster.drop_detached_node(right_roster.detach_node(file_path()));
     safe_erase(right_markings, root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "", new_root_nid);
-    make_nn_conflict("new_root/_MTN", "foo");
+    make_dn_conflict("new_root/_MTN", "foo");
   }
 
   virtual void check()
   {
     I(result.roster.root()->self == new_root_nid);
     I(result.roster.all_nodes().size() == 2);
-    check_nn_conflict();
+    check_dn_conflict();
   }
 };
 
-struct node_name_plus_missing_root : public structural_conflict_helper
+struct divergent_name_plus_missing_root : public structural_conflict_helper
 {
   node_id left_root_nid, right_root_nid;
 
@@ -1740,7 +1865,7 @@ struct node_name_plus_missing_root : public structural_conflict_helper
     make_dir(right_roster, right_markings, old_rid, right_rid, "", right_root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "left_root", left_root_nid);
   }
-  void check_helper(node_name_conflict const & left_c, node_name_conflict const & right_c)
+  void check_helper(divergent_name_conflict const & left_c, divergent_name_conflict const & right_c)
   {
     I(left_c.nid == left_root_nid);
     I(left_c.left == make_pair(the_null_node, path_component()));
@@ -1753,28 +1878,28 @@ struct node_name_plus_missing_root : public structural_conflict_helper
   virtual void check()
   {
     I(!result.is_clean());
-    I(result.node_name_conflicts.size() == 2);
+    I(result.divergent_name_conflicts.size() == 2);
 
-    if (idx(result.node_name_conflicts, 0).nid == left_root_nid)
-      check_helper(idx(result.node_name_conflicts, 0),
-                   idx(result.node_name_conflicts, 1));
+    if (idx(result.divergent_name_conflicts, 0).nid == left_root_nid)
+      check_helper(idx(result.divergent_name_conflicts, 0),
+                   idx(result.divergent_name_conflicts, 1));
     else
-      check_helper(idx(result.node_name_conflicts, 1),
-                   idx(result.node_name_conflicts, 0));
+      check_helper(idx(result.divergent_name_conflicts, 1),
+                   idx(result.divergent_name_conflicts, 0));
 
     I(result.missing_root_dir);
 
     result.roster.attach_node(left_root_nid, file_path());
     result.roster.attach_node(right_root_nid, file_path_internal("totally_other_name"));
-    result.node_name_conflicts.pop_back();
-    result.node_name_conflicts.pop_back();
+    result.divergent_name_conflicts.pop_back();
+    result.divergent_name_conflicts.pop_back();
     result.missing_root_dir = false;
     I(result.is_clean());
     result.roster.check_sane();
   }
 };
 
-struct rename_target_plus_missing_root : public structural_conflict_helper
+struct convergent_name_plus_missing_root : public structural_conflict_helper
 {
   node_id left_root_nid, right_root_nid;
 
@@ -1794,7 +1919,7 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
   virtual void check()
   {
     I(!result.is_clean());
-    rename_target_conflict const & c = idx(result.rename_target_conflicts, 0);
+    convergent_name_conflict const & c = idx(result.convergent_name_conflicts, 0);
     I((c.nid1 == left_root_nid && c.nid2 == right_root_nid)
       || (c.nid1 == right_root_nid && c.nid2 == left_root_nid));
     I(c.parent_name == make_pair(the_null_node, path_component()));
@@ -1806,7 +1931,7 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
     result.roster.attach_node(result.roster.create_dir_node(nis), file_path());
     result.roster.attach_node(left_root_nid, file_path_internal("totally_left_name"));
     result.roster.attach_node(right_root_nid, file_path_internal("totally_right_name"));
-    result.rename_target_conflicts.pop_back();
+    result.convergent_name_conflicts.pop_back();
     result.missing_root_dir = false;
     I(result.is_clean());
     result.roster.check_sane();
@@ -1816,27 +1941,27 @@ struct rename_target_plus_missing_root : public structural_conflict_helper
 UNIT_TEST(roster_merge, complex_structural_conflicts)
 {
   {
-    node_name_plus_rename_target t;
+    divergent_name_plus_convergent_name t;
     t.test();
   }
   {
-    node_name_plus_orphan t;
+    divergent_name_plus_orphan t;
     t.test();
   }
   {
-    node_name_plus_directory_loop t;
+    divergent_name_plus_directory_loop t;
     t.test();
   }
   {
-    node_name_plus_illegal_name t;
+    divergent_name_plus_illegal_name t;
     t.test();
   }
   {
-    node_name_plus_missing_root t;
+    divergent_name_plus_missing_root t;
     t.test();
   }
   {
-    rename_target_plus_missing_root t;
+    convergent_name_plus_missing_root t;
     t.test();
   }
 }
