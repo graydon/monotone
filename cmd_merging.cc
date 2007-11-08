@@ -25,6 +25,7 @@
 #include "ui.hh"
 #include "app_state.hh"
 #include "simplestring_xform.hh"
+#include "keys.hh"
 
 using std::cout;
 using std::make_pair;
@@ -322,6 +323,12 @@ merge_two(revision_id const & left, revision_id const & right,
       P(F("[left]  %s") % left);
       P(F("[right] %s") % right);
     }
+
+  {
+    // early short-circuit to avoid failure after lots of work
+    rsa_keypair_id key;
+    get_user_key(key,app);
+  }
   
   revision_id merged;
   transaction_guard guard(app.db);
