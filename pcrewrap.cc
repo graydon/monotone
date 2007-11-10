@@ -117,7 +117,7 @@ namespace pcre
                flags options) const
   {
     int startoffset = 0;
-    if (startptr != string::const_iterator((char *)0))
+    if (startptr != string::const_iterator())
       startoffset = &*startptr - &*subject.data();
 
     int rc = pcre_exec(basedat, extradat,
