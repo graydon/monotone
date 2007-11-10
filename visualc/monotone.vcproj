@@ -537,6 +537,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\pcrewrap.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\process.cc"
 				>
 			</File>
@@ -947,6 +951,10 @@
 			</File>
 			<File
 				RelativePath="..\pch.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.hh"
 				>
 			</File>
 			<File
