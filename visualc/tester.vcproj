@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\lua&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -123,7 +123,7 @@
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="false"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\lua&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -250,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\pcrewrap.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\process.cc"
 				>
 			</File>
@@ -337,6 +341,10 @@
 			</File>
 			<File
 				RelativePath="..\paths.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.hh"
 				>
 			</File>
 			<File
