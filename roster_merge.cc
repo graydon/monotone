@@ -56,10 +56,16 @@ roster_merge_result::has_non_content_conflicts() const
 static void
 debug_describe_conflicts(roster_merge_result const & result, string & out)
 {
+
   // file content conflicts first
 
-  out = (FL("unclean roster_merge: %d divergent name conflicts, %d content conflicts, %d attr conflicts, "
-            "%d orphaned node conflicts, %d rename target conflicts, %d directory loop conflicts\n")
+  out = (FL("unclean roster_merge: "
+            "%d divergent name conflicts, "
+            "%d content conflicts, "
+            "%d attr conflicts, "
+            "%d orphaned node conflicts, "
+            "%d convergent name conflicts, "
+            "%d directory loop conflicts\n")
          % result.divergent_name_conflicts.size()
          % result.file_content_conflicts.size()
          % result.node_attr_conflicts.size()
@@ -69,7 +75,7 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
     .str();
 
   for (size_t i = 0; i < result.divergent_name_conflicts.size(); ++i)
-    out += (FL("name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
+    out += (FL("divergent name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
             % result.divergent_name_conflicts[i].nid
             % result.divergent_name_conflicts[i].left.first
             % result.divergent_name_conflicts[i].left.second
@@ -104,7 +110,7 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
       .str();
 
   for (size_t i = 0; i < result.convergent_name_conflicts.size(); ++i)
-    out += (FL("rename target conflict: nodes %d, %d, both want parent %d, name %s")
+    out += (FL("convergent name conflict: nodes %d, %d, both want parent %d, name %s")
             % result.convergent_name_conflicts[i].nid1
             % result.convergent_name_conflicts[i].nid2
             % result.convergent_name_conflicts[i].parent_name.first
@@ -148,6 +154,27 @@ roster_merge_result::log_conflicts() const
   L(FL("%s") % str);
 }
 
+namespace
+{
+  string file_type("file");
+  string dir_type("directory");
+
+  string const &
+  get_type(roster_t const & roster, node_id const nid)
+  {
+    node_t n = roster.get_node(nid);
+
+    if (is_file_t(n))
+      return file_type;
+    else if (is_dir_t(n))
+      return dir_type;
+    else
+      I(false);
+  }
+
+}
+
+
 void
 roster_merge_result::warn_non_content_conflicts(roster_t const & left,
                                                 roster_t const & right) const
@@ -182,31 +209,42 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left,
   for (size_t i = 0; i < node_attr_conflicts.size(); ++i)
     {
       file_path left_name, right_name;
+
+      string const & type = get_type(left, node_attr_conflicts[i].nid);
+
       left.get_name(node_attr_conflicts[i].nid, left_name);
       right.get_name(node_attr_conflicts[i].nid, right_name);
 
-      /*
-        mtn: error: attribute conflict
-        mtn: file/dir ... in base (base/left/right?)
-        mtn: ... deleted/set to ... on the left
-        mtn: ... deleted/set to ... on the right
-      */
-
       if (left_name == right_name)
-        W(F("attribute conflict: attribute '%s' on '%s' (node %d) wants two values ('%s' and '%s')")
-          % node_attr_conflicts[i].key
-          % left_name
-          % node_attr_conflicts[i].nid
-          % node_attr_conflicts[i].left.second
+        {
+          P(F("attribute conflict: '%s' on %s '%s'")
+            % node_attr_conflicts[i].key
+            % type
+            % left_name);
+        }
+      else
+        {
+          P(F("attribute conflict: '%s'")
+            % node_attr_conflicts[i].key);
+          P(F("left %s '%s'")
+            % type
+            % left_name);
+          P(F("right %s '%s'")
+            % type
+            % right_name);
+        }
+
+      if (node_attr_conflicts[i].left.first)
+        P(F("set to '%s' on the left")
+          % node_attr_conflicts[i].left.second);
+      else
+        P(F("deleted on the left"));
+
+      if (node_attr_conflicts[i].right.first)
+        P(F("set to '%s' on the right")
           % node_attr_conflicts[i].right.second);
       else
-        W(F("attribute conflict: attribute '%s' between '%s' and '%s' (node %d) wants two values ('%s' and '%s')")
-          % node_attr_conflicts[i].key
-          % left_name
-          % right_name
-          % node_attr_conflicts[i].nid
-          % node_attr_conflicts[i].left.second
-          % node_attr_conflicts[i].right.second);
+        P(F("deleted on the right"));
     }
 
 

@@ -56,7 +56,6 @@ resolve_merge_conflicts(roster_t const & left_roster,
   if (result.has_non_content_conflicts())
     {
       result.warn_non_content_conflicts(left_roster, right_roster);
-      W(F("resolve non-content conflicts and then try again."));
     }
   else if (result.has_content_conflicts())
     {

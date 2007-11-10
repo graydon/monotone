@@ -156,13 +156,13 @@ check(mtn("attr", "set", "foo", "attr2", "value2"), 0, false, false)
 commit("attribute")
 base = base_revision()
 
-check(mtn("attr", "set", "foo", "attr1", "left-value"), 0, false, false)
-check(mtn("attr", "set", "foo", "attr2", "left-value"), 0, false, false)
+check(mtn("attr", "set", "foo", "attr1", "valueX"), 0, false, false)
+check(mtn("attr", "set", "foo", "attr2", "valueY"), 0, false, false)
 commit("attribute")
 
 revert_to(base)
 
-check(mtn("attr", "set", "foo", "attr1", "right-value"), 0, false, false)
+check(mtn("attr", "set", "foo", "attr1", "valueZ"), 0, false, false)
 check(mtn("attr", "drop", "foo", "attr2"), 0, false, false)
 commit("attribute")
 
