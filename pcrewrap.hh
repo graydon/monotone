@@ -70,8 +70,6 @@ namespace pcre
     ~regex();
 
     bool match(std::string const & subject,
-               std::string::const_iterator startoffset 
-               = std::string::const_iterator(),
                pcre::flags options = DEFAULT) const;
   };
 } // namespace pcre
