@@ -150,7 +150,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
     options::opts::depth | options::opts::exclude | options::opts::missing)
 {
   roster_t old_roster, new_roster;
-  cset included, excluded;
+  cset preserved;
 
   N(app.opts.missing || !args.empty() || !app.opts.exclude_patterns.empty(),
     F("you must pass at least one path to 'revert' (perhaps '.')"));
@@ -200,16 +200,22 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
                               old_roster, new_roster, app);
     }
 
-  make_restricted_csets(old_roster, new_roster,
-                        included, excluded, mask);
+  // We want the restricted roster to include all the changes
+  // that are to be *kept*. Then, the changes to revert are those
+  // from the new roster *back* to the restricted roster
 
-  // The included cset will be thrown away (reverted) leaving the
-  // excluded cset pending in MTN/work which must be valid against the
-  // old roster.
+  roster_t restricted_roster;
+  make_restricted_roster(new_roster, old_roster, restricted_roster, 
+                         mask);
+ 
+  make_cset(old_roster, restricted_roster, preserved);
+  
+  // The preserved cset will be left pending in MTN/revision 
 
-  MM(included);
-  MM(excluded);
-  check_restricted_cset(old_roster, excluded);
+  // if/when reverting through the editable_tree interface use
+  // make_cset(new_roster, restricted_roster, reverted); 
+  // to get a cset that gets us back to the restricted roster
+  // from the current workspace roster
 
   node_map const & nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = nodes.begin();
@@ -268,7 +274,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   // around.
 
   revision_t remaining;
-  make_revision_for_workspace(parent_id(parents.begin()), excluded, remaining);
+  make_revision_for_workspace(parent_id(parents.begin()), preserved, remaining);
 
   // Race.
   app.work.put_work_rev(remaining);

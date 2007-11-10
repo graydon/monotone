@@ -2175,19 +2175,17 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
   return true;
 }
 
-
-void make_restricted_csets(roster_t const & from, roster_t const & to,
-                           cset & included, cset & excluded,
-                           node_restriction const & mask)
+static void
+select_restricted_nodes(roster_t const & from, roster_t const & to,
+                        node_restriction const & mask,
+                        map<node_id, node_t> & selected)
 {
-  included.clear();
-  excluded.clear();
-
-  L(FL("building restricted csets"));
+  selected.clear();
   parallel::iter<node_map> i(from.all_nodes(), to.all_nodes());
   while (i.next())
     {
       MM(i);
+
       switch (i.state())
         {
         case parallel::invalid:
@@ -2195,171 +2193,148 @@ void make_restricted_csets(roster_t const & from, roster_t const & to,
 
         case parallel::in_left:
           // deleted
-          if (mask.includes(from, i.left_key()))
-            {
-              delta_only_in_from(from, i.left_key(), i.left_data(), included);
-              L(FL("included left %d") % i.left_key());
-            }
-          else
-            {
-              delta_only_in_from(from, i.left_key(), i.left_data(), excluded);
-              L(FL("excluded left %d") % i.left_key());
-            }
+          if (!mask.includes(from, i.left_key()))
+            selected.insert(make_pair(i.left_key(), i.left_data()));
           break;
 
         case parallel::in_right:
           // added
           if (mask.includes(to, i.right_key()))
-            {
-              delta_only_in_to(to, i.right_key(), i.right_data(), included);
-              L(FL("included right %d") % i.right_key());
-            }
-          else
-            {
-              delta_only_in_to(to, i.right_key(), i.right_data(), excluded);
-              L(FL("excluded right %d") % i.right_key());
-            }
+            selected.insert(make_pair(i.right_key(), i.right_data()));
           break;
 
         case parallel::in_both:
           // moved/renamed/patched/attribute changes
-          if (mask.includes(from, i.left_key()) || mask.includes(to, i.right_key()))
-            {
-              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), included);
-              L(FL("in both %d %d") % i.left_key() % i.right_key());
-            }
+          if (mask.includes(from, i.left_key()) || 
+              mask.includes(to, i.right_key()))
+            selected.insert(make_pair(i.right_key(), i.right_data()));
           else
-            {
-              delta_in_both(i.left_key(), from, i.left_data(), to, i.right_data(), excluded);
-              L(FL("in both %d %d") % i.left_key() % i.right_key());
-            }
+            selected.insert(make_pair(i.left_key(), i.left_data()));
           break;
         }
     }
-
-}
-
-class editable_roster_for_check
-  : public editable_roster_base
-{
- public:
-  editable_roster_for_check(roster_t & r);
-  virtual node_id detach_node(file_path const & src);
-  virtual void drop_detached_node(node_id nid);
-  virtual void attach_node(node_id nid, file_path const & dst);
-  int problems;
-
- private:
-  temp_node_id_source nis;
-  map<node_id, pair<file_path, vector<path_component> > > detached_dirs;
-};
-
-editable_roster_for_check::editable_roster_for_check(roster_t & r)
-  : editable_roster_base(r, nis), problems(0)
-{
-  node_map nodes = r.all_nodes();
-
-  if (!nodes.empty())
-    {
-      node_map::const_iterator i = nodes.begin();
-      node_id max = i->first;
-
-      for (; i != nodes.end(); ++i)
-        {
-          if (i->first > max)
-            max = i->first;
-        }
-
-      // ensure our node source starts beyond the max temp node in this roster
-      while (nis.next() <= max)
-        ;
-    }
-}
-
-node_id
-editable_roster_for_check::detach_node(file_path const & src)
-{
-  node_t n = r.get_node(src);
-  if (is_dir_t(n))
-    {
-      dir_t dir = downcast_to_dir_t(n);
-      vector<path_component> children;
-      for (dir_map::const_iterator 
-             i = dir->children.begin(); i != dir->children.end(); ++i)
-        {
-          children.push_back(i->first);
-        }
-      detached_dirs.insert(make_pair(dir->self, 
-                                     make_pair(src, children)));
-    }
-
-  return this->editable_roster_base::detach_node(src);
 }
 
 void
-editable_roster_for_check::drop_detached_node(node_id nid)
+make_restricted_roster(roster_t const & from, roster_t const & to,
+                       roster_t & restricted,
+                       node_restriction const & mask)
 {
-  node_t n = r.get_node(nid);
-  if (is_dir_t(n) && !downcast_to_dir_t(n)->children.empty())
-    {
-      map<node_id, pair<file_path, vector<path_component> > >::const_iterator 
-        i = detached_dirs.find(nid);
-      I(i != detached_dirs.end());
+  MM(from);
+  MM(to);
+  MM(restricted);
 
-      file_path dir = i->second.first;
-      for (vector<path_component>::const_iterator 
-             p = i->second.second.begin(); p != i->second.second.end(); ++p)
+  I(restricted.all_nodes().empty());
+
+  map<node_id, node_t> selected;
+
+  select_restricted_nodes(from, to, mask, selected);
+
+  int problems = 0;
+
+  while (!selected.empty())
+    {
+      map<node_id, node_t>::const_iterator n = selected.begin(), p;
+
+      L(FL("selected node %d %s parent %d")
+            % n->second->self 
+            % n->second->name
+            % n->second->parent);
+
+      while (!null_node(n->second->parent) && 
+             !restricted.has_node(n->second->parent))
         {
+          // we can't add this node until its parent has been added
+
+          L(FL("deferred node %d %s parent %d")
+            % n->second->self 
+            % n->second->name
+            % n->second->parent);
+
+          p = selected.find(n->second->parent);
+
+          if (p != selected.end())
+            {
+              n = p; // see if we can add the parent
+              I(is_dir_t(n->second));
+            }
+          else
+            break;
+        }
+
+      if (p != selected.end())
+        {
+          L(FL("adding node %d %s parent %d")
+            % n->second->self 
+            % n->second->name
+            % n->second->parent);
+
+          if (is_file_t(n->second))
+            {
+              file_t const f = downcast_to_file_t(n->second);
+              restricted.create_file_node(f->content, f->self);
+            }
+          else
+            restricted.create_dir_node(n->second->self);
+
+          node_t added = restricted.get_node(n->second->self);
+          added->attrs = n->second->attrs;
+
+          restricted.attach_node(n->second->self, n->second->parent, n->second->name);
+        }
+      else if (from.has_node(n->second->parent) && !to.has_node(n->second->parent))
+        {
+          // included a delete that must be excluded
+          file_path self, parent;
+          from.get_name(n->second->self, self);
+          from.get_name(n->second->parent, parent);
           W(F("restriction includes deletion of '%s' "
               "but excludes deletion of '%s'")
-            % dir % (dir / *p));
+            % parent % self);
           problems++;
         }
+      else if (!from.has_node(n->second->parent) && to.has_node(n->second->parent))
+        {
+          // excluded an add that must be included
+          file_path self, parent;
+          to.get_name(n->second->self, self);
+          to.get_name(n->second->parent, parent);
+          W(F("restriction excludes addition of '%s' "
+              "but includes addition of '%s'")
+            % parent % self);
+          problems++;
+        }
+      else
+        I(false); // something we missed?!?
+
+      selected.erase(n->first);
     }
-  else
-    {
-      this->editable_roster_base::drop_detached_node(nid);
-    }
+
+
+  // we cannot call restricted.check_sane(true) unconditionally because the
+  // restricted roster is very possibly *not* sane. for example, if we run
+  // the following in a new unversioned directory the from, to and
+  // restricted rosters will all be empty and thus not sane.
+  //
+  // mtn setup .
+  // mtn status
+  //
+  // several tests do this and it seems entirely reasonable. we first check
+  // that the restricted roster is not empty and only then require it to be
+  // sane.
+
+  if (!restricted.all_nodes().empty() && !restricted.has_root())
+   {
+     W(F("restriction excludes addition of root directory"));
+     problems++;
+   }
+
+  N(problems == 0, F("invalid restriction"));
+
+  if (!restricted.all_nodes().empty())
+    restricted.check_sane(true);
+
 }
-
-void
-editable_roster_for_check::attach_node(node_id nid, file_path const & dst)
-{
-  file_path parent = dst.dirname();
-
-  if (!r.has_node(parent) && !dst.empty())
-    {
-      W(F("restriction excludes addition of '%s' but includes addition of '%s'")
-        % parent % dst);
-      problems++;
-    }
-  else
-    {
-      this->editable_roster_base::attach_node(nid, dst);
-    }
-}
-
-void
-check_restricted_cset(roster_t const & roster, cset const & cs)
-{
-  // This command checks that a cset generated by make_restricted_cset still
-  // is sensical when applied to the given roster -- e.g., it does not
-  // include a deletion of a directory that would be empty, except that some
-  // of the deletions/renames that emptied it were not included in the
-  // restriction, it does not include the addition of a file when the
-  // addition of its parent directory was not included, etc.
-
-  MM(roster);
-  MM(cs);
-
-  // make a copy of the roster to apply the cset to destructively
-  roster_t tmp(roster);
-  editable_roster_for_check e(tmp);
-  cs.apply_to(e);
-
-  N(e.problems == 0, F("invalid restriction"));
-}
-
 
 void
 select_nodes_modified_by_cset(cset const & cs,

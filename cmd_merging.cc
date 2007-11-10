@@ -881,12 +881,13 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
                           args_to_paths(app.opts.exclude_patterns),
                           app.opts.depth,
                           *from_roster, to_true_roster, app);
-    make_restricted_csets(*from_roster, to_true_roster,
-                          from_to_to, from_to_to_excluded,
-                          mask);
-    MM(from_to_to);
-    MM(from_to_to_excluded);
-    check_restricted_cset(*from_roster, from_to_to);
+
+    roster_t restricted_roster;
+    make_restricted_roster(*from_roster, to_true_roster, 
+                           restricted_roster, mask);
+    
+    make_cset(*from_roster, restricted_roster, from_to_to);
+    make_cset(restricted_roster, to_true_roster, from_to_to_excluded);
   }
   N(!from_to_to.empty(), F("no changes to be applied"));
   // ...and use it to create the TO roster
