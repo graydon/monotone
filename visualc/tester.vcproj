@@ -270,6 +270,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\win32\tester-plaf.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\testlib.c"
 				>
 				<FileConfiguration
