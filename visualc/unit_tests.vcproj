@@ -327,6 +327,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\gzip.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\file_io.cc"
 				>
 			</File>
@@ -812,6 +816,10 @@
 			</File>
 			<File
 				RelativePath="..\epoch.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\gzip.hh"
 				>
 			</File>
 			<File
