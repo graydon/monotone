@@ -15,7 +15,10 @@
 
         - Update Botan to 1.7.2.
 
+	Other
 
+	- The monotone manual is now licensed under the GPL rather than
+	  the GFDL.
 
 Fri Oct 25 22:35:33 UTC 2007
 
