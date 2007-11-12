@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconvD.lib"
+				AdditionalDependencies="botan.lib lua.lib pcre.lib stringprep.lib iconvD.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -146,7 +146,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconv.lib"
+				AdditionalDependencies="botan.lib lua.lib pcre.lib stringprep.lib iconv.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
