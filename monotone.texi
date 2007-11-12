@@ -34,9 +34,9 @@ Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
 Copyright @copyright{} 2006, 2007 William Uther @*
 Copyright @copyright{} 2007 Stephen Leake @*
-All rights reserved
-Licensed to the public under the terms of the GNU FDL (>= 1.1).
-See the file COPYING for details
+
+This manual is made available under the GNU GPL version 2.0 or
+greater.  See the accompanying file COPYING for details.
 
 @end titlepage
 
