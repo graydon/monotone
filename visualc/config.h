@@ -55,4 +55,29 @@ typedef unsigned int os_err_t;
 */
 #define _CRT_SECURE_NO_WARNINGS
 
+/*
+ * Disable MS specific warning C4290:
+ * C++ exception specification ignored except to indicate a function is not __declspec(nothrow)
+ *
+ * A function is declared using exception specification, which Visual C++ accepts but does not implement. 
+ * Code with exception specifications that are ignored during compilation may need to be recompiled and 
+ * linked to be reused in future versions supporting exception specifications.
+ */
+#pragma warning( disable : 4290 )
+
+
+/*
+ * Disable MS specific warning C4250:
+ * Two or more members have the same name. The one in class2 is inherited because it is a base class
+ * for the other classes that contained this member.
+ * Because a virtual base class is shared among multiple derived classes, a name in a derived class 
+ * dominates a name in a base class. 
+ * For example, given the following class hierarchy, there are two definitions of func inherited within diamond: 
+ * the vbc::func() instance through the weak class, and the dominant::func() through the dominant class. 
+ * An unqualified call of func() through a diamond class object, always calls the dominate::func() instance. 
+ * If the weak class were to introduce an instance of func(), neither definition would dominate, and the call would be flagged as ambiguous.
+ */
+#pragma warning( disable : 4250 )
+
+
 #endif /* CONFIG_H */
