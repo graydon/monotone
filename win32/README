@@ -1,1 +1,36 @@
 This directory keeps the win32 specific files.
+
+To create a MinGW release, the 'make dist' target does not work for
+MinGW. Instead, we use Inno Setup. Here are all the steps for
+creating a MinGW release, on a fresh Windows machine:
+
+Install MinGW tools, and a monotone binary; see
+http://www.venge.net/mtn-wiki/BuildingOnWindows.
+
+Get a copy of the monotone repository; see
+http://www.venge.net/mtn-wiki/SelfHostingInfo
+
+Check out the release version of monotone:
+mtn -d /path/to/monotone.db checkout -r t:monotone-<version> monotone-<version>
+
+Build the release. In an MSYS shell:
+cd monotone-<version>
+autoreconf -i
+./configure
+make
+
+Install Inno Setup; see http://www.jrsoftware.org/isinfo.php
+
+In Inno Setup, open monotone/win32/monotone.iss
+
+If you have installed MinGW in a non-default place, adjust the Source:
+paths to the mingw dlls to match your mingw installation
+
+If you have built monotone in a separate build directory, adjust
+the Source: paths to monotone.exe and monotone.html
+
+Choose menu Build | Compile (or click the "compile" button). This
+generates monotone-<version>-setup.exe in the monotone/win32
+directory.
+
+Publish the binary on the monotone website: TBD

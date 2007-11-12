@@ -23,5 +23,5 @@ check(mtn("rename", "foo", "baz/foo"), 0, false, false)
 --  a) the foo file is not changed
 --  b) we only restrict on bar
 --  c) we only restrict on baz
-xfail(mtn("commit", "baz/foo"), 1, false, false)
+check(mtn("commit", "-m", "wow", "baz/foo"), 1, false, false)
 

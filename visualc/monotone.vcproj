@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm200"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;;&quot;$(ProjectDir)\..&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -133,7 +133,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -315,6 +315,10 @@
 			</File>
 			<File
 				RelativePath="..\epoch.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\gzip.cc"
 				>
 			</File>
 			<File
@@ -534,6 +538,10 @@
 			</File>
 			<File
 				RelativePath="..\paths.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.cc"
 				>
 			</File>
 			<File
@@ -806,6 +814,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\gzip.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\file_io.hh"
 				>
 			</File>
@@ -947,6 +959,10 @@
 			</File>
 			<File
 				RelativePath="..\pch.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.hh"
 				>
 			</File>
 			<File

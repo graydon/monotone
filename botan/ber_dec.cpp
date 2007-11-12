@@ -1,6 +1,6 @@
 /*************************************************
 * BER Decoder Source File                        *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/ber_dec.h>
@@ -453,7 +453,7 @@ BER_Decoder& BER_Decoder::decode_optional_string(MemoryRegion<byte>& out,
    {
    BER_Object obj = get_next_object();
 
-   ASN1_Tag type_tag = (ASN1_Tag)type_no;
+   ASN1_Tag type_tag = static_cast<ASN1_Tag>(type_no);
 
    out.clear();
    push_back(obj);

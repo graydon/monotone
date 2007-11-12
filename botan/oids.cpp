@@ -1,6 +1,6 @@
 /*************************************************
 * OID Registry Source File                       *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/oids.h>
@@ -40,9 +40,17 @@ std::string lookup(const OID& oid)
 OID lookup(const std::string& name)
    {
    std::string value = global_config().get("str2oid", name);
-   if(value == "")
+   if(value != "")
+      return OID(value);
+
+   try
+      {
       return OID(name);
-   return OID(value);
+      }
+   catch(Exception)
+      {
+      throw Lookup_Error("No object identifier found for " + name);
+      }
    }
 
 /*************************************************

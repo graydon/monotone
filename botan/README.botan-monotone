@@ -12,7 +12,7 @@ Steps to update net.venge.monotone.botan with net.randombit.net:
 
 3) "mtn up" in an a.a.u.m.b.monotone-2 workspace. 
    In a n.v.m.botan botan/ dir, do "rm *".
-   Then copy the entire / contents (no subdirs though) from the staging
+   Then copy the entire contents (no subdirs though) from the staging
    branch's root dir to the botan/ dir.
 
 4) "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If 

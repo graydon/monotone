@@ -4,6 +4,7 @@
 #include "constants.hh"
 
 #include <set>
+#include <algorithm>
 #include <sstream>
 #include <iterator>
 

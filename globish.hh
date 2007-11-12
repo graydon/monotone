@@ -46,7 +46,7 @@
 
 #include "vector.hh"
 
-struct arg_type;
+class arg_type;
 
 struct globish
 {

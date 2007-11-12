@@ -196,7 +196,6 @@ public:
                            node_id_source & nis);
   void create_file_node(file_id const & content,
                         node_id nid);
-  void insert_node(node_t n);
   void attach_node(node_id nid, file_path const & dst);
   void attach_node(node_id nid, node_id parent, path_component name);
   void apply_delta(file_path const & pth,
@@ -364,12 +363,9 @@ equal_up_to_renumbering(roster_t const & a, marking_map const & a_markings,
 class node_restriction;
 
 void
-make_restricted_csets(roster_t const & from, roster_t const & to,
-                      cset & included, cset & excluded,
-                      node_restriction const & mask);
-
-void
-check_restricted_cset(roster_t const & roster, cset const & cs);
+make_restricted_roster(roster_t const & from, roster_t const & to,
+                       roster_t & restricted,
+                       node_restriction const & mask);
 
 void
 select_nodes_modified_by_cset(cset const & cs,

@@ -60,7 +60,7 @@ bug_report_message()
   write_str_to_stderr("\nthis is almost certainly a bug in monotone."
                       "\nplease send this error message, the output of '");
   write_str_to_stderr(argv0);
-  write_str_to_stderr(" --full-version',"
+  write_str_to_stderr(" version --full',"
                       "\nand a description of what you were doing to "
                       PACKAGE_BUGREPORT "\n");
 }

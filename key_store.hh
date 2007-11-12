@@ -7,7 +7,7 @@
 #include "paths.hh"
 
 class app_state;
-class globish;
+struct globish;
 
 class key_store
 {

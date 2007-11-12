@@ -1,6 +1,6 @@
 /*************************************************
 * IF Scheme Source File                          *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/if_algo.h>
@@ -90,7 +90,7 @@ PKCS8_Encoder* IF_Scheme_PrivateKey::pkcs8_encoder() const
             {
             return DER_Encoder()
                .start_cons(SEQUENCE)
-                  .encode((u32bit)0)
+                  .encode(static_cast<u32bit>(0))
                   .encode(key->n)
                   .encode(key->e)
                   .encode(key->d)

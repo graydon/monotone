@@ -15,7 +15,6 @@
 // This dirty trick is necessary to prevent the 'pcre' typedef defined by
 // pcre.h from colliding with namespace pcre.
 #define pcre pcre_t
-#include "pcre_config.h"
 #include "pcre.h"
 #undef pcre
 
@@ -113,17 +112,11 @@ namespace pcre
   }
 
   bool
-  regex::match(string const & subject,
-               string::const_iterator startptr,
-               flags options) const
+  regex::match(string const & subject, flags options) const
   {
-    int startoffset = 0;
-    if (startptr != string::const_iterator(0))
-      startoffset = &*startptr - &*subject.data();
-
     int rc = pcre_exec(basedat, extradat,
                        subject.data(), subject.size(),
-                       startoffset, flags_to_internal(options), 0, 0);
+                       0, flags_to_internal(options), 0, 0);
     if (rc == 0)
       return true;
     else if (rc == PCRE_ERROR_NOMATCH)
