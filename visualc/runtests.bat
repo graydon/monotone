@@ -4,6 +4,8 @@ set PATH=%CD%\visualc\Release;%PATH%
 
 set fail_count=0
 
+cd %CD%\test
+
 unit_tests.exe
 if %ERRORLEVEL%=="0" goto tester-testsuite.lua
 @echo unit-tests failed.
