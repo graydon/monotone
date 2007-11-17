@@ -1,10 +1,16 @@
+monotone (0.37-3) unstable; urgency=low
+
+  * debian/rules: Cross-compilation and lintian fixes.
+  * Clean up usage of "-" in debian/mtn.1.
+
+ -- Zack Weinberg <zackw@panix.com>  Mon, 12 Nov 2007 07:16:05 +0000
+
 monotone (0.37-2) unstable; urgency=low
 
   * Do not error out if $HOME exists but is inaccessible.  Should fix
     mips(el) FTBFS.
   * Fix bashisms in monotone-server scripts.  Thanks to Glen Ditchfield
     for finding this problem and providing part of the fix.
-    (Closes: #450646)
   * In monotone-server.postinst, set permissions and ownership of
     just-created directories whether or not we created the monotone
     user.  Thanks to Michael Berg for doing almost all the work on
@@ -17,12 +23,10 @@ monotone (0.37-2) unstable; urgency=low
     and monkey with the rules so that dpkg-buildpackage -B doesn't
     build the documentation.  This gets us out from under the present
     nonavailability of some of the B-D-Is on some of the buildds.
-    Cross-compilation and lintian fixes.
   * Info files moved to monotone-doc.  Other cleanups to that package.
   * Do not install the boilerplate ABOUT-NLS file in any of the
     packages' documentation directories.
   * Improve short descriptions.
-  * Clean up usage of "-" in debian/mtn.1.
 
  -- Zack Weinberg <zackw@panix.com>  Sun, 04 Nov 2007 11:53:17 -0800
 
