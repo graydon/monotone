@@ -14,6 +14,9 @@
         - mtn now warns if changes to a file will be ignored because
           the file has been deleted on one side of a merge.
 
+        - mtn now errors if your chosen private key doesn't match the public
+          key of the same name in your database.
+
         Internal
 
         - Update Botan to 1.7.2.
