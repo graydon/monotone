@@ -267,11 +267,37 @@ namespace
   insert_if_unborn(node_t const & n,
                    marking_map const & markings,
                    set<revision_id> const & uncommon_ancestors,
+                   roster_t const & parent_roster,
                    roster_t & new_roster)
   {
     revision_id const & birth = safe_get(markings, n->self).birth_revision;
     if (uncommon_ancestors.find(birth) != uncommon_ancestors.end())
       create_node_for(n, new_roster);
+    else
+      {
+        // In this branch we are NOT inserting the node into the new roster as it
+        // has been deleted from the other side of the merge.
+        // In this case, output a warning if there are changes to the file on the
+        // side of the merge where it still exists.
+        set<revision_id> const & content_marks = safe_get(markings, n->self).file_content;
+        bool found_one_ignored_content = false;
+        for (set<revision_id>::const_iterator it = content_marks.begin(); it != content_marks.end(); it++)
+          {
+            if (uncommon_ancestors.find(*it) != uncommon_ancestors.end())
+              {
+                if (!found_one_ignored_content)
+                  {
+                    file_path fp;
+                    parent_roster.get_name(n->self, fp);
+                    W(F("Content changes to the file \"%s\"") % fp);
+                    W(F("will be ignored during this merge as the file has been"));
+                    W(F("removed on one side of the merge.  Affected revisions include:"));
+                  }
+                found_one_ignored_content = true;
+                W(F("Revision : %s") % *it);
+              }
+          }
+      }
   }
 
   bool
@@ -411,13 +437,13 @@ roster_merge(roster_t const & left_parent,
 
           case parallel::in_left:
             insert_if_unborn(i.left_data(),
-                             left_markings, left_uncommon_ancestors,
+                             left_markings, left_uncommon_ancestors, left_parent,
                              result.roster);
             break;
 
           case parallel::in_right:
             insert_if_unborn(i.right_data(),
-                             right_markings, right_uncommon_ancestors,
+                             right_markings, right_uncommon_ancestors, right_parent,
                              result.roster);
             break;
 

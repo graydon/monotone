@@ -11,6 +11,9 @@
         - mtn log now prints a single dot for a project's root
           directory instead of an empty string.
 
+        - mtn now warns if changes to a file will be ignored because
+          the file has been deleted on one side of a merge.
+
         Internal
 
         - Update Botan to 1.7.2.
