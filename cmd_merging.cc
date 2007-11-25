@@ -587,6 +587,10 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor 
           dba(app, left_rid, right_rid, left_marking_map);
 
+        {
+          rsa_keypair_id key;
+          get_user_key(key, app);
+        }
         resolve_merge_conflicts(left_roster, right_roster,
                                 result, dba, app);
 
