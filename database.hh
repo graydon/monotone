@@ -301,6 +301,8 @@ public:
   void get_revision_children(revision_id const & ident,
                              std::set<revision_id> & children);
 
+  void get_leaves(std::set<revision_id> & leaves);
+
   void get_revision_manifest(revision_id const & cid,
                              manifest_id & mid);
 private:
