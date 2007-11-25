@@ -249,8 +249,8 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
 
   if (!bad_keys.empty())
     {
-      W(F("Some keys in the database have the same ID as, "));
-      W(F("but different hashes to, keys in your local key store!"));
+      W(F("Some keys in the database have the same ID as, "
+          "but different hashes to, keys in your local key store!"));
       for (set<rsa_keypair_id>::const_iterator i = bad_keys.begin(); i != bad_keys.end(); i++)
         {
           W(F("Mismatched Key: %s") % *i);
