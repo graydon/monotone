@@ -271,8 +271,9 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left,
   for (size_t i = 0; i < convergent_name_conflicts.size(); ++i)
     {
       file_path left_name, right_name;
-      left.get_name(convergent_name_conflicts[i].nid2, left_name);
-      right.get_name(convergent_name_conflicts[i].nid1, right_name);
+      // FIXME: ensure nid1 is always left and nid2 is always right
+      left.get_name(convergent_name_conflicts[i].nid1, left_name);
+      right.get_name(convergent_name_conflicts[i].nid2, right_name);
 
       I(left_name == right_name);
 
