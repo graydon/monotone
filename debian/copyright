@@ -2,9 +2,7 @@ This package was debianized by Tomas Fasth <tomfa@debian.org> on 2005-04-12,
 adopted by Shaun Jackman <sjackman@debian.org> on 2006-07-24, and adopted
 again by a team reachable at monotone-debian@nongnu.org on 2007-07-10.
 
-The source files was downloaded from
-http://www.monotone.ca/downloads/
-
+The source file was downloaded from http://www.monotone.ca/downloads/
 Upstream authors are reachable at monotone-devel@nongnu.org
 Copyright holders are listed in /usr/share/doc/monotone/AUTHORS.gz
 
@@ -24,8 +22,8 @@ Overall license:
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
 
-On Debian systems, the complete text of the GNU General
-Public License can be found in `/usr/share/common-licenses/GPL'.
+On Debian systems, the complete text of the GNU General Public License
+can be found in `/usr/share/common-licenses/GPL-2'.
 
 Monotone includes substantial bodies of code developed by
 others and available under terms more permissive than the GPL.

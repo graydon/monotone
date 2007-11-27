@@ -92,7 +92,7 @@ I believe I am within my rights to assert my own copyright on:
 
   - the collective work, including the use (though not authorship) of
     files I copied from the public domain, and other copyrighted but
-    freely-licensed sources (and possibly lcs.cc, as mentionned)
+    freely-licensed sources (and possibly lcs.cc, as discussed below)
 
 I license my publication of these copyrighted works to the public
 under the terms of the GNU GPL, version 2 or greater. See the file
@@ -103,6 +103,18 @@ Subsequent additions by contributing authors are implicitly licensed
 to the public under the same terms (GPL), but the contributing authors
 retain copyrights on their portions of the work.
 
+the manual:
+-----------
+
+The monotone manual, like the rest of the collective work, was written
+by me and the other contributing authors listed above, and is licensed
+under the terms of the GNU GPL, version 2 or later.
+
+Prior to version 0.38 the monotone manual was licensed under the terms
+of the GNU FDL (version 1.1 or later).  This was changed in version
+0.38 to facilitate sharing of text between the manual and the program
+itself, and to simplify the licensing requirements of the monotone
+distribution as a whole, by using just one license for everything.
 
 files derived from other sources:
 ---------------------------------
@@ -117,7 +129,7 @@ usable under less restrictive terms.
 lru_writeback_cache.hh was originally written by Patrick Audley and is
 licensed under the GPL v2+.
 
-mkstemp.cc was based on a portion of gfileutiles.c in glib and is
+mkstemp.cc was based on a portion of gfileutils.c in glib and is
 licensed under the LGPL (version 2 or later).
 
 gettext.h is a copy of the one included in the GNU Gettext package,
@@ -491,3 +503,84 @@ copyright statement and licensing; however, to the best of our
 collective knowledge, all files are available under terms compatible
 with the GPL version 2 (*not* necessarily later versions).  See
 contrib/README for further details.
+
+details of the manual relicensing:
+----------------------------------
+
+All contributors who made more than a few lines' worth of changes to
+the manual were polled for their assent to the relicensing, and as of
+November 2007, all agreed.
+
+These contributors gave written agreement on the monotone mailing list
+in February 2007:
+
+alex@ventonegro.org
+bdwalton@gmail.com
+birrachiara@tin.it
+brian.p.campbell@dartmouth.edu
+dan@geek.com.au
+elb@elitists.net
+emile@talentcodeworks.com aka emile@alumni.reed.edu
+evan@warpedview.com
+fw@deneb.enyo.de
+grahame@angrygoats.net
+jeremy@cowgar.com
+joel@rosdahl.net
+joelwreed@comcast.net
+marcel@hsdev.com
+matt@matt-land.com
+matt@ucc.asn.au aka matt+rez@ucc.asn.au
+me@thomaskeller.biz
+papercrane@reversefold.com
+pellegrini@mpcnet.com.br
+richard@levitte.org
+rse@engelschall.com
+Sebastian@SSpaeth.de
+tbrownaw@gmail.com
+
+These contributors gave written agreement on the monotone mailing list
+in November 2007:
+
+derek@echologic.com
+mrbkap@gmail.com
+stephen_leake-2@stephe-leake.org
+willu@cse.unsw.edu.au
+mstone@icali.net
+tromey@redhat.com
+
+These contributors gave verbal assent at the monotone developers'
+summit in February 2007:
+
+christof.petig@arcor.de aka christof@petig-baender.de
+graydon@pobox.com aka graydon@dub.venge.net
+kinetik@orcon.net.nz
+mtn-dev@zackw.users.panix.com
+njs@pobox.com
+thomas.moschny@gmx.de
+
+These contributors made a few small, mechanical changes to the manual,
+which are probably not copyrightable, and were not polled.
+
+henry@bigfoot.de
+	two-line change documenting a subcommand
+	261a1dd0acf065381d27f4c10ee609cb25b70aa8
+
+jmmv@menta.net
+	three patches; typo fixes and use of IANA-reserved
+	example domain names
+	d64ee74bbafc09497d70c169667ae960171a5fcc
+	8975520d4b2c73065004cb9d21990885b391d36c
+	eb8b5710e3720d4fb4ee3ae573aacc3b629ae1a3
+
+jon@siliconcircus.com
+	one patch; change of quoting conventions
+	fcd914bd694bbcc6d0fca080ac4c8132f78f2c2f
+
+martine@danga.com
+	one patch; corrected "cat revision" to "automate get_revision"
+	e92a79a9a56076a4ead5013c29fb705a3c4de719
+
+tomfa@debian.org
+	signed a merge rev involving the manual, but did not
+	change the manual personally
+	8abd5712749648b2232cc4dfa549ce11b627f679

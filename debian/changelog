@@ -1,3 +1,22 @@
+monotone (0.37-4) unstable; urgency=low
+
+  * debian/rules: Turn compiler optimization back on by default.  Doh!
+    Hopefully this shrinks hppa builds to the point where we don't need
+    -mlong-calls.  Since the accidental use of -O0 in 0.37-[23] seems to
+    have been responsible for the unexpected successful builds on Alpha,
+    try -O1 on that architecture.  Implement DEB_BUILD_OPTIONS=noopt while
+    we're at it.
+  * Backport upstream's relicensing of the manual under the GPL, since
+    we (and upstream) may technically have been violating the GFDL by
+    not including its text in the manual proper.  Source and binary
+    packages now contain no content not distributable under GPLv2 or a
+    more permissive license.
+  * debian/copyright: Point specifically to GPLv2 (upstream specifies
+    GPLv2-or-later, let's not be exercising the 'or later' part unless
+    and until they do).  Fix typo.
+
+ -- Zack Weinberg <zackw@panix.com>  Mon, 26 Nov 2007 17:01:18 -0800
+
 monotone (0.37-3) unstable; urgency=low
 
   * debian/rules: Cross-compilation and lintian fixes.
