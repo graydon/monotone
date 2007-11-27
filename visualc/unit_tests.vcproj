@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/Zm200"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;;&quot;$(ProjectDir)\..&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max;BUILD_UNIT_TESTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -66,7 +66,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib /VERBOSE:lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlibd.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib pcre.lib iconvD.lib ws2_32.lib shell32.lib advapi32.lib zlibd.lib"
 				OutputFile="$(outdir)\unit_tests.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
@@ -138,7 +138,7 @@
 				FavorSizeOrSpeed="1"
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE;BOOST_MSVC_STD_ITERATOR;_CRT_SECURE_NO_DEPRECATE;min=min;max=max;;BUILD_UNIT_TESTS"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -164,7 +164,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMT.lib"
-				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib iconv.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
+				AdditionalDependencies="botan.lib sqlite3.lib netxx.lib stringprep.lib lua.lib pcre.lib iconv.lib ws2_32.lib shell32.lib advapi32.lib zlib.lib"
 				OutputFile="$(outdir)/unit_tests.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
@@ -324,6 +324,10 @@
 			</File>
 			<File
 				RelativePath="..\epoch.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\gzip.cc"
 				>
 			</File>
 			<File
@@ -535,6 +539,10 @@
 			</File>
 			<File
 				RelativePath="..\paths.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.cc"
 				>
 			</File>
 			<File
@@ -811,6 +819,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\gzip.hh"
+				>
+			</File>
+			<File
 				RelativePath="..\file_io.hh"
 				>
 			</File>
@@ -952,6 +964,10 @@
 			</File>
 			<File
 				RelativePath="..\pch.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.hh"
 				>
 			</File>
 			<File

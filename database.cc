@@ -1860,6 +1860,21 @@ database::get_revision_children(revision_id const & id,
 }
 
 void
+database::get_leaves(set<revision_id> & leaves)
+{
+  results res;
+  leaves.clear();
+  fetch(res, one_col, any_rows,
+        query("SELECT revisions.id FROM revisions "
+              "LEFT JOIN revision_ancestry "
+              "ON revisions.id = revision_ancestry.parent "
+              "WHERE revision_ancestry.child IS null"));
+  for (size_t i = 0; i < res.size(); ++i)
+    leaves.insert(revision_id(res[i][0]));
+}
+
+
+void
 database::get_revision_manifest(revision_id const & rid,
                                manifest_id & mid)
 {

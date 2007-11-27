@@ -51,6 +51,6 @@ check(mtn("add", "A", "B"), 0, false, false)
 commit()
 check(mtn("rename", "A", "newA"), 0, false, false)
 check(mtn("rename", "B", "newA/B"), 0, false, false)
--- these are nonsensical, and should error out gracefully
-check(mtn("diff", "newA/B"), 1, false, false)
-check(mtn("commit", "newA/B"), 1, false, false)
+-- these were once nonsensical, but should now do something "reasonable"
+check(mtn("diff", "newA/B"), 0, false, false)
+check(mtn("commit", "-m", "crazy", "newA/B"), 0, false, false)

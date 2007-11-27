@@ -57,6 +57,7 @@ MOST_SOURCES = 								\
 	automate.cc							\
 	database_check.cc database_check.hh				\
 	epoch.cc epoch.hh						\
+	gzip.cc gzip.hh							\
 	inodeprint.cc inodeprint.hh					\
 	selectors.cc selectors.hh					\
 	annotate.cc annotate.hh						\
@@ -112,13 +113,13 @@ BOTAN_SOURCES = 							\
 	botan/ber_dec.cpp botan/big_base.cpp     \
 	botan/big_code.cpp botan/big_io.cpp botan/big_ops2.cpp      \
 	botan/big_ops3.cpp botan/blinding.cpp botan/buf_es.cpp      \
-	botan/buf_filt.cpp botan/cbc.cpp botan/certstor.cpp        \
+	botan/buf_filt.cpp botan/cbc.cpp botan/cbc_mac.cpp botan/certstor.cpp \
 	botan/cfb.cpp botan/charset.cpp botan/crc32.cpp  \
 	botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp           \
 	botan/data_snk.cpp botan/data_src.cpp \
 	botan/def_ops.cpp botan/defalloc.cpp \
 	botan/der_enc.cpp botan/divide.cpp botan/dl_algo.cpp        \
-	botan/dl_group.cpp \
+	botan/dl_group.cpp botan/dsa_gen.cpp \
 	botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
@@ -126,7 +127,7 @@ BOTAN_SOURCES = 							\
 	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
 	botan/fips140.cpp \
 	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
-	botan/gzip.cpp botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
+	botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
 	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
 	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
 	botan/make_prm.cpp botan/mdx_hash.cpp       \
@@ -158,7 +159,7 @@ BOTAN_SOURCES = 							\
 	botan/powm_mnt.cpp botan/mp_asm.cpp \
 	botan/asn1_int.cpp botan/config.cpp botan/datastor.cpp \
 	botan/def_char.cpp botan/init_opt.cpp botan/jacobi.cpp \
-	botan/x509_ext.cpp botan/x509stat.cpp \
+	botan/x509_ext.cpp botan/x509stat.cpp botan/dh.cpp \
 	\
 	botan/aes.h botan/botan.h botan/es_win32.h  \
 	botan/lookup.h botan/randpool.h botan/version.h \
@@ -173,7 +174,7 @@ BOTAN_SOURCES = 							\
 	botan/pem.h botan/s2k.h botan/x509_key.h botan/asn1_obj.h   \
 	botan/cfb.h botan/modebase.h    \
 	botan/pipe.h botan/x509_obj.h           \
-	botan/asn1_oid.h botan/eax.h botan/gzip.h      \
+	botan/asn1_oid.h botan/eax.h      \
 	botan/mode_pad.h botan/pk_algs.h botan/secmem.h         \
 	botan/x509find.h botan/x509self.h botan/config.h botan/ecb.h \
 	botan/hex.h botan/pk_core.h botan/secqueue.h    \
@@ -198,7 +199,7 @@ BOTAN_SOURCES = 							\
 	botan/modules.h botan/mp_asm.h botan/pow_mod.h botan/mp_asmi.h \
 	botan/build.h botan/asn1_int.h botan/datastor.h botan/def_char.h \
 	botan/stl_util.h botan/x509_ext.h botan/x509stat.h \
-	botan/alg_id.h
+	botan/alg_id.h botan/cbc_mac.h botan/loadstor.h
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\
@@ -332,7 +333,8 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
 	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
 	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
-	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)
+	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)		\
+	mtn-gzip.$(OBJEXT)
 
 # primaries
 

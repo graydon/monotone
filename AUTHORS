@@ -547,6 +547,7 @@ stephen_leake-2@stephe-leake.org
 willu@cse.unsw.edu.au
 mstone@icali.net
 tromey@redhat.com
+henry@bigfoot.de
 
 These contributors gave verbal assent at the monotone developers'
 summit in February 2007:
@@ -560,10 +561,6 @@ thomas.moschny@gmx.de
 
 These contributors made a few small, mechanical changes to the manual,
 which are probably not copyrightable, and were not polled.
-
-henry@bigfoot.de
-	two-line change documenting a subcommand
-	261a1dd0acf065381d27f4c10ee609cb25b70aa8
 
 jmmv@menta.net
 	three patches; typo fixes and use of IANA-reserved

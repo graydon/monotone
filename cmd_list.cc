@@ -178,6 +178,8 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
        i != pubs.end(); i++)
     pubkeys[*i] = true;
 
+  set<rsa_keypair_id> bad_keys;
+
   bool all_in_db = true;
   for (vector<rsa_keypair_id>::const_iterator i = privkeys.begin();
        i != privkeys.end(); i++)
@@ -186,6 +188,16 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         {
           pubkeys[*i] = false;
           all_in_db = false;
+        }
+      else if (app.db.database_specified())
+        {
+          // we've found a key that should have both a public and a private version
+          base64<rsa_pub_key> pub_key;
+          keypair priv_key;
+          app.db.get_key(*i, pub_key);
+          app.keys.get_key_pair(*i, priv_key);
+          if (!keys_match(*i, pub_key, *i, priv_key.pub))
+            bad_keys.insert(*i);
         }
     }
 
@@ -233,6 +245,16 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           cout << hash_code << ' ' << *i << '\n';
         }
       cout << '\n';
+    }
+
+  if (!bad_keys.empty())
+    {
+      W(F("Some keys in the database have the same ID as, "
+          "but different hashes to, keys in your local key store!"));
+      for (set<rsa_keypair_id>::const_iterator i = bad_keys.begin(); i != bad_keys.end(); i++)
+        {
+          W(F("Mismatched Key: %s") % *i);
+        }
     }
 
   if (pubkeys.size() == 0 &&

@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\lua&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,7 +61,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconvD.lib"
+				AdditionalDependencies="botan.lib lua.lib pcre.lib stringprep.lib iconvD.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				IgnoreDefaultLibraryNames=""
@@ -123,7 +123,7 @@
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="0"
 				OmitFramePointers="false"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)\..\lua&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)&quot;;&quot;$(ProjectDir)\..\lua&quot;;&quot;$(ProjectDir)\..\pcre&quot;;&quot;$(ProjectDir)\..&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				StringPooling="true"
 				MinimalRebuild="true"
@@ -146,7 +146,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/NODEFAULTLIB:LIBCMTD.lib"
-				AdditionalDependencies="botan.lib lua.lib stringprep.lib iconv.lib"
+				AdditionalDependencies="botan.lib lua.lib pcre.lib stringprep.lib iconv.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
@@ -250,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\pcrewrap.cc"
+				>
+			</File>
+			<File
 				RelativePath="..\win32\process.cc"
 				>
 			</File>
@@ -263,6 +267,10 @@
 			</File>
 			<File
 				RelativePath="..\tester.cc"
+				>
+			</File>
+			<File
+				RelativePath="..\win32\tester-plaf.cc"
 				>
 			</File>
 			<File
@@ -337,6 +345,10 @@
 			</File>
 			<File
 				RelativePath="..\paths.hh"
+				>
+			</File>
+			<File
+				RelativePath="..\pcrewrap.hh"
 				>
 			</File>
 			<File

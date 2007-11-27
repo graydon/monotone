@@ -37,7 +37,7 @@ time_t get_last_write_time(char const * name)
   // 12:00 AM, January 1, 1601 UTC.  A time_t is the same as it is for
   // Unix: seconds since 12:00 AM, January 1, 1970 UTC.  The offset is
   // taken verbatim from MSDN.
-  LONGLONG ft64 = ((LONGLONG)ft.dwHighDateTime) << 32 + ft.dwLowDateTime;
+  LONGLONG ft64 = (((LONGLONG)ft.dwHighDateTime) << 32) + ft.dwLowDateTime;
   return (time_t)((ft64/10000000) - 11644473600LL);
 }
 
@@ -66,19 +66,47 @@ int do_umask(int /* mask */)
 
 char * make_temp_dir()
 {
-  char dir[PATH_MAX];
+  // PATH_MAX isn't available everywhere, while FILENAME_MAX is supposed
+  // to be, in C89 and on.  However, the GNU C Library manual says this:
+  //
+  // Macro: int FILENAME_MAX
+  //    The value of this macro is an integer constant expression that
+  //    represents the maximum length of a file name string. It is defined
+  //    in `stdio.h'.
+  //
+  //    Unlike PATH_MAX, this macro is defined even if there is no actual
+  //    limit imposed. In such a case, its value is typically a very large
+  //    number. This is always the case on the GNU system.
+  //
+  //    Usage Note: Don't use FILENAME_MAX as the size of an array in which
+  //    to store a file name! You can't possibly make an array that big!
+  //    Use dynamic allocation (see section 3.2 Allocating Storage For
+  //    Program Data) instead.
+  //
+  // So, to make sure we don't exceed resources, make sure to use a value
+  // no larger than 16384 if FILENAME_MAX is larger.
+#if defined(PATH_MAX)
+# define DIR_MAX_SIZE PATH_MAX
+#elif defined(FILENAME_MAX)
+# if FILENAME_MAX > 16384
+#  define DIR_MAX_SIZE 16384
+# else
+#  define DIR_MAX_SIZE FILENAME_MAX
+# endif
+#endif
+  char dir[DIR_MAX_SIZE];
 
   // GetTempFileName wants 14 characters at the end of the path.
   {
-    DWORD ret = GetTempPath(PATH_MAX - 14, dir);
-    E(ret > 0 && ret <= PATH_MAX - 14,
+    DWORD ret = GetTempPath(DIR_MAX_SIZE - 14, dir);
+    E(ret > 0 && ret <= DIR_MAX_SIZE - 14,
       F("GetTempPath failed: %s") % os_strerror(GetLastError()));
   }
 
   // If the third argument to GetTempFileName is zero, it will create a
   // file, which is not what we want.
   UINT base = GetTickCount();
-  char * name = new char[PATH_MAX];
+  char * name = new char[DIR_MAX_SIZE];
   for (UINT i = 0; i < 65535; i++)
     {
       if (base + i == 0)

@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Source File                               *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/pipe.h>
@@ -130,7 +130,7 @@ void Pipe::process_msg(const MemoryRegion<byte>& input)
 *************************************************/
 void Pipe::process_msg(const std::string& input)
    {
-   process_msg((const byte*)input.c_str(), input.length());
+   process_msg(reinterpret_cast<const byte*>(input.data()), input.length());
    }
 
 /*************************************************

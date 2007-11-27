@@ -101,7 +101,9 @@ print_indented_set(ostream & os,
   for (set<file_path>::const_iterator i = s.begin();
        i != s.end(); i++)
     {
-      const string str = lexical_cast<string>(*i);
+      string str = lexical_cast<string>(*i);
+      if (str.empty())
+        str = "."; // project root
       if (cols > 8 && cols + str.size() + 1 >= max_cols)
         {
           cols = 8;
@@ -358,7 +360,7 @@ prepare_diff(cset & included,
 
   if (app.opts.revision_selectors.size() == 0)
     {
-      roster_t new_roster, old_roster;
+      roster_t old_roster, restricted_roster, new_roster;
       revision_id old_rid;
       parent_map parents;
 
@@ -379,18 +381,19 @@ prepare_diff(cset & included,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
-      make_restricted_csets(old_roster, new_roster,
-                            included, excluded, mask);
-      MM(included);
-      MM(excluded);
-      check_restricted_cset(old_roster, included);
+
+      make_restricted_roster(old_roster, new_roster, restricted_roster, 
+                             mask);
+ 
+      make_cset(old_roster, restricted_roster, included);
+      make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
       header << "# old_revision [" << old_rid << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 1)
     {
-      roster_t new_roster, old_roster;
+      roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
 
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
@@ -406,18 +409,19 @@ prepare_diff(cset & included,
                             old_roster, new_roster, app);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
-      make_restricted_csets(old_roster, new_roster,
-                            included, excluded, mask);
-      MM(included);
-      MM(excluded);
-      check_restricted_cset(old_roster, included);
+
+      make_restricted_roster(old_roster, new_roster, restricted_roster, 
+                             mask);
+ 
+      make_cset(old_roster, restricted_roster, included);
+      make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
       header << "# old_revision [" << r_old_id << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      roster_t new_roster, old_roster;
+      roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
@@ -458,11 +462,11 @@ prepare_diff(cset & included,
       //   (which fails for paths with @'s in them) or possibly //rev/file
       //   since versioned paths are required to be relative.
 
-      make_restricted_csets(old_roster, new_roster,
-                            included, excluded, mask);
-      MM(included);
-      MM(excluded);
-      check_restricted_cset(old_roster, included);
+      make_restricted_roster(old_roster, new_roster, restricted_roster, 
+                             mask);
+ 
+      make_cset(old_roster, restricted_roster, included);
+      make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = true;
     }

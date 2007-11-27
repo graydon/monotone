@@ -19,7 +19,7 @@ WizardImageFile=monotone.bmp
 
 [Files]
 Source: "..\mtn.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\html\*.*"; DestDir: "{app}\documentation"; Flags: ignoreversion
+Source: "..\monotone.html"; DestDir: "{app}\documentation"; Flags: ignoreversion
 Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignoreversion
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\po\de.gmo"; DestDir: "{app}\locale\de\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
@@ -38,10 +38,10 @@ Name: modifypath; Description: "Add monotone to your path"; GroupDescription: "G
 Name: viewdocs; Description: "View the monotone documentation"; GroupDescription: "Get up and running"
 
 [Run]
-Filename: "{app}\documentation\index.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}\documentation"
+Filename: "{app}\documentation\monotone.html"; Tasks: viewdocs; Flags: shellexec nowait; WorkingDir: "{app}\documentation"
 
 [Icons]
-Name: "{group}\monotone documentation"; Filename: "{app}\documentation\index.html"; WorkingDir: "{app}"
+Name: "{group}\monotone documentation"; Filename: "{app}\documentation\monotone.html"; WorkingDir: "{app}"
 
 [Code]
 function ModPathDir(): String;

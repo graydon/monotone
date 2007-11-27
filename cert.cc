@@ -448,21 +448,32 @@ get_user_key(rsa_keypair_id & key, app_state & app)
   if (app.opts.signing_key() != "")
     {
       key = app.opts.signing_key;
-      return;
+    }
+  else if (app.lua.hook_get_branch_key(app.opts.branchname, key))
+    ; // the check also sets the key.
+  else
+    {
+      vector<rsa_keypair_id> all_privkeys;
+      app.keys.get_key_ids(all_privkeys);
+      N(!all_privkeys.empty(), 
+        F("you have no private key to make signatures with\n"
+          "perhaps you need to 'genkey <your email>'"));
+      N(all_privkeys.size() == 1,
+        F("you have multiple private keys\n"
+          "pick one to use for signatures by adding '-k<keyname>' to your command"));
+      key = all_privkeys[0];
     }
 
-  if (app.lua.hook_get_branch_key(app.opts.branchname, key))
-    return;
-
-  vector<rsa_keypair_id> all_privkeys;
-  app.keys.get_key_ids(all_privkeys);
-  N(!all_privkeys.empty(), 
-    F("you have no private key to make signatures with\n"
-      "perhaps you need to 'genkey <your email>'"));
-  N(all_privkeys.size() == 1,
-    F("you have multiple private keys\n"
-      "pick one to use for signatures by adding '-k<keyname>' to your command"));
-  key = all_privkeys[0];
+  if (app.db.database_specified() && app.db.public_key_exists(key))
+    {
+      base64<rsa_pub_key> pub_key;
+      keypair priv_key;
+      app.db.get_key(key, pub_key);
+      app.keys.get_key_pair(key, priv_key);
+      E(keys_match(key, pub_key, key, priv_key.pub),
+        F("The key '%s' stored in your database does\n"
+          "not match the version in your local key store!") % key);
+    }
 }
 
 // Guess which branch is appropriate for a commit below IDENT.

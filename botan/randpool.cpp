@@ -1,6 +1,6 @@
 /*************************************************
 * Randpool Source File                           *
-* (C) 1999-2006 The Botan Project                *
+* (C) 1999-2007 The Botan Project                *
 *************************************************/
 
 #include <botan/randpool.h>
@@ -8,6 +8,8 @@
 #include <botan/bit_ops.h>
 #include <botan/util.h>
 #include <algorithm>
+
+#include <assert.h>
 
 namespace Botan {
 
@@ -27,7 +29,7 @@ SecureVector<byte> randpool_prf(MessageAuthenticationCode* mac,
                                 RANDPOOL_PRF_TAG tag,
                                 const byte in[], u32bit length)
    {
-   mac->update((byte)tag);
+   mac->update(static_cast<byte>(tag));
    mac->update(in, length);
    return mac->final();
    }
@@ -63,8 +65,7 @@ void Randpool::update_buffer()
    for(u32bit j = 0; j != counter.size(); ++j)
       if(++counter[j])
          break;
-   for(u32bit j = 0; j != 8; ++j)
-      counter[j+4] = get_byte(j, timestamp);
+   store_be(timestamp, counter + 4);
 
    SecureVector<byte> mac_val = randpool_prf(mac, GEN_OUTPUT,
                                              counter, counter.size());

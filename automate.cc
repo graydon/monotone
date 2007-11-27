@@ -312,14 +312,8 @@ CMD_AUTOMATE(leaves, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  // this might be more efficient in SQL, but for now who cares.
   set<revision_id> leaves;
-  app.db.get_revision_ids(leaves);
-  multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
-  for (multimap<revision_id, revision_id>::const_iterator
-         i = graph.begin(); i != graph.end(); ++i)
-    leaves.erase(i->first);
+  app.db.get_leaves(leaves);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     output << (*i).inner()() << '\n';

@@ -41,7 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;BOTAN_EXT_ENTROPY_SRC_CAPI;BOTAN_EXT_ENTROPY_SRC_WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -111,7 +111,7 @@
 				OmitFramePointers="true"
 				WholeProgramOptimization="false"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..&quot;;&quot;$(ProjectDir)&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_MBCS;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;BOTAN_EXT_ENTROPY_SRC_CAPI;BOTAN_EXT_ENTROPY_SRC_WIN32;_MBCS;_CONSOLE"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
@@ -266,6 +266,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\cbc_mac.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\certstor.cpp"
 				>
 			</File>
@@ -366,6 +370,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\dsa_gen.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\eax.cpp"
 				>
 			</File>
@@ -447,10 +455,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\get_pbe.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\gzip.cpp"
 				>
 			</File>
 			<File
@@ -851,6 +855,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\cbc_mac.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\certstor.h"
 				>
 			</File>
@@ -963,6 +971,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\botan\es_egd.h"
+				>
+			</File>
+			<File
 				RelativePath="..\botan\es_file.h"
 				>
 			</File>
@@ -984,10 +996,6 @@
 			</File>
 			<File
 				RelativePath="..\botan\fips140.h"
-				>
-			</File>
-			<File
-				RelativePath="..\botan\gzip.h"
 				>
 			</File>
 			<File
@@ -1020,6 +1028,10 @@
 			</File>
 			<File
 				RelativePath="..\botan\libstate.h"
+				>
+			</File>
+			<File
+				RelativePath="..\botan\loadstor.h"
 				>
 			</File>
 			<File

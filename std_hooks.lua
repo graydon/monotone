@@ -765,7 +765,7 @@ function get_preferred_merge3_command (tbl)
    -- If there wasn't any user-given merger, take the first that's available
    -- and wanted.
    for _,mkey in ipairs(default_order) do
-      c = trymerger(mkey) ; if c then return c,nil end
+      c = trymerger(mkey) ; if c then return c,mkey end
    end
 end
 
@@ -1174,4 +1174,9 @@ function add_netsync_notifier(notifier, precedence)
    end
    netsync_notifiers[precedence] = notifier
    return true, warning
+end
+
+function push_netsync_notifier(notifier)
+   local n = table.maxn(netsync_notifiers) + 1
+   return add_netsync_notifier(notifier, n)
 end
