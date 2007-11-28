@@ -18,16 +18,16 @@
 // conflicts encountered in that roster.  Each conflict encountered in merging
 // the roster creates an entry in this list.
 
-// nodes with name conflicts are left detached in the resulting roster, with
-// null parent and name fields.
+// nodes with divergent name conflicts are left detached in the resulting
+// roster, with null parent and name fields.
 // note that it is possible that the parent node on the left, the right, or
 // both, no longer exist in the merged roster.  also note that it is possible
 // that on one or both sides, they do exist, but already have an entry with
 // the given name.
-struct node_name_conflict
+struct divergent_name_conflict
 {
   node_id nid;
-  node_name_conflict(node_id nid) : nid(nid) {}
+  divergent_name_conflict(node_id nid) : nid(nid) {}
   std::pair<node_id, path_component> left, right;
 };
 
@@ -85,9 +85,9 @@ struct orphaned_node_conflict
 // another, and the requirement here is that each node have a unique (parent,
 // basename) tuple, and since our requirement matches our *-merge scalar,
 // we're okay.
-struct rename_target_conflict
+struct convergent_name_conflict
 {
-  node_id nid1, nid2;
+  node_id left_nid, right_nid;
   std::pair<node_id, path_component> parent_name;
 };
 
@@ -112,20 +112,33 @@ struct illegal_name_conflict
 
 struct roster_merge_result
 {
-  std::vector<node_name_conflict> node_name_conflicts;
+  // three main types of conflicts
+  // - content conflicts
+  // - attribute conflicts
+  // - tree layout conflicts  (which have the following subtypes)
+  //   - convergent name conflicts
+  //   - divergent name conflicts
+  //   - orphaned node conflicts
+  //   - directory loop conflicts
+  //   - illegal name conflicts
+  //   - missing root conflicts
+
+  std::vector<divergent_name_conflict> divergent_name_conflicts;
   std::vector<file_content_conflict> file_content_conflicts;
   std::vector<node_attr_conflict> node_attr_conflicts;
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
-  std::vector<rename_target_conflict> rename_target_conflicts;
+  std::vector<convergent_name_conflict> convergent_name_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
   std::vector<illegal_name_conflict> illegal_name_conflicts;
   bool missing_root_dir;
   // this roster is sane if is_clean() returns true
   roster_t roster;
   bool is_clean() const;
-  bool is_clean_except_for_content() const;
+  bool has_content_conflicts() const;
+  bool has_non_content_conflicts() const;
   void log_conflicts() const;
-  void warn_non_content_conflicts() const;
+  void warn_non_content_conflicts(roster_t const & left,
+                                  roster_t const & right) const;
   void clear();
 };
 

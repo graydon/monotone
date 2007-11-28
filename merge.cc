@@ -53,68 +53,64 @@ resolve_merge_conflicts(roster_t const & left_roster,
   if (!result.is_clean())
     result.log_conflicts();
 
-  if (!result.is_clean_except_for_content())
+  if (result.has_non_content_conflicts())
     {
-      result.warn_non_content_conflicts();
-      W(F("resolve non-content conflicts and then try again."));
+      result.warn_non_content_conflicts(left_roster, right_roster);
     }
-  else
+  else if (result.has_content_conflicts())
     {
       // Attempt to auto-resolve any content conflicts using the line-merger.
       // To do this requires finding a merge ancestor.
-      if (!result.file_content_conflicts.empty())
+
+      L(FL("examining content conflicts"));
+
+      size_t cnt;
+      size_t total_conflicts = result.file_content_conflicts.size();
+      std::vector<file_content_conflict>::iterator it;
+
+      for (cnt = 1, it = result.file_content_conflicts.begin();
+           it != result.file_content_conflicts.end(); ++cnt)
         {
+          file_content_conflict const & conflict = *it;
 
-          L(FL("examining content conflicts"));
+          shared_ptr<roster_t const> roster_for_file_lca;
+          adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
 
-          size_t cnt;
-          size_t total_conflicts = result.file_content_conflicts.size();
-          std::vector<file_content_conflict>::iterator it;
+          // Now we should certainly have a roster, which has the node.
+          I(roster_for_file_lca);
+          I(roster_for_file_lca->has_node(conflict.nid));
 
-          for (cnt = 1, it = result.file_content_conflicts.begin();
-               it != result.file_content_conflicts.end(); ++cnt)
+          file_id anc_id, left_id, right_id;
+          file_path anc_path, left_path, right_path;
+          get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
+          get_file_details (left_roster, conflict.nid, left_id, left_path);
+          get_file_details (right_roster, conflict.nid, right_id, right_path);
+
+          file_id merged_id;
+
+          content_merger cm(app, *roster_for_file_lca,
+                            left_roster, right_roster,
+                            adaptor);
+
+          if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
+                                    anc_id, left_id, right_id, merged_id))
             {
-              file_content_conflict const & conflict = *it;
+              L(FL("resolved content conflict %d / %d")
+                % cnt % total_conflicts);
+              file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
+              f->content = merged_id;
 
-              shared_ptr<roster_t const> roster_for_file_lca;
-              adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
+              it = result.file_content_conflicts.erase(it);
+            }
+          else
+            {
+              ++it;
 
-              // Now we should certainly have a roster, which has the node.
-              I(roster_for_file_lca);
-              I(roster_for_file_lca->has_node(conflict.nid));
-
-              file_id anc_id, left_id, right_id;
-              file_path anc_path, left_path, right_path;
-              get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
-              get_file_details (left_roster, conflict.nid, left_id, left_path);
-              get_file_details (right_roster, conflict.nid, right_id, right_path);
-
-              file_id merged_id;
-
-              content_merger cm(app, *roster_for_file_lca,
-                                left_roster, right_roster,
-                                adaptor);
-
-              if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
-                                        anc_id, left_id, right_id, merged_id))
-                {
-                  L(FL("resolved content conflict %d / %d")
-                    % cnt % total_conflicts);
-                  file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
-                  f->content = merged_id;
-
-                  it = result.file_content_conflicts.erase(it);
-                }
-              else
-                {
-                  ++it;
-
-                  // If the content_merger has failed, there's no point
-                  // trying to continue--we'll only frustrate users by
-                  // encouraging them to continue working with their merge
-                  // tool on a merge that is now destined to fail.
-                  break;
-                }
+              // If the content_merger has failed, there's no point
+              // trying to continue--we'll only frustrate users by
+              // encouraging them to continue working with their merge
+              // tool on a merge that is now destined to fail.
+              break;
             }
         }
     }
