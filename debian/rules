@@ -25,6 +25,32 @@ endif
 # This enables parallelism.
 CPUS ?= $(shell getconf _NPROCESSORS_ONLN)
 
+# DEB_BUILD_OPTIONS=noopt handling (Policy 10.1) and arch-specific
+# compiler options.  Allow total override of CFLAGS from the
+# make command line (make -f debian/rules build-arch CFLAGS=whatever).
+# Warning options are activated by upstream configure.
+DEFAULT_CFLAGS = -g
+ifneq (,$(findstring noopt,$(DEB_BUILD_OPTIONS)))
+DEFAULT_CFLAGS += -O0
+# HPPA needs -mlong-calls when built with -O0 because the code is so
+# huge.  Might be addressed by more use of shared libraries - revisit
+# if we ever do anything about bug #318509.
+ifneq (,$(findstring hppa,$(DEB_HOST_GNU_TYPE)))
+DEFAULT_CFLAGS += -mlong-calls
+endif
+else # optimization enabled
+# Back Alpha down to -O1 to avoid apparent compiler bugs
+# (0.37-1 did not build on alpha with random crashes, 0.37-2 did,
+# only plausible difference was the accidental -O0 in all 0.37-2 builds).
+ifneq (,$(findstring alpha,$(DEB_HOST_GNU_TYPE)))
+DEFAULT_CFLAGS += -O1
+else
+DEFAULT_CFLAGS += -O2
+endif
+endif
+
+CFLAGS ?= $(DEFAULT_CFLAGS)
+
 # put this up top so it's the default rule.
 #
 # Policy (section 4.9) says that build should depend on build-indep.
@@ -128,6 +154,8 @@ binary-arch: build-arch
 # install-exec target for the top level makefile and the install-data
 # target for the po directory.  (using the recursive install-exec
 # target would work too, but there's no point.)
+#
+# N.B. DEB_BUILD_OPTIONS=nostrip is handled entirely within dh_strip.
 	$(MAKE) DESTDIR=$(shell pwd)/debian/monotone install-exec-am
 	$(MAKE) DESTDIR=$(shell pwd)/debian/monotone -C po install-data
 

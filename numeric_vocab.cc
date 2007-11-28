@@ -42,7 +42,7 @@ UNIT_TEST(widen, widen)
   I((widen<u32,s8>(255) == 255));
   I((widen<u32,s8>(-1) == 255));
   // contrasts with:
-  I((static_cast<u32>(s8(-1)) == u32(4294967295)));
+  I((static_cast<u32>(s8(-1)) == u32(4294967295u)));
 }
 
 #endif // BUILD_UNIT_TESTS
