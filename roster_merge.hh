@@ -87,7 +87,7 @@ struct orphaned_node_conflict
 // we're okay.
 struct convergent_name_conflict
 {
-  node_id nid1, nid2;
+  node_id left_nid, right_nid;
   std::pair<node_id, path_component> parent_name;
 };
 

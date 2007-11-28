@@ -23,25 +23,72 @@ commit("divergent")
 check(mtn("merge", "--branch", "divergent"), 1, false, true)
 check(qgrep("divergent name conflict", "stderr"))
 
--- convergent name conflict
+
+
+-- convergent name conflict (adds)
 
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "convergent"), 0, false, false)
+check(mtn("setup", ".", "--branch", "convergent-adds"), 0, false, false)
 
-addfile("foo", "convergent foo")
-commit("convergent")
+addfile("foo", "convergent add foo")
+commit("convergent-adds")
 base = base_revision()
 
-addfile("bar", "convergent bar1")
-commit("convergent")
+addfile("bar", "convergent add bar1")
+commit("convergent-adds")
 
 revert_to(base)
 
-addfile("bar", "convergent bar2")
-commit("convergent")
+addfile("bar", "convergent add bar2")
+commit("convergent-adds")
 
-check(mtn("merge", "--branch", "convergent"), 1, false, true)
+check(mtn("merge", "--branch", "convergent-adds"), 1, false, true)
 check(qgrep("convergent name conflict", "stderr"))
+
+-- convergent name conflict (renames)
+
+remove("_MTN")
+check(mtn("setup", ".", "--branch", "convergent-renames"), 0, false, false)
+
+addfile("foo", "convergent rename foo")
+addfile("bar", "convergent rename bar")
+
+commit("convergent-renames")
+base = base_revision()
+
+check(mtn("mv", "foo", "abc"), 0, false, false)
+commit("convergent-renames")
+
+revert_to(base)
+
+check(mtn("mv", "bar", "abc"), 0, false, false)
+commit("convergent-renames")
+
+check(mtn("merge", "--branch", "convergent-renames"), 1, false, true)
+check(qgrep("convergent name conflict", "stderr"))
+
+-- convergent name conflict (add-rename)
+
+remove("_MTN")
+check(mtn("setup", ".", "--branch", "convergent-add-rename"), 0, false, false)
+
+addfile("foo", "convergent add rename foo")
+
+commit("convergent-add-rename")
+base = base_revision()
+
+check(mtn("mv", "foo", "bar"), 0, false, false)
+commit("convergent-add-rename")
+
+revert_to(base)
+
+addfile("bar", "convervent add rename bar")
+commit("convergent-add-rename")
+
+check(mtn("merge", "--branch", "convergent-add-rename"), 1, false, true)
+check(qgrep("convergent name conflict", "stderr"))
+
+
 
 -- directory loop conflict
 

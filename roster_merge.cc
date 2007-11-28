@@ -111,8 +111,8 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
 
   for (size_t i = 0; i < result.convergent_name_conflicts.size(); ++i)
     out += (FL("convergent name conflict: nodes %d, %d, both want parent %d, name %s")
-            % result.convergent_name_conflicts[i].nid1
-            % result.convergent_name_conflicts[i].nid2
+            % result.convergent_name_conflicts[i].left_nid
+            % result.convergent_name_conflicts[i].right_nid
             % result.convergent_name_conflicts[i].parent_name.first
             % result.convergent_name_conflicts[i].parent_name.second)
       .str();
@@ -270,10 +270,12 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left,
 
   for (size_t i = 0; i < convergent_name_conflicts.size(); ++i)
     {
+      convergent_name_conflict const & conflict = convergent_name_conflicts[i];
+
       file_path left_name, right_name;
-      // FIXME: ensure nid1 is always left and nid2 is always right
-      left.get_name(convergent_name_conflicts[i].nid1, left_name);
-      right.get_name(convergent_name_conflicts[i].nid2, right_name);
+
+      left.get_name(conflict.left_nid, left_name);
+      right.get_name(conflict.right_nid, right_name);
 
       I(left_name == right_name);
 
@@ -283,8 +285,8 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left,
       */
 
       W(F("convergent name conflict: two nodes (%d and %d) want one name ('%s')")
-        % convergent_name_conflicts[i].nid2
-        % convergent_name_conflicts[i].nid1
+        % conflict.left_nid
+        % conflict.right_nid
         % left_name);
     }
 
@@ -452,9 +454,11 @@ namespace
     return false;
   }
 
+  enum side_t { left_side, right_side };
+
   void
   assign_name(roster_merge_result & result, node_id nid,
-              node_id parent, path_component name)
+              node_id parent, path_component name, side_t side)
   {
     // this function is reponsible for detecting structural conflicts.  by the
     // time we've gotten here, we have a node that's unambiguously decided on
@@ -473,8 +477,22 @@ namespace
           {
             // see comments below about name collisions.
             convergent_name_conflict c;
-            c.nid1 = nid;
-            c.nid2 = result.roster.root()->self;
+            // some other node has already been attached at the root location
+            // so write a conflict structure with this node on the indicated
+            // side of the merge and the attached node on the other side of
+            // the merge. detach the previously attached node and leave both
+            // conflicted nodes detached.
+            switch (side)
+              {
+              case left_side:
+                c.left_nid = nid;
+                c.right_nid = result.roster.root()->self;
+                break;
+              case right_side:
+                c.left_nid = result.roster.root()->self;
+                c.right_nid = nid;
+                break;
+              }
             c.parent_name = make_pair(parent, name);
             result.roster.detach_node(file_path());
             result.convergent_name_conflicts.push_back(c);
@@ -497,7 +515,7 @@ namespace
 
         // name conflict:
         // see the comment in roster_merge.hh for the analysis showing that at
-        // most two nodes can participate in a rename target conflict.  this code
+        // most two nodes can participate in a convergent name conflict.  this code
         // exploits that; after this code runs, there will be no node at the given
         // location in the tree, which means that in principle, if there were a
         // third node that _also_ wanted to go here, when we got around to
@@ -506,11 +524,23 @@ namespace
         // "poisoned locations" or anything.
         if (p->has_child(name))
           {
-            // is this consistently nid1 from right and nid2 from left?!?
-
             convergent_name_conflict c;
-            c.nid1 = nid;
-            c.nid2 = p->get_child(name)->self;
+            // some other node has already been attached at the named location
+            // so write a conflict structure with this node on the indicated
+            // side of the merge and the attached node on the other side of
+            // the merge. detach the previously attached node and leave both
+            // conflicted nodes detached.
+            switch (side)
+              {
+              case left_side:
+                c.left_nid = nid;
+                c.right_nid = p->get_child(name)->self;
+                break;
+              case right_side:
+                c.left_nid = p->get_child(name)->self;
+                c.right_nid = nid;
+                break;
+              }
             c.parent_name = make_pair(parent, name);
             p->detach_child(name);
             result.convergent_name_conflicts.push_back(c);
@@ -532,13 +562,13 @@ namespace
 
   void
   copy_node_forward(roster_merge_result & result, node_t const & n,
-                    node_t const & old_n)
+                    node_t const & old_n, side_t const & side)
   {
     I(n->self == old_n->self);
     n->attrs = old_n->attrs;
     if (is_file_t(n))
       downcast_to_file_t(n)->content = downcast_to_file_t(old_n)->content;
-    assign_name(result, n->self, old_n->parent, old_n->name);
+    assign_name(result, n->self, old_n->parent, old_n->name, side);
   }
 
 } // end anonymous namespace
@@ -614,7 +644,10 @@ roster_merge(roster_t const & left_parent,
               // deleted in the lifecycles step above)
               if (result.roster.has_node(left_n->self))
                 {
-                  copy_node_forward(result, new_i->second, left_n);
+                  // attach this node from the left roster. this may cause
+                  // a name collision with the previously attached node from
+                  // the other side of the merge.
+                  copy_node_forward(result, new_i->second, left_n, left_side);
                   ++new_i;
                 }
               ++left_mi;
@@ -627,7 +660,10 @@ roster_merge(roster_t const & left_parent,
               // we skip nodes that aren't in the result roster
               if (result.roster.has_node(right_n->self))
                 {
-                  copy_node_forward(result, new_i->second, right_n);
+                  // attach this node from the right roster. this may cause
+                  // a name collision with the previously attached node from
+                  // the other side of the merge.
+                  copy_node_forward(result, new_i->second, right_n, right_side);
                   ++new_i;
                 }
               ++right_mi;
@@ -646,18 +682,34 @@ roster_merge(roster_t const & left_parent,
               node_t const & new_n = new_i->second;
               // merge name
               {
-                pair<node_id, path_component> new_name;
+                pair<node_id, path_component> left_name, right_name, new_name;
                 divergent_name_conflict conflict(new_n->self);
-                if (merge_scalar(make_pair(left_n->parent, left_n->name),
+                left_name = make_pair(left_n->parent, left_n->name);
+                right_name = make_pair(right_n->parent, right_n->name);
+                if (merge_scalar(left_name,
                                  left_marking.parent_name,
                                  left_uncommon_ancestors,
-                                 make_pair(right_n->parent, right_n->name),
+                                 right_name,
                                  right_marking.parent_name,
                                  right_uncommon_ancestors,
                                  new_name, conflict))
                   {
+                    side_t winning_side;
+
+                    if (new_name == left_name)
+                      winning_side = left_side;
+                    else if (new_name == right_name)
+                      winning_side = right_side;
+                    else
+                      I(false);
+
+                    // attach this node from the winning side of the merge. if
+                    // there is a name collision the previously attached node
+                    // (which is blocking this one) must come from the other
+                    // side of the merge.
                     assign_name(result, new_n->self,
-                                new_name.first, new_name.second);
+                                new_name.first, new_name.second, winning_side);
+
                   }
                 else
                   {
@@ -1584,8 +1636,7 @@ struct simple_convergent_name_conflict : public structural_conflict_helper
   {
     I(!result.is_clean());
     convergent_name_conflict const & c = idx(result.convergent_name_conflicts, 0);
-    I((c.nid1 == left_nid && c.nid2 == right_nid)
-      || (c.nid1 == right_nid && c.nid2 == left_nid));
+    I(c.left_nid == left_nid && c.right_nid == right_nid);
     I(c.parent_name == make_pair(root_nid, path_component("thing")));
     // this tests that they were detached, implicitly
     result.roster.attach_node(left_nid, file_path_internal("left"));
@@ -1959,8 +2010,7 @@ struct convergent_name_plus_missing_root : public structural_conflict_helper
   {
     I(!result.is_clean());
     convergent_name_conflict const & c = idx(result.convergent_name_conflicts, 0);
-    I((c.nid1 == left_root_nid && c.nid2 == right_root_nid)
-      || (c.nid1 == right_root_nid && c.nid2 == left_root_nid));
+    I(c.left_nid == left_root_nid && c.right_nid == right_root_nid);
     I(c.parent_name == make_pair(the_null_node, path_component()));
 
     I(result.missing_root_dir);
