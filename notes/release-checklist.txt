@@ -103,9 +103,20 @@ How to release a new version of monotone
    $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
    $ mtn sync
 
-10) Update downloads.html on the website similarly.
+10) Update releases.xml on the website so the RSS feed contains information
+    for the newly released version. Don't forget to update the feed's
+    global pubDate date as well as the invididual item's pubDate
+    and ensure you use the correct datetime format. Add an <enclosure>
+    which links to the monotone source tarball and add the proper length
+    as attribute.
+    Finally you should just copy'n'paste the NEWS entry for the NEW VERSION
+    directly into the description inside a CDATA field and do a couple of
+    searches and replaces to add HTML formatting for a nicer display.
 
-    [Richard's comment: Huh?]
+    $ cd WEBDIR
+    $ vi releases.xml
+    $ mtn ci -m "Updates RSS feed for monotone <NEW VERSION>"
+    $ mtn sync
 
 11) Once you're pretty sure things have gone well, tag the source:
 
