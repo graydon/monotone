@@ -148,7 +148,7 @@ double cpu_now();
 // determine directory to load locale data from
 std::string get_locale_dir();
 
-#ifdef WIN32_PLATFORM
+#ifdef WIN32
 #include "win32/ssh_agent_platform.hh"
 #else
 #include "unix/ssh_agent_platform.hh"
