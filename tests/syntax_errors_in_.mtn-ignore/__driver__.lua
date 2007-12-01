@@ -9,6 +9,7 @@ writefile("dontignoreme")
 check(get("mtn-ignore", ".mtn-ignore"))
 
 check(raw_mtn("ls", "unknown"), 0, true, true)
+canonicalize("stdout")
 check(get("stdout-ref"))
 check(get("stderr-ref"))
 
