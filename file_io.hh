@@ -14,6 +14,7 @@
 #include "paths.hh"
 #include "sanity.hh"
 #include "platform-wrapped.hh"
+#include "vector.hh"
 
 // this layer deals with talking to the filesystem, loading and saving
 // files, walking trees, etc.

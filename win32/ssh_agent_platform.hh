@@ -8,7 +8,7 @@
 // PURPOSE.
 
 #include "../numeric_vocab.hh"
-#include "windows.h"
+#include <windows.h>
 
 class ssh_agent_platform {
 private:
