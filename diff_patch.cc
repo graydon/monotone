@@ -490,8 +490,9 @@ bool merge3(vector<string> const & ancestor,
 content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
                                                                revision_id const & left,
                                                                revision_id const & right,
-                                                               marking_map const & mm)
-  : app(app), mm(mm)
+                                                               marking_map const & left_mm,
+                                                               marking_map const & right_mm)
+  : app(app), left_mm(left_mm), right_mm(right_mm)
 {
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
@@ -516,7 +517,7 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
     {
       delta left_delta;
       diff(left_data.inner(), merged_data.inner(), left_delta);
-      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));    
+      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
     }
   if (!(right_ident == merged_ident))
     {
@@ -547,6 +548,7 @@ load_and_cache_roster(revision_id const & rid,
 
 void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
+                                                     revision_id & rid,
                                                      shared_ptr<roster_t const> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
@@ -554,6 +556,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // birth revision, which is the "per-file worst case" lca.
 
   // Begin by loading any non-empty file lca roster
+  rid = lca;
   if (!lca.inner()().empty())
     load_and_cache_roster(lca, rosters, anc, app);
 
@@ -561,9 +564,29 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // then use the file's birth roster.
   if (!anc || !anc->has_node(nid))
     {
-      marking_map::const_iterator j = mm.find(nid);
-      I(j != mm.end());
-      load_and_cache_roster(j->second.birth_revision, rosters, anc, app);
+      marking_map::const_iterator lmm = left_mm.find(nid);
+      marking_map::const_iterator rmm = right_mm.find(nid);
+
+      MM(left_mm);
+      MM(right_mm);
+
+      if (lmm == left_mm.end())
+        {
+          I(rmm != right_mm.end());
+          rid = rmm->second.birth_revision;
+        }
+      else if (rmm == right_mm.end())
+        {
+          I(lmm != left_mm.end());
+          rid = lmm->second.birth_revision;
+        }
+      else
+        {
+          I(lmm->second.birth_revision == rmm->second.birth_revision);
+          rid = lmm->second.birth_revision;
+        }
+
+      load_and_cache_roster(rid, rosters, anc, app);
     }
   I(anc);
 }
@@ -598,11 +621,14 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
+                                                      revision_id & rid,
                                                       shared_ptr<roster_t const> & anc)
 {
   // When doing an update, the base revision is always the ancestor to
   // use for content merging.
   anc = base;
+
+  // FIXME: return something for rid
 }
 
 void

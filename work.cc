@@ -183,9 +183,9 @@ workspace::get_current_roster_shape(roster_t & ros, node_id_source & nis)
 bool
 workspace::has_changes()
 {
-  parent_map parents;  
+  parent_map parents;
   get_parent_rosters(parents);
-  
+
   // if we have more than one parent roster then this workspace contains
   // a merge which means this is always a committable change
   if (parents.size() > 1)
@@ -738,7 +738,7 @@ struct content_merge_empty_adaptor : public content_merge_adaptor
                             file_data const &, file_data const &,
                             file_data const &)
   { I(false); }
-  virtual void get_ancestral_roster(node_id, boost::shared_ptr<roster_t const> &)
+  virtual void get_ancestral_roster(node_id, revision_id &, boost::shared_ptr<roster_t const> &)
   { I(false); }
 };
 

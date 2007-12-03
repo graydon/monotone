@@ -19,6 +19,7 @@
 #include "numeric_vocab.hh"
 #include "paths.hh"
 #include "sanity.hh"
+
 #include "vocab.hh"
 
 struct node_id_source
@@ -52,6 +53,7 @@ typedef std::map<attr_key, std::pair<bool, attr_value> > full_attr_map_t;
 typedef std::map<path_component, node_t> dir_map;
 typedef hybrid_map<node_id, node_t> node_map;
 
+template <> void dump(node_id const & val, std::string & out);
 template <> void dump(full_attr_map_t const & val, std::string & out);
 
 
@@ -182,6 +184,7 @@ public:
   bool has_node(file_path const & sp) const;
   bool has_node(node_id nid) const;
   bool is_root(node_id nid) const;
+  bool is_attached(node_id nid) const;
   node_t get_node(file_path const & sp) const;
   node_t get_node(node_id nid) const;
   void get_name(node_id nid, file_path & sp) const;
@@ -374,7 +377,7 @@ select_nodes_modified_by_cset(cset const & cs,
                               std::set<node_id> & nodes_modified);
 
 void
-get_content_paths(roster_t const & roster, 
+get_content_paths(roster_t const & roster,
                   std::map<file_id, file_path> & paths);
 
 // These functions are for the use of things like 'update' or 'pluck', that
@@ -470,4 +473,3 @@ struct testing_node_id_source
 // vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 #endif
-

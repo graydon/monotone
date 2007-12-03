@@ -53,9 +53,10 @@ resolve_merge_conflicts(roster_t const & left_roster,
   if (!result.is_clean())
     result.log_conflicts();
 
+
   if (result.has_non_content_conflicts())
     {
-      result.warn_non_content_conflicts(left_roster, right_roster);
+      result.warn_non_content_conflicts(left_roster, right_roster, adaptor);
     }
   else if (result.has_content_conflicts())
     {
@@ -73,8 +74,11 @@ resolve_merge_conflicts(roster_t const & left_roster,
         {
           file_content_conflict const & conflict = *it;
 
+          MM(conflict);
+
+          revision_id rid;
           shared_ptr<roster_t const> roster_for_file_lca;
-          adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
+          adaptor.get_ancestral_roster(conflict.nid, rid, roster_for_file_lca);
 
           // Now we should certainly have a roster, which has the node.
           I(roster_for_file_lca);
@@ -82,9 +86,9 @@ resolve_merge_conflicts(roster_t const & left_roster,
 
           file_id anc_id, left_id, right_id;
           file_path anc_path, left_path, right_path;
-          get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
-          get_file_details (left_roster, conflict.nid, left_id, left_path);
-          get_file_details (right_roster, conflict.nid, right_id, right_path);
+          get_file_details(*roster_for_file_lca, conflict.nid, anc_id, anc_path);
+          get_file_details(left_roster, conflict.nid, left_id, left_path);
+          get_file_details(right_roster, conflict.nid, right_id, right_path);
 
           file_id merged_id;
 
@@ -148,9 +152,10 @@ interactive_merge_and_store(revision_id const & left_rid,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
-  content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
-  resolve_merge_conflicts (left_roster, right_roster,
-                           result, dba, app);
+  content_merge_database_adaptor dba(app, left_rid, right_rid,
+                                     left_marking_map, right_marking_map);
+  resolve_merge_conflicts(left_roster, right_roster,
+                          result, dba, app);
 
   // write new files into the db
   store_roster_merge_result(left_roster, right_roster, result,

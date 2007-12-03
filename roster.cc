@@ -47,6 +47,12 @@ using boost::lexical_cast;
 ///////////////////////////////////////////////////////////////////
 
 template <> void
+dump(node_id const & val, string & out)
+{
+  out = lexical_cast<string>(val);
+}
+
+template <> void
 dump(full_attr_map_t const & val, string & out)
 {
   ostringstream oss;
@@ -619,6 +625,21 @@ roster_t::is_root(node_id n) const
 }
 
 bool
+roster_t::is_attached(node_id n) const
+{
+  if (!has_root())
+    return false;
+  if (n == root_dir->self)
+    return true;
+  if (!has_node(n))
+    return false;
+
+  node_t node = get_node(n);
+
+  return !null_node(node->parent);
+}
+
+bool
 roster_t::has_node(file_path const & p) const
 {
   MM(*this);
@@ -628,7 +649,7 @@ roster_t::has_node(file_path const & p) const
     return false;
   if (p.empty())
     return true;
-  
+
   dir_t nd = root_dir;
   string const & pi = p.as_internal();
   string::size_type start = 0, stop;
@@ -974,7 +995,7 @@ roster_t::get_attr(file_path const & pth,
       return true;
     }
   return false;
-} 
+}
 
 
 template <> void
@@ -1951,7 +1972,7 @@ mark_roster_with_one_parent(roster_t const & parent,
 
   I(!null_id(child_rid));
   child_markings.clear();
-  
+
   for (node_map::const_iterator i = child.all_nodes().begin();
        i != child.all_nodes().end(); ++i)
     {
@@ -2205,7 +2226,7 @@ select_restricted_nodes(roster_t const & from, roster_t const & to,
 
         case parallel::in_both:
           // moved/renamed/patched/attribute changes
-          if (mask.includes(from, i.left_key()) || 
+          if (mask.includes(from, i.left_key()) ||
               mask.includes(to, i.right_key()))
             selected.insert(make_pair(i.right_key(), i.right_data()));
           else
@@ -2237,17 +2258,17 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
       map<node_id, node_t>::const_iterator n = selected.begin(), p;
 
       L(FL("selected node %d %s parent %d")
-            % n->second->self 
+            % n->second->self
             % n->second->name
             % n->second->parent);
 
-      while (!null_node(n->second->parent) && 
+      while (!null_node(n->second->parent) &&
              !restricted.has_node(n->second->parent))
         {
           // we can't add this node until its parent has been added
 
           L(FL("deferred node %d %s parent %d")
-            % n->second->self 
+            % n->second->self
             % n->second->name
             % n->second->parent);
 
@@ -2265,7 +2286,7 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
       if (p != selected.end())
         {
           L(FL("adding node %d %s parent %d")
-            % n->second->self 
+            % n->second->self
             % n->second->name
             % n->second->parent);
 
@@ -2949,7 +2970,7 @@ tests_on_two_rosters(roster_t const & a, roster_t const & b, node_id_source & ni
   make_cset(b2, a2, b2_to_a2);
   do_testing_on_two_equivalent_csets(a_to_b, a2_to_b2);
   do_testing_on_two_equivalent_csets(b_to_a, b2_to_a2);
-  
+
   {
     marking_map a_marking;
     make_fake_marking_for(a, a_marking);
@@ -3026,7 +3047,7 @@ bool parent_of(file_path const & p,
     {
       string const & ci = c.as_internal();
       string const & pi = p.as_internal();
-      
+
       string::const_iterator c_anchor =
         search(ci.begin(), ci.end(),
                pi.begin(), pi.end());
@@ -4799,7 +4820,7 @@ create_random_unification_task(roster_t & left,
 			       randomizer & rng)
 {
   size_t n_nodes = 20 + rng.uniform(60);
-  
+
   // Stick in a root if there isn't one.
   if (!left.has_root())
     {

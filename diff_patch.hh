@@ -51,6 +51,7 @@ content_merge_adaptor
                             file_data const & merged_data) = 0;
 
   virtual void get_ancestral_roster(node_id nid,
+                                    revision_id & rid,
                                     boost::shared_ptr<roster_t const> & anc) = 0;
 
   virtual void get_version(file_id const & ident,
@@ -65,12 +66,14 @@ content_merge_database_adaptor
 {
   app_state & app;
   revision_id lca;
-  marking_map const & mm;
+  marking_map const & left_mm;
+  marking_map const & right_mm;
   std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
   content_merge_database_adaptor (app_state & app,
                                   revision_id const & left,
                                   revision_id const & right,
-                                  marking_map const & mm);
+                                  marking_map const & left_mm,
+                                  marking_map const & right_mm);
   void record_merge(file_id const & left_ident,
                     file_id const & right_ident,
                     file_id const & merged_ident,
@@ -79,6 +82,7 @@ content_merge_database_adaptor
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
+                            revision_id & rid,
                             boost::shared_ptr<roster_t const> & anc);
 
   void get_version(file_id const & ident,
@@ -93,9 +97,9 @@ content_merge_workspace_adaptor
   app_state & app;
   boost::shared_ptr<roster_t const> base;
   std::map<file_id, file_path> content_paths;
-  content_merge_workspace_adaptor (app_state & app,
-                                   boost::shared_ptr<roster_t const> base,
-                                   std::map<file_id, file_path> const & paths)
+  content_merge_workspace_adaptor(app_state & app,
+                                  boost::shared_ptr<roster_t const> base,
+                                  std::map<file_id, file_path> const & paths)
     : app(app), base(base), content_paths(paths)
   {}
   void record_merge(file_id const & left_ident,
@@ -106,6 +110,7 @@ content_merge_workspace_adaptor
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
+                            revision_id & rid,
                             boost::shared_ptr<roster_t const> & anc);
 
   void get_version(file_id const & ident,

@@ -10,9 +10,10 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-
+#include "diff_patch.hh"
 #include "vocab.hh"
 #include "roster.hh"
+#include "sanity.hh"
 
 // our general strategy is to return a (possibly insane) roster, and a list of
 // conflicts encountered in that roster.  Each conflict encountered in merging
@@ -50,7 +51,7 @@ struct node_attr_conflict
 {
   node_id nid;
   node_attr_conflict(node_id nid) : nid(nid) {}
-  attr_key key;
+  attr_key key; // attr_name?
   std::pair<bool, attr_value> left, right;
 };
 
@@ -110,6 +111,14 @@ struct illegal_name_conflict
   std::pair<node_id, path_component> parent_name;
 };
 
+template <> void dump(divergent_name_conflict const & val, std::string & out);
+template <> void dump(file_content_conflict const & val, std::string & out);
+template <> void dump(node_attr_conflict const & val, std::string & out);
+template <> void dump(orphaned_node_conflict const & val, std::string & out);
+template <> void dump(convergent_name_conflict const & val, std::string & out);
+template <> void dump(directory_loop_conflict const & val, std::string & out);
+template <> void dump(illegal_name_conflict const & val, std::string & out);
+
 struct roster_merge_result
 {
   // three main types of conflicts
@@ -138,7 +147,8 @@ struct roster_merge_result
   bool has_non_content_conflicts() const;
   void log_conflicts() const;
   void warn_non_content_conflicts(roster_t const & left,
-                                  roster_t const & right) const;
+                                  roster_t const & right,
+                                  content_merge_adaptor & adaptor) const;
   void clear();
 };
 
