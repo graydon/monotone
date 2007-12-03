@@ -1112,71 +1112,112 @@ function get_remote_unix_socket_command(host)
     return "socat"
 end
 
--- Netsync notifiers are tables containing 5 functions:
--- start, revision_received, cert_received, pubkey_received and end
--- Those functions take exactly the same arguments as the corresponding
--- note_netsync functions, but return a different kind of value, a tuple
--- composed of a return code and a value to be returned back to monotone.
--- The codes are strings:
--- "continue" and "stop"
--- When the code "continue" is returned and there's another notifier, the
--- second value is ignored and the next notifier is called.  Otherwise,
--- the second value is returned immediately.
-netsync_notifiers = {}
+do
+   -- Hook functions are tables containing any of the following 6 items
+   -- with associated functions:
+   --
+   --   startup			Corresponds to note_mtn_startup()
+   --   start			Corresponds to note_netsync_start()
+   --   revision_received	Corresponds to note_netsync_revision_received()
+   --   cert_received		Corresponds to note_netsync_cert_received()
+   --   pubkey_received		Corresponds to note_netsync_pubkey_received()
+   --   end			Corresponds to note_netsync_end()
+   --
+   -- Those functions take exactly the same arguments as the corresponding
+   -- global functions, but return a different kind of value, a tuple
+   -- composed of a return code and a value to be returned back to monotone.
+   -- The codes are strings:
+   -- "continue" and "stop"
+   -- When the code "continue" is returned and there's another notifier, the
+   -- second value is ignored and the next notifier is called.  Otherwise,
+   -- the second value is returned immediately.
+   local hook_functions = {}
+   local supported_items = {
+      "startup",
+      "start", "revision_received", "cert_received", "pubkey_received", "end"
+   }
 
-function _note_netsync_helper(f,...)
-   local s = "continue"
-   local v = nil
-   for _,n in pairs(netsync_notifiers) do
-      if n[f] then
-	 s,v = n[f](...)
+   function _hook_functions_helper(f,...)
+      local s = "continue"
+      local v = nil
+      for _,n in pairs(hook_functions) do
+	 if n[f] then
+	    s,v = n[f](...)
+	 end
+	 if s ~= "continue" then
+	    break
+	 end
       end
-      if s ~= "continue" then
-	 break
-      end
+      return v
    end
-   return v
-end
-function note_netsync_start(...)
-   return _note_netsync_helper("start",...)
-end
-function note_netsync_revision_received(...)
-   return _note_netsync_helper("revision_received",...)
-end
-function note_netsync_cert_received(...)
-   return _note_netsync_helper("cert_received",...)
-end
-function note_netsync_pubkey_received(...)
-   return _note_netsync_helper("pubkey_received",...)
-end
-function note_netsync_end(...)
-   return _note_netsync_helper("end",...)
-end
+   function note_mtn_startup(...)
+      return _hook_functions_helper("startup",...)
+   end
+   function note_netsync_start(...)
+      return _hook_functions_helper("start",...)
+   end
+   function note_netsync_revision_received(...)
+      return _hook_functions_helper("revision_received",...)
+   end
+   function note_netsync_cert_received(...)
+      return _hook_functions_helper("cert_received",...)
+   end
+   function note_netsync_pubkey_received(...)
+      return _hook_functions_helper("pubkey_received",...)
+   end
+   function note_netsync_end(...)
+      return _hook_functions_helper("end",...)
+   end
 
-function add_netsync_notifier(notifier, precedence)
-   if type(notifier) ~= "table" or type(precedence) ~= "number" then
-      return false, "Invalid tyoe"
-   end
-   if netsync_notifiers[precedence] then
-      return false, "Precedence already taken"
-   end
-   local warning = nil
-   for n,f in pairs(notifier) do
-      if type(n) ~= "string" or n ~= "start"
-	 and n ~= "revision_received"
-	 and n ~= "cert_received"
-	 and n ~= "pubkey_received"
-	 and n ~= "end" then
-	 warning = "Unknown item found in notifier table"
-      elseif type(f) ~= "function" then
-	 return false, "Value for notifier item "..n.." isn't a function"
+   function add_hook_functions(functions, precedence)
+      if type(functions) ~= "table" or type(precedence) ~= "number" then
+	 return false, "Invalid type"
       end
-   end
-   netsync_notifiers[precedence] = notifier
-   return true, warning
-end
+      if hook_functions[precedence] then
+	 return false, "Precedence already taken"
+      end
 
-function push_netsync_notifier(notifier)
-   local n = table.maxn(netsync_notifiers) + 1
-   return add_netsync_notifier(notifier, n)
+      local unknown_items = ""
+      local warning = nil
+      local is_member =
+	 function (s,t)
+	    for k,v in pairs(t) do if s == v then return true end end
+	    return false
+	 end
+
+      for n,f in pairs(functions) do
+	 if type(n) == "string" then
+	    if not is_member(n, supported_items) then
+	       if unknown_items ~= "" then
+		  unknown_items = unknown_items .. ","
+	       end
+	       unknown_items = unknown_items .. n
+	    end
+	    if type(f) ~= "function" then
+	       return false, "Value for functions item "..n.." isn't a function"
+	    end
+	 else
+	    warning = "Non-string item keys found in functions table"
+	 end
+      end
+
+      if warning == nil and unknown_items ~= "" then
+	 warning = "Unknown item(s) " .. unknown_items .. " in functions table"
+      end
+
+      hook_functions[precedence] = functions
+      return true, warning
+   end
+   function push_hook_functions(functions)
+      local n = table.maxn(hook_functions) + 1
+      return add_hook_functions(functions, n)
+   end
+
+   -- Kept for backward compatibility
+   function add_netsync_notifier(notifier, precedence)
+      return add_hook_functions(notifier, precedence)
+   end
+   function push_netsync_notifier(notifier)
+      return push_hook_functions(notifier)
+   end
 end
