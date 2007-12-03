@@ -26,7 +26,10 @@ ssh_agent_platform::connect()
   hwnd = FindWindow("Pageant", "Pageant");
 
   if (!hwnd)
-    return false;
+    {
+      filemap = NULL;
+      return false;
+    }
 
   sprintf(mapname, "PageantRequest%08x", (unsigned)GetCurrentThreadId());
   filemap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
