@@ -30,8 +30,12 @@ dump(divergent_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "node: " << conflict.nid << "\n"
-      << "left: " << conflict.left.first << " " << conflict.left.second << "\n"
-      << "right: " << conflict.right.first << " " << conflict.right.second << "\n";
+      << "left\n"
+      << "    parent: " << conflict.left.first << "\n"
+      << "    basename: " << conflict.left.second << "\n"
+      << "right\n"
+      << "    parent: " << conflict.right.first << "\n"
+      << "    basename: " << conflict.right.second << "\n";
   out = oss.str();
 }
 
@@ -61,7 +65,8 @@ dump(orphaned_node_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << " '" << conflict.parent_name.second << "'\n";
+      << "parent: " << conflict.parent_name.first << "\n"
+      << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
 
@@ -71,7 +76,8 @@ dump(convergent_name_conflict const & conflict, string & out)
   ostringstream oss;
   oss << "left: " << conflict.left_nid << "\n"
       << "right: " << conflict.right_nid << "\n"
-      << "parent: " << conflict.parent_name.first << " '" << conflict.parent_name.second << "'\n";
+      << "parent: " << conflict.parent_name.first << "\n"
+      << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
 
@@ -80,7 +86,8 @@ dump(directory_loop_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << " '" << conflict.parent_name.second << "'\n";
+      << "parent: " << conflict.parent_name.first << "\n"
+      << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
 
@@ -89,7 +96,8 @@ dump(illegal_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << " '" << conflict.parent_name.second << "'\n";
+      << "parent: " << conflict.parent_name.first << "\n"
+      << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
 

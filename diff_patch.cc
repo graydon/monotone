@@ -603,6 +603,14 @@ content_merge_database_adaptor::get_version(file_id const & ident,
 // content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
 
+
+void
+content_merge_workspace_adaptor::cache_roster(revision_id const & rid,
+                                              boost::shared_ptr<roster_t const> roster)
+{
+  rosters.insert(std::make_pair(rid, roster));
+}
+
 void
 content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_id const & right_id,
@@ -624,11 +632,39 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
                                                       revision_id & rid,
                                                       shared_ptr<roster_t const> & anc)
 {
-  // When doing an update, the base revision is always the ancestor to
-  // use for content merging.
-  anc = base;
+  // Begin by loading any non-empty file lca roster
+  if (base->has_node(nid))
+    {
+      rid = lca;
+      anc = base;
+    }
+  else
+    {
+      marking_map::const_iterator lmm = left_mm.find(nid);
+      marking_map::const_iterator rmm = right_mm.find(nid);
 
-  // FIXME: return something for rid
+      MM(left_mm);
+      MM(right_mm);
+
+      if (lmm == left_mm.end())
+        {
+          I(rmm != right_mm.end());
+          rid = rmm->second.birth_revision;
+        }
+      else if (rmm == right_mm.end())
+        {
+          I(lmm != left_mm.end());
+          rid = lmm->second.birth_revision;
+        }
+      else
+        {
+          I(lmm->second.birth_revision == rmm->second.birth_revision);
+          rid = lmm->second.birth_revision;
+        }
+
+      load_and_cache_roster(rid, rosters, anc, app);
+    }
+  I(anc);
 }
 
 void
@@ -657,6 +693,37 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
         % i->second % fid % ident);
       dat = file_data(tmp);
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+// content_merge_checkout_adaptor
+///////////////////////////////////////////////////////////////////////////
+
+void
+content_merge_checkout_adaptor::record_merge(file_id const & left_ident,
+                                             file_id const & right_ident,
+                                             file_id const & merged_ident,
+                                             file_data const & left_data,
+                                             file_data const & right_data,
+                                             file_data const & merged_data)
+{
+  I(false);
+}
+
+void
+content_merge_checkout_adaptor::get_ancestral_roster(node_id nid,
+                                                     revision_id & rid,
+                                                     shared_ptr<roster_t const> & anc)
+{
+  I(false);
+}
+
+void
+content_merge_checkout_adaptor::get_version(file_id const & ident,
+                                            file_data & dat) const
+{
+  app.db.get_file_version(ident, dat);
 }
 
 
