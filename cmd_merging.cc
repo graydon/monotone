@@ -800,16 +800,16 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
                r_roster, r_marking, r_uncommon_ancestors,
                result);
 
-  P(F("There are %s divergent_name_conflicts.")
-    % result.divergent_name_conflicts.size());
+  P(F("There are %s multiple_name_conflicts.")
+    % result.multiple_name_conflicts.size());
   P(F("There are %s file_content_conflicts.")
     % result.file_content_conflicts.size());
-  P(F("There are %s node_attr_conflicts.")
-    % result.node_attr_conflicts.size());
+  P(F("There are %s attribute_conflicts.")
+    % result.attribute_conflicts.size());
   P(F("There are %s orphaned_node_conflicts.")
     % result.orphaned_node_conflicts.size());
-  P(F("There are %s convergent_name_conflicts.")
-    % result.convergent_name_conflicts.size());
+  P(F("There are %s duplicate_name_conflicts.")
+    % result.duplicate_name_conflicts.size());
   P(F("There are %s directory_loop_conflicts.")
     % result.directory_loop_conflicts.size());
 }

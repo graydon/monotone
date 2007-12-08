@@ -19,16 +19,16 @@
 // conflicts encountered in that roster.  Each conflict encountered in merging
 // the roster creates an entry in this list.
 
-// nodes with divergent name conflicts are left detached in the resulting
+// nodes with multiple name conflicts are left detached in the resulting
 // roster, with null parent and name fields.
 // note that it is possible that the parent node on the left, the right, or
 // both, no longer exist in the merged roster.  also note that it is possible
 // that on one or both sides, they do exist, but already have an entry with
 // the given name.
-struct divergent_name_conflict
+struct multiple_name_conflict
 {
   node_id nid;
-  divergent_name_conflict(node_id nid) : nid(nid) {}
+  multiple_name_conflict(node_id nid) : nid(nid) {}
   std::pair<node_id, path_component> left, right;
 };
 
@@ -41,16 +41,16 @@ struct file_content_conflict
   file_id left, right;
 };
 
-// nodes with attrs conflicts are left attached in the resulting tree (unless
+// nodes with attribute conflicts are left attached in the resulting tree (unless
 // detached for some other reason), but with the given attribute left out of
 // their full_attr_map_t.  Note that this doesn't actually leave the resulting
 // roster insane (FIXME: we could put an invalid attr value in instead, like a
 // pair (false, "foo") (since the second value can only be non-null if the
 // first is 'true').  Should we do this?)
-struct node_attr_conflict
+struct attribute_conflict
 {
   node_id nid;
-  node_attr_conflict(node_id nid) : nid(nid) {}
+  attribute_conflict(node_id nid) : nid(nid) {}
   attr_key key; // attr_name?
   std::pair<bool, attr_value> left, right;
 };
@@ -86,7 +86,7 @@ struct orphaned_node_conflict
 // another, and the requirement here is that each node have a unique (parent,
 // basename) tuple, and since our requirement matches our *-merge scalar,
 // we're okay.
-struct convergent_name_conflict
+struct duplicate_name_conflict
 {
   node_id left_nid, right_nid;
   std::pair<node_id, path_component> parent_name;
@@ -111,11 +111,11 @@ struct illegal_name_conflict
   std::pair<node_id, path_component> parent_name;
 };
 
-template <> void dump(divergent_name_conflict const & val, std::string & out);
+template <> void dump(multiple_name_conflict const & val, std::string & out);
 template <> void dump(file_content_conflict const & val, std::string & out);
-template <> void dump(node_attr_conflict const & val, std::string & out);
+template <> void dump(attribute_conflict const & val, std::string & out);
 template <> void dump(orphaned_node_conflict const & val, std::string & out);
-template <> void dump(convergent_name_conflict const & val, std::string & out);
+template <> void dump(duplicate_name_conflict const & val, std::string & out);
 template <> void dump(directory_loop_conflict const & val, std::string & out);
 template <> void dump(illegal_name_conflict const & val, std::string & out);
 
@@ -125,18 +125,18 @@ struct roster_merge_result
   // - content conflicts
   // - attribute conflicts
   // - tree layout conflicts  (which have the following subtypes)
-  //   - convergent name conflicts
-  //   - divergent name conflicts
+  //   - duplicate name conflicts
+  //   - multiple name conflicts
   //   - orphaned node conflicts
   //   - directory loop conflicts
   //   - illegal name conflicts
   //   - missing root conflicts
 
-  std::vector<divergent_name_conflict> divergent_name_conflicts;
+  std::vector<multiple_name_conflict> multiple_name_conflicts;
   std::vector<file_content_conflict> file_content_conflicts;
-  std::vector<node_attr_conflict> node_attr_conflicts;
+  std::vector<attribute_conflict> attribute_conflicts;
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
-  std::vector<convergent_name_conflict> convergent_name_conflicts;
+  std::vector<duplicate_name_conflict> duplicate_name_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
   std::vector<illegal_name_conflict> illegal_name_conflicts;
   bool missing_root_dir;
