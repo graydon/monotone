@@ -92,7 +92,7 @@ dump(directory_loop_conflict const & conflict, string & out)
 }
 
 template <> void
-dump(illegal_name_conflict const & conflict, string & out)
+dump(invalid_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "node: " << conflict.nid << "\n"
@@ -130,7 +130,7 @@ roster_merge_result::has_non_content_conflicts() const
     || !orphaned_node_conflicts.empty()
     || !duplicate_name_conflicts.empty()
     || !directory_loop_conflicts.empty()
-    || !illegal_name_conflicts.empty()
+    || !invalid_name_conflicts.empty()
     || missing_root_dir;
 }
 
@@ -205,11 +205,11 @@ debug_describe_conflicts(roster_merge_result const & result, string & out)
             % result.directory_loop_conflicts[i].parent_name.second)
       .str();
 
-  for (size_t i = 0; i < result.illegal_name_conflicts.size(); ++i)
+  for (size_t i = 0; i < result.invalid_name_conflicts.size(); ++i)
     out += (FL("illegal name conflict: node %d, wanted parent %d, name %s")
-            % result.illegal_name_conflicts[i].nid
-            % result.illegal_name_conflicts[i].parent_name.first
-            % result.illegal_name_conflicts[i].parent_name.second)
+            % result.invalid_name_conflicts[i].nid
+            % result.invalid_name_conflicts[i].parent_name.first
+            % result.invalid_name_conflicts[i].parent_name.second)
       .str();
 
   if (result.missing_root_dir)
@@ -530,9 +530,9 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
           % lca_parent_name % right_parent_name);
     }
 
-  for (size_t i = 0; i < illegal_name_conflicts.size(); ++i)
+  for (size_t i = 0; i < invalid_name_conflicts.size(); ++i)
     {
-      illegal_name_conflict const & conflict = illegal_name_conflicts[i];
+      invalid_name_conflict const & conflict = invalid_name_conflicts[i];
       MM(conflict);
 
       I(!roster.is_attached(conflict.nid));
@@ -659,7 +659,7 @@ roster_merge_result::clear()
   orphaned_node_conflicts.clear();
   duplicate_name_conflicts.clear();
   directory_loop_conflicts.clear();
-  illegal_name_conflicts.clear();
+  invalid_name_conflicts.clear();
   missing_root_dir = false;
   roster = roster_t();
 }
@@ -1153,7 +1153,7 @@ roster_merge(roster_t const & left_parent,
 
       if (result_root->has_child(bookkeeping_root_component))
         {
-          illegal_name_conflict conflict;
+          invalid_name_conflict conflict;
           node_t n = result_root->get_child(bookkeeping_root_component);
           conflict.nid = n->self;
           conflict.parent_name.first = n->parent;
@@ -1161,7 +1161,7 @@ roster_merge(roster_t const & left_parent,
           I(n->name == bookkeeping_root_component);
 
           result.roster.detach_node(n->self);
-          result.illegal_name_conflicts.push_back(conflict);
+          result.invalid_name_conflicts.push_back(conflict);
         }
     }
 }
@@ -2071,7 +2071,7 @@ struct simple_orphan_conflict : public structural_conflict_helper
 };
 
 // illegal node ("_MTN")
-struct simple_illegal_name_conflict : public structural_conflict_helper
+struct simple_invalid_name_conflict : public structural_conflict_helper
 {
   node_id new_root_nid, bad_dir_nid;
 
@@ -2095,12 +2095,12 @@ struct simple_illegal_name_conflict : public structural_conflict_helper
   virtual void check()
     {
       I(!result.is_clean());
-      illegal_name_conflict const & c = idx(result.illegal_name_conflicts, 0);
+      invalid_name_conflict const & c = idx(result.invalid_name_conflicts, 0);
       I(c.nid == bad_dir_nid);
       I(c.parent_name == make_pair(new_root_nid, bookkeeping_root_component));
       // this tests it was detached, implicitly
       result.roster.attach_node(bad_dir_nid, file_path_internal("dir_formerly_known_as__MTN"));
-      result.illegal_name_conflicts.pop_back();
+      result.invalid_name_conflicts.pop_back();
       I(result.is_clean());
       result.roster.check_sane();
     }
@@ -2149,7 +2149,7 @@ UNIT_TEST(roster_merge, simple_structural_conflicts)
     t.test();
   }
   {
-    simple_illegal_name_conflict t;
+    simple_invalid_name_conflict t;
     t.test();
   }
   {
@@ -2254,7 +2254,7 @@ struct multiple_name_plus_directory_loop : public multiple_name_plus_helper
   }
 };
 
-struct multiple_name_plus_illegal_name : public multiple_name_plus_helper
+struct multiple_name_plus_invalid_name : public multiple_name_plus_helper
 {
   node_id new_root_nid;
 
@@ -2382,7 +2382,7 @@ UNIT_TEST(roster_merge, complex_structural_conflicts)
     t.test();
   }
   {
-    multiple_name_plus_illegal_name t;
+    multiple_name_plus_invalid_name t;
     t.test();
   }
   {

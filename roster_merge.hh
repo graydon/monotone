@@ -105,7 +105,7 @@ struct directory_loop_conflict
 // this is a node that cleanly merged to some name, but that name was somehow
 // forbidden.  (Currently, the only forbidden name is "_MTN" in the root
 // directory.)
-struct illegal_name_conflict
+struct invalid_name_conflict
 {
   node_id nid;
   std::pair<node_id, path_component> parent_name;
@@ -117,7 +117,7 @@ template <> void dump(attribute_conflict const & val, std::string & out);
 template <> void dump(orphaned_node_conflict const & val, std::string & out);
 template <> void dump(duplicate_name_conflict const & val, std::string & out);
 template <> void dump(directory_loop_conflict const & val, std::string & out);
-template <> void dump(illegal_name_conflict const & val, std::string & out);
+template <> void dump(invalid_name_conflict const & val, std::string & out);
 
 struct roster_merge_result
 {
@@ -138,7 +138,7 @@ struct roster_merge_result
   std::vector<orphaned_node_conflict> orphaned_node_conflicts;
   std::vector<duplicate_name_conflict> duplicate_name_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
-  std::vector<illegal_name_conflict> illegal_name_conflicts;
+  std::vector<invalid_name_conflict> invalid_name_conflicts;
   bool missing_root_dir;
   // this roster is sane if is_clean() returns true
   roster_t roster;

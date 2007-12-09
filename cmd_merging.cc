@@ -812,6 +812,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
     % result.duplicate_name_conflicts.size());
   P(F("There are %s directory_loop_conflicts.")
     % result.directory_loop_conflicts.size());
+  P(F("There are %s invalid_name_conflicts.")
+    % result.invalid_name_conflicts.size());
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
