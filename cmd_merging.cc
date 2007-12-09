@@ -693,6 +693,9 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
+  P(F("[left]  %s") % left_id);
+  P(F("[right] %s") % right_id);
+
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   app.db.get_uncommon_ancestors(left_id, right_id,
                                 left_uncommon_ancestors,
@@ -800,20 +803,32 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
                r_roster, r_marking, r_uncommon_ancestors,
                result);
 
-  P(F("There are %s multiple_name_conflicts.")
-    % result.multiple_name_conflicts.size());
-  P(F("There are %s file_content_conflicts.")
-    % result.file_content_conflicts.size());
-  P(F("There are %s attribute_conflicts.")
-    % result.attribute_conflicts.size());
-  P(F("There are %s orphaned_node_conflicts.")
-    % result.orphaned_node_conflicts.size());
-  P(F("There are %s duplicate_name_conflicts.")
-    % result.duplicate_name_conflicts.size());
-  P(F("There are %s directory_loop_conflicts.")
-    % result.directory_loop_conflicts.size());
-  P(F("There are %s invalid_name_conflicts.")
-    % result.invalid_name_conflicts.size());
+  // note that left and right are in the order specified on the command line
+  // they are not in lexical order as they are with other merge commands
+  // so they may appear swapped here. perhaps we should sort left and right
+  // before using them?
+
+  P(F("[left]  %s") % l_id);
+  P(F("[right] %s") % r_id);
+
+  if (result.is_clean())
+    {
+      P(F("no conflicts detected"));
+    }
+  else
+    {
+      content_merge_database_adaptor adaptor(app, l_id, r_id,
+                                             l_marking, r_marking);
+
+      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_file_content_conflicts(l_roster, r_roster, adaptor);
+      result.report_attribute_conflicts(l_roster, r_roster, adaptor);
+      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor);
+      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor);
+      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
+    }
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),

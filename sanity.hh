@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <ostream>
+#include <vector>
 
 #include "boost/current_function.hpp"
 
@@ -434,6 +435,18 @@ template <typename T>
 void dump(T const &, std::string &);
 
 template <> void dump(std::string const & obj, std::string & out);
+
+template <typename T> void
+dump(std::vector<T> const & vec, std::string & out)
+{
+  for (size_t i = 0; i < vec.size(); ++i)
+    {
+      T const & val = vec[i];
+      std::string msg;
+      dump(val, msg);
+      out += msg;
+    }
+};
 
 // debugging utility to dump out vars like MM but without requiring a crash
 

@@ -29,13 +29,11 @@ template <> void
 dump(multiple_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "left\n"
-      << "    parent: " << conflict.left.first << "\n"
-      << "    basename: " << conflict.left.second << "\n"
-      << "right\n"
-      << "    parent: " << conflict.right.first << "\n"
-      << "    basename: " << conflict.right.second << "\n";
+  oss << "multiple_name_conflict on node: " << conflict.nid << " "
+      << "left parent: " << conflict.left.first << " "
+      << "basename: " << conflict.left.second << " "
+      << "right parent: " << conflict.right.first << " "
+      << "basename: " << conflict.right.second << "\n";
   out = oss.str();
 }
 
@@ -43,8 +41,8 @@ template <> void
 dump(file_content_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "left: " << conflict.left << "\n"
+  oss << "file_content_conflict on node: " << conflict.nid << " "
+      << "left: " << conflict.left << " "
       << "right: " << conflict.right << "\n";
   out = oss.str();
 }
@@ -53,9 +51,9 @@ template <> void
 dump(attribute_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "attr: '" << conflict.key << "'\n"
-      << "left: " << conflict.left.first << " '" << conflict.left.second << "'\n"
+  oss << "attribute_conflict on node: " << conflict.nid << " "
+      << "attr: '" << conflict.key << "' "
+      << "left: " << conflict.left.first << " '" << conflict.left.second << "' "
       << "right: " << conflict.right.first << " '" << conflict.right.second << "'\n";
   out = oss.str();
 }
@@ -64,8 +62,8 @@ template <> void
 dump(orphaned_node_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << "\n"
+  oss << "orphaned_node_conflict on node: " << conflict.nid << " "
+      << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
@@ -74,9 +72,9 @@ template <> void
 dump(duplicate_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "left: " << conflict.left_nid << "\n"
-      << "right: " << conflict.right_nid << "\n"
-      << "parent: " << conflict.parent_name.first << "\n"
+  oss << "duplicate_name_conflict between left node: " << conflict.left_nid << " "
+      << "and right node: " << conflict.right_nid << " "
+      << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
@@ -85,8 +83,8 @@ template <> void
 dump(directory_loop_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << "\n"
+  oss << "directory_loop_conflict on node: " << conflict.nid << " "
+      << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
@@ -95,8 +93,8 @@ template <> void
 dump(invalid_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "node: " << conflict.nid << "\n"
-      << "parent: " << conflict.parent_name.first << "\n"
+  oss << "invalid_name_conflict on node: " << conflict.nid << " "
+      << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
 }
@@ -133,94 +131,26 @@ roster_merge_result::has_non_content_conflicts() const
     || !invalid_name_conflicts.empty()
     || missing_root_dir;
 }
-
 static void
-debug_describe_conflicts(roster_merge_result const & result, string & out)
+dump_conflicts(roster_merge_result const & result, string & out)
 {
-
-  // file content conflicts first
-
-  out = (FL("unclean roster_merge: "
-            "%d multiple name conflicts, "
-            "%d content conflicts, "
-            "%d attribute conflicts, "
-            "%d orphaned node conflicts, "
-            "%d duplicate name conflicts, "
-            "%d directory loop conflicts\n")
-         % result.multiple_name_conflicts.size()
-         % result.file_content_conflicts.size()
-         % result.attribute_conflicts.size()
-         % result.orphaned_node_conflicts.size()
-         % result.duplicate_name_conflicts.size()
-         % result.directory_loop_conflicts.size())
-    .str();
-
-  for (size_t i = 0; i < result.multiple_name_conflicts.size(); ++i)
-    out += (FL("multiple name conflict on node %d: [parent %d, self %s] vs. [parent %d, self %s]")
-            % result.multiple_name_conflicts[i].nid
-            % result.multiple_name_conflicts[i].left.first
-            % result.multiple_name_conflicts[i].left.second
-            % result.multiple_name_conflicts[i].right.first
-            % result.multiple_name_conflicts[i].right.second)
-      .str();
-
-  // put this first
-
-  for (size_t i = 0; i < result.file_content_conflicts.size(); ++i)
-    out += (FL("content conflict on node %d: [%s] vs. [%s]")
-            % result.file_content_conflicts[i].nid
-            % result.file_content_conflicts[i].left
-            % result.file_content_conflicts[i].right)
-      .str();
-
-  for (size_t i = 0; i < result.attribute_conflicts.size(); ++i)
-    out += (FL("attribute conflict on node %d, key %s: [%d, %s] vs. [%d, %s]")
-            % result.attribute_conflicts[i].nid
-            % result.attribute_conflicts[i].key
-            % result.attribute_conflicts[i].left.first
-            % result.attribute_conflicts[i].left.second
-            % result.attribute_conflicts[i].right.first
-            % result.attribute_conflicts[i].right.second)
-      .str();
-
-  for (size_t i = 0; i < result.orphaned_node_conflicts.size(); ++i)
-    out += (FL("orphaned node conflict on node %d, dead parent %d, name %s")
-            % result.orphaned_node_conflicts[i].nid
-            % result.orphaned_node_conflicts[i].parent_name.first
-            % result.orphaned_node_conflicts[i].parent_name.second)
-      .str();
-
-  for (size_t i = 0; i < result.duplicate_name_conflicts.size(); ++i)
-    out += (FL("duplicate name conflict: nodes %d, %d, both want parent %d, name %s")
-            % result.duplicate_name_conflicts[i].left_nid
-            % result.duplicate_name_conflicts[i].right_nid
-            % result.duplicate_name_conflicts[i].parent_name.first
-            % result.duplicate_name_conflicts[i].parent_name.second)
-      .str();
-
-  for (size_t i = 0; i < result.directory_loop_conflicts.size(); ++i)
-    out += (FL("directory loop conflict: node %d, wanted parent %d, name %s")
-            % result.directory_loop_conflicts[i].nid
-            % result.directory_loop_conflicts[i].parent_name.first
-            % result.directory_loop_conflicts[i].parent_name.second)
-      .str();
-
-  for (size_t i = 0; i < result.invalid_name_conflicts.size(); ++i)
-    out += (FL("illegal name conflict: node %d, wanted parent %d, name %s")
-            % result.invalid_name_conflicts[i].nid
-            % result.invalid_name_conflicts[i].parent_name.first
-            % result.invalid_name_conflicts[i].parent_name.second)
-      .str();
+  dump(result.multiple_name_conflicts, out);
+  dump(result.file_content_conflicts, out);
+  dump(result.attribute_conflicts, out);
+  dump(result.orphaned_node_conflicts, out);
+  dump(result.duplicate_name_conflicts, out);
+  dump(result.directory_loop_conflicts, out);
+  dump(result.invalid_name_conflicts, out);
 
   if (result.missing_root_dir)
     out += (FL("missing root conflict: root directory has been removed")).str();
-
 }
 
 template <> void
 dump(roster_merge_result const & result, string & out)
 {
-  debug_describe_conflicts(result, out);
+  dump_conflicts(result, out);
+
   string roster_part;
   dump(result.roster, roster_part);
   out += "\n\n";
@@ -231,7 +161,7 @@ void
 roster_merge_result::log_conflicts() const
 {
   string str;
-  debug_describe_conflicts(*this, str);
+  dump_conflicts(*this, str);
   L(FL("%s") % str);
 }
 
@@ -254,11 +184,10 @@ namespace
   }
 }
 
-
 void
-roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
-                                                roster_t const & right_roster,
-                                                content_merge_adaptor & adaptor) const
+roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster,
+                                                    roster_t const & right_roster,
+                                                    content_merge_adaptor & adaptor) const
 {
   // TODO:
   // - W on each conflict type and then P further details
@@ -292,7 +221,63 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
       P(F("renamed to '%s' on the left") % left_name);
       P(F("renamed to '%s' on the right") % right_name);
     }
+}
 
+void
+roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
+                                                   roster_t const & right_roster,
+                                                   content_merge_adaptor & adaptor) const
+{
+  MM(left_roster);
+  MM(right_roster);
+
+  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
+    {
+      file_content_conflict const & conflict = file_content_conflicts[i];
+      MM(conflict);
+
+      if (roster.is_attached(conflict.nid))
+        {
+          file_path name;
+          roster.get_name(conflict.nid, name);
+
+          P(F("conflict: content conflict on file '%s'")
+            % name);
+          P(F("content hash is %s on the left") % conflict.left);
+          P(F("content hash is %s on the right") % conflict.right);
+        }
+      else
+        {
+          // this node isn't attached in the merged roster and there
+          // isn't really a good name for it so report both the left
+          // and right names using a slightly different format
+
+          file_path left_name, right_name;
+          left_roster.get_name(conflict.nid, left_name);
+          right_roster.get_name(conflict.nid, right_name);
+
+          shared_ptr<roster_t const> lca_roster;
+          revision_id lca_rid;
+          file_path lca_name;
+
+          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+          lca_roster->get_name(conflict.nid, lca_name);
+
+          P(F("conflict: content conflict on file '%s' from revision %s")
+            % lca_name % lca_rid);
+          P(F("content hash is %s on the left in file '%s'")
+            % conflict.left % left_name);
+          P(F("content hash is %s on the right in file '%s'")
+            % conflict.right % right_name);
+        }
+    }
+}
+
+void
+roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
+                                                roster_t const & right_roster,
+                                                content_merge_adaptor & adaptor) const
+{
   for (size_t i = 0; i < attribute_conflicts.size(); ++i)
     {
       attribute_conflict const & conflict = attribute_conflicts[i];
@@ -353,7 +338,13 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
               % type % right_name);
         }
     }
+}
 
+void
+roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster,
+                                                    roster_t const & right_roster,
+                                                    content_merge_adaptor & adaptor) const
+{
   for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
     {
       orphaned_node_conflict const & conflict = orphaned_node_conflicts[i];
@@ -418,7 +409,13 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
       else
         I(false);
     }
+}
 
+void
+roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roster,
+                                                     roster_t const & right_roster,
+                                                     content_merge_adaptor & adaptor) const
+{
   for (size_t i = 0; i < duplicate_name_conflicts.size(); ++i)
     {
       duplicate_name_conflict const & conflict = duplicate_name_conflicts[i];
@@ -487,7 +484,13 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
       else
         I(false);
     }
+}
 
+void
+roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roster,
+                                                     roster_t const & right_roster,
+                                                     content_merge_adaptor & adaptor) const
+{
   for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
     {
       directory_loop_conflict const & conflict = directory_loop_conflicts[i];
@@ -529,7 +532,13 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
         P(F("'%s' renamed to '%s' on the right")
           % lca_parent_name % right_parent_name);
     }
+}
 
+void
+roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
+                                                   roster_t const & right_roster,
+                                                   content_merge_adaptor & adaptor) const
+{
   for (size_t i = 0; i < invalid_name_conflicts.size(); ++i)
     {
       invalid_name_conflict const & conflict = invalid_name_conflicts[i];
@@ -589,7 +598,13 @@ roster_merge_result::warn_non_content_conflicts(roster_t const & left_roster,
       else
         I(false);
     }
+}
 
+void
+roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
+                                                   roster_t const & right_roster,
+                                                   content_merge_adaptor & adaptor) const
+{
   if (missing_root_dir)
     {
       node_id left_root, right_root;
