@@ -171,14 +171,23 @@ struct content_merger
                  content_merge_adaptor & adaptor);
 
   // merge3 on a file (line by line)
-  bool try_to_merge_files(file_path const & anc_path,
-                          file_path const & left_path,
-                          file_path const & right_path,
-                          file_path const & merged_path,
-                          file_id const & ancestor_id,
-                          file_id const & left_id,
-                          file_id const & right,
-                          file_id & merged_id);
+  bool try_auto_merge(file_path const & anc_path,
+                      file_path const & left_path,
+                      file_path const & right_path,
+                      file_path const & merged_path,
+                      file_id const & ancestor_id,
+                      file_id const & left_id,
+                      file_id const & right,
+                      file_id & merged_id);
+
+  bool try_user_merge(file_path const & anc_path,
+                      file_path const & left_path,
+                      file_path const & right_path,
+                      file_path const & merged_path,
+                      file_id const & ancestor_id,
+                      file_id const & left_id,
+                      file_id const & right,
+                      file_id & merged_id);
 
   std::string get_file_encoding(file_path const & path,
                                 roster_t const & ros);

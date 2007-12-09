@@ -495,6 +495,7 @@ check(mtn("merge_into_workspace", first), 1, false, true)
 check(qgrep("conflict: multiple values for attribute", "stderr"))
 
 
+
 -- content conflict on attached node
 
 remove("_MTN")
@@ -502,19 +503,27 @@ check(mtn("setup", ".", "--branch", "content-attached"), 0, false, false)
 remove("foo")
 
 addfile("foo", "content foo attached")
+addfile("bar", "content bar attached\none\ntwo\nthree")
+addfile("baz", "content baz attached\naaa\nbbb\nccc")
 commit("content-attached")
 base = base_revision()
 
 writefile("foo", "foo first revision")
+writefile("bar", "content bar attached\nzero\none\ntwo\nthree")
+writefile("baz", "content baz attached\nAAA\nbbb\nccc")
 commit("content-attached")
 first = base_revision()
 
 revert_to(base)
 
 writefile("foo", "foo second revision")
+writefile("bar", "content bar attached\none\ntwo\nthree\nfour")
+writefile("baz", "content baz attached\naaa\nbbb\nCCC")
 
 check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep("conflict: content conflict on file 'foo'", "stderr"))
+check(not qgrep("conflict: content conflict on file 'bar'", "stderr"))
+check(not qgrep("conflict: content conflict on file 'baz'", "stderr"))
 
 commit("content-attached")
 second = base_revision()

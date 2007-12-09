@@ -764,19 +764,15 @@ content_merger::attribute_manual_merge(file_path const & path,
   return false; // default: enable auto merge
 }
 
-// TODO: split this into auto_merge_files and manual_merge_files
-// then make an automatic merge pass over all conflicting content hashes
-// and list all remaining conflicts before asking the user to merge files
-
 bool
-content_merger::try_to_merge_files(file_path const & anc_path,
-                                   file_path const & left_path,
-                                   file_path const & right_path,
-                                   file_path const & merged_path,
-                                   file_id const & ancestor_id,
-                                   file_id const & left_id,
-                                   file_id const & right_id,
-                                   file_id & merged_id)
+content_merger::try_auto_merge(file_path const & anc_path,
+                               file_path const & left_path,
+                               file_path const & right_path,
+                               file_path const & merged_path,
+                               file_id const & ancestor_id,
+                               file_id const & left_id,
+                               file_id const & right_id,
+                               file_id & merged_id)
 {
   // This version of try_to_merge_files should only be called when there is a
   // real merge3 to perform.
@@ -784,8 +780,8 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   I(!null_id(left_id));
   I(!null_id(right_id));
 
-  L(FL("trying to merge %s <-> %s (ancestor: %s)")
-    % left_id % right_id % ancestor_id);
+  L(FL("trying auto merge '%s' %s <-> %s (ancestor: %s)")
+    % merged_path % left_id % right_id % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -822,10 +818,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
       split_into_lines(right_unpacked(), right_encoding, right_lines);
 
-      if (merge3(ancestor_lines,
-                 left_lines,
-                 right_lines,
-                 merged_lines))
+      if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
         {
           hexenc<id> tmp_id;
           file_data merge_data;
@@ -844,6 +837,46 @@ content_merger::try_to_merge_files(file_path const & anc_path,
           return true;
         }
     }
+
+  return false;
+}
+
+bool
+content_merger::try_user_merge(file_path const & anc_path,
+                               file_path const & left_path,
+                               file_path const & right_path,
+                               file_path const & merged_path,
+                               file_id const & ancestor_id,
+                               file_id const & left_id,
+                               file_id const & right_id,
+                               file_id & merged_id)
+{
+  // This version of try_to_merge_files should only be called when there is a
+  // real merge3 to perform.
+  I(!null_id(ancestor_id));
+  I(!null_id(left_id));
+  I(!null_id(right_id));
+
+  L(FL("trying user merge '%s' %s <-> %s (ancestor: %s)")
+    % merged_path % left_id % right_id % ancestor_id);
+
+  if (left_id == right_id)
+    {
+      L(FL("files are identical"));
+      merged_id = left_id;
+      return true;
+    }
+
+  file_data left_data, right_data, ancestor_data;
+  data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
+
+  left_unpacked = left_data.inner();
+  ancestor_unpacked = ancestor_data.inner();
+  right_unpacked = right_data.inner();
 
   P(F("help required for 3-way merge\n"
       "[ancestor] %s\n"
