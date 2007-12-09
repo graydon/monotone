@@ -26,54 +26,10 @@ using std::set;
 using std::string;
 
 template <> void
-dump(multiple_name_conflict const & conflict, string & out)
+dump(invalid_name_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "multiple_name_conflict on node: " << conflict.nid << " "
-      << "left parent: " << conflict.left.first << " "
-      << "basename: " << conflict.left.second << " "
-      << "right parent: " << conflict.right.first << " "
-      << "basename: " << conflict.right.second << "\n";
-  out = oss.str();
-}
-
-template <> void
-dump(file_content_conflict const & conflict, string & out)
-{
-  ostringstream oss;
-  oss << "file_content_conflict on node: " << conflict.nid << " "
-      << "left: " << conflict.left << " "
-      << "right: " << conflict.right << "\n";
-  out = oss.str();
-}
-
-template <> void
-dump(attribute_conflict const & conflict, string & out)
-{
-  ostringstream oss;
-  oss << "attribute_conflict on node: " << conflict.nid << " "
-      << "attr: '" << conflict.key << "' "
-      << "left: " << conflict.left.first << " '" << conflict.left.second << "' "
-      << "right: " << conflict.right.first << " '" << conflict.right.second << "'\n";
-  out = oss.str();
-}
-
-template <> void
-dump(orphaned_node_conflict const & conflict, string & out)
-{
-  ostringstream oss;
-  oss << "orphaned_node_conflict on node: " << conflict.nid << " "
-      << "parent: " << conflict.parent_name.first << " "
-      << "basename: " << conflict.parent_name.second << "\n";
-  out = oss.str();
-}
-
-template <> void
-dump(duplicate_name_conflict const & conflict, string & out)
-{
-  ostringstream oss;
-  oss << "duplicate_name_conflict between left node: " << conflict.left_nid << " "
-      << "and right node: " << conflict.right_nid << " "
+  oss << "invalid_name_conflict on node: " << conflict.nid << " "
       << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
   out = oss.str();
@@ -90,12 +46,56 @@ dump(directory_loop_conflict const & conflict, string & out)
 }
 
 template <> void
-dump(invalid_name_conflict const & conflict, string & out)
+dump(orphaned_node_conflict const & conflict, string & out)
 {
   ostringstream oss;
-  oss << "invalid_name_conflict on node: " << conflict.nid << " "
+  oss << "orphaned_node_conflict on node: " << conflict.nid << " "
       << "parent: " << conflict.parent_name.first << " "
       << "basename: " << conflict.parent_name.second << "\n";
+  out = oss.str();
+}
+
+template <> void
+dump(multiple_name_conflict const & conflict, string & out)
+{
+  ostringstream oss;
+  oss << "multiple_name_conflict on node: " << conflict.nid << " "
+      << "left parent: " << conflict.left.first << " "
+      << "basename: " << conflict.left.second << " "
+      << "right parent: " << conflict.right.first << " "
+      << "basename: " << conflict.right.second << "\n";
+  out = oss.str();
+}
+
+template <> void
+dump(duplicate_name_conflict const & conflict, string & out)
+{
+  ostringstream oss;
+  oss << "duplicate_name_conflict between left node: " << conflict.left_nid << " "
+      << "and right node: " << conflict.right_nid << " "
+      << "parent: " << conflict.parent_name.first << " "
+      << "basename: " << conflict.parent_name.second << "\n";
+  out = oss.str();
+}
+
+template <> void
+dump(attribute_conflict const & conflict, string & out)
+{
+  ostringstream oss;
+  oss << "attribute_conflict on node: " << conflict.nid << " "
+      << "attr: '" << conflict.key << "' "
+      << "left: " << conflict.left.first << " '" << conflict.left.second << "' "
+      << "right: " << conflict.right.first << " '" << conflict.right.second << "'\n";
+  out = oss.str();
+}
+
+template <> void
+dump(file_content_conflict const & conflict, string & out)
+{
+  ostringstream oss;
+  oss << "file_content_conflict on node: " << conflict.nid << " "
+      << "left: " << conflict.left << " "
+      << "right: " << conflict.right << "\n";
   out = oss.str();
 }
 
@@ -106,14 +106,6 @@ roster_merge_result::is_clean() const
     && !has_content_conflicts();
 }
 
-// possibly split this into
-//
-// has_structure_conflicts
-// has_attribute_conflicts
-// has_content_conflicts
-//
-// and resolve them in that order
-
 bool
 roster_merge_result::has_content_conflicts() const
 {
@@ -123,27 +115,29 @@ roster_merge_result::has_content_conflicts() const
 bool
 roster_merge_result::has_non_content_conflicts() const
 {
-  return !multiple_name_conflicts.empty()
-    || !attribute_conflicts.empty()
-    || !orphaned_node_conflicts.empty()
-    || !duplicate_name_conflicts.empty()
-    || !directory_loop_conflicts.empty()
+  return missing_root_dir
     || !invalid_name_conflicts.empty()
-    || missing_root_dir;
+    || !directory_loop_conflicts.empty()
+    || !orphaned_node_conflicts.empty()
+    || !multiple_name_conflicts.empty()
+    || !duplicate_name_conflicts.empty()
+    || !attribute_conflicts.empty();
 }
 static void
 dump_conflicts(roster_merge_result const & result, string & out)
 {
-  dump(result.multiple_name_conflicts, out);
-  dump(result.file_content_conflicts, out);
-  dump(result.attribute_conflicts, out);
-  dump(result.orphaned_node_conflicts, out);
-  dump(result.duplicate_name_conflicts, out);
-  dump(result.directory_loop_conflicts, out);
-  dump(result.invalid_name_conflicts, out);
-
   if (result.missing_root_dir)
     out += (FL("missing root conflict: root directory has been removed")).str();
+
+  dump(result.invalid_name_conflicts, out);
+  dump(result.directory_loop_conflicts, out);
+
+  dump(result.orphaned_node_conflicts, out);
+  dump(result.multiple_name_conflicts, out);
+  dump(result.duplicate_name_conflicts, out);
+
+  dump(result.attribute_conflicts, out);
+  dump(result.file_content_conflicts, out);
 }
 
 template <> void
@@ -185,158 +179,190 @@ namespace
 }
 
 void
-roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster,
-                                                    roster_t const & right_roster,
-                                                    content_merge_adaptor & adaptor) const
-{
-  // TODO:
-  // - W on each conflict type and then P further details
-  // - add a better error macro (D?) for these multiple problem cases
-  // - need a way to pring blank lines, with no "mtn:" prefix
-
-  MM(left_roster);
-  MM(right_roster);
-
-  for (size_t i = 0; i < multiple_name_conflicts.size(); ++i)
-    {
-      multiple_name_conflict const & conflict = multiple_name_conflicts[i];
-      MM(conflict);
-
-      I(!roster.is_attached(conflict.nid));
-
-      file_path left_name, right_name;
-
-      left_roster.get_name(conflict.nid, left_name);
-      right_roster.get_name(conflict.nid, right_name);
-
-      shared_ptr<roster_t const> lca_roster;
-      revision_id lca_rid;
-      file_path lca_name;
-
-      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-      lca_roster->get_name(conflict.nid, lca_name);
-
-      P(F("conflict: multiple names for %s '%s' from revision %s")
-        % get_type(*lca_roster, conflict.nid) % lca_name % lca_rid);
-      P(F("renamed to '%s' on the left") % left_name);
-      P(F("renamed to '%s' on the right") % right_name);
-    }
-}
-
-void
-roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
+roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
                                                    roster_t const & right_roster,
                                                    content_merge_adaptor & adaptor) const
 {
   MM(left_roster);
   MM(right_roster);
 
-  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
+  if (missing_root_dir)
     {
-      file_content_conflict const & conflict = file_content_conflicts[i];
-      MM(conflict);
+      node_id left_root, right_root;
+      left_root = left_roster.root()->self;
+      right_root = right_roster.root()->self;
 
-      if (roster.is_attached(conflict.nid))
+      P(F("conflict: missing root directory"));
+
+      if (left_roster.has_node(right_root) &&
+          !right_roster.has_node(left_root))
         {
-          file_path name;
-          roster.get_name(conflict.nid, name);
-
-          P(F("conflict: content conflict on file '%s'")
-            % name);
-          P(F("content hash is %s on the left") % conflict.left);
-          P(F("content hash is %s on the right") % conflict.right);
-        }
-      else
-        {
-          // this node isn't attached in the merged roster and there
-          // isn't really a good name for it so report both the left
-          // and right names using a slightly different format
-
-          file_path left_name, right_name;
-          left_roster.get_name(conflict.nid, left_name);
-          right_roster.get_name(conflict.nid, right_name);
-
           shared_ptr<roster_t const> lca_roster;
           revision_id lca_rid;
           file_path lca_name;
 
-          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-          lca_roster->get_name(conflict.nid, lca_name);
+          adaptor.get_ancestral_roster(left_root, lca_rid, lca_roster);
+          lca_roster->get_name(left_root, lca_name);
 
-          P(F("conflict: content conflict on file '%s' from revision %s")
-            % lca_name % lca_rid);
-          P(F("content hash is %s on the left in file '%s'")
-            % conflict.left % left_name);
-          P(F("content hash is %s on the right in file '%s'")
-            % conflict.right % right_name);
+          P(F("directory '%s' pivoted to root on the left") % lca_name);
+          P(F("directory '%s' deleted on the right") % lca_name);
         }
+      else if (!left_roster.has_node(right_root) &&
+               right_roster.has_node(left_root))
+        {
+          shared_ptr<roster_t const> lca_roster;
+          revision_id lca_rid;
+          file_path lca_name;
+
+          adaptor.get_ancestral_roster(right_root, lca_rid, lca_roster);
+          lca_roster->get_name(right_root, lca_name);
+
+          P(F("directory '%s' pivoted to root on the right") % lca_name);
+          P(F("directory '%s' deleted on the left") % lca_name);
+        }
+      else if (!left_roster.has_node(right_root) &&
+               !right_roster.has_node(left_root))
+        {
+          shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
+          revision_id left_lca_rid, right_lca_rid;
+          file_path left_lca_name, right_lca_name;
+
+          adaptor.get_ancestral_roster(left_root, left_lca_rid,
+                                       left_lca_roster);
+          adaptor.get_ancestral_roster(right_root, right_lca_rid,
+                                       right_lca_roster);
+
+          left_lca_roster->get_name(left_root, left_lca_name);
+          right_lca_roster->get_name(right_root, right_lca_name);
+
+          P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+          P(F("directory '%s' deleted on the right") % left_lca_name);
+
+          P(F("directory '%s' deleted on the left") % right_lca_name);
+          P(F("directory '%s' pivoted to root on the right") % right_lca_name);
+        }
+      else
+        I(false);
     }
 }
 
 void
-roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
-                                                roster_t const & right_roster,
-                                                content_merge_adaptor & adaptor) const
+roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
+                                                   roster_t const & right_roster,
+                                                   content_merge_adaptor & adaptor) const
 {
-  for (size_t i = 0; i < attribute_conflicts.size(); ++i)
+  MM(left_roster);
+  MM(right_roster);
+
+  for (size_t i = 0; i < invalid_name_conflicts.size(); ++i)
     {
-      attribute_conflict const & conflict = attribute_conflicts[i];
+      invalid_name_conflict const & conflict = invalid_name_conflicts[i];
       MM(conflict);
 
-      string const & type = get_type(roster, conflict.nid);
+      I(!roster.is_attached(conflict.nid));
 
-      if (roster.is_attached(conflict.nid))
+      shared_ptr<roster_t const> lca_roster, parent_lca_roster;
+      revision_id lca_rid, parent_lca_rid;
+      file_path lca_name, lca_parent_name;
+
+      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+      lca_roster->get_name(conflict.nid, lca_name);
+      lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
+
+      adaptor.get_ancestral_roster(conflict.parent_name.first,
+                                   parent_lca_rid, parent_lca_roster);
+
+      P(F("conflict: invalid name _MTN in root directory"));
+
+      if (left_roster.root()->self == conflict.parent_name.first)
         {
-          file_path name;
-          roster.get_name(conflict.nid, name);
+          P(F("'%s' pivoted to root on the left")
+            % lca_parent_name);
 
-          P(F("conflict: multiple values for attribute '%s' on %s '%s'")
-            % conflict.key % type % name);
-
-          if (conflict.left.first)
-            P(F("set to '%s' on the left") % conflict.left.second);
+          file_path right_name;
+          right_roster.get_name(conflict.nid, right_name);
+          if (parent_lca_roster->has_node(conflict.nid))
+            {
+              P(F("'%s' renamed to '%s' on the right")
+                % lca_name % right_name);
+            }
           else
-            P(F("deleted on the left"));
+            {
+              P(F("'%s' added in revision %s on the right")
+                % right_name % lca_rid);
+            }
+        }
+      else if (right_roster.root()->self == conflict.parent_name.first)
+        {
+          P(F("'%s' pivoted to root on the right")
+            % lca_parent_name);
 
-          if (conflict.right.first)
-            P(F("set to '%s' on the right") % conflict.right.second);
+          file_path left_name;
+          left_roster.get_name(conflict.nid, left_name);
+          if (parent_lca_roster->has_node(conflict.nid))
+            {
+              P(F("'%s' renamed to '%s' on the left")
+                % lca_name % left_name);
+            }
           else
-            P(F("deleted on the right"));
+            {
+              P(F("'%s' added in revision %s on the left")
+                % left_name % lca_rid);
+            }
         }
       else
-        {
-          // this node isn't attached in the merged roster and there
-          // isn't really a good name for it so report both the left
-          // and right names using a slightly different format
+        I(false);
+    }
+}
 
-          file_path left_name, right_name;
-          left_roster.get_name(conflict.nid, left_name);
-          right_roster.get_name(conflict.nid, right_name);
+void
+roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roster,
+                                                     roster_t const & right_roster,
+                                                     content_merge_adaptor & adaptor) const
+{
+  MM(left_roster);
+  MM(right_roster);
 
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
+  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+    {
+      directory_loop_conflict const & conflict = directory_loop_conflicts[i];
+      MM(conflict);
 
-          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-          lca_roster->get_name(conflict.nid, lca_name);
+      I(!roster.is_attached(conflict.nid));
 
-          P(F("conflict: multiple values for attribute '%s' on %s '%s' from revision %s")
-            % conflict.key % type % lca_name % lca_rid);
+      file_path left_name, right_name, left_parent_name, right_parent_name;
 
-          if (conflict.left.first)
-            P(F("set to '%s' on left %s '%s'")
-              % conflict.left.second % type % left_name);
-          else
-            P(F("deleted from left %s '%s'")
-              % type % left_name);
+      left_roster.get_name(conflict.nid, left_name);
+      right_roster.get_name(conflict.nid, right_name);
 
-          if (conflict.right.first)
-            P(F("set to '%s' on right %s '%s'")
-              % conflict.right.second % type % right_name);
-          else
-            P(F("deleted from right %s '%s'")
-              % type % right_name);
-        }
+      left_roster.get_name(conflict.parent_name.first, left_parent_name);
+      right_roster.get_name(conflict.parent_name.first, right_parent_name);
+
+      shared_ptr<roster_t const> lca_roster;
+      revision_id lca_rid;
+      file_path lca_name, lca_parent_name;
+
+      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+      lca_roster->get_name(conflict.nid, lca_name);
+      lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
+
+      P(F("conflict: directory loop created"));
+
+      if (left_name != lca_name)
+        P(F("'%s' renamed to '%s' on the left")
+          % lca_name % left_name);
+
+      if (right_name != lca_name)
+        P(F("'%s' renamed to '%s' on the right")
+          % lca_name % right_name);
+
+      if (left_parent_name != lca_parent_name)
+        P(F("'%s' renamed to '%s' on the left")
+          % lca_parent_name % left_parent_name);
+
+      if (right_parent_name != lca_parent_name)
+        P(F("'%s' renamed to '%s' on the right")
+          % lca_parent_name % right_parent_name);
     }
 }
 
@@ -345,6 +371,9 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
                                                     roster_t const & right_roster,
                                                     content_merge_adaptor & adaptor) const
 {
+  MM(left_roster);
+  MM(right_roster);
+
   for (size_t i = 0; i < orphaned_node_conflicts.size(); ++i)
     {
       orphaned_node_conflict const & conflict = orphaned_node_conflicts[i];
@@ -412,10 +441,47 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
 }
 
 void
+roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster,
+                                                    roster_t const & right_roster,
+                                                    content_merge_adaptor & adaptor) const
+{
+  MM(left_roster);
+  MM(right_roster);
+
+  for (size_t i = 0; i < multiple_name_conflicts.size(); ++i)
+    {
+      multiple_name_conflict const & conflict = multiple_name_conflicts[i];
+      MM(conflict);
+
+      I(!roster.is_attached(conflict.nid));
+
+      file_path left_name, right_name;
+
+      left_roster.get_name(conflict.nid, left_name);
+      right_roster.get_name(conflict.nid, right_name);
+
+      shared_ptr<roster_t const> lca_roster;
+      revision_id lca_rid;
+      file_path lca_name;
+
+      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+      lca_roster->get_name(conflict.nid, lca_name);
+
+      P(F("conflict: multiple names for %s '%s' from revision %s")
+        % get_type(*lca_roster, conflict.nid) % lca_name % lca_rid);
+      P(F("renamed to '%s' on the left") % left_name);
+      P(F("renamed to '%s' on the right") % right_name);
+    }
+}
+
+void
 roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roster,
                                                      roster_t const & right_roster,
                                                      content_merge_adaptor & adaptor) const
 {
+  MM(left_roster);
+  MM(right_roster);
+
   for (size_t i = 0; i < duplicate_name_conflicts.size(); ++i)
     {
       duplicate_name_conflict const & conflict = duplicate_name_conflicts[i];
@@ -487,195 +553,139 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
 }
 
 void
-roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roster,
-                                                     roster_t const & right_roster,
-                                                     content_merge_adaptor & adaptor) const
+roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
+                                                roster_t const & right_roster,
+                                                content_merge_adaptor & adaptor) const
 {
-  for (size_t i = 0; i < directory_loop_conflicts.size(); ++i)
+  MM(left_roster);
+  MM(right_roster);
+
+  for (size_t i = 0; i < attribute_conflicts.size(); ++i)
     {
-      directory_loop_conflict const & conflict = directory_loop_conflicts[i];
+      attribute_conflict const & conflict = attribute_conflicts[i];
       MM(conflict);
 
-      I(!roster.is_attached(conflict.nid));
+      string const & type = get_type(roster, conflict.nid);
 
-      file_path left_name, right_name, left_parent_name, right_parent_name;
-
-      left_roster.get_name(conflict.nid, left_name);
-      right_roster.get_name(conflict.nid, right_name);
-
-      left_roster.get_name(conflict.parent_name.first, left_parent_name);
-      right_roster.get_name(conflict.parent_name.first, right_parent_name);
-
-      shared_ptr<roster_t const> lca_roster;
-      revision_id lca_rid;
-      file_path lca_name, lca_parent_name;
-
-      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-      lca_roster->get_name(conflict.nid, lca_name);
-      lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
-
-      P(F("conflict: directory loop created"));
-
-      if (left_name != lca_name)
-        P(F("'%s' renamed to '%s' on the left")
-          % lca_name % left_name);
-
-      if (right_name != lca_name)
-        P(F("'%s' renamed to '%s' on the right")
-          % lca_name % right_name);
-
-      if (left_parent_name != lca_parent_name)
-        P(F("'%s' renamed to '%s' on the left")
-          % lca_parent_name % left_parent_name);
-
-      if (right_parent_name != lca_parent_name)
-        P(F("'%s' renamed to '%s' on the right")
-          % lca_parent_name % right_parent_name);
-    }
-}
-
-void
-roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
-                                                   roster_t const & right_roster,
-                                                   content_merge_adaptor & adaptor) const
-{
-  for (size_t i = 0; i < invalid_name_conflicts.size(); ++i)
-    {
-      invalid_name_conflict const & conflict = invalid_name_conflicts[i];
-      MM(conflict);
-
-      I(!roster.is_attached(conflict.nid));
-
-      shared_ptr<roster_t const> lca_roster, parent_lca_roster;
-      revision_id lca_rid, parent_lca_rid;
-      file_path lca_name, lca_parent_name;
-
-      adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-      lca_roster->get_name(conflict.nid, lca_name);
-      lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
-
-      adaptor.get_ancestral_roster(conflict.parent_name.first,
-                                   parent_lca_rid, parent_lca_roster);
-
-      P(F("conflict: invalid name _MTN in root directory"));
-
-      if (left_roster.root()->self == conflict.parent_name.first)
+      if (roster.is_attached(conflict.nid))
         {
-          P(F("'%s' pivoted to root on the left")
-            % lca_parent_name);
+          file_path name;
+          roster.get_name(conflict.nid, name);
 
-          file_path right_name;
-          right_roster.get_name(conflict.nid, right_name);
-          if (parent_lca_roster->has_node(conflict.nid))
-            {
-              P(F("'%s' renamed to '%s' on the right")
-                % lca_name % right_name);
-            }
+          P(F("conflict: multiple values for attribute '%s' on %s '%s'")
+            % conflict.key % type % name);
+
+          if (conflict.left.first)
+            P(F("set to '%s' on the left") % conflict.left.second);
           else
-            {
-              P(F("'%s' added in revision %s on the right")
-                % right_name % lca_rid);
-            }
-        }
-      else if (right_roster.root()->self == conflict.parent_name.first)
-        {
-          P(F("'%s' pivoted to root on the right")
-            % lca_parent_name);
+            P(F("deleted on the left"));
 
-          file_path left_name;
+          if (conflict.right.first)
+            P(F("set to '%s' on the right") % conflict.right.second);
+          else
+            P(F("deleted on the right"));
+        }
+      else
+        {
+          // this node isn't attached in the merged roster and there
+          // isn't really a good name for it so report both the left
+          // and right names using a slightly different format
+
+          file_path left_name, right_name;
           left_roster.get_name(conflict.nid, left_name);
-          if (parent_lca_roster->has_node(conflict.nid))
-            {
-              P(F("'%s' renamed to '%s' on the left")
-                % lca_name % left_name);
-            }
+          right_roster.get_name(conflict.nid, right_name);
+
+          shared_ptr<roster_t const> lca_roster;
+          revision_id lca_rid;
+          file_path lca_name;
+
+          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+          lca_roster->get_name(conflict.nid, lca_name);
+
+          P(F("conflict: multiple values for attribute '%s' on %s '%s' from revision %s")
+            % conflict.key % type % lca_name % lca_rid);
+
+          if (conflict.left.first)
+            P(F("set to '%s' on left %s '%s'")
+              % conflict.left.second % type % left_name);
           else
-            {
-              P(F("'%s' added in revision %s on the left")
-                % left_name % lca_rid);
-            }
+            P(F("deleted from left %s '%s'")
+              % type % left_name);
+
+          if (conflict.right.first)
+            P(F("set to '%s' on right %s '%s'")
+              % conflict.right.second % type % right_name);
+          else
+            P(F("deleted from right %s '%s'")
+              % type % right_name);
         }
-      else
-        I(false);
     }
 }
 
 void
-roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
+roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
                                                    roster_t const & right_roster,
                                                    content_merge_adaptor & adaptor) const
 {
-  if (missing_root_dir)
+  MM(left_roster);
+  MM(right_roster);
+
+  for (size_t i = 0; i < file_content_conflicts.size(); ++i)
     {
-      node_id left_root, right_root;
-      left_root = left_roster.root()->self;
-      right_root = right_roster.root()->self;
+      file_content_conflict const & conflict = file_content_conflicts[i];
+      MM(conflict);
 
-      P(F("conflict: missing root directory"));
-
-      if (left_roster.has_node(right_root) &&
-          !right_roster.has_node(left_root))
+      if (roster.is_attached(conflict.nid))
         {
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
+          file_path name;
+          roster.get_name(conflict.nid, name);
 
-          adaptor.get_ancestral_roster(left_root, lca_rid, lca_roster);
-          lca_roster->get_name(left_root, lca_name);
-
-          P(F("directory '%s' pivoted to root on the left") % lca_name);
-          P(F("directory '%s' deleted on the right") % lca_name);
-        }
-      else if (!left_roster.has_node(right_root) &&
-               right_roster.has_node(left_root))
-        {
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
-
-          adaptor.get_ancestral_roster(right_root, lca_rid, lca_roster);
-          lca_roster->get_name(right_root, lca_name);
-
-          P(F("directory '%s' pivoted to root on the right") % lca_name);
-          P(F("directory '%s' deleted on the left") % lca_name);
-        }
-      else if (!left_roster.has_node(right_root) &&
-               !right_roster.has_node(left_root))
-        {
-          shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
-          revision_id left_lca_rid, right_lca_rid;
-          file_path left_lca_name, right_lca_name;
-
-          adaptor.get_ancestral_roster(left_root, left_lca_rid,
-                                       left_lca_roster);
-          adaptor.get_ancestral_roster(right_root, right_lca_rid,
-                                       right_lca_roster);
-
-          left_lca_roster->get_name(left_root, left_lca_name);
-          right_lca_roster->get_name(right_root, right_lca_name);
-
-          P(F("directory '%s' pivoted to root on the left") % left_lca_name);
-          P(F("directory '%s' deleted on the right") % left_lca_name);
-
-          P(F("directory '%s' deleted on the left") % right_lca_name);
-          P(F("directory '%s' pivoted to root on the right") % right_lca_name);
+          P(F("conflict: content conflict on file '%s'")
+            % name);
+          P(F("content hash is %s on the left") % conflict.left);
+          P(F("content hash is %s on the right") % conflict.right);
         }
       else
-        I(false);
+        {
+          // this node isn't attached in the merged roster and there
+          // isn't really a good name for it so report both the left
+          // and right names using a slightly different format
+
+          file_path left_name, right_name;
+          left_roster.get_name(conflict.nid, left_name);
+          right_roster.get_name(conflict.nid, right_name);
+
+          shared_ptr<roster_t const> lca_roster;
+          revision_id lca_rid;
+          file_path lca_name;
+
+          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+          lca_roster->get_name(conflict.nid, lca_name);
+
+          P(F("conflict: content conflict on file '%s' from revision %s")
+            % lca_name % lca_rid);
+          P(F("content hash is %s on the left in file '%s'")
+            % conflict.left % left_name);
+          P(F("content hash is %s on the right in file '%s'")
+            % conflict.right % right_name);
+        }
     }
 }
 
 void
 roster_merge_result::clear()
 {
-  multiple_name_conflicts.clear();
-  file_content_conflicts.clear();
-  attribute_conflicts.clear();
-  orphaned_node_conflicts.clear();
-  duplicate_name_conflicts.clear();
-  directory_loop_conflicts.clear();
-  invalid_name_conflicts.clear();
   missing_root_dir = false;
+  invalid_name_conflicts.clear();
+  directory_loop_conflicts.clear();
+
+  orphaned_node_conflicts.clear();
+  multiple_name_conflicts.clear();
+  duplicate_name_conflicts.clear();
+
+  attribute_conflicts.clear();
+  file_content_conflicts.clear();
+
   roster = roster_t();
 }
 

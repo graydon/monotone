@@ -764,6 +764,10 @@ content_merger::attribute_manual_merge(file_path const & path,
   return false; // default: enable auto merge
 }
 
+// TODO: split this into auto_merge_files and manual_merge_files
+// then make an automatic merge pass over all conflicting content hashes
+// and list all remaining conflicts before asking the user to merge files
+
 bool
 content_merger::try_to_merge_files(file_path const & anc_path,
                                    file_path const & left_path,

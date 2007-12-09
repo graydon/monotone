@@ -820,14 +820,16 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
       content_merge_database_adaptor adaptor(app, l_id, r_id,
                                              l_marking, r_marking);
 
-      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_file_content_conflicts(l_roster, r_roster, adaptor);
-      result.report_attribute_conflicts(l_roster, r_roster, adaptor);
-      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor);
-      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor);
-      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor);
       result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
+      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor);
+
+      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor);
+      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor);
+
+      result.report_attribute_conflicts(l_roster, r_roster, adaptor);
+      result.report_file_content_conflicts(l_roster, r_roster, adaptor);
     }
 }
 

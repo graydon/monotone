@@ -56,14 +56,16 @@ resolve_merge_conflicts(roster_t const & left_roster,
 
   if (result.has_non_content_conflicts())
     {
-      result.report_multiple_name_conflicts(left_roster, right_roster, adaptor);
-      result.report_file_content_conflicts(left_roster, right_roster, adaptor);
-      result.report_attribute_conflicts(left_roster, right_roster, adaptor);
-      result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor);
-      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor);
-      result.report_directory_loop_conflicts(left_roster, right_roster, adaptor);
-      result.report_invalid_name_conflicts(left_roster, right_roster, adaptor);
       result.report_missing_root_conflicts(left_roster, right_roster, adaptor);
+      result.report_invalid_name_conflicts(left_roster, right_roster, adaptor);
+      result.report_directory_loop_conflicts(left_roster, right_roster, adaptor);
+
+      result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor);
+      result.report_multiple_name_conflicts(left_roster, right_roster, adaptor);
+      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor);
+
+      result.report_attribute_conflicts(left_roster, right_roster, adaptor);
+      result.report_file_content_conflicts(left_roster, right_roster, adaptor);
     }
   else if (result.has_content_conflicts())
     {
@@ -71,7 +73,16 @@ resolve_merge_conflicts(roster_t const & left_roster,
       // To do this requires finding a merge ancestor.
 
       L(FL("examining content conflicts"));
+
+      // FIXME: need this for the tests to pass but it doesn't really make sense
+      // because the auto merger may resolve all of the content conflicts
+
       result.report_file_content_conflicts(left_roster, right_roster, adaptor);
+
+      // TODO: split this into two merge passes
+      // first make an automatic merge pass over all content conflicts
+      // then list all remaining conflicts before making a second
+      // manual merge pass over the remaining conflicts
 
       size_t cnt;
       size_t total_conflicts = result.file_content_conflicts.size();
