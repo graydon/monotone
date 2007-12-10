@@ -51,6 +51,7 @@ content_merge_adaptor
                             file_data const & merged_data) = 0;
 
   virtual void get_ancestral_roster(node_id nid,
+                                    revision_id & rid,
                                     boost::shared_ptr<roster_t const> & anc) = 0;
 
   virtual void get_version(file_id const & ident,
@@ -65,12 +66,14 @@ content_merge_database_adaptor
 {
   app_state & app;
   revision_id lca;
-  marking_map const & mm;
+  marking_map const & left_mm;
+  marking_map const & right_mm;
   std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
-  content_merge_database_adaptor (app_state & app,
-                                  revision_id const & left,
-                                  revision_id const & right,
-                                  marking_map const & mm);
+  content_merge_database_adaptor(app_state & app,
+                                 revision_id const & left,
+                                 revision_id const & right,
+                                 marking_map const & left_mm,
+                                 marking_map const & right_mm);
   void record_merge(file_id const & left_ident,
                     file_id const & right_ident,
                     file_id const & merged_ident,
@@ -79,6 +82,7 @@ content_merge_database_adaptor
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
+                            revision_id & rid,
                             boost::shared_ptr<roster_t const> & anc);
 
   void get_version(file_id const & ident,
@@ -91,13 +95,25 @@ content_merge_workspace_adaptor
 {
   std::map<file_id, file_data> temporary_store;
   app_state & app;
+  revision_id const lca;
   boost::shared_ptr<roster_t const> base;
+  marking_map const & left_mm;
+  marking_map const & right_mm;
+  std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
   std::map<file_id, file_path> content_paths;
-  content_merge_workspace_adaptor (app_state & app,
-                                   boost::shared_ptr<roster_t const> base,
-                                   std::map<file_id, file_path> const & paths)
-    : app(app), base(base), content_paths(paths)
+  content_merge_workspace_adaptor(app_state & app,
+                                  revision_id const & lca,
+                                  boost::shared_ptr<roster_t const> base,
+                                  marking_map const & left_mm,
+                                  marking_map const & right_mm,
+                                  std::map<file_id, file_path> const & paths)
+    : app(app), lca(lca), base(base),
+      left_mm(left_mm), right_mm(right_mm), content_paths(paths)
   {}
+
+  void cache_roster(revision_id const & rid,
+                    boost::shared_ptr<roster_t const> roster);
+
   void record_merge(file_id const & left_ident,
                     file_id const & right_ident,
                     file_id const & merged_ident,
@@ -106,11 +122,38 @@ content_merge_workspace_adaptor
                     file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
+                            revision_id & rid,
                             boost::shared_ptr<roster_t const> & anc);
 
   void get_version(file_id const & ident,
                    file_data & dat) const;
 };
+
+struct
+content_merge_checkout_adaptor
+  : public content_merge_adaptor
+{
+  app_state & app;
+  content_merge_checkout_adaptor(app_state & app)
+    : app(app)
+  {}
+
+  void record_merge(file_id const & left_ident,
+                    file_id const & right_ident,
+                    file_id const & merged_ident,
+                    file_data const & left_data,
+                    file_data const & right_data,
+                    file_data const & merged_data);
+
+  void get_ancestral_roster(node_id nid,
+                            revision_id & rid,
+                            boost::shared_ptr<roster_t const> & anc);
+
+  void get_version(file_id const & ident,
+                   file_data & dat) const;
+
+};
+
 
 struct content_merger
 {
@@ -128,14 +171,23 @@ struct content_merger
                  content_merge_adaptor & adaptor);
 
   // merge3 on a file (line by line)
-  bool try_to_merge_files(file_path const & anc_path,
-                          file_path const & left_path,
-                          file_path const & right_path,
-                          file_path const & merged_path,
-                          file_id const & ancestor_id,
-                          file_id const & left_id,
-                          file_id const & right,
-                          file_id & merged_id);
+  bool try_auto_merge(file_path const & anc_path,
+                      file_path const & left_path,
+                      file_path const & right_path,
+                      file_path const & merged_path,
+                      file_id const & ancestor_id,
+                      file_id const & left_id,
+                      file_id const & right,
+                      file_id & merged_id);
+
+  bool try_user_merge(file_path const & anc_path,
+                      file_path const & left_path,
+                      file_path const & right_path,
+                      file_path const & merged_path,
+                      file_id const & ancestor_id,
+                      file_id const & left_id,
+                      file_id const & right,
+                      file_id & merged_id);
 
   std::string get_file_encoding(file_path const & path,
                                 roster_t const & ros);

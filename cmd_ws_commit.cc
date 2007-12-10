@@ -102,7 +102,7 @@ get_log_message_interactively(revision_t const & cs,
   revision_summary(cs, app.opts.branchname, summary);
   external summary_external;
   utf8_to_system_best_effort(summary, summary_external);
-  
+
   utf8 branch_comment = utf8((F("branch \"%s\"\n\n") % app.opts.branchname).str());
   external branch_external;
   utf8_to_system_best_effort(branch_comment, branch_external);
@@ -167,7 +167,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
     temp_node_id_source nis;
     app.work.get_current_roster_shape(new_roster, nis);
   }
-    
+
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
@@ -205,15 +205,15 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   // from the new roster *back* to the restricted roster
 
   roster_t restricted_roster;
-  make_restricted_roster(new_roster, old_roster, restricted_roster, 
+  make_restricted_roster(new_roster, old_roster, restricted_roster,
                          mask);
- 
+
   make_cset(old_roster, restricted_roster, preserved);
-  
-  // The preserved cset will be left pending in MTN/revision 
+
+  // The preserved cset will be left pending in MTN/revision
 
   // if/when reverting through the editable_tree interface use
-  // make_cset(new_roster, restricted_roster, reverted); 
+  // make_cset(new_roster, restricted_roster, reverted);
   // to get a cset that gets us back to the restricted roster
   // from the current workspace roster
 
@@ -617,10 +617,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  map<file_id, file_path> paths;
-  get_content_paths(*empty_roster, paths);
-
-  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+  content_merge_checkout_adaptor wca(app);
 
   app.work.perform_content_update(checkout, wca, false);
 
@@ -782,7 +779,7 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
 //         format: ('attr', name, value), ('state', [unchanged|changed|added|dropped])
 //         occurs: zero or more times
 //
-// Error conditions: If the path has no attributes, prints only the 
+// Error conditions: If the path has no attributes, prints only the
 //                   format version, if the file is unknown, escalates
 CMD_AUTOMATE(get_attributes, N_("PATH"),
              N_("Prints all attributes for the specified path"),
@@ -813,20 +810,20 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
 
   // create the printer
   basic_io::printer pr;
-  
+
   // print the format version
   basic_io::stanza st;
   st.push_str_pair(basic_io::syms::format_version, "1");
   pr.print_stanza(st);
-    
+
   // the current node holds all current attributes (unchanged and new ones)
   node_t n = current.get_node(path);
-  for (full_attr_map_t::const_iterator i = n->attrs.begin(); 
+  for (full_attr_map_t::const_iterator i = n->attrs.begin();
        i != n->attrs.end(); ++i)
   {
     std::string value(i->second.second());
     std::string state;
-    
+
     // if if the first value of the value pair is false this marks a
     // dropped attribute
     if (!i->second.first)
@@ -836,16 +833,16 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
         // because if it is dropped there as well it was already deleted
         // in any previous revision
         I(base.has_node(path));
-        
+
         node_t prev_node = base.get_node(path);
-        
+
         // find the attribute in there
         full_attr_map_t::const_iterator j = prev_node->attrs.find(i->first);
         I(j != prev_node->attrs.end());
-        
+
         // was this dropped before? then ignore it
         if (!j->second.first) { continue; }
-        
+
         state = "dropped";
         // output the previous (dropped) value later
         value = j->second.second();
@@ -856,16 +853,16 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
         if (base.has_node(path))
           {
             node_t prev_node = base.get_node(path);
-            full_attr_map_t::const_iterator j = 
+            full_attr_map_t::const_iterator j =
               prev_node->attrs.find(i->first);
-            
+
             // the attribute is new if it either hasn't been found
             // in the previous roster or has been deleted there
             if (j == prev_node->attrs.end() || !j->second.first)
               {
                 state = "added";
               }
-            // check if the attribute's value has been changed 
+            // check if the attribute's value has been changed
             else if (i->second.second() != j->second.second())
               {
                 state = "changed";
@@ -881,14 +878,14 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
             state = "added";
           }
       }
-      
+
     basic_io::stanza st;
     st.push_str_triple(basic_io::syms::attr, i->first(), value);
     st.push_str_pair(symbol("state"), state);
     pr.print_stanza(st);
   }
-  
-  // print the output  
+
+  // print the output
   output.write(pr.buf.data(), pr.buf.size());
 }
 
@@ -940,7 +937,7 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
 //   1: file / directory name
 //   2: attribute key (optional)
 // Added in: 5.0
-// Purpose: Edits the workspace revision and drops an attribute or all 
+// Purpose: Edits the workspace revision and drops an attribute or all
 //          attributes of the specified path
 //
 // Error conditions: If PATH is unknown in the new roster or the specified
@@ -1106,7 +1103,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   set<revision_id> heads;
   app.get_project().get_branch_heads(app.opts.branchname, heads);
   unsigned int old_head_size = heads.size();
-  
+
   {
     transaction_guard guard(app.db);
 
@@ -1115,7 +1112,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     else
       {
         L(FL("inserting new revision %s") % restricted_rev_id);
-  
+
         for (edge_map::const_iterator edge = restricted_rev.edges.begin();
              edge != restricted_rev.edges.end();
              edge++)
