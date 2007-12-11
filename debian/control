@@ -3,11 +3,13 @@ Section: devel
 Priority: optional
 Maintainer: Debian Maintainers for Monotone <monotone-debian@nongnu.org>
 Uploaders: Richard Levitte <richard@levitte.org>, Zack Weinberg <zackw@panix.com>, Ludovic Brenta <lbrenta@debian.org>
+Homepage: http://monotone.ca/
+Vcs-Browser: http://viewmtn.angrygoats.net/branch/changes/net.venge.monotone
 Build-Depends: debhelper (>= 4.2.0), autotools-dev, libz-dev, po-debconf,
  libboost-dev (>= 1.34.1-2), patch
 Build-Depends-Indep: ps2eps, texlive-base, texlive-generic-recommended,
  texlive-latex-base, texinfo, xpdf-utils
-Standards-Version: 3.7.2.2
+Standards-Version: 3.7.3
 
 Package: monotone
 Architecture: any

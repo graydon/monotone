@@ -59,6 +59,7 @@ case "$1" in
 	       rm -f /var/lib/monotone/keys/"$RET"
 
 	       rm -f /var/lib/monotone/default.mtn
+	       rm -f /var/lib/monotone/default.mtn~
 	       rm -f /var/lib/monotone/default.mtn-journal
 
 	       grep -v "$RET" /etc/monotone/passphrases \
