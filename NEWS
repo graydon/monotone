@@ -16,6 +16,12 @@
 
         - mtn now errors if your chosen private key doesn't match the public
           key of the same name in your database.
+          
+        Bugs fixed
+
+        - mtn read successfully reads revision data, and cert packets 
+
+        - mtn consistently supports certs with empty values (fixed 'ls certs' and 'read') 
 
         Internal
 

@@ -132,14 +132,14 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
       vector<string> lines;
       split_into_lines(washed, lines);
-      I(lines.size() > 0);
+      std::string value_first_line = lines.size() > 0 ? idx(lines, 0) : "";
 
       cout << string(guess_terminal_width(), '-') << '\n'
            << (i18n_format(str)
                % idx(certs, i).key()
                % stat
                % idx(certs, i).name()
-               % idx(lines, 0));
+               % value_first_line);
 
       for (size_t i = 1; i < lines.size(); ++i)
         cout << (i18n_format(extra_str) % idx(lines, i));

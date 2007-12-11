@@ -126,6 +126,11 @@ feed_packet_consumer
       && s.find_first_not_of(constants::legal_base64_bytes) == string::npos,
       F("malformed packet: invalid base64 block"));
   }
+  void validate_arg_base64(string const & s) const
+  {
+    E(s.find_first_not_of(constants::legal_base64_bytes) == string::npos,
+      F("malformed packet: invalid base64 block"));
+  }
   void validate_key(string const & k) const
   {
     E(k.size() > 0
@@ -197,7 +202,7 @@ feed_packet_consumer
     string name;   iss >> name;   validate_certname(name);
     string keyid;  iss >> keyid;  validate_key(keyid);
     string val;    
-    read_rest(iss,val);           validate_base64(val);    
+    read_rest(iss,val);           validate_arg_base64(val);    
     validate_base64(body);
     // canonicalize the base64 encodings to permit searches
     cert t = cert(hexenc<id>(certid),
