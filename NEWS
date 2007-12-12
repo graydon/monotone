@@ -4,10 +4,6 @@
 
         Changes
 
-        - Added the scripts of the following Lua-based contributed
-          Monotone extension commands to contrib/command/:
-          "mtn base", "mtn fuse", "mtn revision", "mtn conflicts".
-
         - mtn log now prints a single dot for a project's root
           directory instead of an empty string.
 
@@ -34,7 +30,16 @@
 
         - Update Botan to 1.7.2.
 
+        - Moved the gzip implementation out of the Botan directory.
+
 	Other
+
+        - Added the scripts of the following Lua-based contributed
+          Monotone extension commands to contrib/command/:
+          "mtn base", "mtn fuse", "mtn revision", "mtn conflicts".
+
+        - Added a hooks version of the contributed ciabot script,
+          contrib/ciabot_monotone_hookversion.lua
 
 	- The monotone manual is now licensed under the GPL rather than
 	  the GFDL.
