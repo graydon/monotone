@@ -127,7 +127,7 @@ static void
 dump_conflicts(roster_merge_result const & result, string & out)
 {
   if (result.missing_root_dir)
-    out += (FL("missing root conflict: root directory has been removed")).str();
+    out += (FL("missing root conflict: root directory has been removed\n")).str();
 
   dump(result.invalid_name_conflicts, out);
   dump(result.directory_loop_conflicts, out);
@@ -2188,7 +2188,7 @@ struct multiple_name_plus_helper : public structural_conflict_helper
   node_id name_conflict_nid;
   node_id left_parent, right_parent;
   path_component left_name, right_name;
-  void make_dn_conflict(string const & left, string const & right)
+  void make_multiple_name_conflict(string const & left, string const & right)
   {
     file_path left_path = file_path_internal(left);
     file_path right_path = file_path_internal(right);
@@ -2200,7 +2200,7 @@ struct multiple_name_plus_helper : public structural_conflict_helper
     right_parent = right_roster.get_node(right_path)->parent;
     right_name = right_roster.get_node(right_path)->name;
   }
-  void check_dn_conflict()
+  void check_multiple_name_conflict()
   {
     I(!result.is_clean());
     multiple_name_conflict const & c = idx(result.multiple_name_conflicts, 0);
@@ -2222,7 +2222,7 @@ struct multiple_name_plus_duplicate_name : public multiple_name_plus_helper
   {
     a_nid = nis.next();
     b_nid = nis.next();
-    make_dn_conflict("a", "b");
+    make_multiple_name_conflict("a", "b");
     make_dir(left_roster, left_markings, left_rid, left_rid, "b", b_nid);
     make_dir(right_roster, right_markings, right_rid, right_rid, "a", a_nid);
   }
@@ -2233,7 +2233,7 @@ struct multiple_name_plus_duplicate_name : public multiple_name_plus_helper
     // b should have landed fine
     I(result.roster.get_node(file_path_internal("a"))->self == a_nid);
     I(result.roster.get_node(file_path_internal("b"))->self == b_nid);
-    check_dn_conflict();
+    check_multiple_name_conflict();
   }
 };
 
@@ -2247,13 +2247,13 @@ struct multiple_name_plus_orphan : public multiple_name_plus_helper
     b_nid = nis.next();
     make_dir(left_roster, left_markings, old_rid, left_rid, "a", a_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "b", b_nid);
-    make_dn_conflict("a/foo", "b/foo");
+    make_multiple_name_conflict("a/foo", "b/foo");
   }
 
   virtual void check()
   {
     I(result.roster.all_nodes().size() == 2);
-    check_dn_conflict();
+    check_multiple_name_conflict();
   }
 };
 
@@ -2267,7 +2267,7 @@ struct multiple_name_plus_directory_loop : public multiple_name_plus_helper
     b_nid = nis.next();
     make_dir(left_roster, left_markings, old_rid, old_rid, "a", a_nid);
     make_dir(right_roster, right_markings, old_rid, old_rid, "b", b_nid);
-    make_dn_conflict("a/foo", "b/foo");
+    make_multiple_name_conflict("a/foo", "b/foo");
     make_dir(left_roster, left_markings, old_rid, left_rid, "a/foo/b", b_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "b/foo/a", a_nid);
   }
@@ -2275,7 +2275,7 @@ struct multiple_name_plus_directory_loop : public multiple_name_plus_helper
   virtual void check()
   {
     I(downcast_to_dir_t(result.roster.get_node(name_conflict_nid))->children.size() == 2);
-    check_dn_conflict();
+    check_multiple_name_conflict();
   }
 };
 
@@ -2290,14 +2290,14 @@ struct multiple_name_plus_invalid_name : public multiple_name_plus_helper
     right_roster.drop_detached_node(right_roster.detach_node(file_path()));
     safe_erase(right_markings, root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "", new_root_nid);
-    make_dn_conflict("new_root/_MTN", "foo");
+    make_multiple_name_conflict("new_root/_MTN", "foo");
   }
 
   virtual void check()
   {
     I(result.roster.root()->self == new_root_nid);
     I(result.roster.all_nodes().size() == 2);
-    check_dn_conflict();
+    check_multiple_name_conflict();
   }
 };
 
@@ -2320,7 +2320,8 @@ struct multiple_name_plus_missing_root : public structural_conflict_helper
     make_dir(right_roster, right_markings, old_rid, right_rid, "", right_root_nid);
     make_dir(right_roster, right_markings, old_rid, right_rid, "left_root", left_root_nid);
   }
-  void check_helper(multiple_name_conflict const & left_c, multiple_name_conflict const & right_c)
+  void check_helper(multiple_name_conflict const & left_c,
+                    multiple_name_conflict const & right_c)
   {
     I(left_c.nid == left_root_nid);
     I(left_c.left == make_pair(the_null_node, path_component()));

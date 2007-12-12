@@ -79,7 +79,7 @@ namespace
                           left_roster, right_roster,
                           adaptor);
 
-        bool merged;
+        bool merged = false;
 
         switch (method)
           {

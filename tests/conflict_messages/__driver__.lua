@@ -33,6 +33,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: missing root directory", "stderr"))
 
+check(mtn("explicit_merge", first, second, "missing"), 1, false, true)
+check(qgrep("conflict: missing root directory", "stderr"))
+
 check(mtn("merge", "--branch", "missing"), 1, false, true)
 check(qgrep("conflict: missing root directory", "stderr"))
 
@@ -74,6 +77,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: invalid name", "stderr"))
 
+check(mtn("explicit_merge", first, second, "invalid-add"), 1, false, true)
+check(qgrep("conflict: invalid name", "stderr"))
+
 check(mtn("merge", "--branch", "invalid-add"), 1, false, true)
 check(qgrep("conflict: invalid name", "stderr"))
 
@@ -112,6 +118,9 @@ commit("invalid-rename")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: invalid name", "stderr"))
+
+check(mtn("explicit_merge", first, second, "invalid-rename"), 1, false, true)
 check(qgrep("conflict: invalid name", "stderr"))
 
 check(mtn("merge", "--branch", "invalid-rename"), 1, false, true)
@@ -155,6 +164,9 @@ commit("loop")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: directory loop", "stderr"))
+
+check(mtn("explicit_merge", first, second, "loop"), 1, false, true)
 check(qgrep("conflict: directory loop", "stderr"))
 
 check(mtn("merge", "--branch", "loop"), 1, false, true)
@@ -202,6 +214,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: orphaned file", "stderr"))
 
+check(mtn("explicit_merge", first, second, "orphaned-add"), 1, false, true)
+check(qgrep("conflict: orphaned file", "stderr"))
+
 check(mtn("merge", "--branch", "orphaned-add"), 1, false, true)
 check(qgrep("conflict: orphaned file", "stderr"))
 
@@ -246,6 +261,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: orphaned file", "stderr"))
 
+check(mtn("explicit_merge", first, second, "orphaned-rename"), 1, false, true)
+check(qgrep("conflict: orphaned file", "stderr"))
+
 check(mtn("merge", "--branch", "orphaned-rename"), 1, false, true)
 check(qgrep("conflict: orphaned file", "stderr"))
 
@@ -281,6 +299,9 @@ commit("multiple")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: multiple names", "stderr"))
+
+check(mtn("explicit_merge", first, second, "multiple"), 1, false, true)
 check(qgrep("conflict: multiple names", "stderr"))
 
 check(mtn("merge", "--branch", "multiple"), 1, false, true)
@@ -324,6 +345,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
+check(mtn("explicit_merge", first, second, "duplicate-adds"), 1, false, true)
+check(qgrep("conflict: duplicate name", "stderr"))
+
 check(mtn("merge", "--branch", "duplicate-adds"), 1, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
@@ -362,6 +386,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
+check(mtn("explicit_merge", first, second, "duplicate-renames"), 1, false, true)
+check(qgrep("conflict: duplicate name", "stderr"))
+
 check(mtn("merge", "--branch", "duplicate-renames"), 1, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
@@ -397,6 +424,9 @@ commit("duplicate-add-rename")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: duplicate name", "stderr"))
+
+check(mtn("explicit_merge", first, second, "duplicate-add-rename"), 1, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
 check(mtn("merge", "--branch", "duplicate-add-rename"), 1, false, true)
@@ -441,6 +471,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: multiple values for attribute", "stderr"))
 
+check(mtn("explicit_merge", first, second, "attribute-attached"), 1, false, true)
+check(qgrep("conflict: multiple values for attribute", "stderr"))
+
 check(mtn("merge", "--branch", "attribute-attached"), 1, false, true)
 check(qgrep("conflict: multiple values for attribute", "stderr"))
 
@@ -457,6 +490,8 @@ check(qgrep("conflict: multiple values for attribute", "stderr"))
 remove("_MTN")
 check(mtn("setup", ".", "--branch", "attribute-detached"), 0, false, false)
 remove("foo")
+remove("bar")
+remove("baz")
 
 addfile("foo", "attribute foo detached")
 check(mtn("attr", "set", "foo", "attr1", "value1"), 0, false, false)
@@ -483,6 +518,9 @@ commit("attribute-detached")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: multiple values for attribute", "stderr"))
+
+check(mtn("explicit_merge", first, second, "attribute-detached"), 1, false, true)
 check(qgrep("conflict: multiple values for attribute", "stderr"))
 
 check(mtn("merge", "--branch", "attribute-detached"), 1, false, true)
@@ -531,6 +569,9 @@ second = base_revision()
 check(mtn("show_conflicts", first, second), 0, false, true)
 check(qgrep("conflict: content conflict on file", "stderr"))
 
+check(mtn("explicit_merge", first, second, "content-attached"), 1, false, true)
+check(qgrep("conflict: content conflict on file", "stderr"))
+
 check(mtn("merge", "--branch", "content-attached"), 1, false, true)
 check(qgrep("conflict: content conflict on file", "stderr"))
 
@@ -569,6 +610,9 @@ commit("content-detached")
 second = base_revision()
 
 check(mtn("show_conflicts", first, second), 0, false, true)
+check(qgrep("conflict: content conflict on file", "stderr"))
+
+check(mtn("explicit_merge", first, second, "content-detached"), 1, false, true)
 check(qgrep("conflict: content conflict on file", "stderr"))
 
 check(mtn("merge", "--branch", "content-detached"), 1, false, true)
