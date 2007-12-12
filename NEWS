@@ -16,12 +16,19 @@
 
         - mtn now errors if your chosen private key doesn't match the public
           key of the same name in your database.
+
+        - mtn now checks for your key before a merge action takes place to
+          ensure that any manually merged file isn't lost in an error case
           
         Bugs fixed
 
-        - mtn read successfully reads revision data, and cert packets 
+        - a bug introduced in 0.37 prevented an external merger from being
+          executed unless the MTN_MERGE environment variable was set
 
-        - mtn consistently supports certs with empty values (fixed 'ls certs' and 'read') 
+        - mtn read successfully reads revision data, and cert packets again
+
+        - mtn consistently supports certs with empty values 
+          (fixed 'ls certs' and 'read') 
 
         Internal
 
