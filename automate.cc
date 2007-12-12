@@ -1544,10 +1544,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   N(!exists, F("key '%s' already exists") % ident);
 
   keypair kp;
-  P(F("generating key-pair '%s'") % ident);
   generate_key_pair(kp, passphrase);
-  P(F("storing key-pair '%s' in %s/")
-    % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
 
   basic_io::printer prt;
