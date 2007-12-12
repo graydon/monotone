@@ -6,9 +6,9 @@ AC_DEFUN([MTN_LIB_PCRE],
       copy. (To use a specific installed version, use the environment
       variables PCRE_CFLAGS and/or PCRE_LIBS.)]),
    [case "$withval" in
-      (""|yes) with_system_pcre=yes ;;
-      (no)     with_system_pcre=no  ;;
-      (*)      AC_MSG_ERROR([--with(out)-system-pcre takes no argument]) ;;
+      ""|yes) with_system_pcre=yes ;;
+      no)     with_system_pcre=no  ;;
+      *)      AC_MSG_ERROR([--with(out)-system-pcre takes no argument]) ;;
     esac],
    [with_system_pcre=no])
  if test "$with_system_pcre" = yes; then
