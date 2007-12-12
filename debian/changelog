@@ -1,3 +1,12 @@
+monotone (0.38-1) UNRELEASED; urgency=low
+
+  * monotone-server.postrm: Delete default.mtn~ on purge.
+    (Closes: #455058)
+  * Add Homepage: and Vcs-Browser: fields to debian/control.
+  * Standards-Version: 3.7.3 (no changes required).
+
+ -- Zack Weinberg <zackw@panix.com>  Tue, 11 Dec 2007 01:58:16 -0800
+
 monotone (0.37-4) unstable; urgency=low
 
   * debian/rules: Turn compiler optimization back on by default.  Doh!
