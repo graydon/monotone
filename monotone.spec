@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.37
+Version: 0.38
 Release: 0.mtn.1%{?dist}
 License: GPL
 Group: Development/Tools
@@ -58,6 +58,9 @@ fi
 
 
 %changelog
+* Wed Dec 12 2007 Richard Levitte <richard@levitte.org>
+- 0.38 release.
+
 * Mon Nov  5 2007 Julio M. Merino Vidal <jmmv@NetBSD.org>
 - Fixed build of RPM package in Fedora by discarding info/dir.
 
