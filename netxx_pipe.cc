@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <cstring> // strerror
 #endif
 
 using std::vector;
@@ -336,7 +337,7 @@ Netxx::PipeStream::close (void)
   writefd = -1;
 
   if (child)
-    while (waitpid(child,0,0) == -1 && errno == EINTR);
+    while (waitpid(child,0,0) == -1 && errno == EINTR) ;
   child = 0;
 #endif
 }

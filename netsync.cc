@@ -1434,14 +1434,17 @@ session::process_anonymous_cmd(protocol_role their_role,
       i != all_branches.end(); i++)
     {
       if (their_matcher((*i)()))
-        if (app.opts.use_transport_auth &&
-            !app.lua.hook_get_netsync_read_permitted((*i)()))
-          {
-            error(not_permitted,
-                  (F("anonymous access to branch '%s' denied by server") % *i).str());
-          }
-        else
-          ok_branches.insert(*i);
+        {
+          if (app.opts.use_transport_auth &&
+              !app.lua.hook_get_netsync_read_permitted((*i)()))
+            {
+              error(not_permitted,
+                    (F("anonymous access to branch '%s' denied by server")
+                     % *i).str());
+            }
+          else
+            ok_branches.insert(*i);
+        }
     }
 
   if (app.opts.use_transport_auth)
