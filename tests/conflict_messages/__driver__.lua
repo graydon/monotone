@@ -6,138 +6,164 @@ mtn_setup()
 
 -- missing root conflict
 
+branch = "missing"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "missing"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 mkdir("foo")
 addfile("foo/foo", "missing foofoo")
-commit("missing")
+commit(branch)
 
 base = base_revision()
 
-check(mtn("co", "--branch", "missing", "missing"), 0, false, false)
-check(indir("missing", mtn("pivot_root", "foo", "bar")), 0, true, true)
---check(indir("missing", mtn("drop", "--recursive", "bar")), 0, true, true)
-check(indir("missing", mtn("commit", "--message", "commit")), 0, false, false)
+check(mtn("co", "--branch", branch, branch), 0, false, false)
+check(indir(branch, mtn("pivot_root", "foo", "bar")), 0, true, true)
+--check(indir(branch, mtn("drop", "--recursive", "bar")), 0, true, true)
+check(indir(branch, mtn("commit", "--message", "commit")), 0, false, false)
 
-first = indir("missing", {base_revision})[1]()
+first = indir(branch, {base_revision})[1]()
 
 check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+message = "conflict: missing root directory"
 
-commit("missing")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "missing"), 1, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "missing"), 1, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: missing root directory", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- invalid name add
 
+branch = "invalid-add"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "invalid-add"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 mkdir("foo")
 addfile("foo/foo", "invalid add foofoo")
-commit("invalid-add")
+commit(branch)
 
 base = base_revision()
 
-check(mtn("co", "--branch", "invalid-add", "invalid"), 0, false, false)
-check(indir("invalid", mtn("pivot_root", "foo", "bar")), 0, true, true)
-check(indir("invalid", mtn("commit", "--message", "commit")), 0, false, false)
+check(mtn("co", "--branch", branch, branch), 0, false, false)
+check(indir(branch, mtn("pivot_root", "foo", "bar")), 0, true, true)
+check(indir(branch, mtn("commit", "--message", "commit")), 0, false, false)
 
-first = indir("invalid", {base_revision})[1]()
+first = indir(branch, {base_revision})[1]()
 
 mkdir("foo/_MTN")
 addfile("foo/_MTN/foo", "invalid foo")
 addfile("foo/_MTN/bar", "invalid bar")
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+message = "conflict: invalid name"
 
-commit("invalid-add")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "invalid-add"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "invalid-add"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 -- invalid name rename
 
+branch = "invalid-rename"
+
 remove("_MTN")
 remove("invalid")
-check(mtn("setup", ".", "--branch", "invalid-rename"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 mkdir("foo")
 mkdir("bad")
 addfile("foo/foo", "invalid rename foofoo")
 addfile("bad/_MTN", "invalid bar")
-commit("invalid-rename")
+commit(branch)
 
 base = base_revision()
 
-check(mtn("co", "--branch", "invalid-rename", "invalid"), 0, false, false)
-check(indir("invalid", mtn("pivot_root", "foo", "bar")), 0, true, true)
-check(indir("invalid", mtn("commit", "--message", "commit")), 0, false, false)
-first = indir("invalid", {base_revision})[1]()
+check(mtn("co", "--branch", branch, branch), 0, false, false)
+check(indir(branch, mtn("pivot_root", "foo", "bar")), 0, true, true)
+check(indir(branch, mtn("commit", "--message", "commit")), 0, false, false)
+first = indir(branch, {base_revision})[1]()
 
 check(mtn("mv", "bad/_MTN", "foo/_MTN"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+message = "conflict: invalid name"
 
-commit("invalid-rename")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "invalid-rename"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "invalid-rename"), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: invalid name", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- directory loop conflict
 
+branch = "loop"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "loop"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 remove("bar")
 
@@ -145,59 +171,66 @@ mkdir("foo")
 mkdir("bar")
 addfile("foo/foo", "foofoo")
 addfile("bar/bar", "barbar")
-commit("loop")
+commit(branch)
 
 base = base_revision()
 
 check(mtn("mv", "foo", "bar"), 0, false, false)
-commit("loop")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
 
 check(mtn("mv", "bar", "foo"), 0, false, false)
 
+message = "conflict: directory loop"
 check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(qgrep(message, "stderr"))
 
-commit("loop")
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "loop"), 1, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "loop"), 1, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: directory loop", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- orphaned add
 
+branch = "orphaned-add"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "orphaned-add"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 remove("bar")
 
 mkdir("foo")
 addfile("foo/foo", "orphaned add foofoo")
-commit("orphaned-add")
+commit(branch)
 
 base = base_revision()
 
 addfile("foo/bar", "orphan foobar")
-commit("orphaned-add")
+commit(branch)
 
 check(mtn("mv", "foo/bar", "foo/baz"), 0, false, false)
-commit("orphaned-add")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -205,46 +238,54 @@ revert_to(base)
 remove("foo")
 check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+message = "conflict: orphaned file"
 
-commit("orphaned-add")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "orphaned-add"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "orphaned-add"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 -- orphaned rename
 
+branch = "orphaned-rename"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "orphaned-rename"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 remove("bar")
 
 mkdir("foo")
 addfile("foo/foo", "orphaned rename foofoo")
 addfile("bar", "orphaned rename bar")
-commit("orphaned-rename")
+commit(branch)
 
 base = base_revision()
 
 check(mtn("mv", "bar", "foo/bar"), 0, false, false)
-commit("orphaned-rename")
+commit(branch)
 check(mtn("mv", "foo/bar", "foo/baz"), 0, false, false)
-commit("orphaned-rename")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -252,209 +293,249 @@ revert_to(base)
 remove("foo")
 check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+message = "conflict: orphaned file"
 
-commit("orphaned-rename")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "orphaned-rename"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "orphaned-rename"), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: orphaned file", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- multiple name conflict
 
+branch = "multiple"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "multiple"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 addfile("foo", "multiple foo")
-commit("multiple")
+commit(branch)
 base = base_revision()
 
 check(mtn("mv", "foo", "bar"), 0, false, false)
-commit("multiple")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
 
 check(mtn("mv", "foo", "baz"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+message = "conflict: multiple names"
 
-commit("multiple")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "multiple"), 1, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "multiple"), 1, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: multiple names", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- duplicate name conflict (adds)
 
+branch = "duplicate-adds"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "duplicate-adds"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 addfile("foo", "duplicate add foo")
-commit("duplicate-adds")
+commit(branch)
 base = base_revision()
 
 addfile("xxx", "duplicate add xxx")
-commit("duplicate-adds")
+commit(branch)
 
 check(mtn("mv", "xxx", "bar"), 0, false, false)
 --addfile("bar", "duplicate add bar1")
-commit("duplicate-adds")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
 
 addfile("bar", "duplicate add bar2")
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+message = "conflict: duplicate name"
 
-commit("duplicate-adds")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "duplicate-adds"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "duplicate-adds"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 -- duplicate name conflict (renames)
 
+branch = "duplicate-renames"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "duplicate-renames"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 addfile("foo", "duplicate rename foo")
 addfile("bar", "duplicate rename bar")
 
-commit("duplicate-renames")
+commit(branch)
 base = base_revision()
 
 check(mtn("mv", "foo", "abc"), 0, false, false)
-commit("duplicate-renames")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
 
 check(mtn("mv", "bar", "abc"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+message = "conflict: duplicate name"
 
-commit("duplicate-renames")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "duplicate-renames"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "duplicate-renames"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 -- duplicate name conflict (add-rename)
 
+branch = "duplicate-add-rename"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "duplicate-add-rename"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 
 addfile("foo", "duplicate add rename foo")
 
-commit("duplicate-add-rename")
+commit(branch)
 base = base_revision()
 
 check(mtn("mv", "foo", "bar"), 0, false, false)
-commit("duplicate-add-rename")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
 
 addfile("bar", "convervent add rename bar")
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+message = "conflict: duplicate name"
 
-commit("duplicate-add-rename")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "duplicate-add-rename"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "duplicate-add-rename"), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: duplicate name", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- attribute conflict on attached node
 
+branch = "attribute-attached"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "attribute-attached"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 
 addfile("foo", "attribute foo attached")
 check(mtn("attr", "set", "foo", "attr1", "value1"), 0, false, false)
 check(mtn("attr", "set", "foo", "attr2", "value2"), 0, false, false)
-commit("attribute-attached")
+commit(branch)
 base = base_revision()
 
 check(mtn("attr", "set", "foo", "attr1", "valueX"), 0, false, false)
 check(mtn("attr", "set", "foo", "attr2", "valueY"), 0, false, false)
-commit("attribute-attached")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -462,33 +543,41 @@ revert_to(base)
 check(mtn("attr", "set", "foo", "attr1", "valueZ"), 0, false, false)
 check(mtn("attr", "drop", "foo", "attr2"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+message = "conflict: multiple values for attribute"
 
-commit("attribute-attached")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "attribute-attached"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "attribute-attached"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- attribute conflict on detached node
 
+branch = "attribute-detached"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "attribute-detached"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 remove("bar")
 remove("baz")
@@ -496,13 +585,13 @@ remove("baz")
 addfile("foo", "attribute foo detached")
 check(mtn("attr", "set", "foo", "attr1", "value1"), 0, false, false)
 check(mtn("attr", "set", "foo", "attr2", "value2"), 0, false, false)
-commit("attribute-detached")
+commit(branch)
 base = base_revision()
 
 check(mtn("attr", "set", "foo", "attr1", "valueX"), 0, false, false)
 check(mtn("attr", "set", "foo", "attr2", "valueY"), 0, false, false)
 check(mtn("mv", "foo", "bar"), 0, false, false)
-commit("attribute-detached")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -511,45 +600,53 @@ check(mtn("attr", "set", "foo", "attr1", "valueZ"), 0, false, false)
 check(mtn("attr", "drop", "foo", "attr2"), 0, false, false)
 check(mtn("mv", "foo", "baz"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+message = "conflict: multiple values for attribute"
 
-commit("attribute-detached")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "attribute-detached"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "attribute-detached"), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: multiple values for attribute", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 
 -- content conflict on attached node
 
+branch = "content-attached"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "content-attached"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 
 addfile("foo", "content foo attached")
 addfile("bar", "content bar attached\none\ntwo\nthree")
 addfile("baz", "content baz attached\naaa\nbbb\nccc")
-commit("content-attached")
+commit(branch)
 base = base_revision()
 
 writefile("foo", "foo first revision")
 writefile("bar", "content bar attached\nzero\none\ntwo\nthree")
 writefile("baz", "content baz attached\nAAA\nbbb\nccc")
-commit("content-attached")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -558,44 +655,52 @@ writefile("foo", "foo second revision")
 writefile("bar", "content bar attached\none\ntwo\nthree\nfour")
 writefile("baz", "content baz attached\naaa\nbbb\nCCC")
 
+message = "conflict: content conflict on file 'foo'"
+
 check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: content conflict on file 'foo'", "stderr"))
+check(qgrep(message, "stderr"))
 check(not qgrep("conflict: content conflict on file 'bar'", "stderr"))
 check(not qgrep("conflict: content conflict on file 'baz'", "stderr"))
 
-commit("content-attached")
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "content-attached"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "content-attached"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))
 
 
 -- content conflict on detached node
 
+branch = "content-detached"
+
 remove("_MTN")
-check(mtn("setup", ".", "--branch", "content-detached"), 0, false, false)
+check(mtn("setup", ".", "--branch", branch), 0, false, false)
 remove("foo")
 
 addfile("foo", "content foo detached")
-commit("content-detached")
+commit(branch)
 base = base_revision()
 
 writefile("foo", "foo first revision")
 check(mtn("mv", "foo", "bar"), 0, false, false)
 
-commit("content-detached")
+commit(branch)
 first = base_revision()
 
 revert_to(base)
@@ -603,23 +708,29 @@ revert_to(base)
 writefile("foo", "foo second revision")
 check(mtn("mv", "foo", "baz"), 0, false, false)
 
-check(mtn("update", "--debug"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+message = "conflict: content conflict on file"
 
-commit("content-detached")
+check(mtn("update", "--debug"), 1, false, true)
+check(qgrep(message, "stderr"))
+
+commit(branch .. "-propagate")
 second = base_revision()
 
+check(mtn("propagate", branch , branch .. "-propagate"), 1, false, true)
+check(qgrep(message, "stderr"))
+check(mtn("cert", second, "branch", branch))
+
 check(mtn("show_conflicts", first, second), 0, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))
 
-check(mtn("explicit_merge", first, second, "content-detached"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(mtn("explicit_merge", first, second, branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
-check(mtn("merge", "--branch", "content-detached"), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(mtn("merge", "--branch", branch), 1, false, true)
+check(qgrep(message, "stderr"))
 
 check(mtn("pluck", "--revision", base, "--revision", first), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))
 
 check(mtn("merge_into_workspace", first), 1, false, true)
-check(qgrep("conflict: content conflict on file", "stderr"))
+check(qgrep(message, "stderr"))

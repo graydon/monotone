@@ -536,8 +536,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   set<revision_id>::const_iterator dst_i = dst_heads.begin();
 
   P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
-  P(F("[source] %s") % *src_i);
-  P(F("[target] %s") % *dst_i);
+  P(F("[left]  %s") % *src_i);
+  P(F("[right] %s") % *dst_i);
 
   // check for special cases
   if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))

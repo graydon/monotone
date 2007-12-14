@@ -127,7 +127,7 @@ static void
 dump_conflicts(roster_merge_result const & result, string & out)
 {
   if (result.missing_root_dir)
-    out += (FL("missing root conflict: root directory has been removed\n")).str();
+    out += (FL("missing_root_conflict: root directory has been removed\n")).str();
 
   dump(result.invalid_name_conflicts, out);
   dump(result.directory_loop_conflicts, out);
