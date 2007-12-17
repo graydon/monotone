@@ -102,15 +102,15 @@ public:
   /** @brief Gets the current abstract size of the cache.
    *  @return current size
    */
-  inline const unsigned long size(void) const
+  inline unsigned long size(void) const
   {
     return _curr_size;
   }
 
-  /** @brief Gets the maximum sbstract size of the cache.
+  /** @brief Gets the maximum abstract size of the cache.
    *  @return maximum size
    */
-  inline const unsigned long max_size(void) const
+  inline unsigned long max_size(void) const
   {
     return _max_size;
   }

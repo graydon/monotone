@@ -9,6 +9,7 @@
 
 #include "base.hh"
 #include <iostream>
+#include <iterator>
 
 #include "annotate.hh"
 #include "revision.hh"

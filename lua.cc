@@ -11,6 +11,7 @@
 #include <set>
 #include "vector.hh"
 #include <utility>
+#include <cstring> // strerror, strlen
 
 using std::pair;
 using std::set;
