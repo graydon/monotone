@@ -1,3 +1,21 @@
+??? ??? ?? ??:??:?? UTC 2008
+
+        0.39 release.
+
+        Changes
+
+        - 'automate db_set' has been renamed to 'automate set_db_variable'.
+
+        - 'automate db_get' has been replaced by 'automate get_db_variables'
+          which returns all database variables similar to 'list vars' in
+          basic_io format, optionally restricted by domain.
+
+        New features
+
+        - 'automate drop_db_variables' which drops one database variable
+          (like the 'unset' command) or all variables within a given domain.
+
+
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.
@@ -15,7 +33,7 @@ Wed Dec 12 21:21:15 UTC 2007
 
         - mtn now checks for your key before a merge action takes place to
           ensure that any manually merged file isn't lost in an error case
-          
+
         Bugs fixed
 
         - a bug introduced in 0.37 prevented an external merger from being
@@ -23,8 +41,8 @@ Wed Dec 12 21:21:15 UTC 2007
 
         - mtn read successfully reads revision data, and cert packets again
 
-        - mtn consistently supports certs with empty values 
-          (fixed 'ls certs' and 'read') 
+        - mtn consistently supports certs with empty values
+          (fixed 'ls certs' and 'read')
 
         Internal
 
@@ -32,7 +50,7 @@ Wed Dec 12 21:21:15 UTC 2007
 
         - Moved the gzip implementation out of the Botan directory.
 
-	Other
+        Other
 
         - Added the scripts of the following Lua-based contributed
           Monotone extension commands to contrib/command/:
@@ -41,8 +59,8 @@ Wed Dec 12 21:21:15 UTC 2007
         - Added a hooks version of the contributed ciabot script,
           contrib/ciabot_monotone_hookversion.lua
 
-	- The monotone manual is now licensed under the GPL rather than
-	  the GFDL.
+        - The monotone manual is now licensed under the GPL rather than
+          the GFDL.
 
 Fri Oct 25 22:35:33 UTC 2007
 
@@ -1865,10 +1883,10 @@ Tue May  3 00:31:37 PDT 2005
 Sun Apr 10 17:49:25 PDT 2005
 
         0.18 release.  performance improvements, features, and bug fixes.
-	This release is dedicated to Shweta Narayan.
+    This release is dedicated to Shweta Narayan.
 
         - most operations sped up by a factor of 2 or better; many sped up
-	  by up several orders of magnitude.
+      by up several orders of magnitude.
                 - special thanks to Matt Johnston <matt@ucc.asn.au>, Derek
                   Scherger <derek@echologic.com>, Linus Torvalds
                   <torvalds@osdl.org>.
@@ -1888,12 +1906,12 @@ Sun Apr 10 17:49:25 PDT 2005
                   previously synced with, to prevent man-in-the-middle
                   attacks.
                 - several powerful new "automate" commands added.
-		- new command 'ls known', lists files that are under version
-		  control.  Thanks to Florian Weimer <fw@deneb.enyo.de>.
-		- preliminary "inodeprints" functionality -- speeds up diff,
-		  status, etc.  No UI or documentation yet -- in a working
-		  copy, 'touch MT/inodeprints' to enable, then commit or
-		  update to populate cache.
+        - new command 'ls known', lists files that are under version
+          control.  Thanks to Florian Weimer <fw@deneb.enyo.de>.
+        - preliminary "inodeprints" functionality -- speeds up diff,
+          status, etc.  No UI or documentation yet -- in a working
+          copy, 'touch MT/inodeprints' to enable, then commit or
+          update to populate cache.
         - UI improvements:
                 - Added short options -r, -b, -k, -m.
                 - default to 'dot' ticker-style when stderr is
@@ -1915,9 +1933,9 @@ Sun Apr 10 17:49:25 PDT 2005
           email notification, Bash completion.
         - 33 new integration tests.  total line coverage: ~82%.
         - many bug fixes
-		- Special thanks to Matt Johnston <matt@ucc.asn.au>,
-		  for going above and beyond to track down the last
-		  release blocker.
+        - Special thanks to Matt Johnston <matt@ucc.asn.au>,
+          for going above and beyond to track down the last
+          release blocker.
 
                 - upgrading from 0.17 requires only a 'db migrate'.
 
@@ -1970,214 +1988,214 @@ Fri Mar 18 15:38:52 PST 2005
 
 Thu Dec 30 01:37:54 EST 2004
 
-	0.16 release. bug fixes.
+    0.16 release. bug fixes.
 
-	- 50+ new integration tests
-	- many NetBSD portability fixes
-	- release build on gcc 3.4 / FC3
-	- masses of changeset bugs in 0.15 fixed
+    - 50+ new integration tests
+    - many NetBSD portability fixes
+    - release build on gcc 3.4 / FC3
+    - masses of changeset bugs in 0.15 fixed
 
-		- some bogus changesets were generated
-		  in the 0.16 development cycle. you will
-		  need to rebuild revision graph.
+        - some bogus changesets were generated
+          in the 0.16 development cycle. you will
+          need to rebuild revision graph.
 
 
 Sun Nov  7 14:06:03 EST 2004
 
-	0.15 release. major changes.
+    0.15 release. major changes.
 
-	- overhauled the internal representation of changes. see
-	  README.changesets for details
-	- fixed bugs in merkle trie synchronization code
-	- fixed echoing and progress UI bugs
-	  (helps when using in emacs)
-	- upgraded cryptopp to 5.2.1
-	- fixed bug 8715, diff hunk coordinate reporting
-	- added figures, new tutorial to manual
-	- improve accuracy of log command
-	- several build, configure, and linkage fixes
-	- some OSX / PPC portability fixes
+    - overhauled the internal representation of changes. see
+      README.changesets for details
+    - fixed bugs in merkle trie synchronization code
+    - fixed echoing and progress UI bugs
+      (helps when using in emacs)
+    - upgraded cryptopp to 5.2.1
+    - fixed bug 8715, diff hunk coordinate reporting
+    - added figures, new tutorial to manual
+    - improve accuracy of log command
+    - several build, configure, and linkage fixes
+    - some OSX / PPC portability fixes
 
 Sat Jul 31 15:38:02 EDT 2004
 
-	0.14 release. bug fixes.
+    0.14 release. bug fixes.
 
-	- some compile fixes for g++ 3.4
-	- made --dump=FILE option for saving traces,
-	  otherwise failures just print reason (no trace)
-	- some things disabled, as scheduled for replacement
-	  by upcoming changeset branch work
-		- disabled "disapprove" command due to bad semantics
-		- removed "bump" and .mt-nonce machinery
-	- several critical rename-merging bugs fixed
-		- renames vs. deletes
-		- renames vs. deltas
-		- parallel renames
-	- bugs fixed from savannah bug tracker:
-		- 9223 argv overflow
-		- 9075 empty commits
-		- 8919 rename --verbose to --debug
-		- 8958 rename debug to db execute
-		- 8920 empty passphrase message
-		- 8917 connection refused message
-		- 8913 testresult argument
-		- 8912 passphrase read on serve
-		- 8472 approve into branch
-		- 8428 duplicate key warning
-		- 8928 nonce uses too many bits
+    - some compile fixes for g++ 3.4
+    - made --dump=FILE option for saving traces,
+      otherwise failures just print reason (no trace)
+    - some things disabled, as scheduled for replacement
+      by upcoming changeset branch work
+        - disabled "disapprove" command due to bad semantics
+        - removed "bump" and .mt-nonce machinery
+    - several critical rename-merging bugs fixed
+        - renames vs. deletes
+        - renames vs. deltas
+        - parallel renames
+    - bugs fixed from savannah bug tracker:
+        - 9223 argv overflow
+        - 9075 empty commits
+        - 8919 rename --verbose to --debug
+        - 8958 rename debug to db execute
+        - 8920 empty passphrase message
+        - 8917 connection refused message
+        - 8913 testresult argument
+        - 8912 passphrase read on serve
+        - 8472 approve into branch
+        - 8428 duplicate key warning
+        - 8928 nonce uses too many bits
 
 Thu May 20 22:26:27 EDT 2004
 
-	0.13 release. bug fixes.
+    0.13 release. bug fixes.
 
-	- remove (file|manifest) in several commands
-	- "list missing" command
-	- fixed bugs:
-		- (critical) empty data netsync crash
-		- mkstemp, platform lua
-		- runtime error reporting chatter
-		- non-posix database names
-		- non-posix dirnames
-		- non-posix merge names
-		- 2-way merge algorithm and hook
-		- single-character filenames
-		- multiple password reads
-		- .svn ignore pattern
+    - remove (file|manifest) in several commands
+    - "list missing" command
+    - fixed bugs:
+        - (critical) empty data netsync crash
+        - mkstemp, platform lua
+        - runtime error reporting chatter
+        - non-posix database names
+        - non-posix dirnames
+        - non-posix merge names
+        - 2-way merge algorithm and hook
+        - single-character filenames
+        - multiple password reads
+        - .svn ignore pattern
 
 Sun May  2 21:03:38 EDT 2004
 
-	0.12 release. win32 port, bug fixes and optimizations.
+    0.12 release. win32 port, bug fixes and optimizations.
 
-	- ported to native win32 (mingw)
-	- implemented human friendly version selectors
-	- added post-commit hook for change notification
-	- removed spirit-based parsers, reduced compile costs
-	- many netsync bugs removed, pipeline performance improved
-	- removed old, deprecated networking system
-	- several minor CVS import bugs fixed
-	- upgraded bundled netxx
+    - ported to native win32 (mingw)
+    - implemented human friendly version selectors
+    - added post-commit hook for change notification
+    - removed spirit-based parsers, reduced compile costs
+    - many netsync bugs removed, pipeline performance improved
+    - removed old, deprecated networking system
+    - several minor CVS import bugs fixed
+    - upgraded bundled netxx
 
 Sun Mar 28 12:41:07 EST 2004
 
-	0.11 release. bug fixes and optimizations.
+    0.11 release. bug fixes and optimizations.
 
-	NOTE: this release expands the sqlite page size. YOU WILL NEED
-	to dump existing databases before upgrading and reload it
-	after upgrading, otherwise monotone will complain that the
-	database image appears malformed. this condition cannot
-	unfortunately be distinguished from a real malformed image on
-	disk. for example:
+    NOTE: this release expands the sqlite page size. YOU WILL NEED
+    to dump existing databases before upgrading and reload it
+    after upgrading, otherwise monotone will complain that the
+    database image appears malformed. this condition cannot
+    unfortunately be distinguished from a real malformed image on
+    disk. for example:
 
-		$ monotone --db=my.db db dump >dump.sql
-		$ <upgrade to new monotone>
-		$ mv my.db my.db.backup
-		$ monotone --db=my.db db load <dump.sql
+        $ monotone --db=my.db db dump >dump.sql
+        $ <upgrade to new monotone>
+        $ mv my.db my.db.backup
+        $ monotone --db=my.db db load <dump.sql
 
-	- fixed bugs:
-		- aliasing bug on debian (-O2 now works)
-		- netsync ppc portability / checksums
-		- sha1 whitespace bug
-		- netsync broken formatter
-		- broken symlink handling
-		- merger execution pessimism
-		- LCA bitset calculation pessimism
-		- static object initialization order
-		- CVS single-version import
-		- CVS first-version changelog
-		- CVS branch inference and topology
-	- cryptographic SSE2 paths enabled on linux/x86.
-	- builds against boost 1.31.0.
-	- removed boost::socket
-	- removed documentation about old networking system.
-	- "officially" deprecated old networking system.
-	- enable building with system-local libraries.
-	- upgraded bundled sqlite.
-	- changed sqlite page size from 1k -> 8k
+    - fixed bugs:
+        - aliasing bug on debian (-O2 now works)
+        - netsync ppc portability / checksums
+        - sha1 whitespace bug
+        - netsync broken formatter
+        - broken symlink handling
+        - merger execution pessimism
+        - LCA bitset calculation pessimism
+        - static object initialization order
+        - CVS single-version import
+        - CVS first-version changelog
+        - CVS branch inference and topology
+    - cryptographic SSE2 paths enabled on linux/x86.
+    - builds against boost 1.31.0.
+    - removed boost::socket
+    - removed documentation about old networking system.
+    - "officially" deprecated old networking system.
+    - enable building with system-local libraries.
+    - upgraded bundled sqlite.
+    - changed sqlite page size from 1k -> 8k
 
 Mon Mar  1 00:32:07 EST 2004
 
-	0.10 release. new "netsync" protocol implemented, allowing
-	direct monotone-to-monotone database synchronization. random
-	number underflow problem fixed. more tests added. database
-	schema changed, must migrate schema. added new QA logic to
-	update and merge algorithms (testresult / approval).
+    0.10 release. new "netsync" protocol implemented, allowing
+    direct monotone-to-monotone database synchronization. random
+    number underflow problem fixed. more tests added. database
+    schema changed, must migrate schema. added new QA logic to
+    update and merge algorithms (testresult / approval).
 
 Thu Jan  1 18:23:06 EST 2004
 
-	0.9 release. support international users (non-ASCII character
-	sets, locales). some corrections to update algorithm. line
-	merging algorithm reimplemented. support working copy
-	MT/monotonerc file. broke format compatibility with MT/work
-	files; commit any pending work before upgrading. permit
-	spaces, colons, other "funny" characters in filenames. support
-	HTTP 1.1, HTTP proxies, handle some corner cases in ancestry
-	graph and database faults.
+    0.9 release. support international users (non-ASCII character
+    sets, locales). some corrections to update algorithm. line
+    merging algorithm reimplemented. support working copy
+    MT/monotonerc file. broke format compatibility with MT/work
+    files; commit any pending work before upgrading. permit
+    spaces, colons, other "funny" characters in filenames. support
+    HTTP 1.1, HTTP proxies, handle some corner cases in ancestry
+    graph and database faults.
 
 Fri Nov 21 20:25:26 EST 2003
 
-	0.8 release. row size increased to 16mb. more performance
-	improvements in cvs importer. cvs branch tags imported now.
-	minor UI improvements. new commands: SQL dump and load, vcheck
-	for enhanced collision detection, queue addtree for recursive
-	queueing. improved networking scalability. historical rename
-	certs and .mt-attrs file format changed to accomodate upcoming
-	i18n work.
+    0.8 release. row size increased to 16mb. more performance
+    improvements in cvs importer. cvs branch tags imported now.
+    minor UI improvements. new commands: SQL dump and load, vcheck
+    for enhanced collision detection, queue addtree for recursive
+    queueing. improved networking scalability. historical rename
+    certs and .mt-attrs file format changed to accomodate upcoming
+    i18n work.
 
 Sun Nov  2 23:38:09 EST 2003
 
-	0.7 release. many critical merge and patch set calculation
-	bugs fixed. groups merged with URLs, "monotone db migrate"
-	necessary. directory renames and explicit rename certs
-	supported. added SMTP support. incorporated adns library,
-	avoiding gethostbyname(). new queue commands.
+    0.7 release. many critical merge and patch set calculation
+    bugs fixed. groups merged with URLs, "monotone db migrate"
+    necessary. directory renames and explicit rename certs
+    supported. added SMTP support. incorporated adns library,
+    avoiding gethostbyname(). new queue commands.
 
 Sat Oct 18 22:10:09 EDT 2003
 
-	0.6 release. more stability and bug fixing, including fix to
-	some silent failures in LCA calculation. some minor new
-	features: persistent attributes (eg. 'the execute bit'),
-	rename and log commands. performance of cvs importer greatly
-	improved, lua system upgraded to 5.0, much expanded
-	documentation.
+    0.6 release. more stability and bug fixing, including fix to
+    some silent failures in LCA calculation. some minor new
+    features: persistent attributes (eg. 'the execute bit'),
+    rename and log commands. performance of cvs importer greatly
+    improved, lua system upgraded to 5.0, much expanded
+    documentation.
 
 Sat Sep 27 11:50:08 EDT 2003
 
-	0.5 release. stability and bug fixing. many UI issues
-	addressed, including SHA1 completion, persistent options, new
-	revert command and new diff modes. database migration,
-	inspection and debugging interfaces added. LCS algorithm and
-	line-merger overhauled. several multi-depot bugs
-	fixed. existing depot databases should be migrated (depot.cgi
-	migratedb).
+    0.5 release. stability and bug fixing. many UI issues
+    addressed, including SHA1 completion, persistent options, new
+    revert command and new diff modes. database migration,
+    inspection and debugging interfaces added. LCS algorithm and
+    line-merger overhauled. several multi-depot bugs
+    fixed. existing depot databases should be migrated (depot.cgi
+    migratedb).
 
 Thu Sep  4 15:40:07 EDT 2003
 
-	0.4 release. monotone is now self-hosting. database
-	compatibility broken since 0.3. depot uses RSA signatures now,
-	not mac keys. many bugs removed. depot database compatibility
-	broken. database schemas should now remain stable (or be
-	provided with safe schema-upgrading function).
+    0.4 release. monotone is now self-hosting. database
+    compatibility broken since 0.3. depot uses RSA signatures now,
+    not mac keys. many bugs removed. depot database compatibility
+    broken. database schemas should now remain stable (or be
+    provided with safe schema-upgrading function).
 
 Mon Aug 25 18:00:37 EDT 2003
 
-	0.3 release. database compatibility broken. packet format
-	compatibility broken. dropped boost sandbox library dependency.
-	redid networking to support private HTTP+CGI depots along with
-	netnews. wrote depot. added 'propagate' command to move changes
-	between branches asymmetrically. rewrote testsuite in autotest.
-	cleaned up command line processing. expanded testsuite. improved
-	user-friendly error reporting.
+    0.3 release. database compatibility broken. packet format
+    compatibility broken. dropped boost sandbox library dependency.
+    redid networking to support private HTTP+CGI depots along with
+    netnews. wrote depot. added 'propagate' command to move changes
+    between branches asymmetrically. rewrote testsuite in autotest.
+    cleaned up command line processing. expanded testsuite. improved
+    user-friendly error reporting.
 
 Fri Aug  8 10:20:01 EDT 2003
 
-	0.2 release. database compatibility broken. dropped many
-	library dependencies. hand-reimplemented xdelta, parts of
-	nana. incorporated subset of cryptopp and sqlite into
-	sources. added RCS and CVS importer. switched to piecewise
-	reconstruction. generally much more robust storage system.
-	scalability tests against real world CVS archives show
-	performance gap with CVS closing, but still present.
+    0.2 release. database compatibility broken. dropped many
+    library dependencies. hand-reimplemented xdelta, parts of
+    nana. incorporated subset of cryptopp and sqlite into
+    sources. added RCS and CVS importer. switched to piecewise
+    reconstruction. generally much more robust storage system.
+    scalability tests against real world CVS archives show
+    performance gap with CVS closing, but still present.
 
 Sun Apr 6 20:20:42 EDT 2003
 
-	initial release
+    initial release

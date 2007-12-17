@@ -1499,6 +1499,9 @@ namespace
     symbol const private_hash("private_hash");
     symbol const public_location("public_location");
     symbol const private_location("private_location");
+
+    symbol const domain("domain");
+    symbol const entry("entry");
   }
 };
 
@@ -1875,19 +1878,88 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   guard.commit();
 }
 
-// Name: db_set
+// Name: get_db_variables
+// Arguments:
+//   variable domain
+// Changes:
+//  4.1 (added as 'db_get')
+//  7.0 (changed to 'get_db_variables', output is now basic_io)
+// Purpose:
+//   Retrieves db variables, optionally filtered by DOMAIN
+// Output format:
+//   basic_io, see the mtn docs for details
+// Error conditions:
+//   none
+CMD_AUTOMATE(get_db_variables, N_("[DOMAIN]"),
+             N_("Retrieve database variables"),
+             "",
+             options::opts::none)
+{
+  N(args.size() < 2,
+    F("wrong argument count"));
+
+  bool filter_by_domain = false;
+  var_domain filter;
+  if (args.size() == 1)
+    {
+      filter_by_domain = true;
+      filter = var_domain(idx(args, 0)());
+    }
+
+  map<var_key, var_value> vars;
+  app.db.get_vars(vars);
+
+  var_domain cur_domain;
+  basic_io::stanza st;
+  basic_io::printer pr;
+  bool found_something = false;
+
+  for (map<var_key, var_value>::const_iterator i = vars.begin();
+       i != vars.end(); ++i)
+    {
+      if (filter_by_domain && !(i->first.first == filter))
+        continue;
+
+      found_something = true;
+
+      if (cur_domain != i->first.first)
+        {
+          // check if we need to print a previous stanza
+          if (st.entries.size() > 0)
+            {
+              pr.print_stanza(st);
+              st.entries.clear();
+            }
+          cur_domain = i->first.first;
+          st.push_str_pair(syms::domain, cur_domain());
+        }
+
+      st.push_str_triple(syms::entry, i->first.second(), i->second());
+    }
+
+    N(found_something,
+      F("No variables found or invalid domain specified"));
+
+    // print the last stanza
+    pr.print_stanza(st);
+    output.write(pr.buf.data(), pr.buf.size());
+}
+
+// Name: set_db_variable
 // Arguments:
 //   variable domain
 //   variable name
 //   veriable value
-// Added in: 4.1
+// Changes:
+//   4.1 (added as 'db_set')
+//   7.0 (renamed to 'set_db_variable')
 // Purpose:
 //   Set a database variable (like mtn database set)
 // Output format:
 //   nothing
 // Error conditions:
 //   none
-CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
+CMD_AUTOMATE(set_db_variable, N_("DOMAIN NAME VALUE"),
              N_("Sets a database variable"),
              "",
              options::opts::none)
@@ -1902,38 +1974,56 @@ CMD_AUTOMATE(db_set, N_("DOMAIN NAME VALUE"),
   app.db.set_var(key, var_value(value()));
 }
 
-// Name: db_get
+// Name: drop_db_variables
 // Arguments:
 //   variable domain
 //   variable name
-// Added in: 4.1
+// Changes:
+//  7.0 (added)
 // Purpose:
-//   Get a database variable (like mtn database ls vars | grep NAME)
+//   Drops a database variable (like mtn unset DOMAIN NAME) or all variables
+//   within a domain
 // Output format:
-//   variable value
+//   none
 // Error conditions:
-//   a runtime exception is thrown if the variable is not set
-CMD_AUTOMATE(db_get, N_("DOMAIN NAME"),
-             N_("Gets a database variable"),
+//   a runtime exception is thrown if the variable was not found
+CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
+             N_("Drops a database variable"),
              "",
              options::opts::none)
 {
-  N(args.size() == 2,
+  N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
-  var_domain domain = var_domain(idx(args, 0)());
-  utf8 name = idx(args, 1);
-  var_key key(domain, var_name(name()));
-  var_value value;
-  try
+  var_domain domain(idx(args, 0)());
+
+  if (args.size() == 2)
     {
-      app.db.get_var(key, value);
+      var_name name(idx(args, 1)());
+      var_key  key(domain, name);
+      N(app.db.var_exists(key),
+        F("no var with name %s in domain %s") % name % domain);
+      app.db.clear_var(key);
     }
-  catch (std::logic_error)
+  else
     {
-      N(false, F("variable not found"));
+      map<var_key, var_value> vars;
+      app.db.get_vars(vars);
+      bool found_something = false;
+
+      for (map<var_key, var_value>::const_iterator i = vars.begin();
+           i != vars.end(); ++i)
+        {
+          if (i->first.first == domain)
+            {
+              found_something = true;
+              app.db.clear_var(i->first);
+            }
+        }
+
+      N(found_something,
+        F("no variables found in domain %s") % domain);
     }
-  output << value();
 }
 
 // Local Variables:
