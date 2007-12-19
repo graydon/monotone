@@ -478,7 +478,7 @@ prepare_diff(cset & included,
     revheader = header.str();
 }
 
-CMD(diff, "diff", "", CMD_REF(informative), N_("[PATH]..."),
+CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
     N_("Shows current differences"),
     N_("Compares the current tree with the files in the repository and "
        "prints the differences on the standard output.\n"

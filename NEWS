@@ -4,6 +4,8 @@
 
         Changes
 
+        - 'mtn di' is now an alias for 'mtn diff'.
+
         - 'automate db_set' has been renamed to 'automate set_db_variable'.
 
         - 'automate db_get' has been replaced by 'automate get_db_variables'
