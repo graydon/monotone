@@ -192,57 +192,52 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
       left_root = left_roster.root()->self;
       right_root = right_roster.root()->self;
 
+      // these must be different for this conflict to happen
+      I(left_root != right_root);
+
+      shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
+      revision_id left_lca_rid, right_lca_rid;
+      file_path left_lca_name, right_lca_name;
+
+      adaptor.get_ancestral_roster(left_root, left_lca_rid,
+                                   left_lca_roster);
+      adaptor.get_ancestral_roster(right_root, right_lca_rid,
+                                   right_lca_roster);
+
+      left_lca_roster->get_name(left_root, left_lca_name);
+      right_lca_roster->get_name(right_root, right_lca_name);
+
+      node_id left_lca_root = left_lca_roster->root()->self;
+      node_id right_lca_root = right_lca_roster->root()->self;
+
       P(F("conflict: missing root directory"));
 
-      if (left_roster.has_node(right_root) &&
-          !right_roster.has_node(left_root))
+      if (left_root != left_lca_root && right_root == right_lca_root)
         {
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
-
-          adaptor.get_ancestral_roster(left_root, lca_rid, lca_roster);
-          lca_roster->get_name(left_root, lca_name);
-
-          P(F("directory '%s' pivoted to root on the left") % lca_name);
-          P(F("directory '%s' deleted on the right") % lca_name);
-        }
-      else if (!left_roster.has_node(right_root) &&
-               right_roster.has_node(left_root))
-        {
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
-
-          adaptor.get_ancestral_roster(right_root, lca_rid, lca_roster);
-          lca_roster->get_name(right_root, lca_name);
-
-          P(F("directory '%s' pivoted to root on the right") % lca_name);
-          P(F("directory '%s' deleted on the left") % lca_name);
-        }
-      else if (!left_roster.has_node(right_root) &&
-               !right_roster.has_node(left_root))
-        {
-          shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
-          revision_id left_lca_rid, right_lca_rid;
-          file_path left_lca_name, right_lca_name;
-
-          adaptor.get_ancestral_roster(left_root, left_lca_rid,
-                                       left_lca_roster);
-          adaptor.get_ancestral_roster(right_root, right_lca_rid,
-                                       right_lca_roster);
-
-          left_lca_roster->get_name(left_root, left_lca_name);
-          right_lca_roster->get_name(right_root, right_lca_name);
-
           P(F("directory '%s' pivoted to root on the left") % left_lca_name);
-          P(F("directory '%s' deleted on the right") % left_lca_name);
-
-          P(F("directory '%s' deleted on the left") % right_lca_name);
+          if (!right_roster.has_node(left_root))
+            P(F("directory '%s' deleted on the right") % left_lca_name);
+        }
+      else if (left_root == left_lca_root && right_root != right_lca_root)
+        {
+          if (!left_roster.has_node(right_root))
+            P(F("directory '%s' deleted on the left") % right_lca_name);
           P(F("directory '%s' pivoted to root on the right") % right_lca_name);
         }
-      else
-        I(false);
+      else if (left_root != left_lca_root && right_root != right_lca_root)
+        {
+          P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+          if (!right_roster.has_node(left_root))
+            P(F("directory '%s' deleted on the right") % left_lca_name);
+
+          if (!left_roster.has_node(right_root))
+            P(F("directory '%s' deleted on the left") % right_lca_name);
+          P(F("directory '%s' pivoted to root on the right") % right_lca_name);
+        }
+      // else
+      // other conflicts can cause the root dir to be left detached
+      // for example, merging two independently created projects
+      // in these cases don't report anything about pivot_root
     }
 }
 
@@ -402,11 +397,6 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
           file_path orphan_name, parent_name;
           left_roster.get_name(conflict.nid, orphan_name);
           left_roster.get_name(conflict.parent_name.first, parent_name);
-
-          // FIXME: we get '' for the root directory here
-          // also something else is not right in the missing root directory
-          // case when both sides have pivoted something to the root
-          // and deleted the other's new root
 
           P(F("parent directory '%s' was deleted on the right")
             % parent_name);
