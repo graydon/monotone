@@ -12,6 +12,7 @@
 
 #include <stdexcept>
 #include <ostream>
+#include <vector>
 
 #include "boost/current_function.hpp"
 
@@ -149,7 +150,7 @@ plain_format
   {}
 };
 
-template<typename T> inline plain_format const & 
+template<typename T> inline plain_format const &
 operator %(plain_format const & f, T const & t)
 {
   f.get_stream() << t;
@@ -157,7 +158,7 @@ operator %(plain_format const & f, T const & t)
   return f;
 }
 
-template<typename T> inline plain_format const & 
+template<typename T> inline plain_format const &
 operator %(const plain_format & f, T & t)
 {
   f.get_stream() << t;
@@ -165,7 +166,7 @@ operator %(const plain_format & f, T & t)
   return f;
 }
 
-template<typename T> inline plain_format & 
+template<typename T> inline plain_format &
 operator %(plain_format & f, T const & t)
 {
   f.get_stream() << t;
@@ -173,7 +174,7 @@ operator %(plain_format & f, T const & t)
   return f;
 }
 
-template<typename T> inline plain_format & 
+template<typename T> inline plain_format &
 operator %(plain_format & f, T & t)
 {
   f.get_stream() << t;
@@ -219,13 +220,13 @@ i18n_format
   explicit i18n_format(const char * localized_pattern)
     : format_base(localized_pattern, true)
   {}
-  
+
   explicit i18n_format(std::string const & localized_pattern)
     : format_base(localized_pattern, true)
   {}
 };
 
-template<typename T> inline i18n_format const & 
+template<typename T> inline i18n_format const &
 operator %(i18n_format const & f, T const & t)
 {
   f.get_stream() << t;
@@ -233,7 +234,7 @@ operator %(i18n_format const & f, T const & t)
   return f;
 }
 
-template<typename T> inline i18n_format const & 
+template<typename T> inline i18n_format const &
 operator %(i18n_format const & f, T & t)
 {
   f.get_stream() << t;
@@ -241,7 +242,7 @@ operator %(i18n_format const & f, T & t)
   return f;
 }
 
-template<typename T> inline i18n_format & 
+template<typename T> inline i18n_format &
 operator %(i18n_format & f, T const & t)
 {
   f.get_stream() << t;
@@ -249,7 +250,7 @@ operator %(i18n_format & f, T const & t)
   return f;
 }
 
-template<typename T> inline i18n_format & 
+template<typename T> inline i18n_format &
 operator %(i18n_format & f, T & t)
 {
   f.get_stream() << t;
@@ -435,10 +436,22 @@ void dump(T const &, std::string &);
 
 template <> void dump(std::string const & obj, std::string & out);
 
+template <typename T> void
+dump(std::vector<T> const & vec, std::string & out)
+{
+  for (size_t i = 0; i < vec.size(); ++i)
+    {
+      T const & val = vec[i];
+      std::string msg;
+      dump(val, msg);
+      out += msg;
+    }
+};
+
 // debugging utility to dump out vars like MM but without requiring a crash
 
 extern void print_var(std::string const & value,
-                      std::string const & var,
+                      char const * var,
                       char const * file,
                       int const line,
                       char const * func);

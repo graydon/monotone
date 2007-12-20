@@ -307,7 +307,7 @@ CMD(clone, "clone", "", CMD_REF(network),
       P(F("setting default branch include pattern to '%s'") % include_pattern);
       app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
     }
-  
+
   if (app.opts.exclude_given)
     {
       if (!app.db.var_exists(default_exclude_pattern_key)
@@ -317,10 +317,10 @@ CMD(clone, "clone", "", CMD_REF(network),
           app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
-  
+
   // make sure we're back in the original dir so that file: URIs work
   change_current_working_dir(start_dir);
-  
+
   std::list<utf8> uris;
   uris.push_back(addr);
 
@@ -380,10 +380,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  map<file_id, file_path> paths;
-  get_content_paths(*empty_roster, paths);
-
-  content_merge_workspace_adaptor wca(app, empty_roster, paths);
+  content_merge_checkout_adaptor wca(app);
 
   app.work.perform_content_update(checkout, wca, false);
 

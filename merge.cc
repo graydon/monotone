@@ -27,15 +27,100 @@ using std::vector;
 
 using boost::shared_ptr;
 
-static void
-get_file_details(roster_t const & ros, node_id nid,
-                 file_id & fid,
-                 file_path & pth)
+namespace
 {
-  I(ros.has_node(nid));
-  file_t f = downcast_to_file_t(ros.get_node(nid));
-  fid = f->content;
-  ros.get_name(nid, pth);
+  enum merge_method { auto_merge, user_merge };
+
+  void
+  get_file_details(roster_t const & ros, node_id nid,
+                   file_id & fid,
+                   file_path & pth)
+  {
+    I(ros.has_node(nid));
+    file_t f = downcast_to_file_t(ros.get_node(nid));
+    fid = f->content;
+    ros.get_name(nid, pth);
+  }
+
+  void
+  try_to_merge_files(app_state & app,
+                     roster_t const & left_roster, roster_t const & right_roster,
+                     roster_merge_result & result, content_merge_adaptor & adaptor,
+                     merge_method const method)
+  {
+    size_t cnt;
+    size_t total_conflicts = result.file_content_conflicts.size();
+    std::vector<file_content_conflict>::iterator it;
+
+    for (cnt = 1, it = result.file_content_conflicts.begin();
+         it != result.file_content_conflicts.end(); ++cnt)
+      {
+        file_content_conflict const & conflict = *it;
+
+        MM(conflict);
+
+        revision_id rid;
+        shared_ptr<roster_t const> roster_for_file_lca;
+        adaptor.get_ancestral_roster(conflict.nid, rid, roster_for_file_lca);
+
+        // Now we should certainly have a roster, which has the node.
+        I(roster_for_file_lca);
+        I(roster_for_file_lca->has_node(conflict.nid));
+
+        file_id anc_id, left_id, right_id;
+        file_path anc_path, left_path, right_path;
+        get_file_details(*roster_for_file_lca, conflict.nid, anc_id, anc_path);
+        get_file_details(left_roster, conflict.nid, left_id, left_path);
+        get_file_details(right_roster, conflict.nid, right_id, right_path);
+
+        file_id merged_id;
+
+        content_merger cm(app, *roster_for_file_lca,
+                          left_roster, right_roster,
+                          adaptor);
+
+        bool merged = false;
+
+        switch (method)
+          {
+          case auto_merge:
+            merged = cm.try_auto_merge(anc_path, left_path, right_path,
+                                       right_path, anc_id, left_id, right_id,
+                                       merged_id);
+            break;
+
+          case user_merge:
+            merged = cm.try_user_merge(anc_path, left_path, right_path,
+                                       right_path, anc_id, left_id, right_id,
+                                       merged_id);
+
+            // If the user merge has failed, there's no point
+            // trying to continue -- we'll only frustrate users by
+            // encouraging them to continue working with their merge
+            // tool on a merge that is now destined to fail.
+            if (!merged)
+              return;
+
+            break;
+          }
+
+        if (merged)
+          {
+            L(FL("resolved content conflict %d / %d on file '%s'")
+              % cnt % total_conflicts % right_path);
+            file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
+            f->content = merged_id;
+
+            it = result.file_content_conflicts.erase(it);
+          }
+        else
+          {
+            ++it;
+          }
+      }
+  }
+
+
 }
 
 void
@@ -53,70 +138,39 @@ resolve_merge_conflicts(roster_t const & left_roster,
   if (!result.is_clean())
     result.log_conflicts();
 
-  if (!result.is_clean_except_for_content())
+
+  if (result.has_non_content_conflicts())
     {
-      result.warn_non_content_conflicts();
-      W(F("resolve non-content conflicts and then try again."));
+      result.report_missing_root_conflicts(left_roster, right_roster, adaptor);
+      result.report_invalid_name_conflicts(left_roster, right_roster, adaptor);
+      result.report_directory_loop_conflicts(left_roster, right_roster, adaptor);
+
+      result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor);
+      result.report_multiple_name_conflicts(left_roster, right_roster, adaptor);
+      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor);
+
+      result.report_attribute_conflicts(left_roster, right_roster, adaptor);
+      result.report_file_content_conflicts(left_roster, right_roster, adaptor);
     }
-  else
+  else if (result.has_content_conflicts())
     {
       // Attempt to auto-resolve any content conflicts using the line-merger.
       // To do this requires finding a merge ancestor.
-      if (!result.file_content_conflicts.empty())
+
+      L(FL("examining content conflicts"));
+
+      try_to_merge_files(app, left_roster, right_roster,
+                         result, adaptor, auto_merge);
+
+      size_t remaining = result.file_content_conflicts.size();
+      if (remaining > 0)
         {
-
-          L(FL("examining content conflicts"));
-
-          size_t cnt;
-          size_t total_conflicts = result.file_content_conflicts.size();
-          std::vector<file_content_conflict>::iterator it;
-
-          for (cnt = 1, it = result.file_content_conflicts.begin();
-               it != result.file_content_conflicts.end(); ++cnt)
-            {
-              file_content_conflict const & conflict = *it;
-
-              shared_ptr<roster_t const> roster_for_file_lca;
-              adaptor.get_ancestral_roster(conflict.nid, roster_for_file_lca);
-
-              // Now we should certainly have a roster, which has the node.
-              I(roster_for_file_lca);
-              I(roster_for_file_lca->has_node(conflict.nid));
-
-              file_id anc_id, left_id, right_id;
-              file_path anc_path, left_path, right_path;
-              get_file_details (*roster_for_file_lca, conflict.nid, anc_id, anc_path);
-              get_file_details (left_roster, conflict.nid, left_id, left_path);
-              get_file_details (right_roster, conflict.nid, right_id, right_path);
-
-              file_id merged_id;
-
-              content_merger cm(app, *roster_for_file_lca,
-                                left_roster, right_roster,
-                                adaptor);
-
-              if (cm.try_to_merge_files(anc_path, left_path, right_path, right_path,
-                                        anc_id, left_id, right_id, merged_id))
-                {
-                  L(FL("resolved content conflict %d / %d")
-                    % cnt % total_conflicts);
-                  file_t f = downcast_to_file_t(result.roster.get_node(conflict.nid));
-                  f->content = merged_id;
-
-                  it = result.file_content_conflicts.erase(it);
-                }
-              else
-                {
-                  ++it;
-
-                  // If the content_merger has failed, there's no point
-                  // trying to continue--we'll only frustrate users by
-                  // encouraging them to continue working with their merge
-                  // tool on a merge that is now destined to fail.
-                  break;
-                }
-            }
+          P(F("%d content conflicts require user intervention") % remaining);
+          result.report_file_content_conflicts(left_roster, right_roster, adaptor);
         }
+
+      try_to_merge_files(app, left_roster, right_roster,
+                         result, adaptor, user_merge);
     }
 
   E(result.is_clean(),
@@ -152,9 +206,10 @@ interactive_merge_and_store(revision_id const & left_rid,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
-  content_merge_database_adaptor dba(app, left_rid, right_rid, left_marking_map);
-  resolve_merge_conflicts (left_roster, right_roster,
-                           result, dba, app);
+  content_merge_database_adaptor dba(app, left_rid, right_rid,
+                                     left_marking_map, right_marking_map);
+  resolve_merge_conflicts(left_roster, right_roster,
+                          result, dba, app);
 
   // write new files into the db
   store_roster_merge_result(left_roster, right_roster, result,
