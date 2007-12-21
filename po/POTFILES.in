@@ -70,6 +70,7 @@ restrictions.cc
 revision.cc
 revision.hh
 roster.cc
+roster_merge.cc
 sanity.cc
 sanity.hh
 selectors.cc

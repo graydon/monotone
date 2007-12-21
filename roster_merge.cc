@@ -161,10 +161,9 @@ roster_merge_result::log_conflicts() const
 
 namespace
 {
-  string file_type("file");
-  string dir_type("directory");
+  enum node_type { file_type, dir_type };
 
-  string const &
+  node_type
   get_type(roster_t const & roster, node_id const nid)
   {
     node_t n = roster.get_node(nid);
@@ -386,10 +385,14 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
 
       lca_roster->get_name(conflict.nid, lca_name);
 
-      string const & type = get_type(*lca_roster, conflict.nid);
+      node_type type = get_type(*lca_roster, conflict.nid);
 
-      P(F("conflict: orphaned %s '%s' from revision %s")
-        % type % lca_name % lca_rid);
+      if (type == file_type)
+        P(F("conflict: orphaned file '%s' from revision %s")
+          % lca_name % lca_rid);
+      else
+        P(F("conflict: orphaned directory '%s' from revision %s")
+          % lca_name % lca_rid);
 
       if (left_roster.has_node(conflict.parent_name.first) &&
           !right_roster.has_node(conflict.parent_name.first))
@@ -402,11 +405,24 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
             % parent_name);
 
           if (parent_lca_roster->has_node(conflict.nid))
-            P(F("%s '%s' was renamed from '%s' on the left")
-              % type % orphan_name % lca_name);
+            {
+              if (type == file_type)
+                P(F("file '%s' was renamed from '%s' on the left")
+                  % orphan_name % lca_name);
+              else
+                P(F("directory '%s' was renamed from '%s' on the left")
+                  % orphan_name % lca_name);
+            }
           else
-            P(F("%s '%s' was added on the left")
-              % type % orphan_name);
+            {
+              if (type == file_type)
+                P(F("file '%s' was added on the left")
+                  % orphan_name);
+              else
+                P(F("directory '%s' was added on the left")
+                  % orphan_name);
+
+            }
         }
       else if (!left_roster.has_node(conflict.parent_name.first) &&
                right_roster.has_node(conflict.parent_name.first))
@@ -419,11 +435,23 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
             % parent_name);
 
           if (parent_lca_roster->has_node(conflict.nid))
-            P(F("%s '%s' was renamed from '%s' on the right")
-              % type % orphan_name % lca_name);
+            {
+              if (type == file_type)
+                P(F("file '%s' was renamed from '%s' on the right")
+                  % orphan_name % lca_name);
+              else
+                P(F("directory '%s' was renamed from '%s' on the right")
+                  % orphan_name % lca_name);
+            }
           else
-            P(F("%s '%s' was added on the right")
-              % type % orphan_name);
+            {
+              if (type == file_type)
+                P(F("file '%s' was added on the right")
+                  % orphan_name);
+              else
+                P(F("directory '%s' was added on the right")
+                  % orphan_name);
+            }
         }
       else
         I(false);
@@ -457,8 +485,15 @@ roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster
       adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
       lca_roster->get_name(conflict.nid, lca_name);
 
-      P(F("conflict: multiple names for %s '%s' from revision %s")
-        % get_type(*lca_roster, conflict.nid) % lca_name % lca_rid);
+      node_type type = get_type(*lca_roster, conflict.nid);
+
+      if (type == file_type)
+        P(F("conflict: multiple names for file '%s' from revision %s")
+          % lca_name % lca_rid);
+      else
+        P(F("conflict: multiple names for directory '%s' from revision %s")
+          % lca_name % lca_rid);
+
       P(F("renamed to '%s' on the left") % left_name);
       P(F("renamed to '%s' on the right") % right_name);
     }
@@ -500,23 +535,37 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
 
       P(F("conflict: duplicate name '%s'") % left_name);
 
-      string const & left_type = get_type(left_roster, left_nid);
-      string const & right_type = get_type(right_roster, right_nid);
+      node_type left_type  = get_type(left_roster, left_nid);
+      node_type right_type = get_type(right_roster, right_nid);
 
       if (!left_lca_roster->has_node(right_nid) &&
           !right_lca_roster->has_node(left_nid))
         {
-          P(F("added as a new %s on the left") % left_type);
-          P(F("added as a new %s on the right") % right_type);
-        }
+          if (left_type == file_type)
+            P(F("added as a new file on the left"));
+          else
+            P(F("added as a new directory on the left"));
+
+          if (right_type == file_type)
+            P(F("added as a new file on the right"));
+          else
+            P(F("added as a new directory on the right"));
+         }
       else if (!left_lca_roster->has_node(right_nid) &&
                right_lca_roster->has_node(left_nid))
         {
           file_path left_lca_name;
           left_lca_roster->get_name(left_nid, left_lca_name);
 
-          P(F("renamed from %s '%s' on the left") % left_type % left_lca_name);
-          P(F("added as a new %s on the right") % right_type);
+          if (left_type == file_type)
+            P(F("renamed from file '%s' on the left") % left_lca_name);
+          else
+            P(F("renamed from directory '%s' on the left") % left_lca_name);
+
+          if (right_type == file_type)
+            P(F("added as a new file on the right"));
+          else
+            P(F("added as a new directory on the right"));
         }
       else if (left_lca_roster->has_node(right_nid) &&
                !right_lca_roster->has_node(left_nid))
@@ -524,8 +573,15 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           file_path right_lca_name;
           right_lca_roster->get_name(right_nid, right_lca_name);
 
-          P(F("added as a new %s on the left") % left_type);
-          P(F("renamed from %s '%s' on the right") % right_type % right_lca_name);
+          if (left_type == file_type)
+            P(F("added as a new file on the left"));
+          else
+            P(F("added as a new directory on the left"));
+
+          if (right_type == file_type)
+            P(F("renamed from file '%s' on the right") % right_lca_name);
+          else
+            P(F("renamed from directory '%s' on the right") % right_lca_name);
         }
       else if (left_lca_roster->has_node(right_nid) &&
                right_lca_roster->has_node(left_nid))
@@ -534,8 +590,15 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           left_lca_roster->get_name(left_nid, left_lca_name);
           right_lca_roster->get_name(right_nid, right_lca_name);
 
-          P(F("renamed from %s '%s' on the left") % left_type % left_lca_name);
-          P(F("renamed from %s '%s' on the right")% right_type % right_lca_name);
+          if (left_type == file_type)
+            P(F("renamed from file '%s' on the left") % left_lca_name);
+          else
+            P(F("renamed from directory '%s' on the left") % left_lca_name);
+
+          if (right_type == file_type)
+            P(F("renamed from file '%s' on the right") % right_lca_name);
+          else
+            P(F("renamed from directory '%s' on the right") % right_lca_name);
         }
       else
         I(false);
@@ -555,15 +618,19 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
       attribute_conflict const & conflict = attribute_conflicts[i];
       MM(conflict);
 
-      string const & type = get_type(roster, conflict.nid);
+      node_type type = get_type(roster, conflict.nid);
 
       if (roster.is_attached(conflict.nid))
         {
           file_path name;
           roster.get_name(conflict.nid, name);
 
-          P(F("conflict: multiple values for attribute '%s' on %s '%s'")
-            % conflict.key % type % name);
+          if (type == file_type)
+            P(F("conflict: multiple values for attribute '%s' on file '%s'")
+              % conflict.key % name);
+          else
+            P(F("conflict: multiple values for attribute '%s' on directory '%s'")
+              % conflict.key % name);
 
           if (conflict.left.first)
             P(F("set to '%s' on the left") % conflict.left.second);
@@ -592,22 +659,50 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
           adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
           lca_roster->get_name(conflict.nid, lca_name);
 
-          P(F("conflict: multiple values for attribute '%s' on %s '%s' from revision %s")
-            % conflict.key % type % lca_name % lca_rid);
+          if (type == file_type)
+            P(F("conflict: multiple values for attribute '%s' on file '%s' from revision %s")
+              % conflict.key % lca_name % lca_rid);
+          else
+            P(F("conflict: multiple values for attribute '%s' on directory '%s' from revision %s")
+              % conflict.key % lca_name % lca_rid);
 
           if (conflict.left.first)
-            P(F("set to '%s' on left %s '%s'")
-              % conflict.left.second % type % left_name);
+            {
+              if (type == file_type)
+                P(F("set to '%s' on left file '%s'")
+                  % conflict.left.second % left_name);
+              else
+                P(F("set to '%s' on left directory '%s'")
+                  % conflict.left.second % left_name);
+            }
           else
-            P(F("deleted from left %s '%s'")
-              % type % left_name);
+            {
+              if (type == file_type)
+                P(F("deleted from left file '%s'")
+                  % left_name);
+              else
+                P(F("deleted from left directory '%s'")
+                  % left_name);
+            }
 
           if (conflict.right.first)
-            P(F("set to '%s' on right %s '%s'")
-              % conflict.right.second % type % right_name);
+            {
+              if (type == file_type)
+                P(F("set to '%s' on right file '%s'")
+                  % conflict.right.second % right_name);
+              else
+                P(F("set to '%s' on right directory '%s'")
+                  % conflict.right.second % right_name);
+            }
           else
-            P(F("deleted from right %s '%s'")
-              % type % right_name);
+            {
+              if (type == file_type)
+                P(F("deleted from right file '%s'")
+                  % right_name);
+              else
+                P(F("deleted from right directory '%s'")
+                  % right_name);
+            }
         }
     }
 }
@@ -782,12 +877,12 @@ namespace
                   {
                     file_path fp;
                     parent_roster.get_name(n->self, fp);
-                    W(F("Content changes to the file \"%s\"") % fp);
-                    W(F("will be ignored during this merge as the file has been"));
-                    W(F("removed on one side of the merge.  Affected revisions include:"));
+                    W(F("Content changes to the file '%s'\n"
+                        "will be ignored during this merge as the file has been\n"
+                        "removed on one side of the merge.  Affected revisions include:") % fp);
                   }
                 found_one_ignored_content = true;
-                W(F("Revision : %s") % *it);
+                W(F("Revision: %s") % *it);
               }
           }
       }
