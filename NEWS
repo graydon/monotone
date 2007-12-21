@@ -12,6 +12,13 @@
           which returns all database variables similar to 'list vars' in
           basic_io format, optionally restricted by domain.
 
+        - messages describing conflicts from all of the various merge commands
+          have been reworked and should be much more informative.
+
+        - mtn show_conflicts now outputs much more detailed and descriptive
+          messages, however it may report content conflicts that will be
+          resolved automatically by the line merger.
+
         New features
 
         - 'automate drop_db_variables' which drops one database variable
