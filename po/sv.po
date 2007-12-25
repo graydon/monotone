@@ -149,7 +149,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-12-25 08:14+0100\n"
-"PO-Revision-Date: 2007-12-25 08:48+0100\n"
+"PO-Revision-Date: 2007-12-25 10:11+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -4794,7 +4794,7 @@ msgstr "borttagen på vänstersidan"
 #: roster_merge.cc:641
 #, c-format
 msgid "set to '%s' on the right"
-msgstr "borttagen på högersidan"
+msgstr "satt till '%s' på högersidan"
 
 #: roster_merge.cc:643
 #, c-format
