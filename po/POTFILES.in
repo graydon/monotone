@@ -55,6 +55,7 @@ netcmd.hh
 netio.hh
 netsync.cc
 numeric_vocab.hh
+option.cc
 options_list.hh
 packet.cc
 packet.hh
