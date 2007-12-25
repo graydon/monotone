@@ -178,7 +178,7 @@ Netxx::PipeStream::PipeStream (const string & cmd,
   // pipes and overlapped i/o. There is no other way, alas.
 
   static unsigned long serial = 0;
-  string pipename = (F("\\\\.\\pipe\\netxx_pipe_%ld_%d")
+  string pipename = (FL("\\\\.\\pipe\\netxx_pipe_%ld_%d")
                           % GetCurrentProcessId()
                           % (++serial)).str();
 
