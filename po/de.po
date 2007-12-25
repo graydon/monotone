@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-21 14:48+0100\n"
+"POT-Creation-Date: 2007-12-25 03:11+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -3971,6 +3971,41 @@ msgstr ""
 #, c-format
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
+
+#: option.cc:17
+#, c-format
+msgid "option error: %s"
+msgstr "Optionen-Fehler: %s"
+
+#: option.cc:21
+#, c-format
+msgid "unknown option '%s'"
+msgstr "unbekannte Option '%s'"
+
+#: option.cc:25
+#, c-format
+msgid "missing argument to option '%s'"
+msgstr "fehlendes Argument zu Option '%s'"
+
+#: option.cc:29
+#, c-format
+msgid "option '%s' does not take an argument"
+msgstr "Option '%s' hat kein Argument"
+
+#: option.cc:33
+#, c-format
+msgid "bad argument '%s' to option '%s'"
+msgstr "falsches Argument '%s' zu Option '%s'"
+
+#: option.cc:39
+#, c-format
+msgid "bad argument '%s' to option '%s': %s"
+msgstr "falsches Argument '%s' zu Option '%s': %s"
+
+#: option.cc:209
+#, c-format
+msgid "Invalid escape in --xargs file"
+msgstr "Ungültige Escape-Sequenz in --xargs-Datei"
 
 #: options_list.hh:19
 msgid "override author for commit"
