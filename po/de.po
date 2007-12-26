@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-25 03:11+0100\n"
+"POT-Creation-Date: 2007-12-26 00:26+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -486,6 +486,26 @@ msgid ""
 msgstr ""
 "mehrere Zweigzertifikate für Revision %s gefunden, bitte geben Sie einen "
 "Zweignamen an"
+
+#: charset.cc:56
+#, c-format
+msgid "failed to convert string from %s to %s: '%s'"
+msgstr "konnte Zeichenkette nicht von %s nach %s konvertieren: '%s'"
+
+#: charset.cc:317 charset.cc:331
+#, c-format
+msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
+msgstr "Fehler bei der Konvertierung von %d UTF-8-Bytes nach IDNA ACE: %s"
+
+#: cmd.hh:140
+#, c-format
+msgid "ignored bookkeeping path '%s'"
+msgstr "ignoriere monotone-Systempfad '%s'"
+
+#: cmd.hh:150
+#, c-format
+msgid "all arguments given were bookkeeping paths; aborting"
+msgstr "alle übergebenen Parameter waren monotone-Systempfade; breche ab"
 
 #: cmd_automate.cc:32
 msgid "Interface for scripted execution"
@@ -1006,16 +1026,6 @@ msgstr "Gibt die Inhalte einer Datei aus (anhand einer gegebenen ID)"
 #: cmd_files.cc:349
 msgid "Prints the contents of a file (given a name)"
 msgstr "Gibt die Inhalte einer Datei aus (anhand eines gegebenen Namens)"
-
-#: cmd.hh:140
-#, c-format
-msgid "ignored bookkeeping path '%s'"
-msgstr "ignoriere monotone-Systempfad '%s'"
-
-#: cmd.hh:150
-#, c-format
-msgid "all arguments given were bookkeeping paths; aborting"
-msgstr "alle übergebenen Parameter waren monotone-Systempfade; breche ab"
 
 #: cmd_key_cert.cc:34 cmd_key_cert.cc:62 cmd_key_cert.cc:104
 msgid "KEYID"
@@ -2623,6 +2633,245 @@ msgstr ""
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message und --message-file können nicht zusammen verwendet werden"
 
+#: database.cc:155
+#, c-format
+msgid "this database already contains rosters"
+msgstr "diese Datenbank enthält bereits Kataloge"
+
+#: database.cc:180
+#, c-format
+msgid ""
+"database %s lacks some cached data\n"
+"run '%s db regenerate_caches' to restore use of this database"
+msgstr ""
+"Der Datenbank %s fehlen einige Cache-Daten.\n"
+"Führen Sie '%s db regenerate_caches' aus, um diese Datenbank wieder "
+"benutzbar zu machen."
+
+#: database.cc:192
+#, c-format
+msgid ""
+"database %s contains old-style revisions\n"
+"if you are a project leader or doing local testing:\n"
+"  see the file UPGRADE for instructions on upgrading.\n"
+"if you are not a project leader:\n"
+"  wait for a leader to migrate project data, and then\n"
+"  pull into a fresh database.\n"
+"sorry about the inconvenience."
+msgstr ""
+"Datenbank %s beinhaltet ein altes Revisionsformat.\n"
+"Wenn Sie der Projektleiter sind oder lokale Tests durchführen:\n"
+"  Die Datei UPGRADE beinhaltet Anweisungen zum Upgrade.\n"
+"Wenn Sie nicht der Projektleiter sind:\n"
+"  Warten Sie bitte, bis ein Projektleiter die Projektdaten migriert hat\n"
+"  und holen Sie sich dann eine aktualisierte Kopie.\n"
+"Wir bitten die Unannehmlichkeiten zu entschuldigen."
+
+#: database.cc:202
+#, c-format
+msgid ""
+"database %s contains manifests but no revisions\n"
+"this is a very old database; it needs to be upgraded\n"
+"please see README.changesets for details"
+msgstr ""
+"Datenbank %s beinhaltet Manifeste, aber keine Revisionen\n"
+"Dies ist eine sehr alte Datenbank, die erneuert werden muss.\n"
+"Bitte konsultieren Sie die Datei README.changesets für Details."
+
+#: database.cc:492 sanity.cc:294 schema_migration.cc:62
+msgid "error: "
+msgstr "Fehler: "
+
+#: database.cc:493
+msgid "sqlite error: "
+msgstr "SQLite-Fehler: "
+
+#: database.cc:517
+msgid "not set"
+msgstr "nicht gesetzt"
+
+#: database.cc:530
+msgid " (not a monotone database)"
+msgstr " (keine monotone-Datenbank)"
+
+#: database.cc:578 database.cc:609 database.cc:1068 database.cc:1088
+#, c-format
+msgid "%u"
+msgstr "%u"
+
+#: database.cc:628
+#, c-format
+msgid ""
+"creator code      : %s\n"
+"schema version    : %s\n"
+"counts:\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  ancestry edges  : %s\n"
+"  certs           : %s\n"
+"  logical files   : %s\n"
+"bytes:\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  cached ancestry : %s\n"
+"  certs           : %s\n"
+"  heights         : %s\n"
+"  total           : %s\n"
+"database:\n"
+"  page size       : %s\n"
+"  cache size      : %s"
+msgstr ""
+"DB-Identifikation      : %s\n"
+"Schema-Version         : %s\n"
+"Zahlen:\n"
+"  komplette Kataloge   : %s\n"
+"  Katalog-Deltas       : %s\n"
+"  komplette Dateien    : %s\n"
+"  Datei-Deltas         : %s\n"
+"  Revisionen           : %s\n"
+"  Kanten in Abstammung : %s\n"
+"  Zertifikate          : %s\n"
+"  Logische Dateien     : %s\n"
+"Speicherplatz:\n"
+"  komplette Kataloge   : %s\n"
+"  Katalog-Deltas       : %s\n"
+"  komplette Dateien    : %s\n"
+"  Datei-Deltas         : %s\n"
+"  Revisionen           : %s\n"
+"  gecachte Abstammung  : %s\n"
+"  Zertifikate          : %s\n"
+"  Höhenangaben         : %s\n"
+"  Gesamt               : %s\n"
+"Datenbank:\n"
+"  Seitengröße          : %s\n"
+"  Cache-Größe          : %s"
+
+#: database.cc:673
+#, c-format
+msgid "database schema version: %s"
+msgstr "Datenbank Schema-Version: %s"
+
+#: database.cc:758
+#, c-format
+msgid "multiple statements in query: %s"
+msgstr "mehrere Angaben in Anfrage: %s"
+
+#: database.cc:764
+#, c-format
+msgid "wanted %d columns got %d in query: %s"
+msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s"
+
+#: database.cc:830
+#, c-format
+msgid "null result in query: %s"
+msgstr "Null-Ergebnis in Anfrage: %s"
+
+#: database.cc:848
+#, c-format
+msgid "wanted %d rows got %d in query: %s"
+msgstr "erwarte %d, erhielt %d Zeilen in Anfrage: %s"
+
+#: database.cc:1726
+#, c-format
+msgid "file preimage '%s' missing in db"
+msgstr "Datei-Urbild '%s' fehlt in der Datenbank"
+
+#: database.cc:1727
+#, c-format
+msgid "dropping delta '%s' -> '%s'"
+msgstr "übergehe Delta '%s' -> '%s'"
+
+#: database.cc:2044
+#, c-format
+msgid "missing prerequisite revision '%s'"
+msgstr "fehlende vorausgesetzte Revision '%s'"
+
+#: database.cc:2045 database.cc:2056 database.cc:2072 database.cc:2080
+#, c-format
+msgid "dropping revision '%s'"
+msgstr "entferne Revision '%s'"
+
+#: database.cc:2055
+#, c-format
+msgid "missing prerequisite file '%s'"
+msgstr "fehlende, erforderliche Datei '%s'"
+
+#: database.cc:2070
+#, c-format
+msgid "missing prerequisite file pre-delta '%s'"
+msgstr "fehlendes, erforderliches Datei-Pre-Delta '%s'"
+
+#: database.cc:2078
+#, c-format
+msgid "missing prerequisite file post-delta '%s'"
+msgstr "fehlendes, erforderliches Datei-Post-Delta '%s'"
+
+#: database.cc:2386
+#, c-format
+msgid "key '%s' is not equal to key '%s' in database"
+msgstr ""
+"Schlüssel '%s' stimmt nicht mit dem Schlüssel '%s' in der Datenbank überein"
+
+#: database.cc:2608
+#, c-format
+msgid "cert revision '%s' does not exist in db"
+msgstr "Zertifikats-Revision '%s' existiert nicht in der Datenbank"
+
+#: database.cc:2610
+#, c-format
+msgid "dropping cert"
+msgstr "entferne Zertifikat"
+
+#: database.cc:3430
+#, c-format
+msgid "no database specified"
+msgstr "keine Datenbank spezifiziert"
+
+#: database.cc:3440
+#, c-format
+msgid "database %s does not exist"
+msgstr "Datenbank %s existiert nicht"
+
+#: database.cc:3458
+#, c-format
+msgid ""
+"You gave a database option of: \n"
+"%s\n"
+"That is actually a workspace.  Did you mean: \n"
+"%s"
+msgstr ""
+"Sie übergaben die Datenbank-Option: \n"
+"%s\n"
+"Dieser Pfad ist aber ein Arbeitsbereich.  Meinten Sie: \n"
+"%s"
+
+#: database.cc:3463
+#, c-format
+msgid "%s is a directory, not a database"
+msgstr "%s ist ein Verzeichnis, keine Datenbank"
+
+#: database.cc:3473
+#, c-format
+msgid "database %s already exists"
+msgstr "Datenbank %s existiert bereits"
+
+#: database.cc:3478
+#, c-format
+msgid ""
+"existing (possibly stale) journal file '%s' has same stem as new database '%"
+"s'\n"
+"cancelling database creation"
+msgstr ""
+"Existierende Journal-Datei '%s' hat denselben Stamm wie die neue Datenbank '%"
+"s'\n"
+"Datenbankerstellung abgebrochen"
+
 #: database_check.cc:143
 #, c-format
 msgid "file structure is corrupted; cannot check further"
@@ -2926,244 +3175,26 @@ msgstr "kleinere Probleme aufgespürt"
 msgid "database is good"
 msgstr "Datenbank ist in Ordnung"
 
-#: database.cc:155
+#: dates.cc:230 dates.cc:242 dates.cc:255 dates.cc:260 dates.cc:270
+#: dates.cc:284 dates.cc:298 dates.cc:307 dates.cc:330
 #, c-format
-msgid "this database already contains rosters"
-msgstr "diese Datenbank enthält bereits Kataloge"
+msgid "unrecognized date (monotone only understands ISO 8601 format)"
+msgstr "nicht-erkanntes Datum (monotone versteht nur das Format ISO 8601)"
 
-#: database.cc:180
+#: dates.cc:287
 #, c-format
-msgid ""
-"database %s lacks some cached data\n"
-"run '%s db regenerate_caches' to restore use of this database"
-msgstr ""
-"Der Datenbank %s fehlen einige Cache-Daten.\n"
-"Führen Sie '%s db regenerate_caches' aus, um diese Datenbank wieder "
-"benutzbar zu machen."
+msgid "month out of range in '%s'"
+msgstr "Monat außerhalb des Bereichs in '%s'"
 
-#: database.cc:192
+#: dates.cc:314
 #, c-format
-msgid ""
-"database %s contains old-style revisions\n"
-"if you are a project leader or doing local testing:\n"
-"  see the file UPGRADE for instructions on upgrading.\n"
-"if you are not a project leader:\n"
-"  wait for a leader to migrate project data, and then\n"
-"  pull into a fresh database.\n"
-"sorry about the inconvenience."
-msgstr ""
-"Datenbank %s beinhaltet ein altes Revisionsformat.\n"
-"Wenn Sie der Projektleiter sind oder lokale Tests durchführen:\n"
-"  Die Datei UPGRADE beinhaltet Anweisungen zum Upgrade.\n"
-"Wenn Sie nicht der Projektleiter sind:\n"
-"  Warten Sie bitte, bis ein Projektleiter die Projektdaten migriert hat\n"
-"  und holen Sie sich dann eine aktualisierte Kopie.\n"
-"Wir bitten die Unannehmlichkeiten zu entschuldigen."
+msgid "date too early (monotone only goes back to 1970-01-01T00:00:00)"
+msgstr "Datum zu früh (monotone geht lediglich bis 1970-01-01T00:00:00 zurück)"
 
-#: database.cc:202
+#: dates.cc:323
 #, c-format
-msgid ""
-"database %s contains manifests but no revisions\n"
-"this is a very old database; it needs to be upgraded\n"
-"please see README.changesets for details"
-msgstr ""
-"Datenbank %s beinhaltet Manifeste, aber keine Revisionen\n"
-"Dies ist eine sehr alte Datenbank, die erneuert werden muss.\n"
-"Bitte konsultieren Sie die Datei README.changesets für Details."
-
-#: database.cc:492 sanity.cc:294 schema_migration.cc:62
-msgid "error: "
-msgstr "Fehler: "
-
-#: database.cc:493
-msgid "sqlite error: "
-msgstr "SQLite-Fehler: "
-
-#: database.cc:517
-msgid "not set"
-msgstr "nicht gesetzt"
-
-#: database.cc:530
-msgid " (not a monotone database)"
-msgstr " (keine monotone-Datenbank)"
-
-#: database.cc:578 database.cc:609 database.cc:1068 database.cc:1088
-#, c-format
-msgid "%u"
-msgstr "%u"
-
-#: database.cc:628
-#, c-format
-msgid ""
-"creator code      : %s\n"
-"schema version    : %s\n"
-"counts:\n"
-"  full rosters    : %s\n"
-"  roster deltas   : %s\n"
-"  full files      : %s\n"
-"  file deltas     : %s\n"
-"  revisions       : %s\n"
-"  ancestry edges  : %s\n"
-"  certs           : %s\n"
-"  logical files   : %s\n"
-"bytes:\n"
-"  full rosters    : %s\n"
-"  roster deltas   : %s\n"
-"  full files      : %s\n"
-"  file deltas     : %s\n"
-"  revisions       : %s\n"
-"  cached ancestry : %s\n"
-"  certs           : %s\n"
-"  heights         : %s\n"
-"  total           : %s\n"
-"database:\n"
-"  page size       : %s\n"
-"  cache size      : %s"
-msgstr ""
-"DB-Identifikation      : %s\n"
-"Schema-Version         : %s\n"
-"Zahlen:\n"
-"  komplette Kataloge   : %s\n"
-"  Katalog-Deltas       : %s\n"
-"  komplette Dateien    : %s\n"
-"  Datei-Deltas         : %s\n"
-"  Revisionen           : %s\n"
-"  Kanten in Abstammung : %s\n"
-"  Zertifikate          : %s\n"
-"  Logische Dateien     : %s\n"
-"Speicherplatz:\n"
-"  komplette Kataloge   : %s\n"
-"  Katalog-Deltas       : %s\n"
-"  komplette Dateien    : %s\n"
-"  Datei-Deltas         : %s\n"
-"  Revisionen           : %s\n"
-"  gecachte Abstammung  : %s\n"
-"  Zertifikate          : %s\n"
-"  Höhenangaben         : %s\n"
-"  Gesamt               : %s\n"
-"Datenbank:\n"
-"  Seitengröße          : %s\n"
-"  Cache-Größe          : %s"
-
-#: database.cc:673
-#, c-format
-msgid "database schema version: %s"
-msgstr "Datenbank Schema-Version: %s"
-
-#: database.cc:758
-#, c-format
-msgid "multiple statements in query: %s"
-msgstr "mehrere Angaben in Anfrage: %s"
-
-#: database.cc:764
-#, c-format
-msgid "wanted %d columns got %d in query: %s"
-msgstr "erwarte %d, erhielt %d Spalten in Anfrage: %s"
-
-#: database.cc:830
-#, c-format
-msgid "null result in query: %s"
-msgstr "Null-Ergebnis in Anfrage: %s"
-
-#: database.cc:848
-#, c-format
-msgid "wanted %d rows got %d in query: %s"
-msgstr "erwarte %d, erhielt %d Zeilen in Anfrage: %s"
-
-#: database.cc:1726
-#, c-format
-msgid "file preimage '%s' missing in db"
-msgstr "Datei-Urbild '%s' fehlt in der Datenbank"
-
-#: database.cc:1727
-#, c-format
-msgid "dropping delta '%s' -> '%s'"
-msgstr "übergehe Delta '%s' -> '%s'"
-
-#: database.cc:2044
-#, c-format
-msgid "missing prerequisite revision '%s'"
-msgstr "fehlende vorausgesetzte Revision '%s'"
-
-#: database.cc:2045 database.cc:2056 database.cc:2072 database.cc:2080
-#, c-format
-msgid "dropping revision '%s'"
-msgstr "entferne Revision '%s'"
-
-#: database.cc:2055
-#, c-format
-msgid "missing prerequisite file '%s'"
-msgstr "fehlende, erforderliche Datei '%s'"
-
-#: database.cc:2070
-#, c-format
-msgid "missing prerequisite file pre-delta '%s'"
-msgstr "fehlendes, erforderliches Datei-Pre-Delta '%s'"
-
-#: database.cc:2078
-#, c-format
-msgid "missing prerequisite file post-delta '%s'"
-msgstr "fehlendes, erforderliches Datei-Post-Delta '%s'"
-
-#: database.cc:2386
-#, c-format
-msgid "key '%s' is not equal to key '%s' in database"
-msgstr ""
-"Schlüssel '%s' stimmt nicht mit dem Schlüssel '%s' in der Datenbank überein"
-
-#: database.cc:2608
-#, c-format
-msgid "cert revision '%s' does not exist in db"
-msgstr "Zertifikats-Revision '%s' existiert nicht in der Datenbank"
-
-#: database.cc:2610
-#, c-format
-msgid "dropping cert"
-msgstr "entferne Zertifikat"
-
-#: database.cc:3430
-#, c-format
-msgid "no database specified"
-msgstr "keine Datenbank spezifiziert"
-
-#: database.cc:3440
-#, c-format
-msgid "database %s does not exist"
-msgstr "Datenbank %s existiert nicht"
-
-#: database.cc:3458
-#, c-format
-msgid ""
-"You gave a database option of: \n"
-"%s\n"
-"That is actually a workspace.  Did you mean: \n"
-"%s"
-msgstr ""
-"Sie übergaben die Datenbank-Option: \n"
-"%s\n"
-"Dieser Pfad ist aber ein Arbeitsbereich.  Meinten Sie: \n"
-"%s"
-
-#: database.cc:3463
-#, c-format
-msgid "%s is a directory, not a database"
-msgstr "%s ist ein Verzeichnis, keine Datenbank"
-
-#: database.cc:3473
-#, c-format
-msgid "database %s already exists"
-msgstr "Datenbank %s existiert bereits"
-
-#: database.cc:3478
-#, c-format
-msgid ""
-"existing (possibly stale) journal file '%s' has same stem as new database '%"
-"s'\n"
-"cancelling database creation"
-msgstr ""
-"Existierende Journal-Datei '%s' hat denselben Stamm wie die neue Datenbank '%"
-"s'\n"
-"Datenbankerstellung abgebrochen"
+msgid "day out of range for its month in '%s'"
+msgstr "Tag für seinen Monat außerhalb des Bereichs in '%s'"
 
 #: diff_patch.cc:687
 #, c-format
@@ -3320,6 +3351,89 @@ msgstr "Datei oder Verzeichnis unbekannt: '%s'"
 msgid "expected file '%s', but it is a directory."
 msgstr "erwartete Datei '%s', diese ist jedoch ein Verzeichnis"
 
+#: globish.cc:54 globish.cc:61 globish.cc:127
+#, c-format
+msgid "invalid pattern '%s': unmatched '['"
+msgstr "ungültiges Muster '%s': unpassende Klammer '['"
+
+#: globish.cc:87 globish.cc:115 globish.cc:158 globish.cc:192
+#, c-format
+msgid "invalid pattern '%s': control character 0x%02x is not allowed"
+msgstr "ungültiges Muster '%s': Kontroll-Zeichen 0x%02x ist nicht erlaubt"
+
+#: globish.cc:94
+#, c-format
+msgid "invalid pattern '%s': one-element character ranges are not allowed"
+msgstr "ungültiges Muster '%s': Ein-Element-Zeichenbereiche sind nicht erlaubt"
+
+#: globish.cc:97
+#, c-format
+msgid ""
+"invalid pattern '%s': endpoints of a character range must be in ascending "
+"numeric order"
+msgstr ""
+"ungültiges Muster '%s': Endpunkte eines Zeichenbereichs müssen in numerisch "
+"aufsteigender Reihenfolge vorliegen"
+
+#: globish.cc:101 globish.cc:119
+#, c-format
+msgid "invalid pattern '%s': cannot use non-ASCII characters in classes"
+msgstr ""
+"ungültiges Muster '%s': kann keine Nicht-ASCII-Zeichen in Klassen benutzen"
+
+#: globish.cc:111
+#, c-format
+msgid "syntax error in '%s': character classes may not be nested"
+msgstr "Syntax-Fehler in '%s': Zeichenklassen dürfen nicht verschachtelt sein"
+
+#: globish.cc:130
+#, c-format
+msgid "invalid pattern '%s': empty character class"
+msgstr "ungültiges Muster '%s': leere Zeichenklasse"
+
+#: globish.cc:189
+#, c-format
+msgid "invalid pattern '%s': un-escaped \\ at end"
+msgstr "ungültiges Muster '%s': nicht-escapter Backslash \\ am Ende"
+
+#: globish.cc:203
+#, c-format
+msgid "invalid pattern '%s': unmatched ']'"
+msgstr "ungültiges Muster '%s': unpassende Klammer ']'"
+
+#: globish.cc:212
+#, c-format
+msgid "invalid pattern '%s': braces nested too deeply"
+msgstr "ungültiges Muster '%s': Klammern zu tief verschachtelt"
+
+#: globish.cc:225
+#, c-format
+msgid "invalid pattern '%s': unmatched '}'"
+msgstr "ungültiges Muster '%s': unpassende Klammer '}'"
+
+#: globish.cc:232
+#, c-format
+msgid "invalid pattern '%s': unmatched '{'"
+msgstr "ungültiges Muster '%s': unpassende Klammer '{'"
+
+#: key_store.cc:28 key_store.cc:32 key_store.cc:36 key_store.cc:38
+#: key_store.cc:43
+#, c-format
+msgid "Extraneous data in key store."
+msgstr "Belanglose Daten im Schlüsselbund"
+
+#: key_store.cc:51
+#, c-format
+msgid "Key store has multiple keys with id '%s'."
+msgstr "Schlüsselbund hat mehrere Schlüssel mit der ID '%s'"
+
+#: key_store.cc:231
+#, c-format
+msgid "Cannot store key '%s'; a different key by that name exists."
+msgstr ""
+"Kann den Schlüssel '%s' nicht speichern; ein anderer Schlüssel mit diesem "
+"Namen existiert bereits"
+
 #: keys.cc:105
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
@@ -3395,7 +3509,7 @@ msgstr "make_signature: Signatur ist ungültig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489
+#: lua.cc:466 lua.cc:477 lua.cc:489 lua_hooks.cc:1035 lua_hooks.cc:1058
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
@@ -3410,10 +3524,25 @@ msgstr "Das Verzeichnis '%s' existiert nicht"
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: lua.cc:596
+#: lua.cc:596 lua_hooks.cc:181
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
+
+#: lua_hooks.cc:210
+#, c-format
+msgid "lua error while loading '%s'"
+msgstr "lua-Fehler beim Laden von '%s'"
+
+#: lua_hooks.cc:215
+#, c-format
+msgid "rcfile '%s' does not exist"
+msgstr "rc-Datei '%s' existiert nicht"
+
+#: lua_hooks.cc:1027
+#, c-format
+msgid "Call to user command %s (lua command: %s) failed."
+msgstr "Aufruf des Benutzerkommandos %s (Lua-Kommando: %s) schlug fehl"
 
 #: merge.cc:168
 #, c-format
@@ -3972,6 +4101,66 @@ msgstr ""
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
 
+#: netxx_pipe.cc:58
+#, c-format
+msgid "pipe handle is invalid"
+msgstr "Pipe-Handle ist ungültig"
+
+#: netxx_pipe.cc:197
+#, c-format
+msgid "CreateNamedPipe(%s,...) call failed: %s"
+msgstr "CreateNamedPipe(%s,...)-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:214
+#, c-format
+msgid "CreateFile(%s,...) call failed: %s"
+msgstr "CreateFile(%s,...)-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:245
+#, c-format
+msgid "CreateProcess(%s,...) call failed: %s"
+msgstr "CreateProcess(%s,...)-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:261
+#, c-format
+msgid "pipe/fork failed %s"
+msgstr "pipe/fork schlug fehl: %s"
+
+#: netxx_pipe.cc:307
+#, c-format
+msgid "WriteFile call failed: %s"
+msgstr "WriteFile-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:399
+#, c-format
+msgid "ReadFile call failed: %s"
+msgstr "ReadFile-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:434
+#, c-format
+msgid "WaitForMultipleObjects call failed: %s"
+msgstr "WaitForMultipleObjects-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:444
+#, c-format
+msgid "WaitForSingleObject call failed: %s"
+msgstr "WaitForSingleObject-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:464
+#, c-format
+msgid "GetOverlappedResult call failed: %s"
+msgstr "GetOverlappedResult-Aufruf schlug fehl: %s"
+
+#: netxx_pipe.cc:587
+#, c-format
+msgid "timeout reading data %d"
+msgstr "Zeitüberschreitung beim Lesen der Daten %d"
+
+#: netxx_pipe.cc:608
+#, c-format
+msgid "Failure %s"
+msgstr "Fehler %s"
+
 #: option.cc:17
 #, c-format
 msgid "option error: %s"
@@ -4301,6 +4490,46 @@ msgstr "falsch gebildetes Paket: zu viele Argumente im Kopf"
 msgid "unknown packet type: '%s'"
 msgstr "unbekannter Pakettyp: '%s'"
 
+#: paths.cc:355 paths.cc:372 paths.cc:377
+#, c-format
+msgid "path '%s' is invalid"
+msgstr "Pfad '%s' ist ungültig"
+
+#: paths.cc:359
+#, c-format
+msgid "empty path '%s' is invalid"
+msgstr "leerer Pfad '%s' ist ungültig"
+
+#: paths.cc:360
+#, c-format
+msgid "absolute path '%s' is invalid"
+msgstr "absoluter Pfad '%s' ist ungültig"
+
+#: paths.cc:437 paths.cc:455
+#, c-format
+msgid "path '%s' is in bookkeeping dir"
+msgstr "Pfad '%s' ist im monotone-Systemverzeichnis"
+
+#: paths.cc:774
+#, c-format
+msgid "invalid path ''"
+msgstr "ungültiger Pfad ''"
+
+#: paths.cc:807
+#, c-format
+msgid "current directory '%s' is not below root '%s'"
+msgstr "aktuelles Verzeichnis '%s' ist nicht unterhalb der Wurzel '%s'"
+
+#: paths.cc:915
+#, c-format
+msgid "search root '%s' does not exist"
+msgstr "Wurzel der Suche '%s' existiert nicht"
+
+#: paths.cc:916
+#, c-format
+msgid "search root '%s' is not a directory"
+msgstr "Wurzel der Suche '%s' ist kein Verzeichnis"
+
 #: pcrewrap.cc:155
 #, c-format
 msgid "while compiling regex \"%s\": %s"
@@ -4393,6 +4622,11 @@ msgstr "Pfad %s existiert nicht"
 #: rcs_import.cc:1263
 msgid "tags"
 msgstr "Marken"
+
+#: refiner.cc:372
+#, c-format
+msgid "underflow on query-in-flight counter"
+msgstr "Unterlauf für query-in-flight-Zähler"
 
 #: restrictions.cc:51 restrictions.cc:68
 #, c-format
@@ -4873,6 +5107,21 @@ msgstr ""
 msgid "Revision: %s"
 msgstr "Revision: %s"
 
+#: safe_map.hh:24
+#, c-format
+msgid "erasing nonexistent key from %s"
+msgstr "Entfernung eines nicht-existenten Schlüssel von %s"
+
+#: safe_map.hh:40 safe_map.hh:59
+#, c-format
+msgid "inserting duplicate entry into %s"
+msgstr "Hinzufügen eines doppelten Eintrag in %s"
+
+#: safe_map.hh:76
+#, c-format
+msgid "fetching nonexistent entry from %s"
+msgstr "Anforderung eines nicht-existenten Eintrags von %s"
+
 #: sanity.cc:181
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
@@ -4896,31 +5145,6 @@ msgstr "%s:%d: Index '%s' = %d übergelaufener Vektor '%s' der Größe %d"
 #, c-format
 msgid "Current work set: %i items"
 msgstr "Derzeitige Arbeitsgruppe: %i Elemente"
-
-#: selectors.cc:46
-#, c-format
-msgid "expanded selector '%s' -> '%s'"
-msgstr "expandiere Selektor '%s' -> '%s'"
-
-#: selectors.cc:86
-#, c-format
-msgid "unknown selector type: %c"
-msgstr "unbekannter Selektor-Typ: %c"
-
-#: selectors.cc:97
-#, c-format
-msgid "selector '%s' is not a valid date\n"
-msgstr "Der Selektor '%s' ist kein gültiges Datum\n"
-
-#: selectors.cc:115
-#, c-format
-msgid "selector '%s' is not a valid date (%s)"
-msgstr "Der Selektor '%s' ist kein gültiges Datum (%s)"
-
-#: selectors.cc:119
-#, c-format
-msgid "expanded date '%s' -> '%s'\n"
-msgstr "expandierte Datum '%s' -> '%s'\n"
 
 #: schema_migration.cc:82
 msgid ""
@@ -5090,6 +5314,121 @@ msgstr "Schema %s ist aktuell"
 msgid "successful migration to schema %s"
 msgstr "erfolgreiche Migration zu Schema %s"
 
+#: selectors.cc:46
+#, c-format
+msgid "expanded selector '%s' -> '%s'"
+msgstr "expandiere Selektor '%s' -> '%s'"
+
+#: selectors.cc:86
+#, c-format
+msgid "unknown selector type: %c"
+msgstr "unbekannter Selektor-Typ: %c"
+
+#: selectors.cc:97
+#, c-format
+msgid "selector '%s' is not a valid date\n"
+msgstr "Der Selektor '%s' ist kein gültiges Datum\n"
+
+#: selectors.cc:115
+#, c-format
+msgid "selector '%s' is not a valid date (%s)"
+msgstr "Der Selektor '%s' ist kein gültiges Datum (%s)"
+
+#: selectors.cc:119
+#, c-format
+msgid "expanded date '%s' -> '%s'\n"
+msgstr "expandierte Datum '%s' -> '%s'\n"
+
+#: sha1.cc:96
+msgid "Benchmarks SHA-1 cores"
+msgstr "Bewertet SHA-Kerne"
+
+#: sha1.cc:100
+#, c-format
+msgid "Benchmarking %s SHA-1 cores"
+msgstr "Bewerte %s SHA-1-Kerne"
+
+#: sha1.cc:113
+#, c-format
+msgid "%s: %s MiB/s"
+msgstr "%s: %s MiB/s"
+
+#: ssh_agent.cc:123
+#, c-format
+msgid "string not long enough to get a long"
+msgstr "Zeichenkette ist nicht lang genug, um einen 'long'-Wert zu erhalten"
+
+#: ssh_agent.cc:142
+#, c-format
+msgid "ssh_agent: length (%i) of buf less than loc (%u) + len (%u)"
+msgstr ""
+"ssh_agent: Länge (%i) von buf ist kürzer als location (%u) + length (%u)"
+
+#: ssh_agent.cc:240
+#, c-format
+msgid "ssh_agent: fetch_packet: zero-length packet from ssh-agent"
+msgstr "ssh_agent: fetch_packet: Paket der Länge 0 von ssh-agent"
+
+#: ssh_agent.cc:266
+#, c-format
+msgid "ssh_agent: packet type (%u) != 12"
+msgstr "ssh_agent: Paket-Typ (%u) != 12"
+
+#: ssh_agent.cc:304
+#, c-format
+msgid ""
+"ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), "
+"length(%i)"
+msgstr ""
+"ssh_agent: get_keys: nicht alle oder zu viele Schlüssel-Bytes verarbeitet, "
+"location (%u), length (%i)"
+
+#: ssh_agent.cc:350
+#, c-format
+msgid ""
+"ssh_agent: get_keys: not all or too many packet bytes consumed, location (%"
+"u), length(%i)"
+msgstr ""
+"ssh_agent: get_keys: nicht alle oder zu viele Paket-Bytes verarbeitet, "
+"location (%u), length (%i)"
+
+#: ssh_agent.cc:363
+#, c-format
+msgid "ssh_agent: get_keys: attempted to sign data when not connected"
+msgstr ""
+"ssh_agent: get_keys: Versuch, Daten ohne bestehende Verbindung zu "
+"unterschreiben"
+
+#: ssh_agent.cc:419
+#, c-format
+msgid ""
+"ssh_agent: sign_data: not all or too many signature bytes consumed, location "
+"(%u), length(%i)"
+msgstr ""
+"ssh_agent: sign_data: nicht alle oder zu viele Signatur-Bytes verarbeitet, "
+"location (%u), length (%i)"
+
+#: ssh_agent.cc:425
+#, c-format
+msgid ""
+"ssh_agent: sign_data: not all or too many packet bytes consumed, location (%"
+"u), length(%i)"
+msgstr ""
+"ssh_agent: sign_data: nicht alle oder zu viele Paket-Bytes verarbeitet, "
+"location (%u), length (%i)"
+
+#: ssh_agent.cc:441
+#, c-format
+msgid "ssh_agent: add_identity: attempted to add a key when not connected"
+msgstr ""
+"ssh_agent: add_identity: Versuch, einen Schlüssel ohne bestehende Verbindung "
+"hinzuzufügen"
+
+#: ssh_agent.cc:466
+#, c-format
+msgid "ssh_agent: packet type (%u) != 6"
+msgstr "ssh_agent: Paket-Type (%u) != 6"
+
 #: std_hooks.lua:48
 msgid "Press enter"
 msgstr "Drücken Sie die Eingabetaste"
@@ -5161,6 +5500,144 @@ msgstr ""
 msgid "failed to open log file '%s'"
 msgstr "konnte Logdatei '%s' nicht öffnen"
 
+#: unix/fs.cc:43 win32/fs.cc:23
+#, c-format
+msgid "cannot get working directory: %s"
+msgstr "kann Arbeitsverzeichnis nicht ermitteln: %s"
+
+#: unix/fs.cc:54 win32/fs.cc:34
+#, c-format
+msgid "cannot change to directory %s: %s"
+msgstr "kann nicht in Verzeichnis %s wechseln: %s"
+
+#: unix/fs.cc:75
+#, c-format
+msgid "could not find home directory for uid %d"
+msgstr "konnte Heimatverzeichnis für UID %d nicht finden"
+
+#: unix/fs.cc:108
+#, c-format
+msgid "could not find home directory for user %s"
+msgstr "konnte Heimatverzeichnis von Benutzer %s nicht finden"
+
+#: unix/fs.cc:125
+#, c-format
+msgid "error accessing file %s: %s"
+msgstr "Fehler beim Zugriff auf die Datei %s: %s"
+
+#: unix/fs.cc:134
+#, c-format
+msgid "cannot handle special file %s"
+msgstr "kann nicht mit spezieller Datei %s umgehen"
+
+#: unix/fs.cc:149 win32/fs.cc:164
+#, c-format
+msgid "could not open directory '%s': %s"
+msgstr "konnte Verzeichnis '%s' nicht öffnen: %s"
+
+#: unix/fs.cc:240
+#, c-format
+msgid "error accessing '%s/%s': %s"
+msgstr "Fehler beim Zugriff auf '%s/%s': %s"
+
+#: unix/fs.cc:262
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s"
+msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s"
+
+#: unix/fs.cc:274 win32/fs.cc:240
+#, c-format
+msgid "could not remove '%s': %s"
+msgstr "konnte '%s' nicht entfernen: %s"
+
+#: unix/fs.cc:286 win32/fs.cc:247
+#, c-format
+msgid "could not create directory '%s': %s"
+msgstr "konnte Verzeichnis '%s' nicht erstellen: %s"
+
+#: unix/fs.cc:352 win32/fs.cc:381
+#, c-format
+msgid "cannot create temp file %s: %s"
+msgstr "Kann temporäre Datei %s nicht anlegen: %s"
+
+#: unix/fs.cc:361
+#, c-format
+msgid "all %d possible temporary file names are in use"
+msgstr "alle %d möglichen, temporären Dateinamen sind in Benutzung"
+
+#: unix/fs.cc:402 win32/fs.cc:441
+#, c-format
+msgid "error writing to temp file %s: %s"
+msgstr "Fehler beim Schreiben zur temporären Datei %s: %s"
+
+#: unix/fs.cc:407 win32/fs.cc:448
+#, c-format
+msgid ""
+"giving up after four zero-length writes to %s (%d byte written, %d left)"
+msgid_plural ""
+"giving up after four zero-length writes to %s (%d bytes written, %d left)"
+msgstr[0] ""
+"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Byte "
+"geschrieben, %d verbleiben)"
+msgstr[1] ""
+"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Bytes "
+"geschrieben, %d verbleiben)"
+
+#: unix/os_strerror.cc:17 win32/os_strerror.cc:23
+#, c-format
+msgid "unknown error code %d"
+msgstr "unbekannter Fehlercode %d"
+
+#: unix/process.cc:58
+#, c-format
+msgid "error getting status of file %s: %s"
+msgstr "Fehler bei der Abfrage des Status der Datei %s: %s"
+
+#: unix/process.cc:81
+#, c-format
+msgid "error opening file %s: %s"
+msgstr "Fehler beim Öffnen der Datei %s: %s"
+
+#: unix/process.cc:91
+#, c-format
+msgid "error closing file %s: %s"
+msgstr "Fehler beim Schließen der Datei %s: %s"
+
+#: unix/ssh_agent_platform.cc:49
+#, c-format
+msgid "ssh_agent: connect: could not open socket to ssh-agent"
+msgstr "ssh_agent: connect: kann Socket zu ssh-agent nicht öffnen"
+
+#: unix/ssh_agent_platform.cc:57
+#, c-format
+msgid "ssh_agent: connect: could not set up socket for ssh-agent"
+msgstr "ssh_agent: connect: kann Socket für ssh-agent nicht aufsetzen"
+
+#: unix/ssh_agent_platform.cc:64
+#, c-format
+msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
+msgstr "ssh_agent: connect: kann nicht zu Socket für ssh-agent verbinden"
+
+#: unix/ssh_agent_platform.cc:103
+#, c-format
+msgid "stream read failed (%i)"
+msgstr "Lesen vom Strom schlug fehl (%i)"
+
+#: unix/ssh_agent_platform.cc:111
+#, c-format
+msgid "%u extra bytes from ssh-agent"
+msgstr "%u zusätzliche Bytes von ssh-agent"
+
+#: update.cc:73
+#, c-format
+msgid "failed to decode boolean testresult cert value '%s'"
+msgstr "konnte booleschen Zertifikatswert '%s' nicht dekodieren"
+
+#: update.cc:206
+#, c-format
+msgid "cannot determine branch for update"
+msgstr "kann Zweig zur Aktualisierung nicht bestimmen"
+
 #: uri.cc:43
 #, c-format
 msgid "IPv6 address in URI has no closing ']'"
@@ -5176,16 +5653,6 @@ msgstr "die in der URI explizit angegebene Portnummer besteht nicht aus Zahlen"
 msgid "explicit port-number specification in URI contains nondigits"
 msgstr ""
 "die in der URI explizit angegebene Portnummer beinhaltet Nicht-Zahlen-Zeichen"
-
-#: update.cc:73
-#, c-format
-msgid "failed to decode boolean testresult cert value '%s'"
-msgstr "konnte booleschen Zertifikatswert '%s' nicht dekodieren"
-
-#: update.cc:206
-#, c-format
-msgid "cannot determine branch for update"
-msgstr "kann Zweig zur Aktualisierung nicht bestimmen"
 
 #: vocab.cc:64
 #, c-format
@@ -5221,6 +5688,61 @@ msgstr "Ungültige Schlüssellänge von %d Bytes"
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr "Ungültige 'hmac'-Länge von %d Bytes"
+
+#: win32/fs.cc:51
+#, c-format
+msgid "could not determine configuration path"
+msgstr "kann Konfigurationspfad nicht bestimmen"
+
+#: win32/fs.cc:136
+#, c-format
+msgid "%s: GetFileAttributes error: %s"
+msgstr "%s: GetFileAttributes-Fehler: %s"
+
+#: win32/fs.cc:186
+#, c-format
+msgid "error while reading directory: %s"
+msgstr "Fehler beim Lesen des Verzeichnisses: %s"
+
+#: win32/fs.cc:320
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s (%d)"
+msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s (%d)"
+
+#: win32/fs.cc:389
+#, c-format
+msgid "cannot find a temporary file (tried %d possibilities)"
+msgstr "kann keine temporäre Datei finden (versuchte %d Möglichkeiten)"
+
+#: win32/fs.cc:416
+#, c-format
+msgid "%s will be accessible to all users of this computer\n"
+msgstr "%s wird für alle Benutzer dieses Computers zugänglich sein\n"
+
+#: win32/get_system_flavour.cc:156
+#, c-format
+msgid "%s (level %d, rev %d)"
+msgstr "%s (Level %d, Rev %d)"
+
+#: win32/get_system_flavour.cc:162
+#, c-format
+msgid "Windows %s (%d.%d, build %d, %s) on %s"
+msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
+
+#: win32/ssh_agent_platform.cc:92
+#, c-format
+msgid "Asked to write more than %u to pageant."
+msgstr "Erhielt Anfrage, mehr als %u Bytes zu pageant zu schreiben"
+
+#: win32/ssh_agent_platform.cc:101
+#, c-format
+msgid "Error sending message to pageant (%d)."
+msgstr "Fehler beim Senden der Nachricht an pageant (%d)"
+
+#: win32/ssh_agent_platform.cc:115
+#, c-format
+msgid "Asked to read more than %u from pageant."
+msgstr "Erhielt Anfrage, mehr als %u Bytes von pageant zu lesen"
 
 #: work.cc:97 work_migration.cc:191 work_migration.cc:211
 #, c-format
@@ -5583,175 +6105,6 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
 
-#: unix/fs.cc:43 win32/fs.cc:23
-#, c-format
-msgid "cannot get working directory: %s"
-msgstr "kann Arbeitsverzeichnis nicht ermitteln: %s"
-
-#: unix/fs.cc:54 win32/fs.cc:34
-#, c-format
-msgid "cannot change to directory %s: %s"
-msgstr "kann nicht in Verzeichnis %s wechseln: %s"
-
-#: unix/fs.cc:75
-#, c-format
-msgid "could not find home directory for uid %d"
-msgstr "konnte Heimatverzeichnis für UID %d nicht finden"
-
-#: unix/fs.cc:108
-#, c-format
-msgid "could not find home directory for user %s"
-msgstr "konnte Heimatverzeichnis von Benutzer %s nicht finden"
-
-#: unix/fs.cc:125
-#, c-format
-msgid "error accessing file %s: %s"
-msgstr "Fehler beim Zugriff auf die Datei %s: %s"
-
-#: unix/fs.cc:134
-#, c-format
-msgid "cannot handle special file %s"
-msgstr "kann nicht mit spezieller Datei %s umgehen"
-
-#: unix/fs.cc:149 win32/fs.cc:164
-#, c-format
-msgid "could not open directory '%s': %s"
-msgstr "konnte Verzeichnis '%s' nicht öffnen: %s"
-
-#: unix/fs.cc:240
-#, c-format
-msgid "error accessing '%s/%s': %s"
-msgstr "Fehler beim Zugriff auf '%s/%s': %s"
-
-#: unix/fs.cc:262
-#, c-format
-msgid "renaming '%s' to '%s' failed: %s"
-msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s"
-
-#: unix/fs.cc:274 win32/fs.cc:240
-#, c-format
-msgid "could not remove '%s': %s"
-msgstr "konnte '%s' nicht entfernen: %s"
-
-#: unix/fs.cc:286 win32/fs.cc:247
-#, c-format
-msgid "could not create directory '%s': %s"
-msgstr "konnte Verzeichnis '%s' nicht erstellen: %s"
-
-#: unix/fs.cc:352 win32/fs.cc:381
-#, c-format
-msgid "cannot create temp file %s: %s"
-msgstr "Kann temporäre Datei %s nicht anlegen: %s"
-
-#: unix/fs.cc:361
-#, c-format
-msgid "all %d possible temporary file names are in use"
-msgstr "alle %d möglichen, temporären Dateinamen sind in Benutzung"
-
-#: unix/fs.cc:402 win32/fs.cc:441
-#, c-format
-msgid "error writing to temp file %s: %s"
-msgstr "Fehler beim Schreiben zur temporären Datei %s: %s"
-
-#: unix/fs.cc:407 win32/fs.cc:448
-#, c-format
-msgid ""
-"giving up after four zero-length writes to %s (%d byte written, %d left)"
-msgid_plural ""
-"giving up after four zero-length writes to %s (%d bytes written, %d left)"
-msgstr[0] ""
-"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Byte "
-"geschrieben, %d verbleiben)"
-msgstr[1] ""
-"breche nach vier fehlgeschlagenen Schreibversuchen zu %s ab (%d Bytes "
-"geschrieben, %d verbleiben)"
-
-#: unix/os_strerror.cc:17 win32/os_strerror.cc:23
-#, c-format
-msgid "unknown error code %d"
-msgstr "unbekannter Fehlercode %d"
-
-#: unix/process.cc:58
-#, c-format
-msgid "error getting status of file %s: %s"
-msgstr "Fehler bei der Abfrage des Status der Datei %s: %s"
-
-#: unix/process.cc:81
-#, c-format
-msgid "error opening file %s: %s"
-msgstr "Fehler beim Öffnen der Datei %s: %s"
-
-#: unix/process.cc:91
-#, c-format
-msgid "error closing file %s: %s"
-msgstr "Fehler beim Schließen der Datei %s: %s"
-
-#: unix/ssh_agent_platform.cc:49
-#, c-format
-msgid "ssh_agent: connect: could not open socket to ssh-agent"
-msgstr "ssh_agent: connect: kann Socket zu ssh-agent nicht öffnen"
-
-#: unix/ssh_agent_platform.cc:57
-#, c-format
-msgid "ssh_agent: connect: could not set up socket for ssh-agent"
-msgstr "ssh_agent: connect: kann Socket für ssh-agent nicht aufsetzen"
-
-#: unix/ssh_agent_platform.cc:64
-#, c-format
-msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
-msgstr "ssh_agent: connect: kann nicht zu Socket für ssh-agent verbinden"
-
-#: unix/ssh_agent_platform.cc:103
-#, c-format
-msgid "stream read failed (%i)"
-msgstr "Lesen vom Strom schlug fehl (%i)"
-
-#: unix/ssh_agent_platform.cc:111
-#, c-format
-msgid "%u extra bytes from ssh-agent"
-msgstr "%u zusätzliche Bytes von ssh-agent"
-
-#: win32/fs.cc:51
-#, c-format
-msgid "could not determine configuration path"
-msgstr "kann Konfigurationspfad nicht bestimmen"
-
-#: win32/fs.cc:136
-#, c-format
-msgid "%s: GetFileAttributes error: %s"
-msgstr "%s: GetFileAttributes-Fehler: %s"
-
-#: win32/fs.cc:186
-#, c-format
-msgid "error while reading directory: %s"
-msgstr "Fehler beim Lesen des Verzeichnisses: %s"
-
-#: win32/fs.cc:320
-#, c-format
-msgid "renaming '%s' to '%s' failed: %s (%d)"
-msgstr "Umbenennung von '%s' nach '%s' schlug fehl: %s (%d)"
-
-#: win32/fs.cc:389
-#, c-format
-msgid "cannot find a temporary file (tried %d possibilities)"
-msgstr "kann keine temporäre Datei finden (versuchte %d Möglichkeiten)"
-
-#: win32/fs.cc:416
-#, c-format
-msgid "%s will be accessible to all users of this computer\n"
-msgstr "%s wird für alle Benutzer dieses Computers zugänglich sein\n"
-
-#: win32/get_system_flavour.cc:156
-#, c-format
-msgid "%s (level %d, rev %d)"
-msgstr "%s (Level %d, Rev %d)"
-
-#: win32/get_system_flavour.cc:162
-#, c-format
-msgid "Windows %s (%d.%d, build %d, %s) on %s"
-msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
-
-#, fuzzy
 #~ msgid "Content changes to the file \"%s\""
 #~ msgstr "Es gab keine Änderungen vorzunehmen."
 
@@ -5809,9 +6162,6 @@ msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
 #~ msgid "cannot handle special file '%s/%s'"
 #~ msgstr "kann nicht mit spezieller Datei '%s/%s' umgehen"
 
-#~ msgid "failed to create directory '%s' for '%s'"
-#~ msgstr "konnte Verzeichnis '%s' für '%s' nicht erstellen"
-
 #~ msgid "caught runtime error %s constructing file path for %s"
 #~ msgstr "Laufzeitfehler %s während der Erstellung des Dateipfades für %s"
 
@@ -5823,9 +6173,6 @@ msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
 
 #~ msgid "destination %s is an existing file in current revision"
 #~ msgstr "Ziel %s ist eine existierende Datei in der derzeitigen Revision"
-
-#~ msgid "empty path %s is not allowed"
-#~ msgstr "leerer Pfad %s ist nicht erlaubt"
 
 #~ msgid "%s does not exist in current manifest"
 #~ msgstr "%s existiert nicht im derzeitigen Manifest"
@@ -5839,9 +6186,3 @@ msgstr "Windows %s (%d.%d, Build %d, %s) auf %s"
 #~ msgstr ""
 #~ "übergehe Verschiebung %s->%s im Dateisystem, die Quelle existiert nicht, "
 #~ "das Ziel jedoch existiert"
-
-#~ msgid "search root '%s' does not exist"
-#~ msgstr "Wurzel der Suche '%s' existiert nicht"
-
-#~ msgid "search root '%s' is not a directory"
-#~ msgstr "Wurzel der Suche '%s' ist kein Verzeichnis"
