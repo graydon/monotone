@@ -258,7 +258,7 @@ Netxx::PipeStream::PipeStream (const string & cmd,
 
   int fd1[2], fd2[2];
   child = pipe_and_fork(fd1, fd2);
-  E(child >= 0, F("pipe/fork failed %s") % strerror(errno));
+  E(child >= 0, F("pipe/fork failed: %s") % strerror(errno));
   if (!child)
     {
       execvp(newargv[0], const_cast<char * const *>(newargv));
