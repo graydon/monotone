@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-26 00:26+0100\n"
+"POT-Creation-Date: 2007-12-27 13:07+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -3429,7 +3429,7 @@ msgstr "Schlüsselbund hat mehrere Schlüssel mit der ID '%s'"
 
 #: key_store.cc:231
 #, c-format
-msgid "Cannot store key '%s'; a different key by that name exists."
+msgid "Cannot store key '%s': a different key by that name exists."
 msgstr ""
 "Kann den Schlüssel '%s' nicht speichern; ein anderer Schlüssel mit diesem "
 "Namen existiert bereits"
@@ -4123,7 +4123,7 @@ msgstr "CreateProcess(%s,...)-Aufruf schlug fehl: %s"
 
 #: netxx_pipe.cc:261
 #, c-format
-msgid "pipe/fork failed %s"
+msgid "pipe/fork failed: %s"
 msgstr "pipe/fork schlug fehl: %s"
 
 #: netxx_pipe.cc:307
@@ -5378,7 +5378,7 @@ msgstr "ssh_agent: Paket-Typ (%u) != 12"
 #, c-format
 msgid ""
 "ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), "
-"length(%i)"
+"length (%i)"
 msgstr ""
 "ssh_agent: get_keys: nicht alle oder zu viele Schlüssel-Bytes verarbeitet, "
 "location (%u), length (%i)"
@@ -5387,7 +5387,7 @@ msgstr ""
 #, c-format
 msgid ""
 "ssh_agent: get_keys: not all or too many packet bytes consumed, location (%"
-"u), length(%i)"
+"u), length (%i)"
 msgstr ""
 "ssh_agent: get_keys: nicht alle oder zu viele Paket-Bytes verarbeitet, "
 "location (%u), length (%i)"
@@ -5403,7 +5403,7 @@ msgstr ""
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many signature bytes consumed, location "
-"(%u), length(%i)"
+"(%u), length (%i)"
 msgstr ""
 "ssh_agent: sign_data: nicht alle oder zu viele Signatur-Bytes verarbeitet, "
 "location (%u), length (%i)"
@@ -5412,7 +5412,7 @@ msgstr ""
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many packet bytes consumed, location (%"
-"u), length(%i)"
+"u), length (%i)"
 msgstr ""
 "ssh_agent: sign_data: nicht alle oder zu viele Paket-Bytes verarbeitet, "
 "location (%u), length (%i)"
