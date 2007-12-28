@@ -45,6 +45,22 @@ else
    AC_DEFINE(os_err_t, int, [OS-specific error type])
 fi
 
+AC_CACHE_CHECK([whether this is AIX],
+       ac_aix, [
+       AC_TRY_COMPILE([#ifndef _AIX
+                       #error "This is not AIX"
+                       #endif],
+                      [int i;],
+                      ac_aix=yes,
+                      ac_aix=no)
+])
+if test "$ac_aix" = "yes"; then
+   AM_CONDITIONAL(AIX_PLATFORM, true)
+   LDFLAGS="$LDFLAGS -Wl,-bexpfull"
+else
+   AM_CONDITIONAL(AIX_PLATFORM, false)
+fi
+
 # Checks for header files.
 AC_HEADER_STDC
 dnl Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all

@@ -291,14 +291,14 @@ UNIX_PLATFORM_SOURCES =							\
 	unix/process.cc unix/terminal.cc unix/inodeprint.cc		\
 	unix/fs.cc unix/make_io_binary.cc unix/os_strerror.cc           \
 	unix/cputime.cc unix/ssh_agent_platform.cc			\
-	unix/ssh_agent_platform.hh unix/tester-plaf.cc
+	unix/ssh_agent_platform.hh
 
 WIN32_PLATFORM_SOURCES =						\
 	win32/read_password.cc win32/get_system_flavour.cc		\
 	win32/process.cc win32/terminal.cc win32/inodeprint.cc		\
 	win32/fs.cc win32/make_io_binary.cc win32/os_strerror.cc	\
 	win32/cputime.cc win32/ssh_agent_platform.cc			\
-	win32/ssh_agent_platform.hh win32/tester-plaf.cc
+	win32/ssh_agent_platform.hh
 
 # these files contain unit tests
 UNIT_TEST_SOURCES =							\
@@ -450,9 +450,11 @@ if WIN32_PLATFORM
   unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
+  tester_SOURCES += win32/tester-plaf.cc
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
   mtn_SOURCES += unix/main.cc
+  tester_SOURCES += unix/tester-plaf.cc
 endif
 
 if MISSING_INET_PTON
