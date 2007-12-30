@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-25 08:14+0100\n"
-"PO-Revision-Date: 2007-12-25 10:11+0100\n"
+"POT-Creation-Date: 2007-12-28 20:27+0100\n"
+"PO-Revision-Date: 2007-12-30 11:43+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -585,6 +585,26 @@ msgstr "inget grencert funnet för revision %s, var god ange en gren"
 msgid ""
 "multiple branch certs found for revision %s, please provide a branch name"
 msgstr "flera grencert funna för revision %s, var god ange en gren"
+
+#: charset.cc:56
+#, c-format
+msgid "failed to convert string from %s to %s: '%s'"
+msgstr "misslyckades med att konvertera en sträng från %s till %s: '%s'"
+
+#: charset.cc:317 charset.cc:331
+#, c-format
+msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
+msgstr "fel vid konvertering av %d UTF-8-byte till IDNA ACE: %s"
+
+#: cmd.hh:140
+#, c-format
+msgid "ignored bookkeeping path '%s'"
+msgstr "ignorerad administrativ sökväg '%s'"
+
+#: cmd.hh:150
+#, c-format
+msgid "all arguments given were bookkeeping paths; aborting"
+msgstr "alla givna argument är administrativa sökvägar; avbryter"
 
 #: cmd_automate.cc:32
 msgid "Interface for scripted execution"
@@ -1090,16 +1110,6 @@ msgstr "Skriver ut innehållet på en fil (givet en filidentitet)"
 #: cmd_files.cc:349
 msgid "Prints the contents of a file (given a name)"
 msgstr "Skriver ut innehållet på en fil (givet ett filnamn)"
-
-#: cmd.hh:140
-#, c-format
-msgid "ignored bookkeeping path '%s'"
-msgstr "ignorerad administrativ sökväg '%s'"
-
-#: cmd.hh:150
-#, c-format
-msgid "all arguments given were bookkeeping paths; aborting"
-msgstr "alla givna argument är administrativa sökvägar; avbryter"
 
 #: cmd_key_cert.cc:34 cmd_key_cert.cc:62 cmd_key_cert.cc:104
 msgid "KEYID"
@@ -2681,6 +2691,243 @@ msgstr ""
 msgid "--message and --message-file are mutually exclusive"
 msgstr "--message och --message-file får inte anges samtidigt"
 
+#: database.cc:155
+#, c-format
+msgid "this database already contains rosters"
+msgstr "den här databasen har redan listor"
+
+#: database.cc:180
+#, c-format
+msgid ""
+"database %s lacks some cached data\n"
+"run '%s db regenerate_caches' to restore use of this database"
+msgstr ""
+"databasen %s saknar cache-data\n"
+"kör '%s db regenerate_caches' för att göra databasen användbar igen"
+
+#: database.cc:192
+#, c-format
+msgid ""
+"database %s contains old-style revisions\n"
+"if you are a project leader or doing local testing:\n"
+"  see the file UPGRADE for instructions on upgrading.\n"
+"if you are not a project leader:\n"
+"  wait for a leader to migrate project data, and then\n"
+"  pull into a fresh database.\n"
+"sorry about the inconvenience."
+msgstr ""
+"databasen %s innehåller revisioner av äldre stil.\n"
+"om du är en projektledare eller gör lokala tester:\n"
+"  läs i filen UPGRADE och följ instruktionerna för uppgradering.\n"
+"om du inte är en projektledare:\n"
+"  vänta på att projektledaren migrerar projektets data, och hämta\n"
+"  sedan databasen på nytt.\n"
+"ursäkta besväret."
+
+#: database.cc:202
+#, c-format
+msgid ""
+"database %s contains manifests but no revisions\n"
+"this is a very old database; it needs to be upgraded\n"
+"please see README.changesets for details"
+msgstr ""
+"databasen %s innehåller manifest men inga revisioner\n"
+"detta är en väldigt gammal databas; den behöver uppgraderas\n"
+"var god läs README.changesets för detaljer"
+
+#: database.cc:492 sanity.cc:294 schema_migration.cc:62
+msgid "error: "
+msgstr "fel: "
+
+#: database.cc:493
+msgid "sqlite error: "
+msgstr "sqlite-fel: "
+
+#: database.cc:517
+msgid "not set"
+msgstr "ej tilldelat "
+
+#: database.cc:530
+msgid " (not a monotone database)"
+msgstr " (är inte en monotonedatabas)"
+
+#: database.cc:578 database.cc:609 database.cc:1068 database.cc:1088
+#, c-format
+msgid "%u"
+msgstr "%u"
+
+#: database.cc:628
+#, c-format
+msgid ""
+"creator code      : %s\n"
+"schema version    : %s\n"
+"counts:\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  ancestry edges  : %s\n"
+"  certs           : %s\n"
+"  logical files   : %s\n"
+"bytes:\n"
+"  full rosters    : %s\n"
+"  roster deltas   : %s\n"
+"  full files      : %s\n"
+"  file deltas     : %s\n"
+"  revisions       : %s\n"
+"  cached ancestry : %s\n"
+"  certs           : %s\n"
+"  heights         : %s\n"
+"  total           : %s\n"
+"database:\n"
+"  page size       : %s\n"
+"  cache size      : %s"
+msgstr ""
+"skaparkod             : %s\n"
+"schemaversion         : %s\n"
+"antal:\n"
+"  hela listor         : %s\n"
+"  listdeltan          : %s\n"
+"  hela filer          : %s\n"
+"  fildeltan           : %s\n"
+"  revisioner          : %s\n"
+"  föräldrabågar       : %s\n"
+"  cert                : %s\n"
+"  logiska filer       : %s\n"
+"byte:\n"
+"  hela listor         : %s\n"
+"  listdeltan          : %s\n"
+"  hela filer          : %s\n"
+"  fildeltan           : %s\n"
+"  revisioner          : %s\n"
+"  cachat föräldraskap : %s\n"
+"  cert                : %s\n"
+"  höjder              : %s\n"
+"  total               : %s\n"
+"databas:\n"
+"  sidstorlek          : %s\n"
+"  cachestorlek        : %s"
+
+#: database.cc:673
+#, c-format
+msgid "database schema version: %s"
+msgstr "databasens schemaversion: %s"
+
+#: database.cc:758
+#, c-format
+msgid "multiple statements in query: %s"
+msgstr "multipla kommandon i databasfråga: %s"
+
+#: database.cc:764
+#, c-format
+msgid "wanted %d columns got %d in query: %s"
+msgstr "ville ha %d kolumner, fick %d i databasfråga: %s"
+
+#: database.cc:830
+#, c-format
+msgid "null result in query: %s"
+msgstr "inget resultat med databasfråga: %s"
+
+#: database.cc:848
+#, c-format
+msgid "wanted %d rows got %d in query: %s"
+msgstr "ville ha %d rader, fick %d i databasfråga: %s"
+
+#: database.cc:1726
+#, c-format
+msgid "file preimage '%s' missing in db"
+msgstr "\"preimage\" för filen '%s' saknas i databasen"
+
+#: database.cc:1727
+#, c-format
+msgid "dropping delta '%s' -> '%s'"
+msgstr "slänger deltat '%s' -> '%s'"
+
+#: database.cc:2044
+#, c-format
+msgid "missing prerequisite revision '%s'"
+msgstr "saknar nödvändig revision '%s'"
+
+#: database.cc:2045 database.cc:2056 database.cc:2072 database.cc:2080
+#, c-format
+msgid "dropping revision '%s'"
+msgstr "slänger revisionen '%s'"
+
+#: database.cc:2055
+#, c-format
+msgid "missing prerequisite file '%s'"
+msgstr "saknar nödvändig fil '%s'"
+
+#: database.cc:2070
+#, c-format
+msgid "missing prerequisite file pre-delta '%s'"
+msgstr "saknar nödvändigt predelta till fil '%s'"
+
+#: database.cc:2078
+#, c-format
+msgid "missing prerequisite file post-delta '%s'"
+msgstr "saknar nödvändigt postdelta till fil '%s'"
+
+#: database.cc:2386
+#, c-format
+msgid "key '%s' is not equal to key '%s' in database"
+msgstr "nyckeln '%s' är inte samma som nyckeln '%s' i databasen"
+
+#: database.cc:2608
+#, c-format
+msgid "cert revision '%s' does not exist in db"
+msgstr "certrevision '%s' finns inte i databasen"
+
+#: database.cc:2610
+#, c-format
+msgid "dropping cert"
+msgstr "slänger cert"
+
+#: database.cc:3430
+#, c-format
+msgid "no database specified"
+msgstr "ingen databas angiven"
+
+#: database.cc:3440
+#, c-format
+msgid "database %s does not exist"
+msgstr "databasen %s finns inte"
+
+#: database.cc:3458
+#, c-format
+msgid ""
+"You gave a database option of: \n"
+"%s\n"
+"That is actually a workspace.  Did you mean: \n"
+"%s"
+msgstr ""
+"Du angav denna databasinställning: \n"
+"%s\n"
+"Det är en arbetskopia.  Du kanske menade: \n"
+"%s"
+
+#: database.cc:3463
+#, c-format
+msgid "%s is a directory, not a database"
+msgstr "%s är en katalog, inte en databas"
+
+#: database.cc:3473
+#, c-format
+msgid "database %s already exists"
+msgstr "databasen %s finns redan"
+
+#: database.cc:3478
+#, c-format
+msgid ""
+"existing (possibly stale) journal file '%s' has same stem as new database '%"
+"s'\n"
+"cancelling database creation"
+msgstr ""
+"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya "
+"databasen '%s'\n"
+"avbryter skapandet av databasen"
+
 #: database_check.cc:143
 #, c-format
 msgid "file structure is corrupted; cannot check further"
@@ -2983,242 +3230,26 @@ msgstr "småproblem funna"
 msgid "database is good"
 msgstr "databasen är i gott skick"
 
-#: database.cc:155
+#: dates.cc:230 dates.cc:242 dates.cc:255 dates.cc:260 dates.cc:270
+#: dates.cc:284 dates.cc:298 dates.cc:307 dates.cc:330
 #, c-format
-msgid "this database already contains rosters"
-msgstr "den här databasen har redan listor"
+msgid "unrecognized date (monotone only understands ISO 8601 format)"
+msgstr "datumet går inte att känna igen (monotone förstår bara datum med format enligt ISO 8601)"
 
-#: database.cc:180
+#: dates.cc:287
 #, c-format
-msgid ""
-"database %s lacks some cached data\n"
-"run '%s db regenerate_caches' to restore use of this database"
-msgstr ""
-"databasen %s saknar cache-data\n"
-"kör '%s db regenerate_caches' för att göra databasen användbar igen"
+msgid "month out of range in '%s'"
+msgstr "ogiltigt månadsnummer i '%s'"
 
-#: database.cc:192
+#: dates.cc:314
 #, c-format
-msgid ""
-"database %s contains old-style revisions\n"
-"if you are a project leader or doing local testing:\n"
-"  see the file UPGRADE for instructions on upgrading.\n"
-"if you are not a project leader:\n"
-"  wait for a leader to migrate project data, and then\n"
-"  pull into a fresh database.\n"
-"sorry about the inconvenience."
-msgstr ""
-"databasen %s innehåller revisioner av äldre stil.\n"
-"om du är en projektledare eller gör lokala tester:\n"
-"  läs i filen UPGRADE och följ instruktionerna för uppgradering.\n"
-"om du inte är en projektledare:\n"
-"  vänta på att projektledaren migrerar projektets data, och hämta\n"
-"  sedan databasen på nytt.\n"
-"ursäkta besväret."
+msgid "date too early (monotone only goes back to 1970-01-01T00:00:00)"
+msgstr "för tidigt datum (monotone kan inte hantera tidpunkter före 1970-01-01T00:00:00)"
 
-#: database.cc:202
+#: dates.cc:323
 #, c-format
-msgid ""
-"database %s contains manifests but no revisions\n"
-"this is a very old database; it needs to be upgraded\n"
-"please see README.changesets for details"
-msgstr ""
-"databasen %s innehåller manifest men inga revisioner\n"
-"detta är en väldigt gammal databas; den behöver uppgraderas\n"
-"var god läs README.changesets för detaljer"
-
-#: database.cc:492 sanity.cc:294 schema_migration.cc:62
-msgid "error: "
-msgstr "fel: "
-
-#: database.cc:493
-msgid "sqlite error: "
-msgstr "sqlite-fel: "
-
-#: database.cc:517
-msgid "not set"
-msgstr "ej tilldelat "
-
-#: database.cc:530
-msgid " (not a monotone database)"
-msgstr " (är inte en monotonedatabas)"
-
-#: database.cc:578 database.cc:609 database.cc:1068 database.cc:1088
-#, c-format
-msgid "%u"
-msgstr "%u"
-
-#: database.cc:628
-#, c-format
-msgid ""
-"creator code      : %s\n"
-"schema version    : %s\n"
-"counts:\n"
-"  full rosters    : %s\n"
-"  roster deltas   : %s\n"
-"  full files      : %s\n"
-"  file deltas     : %s\n"
-"  revisions       : %s\n"
-"  ancestry edges  : %s\n"
-"  certs           : %s\n"
-"  logical files   : %s\n"
-"bytes:\n"
-"  full rosters    : %s\n"
-"  roster deltas   : %s\n"
-"  full files      : %s\n"
-"  file deltas     : %s\n"
-"  revisions       : %s\n"
-"  cached ancestry : %s\n"
-"  certs           : %s\n"
-"  heights         : %s\n"
-"  total           : %s\n"
-"database:\n"
-"  page size       : %s\n"
-"  cache size      : %s"
-msgstr ""
-"skaparkod             : %s\n"
-"schemaversion         : %s\n"
-"antal:\n"
-"  hela listor         : %s\n"
-"  listdeltan          : %s\n"
-"  hela filer          : %s\n"
-"  fildeltan           : %s\n"
-"  revisioner          : %s\n"
-"  föräldrabågar       : %s\n"
-"  cert                : %s\n"
-"  logiska filer       : %s\n"
-"byte:\n"
-"  hela listor         : %s\n"
-"  listdeltan          : %s\n"
-"  hela filer          : %s\n"
-"  fildeltan           : %s\n"
-"  revisioner          : %s\n"
-"  cachat föräldraskap : %s\n"
-"  cert                : %s\n"
-"  höjder              : %s\n"
-"  total               : %s\n"
-"databas:\n"
-"  sidstorlek          : %s\n"
-"  cachestorlek        : %s"
-
-#: database.cc:673
-#, c-format
-msgid "database schema version: %s"
-msgstr "databasens schemaversion: %s"
-
-#: database.cc:758
-#, c-format
-msgid "multiple statements in query: %s"
-msgstr "multipla kommandon i databasfråga: %s"
-
-#: database.cc:764
-#, c-format
-msgid "wanted %d columns got %d in query: %s"
-msgstr "ville ha %d kolumner, fick %d i databasfråga: %s"
-
-#: database.cc:830
-#, c-format
-msgid "null result in query: %s"
-msgstr "inget resultat med databasfråga: %s"
-
-#: database.cc:848
-#, c-format
-msgid "wanted %d rows got %d in query: %s"
-msgstr "ville ha %d rader, fick %d i databasfråga: %s"
-
-#: database.cc:1726
-#, c-format
-msgid "file preimage '%s' missing in db"
-msgstr "\"preimage\" för filen '%s' saknas i databasen"
-
-#: database.cc:1727
-#, c-format
-msgid "dropping delta '%s' -> '%s'"
-msgstr "slänger deltat '%s' -> '%s'"
-
-#: database.cc:2044
-#, c-format
-msgid "missing prerequisite revision '%s'"
-msgstr "saknar nödvändig revision '%s'"
-
-#: database.cc:2045 database.cc:2056 database.cc:2072 database.cc:2080
-#, c-format
-msgid "dropping revision '%s'"
-msgstr "slänger revisionen '%s'"
-
-#: database.cc:2055
-#, c-format
-msgid "missing prerequisite file '%s'"
-msgstr "saknar nödvändig fil '%s'"
-
-#: database.cc:2070
-#, c-format
-msgid "missing prerequisite file pre-delta '%s'"
-msgstr "saknar nödvändigt predelta till fil '%s'"
-
-#: database.cc:2078
-#, c-format
-msgid "missing prerequisite file post-delta '%s'"
-msgstr "saknar nödvändigt postdelta till fil '%s'"
-
-#: database.cc:2386
-#, c-format
-msgid "key '%s' is not equal to key '%s' in database"
-msgstr "nyckeln '%s' är inte samma som nyckeln '%s' i databasen"
-
-#: database.cc:2608
-#, c-format
-msgid "cert revision '%s' does not exist in db"
-msgstr "certrevision '%s' finns inte i databasen"
-
-#: database.cc:2610
-#, c-format
-msgid "dropping cert"
-msgstr "slänger cert"
-
-#: database.cc:3430
-#, c-format
-msgid "no database specified"
-msgstr "ingen databas angiven"
-
-#: database.cc:3440
-#, c-format
-msgid "database %s does not exist"
-msgstr "databasen %s finns inte"
-
-#: database.cc:3458
-#, c-format
-msgid ""
-"You gave a database option of: \n"
-"%s\n"
-"That is actually a workspace.  Did you mean: \n"
-"%s"
-msgstr ""
-"Du angav denna databasinställning: \n"
-"%s\n"
-"Det är en arbetskopia.  Du kanske menade: \n"
-"%s"
-
-#: database.cc:3463
-#, c-format
-msgid "%s is a directory, not a database"
-msgstr "%s är en katalog, inte en databas"
-
-#: database.cc:3473
-#, c-format
-msgid "database %s already exists"
-msgstr "databasen %s finns redan"
-
-#: database.cc:3478
-#, c-format
-msgid ""
-"existing (possibly stale) journal file '%s' has same stem as new database '%"
-"s'\n"
-"cancelling database creation"
-msgstr ""
-"det finns en (kanske trasig) journalfil '%s' med samma bas som den nya "
-"databasen '%s'\n"
-"avbryter skapandet av databasen"
+msgid "day out of range for its month in '%s'"
+msgstr "det finns inte så många dagar i månaden given i '%s'"
 
 #: diff_patch.cc:687
 #, c-format
@@ -3372,6 +3403,84 @@ msgstr "ingen sådan fil eller katalog: '%s'"
 msgid "expected file '%s', but it is a directory."
 msgstr "förväntade filen '%s', men det är en katalog."
 
+#: globish.cc:54 globish.cc:61 globish.cc:127
+#, c-format
+msgid "invalid pattern '%s': unmatched '['"
+msgstr "ogiltigt mönster '%s': oavslutad '['"
+
+#: globish.cc:87 globish.cc:115 globish.cc:158 globish.cc:192
+#, c-format
+msgid "invalid pattern '%s': control character 0x%02x is not allowed"
+msgstr "ogiltigt mönster '%s': kontrolltecknet 0x%02x är inte tillåtet"
+
+#: globish.cc:94
+#, c-format
+msgid "invalid pattern '%s': one-element character ranges are not allowed"
+msgstr "ogiltigt mönster '%s': teckenset på ett tecken är inte tillåtet"
+
+#: globish.cc:97
+#, c-format
+msgid ""
+"invalid pattern '%s': endpoints of a character range must be in ascending "
+"numeric order"
+msgstr "ogiltigt mönster '%s': teckenset måste anges i stigande ordning"
+
+#: globish.cc:101 globish.cc:119
+#, c-format
+msgid "invalid pattern '%s': cannot use non-ASCII characters in classes"
+msgstr "ogiltigt mönster '%s': man får inte använda tecken utanför ASCII-setet i klasser"
+
+#: globish.cc:111
+#, c-format
+msgid "syntax error in '%s': character classes may not be nested"
+msgstr "syntaxfel i '%s': teckenklasser får inte förekomma inuti teckenklasser"
+
+#: globish.cc:130
+#, c-format
+msgid "invalid pattern '%s': empty character class"
+msgstr "ogiltigt mönster '%s': tom teckenklass"
+
+#: globish.cc:189
+#, c-format
+msgid "invalid pattern '%s': un-escaped \\ at end"
+msgstr "ogiltigt mönster '%s': ensam \\ på slutet"
+
+#: globish.cc:203
+#, c-format
+msgid "invalid pattern '%s': unmatched ']'"
+msgstr "ogiltigt mönster '%s': ']' saknar begynnande '['"
+
+#: globish.cc:212
+#, c-format
+msgid "invalid pattern '%s': braces nested too deeply"
+msgstr "ogiltigt mönster '%s': för många nivåer med '{' '}'"
+
+#: globish.cc:225
+#, c-format
+msgid "invalid pattern '%s': unmatched '}'"
+msgstr "ogiltigt mönster '%s': '}' saknar begynnande '{'"
+
+#: globish.cc:232
+#, c-format
+msgid "invalid pattern '%s': unmatched '{'"
+msgstr "ogiltigt mönster '%s': oavslutat '{'"
+
+#: key_store.cc:28 key_store.cc:32 key_store.cc:36 key_store.cc:38
+#: key_store.cc:43
+#, c-format
+msgid "Extraneous data in key store."
+msgstr "Extra data i nyckelarkivet."
+
+#: key_store.cc:51
+#, c-format
+msgid "Key store has multiple keys with id '%s'."
+msgstr "Nyckelarkivet har multipla nycklar med identiteten '%s'."
+
+#: key_store.cc:231
+#, c-format
+msgid "Cannot store key '%s': a different key by that name exists."
+msgstr "Kan inte spara nyckeln '%s': en annan nyckel med samma namn finns redan."
+
 #: keys.cc:105
 #, c-format
 msgid "got empty passphrase from get_passphrase() hook"
@@ -3447,7 +3556,7 @@ msgstr "make_signature: signaturen är ogiltig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "lösen för '%s' stämmer inte"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489
+#: lua.cc:466 lua.cc:477 lua.cc:489 lua_hooks.cc:1035 lua_hooks.cc:1058
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s anropades med inkorrekt parameter"
@@ -3462,10 +3571,25 @@ msgstr "Katalogen '%s' finns inte"
 msgid "'%s' is not a directory"
 msgstr "'%s' är inte en katalog"
 
-#: lua.cc:596
+#: lua.cc:596 lua_hooks.cc:181
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-fel vid läsning av rcfilen '%s'"
+
+#: lua_hooks.cc:210
+#, c-format
+msgid "lua error while loading '%s'"
+msgstr "lua-fel vid läsning av '%s'"
+
+#: lua_hooks.cc:215
+#, c-format
+msgid "rcfile '%s' does not exist"
+msgstr "rcfilen '%s' finns inte"
+
+#: lua_hooks.cc:1027
+#, c-format
+msgid "Call to user command %s (lua command: %s) failed."
+msgstr "Anropet till användarkommandot %s (lua command: %s) misslyckades."
 
 #: merge.cc:168
 #, c-format
@@ -4021,6 +4145,66 @@ msgstr ""
 msgid "network error: %s"
 msgstr "nätverksfel: %s"
 
+#: netxx_pipe.cc:58
+#, c-format
+msgid "pipe handle is invalid"
+msgstr ""
+
+#: netxx_pipe.cc:197
+#, c-format
+msgid "CreateNamedPipe(%s,...) call failed: %s"
+msgstr "Anrop till CreateNamedPipe(%s,...) misslyckades: %s"
+
+#: netxx_pipe.cc:214
+#, c-format
+msgid "CreateFile(%s,...) call failed: %s"
+msgstr "Anrop till CreateFile(%s,...) misslyckades: %s"
+
+#: netxx_pipe.cc:245
+#, c-format
+msgid "CreateProcess(%s,...) call failed: %s"
+msgstr "Anrop till CreateProcess(%s,...) misslyckades: %s"
+
+#: netxx_pipe.cc:261
+#, c-format
+msgid "pipe/fork failed: %s"
+msgstr ""
+
+#: netxx_pipe.cc:307
+#, c-format
+msgid "WriteFile call failed: %s"
+msgstr "anrop till WriteFile misslyckades: %s"
+
+#: netxx_pipe.cc:399
+#, c-format
+msgid "ReadFile call failed: %s"
+msgstr "anrop till ReadFile misslyckades: %s"
+
+#: netxx_pipe.cc:434
+#, c-format
+msgid "WaitForMultipleObjects call failed: %s"
+msgstr "Anrop till WaitForMultipleObjects misslyckades: %s"
+
+#: netxx_pipe.cc:444
+#, c-format
+msgid "WaitForSingleObject call failed: %s"
+msgstr "Anrop till WaitForSingleObject misslyckades: %s"
+
+#: netxx_pipe.cc:464
+#, c-format
+msgid "GetOverlappedResult call failed: %s"
+msgstr "Anrop till GetOverlappedResult misslyckades: %s"
+
+#: netxx_pipe.cc:587
+#, c-format
+msgid "timeout reading data %d"
+msgstr "Det tog för lång tid att läsa data %d"
+
+#: netxx_pipe.cc:608
+#, c-format
+msgid "Failure %s"
+msgstr "Misslyckande %s"
+
 #: option.cc:17
 #, c-format
 msgid "option error: %s"
@@ -4344,6 +4528,46 @@ msgstr "otydbart paket: för många argument i headern"
 msgid "unknown packet type: '%s'"
 msgstr "okänd pakettyp: '%s'"
 
+#: paths.cc:355 paths.cc:372 paths.cc:377
+#, c-format
+msgid "path '%s' is invalid"
+msgstr "sökväg '%s' ogiltig"
+
+#: paths.cc:359
+#, c-format
+msgid "empty path '%s' is invalid"
+msgstr "tom sökväg '%s' ogiltig"
+
+#: paths.cc:360
+#, c-format
+msgid "absolute path '%s' is invalid"
+msgstr "absolut sökväg '%s' ogiltig"
+
+#: paths.cc:437 paths.cc:455
+#, c-format
+msgid "path '%s' is in bookkeeping dir"
+msgstr "sökvägen '%s' finns i den administrativa katalogen"
+
+#: paths.cc:774
+#, c-format
+msgid "invalid path ''"
+msgstr "ogiltig sökväg ''"
+
+#: paths.cc:807
+#, c-format
+msgid "current directory '%s' is not below root '%s'"
+msgstr "nuvarande katalog '%s' är inte under arbetskopians rot '%s'"
+
+#: paths.cc:915
+#, c-format
+msgid "search root '%s' does not exist"
+msgstr "angiven sökrot '%s' finns inte"
+
+#: paths.cc:916
+#, c-format
+msgid "search root '%s' is not a directory"
+msgstr "sökroten '%s' är inte en katalog"
+
 #: pcrewrap.cc:155
 #, c-format
 msgid "while compiling regex \"%s\": %s"
@@ -4433,6 +4657,11 @@ msgstr "sökvägen %s finns inte"
 #: rcs_import.cc:1263
 msgid "tags"
 msgstr "taggar"
+
+#: refiner.cc:372
+#, c-format
+msgid "underflow on query-in-flight counter"
+msgstr ""
 
 #: restrictions.cc:51 restrictions.cc:68
 #, c-format
@@ -4805,14 +5034,16 @@ msgstr "borttagen på högersidan"
 #, c-format
 msgid ""
 "conflict: multiple values for attribute '%s' on file '%s' from revision %s"
-msgstr "konflikt: multipla värden på attributet '%s' för filen '%s' i revision %s"
+msgstr ""
+"konflikt: multipla värden på attributet '%s' för filen '%s' i revision %s"
 
 #: roster_merge.cc:666
 #, c-format
 msgid ""
 "conflict: multiple values for attribute '%s' on directory '%s' from revision "
 "%s"
-msgstr "konflikt: multipla värden på attributet '%s' för katalogen '%s' i revision %s"
+msgstr ""
+"konflikt: multipla värden på attributet '%s' för katalogen '%s' i revision %s"
 
 #: roster_merge.cc:672
 #, c-format
@@ -4900,6 +5131,21 @@ msgstr ""
 msgid "Revision: %s"
 msgstr "Revision: %s"
 
+#: safe_map.hh:24
+#, c-format
+msgid "erasing nonexistent key from %s"
+msgstr "tar bort nyckel som inte finns från %s"
+
+#: safe_map.hh:40 safe_map.hh:59
+#, c-format
+msgid "inserting duplicate entry into %s"
+msgstr "stoppar in dubbelt entry i %s"
+
+#: safe_map.hh:76
+#, c-format
+msgid "fetching nonexistent entry from %s"
+msgstr "hämtar entry som inte finns från %s"
+
 #: sanity.cc:181
 #, c-format
 msgid "fatal: formatter failed on %s:%d: %s"
@@ -4923,31 +5169,6 @@ msgstr "%s:%d; index '%s' = %d blev större än vektorn '%s' med storlek %d"
 #, c-format
 msgid "Current work set: %i items"
 msgstr "Nuvarande arbetsmängd: %i delar"
-
-#: selectors.cc:46
-#, c-format
-msgid "expanded selector '%s' -> '%s'"
-msgstr "expanderar valet '%s' -> '%s'"
-
-#: selectors.cc:86
-#, c-format
-msgid "unknown selector type: %c"
-msgstr "okänd väljartyp: %c"
-
-#: selectors.cc:97
-#, c-format
-msgid "selector '%s' is not a valid date\n"
-msgstr "väljaren '%s' är inte en korrekt datumangivelse\n"
-
-#: selectors.cc:115
-#, c-format
-msgid "selector '%s' is not a valid date (%s)"
-msgstr "väljaren '%s' är inte en korrekt datumangivelse (%s)"
-
-#: selectors.cc:119
-#, c-format
-msgid "expanded date '%s' -> '%s'\n"
-msgstr "expanderade datumangivelsen '%s' -> '%s'\n"
 
 #: schema_migration.cc:82
 msgid ""
@@ -5115,6 +5336,108 @@ msgstr "redan uppdaterat till schema %s"
 msgid "successful migration to schema %s"
 msgstr "migrering till schema %s lyckades"
 
+#: selectors.cc:46
+#, c-format
+msgid "expanded selector '%s' -> '%s'"
+msgstr "expanderar valet '%s' -> '%s'"
+
+#: selectors.cc:86
+#, c-format
+msgid "unknown selector type: %c"
+msgstr "okänd väljartyp: %c"
+
+#: selectors.cc:97
+#, c-format
+msgid "selector '%s' is not a valid date\n"
+msgstr "väljaren '%s' är inte en korrekt datumangivelse\n"
+
+#: selectors.cc:115
+#, c-format
+msgid "selector '%s' is not a valid date (%s)"
+msgstr "väljaren '%s' är inte en korrekt datumangivelse (%s)"
+
+#: selectors.cc:119
+#, c-format
+msgid "expanded date '%s' -> '%s'\n"
+msgstr "expanderade datumangivelsen '%s' -> '%s'\n"
+
+#: sha1.cc:96
+msgid "Benchmarks SHA-1 cores"
+msgstr ""
+
+#: sha1.cc:100
+#, c-format
+msgid "Benchmarking %s SHA-1 cores"
+msgstr ""
+
+#: sha1.cc:113
+#, c-format
+msgid "%s: %s MiB/s"
+msgstr "%s: %s MiB/s"
+
+#: ssh_agent.cc:123
+#, c-format
+msgid "string not long enough to get a long"
+msgstr ""
+
+#: ssh_agent.cc:142
+#, c-format
+msgid "ssh_agent: length (%i) of buf less than loc (%u) + len (%u)"
+msgstr ""
+
+#: ssh_agent.cc:240
+#, c-format
+msgid "ssh_agent: fetch_packet: zero-length packet from ssh-agent"
+msgstr "ssh_agent: fetch_packet: tomt paket från ssh-agent"
+
+#: ssh_agent.cc:266
+#, c-format
+msgid "ssh_agent: packet type (%u) != 12"
+msgstr ""
+
+#: ssh_agent.cc:304
+#, c-format
+msgid ""
+"ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), "
+"length (%i)"
+msgstr ""
+
+#: ssh_agent.cc:350
+#, c-format
+msgid ""
+"ssh_agent: get_keys: not all or too many packet bytes consumed, location (%"
+"u), length (%i)"
+msgstr ""
+
+#: ssh_agent.cc:363
+#, c-format
+msgid "ssh_agent: get_keys: attempted to sign data when not connected"
+msgstr ""
+
+#: ssh_agent.cc:419
+#, c-format
+msgid ""
+"ssh_agent: sign_data: not all or too many signature bytes consumed, location "
+"(%u), length (%i)"
+msgstr ""
+
+#: ssh_agent.cc:425
+#, c-format
+msgid ""
+"ssh_agent: sign_data: not all or too many packet bytes consumed, location (%"
+"u), length (%i)"
+msgstr ""
+
+#: ssh_agent.cc:441
+#, c-format
+msgid "ssh_agent: add_identity: attempted to add a key when not connected"
+msgstr ""
+
+#: ssh_agent.cc:466
+#, c-format
+msgid "ssh_agent: packet type (%u) != 6"
+msgstr ""
+
 #: std_hooks.lua:48
 msgid "Press enter"
 msgstr "Tryck på Enter"
@@ -5185,6 +5508,144 @@ msgstr ""
 msgid "failed to open log file '%s'"
 msgstr "misslyckades med att öppna loggfilen %s"
 
+#: unix/fs.cc:43 win32/fs.cc:23
+#, c-format
+msgid "cannot get working directory: %s"
+msgstr "kan inte finna katalogen vi står i: %s"
+
+#: unix/fs.cc:54 win32/fs.cc:34
+#, c-format
+msgid "cannot change to directory %s: %s"
+msgstr "kan inte byta till katalog %s: %s"
+
+#: unix/fs.cc:75
+#, c-format
+msgid "could not find home directory for uid %d"
+msgstr "kunde inte finna hemkatalogen för uid %d"
+
+#: unix/fs.cc:108
+#, c-format
+msgid "could not find home directory for user %s"
+msgstr "kunde inte finns hemkatalogen för användaren %s"
+
+#: unix/fs.cc:125
+#, c-format
+msgid "error accessing file %s: %s"
+msgstr "fel när jag försökte nå filen %s: %s"
+
+#: unix/fs.cc:134
+#, c-format
+msgid "cannot handle special file %s"
+msgstr "kan inte hantera specialfilen %s"
+
+#: unix/fs.cc:149 win32/fs.cc:164
+#, c-format
+msgid "could not open directory '%s': %s"
+msgstr "kunde inte öppna katalogen '%s': %s"
+
+#: unix/fs.cc:240
+#, c-format
+msgid "error accessing '%s/%s': %s"
+msgstr "fel när jag försökte nå '%s/%s': %s"
+
+#: unix/fs.cc:262
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s"
+msgstr "byta namn på '%s' till '%s' misslyckades: %s"
+
+#: unix/fs.cc:274 win32/fs.cc:240
+#, c-format
+msgid "could not remove '%s': %s"
+msgstr "kunde inte ta bort '%s': %s"
+
+#: unix/fs.cc:286 win32/fs.cc:247
+#, c-format
+msgid "could not create directory '%s': %s"
+msgstr "kunde inte skapa katalogen %s: %s"
+
+#: unix/fs.cc:352 win32/fs.cc:381
+#, c-format
+msgid "cannot create temp file %s: %s"
+msgstr "kan inte skapa tillfällig fil %s: %s"
+
+#: unix/fs.cc:361
+#, c-format
+msgid "all %d possible temporary file names are in use"
+msgstr "Alla %d möjliga tillfälliga filnamn används"
+
+#: unix/fs.cc:402 win32/fs.cc:441
+#, c-format
+msgid "error writing to temp file %s: %s"
+msgstr "fel vid skrivning till tillfällig fil %s: %s"
+
+#: unix/fs.cc:407 win32/fs.cc:448
+#, c-format
+msgid ""
+"giving up after four zero-length writes to %s (%d byte written, %d left)"
+msgid_plural ""
+"giving up after four zero-length writes to %s (%d bytes written, %d left)"
+msgstr[0] ""
+"ger upp efter att ha försökt skriva noll bytes fyra gånger till %s (%d byte "
+"skriven, %d kvar)"
+msgstr[1] ""
+"ger upp efter att ha försökt skriva noll bytes fyra gånger till %s (%d bytes "
+"skriva, %d kvar)"
+
+#: unix/os_strerror.cc:17 win32/os_strerror.cc:23
+#, c-format
+msgid "unknown error code %d"
+msgstr "okänd felkod %d"
+
+#: unix/process.cc:58
+#, c-format
+msgid "error getting status of file %s: %s"
+msgstr "fel vid hämtning av läget för filen %s: %s"
+
+#: unix/process.cc:81
+#, c-format
+msgid "error opening file %s: %s"
+msgstr "fel vid öppnande av filen %s: %s"
+
+#: unix/process.cc:91
+#, c-format
+msgid "error closing file %s: %s"
+msgstr "fel vid stängning av filen %s: %s"
+
+#: unix/ssh_agent_platform.cc:49
+#, c-format
+msgid "ssh_agent: connect: could not open socket to ssh-agent"
+msgstr "ssh_agent: connect: kunde inte öppna kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:57
+#, c-format
+msgid "ssh_agent: connect: could not set up socket for ssh-agent"
+msgstr "ssh_agent: connect: kunde inte ställa in kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:64
+#, c-format
+msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
+msgstr "ssh_agent: connect: kunde inte koppla till kanal till ssh-agent"
+
+#: unix/ssh_agent_platform.cc:103
+#, c-format
+msgid "stream read failed (%i)"
+msgstr "misslyckades med att läsa strömmen (%i)"
+
+#: unix/ssh_agent_platform.cc:111
+#, c-format
+msgid "%u extra bytes from ssh-agent"
+msgstr "%u extra bytes från ssh-agent"
+
+#: update.cc:73
+#, c-format
+msgid "failed to decode boolean testresult cert value '%s'"
+msgstr "misslyckades med att tolka det booleska testresultatets värde '%s'"
+
+#: update.cc:206
+#, c-format
+msgid "cannot determine branch for update"
+msgstr "kan inte avgöra gren att uppdatera"
+
 #: uri.cc:43
 #, c-format
 msgid "IPv6 address in URI has no closing ']'"
@@ -5199,16 +5660,6 @@ msgstr "explicit portnummer utan siffror i URIn"
 #, c-format
 msgid "explicit port-number specification in URI contains nondigits"
 msgstr "explcit portnummer i URIn har andra tecken än siffror"
-
-#: update.cc:73
-#, c-format
-msgid "failed to decode boolean testresult cert value '%s'"
-msgstr "misslyckades med att tolka det booleska testresultatets värde '%s'"
-
-#: update.cc:206
-#, c-format
-msgid "cannot determine branch for update"
-msgstr "kan inte avgöra gren att uppdatera"
 
 #: vocab.cc:64
 #, c-format
@@ -5244,6 +5695,61 @@ msgstr "felaktig nyckellängd, %d byte"
 #, c-format
 msgid "Invalid hmac length of %d bytes"
 msgstr "felaktig HMAC-längd, %d byte"
+
+#: win32/fs.cc:51
+#, c-format
+msgid "could not determine configuration path"
+msgstr "kunde inte räkna ut vägen till konfigurationen"
+
+#: win32/fs.cc:136
+#, c-format
+msgid "%s: GetFileAttributes error: %s"
+msgstr "%s: fel i GetFileAttributes: %s"
+
+#: win32/fs.cc:186
+#, c-format
+msgid "error while reading directory: %s"
+msgstr "fel när läste katalog: %s"
+
+#: win32/fs.cc:320
+#, c-format
+msgid "renaming '%s' to '%s' failed: %s (%d)"
+msgstr "namnbyte av '%s' till '%s' misslyckades: %s (%d)"
+
+#: win32/fs.cc:389
+#, c-format
+msgid "cannot find a temporary file (tried %d possibilities)"
+msgstr "kan inte finna någon tillfällig fil (provade %d möjligheter)"
+
+#: win32/fs.cc:416
+#, c-format
+msgid "%s will be accessible to all users of this computer\n"
+msgstr "%s kommer att vara åtkomlig för alla användare på den här datorn\n"
+
+#: win32/get_system_flavour.cc:156
+#, c-format
+msgid "%s (level %d, rev %d)"
+msgstr "%s (nivå %d, rev %d)"
+
+#: win32/get_system_flavour.cc:162
+#, c-format
+msgid "Windows %s (%d.%d, build %d, %s) on %s"
+msgstr "Windows %s (%d.%d build %d, %s) på %s"
+
+#: win32/ssh_agent_platform.cc:92
+#, c-format
+msgid "Asked to write more than %u to pageant."
+msgstr ""
+
+#: win32/ssh_agent_platform.cc:101
+#, c-format
+msgid "Error sending message to pageant (%d)."
+msgstr ""
+
+#: win32/ssh_agent_platform.cc:115
+#, c-format
+msgid "Asked to read more than %u from pageant."
+msgstr ""
 
 #: work.cc:97 work_migration.cc:191 work_migration.cc:211
 #, c-format
@@ -5592,174 +6098,6 @@ msgstr "arbetskopian är korrupt: %s finns men är inte en vanlig fil"
 msgid "this workspace is in the current format, no migration is necessary."
 msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
-#: unix/fs.cc:43 win32/fs.cc:23
-#, c-format
-msgid "cannot get working directory: %s"
-msgstr "kan inte finna katalogen vi står i: %s"
-
-#: unix/fs.cc:54 win32/fs.cc:34
-#, c-format
-msgid "cannot change to directory %s: %s"
-msgstr "kan inte byta till katalog %s: %s"
-
-#: unix/fs.cc:75
-#, c-format
-msgid "could not find home directory for uid %d"
-msgstr "kunde inte finna hemkatalogen för uid %d"
-
-#: unix/fs.cc:108
-#, c-format
-msgid "could not find home directory for user %s"
-msgstr "kunde inte finns hemkatalogen för användaren %s"
-
-#: unix/fs.cc:125
-#, c-format
-msgid "error accessing file %s: %s"
-msgstr "fel när jag försökte nå filen %s: %s"
-
-#: unix/fs.cc:134
-#, c-format
-msgid "cannot handle special file %s"
-msgstr "kan inte hantera specialfilen %s"
-
-#: unix/fs.cc:149 win32/fs.cc:164
-#, c-format
-msgid "could not open directory '%s': %s"
-msgstr "kunde inte öppna katalogen '%s': %s"
-
-#: unix/fs.cc:240
-#, c-format
-msgid "error accessing '%s/%s': %s"
-msgstr "fel när jag försökte nå '%s/%s': %s"
-
-#: unix/fs.cc:262
-#, c-format
-msgid "renaming '%s' to '%s' failed: %s"
-msgstr "byta namn på '%s' till '%s' misslyckades: %s"
-
-#: unix/fs.cc:274 win32/fs.cc:240
-#, c-format
-msgid "could not remove '%s': %s"
-msgstr "kunde inte ta bort '%s': %s"
-
-#: unix/fs.cc:286 win32/fs.cc:247
-#, c-format
-msgid "could not create directory '%s': %s"
-msgstr "kunde inte skapa katalogen %s: %s"
-
-#: unix/fs.cc:352 win32/fs.cc:381
-#, c-format
-msgid "cannot create temp file %s: %s"
-msgstr "kan inte skapa tillfällig fil %s: %s"
-
-#: unix/fs.cc:361
-#, c-format
-msgid "all %d possible temporary file names are in use"
-msgstr "Alla %d möjliga tillfälliga filnamn används"
-
-#: unix/fs.cc:402 win32/fs.cc:441
-#, c-format
-msgid "error writing to temp file %s: %s"
-msgstr "fel vid skrivning till tillfällig fil %s: %s"
-
-#: unix/fs.cc:407 win32/fs.cc:448
-#, c-format
-msgid ""
-"giving up after four zero-length writes to %s (%d byte written, %d left)"
-msgid_plural ""
-"giving up after four zero-length writes to %s (%d bytes written, %d left)"
-msgstr[0] ""
-"ger upp efter att ha försökt skriva noll bytes fyra gånger till %s (%d byte "
-"skriven, %d kvar)"
-msgstr[1] ""
-"ger upp efter att ha försökt skriva noll bytes fyra gånger till %s (%d bytes "
-"skriva, %d kvar)"
-
-#: unix/os_strerror.cc:17 win32/os_strerror.cc:23
-#, c-format
-msgid "unknown error code %d"
-msgstr "okänd felkod %d"
-
-#: unix/process.cc:58
-#, c-format
-msgid "error getting status of file %s: %s"
-msgstr "fel vid hämtning av läget för filen %s: %s"
-
-#: unix/process.cc:81
-#, c-format
-msgid "error opening file %s: %s"
-msgstr "fel vid öppnande av filen %s: %s"
-
-#: unix/process.cc:91
-#, c-format
-msgid "error closing file %s: %s"
-msgstr "fel vid stängning av filen %s: %s"
-
-#: unix/ssh_agent_platform.cc:49
-#, c-format
-msgid "ssh_agent: connect: could not open socket to ssh-agent"
-msgstr "ssh_agent: connect: kunde inte öppna kanal till ssh-agent"
-
-#: unix/ssh_agent_platform.cc:57
-#, c-format
-msgid "ssh_agent: connect: could not set up socket for ssh-agent"
-msgstr "ssh_agent: connect: kunde inte ställa in kanal till ssh-agent"
-
-#: unix/ssh_agent_platform.cc:64
-#, c-format
-msgid "ssh_agent: connect: could not connect to socket for ssh-agent"
-msgstr "ssh_agent: connect: kunde inte koppla till kanal till ssh-agent"
-
-#: unix/ssh_agent_platform.cc:103
-#, c-format
-msgid "stream read failed (%i)"
-msgstr "misslyckades med att läsa strömmen (%i)"
-
-#: unix/ssh_agent_platform.cc:111
-#, c-format
-msgid "%u extra bytes from ssh-agent"
-msgstr "%u extra bytes från ssh-agent"
-
-#: win32/fs.cc:51
-#, c-format
-msgid "could not determine configuration path"
-msgstr "kunde inte räkna ut vägen till konfigurationen"
-
-#: win32/fs.cc:136
-#, c-format
-msgid "%s: GetFileAttributes error: %s"
-msgstr "%s: fel i GetFileAttributes: %s"
-
-#: win32/fs.cc:186
-#, c-format
-msgid "error while reading directory: %s"
-msgstr "fel när läste katalog: %s"
-
-#: win32/fs.cc:320
-#, c-format
-msgid "renaming '%s' to '%s' failed: %s (%d)"
-msgstr "namnbyte av '%s' till '%s' misslyckades: %s (%d)"
-
-#: win32/fs.cc:389
-#, c-format
-msgid "cannot find a temporary file (tried %d possibilities)"
-msgstr "kan inte finna någon tillfällig fil (provade %d möjligheter)"
-
-#: win32/fs.cc:416
-#, c-format
-msgid "%s will be accessible to all users of this computer\n"
-msgstr "%s kommer att vara åtkomlig för alla användare på den här datorn\n"
-
-#: win32/get_system_flavour.cc:156
-#, c-format
-msgid "%s (level %d, rev %d)"
-msgstr "%s (nivå %d, rev %d)"
-
-#: win32/get_system_flavour.cc:162
-#, c-format
-msgid "Windows %s (%d.%d, build %d, %s) on %s"
-msgstr "Windows %s (%d.%d build %d, %s) på %s"
-
 #~ msgid "Gets a database variable"
 #~ msgstr "Hämta värdet för en databasvariabel"
 
@@ -5819,9 +6157,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 #~ msgid "destination %s is an existing file in current revision"
 #~ msgstr "målet %s är en existerande fil i nuvarande revision"
 
-#~ msgid "empty path %s is not allowed"
-#~ msgstr "tom sökväg %s ej tillåten"
-
 #~ msgid "%s does not exist in current manifest"
 #~ msgstr "%s finns inte i nuvarande manifest"
 
@@ -5834,12 +6169,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 #~ msgstr ""
 #~ "kommer inte att genomföra namnbytet %s -> %s fysiskt, för källan finns "
 #~ "inte och målet finns"
-
-#~ msgid "search root '%s' does not exist"
-#~ msgstr "angiven sökrot '%s' finns inte"
-
-#~ msgid "search root '%s' is not a directory"
-#~ msgstr "sökroten '%s' är inte en katalog"
 
 #~ msgid "debug"
 #~ msgstr "felsökning"
@@ -6036,9 +6365,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 #~ msgid "error at transaction BEGIN statement"
 #~ msgstr "fel vid transaktionens början (kommandot BEGIN)"
 
-#~ msgid "migration step failed: %s"
-#~ msgstr "migreringssteg misslyckades: %s"
-
 #~ msgid "failure on COMMIT"
 #~ msgstr "databaskommandot COMMIT misslyckades"
 
@@ -6092,9 +6418,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 
 #~ msgid "%s"
 #~ msgstr "%s"
-
-#~ msgid "%s: %s"
-#~ msgstr "%s: %s"
 
 #~ msgid "roster %s is not parseable (perhaps with unnormalized paths?)"
 #~ msgstr ""
@@ -6225,18 +6548,6 @@ msgstr "Windows %s (%d.%d build %d, %s) på %s"
 
 #~ msgid "branch '%s' is empty\n"
 #~ msgstr "grenen '%s' är tom\n"
-
-#~ msgid "lua error while loading '%s'"
-#~ msgstr "lua-fel vid läsning av '%s'"
-
-#~ msgid "rcfile '%s' does not exist"
-#~ msgstr "rcfilen '%s' finns inte"
-
-#~ msgid "failed to convert string from %s to %s: '%s'"
-#~ msgstr "misslyckades med att konvertera en sträng från %s till %s: '%s'"
-
-#~ msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-#~ msgstr "fel vid konvertering av %d UTF-8-byte till IDNA ACE: %s"
 
 #~ msgid "use least common ancestor as ancestor for merge"
 #~ msgstr ""
