@@ -8845,8 +8845,7 @@ hook; and if you send it to the monotone developers, we will likely
 make it the default for that language.  @xref{Regexps}, for the
 regular expression syntax.
 
-@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
-                     @var{diff_args}, @var{old_rev}, @var{new_rev})
+@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary}, @var{diff_args}, @var{old_rev}, @var{new_rev})
 
 Called for each file when @command{diff} is given the
 @option{--external} option.  @var{file_path} is the pathname of the
