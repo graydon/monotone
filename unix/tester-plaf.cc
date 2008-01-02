@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
+#include <string.h>
 #include <map>
 
 using std::string;

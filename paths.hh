@@ -164,7 +164,7 @@ public:
   // in file_io.cc).
   any_path operator /(path_component const &) const;
   any_path dirname() const;
-  
+
   any_path(any_path const & other)
     : data(other.data) {}
   any_path & operator=(any_path const & other)
@@ -202,14 +202,17 @@ public:
 
   // does dirname() and basename() at the same time, for efficiency
   void dirname_basename(file_path &, path_component &) const;
-  
+
   // returns the number of /-separated components of the path.
   // The empty path has depth zero.
   unsigned int depth() const;
 
   // ordering...
-  bool operator ==(const file_path & other) const
+  bool operator==(const file_path & other) const
   { return data == other.data; }
+
+  bool operator!=(const file_path & other) const
+  { return data != other.data; }
 
   // the ordering on file_path is not exactly that of strings.
   // see the "ordering" unit test in paths.cc.
@@ -300,7 +303,7 @@ public:
   // exposed for the use of walk_tree and friends
   static bool internal_string_is_bookkeeping_path(utf8 const & path);
   static bool external_string_is_bookkeeping_path(utf8 const & path);
-  bool operator ==(const bookkeeping_path & other) const
+  bool operator==(const bookkeeping_path & other) const
   { return data == other.data; }
 
   bool operator <(const bookkeeping_path & other) const
@@ -350,8 +353,8 @@ public:
   system_path(std::string const & path);
   system_path(utf8 const & path);
 
-  bool operator ==(const system_path & other) const
-  { return data == other.data; }
+  bool operator==(const system_path & other) const
+  { return data== other.data; }
 
   system_path operator /(path_component const & to_append) const;
   system_path operator /(char const * to_append) const;

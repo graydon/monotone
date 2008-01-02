@@ -1,11 +1,15 @@
-monotone (0.38-1) UNRELEASED; urgency=low
+monotone (0.38-1) unstable; urgency=low
 
+  [ Richard Levitte ]
+  * New upstream release.
+
+  [ Zack Weinberg ]
   * monotone-server.postrm: Delete default.mtn~ on purge.
     (Closes: #455058)
   * Add Homepage: and Vcs-Browser: fields to debian/control.
   * Standards-Version: 3.7.3 (no changes required).
 
- -- Zack Weinberg <zackw@panix.com>  Tue, 11 Dec 2007 01:58:16 -0800
+ -- Richard Levitte <richard@levitte.org>  Wed, 12 Dec 2007 20:52:32 +0100
 
 monotone (0.37-4) unstable; urgency=low
 

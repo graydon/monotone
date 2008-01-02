@@ -12,6 +12,7 @@
 #include <map>
 #include <utility>
 #include <iostream>
+#include <iterator>
 
 #include <boost/tuple/tuple.hpp>
 

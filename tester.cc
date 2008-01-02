@@ -5,6 +5,7 @@
 #include "vector.hh"
 #include "sanity.hh"
 #include <boost/lexical_cast.hpp>
+#include <cstring>
 
 using std::string;
 using std::map;

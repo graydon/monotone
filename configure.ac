@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.37, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.38, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -43,6 +43,22 @@ if test "$ac_win32" = "yes"; then
 else
    AM_CONDITIONAL(WIN32_PLATFORM, false)
    AC_DEFINE(os_err_t, int, [OS-specific error type])
+fi
+
+AC_CACHE_CHECK([whether this is AIX],
+       ac_aix, [
+       AC_TRY_COMPILE([#ifndef _AIX
+                       #error "This is not AIX"
+                       #endif],
+                      [int i;],
+                      ac_aix=yes,
+                      ac_aix=no)
+])
+if test "$ac_aix" = "yes"; then
+   AM_CONDITIONAL(AIX_PLATFORM, true)
+   LDFLAGS="$LDFLAGS -Wl,-bexpfull"
+else
+   AM_CONDITIONAL(AIX_PLATFORM, false)
 fi
 
 # Checks for header files.

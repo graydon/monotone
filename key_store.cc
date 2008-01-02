@@ -228,7 +228,7 @@ key_store::put_key_pair_memory(rsa_keypair_id const & ident,
   else
     {
       E(keys_match(ident, res.first->second.pub, ident, kp.pub),
-        F("Cannot store key '%s'; a different key by that name exists.")
+        F("Cannot store key '%s': a different key by that name exists.")
           % ident);
       L(FL("skipping existing key pair %s") % ident);
       return false;

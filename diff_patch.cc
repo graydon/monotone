@@ -34,6 +34,7 @@
 using std::make_pair;
 using std::map;
 using std::min;
+using std::max;
 using std::ostream;
 using std::ostream_iterator;
 using std::string;
@@ -490,8 +491,9 @@ bool merge3(vector<string> const & ancestor,
 content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
                                                                revision_id const & left,
                                                                revision_id const & right,
-                                                               marking_map const & mm)
-  : app(app), mm(mm)
+                                                               marking_map const & left_mm,
+                                                               marking_map const & right_mm)
+  : app(app), left_mm(left_mm), right_mm(right_mm)
 {
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
@@ -516,7 +518,7 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
     {
       delta left_delta;
       diff(left_data.inner(), merged_data.inner(), left_delta);
-      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));    
+      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
     }
   if (!(right_ident == merged_ident))
     {
@@ -547,6 +549,7 @@ load_and_cache_roster(revision_id const & rid,
 
 void
 content_merge_database_adaptor::get_ancestral_roster(node_id nid,
+                                                     revision_id & rid,
                                                      shared_ptr<roster_t const> & anc)
 {
   // Given a file, if the lca is nonzero and its roster contains the file,
@@ -554,6 +557,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // birth revision, which is the "per-file worst case" lca.
 
   // Begin by loading any non-empty file lca roster
+  rid = lca;
   if (!lca.inner()().empty())
     load_and_cache_roster(lca, rosters, anc, app);
 
@@ -561,9 +565,29 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // then use the file's birth roster.
   if (!anc || !anc->has_node(nid))
     {
-      marking_map::const_iterator j = mm.find(nid);
-      I(j != mm.end());
-      load_and_cache_roster(j->second.birth_revision, rosters, anc, app);
+      marking_map::const_iterator lmm = left_mm.find(nid);
+      marking_map::const_iterator rmm = right_mm.find(nid);
+
+      MM(left_mm);
+      MM(right_mm);
+
+      if (lmm == left_mm.end())
+        {
+          I(rmm != right_mm.end());
+          rid = rmm->second.birth_revision;
+        }
+      else if (rmm == right_mm.end())
+        {
+          I(lmm != left_mm.end());
+          rid = lmm->second.birth_revision;
+        }
+      else
+        {
+          I(lmm->second.birth_revision == rmm->second.birth_revision);
+          rid = lmm->second.birth_revision;
+        }
+
+      load_and_cache_roster(rid, rosters, anc, app);
     }
   I(anc);
 }
@@ -579,6 +603,14 @@ content_merge_database_adaptor::get_version(file_id const & ident,
 ///////////////////////////////////////////////////////////////////////////
 // content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
+
+
+void
+content_merge_workspace_adaptor::cache_roster(revision_id const & rid,
+                                              boost::shared_ptr<roster_t const> roster)
+{
+  rosters.insert(std::make_pair(rid, roster));
+}
 
 void
 content_merge_workspace_adaptor::record_merge(file_id const & left_id,
@@ -598,11 +630,42 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 
 void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
+                                                      revision_id & rid,
                                                       shared_ptr<roster_t const> & anc)
 {
-  // When doing an update, the base revision is always the ancestor to
-  // use for content merging.
-  anc = base;
+  // Begin by loading any non-empty file lca roster
+  if (base->has_node(nid))
+    {
+      rid = lca;
+      anc = base;
+    }
+  else
+    {
+      marking_map::const_iterator lmm = left_mm.find(nid);
+      marking_map::const_iterator rmm = right_mm.find(nid);
+
+      MM(left_mm);
+      MM(right_mm);
+
+      if (lmm == left_mm.end())
+        {
+          I(rmm != right_mm.end());
+          rid = rmm->second.birth_revision;
+        }
+      else if (rmm == right_mm.end())
+        {
+          I(lmm != left_mm.end());
+          rid = lmm->second.birth_revision;
+        }
+      else
+        {
+          I(lmm->second.birth_revision == rmm->second.birth_revision);
+          rid = lmm->second.birth_revision;
+        }
+
+      load_and_cache_roster(rid, rosters, anc, app);
+    }
+  I(anc);
 }
 
 void
@@ -631,6 +694,37 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
         % i->second % fid % ident);
       dat = file_data(tmp);
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////
+// content_merge_checkout_adaptor
+///////////////////////////////////////////////////////////////////////////
+
+void
+content_merge_checkout_adaptor::record_merge(file_id const & left_ident,
+                                             file_id const & right_ident,
+                                             file_id const & merged_ident,
+                                             file_data const & left_data,
+                                             file_data const & right_data,
+                                             file_data const & merged_data)
+{
+  I(false);
+}
+
+void
+content_merge_checkout_adaptor::get_ancestral_roster(node_id nid,
+                                                     revision_id & rid,
+                                                     shared_ptr<roster_t const> & anc)
+{
+  I(false);
+}
+
+void
+content_merge_checkout_adaptor::get_version(file_id const & ident,
+                                            file_data & dat) const
+{
+  app.db.get_file_version(ident, dat);
 }
 
 
@@ -672,14 +766,14 @@ content_merger::attribute_manual_merge(file_path const & path,
 }
 
 bool
-content_merger::try_to_merge_files(file_path const & anc_path,
-                                   file_path const & left_path,
-                                   file_path const & right_path,
-                                   file_path const & merged_path,
-                                   file_id const & ancestor_id,
-                                   file_id const & left_id,
-                                   file_id const & right_id,
-                                   file_id & merged_id)
+content_merger::try_auto_merge(file_path const & anc_path,
+                               file_path const & left_path,
+                               file_path const & right_path,
+                               file_path const & merged_path,
+                               file_id const & ancestor_id,
+                               file_id const & left_id,
+                               file_id const & right_id,
+                               file_id & merged_id)
 {
   // This version of try_to_merge_files should only be called when there is a
   // real merge3 to perform.
@@ -687,8 +781,8 @@ content_merger::try_to_merge_files(file_path const & anc_path,
   I(!null_id(left_id));
   I(!null_id(right_id));
 
-  L(FL("trying to merge %s <-> %s (ancestor: %s)")
-    % left_id % right_id % ancestor_id);
+  L(FL("trying auto merge '%s' %s <-> %s (ancestor: %s)")
+    % merged_path % left_id % right_id % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -725,10 +819,7 @@ content_merger::try_to_merge_files(file_path const & anc_path,
       split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
       split_into_lines(right_unpacked(), right_encoding, right_lines);
 
-      if (merge3(ancestor_lines,
-                 left_lines,
-                 right_lines,
-                 merged_lines))
+      if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
         {
           hexenc<id> tmp_id;
           file_data merge_data;
@@ -747,6 +838,46 @@ content_merger::try_to_merge_files(file_path const & anc_path,
           return true;
         }
     }
+
+  return false;
+}
+
+bool
+content_merger::try_user_merge(file_path const & anc_path,
+                               file_path const & left_path,
+                               file_path const & right_path,
+                               file_path const & merged_path,
+                               file_id const & ancestor_id,
+                               file_id const & left_id,
+                               file_id const & right_id,
+                               file_id & merged_id)
+{
+  // This version of try_to_merge_files should only be called when there is a
+  // real merge3 to perform.
+  I(!null_id(ancestor_id));
+  I(!null_id(left_id));
+  I(!null_id(right_id));
+
+  L(FL("trying user merge '%s' %s <-> %s (ancestor: %s)")
+    % merged_path % left_id % right_id % ancestor_id);
+
+  if (left_id == right_id)
+    {
+      L(FL("files are identical"));
+      merged_id = left_id;
+      return true;
+    }
+
+  file_data left_data, right_data, ancestor_data;
+  data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
+
+  left_unpacked = left_data.inner();
+  ancestor_unpacked = ancestor_data.inner();
+  right_unpacked = right_data.inner();
 
   P(F("help required for 3-way merge\n"
       "[ancestor] %s\n"
@@ -998,24 +1129,17 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
 
 void unidiff_hunk_writer::advance_to(size_t newpos)
 {
-  if (a_begin + a_len + (2 * ctx) < newpos)
+  if (a_begin + a_len + (2 * ctx) < newpos || hunk.empty())
     {
       flush_hunk(newpos);
 
       // insert new leading context
-      if (newpos - ctx < a.size())
+      for (size_t p = max(ctx, newpos) - ctx;
+           p < min(a.size(), newpos); ++p)
         {
-          for (size_t i = ctx; i > 0; --i)
-            {
-              // The original test was (newpos - i < 0), but since newpos
-              // is size_t (unsigned), it will never go negative.  Testing
-              // that newpos is smaller than i is the same test, really.
-              if (newpos < i)
-                continue;
-              hunk.push_back(string(" ") + a[newpos - i]);
-              a_begin--; a_len++;
-              b_begin--; b_len++;
-            }
+          hunk.push_back(string(" ") + a[p]);
+          a_begin--; a_len++;
+          b_begin--; b_len++;
         }
     }
   else

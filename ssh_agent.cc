@@ -302,7 +302,7 @@ ssh_agent::get_keys()
 
           E(key.length() == key_loc,
             F("ssh_agent: get_keys: not all or too many key bytes consumed,"
-              " location (%u), length(%i)")
+              " location (%u), length (%i)")
             % key_loc
             % key.length());
 
@@ -348,7 +348,7 @@ ssh_agent::get_keys()
     }
   E(packet.length() == packet_loc,
     F("ssh_agent: get_keys: not all or too many packet bytes consumed,"
-      " location (%u), length(%i)")
+      " location (%u), length (%i)")
     % packet_loc
     % packet.length());
   return keys;
@@ -417,13 +417,13 @@ ssh_agent::sign_data(RSA_PublicKey const & key,
   L(FL("ssh_agent: sign_data: output length %u") % out_len);
   E(full_sig.length() == full_sig_loc,
     (F("ssh_agent: sign_data: not all or too many signature bytes consumed,"
-       " location (%u), length(%i)")
+       " location (%u), length (%i)")
      % full_sig_loc
      % full_sig.length()));
 
   E(packet_in.length() == packet_in_loc,
     (F("ssh_agent: sign_data: not all or too many packet bytes consumed,"
-       " location (%u), length(%i)")
+       " location (%u), length (%i)")
      % packet_in_loc
      % packet_in.length()));
 }

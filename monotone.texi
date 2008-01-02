@@ -7816,41 +7816,56 @@ revision @var{source_id} or is invalid, prints an error message to stderr and ex
 
 @end table
 
-@item mtn automate db_get @var{domain} @var{name}
+@item mtn automate get_db_variables [@var{domain}]
 
 @table @strong
 @item Arguments:
 
-The @var{domain} and @var{name} specify the database variable
-which is returned.
+The optional @var{domain} restricts the output to variables only within
+this domain.
 
-@item Added in:
+@item Changes:
 
-4.1
+@itemize
+@item
+7.0 -- converted output to basic_io, renamed to 'get_db_variables'
+@item
+4.1 -- added as 'db_get'
+@end itemize
 
 @item Purpose:
 
-Read a database variable, see also @ref{Vars}.
+Reads and outputs database variables. For more information about variables,
+see @ref{Vars}.
 
 @item Sample output:
 
 @verbatim
-off.net
+domain "database"
+ entry "default-exclude-pattern" ""
+ entry "default-include-pattern" "net.venge.monotone*"
+ entry "default-server" "monotone.ca"
+
+domain "known-servers"
+ entry "monotone.ca" "3e6f5225bc2fffacbc20c9de37ff2dae1e20892e"
+ entry "monotone.mtn-host.prjek.net" "a52f85615cb2445989f525bf17a603250381a751"
+ entry "venge.net" "70a0f283898a18815a83df37c902e5f1492e9aa2"
 @end verbatim
 
 @item Output format:
 
-Exactly the variable's content. Since this command is mainly intended for
-@command{automate stdio} it will not add a trailing newline.
+basic_io-formatted stanzas. Each stanza starts with a 'domain', followed by one
+or more 'entry' lines. Each 'entry' contains the @var{name} and the @var{value}
+of the respective database variable.
 
 @item Error conditions:
 
-If the variable is unknown prints an error message to stderr and exits with
-status 1.
+If the domain is unknown or no variables where found, prints an error message
+to stderr and exits with status 1.
 
 @end table
 
-@item mtn automate db_put @var{domain} @var{name} @var{value}
+@item mtn automate set_db_variable @var{domain} @var{name} @var{value}
 
 @table @strong
 @item Arguments:
@@ -7858,9 +7873,14 @@ status 1.
 The @var{domain} and @var{name} specify the database variable
 which is changed to @var{value}.
 
-@item Added in:
+@item Changes:
 
-4.1
+@itemize
+@item
+7.0 -- renamed to 'set_db_variable'
+@item
+4.1 -- added as 'db_set'
+@end itemize
 
 @item Purpose:
 
@@ -7869,7 +7889,7 @@ Change a database variable, see also @ref{Vars}.
 @item Sample usage:
 
 @verbatim
-mtn automate db_set database default-server off.net
+mtn automate set_db_variable database default-server off.net
 @end verbatim
 
 @item Output format:
@@ -7879,6 +7899,40 @@ No output.
 @item Error conditions:
 
 None.
+
+@end table
+
+@item mtn automate drop_db_variables @var{domain} [@var{name}]
+
+@table @strong
+@item Arguments:
+
+The @var{domain} and @var{name} specify the database variable
+which should be dropped. If @var{name} is ommitted, all database
+variables in the @var{domain} are dropped.
+
+@item Added in:
+
+7.0
+
+@item Purpose:
+
+Drops one or more database variables, see also @ref{Vars}.
+
+@item Sample usage:
+
+@verbatim
+mtn automate drop_db_variables known-servers
+@end verbatim
+
+@item Output format:
+
+No output.
+
+@item Error conditions:
+
+If the specific variable or any variables in the given domain are not found,
+prints to stderr and exits with status 1.
 
 @end table
 
@@ -8075,12 +8129,12 @@ this can be achieved with the following code:
 @smallexample
 @group
 do
-	local old_hook = default_hook
-	function default_hook(arg)
-		if not old_hook(arg) then
-			-- do other stuff
-		end
-	end
+    local old_hook = default_hook
+    function default_hook(arg)
+        if not old_hook(arg) then
+            -- do other stuff
+        end
+    end
 end
 @end group
 @end smallexample
@@ -8655,7 +8709,7 @@ monotone binary is not in the default path.
 @smallexample
 @group
 function get_mtn_command(host)
-	return "mtn"
+    return "mtn"
 end
 @end group
 @end smallexample
@@ -8751,7 +8805,7 @@ function accept_testresult_change(old_results, new_results)
    do
       if res == true and new_results[test] ~= true
       then
-	 return false
+     return false
       end
    end
    return true
@@ -8791,8 +8845,7 @@ hook; and if you send it to the monotone developers, we will likely
 make it the default for that language.  @xref{Regexps}, for the
 regular expression syntax.
 
-@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary},
-                     @var{diff_args}, @var{old_rev}, @var{new_rev})
+@item external_diff (@var{file_path}, @var{old_data}, @var{new_data}, @var{is_binary}, @var{diff_args}, @var{old_rev}, @var{new_rev})
 
 Called for each file when @command{diff} is given the
 @option{--external} option.  @var{file_path} is the pathname of the
@@ -9221,7 +9274,7 @@ specifics of how it works. Most users can ignore these sections.
 * Hash Integrity::              Notes on probability and failure.
 * Rebuilding ancestry::         In case of corruption.
 * Mark-Merge::                  The merging algorithm used by Monotone.
-* Regexps::                     The syntax of regular expressions 
+* Regexps::                     The syntax of regular expressions
                                   used by Monotone.
 @end menu
 

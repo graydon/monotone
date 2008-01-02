@@ -18,7 +18,7 @@ srv1 = netsync.start({"--rcfile=server1.rc"})
 
 srv1:push({"*"})
 
-sleep(5)
+sleep(20)
 
 srv1:stop()
 srv2:stop()

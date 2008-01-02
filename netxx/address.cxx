@@ -46,6 +46,7 @@
 
 // standard includes
 #include <cstdlib>
+#include <cstring>
 
 //####################################################################
 namespace 

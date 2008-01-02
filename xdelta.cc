@@ -29,6 +29,7 @@
 #include "vector.hh"
 #include <set>
 #include <sstream>
+#include <cstring>  // memcmp
 
 #include <boost/shared_ptr.hpp>
 #include <boost/version.hpp>

@@ -11,6 +11,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <iterator>
 
 #include "cert.hh"
 #include "charset.hh"

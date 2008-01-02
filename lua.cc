@@ -11,9 +11,15 @@
 #include <set>
 #include "vector.hh"
 #include <utility>
+#include <cstring> // strerror, strlen
 
 using std::pair;
 using std::set;
+#ifdef WIN32
+// with visual studio you need to include algorithm. 
+// Not sure if this applies to other platforms so ifdef it for now.
+#include <algorithm>
+#endif
 using std::sort;
 using std::string;
 using std::vector;
