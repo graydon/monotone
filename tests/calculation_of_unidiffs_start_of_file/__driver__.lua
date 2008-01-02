@@ -21,7 +21,7 @@ rename("testfile", "secondfile")
 
 -- see if patch likes that
 rename("monodiff", "stdin")
-xfail({"patch", "firstfile"}, 0, false, false, true)
+check({"patch", "firstfile"}, 0, false, false, true)
 
 -- see if the resulting file has been properly patched
 check(samefile("firstfile", "secondfile"))

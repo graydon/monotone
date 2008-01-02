@@ -1128,12 +1128,12 @@ void unidiff_hunk_writer::flush_hunk(size_t pos)
 
 void unidiff_hunk_writer::advance_to(size_t newpos)
 {
-  if (a_begin + a_len + (2 * ctx) < newpos)
+  if (a_begin + a_len + (2 * ctx) < newpos || hunk.empty())
     {
       flush_hunk(newpos);
 
       // insert new leading context
-      if (newpos - ctx < a.size())
+      if (newpos < a.size() + ctx)
         {
           for (size_t i = ctx; i > 0; --i)
             {
