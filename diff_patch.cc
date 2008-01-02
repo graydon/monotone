@@ -34,6 +34,7 @@
 using std::make_pair;
 using std::map;
 using std::min;
+using std::max;
 using std::ostream;
 using std::ostream_iterator;
 using std::string;
@@ -1133,19 +1134,12 @@ void unidiff_hunk_writer::advance_to(size_t newpos)
       flush_hunk(newpos);
 
       // insert new leading context
-      if (newpos < a.size() + ctx)
+      for (size_t p = max(ctx, newpos) - ctx;
+           p < min(a.size(), newpos); ++p)
         {
-          for (size_t i = ctx; i > 0; --i)
-            {
-              // The original test was (newpos - i < 0), but since newpos
-              // is size_t (unsigned), it will never go negative.  Testing
-              // that newpos is smaller than i is the same test, really.
-              if (newpos < i)
-                continue;
-              hunk.push_back(string(" ") + a[newpos - i]);
-              a_begin--; a_len++;
-              b_begin--; b_len++;
-            }
+          hunk.push_back(string(" ") + a[p]);
+          a_begin--; a_len++;
+          b_begin--; b_len++;
         }
     }
   else
