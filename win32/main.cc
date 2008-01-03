@@ -180,6 +180,17 @@ cpp_main(int argc, char ** argv);
 int
 main(int argc, char ** argv)
 {
+  // Have to get fully qualified path to mtn.exe into argv0 before anything
+  // might try to report an error.
+  char name[MAX_PATH];
+  int len = 0;
+  len = (int)GetModuleFileName(0, name, MAX_PATH);
+  if(len != 0) {
+    argv0 = strdup(name);
+  } else {
+    argv0 = argv[0];
+  }
+  
   SetUnhandledExceptionFilter(&seh_reporting_function);
 
 #ifdef MS_CRT_DEBUG_HOOK
