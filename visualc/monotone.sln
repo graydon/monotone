@@ -37,7 +37,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tester", "tester.vcproj", "
 		{36249158-B5C6-46BD-9FAF-15454CBE722F} = {36249158-B5C6-46BD-9FAF-15454CBE722F}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unit_tests", "unit_tests.vcproj", "{8F951705-66C4-4B67-A585-C8CF75EA2644}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "unit_tester", "unit_tester.vcproj", "{8F951705-66C4-4B67-A585-C8CF75EA2644}"
 	ProjectSection(ProjectDependencies) = postProject
 		{83E1EB91-ABA9-4DC5-9423-87B3D977F015} = {83E1EB91-ABA9-4DC5-9423-87B3D977F015}
 	EndProjectSection

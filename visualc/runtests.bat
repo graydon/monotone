@@ -1,26 +1,34 @@
 SETLOCAL
 
+if "%1x"=="debugx" goto do_debug
 set EXE_PATH=visualc\Release
+goto setpath
+
+:do_debug
+set EXE_PATH=visualc\Debug
+goto setpath
+
+:setpath
 set PATH=%CD%\%EXE_PATH%;%PATH%
 
 set fail_count=0
 
-unit_tests.exe
-if %ERRORLEVEL%==0 goto tester-testsuite.lua
-@echo unit-tests failed.
+%EXE_PATH%\tester.exe tester-testsuite.lua
+if %ERRORLEVEL%==0 goto unit-testsuite.lua
+@echo tester-testsuite.lua failed.
 set fail_count=1
 
-:tester-testsuite.lua
-%EXE_PATH%\tester.exe tester-testsuite.lua
-if %ERRORLEVEL%==0 goto testsuite.lua
-@echo tester-testsuite.lua failed.
+:unit-testsuite.lua
+%EXE_PATH%\tester.exe unit-testsuite.lua
+if %ERRORLEVEL%==0 goto lua-testsuite.lua
+@echo unit-testsuite.lua failed.
 if %fail_count%==1 set fail_count=2
 if %fail_count%==0 set fail_count=1
 
-:testsuite.lua
-%EXE_PATH%\tester.exe testsuite.lua
+:lua-testsuite.lua
+%EXE_PATH%\tester.exe lua-testsuite.lua
 if %ERRORLEVEL%==0 goto nomore
-@echo testsuite.lua failed.
+@echo lua-testsuite.lua failed.
 if %fail_count%==2 set fail_count=3
 if %fail_count%==1 set fail_count=2
 if %fail_count%==0 set fail_count=1

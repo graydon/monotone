@@ -1,6 +1,8 @@
 #include "base.hh"
 #include "lua.hh"
+#include "paths.hh"
 #include "platform.hh"
+#include "platform-wrapped.hh"
 #include "tester-plaf.hh"
 #include "vector.hh"
 #include "sanity.hh"
@@ -1051,14 +1053,19 @@ int main(int argc, char **argv)
           run_dir = firstdir + "/tester_dir";
           testfile = tests_to_run.front();
 
-          if (argv[0][0] == '/'
-#ifdef WIN32
-              || argv[0][0] != '\0' && argv[0][1] == ':'
-#endif
-              )
+#if defined(WIN32)
+          char name[MAX_PATH];
+          int len = 0;
+          len = (int)GetModuleFileName(0, name, MAX_PATH);
+          if(len != 0) {
+            argv0 = system_path(name).as_external();
+          }
+#else
+          if (argv[0][0] == '/')
             argv0 = argv[0];
           else
             argv0 = firstdir + "/" + argv[0];
+#endif
 
           change_current_working_dir(dirname(testfile));
           source_dir = get_current_working_dir();
