@@ -2255,7 +2255,7 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
 
   while (!selected.empty())
     {
-      map<node_id, node_t>::const_iterator n = selected.begin(), p;
+      map<node_id, node_t>::const_iterator n = selected.begin(), p = selected.begin();
 
       L(FL("selected node %d %s parent %d")
             % n->second->self
