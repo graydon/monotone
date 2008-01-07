@@ -2255,12 +2255,14 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
 
   while (!selected.empty())
     {
-      map<node_id, node_t>::const_iterator n = selected.begin(), p = selected.end();
+      map<node_id, node_t>::const_iterator n = selected.begin();
 
       L(FL("selected node %d %s parent %d")
             % n->second->self
             % n->second->name
             % n->second->parent);
+
+      bool missing_parent = false;
 
       while (!null_node(n->second->parent) &&
              !restricted.has_node(n->second->parent))
@@ -2272,7 +2274,8 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
             % n->second->name
             % n->second->parent);
 
-          p = selected.find(n->second->parent);
+          map<node_id, node_t>::const_iterator
+            p = selected.find(n->second->parent);
 
           if (p != selected.end())
             {
@@ -2280,10 +2283,13 @@ make_restricted_roster(roster_t const & from, roster_t const & to,
               I(is_dir_t(n->second));
             }
           else
-            break;
+            {
+              missing_parent = true;
+              break;
+            }
         }
 
-      if (p != selected.end())
+      if (!missing_parent)
         {
           L(FL("adding node %d %s parent %d")
             % n->second->self
