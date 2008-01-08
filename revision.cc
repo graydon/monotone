@@ -1655,7 +1655,7 @@ build_roster_style_revs_from_manifest_style_revs(database & db)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, db.get_key_store());
+    get_user_key(key, db);
     require_password(key, db.get_key_store());
   }
 
@@ -1709,7 +1709,7 @@ build_changesets_from_manifest_ancestry(database & db)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, db.get_key_store());
+    get_user_key(key, db);
     require_password(key, db.get_key_store());
   }
 

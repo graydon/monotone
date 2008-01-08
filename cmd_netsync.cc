@@ -78,7 +78,7 @@ find_key(utf8 const & addr,
     {
       if (needed)
         {
-          get_user_key(key, app.keys);
+          get_user_key(key, app.db);
         }
     }
   app.opts.signing_key = key;

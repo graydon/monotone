@@ -349,7 +349,7 @@ merge_two(revision_id const & left, revision_id const & right,
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key,app);
+    get_user_key(key, app.db);
   }
 
   revision_id merged;
@@ -611,7 +611,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
         {
           rsa_keypair_id key;
-          get_user_key(key, app);
+          get_user_key(key, app.db);
         }
         resolve_merge_conflicts(left_roster, right_roster,
                                 result, dba, app);

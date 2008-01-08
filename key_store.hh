@@ -10,6 +10,7 @@
 #include "vocab.hh"
 #include "paths.hh"
 
+class app_state;
 struct globish;
 class ssh_agent;
 

@@ -1208,7 +1208,7 @@ import_cvs_repo(system_path const & cvsroot,
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, app.keys);
+    get_user_key(key, app.db);
     require_password(key, app.keys);
   }
 

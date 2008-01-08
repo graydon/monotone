@@ -134,7 +134,7 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app.keys);
+  get_user_key(id, app.db);
   N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
@@ -174,7 +174,7 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app.keys);
+  get_user_key(id, app.db);
   N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
@@ -199,7 +199,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   internalize_cert_name(idx(args, 1), cname);
 
   rsa_keypair_id key;
-  get_user_key(key, app.keys);
+  get_user_key(key, app.db);
 
   cert_value val;
   if (args.size() == 3)

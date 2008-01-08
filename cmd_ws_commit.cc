@@ -1008,7 +1008,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   {
     // fail early if there isn't a key
     rsa_keypair_id key;
-    get_user_key(key, app.keys);
+    get_user_key(key, app.db);
   }
 
   app.make_branch_sticky();

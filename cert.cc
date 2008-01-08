@@ -442,14 +442,13 @@ check_cert(database & db, cert const & t)
 // "special certs"
 
 void
-get_user_key(rsa_keypair_id & key, key_store & keys)
+get_user_key(rsa_keypair_id & key, database & db)
 {
-
+  key_store & keys = db.get_key_store();
+  
   if (keys.has_opt_signing_key())
-    {
-      key = keys.get_opt_signing_key();
-    }
-  else if (keys.hook_get_branch_key(app.opts.branchname, key))
+    key = keys.get_opt_signing_key();
+  else if (keys.hook_get_current_branch_key(key))
     ; // the check also sets the key.
   else
     {
@@ -460,16 +459,17 @@ get_user_key(rsa_keypair_id & key, key_store & keys)
           "perhaps you need to 'genkey <your email>'"));
       N(all_privkeys.size() == 1,
         F("you have multiple private keys\n"
-          "pick one to use for signatures by adding '-k<keyname>' to your command"));
+          "pick one to use for signatures by adding "
+          "'-k<keyname>' to your command"));
       key = all_privkeys[0];
     }
 
-  if (app.db.database_specified() && app.db.public_key_exists(key))
+  if (db.database_specified() && db.public_key_exists(key))
     {
       base64<rsa_pub_key> pub_key;
       keypair priv_key;
-      app.db.get_key(key, pub_key);
-      app.keys.get_key_pair(key, priv_key);
+      db.get_key(key, pub_key);
+      keys.get_key_pair(key, priv_key);
       E(keys_match(key, pub_key, key, priv_key.pub),
         F("The key '%s' stored in your database does\n"
           "not match the version in your local key store!") % key);
@@ -525,7 +525,7 @@ make_simple_cert(hexenc<id> const & id,
                  cert & c)
 {
   rsa_keypair_id key;
-  get_user_key(key, db.get_key_store());
+  get_user_key(key, db);
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
@@ -588,7 +588,7 @@ cert_revision_author_default(revision_id const & m,
 {
   string author;
   rsa_keypair_id key;
-  get_user_key(key, db.get_key_store());
+  get_user_key(key, db);
 
   if (!db.hook_get_author(key, author))
     {

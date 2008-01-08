@@ -877,9 +877,6 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              "",
              options::opts::depth | options::opts::exclude)
 {
-  N(args.size() == 0,
-    F("no arguments needed"));
-
   CMD_REQUIRES_DATABASE(app);
   CMD_REQUIRES_WORKSPACE(app);
 
