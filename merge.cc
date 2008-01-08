@@ -214,7 +214,7 @@ interactive_merge_and_store(revision_id const & left_rid,
   // write new files into the db
   store_roster_merge_result(left_roster, right_roster, result,
                             left_rid, right_rid, merged_rid,
-                            app);
+                            app.db);
 }
 
 void
@@ -224,7 +224,7 @@ store_roster_merge_result(roster_t const & left_roster,
                           revision_id const & left_rid,
                           revision_id const & right_rid,
                           revision_id & merged_rid,
-                          app_state & app)
+                          database & db)
 {
   I(result.is_clean());
   roster_t & merged_roster = result.roster;
@@ -247,9 +247,9 @@ store_roster_merge_result(roster_t const & left_roster,
   write_revision(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
 
-    app.db.put_revision(merged_rid, merged_rev);
+    db.put_revision(merged_rid, merged_rev);
 
     guard.commit();
   }

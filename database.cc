@@ -28,6 +28,7 @@
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
+#include "dates.hh"
 #include "database.hh"
 #include "hash_map.hh"
 #include "keys.hh"
@@ -244,7 +245,7 @@ database::sql(enum open_mode mode)
             check_format();
         }
 
-      install_functions(__app);
+      install_functions();
     }
   else
     I(mode == normal_mode);
@@ -2177,7 +2178,7 @@ database::put_roster_for_revision(revision_id const & new_id,
   shared_ptr<marking_map> mm_writeable(new marking_map); MM(*mm_writeable);
   manifest_id roster_manifest_id;
   MM(roster_manifest_id);
-  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *__app);
+  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *this);
   calculate_ident(*ros_writeable, roster_manifest_id);
   I(rev.new_manifest == roster_manifest_id);
   // const'ify the objects, suitable for caching etc.
@@ -2483,7 +2484,7 @@ database::results_to_certs(results const & res,
 }
 
 void
-database::install_functions(app_state * app)
+database::install_functions()
 {
   // register any functions we're going to use
   I(sqlite3_create_function(sql(), "gunzip", -1,
@@ -3511,6 +3512,114 @@ database::close()
 
   I(!__sql);
 }
+
+// FIXME: the quick hack lua link in functions
+bool
+database::hook_exists(std::string const & name)
+{
+  return __app->lua.hook_exists(name);
+}
+
+bool
+database::hook_expand_selector(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_selector(sel, exp);
+};
+
+bool
+database::hook_expand_date(std::string const & sel, std::string & exp)
+{
+  return __app->lua.hook_expand_date(sel, exp);
+};
+
+bool
+database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_manifest_cert_trust(signers, id, name, val);
+};
+
+bool
+database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+{
+  return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
+};
+
+bool
+database::hook_get_author(rsa_keypair_id const & k,
+                          string & author)
+{
+  return __app->lua.hook_get_author(__app->opts.branchname, k, author);
+}
+
+bool
+database::hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
+                                     std::map<rsa_keypair_id, bool> const & new_results)
+{
+  return __app->lua.hook_accept_testresult_change(old_results, new_results);
+}
+
+
+key_store &
+database::get_key_store()
+{
+  return __app->keys;
+}
+
+project_t &
+database::get_project()
+{
+  return __app->get_project();
+}
+
+bool
+database::must_drop_attr(string const & key)
+{
+  return (__app->opts.attrs_to_drop.find(key) !=
+          __app->opts.attrs_to_drop.end());
+}
+
+utf8 const &
+database::get_opt_author()
+{
+  return __app->opts.author;
+}
+
+bool const
+database::get_opt_ignore_suspend_certs()
+{
+  return __app->opts.ignore_suspend_certs;
+}
+
+date_t const
+database::get_opt_date_or_cur_date()
+{
+  if (__app->opts.date_given)
+    return __app->opts.date;
+  else
+    return date_t::now();
+}
+
+bool
+database::has_opt_branch()
+{
+  return __app->opts.branch_given;
+}
+
+branch_name const &
+database::get_opt_branchname()
+{
+  return __app->opts.branchname;
+}
+
+void
+database::set_opt_branchname(branch_name const & branchname)
+{
+  __app->opts.branchname = branchname;
+}
+
+
 
 // transaction guards
 

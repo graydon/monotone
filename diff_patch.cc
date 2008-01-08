@@ -498,7 +498,7 @@ content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
   // called on to do content merging.
-  find_common_ancestor_for_merge(left, right, lca, app);
+  find_common_ancestor_for_merge(left, right, lca, app.db);
 }
 
 void
