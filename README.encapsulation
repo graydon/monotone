@@ -1,8 +1,3 @@
-revision.cc:
-
- only a CMD(rev_height is left using the app_state
-
-
 database.cc:
 
   __app is a member variable of class database, it's needed for the

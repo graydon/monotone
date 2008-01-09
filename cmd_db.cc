@@ -373,6 +373,20 @@ CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
   app.db.test_migration_step(idx(args,0)());
 }
 
+CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
+           N_("Shows a revision's height"),
+           "",
+           options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(execid);
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  rev_height height;
+  app.db.get_rev_height(rid, height);
+  P(F("cached height: %s") % height);
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
