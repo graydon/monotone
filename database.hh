@@ -626,6 +626,9 @@ public:
   project_t & get_project();
 };
 
+// not a member function, defined in database_check.cc
+void check_db(database & db);
+
 // Parent maps are used in a number of places to keep track of all the
 // parent rosters of a given revision.
 typedef std::map<revision_id, database::cached_roster>

@@ -13,7 +13,6 @@
 
 #include "charset.hh"
 #include "cmd.hh"
-#include "database_check.hh"
 #include "revision.hh"
 #include "constants.hh"
 #include "app_state.hh"
@@ -213,7 +212,7 @@ CMD(db_check, "check", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  check_db(app);
+  check_db(app.db);
 }
 
 CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
