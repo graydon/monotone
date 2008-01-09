@@ -554,7 +554,7 @@ session::session(protocol_role role,
   key_refiner(key_item, voice, *this),
   cert_refiner(cert_item, voice, *this),
   rev_refiner(revision_item, voice, *this),
-  rev_enumerator(*this, app),
+  rev_enumerator(*this, app.db),
   initiated_by_server(initiated_by_server)
 {}
 

@@ -17,7 +17,8 @@
 #include "enumerator.hh"
 #include "revision.hh"
 #include "vocab.hh"
-#include "app_state.hh"
+#include "database.hh"
+#include "project.hh"
 
 using std::make_pair;
 using std::map;
@@ -27,10 +28,10 @@ using std::set;
 using std::vector;
 
 revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
-                                         app_state & app,
+                                         database & db,
                                          set<revision_id> const & initial,
                                          set<revision_id> const & terminal)
-  : cb(cb), app(app), terminal_nodes(terminal)
+  : cb(cb), db(db), terminal_nodes(terminal)
 {
   for (set<revision_id>::const_iterator i = initial.begin();
        i != initial.end(); ++i)
@@ -39,8 +40,8 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
 }
 
 revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
-                                         app_state & app)
-  : cb(cb), app(app)
+                                         database & db)
+  : cb(cb), db(db)
 {
   revision_id root;
   revs.push_back(root);
@@ -50,7 +51,7 @@ revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
 void
 revision_enumerator::load_graphs()
 {
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
        i != graph.end(); ++i)
     {
@@ -118,7 +119,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
 
   revision_t rs;
   MM(rs);
-  app.db.get_revision(r, rs);
+  db.get_revision(r, rs);
 
   for (edge_map::const_iterator i = rs.edges.begin();
        i != rs.edges.end(); ++i)
@@ -204,7 +205,7 @@ revision_enumerator::get_revision_certs(revision_id const & rid,
     }
   if (!found_one)
     {
-      app.get_project().get_revision_cert_hashes(rid, hashes);
+      db.get_project().get_revision_cert_hashes(rid, hashes);
     }
 }
 
