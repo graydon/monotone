@@ -86,12 +86,6 @@ netsync.cc:
     app.keys.ensure_in_database()_netsync_protocol():
     app.opts.bind_stdio
 
-
-keys.cc:
-  Only a unit test left, which uses app_state. This should be cleaned
-  up as soon as we remove the hackish hooks in the key_store.
-
-
 cmd_diff_log.cc:
 
   CMD(diff:

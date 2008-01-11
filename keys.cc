@@ -23,6 +23,7 @@
 
 #include "constants.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "lua_hooks.hh"
 #include "netio.hh"
 #include "platform.hh"
@@ -32,7 +33,6 @@
 #include "sanity.hh"
 #include "ui.hh"
 #include "cert.hh"
-#include "app_state.hh"
 #include "charset.hh"
 #include "ssh_agent.hh"
 
@@ -689,18 +689,16 @@ require_password(rsa_keypair_id const & key,
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
+// This is not much of a unit test, but there is no point in strengthening
+// it, because the only thing we still use arc4 for is migrating *really*
+// old in-database private keys out to pkcs#8 files in the keystore.
 UNIT_TEST(key, arc4)
 {
+  static Botan::byte const pt[] = "new fascist tidiness regime in place";
+  static Botan::byte const phr[] = "still spring water";
 
-  string pt("new fascist tidiness regime in place");
-  string phr("still spring water");
-
-  SecureVector<Botan::byte> phrase(reinterpret_cast<Botan::byte const*>(phr.data()),
-    phr.size());
-
-  SecureVector<Botan::byte> orig(reinterpret_cast<Botan::byte const*>(pt.data()),
-    pt.size());
-
+  SecureVector<Botan::byte> phrase(phr, sizeof phr - 1);
+  SecureVector<Botan::byte> orig(pt, sizeof pt - 1);
   SecureVector<Botan::byte> data(orig);
 
   UNIT_TEST_CHECKPOINT("encrypting data");
@@ -712,35 +710,6 @@ UNIT_TEST(key, arc4)
   do_arc4(phrase, data);
 
   UNIT_TEST_CHECK(data == orig);
-
-}
-
-UNIT_TEST(key, signature_round_trip)
-{
-  app_state app;
-  app.set_key_dir(system_path(get_current_working_dir()) / ".monotone_tmp" / "keys");
-  app.lua.add_std_hooks();
-  app.lua.add_test_hooks();
-
-  UNIT_TEST_CHECKPOINT("generating key pairs");
-  keypair kp;
-  utf8 passphrase("bob123@example.com");
-  rsa_keypair_id key("bob123@example.com");
-  generate_key_pair(kp, passphrase);
-  app.keys.put_key_pair(key, kp);
-
-  UNIT_TEST_CHECKPOINT("signing plaintext");
-  string plaintext("test string to sign");
-  base64<rsa_sha1_signature> sig;
-  make_signature(app.keys, key, kp.priv, plaintext, sig);
-
-  UNIT_TEST_CHECKPOINT("checking signature");
-  UNIT_TEST_CHECK(check_signature(app.keys, key, kp.pub, plaintext, sig));
-
-  string broken_plaintext = plaintext + " ...with a lie";
-  UNIT_TEST_CHECKPOINT("checking non-signature");
-  UNIT_TEST_CHECK(!check_signature(app.keys, key, kp.pub, broken_plaintext, sig));
-  app.keys.delete_key(key);
 }
 
 #endif // BUILD_UNIT_TESTS

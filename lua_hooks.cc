@@ -32,11 +32,8 @@
 #include "commands.hh"
 #include "globish.hh"
 
-// defined in {std,test}_hooks.lua, converted to {std,test}_hooks.c respectively
+// defined in std_hooks.c, generated from std_hooks.lua
 extern char const std_hooks_constant[];
-#ifdef BUILD_UNIT_TESTS
-extern char const test_hooks_constant[];
-#endif
 
 using std::make_pair;
 using std::map;
@@ -134,15 +131,6 @@ lua_hooks::check_lua_state(lua_State * p_st) const
 {
   return (p_st == st);
 }
-
-#ifdef BUILD_UNIT_TESTS
-void
-lua_hooks::add_test_hooks()
-{
-  if (!run_string(st, test_hooks_constant, "<test hooks>"))
-    throw oops("lua error while setting up testing hooks");
-}
-#endif
 
 void
 lua_hooks::add_std_hooks()
