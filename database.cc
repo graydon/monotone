@@ -679,14 +679,14 @@ void
 database::migrate()
 {
   ensure_open_for_maintenance();
-  migrate_sql_schema(__sql, *__app);
+  migrate_sql_schema(__sql, get_filename(), __app->keys);
 }
 
 void
 database::test_migration_step(string const & schema)
 {
   ensure_open_for_maintenance();
-  ::test_migration_step(__sql, *__app, schema);
+  ::test_migration_step(__sql, get_filename(), __app->keys, schema);
 }
 
 void

@@ -1,22 +1,43 @@
 database.cc:
 
-  __app is a member variable of class database, it's needed for the
-  following functions:
+  __app is a member variable of class database, used by:
 
-  migrate_sql_schema()
-  test_migration_step()
-
+  normal member functions:
   database::complete()
-    needs: __app->require_workspace()
-    needs: __app->opts.branchname
+       __app->require_workspace()
+       __app->opts.branchname
+       __app->get_project()
 
+  database::test_migration_step()
+       __app->keys
 
-schema_migration.cc:
+  database::migrate()
+       __app->keys
 
-  migrate_to_external_privkeys():
-    needs the key_store
+  accessor hacks:
+  __app->keys
+    get_key_store()
 
-  the migrator func (migrator_cb) also needs the app_state.
+  __app->lua ...
+    hook_exists()
+    hook_expand_selector()
+    hook_expand_date()
+    hook_get_manifest_cert_trust()
+    hook_get_revision_cert_trust()
+    hook_get_author()
+    hook_accept_testresult_change()
+
+  __app->get_project()
+    get_project()
+
+  __app->opts
+    must_drop_attr()
+    get_opt_author()
+    get_opt_ignore_suspend_certs()
+    get_opt_date_or_cur_date()
+    has_opt_branch()
+    get_opt_branchname()
+    set_opt_branchname()
 
 
 netsync.cc:
