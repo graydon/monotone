@@ -277,10 +277,10 @@ get_private_key(key_store & keys,
 void
 migrate_private_key(key_store & keys,
                     rsa_keypair_id const & id,
-                    base64< arc4<rsa_priv_key> > const & old_priv,
+                    base64< old_arc4_rsa_priv_key > const & old_priv,
                     keypair & new_kp)
 {
-  arc4<rsa_priv_key> decoded_key;
+  old_arc4_rsa_priv_key decoded_key;
   SecureVector<Botan::byte> decrypted_key;
   utf8 phrase;
 

@@ -37,7 +37,7 @@ void change_key_passphrase(key_store & keys,          // to hook for phrase
 
 void migrate_private_key(key_store & keys,
                          rsa_keypair_id const & id,
-                         base64< arc4<rsa_priv_key> > const & old_priv,
+                         base64< old_arc4_rsa_priv_key > const & old_priv,
                          keypair & kp);
 
 void make_signature(key_store & keys,          // to hook for phrase

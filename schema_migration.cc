@@ -498,7 +498,7 @@ migrate_to_external_privkeys(sqlite3 * db, key_store & keys)
     while (stmt.step())
       {
         rsa_keypair_id ident(stmt.column_string(0));
-        base64< arc4<rsa_priv_key> > old_priv(stmt.column_string(1));
+        base64< old_arc4_rsa_priv_key > old_priv(stmt.column_string(1));
 
         keypair kp;
         migrate_private_key(keys, ident, old_priv, kp);

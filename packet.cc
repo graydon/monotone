@@ -247,7 +247,7 @@ feed_packet_consumer
     keypair kp;
     migrate_private_key(keys,
                         rsa_keypair_id(args),
-                        base64<arc4<rsa_priv_key> >(body),
+                        base64<old_arc4_rsa_priv_key>(body),
                         kp);
     cons.consume_key_pair(rsa_keypair_id(args), kp);
   }
