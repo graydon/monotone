@@ -383,7 +383,7 @@ CMD(known, "known", "", CMD_REF(list), "",
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        new_roster, app);
+                        new_roster, app.work);
 
   // to be printed sorted
   vector<file_path> print_paths;
@@ -417,7 +417,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
 
   vector<file_path> roots = args_to_paths(args);
   path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth, app);
+                        app.opts.depth, app.work);
   set<file_path> unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
@@ -449,7 +449,7 @@ CMD(missing, "missing", "", CMD_REF(list), "",
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        current_roster_shape, app);
+                        current_roster_shape, app.work);
 
   set<file_path> missing;
   app.work.find_missing(current_roster_shape, mask, missing);
@@ -478,7 +478,7 @@ CMD(changed, "changed", "", CMD_REF(list), "",
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        parents, new_roster, app);
+                        parents, new_roster, app.work);
 
   revision_t rrev;
   make_restricted_revision(parents, new_roster, mask, rrev);

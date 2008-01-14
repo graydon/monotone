@@ -656,16 +656,16 @@ struct inventory_itemizer : public tree_walker
 {
   path_restriction const & mask;
   inventory_map & inventory;
-  app_state & app;
   inodeprint_map ipm;
 
-  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) :
-    mask(m), inventory(i), app(a)
+  inventory_itemizer(path_restriction const & m, inventory_map & i,
+                     workspace & work) :
+    mask(m), inventory(i)
   {
-    if (app.work.in_inodeprints_mode())
+    if (work.in_inodeprints_mode())
       {
         data dat;
-        app.work.read_inodeprints(dat);
+        work.read_inodeprints(dat);
         read_inodeprint_map(dat, ipm);
       }
   }
@@ -704,9 +704,10 @@ inventory_itemizer::visit_file(file_path const & path)
 }
 
 static void
-inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
+inventory_filesystem(path_restriction const & mask, inventory_map & inventory,
+                     workspace & work)
 {
-  inventory_itemizer itemizer(mask, inventory, app);
+  inventory_itemizer itemizer(mask, inventory, work);
   file_path const root;
   // The constructor file_path() returns ""; the root directory. walk_tree
   // does not visit that node, so set fs_type now, if it meets the
@@ -734,7 +735,7 @@ namespace
 }
 
 static void
-inventory_print_states(app_state & app, file_path const & fs_path,
+inventory_print_states(workspace & work, file_path const & fs_path,
                        inventory_item const & item, roster_t const & old_roster,
                        roster_t const & new_roster, basic_io::stanza & st)
 {
@@ -786,7 +787,7 @@ inventory_print_states(app_state & app, file_path const & fs_path,
     {
       if (!item.new_node.exists)
         {
-          if (app.lua.hook_ignore_file(fs_path))
+          if (work.ignore_file(fs_path))
             states.push_back("ignored");
           else
             states.push_back("unknown");
@@ -897,11 +898,12 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   vector<file_path> includes = args_to_paths(args);
   vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
-  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
+  node_restriction nmask(includes, excludes, app.opts.depth,
+                         old_roster, new_roster, app.work);
   inventory_rosters(old_roster, new_roster, nmask, inventory);
 
-  path_restriction pmask(includes, excludes, app.opts.depth, app);
-  inventory_filesystem(pmask, inventory, app);
+  path_restriction pmask(includes, excludes, app.opts.depth, app.work);
+  inventory_filesystem(pmask, inventory, app.work);
 
   basic_io::printer pr;
 
@@ -947,7 +949,8 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      inventory_print_states(app, i->first, item, old_roster, new_roster, st);
+      inventory_print_states(app.work, i->first, item,
+                             old_roster, new_roster, st);
       inventory_print_changes(item, old_roster, st);
 
       pr.print_stanza(st);

@@ -934,7 +934,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.opts.exclude_patterns),
                           app.opts.depth,
-                          *from_roster, to_true_roster, app);
+                          *from_roster, to_true_roster, app.work);
 
     roster_t restricted_roster;
     make_restricted_roster(*from_roster, to_true_roster,
