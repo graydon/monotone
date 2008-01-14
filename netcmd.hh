@@ -21,6 +21,10 @@
 #include "string_queue.hh"
 
 struct globish;
+class database;
+class key_store;
+class lua_hooks;
+class options;
 
 typedef enum
   {
@@ -171,13 +175,13 @@ public:
 
 };
 
-class app_state;
 void run_netsync_protocol(protocol_voice voice,
                           protocol_role role,
                           std::list<utf8> const & addrs,
                           globish const & include_pattern,
                           globish const & exclude_pattern,
-                          app_state & app);
+                          database & db, key_store & keys,
+                          lua_hooks & lua, options & opts);
 
 // Local Variables:
 // mode: C++

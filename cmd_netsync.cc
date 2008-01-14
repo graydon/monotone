@@ -162,7 +162,8 @@ CMD(push, "push", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, source_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -185,7 +186,8 @@ CMD(pull, "pull", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -206,7 +208,8 @@ CMD(sync, "sync", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -325,7 +328,8 @@ CMD(clone, "clone", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -449,7 +453,8 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   app.db.ensure_open();
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""), app);
+                       globish("*"), globish(""),
+                       app.db, app.keys, app.lua, app.opts);
 }
 
 // Local Variables:
