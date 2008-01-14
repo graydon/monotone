@@ -380,7 +380,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app);
+  content_merge_checkout_adaptor wca(app.db);
 
   app.work.perform_content_update(checkout, wca, false);
 

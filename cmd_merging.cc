@@ -272,11 +272,11 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, old_rid, old_roster,
+  content_merge_workspace_adaptor wca(app.db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
   resolve_merge_conflicts(*working_roster, chosen_roster,
-                          result, wca, app);
+                          result, wca, app.lua);
 
   // Make sure it worked...
   I(result.is_clean());
@@ -354,7 +354,7 @@ merge_two(revision_id const & left, revision_id const & right,
 
   revision_id merged;
   transaction_guard guard(app.db);
-  interactive_merge_and_store(left, right, merged, app);
+  interactive_merge_and_store(left, right, merged, app.db, app.lua);
 
   app.get_project().put_standard_certs_from_options(merged,
                                                     branch,
@@ -607,14 +607,14 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                      result);
 
         content_merge_database_adaptor
-          dba(app, left_rid, right_rid, left_marking_map, right_marking_map);
+          dba(app.db, left_rid, right_rid, left_marking_map, right_marking_map);
 
         {
           rsa_keypair_id key;
           get_user_key(key, app.db);
         }
         resolve_merge_conflicts(left_roster, right_roster,
-                                result, dba, app);
+                                result, dba, app.lua);
 
         {
           dir_t moved_root = left_roster.root();
@@ -719,10 +719,10 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, lca_id, lca.first,
+  content_merge_workspace_adaptor wca(app.db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app);
+  resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app.lua);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -821,7 +821,7 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
     }
   else
     {
-      content_merge_database_adaptor adaptor(app, l_id, r_id,
+      content_merge_database_adaptor adaptor(app.db, l_id, r_id,
                                              l_marking, r_marking);
 
       result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
@@ -974,7 +974,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, from_rid, from_roster,
+  content_merge_workspace_adaptor wca(app.db, from_rid, from_roster,
                                       left_markings, right_markings, paths);
 
   wca.cache_roster(working_rid, working_roster);
@@ -983,7 +983,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   wca.cache_roster(to_rid, to_roster);
 
   resolve_merge_conflicts(*working_roster, *to_roster,
-                          result, wca, app);
+                          result, wca, app.lua);
 
   I(result.is_clean());
   // temporary node ids may appear

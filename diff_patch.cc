@@ -28,8 +28,8 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "file_io.hh"
-#include "app_state.hh"
 #include "pcrewrap.hh"
+#include "lua_hooks.hh"
 
 using std::make_pair;
 using std::map;
@@ -488,17 +488,17 @@ bool merge3(vector<string> const & ancestor,
 ///////////////////////////////////////////////////////////////////////////
 
 
-content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
+content_merge_database_adaptor::content_merge_database_adaptor(database & db,
                                                                revision_id const & left,
                                                                revision_id const & right,
                                                                marking_map const & left_mm,
                                                                marking_map const & right_mm)
-  : app(app), left_mm(left_mm), right_mm(right_mm)
+  : db(db), left_mm(left_mm), right_mm(right_mm)
 {
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
   // called on to do content merging.
-  find_common_ancestor_for_merge(left, right, lca, app.db);
+  find_common_ancestor_for_merge(left, right, lca, db);
 }
 
 void
@@ -512,19 +512,19 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
   L(FL("recording successful merge of %s <-> %s into %s")
     % left_ident % right_ident % merged_ident);
 
-  transaction_guard guard(app.db);
+  transaction_guard guard(db);
 
   if (!(left_ident == merged_ident))
     {
       delta left_delta;
       diff(left_data.inner(), merged_data.inner(), left_delta);
-      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
+      db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
     }
   if (!(right_ident == merged_ident))
     {
       delta right_delta;
       diff(right_data.inner(), merged_data.inner(), right_delta);
-      app.db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
+      db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
     }
   guard.commit();
 }
@@ -533,7 +533,7 @@ static void
 load_and_cache_roster(revision_id const & rid,
                       map<revision_id, shared_ptr<roster_t const> > & rmap,
                       shared_ptr<roster_t const> & rout,
-                      app_state & app)
+                      database & db)
 {
   map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
@@ -541,7 +541,7 @@ load_and_cache_roster(revision_id const & rid,
   else
     {
       database::cached_roster cr;
-      app.db.get_roster(rid, cr);
+      db.get_roster(rid, cr);
       safe_insert(rmap, make_pair(rid, cr.first));
       rout = cr.first;
     }
@@ -559,7 +559,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // Begin by loading any non-empty file lca roster
   rid = lca;
   if (!lca.inner()().empty())
-    load_and_cache_roster(lca, rosters, anc, app);
+    load_and_cache_roster(lca, rosters, anc, db);
 
   // If there is no LCA, or the LCA's roster doesn't contain the file,
   // then use the file's birth roster.
@@ -587,7 +587,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, app);
+      load_and_cache_roster(rid, rosters, anc, db);
     }
   I(anc);
 }
@@ -596,14 +596,13 @@ void
 content_merge_database_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 // content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
-
 
 void
 content_merge_workspace_adaptor::cache_roster(revision_id const & rid,
@@ -663,7 +662,7 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, app);
+      load_and_cache_roster(rid, rosters, anc, db);
     }
   I(anc);
 }
@@ -675,8 +674,8 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
   map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
   if (i != temporary_store.end())
     dat = i->second;
-  else if (app.db.file_version_exists(ident))
-    app.db.get_file_version(ident, dat);
+  else if (db.file_version_exists(ident))
+    db.get_file_version(ident, dat);
   else
     {
       data tmp;
@@ -724,25 +723,13 @@ void
 content_merge_checkout_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 // content_merger
 ///////////////////////////////////////////////////////////////////////////
-
-content_merger::content_merger(app_state & app,
-                               roster_t const & anc_ros,
-                               roster_t const & left_ros,
-                               roster_t const & right_ros,
-                               content_merge_adaptor & adaptor)
-  : app(app),
-    anc_ros(anc_ros),
-    left_ros(left_ros),
-    right_ros(right_ros),
-    adaptor(adaptor)
-{}
 
 string
 content_merger::get_file_encoding(file_path const & path,
@@ -889,9 +876,9 @@ content_merger::try_user_merge(file_path const & anc_path,
     % right_path
     % merged_path);
 
-  if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
-                          ancestor_unpacked, left_unpacked,
-                          right_unpacked, merged_unpacked))
+  if (lua.hook_merge3(anc_path, left_path, right_path, merged_path,
+                      ancestor_unpacked, left_unpacked,
+                      right_unpacked, merged_unpacked))
     {
       hexenc<id> tmp_id;
       file_data merge_data;
