@@ -66,23 +66,5 @@ key_store.cc:
        app.agent
 
 lua_hooks.cc:
-  << evil mess involving a map from lua_*state* pointers to app_state pointers >>
-
-rcs_import.cc:
-  struct cluster_consumer : app_state member variable (app)
-
-  cluster_consumer::store_revisions()
-     app.db
-
-  cluster_consumer::store_auxiliary_certs()
-     app.db.get_project()
-
-  import_branch()
-     cluster_consumer constructor
-
-  import_cvs_repo()
-     app.db
-     app.keys (require_password)
-     app.opts.branchname
-
- 
+  << evil mess involving a map from lua_*state* pointers 
+     to app_state pointers >>

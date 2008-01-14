@@ -25,7 +25,6 @@
 #include "lexical_cast.hh"
 #include <boost/tokenizer.hpp>
 
-#include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
 #include "cycle_detector.hh"
@@ -1009,7 +1008,9 @@ struct
 cluster_consumer
 {
   cvs_history & cvs;
-  app_state & app;
+  database & db;
+  project_t & project;
+
   string const & branchname;
   cvs_branch const & branch;
   set<file_path> created_dirs;
@@ -1037,7 +1038,8 @@ cluster_consumer
   revision_id parent_rid, child_rid;
 
   cluster_consumer(cvs_history & cvs,
-                   app_state & app,
+                   database & db,
+                   project_t & project,
                    string const & branchname,
                    cvs_branch const & branch,
                    ticker & n_revs);
@@ -1067,13 +1069,14 @@ cluster_set;
 
 void
 import_branch(cvs_history & cvs,
-              app_state & app,
+              database & db,
+              project_t & project,
               string const & branchname,
               shared_ptr<cvs_branch> const & branch,
               ticker & n_revs)
 {
   cluster_set clusters;
-  cluster_consumer cons(cvs, app, branchname, *branch, n_revs);
+  cluster_consumer cons(cvs, db, project, branchname, *branch, n_revs);
   unsigned long commits_remaining = branch->lineage.size();
 
   // step 1: sort the lineage
@@ -1198,23 +1201,19 @@ import_branch(cvs_history & cvs,
 
 void
 import_cvs_repo(system_path const & cvsroot,
-                app_state & app)
+                database & db,
+                project_t & project,
+                branch_name const & branchname)
+
 {
   N(!directory_exists(cvsroot / "CVSROOT"),
     F("%s appears to be a CVS repository root directory\n"
       "try importing a module instead, with 'cvs_import %s/<module_name>")
     % cvsroot % cvsroot);
 
-  {
-    // early short-circuit to avoid failure after lots of work
-    rsa_keypair_id key;
-    get_user_key(key, app.db);
-    require_password(key, app.keys);
-  }
-
   cvs_history cvs;
-  N(app.opts.branchname() != "", F("need base --branch argument for importing"));
-  cvs.base_branch = app.opts.branchname();
+
+  cvs.base_branch = branchname();
 
   // push the trunk
   cvs.trunk = shared_ptr<cvs_branch>(new cvs_branch());
@@ -1222,12 +1221,9 @@ import_cvs_repo(system_path const & cvsroot,
   cvs.bstk.push(cvs.branch_interner.intern(cvs.base_branch));
 
   {
-    transaction_guard guard(app.db);
-    cvs_tree_walker walker(cvs, app.db);
-    require_path_is_directory(cvsroot,
-                              F("path %s does not exist") % cvsroot,
-                              F("'%s' is not a directory") % cvsroot);
-    app.db.ensure_open();
+    transaction_guard guard(db);
+    cvs_tree_walker walker(cvs, db);
+    db.ensure_open();
     change_current_working_dir(cvsroot);
     walk_tree(file_path(), walker);
     guard.commit();
@@ -1239,12 +1235,12 @@ import_cvs_repo(system_path const & cvsroot,
 
   while (cvs.branches.size() > 0)
     {
-      transaction_guard guard(app.db);
+      transaction_guard guard(db);
       map<string, shared_ptr<cvs_branch> >::const_iterator i = cvs.branches.begin();
       string branchname = i->first;
       shared_ptr<cvs_branch> branch = i->second;
       L(FL("branch %s has %d entries") % branchname % branch->lineage.size());
-      import_branch(cvs, app, branchname, branch, n_revs);
+      import_branch(cvs, db, project, branchname, branch, n_revs);
 
       // free up some memory
       cvs.branches.erase(branchname);
@@ -1252,38 +1248,37 @@ import_cvs_repo(system_path const & cvsroot,
     }
 
   {
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
     L(FL("trunk has %d entries") % cvs.trunk->lineage.size());
-    import_branch(cvs, app, cvs.base_branch, cvs.trunk, n_revs);
+    import_branch(cvs, db, project, cvs.base_branch, cvs.trunk, n_revs);
     guard.commit();
   }
 
   // now we have a "last" rev for each tag
   {
     ticker n_tags(_("tags"), "t", 1);
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
          i != cvs.resolved_tags.end(); ++i)
       {
         string tag = cvs.tag_interner.lookup(i->first);
         ui.set_tick_trailer("marking tag " + tag);
-        app.db.get_project().put_tag(i->second.second, tag);
+        project.put_tag(i->second.second, tag);
         ++n_tags;
       }
     guard.commit();
   }
-
-
-  return;
 }
 
 cluster_consumer::cluster_consumer(cvs_history & cvs,
-                                   app_state & app,
+                                   database & db,
+                                   project_t & project,
                                    string const & branchname,
                                    cvs_branch const & branch,
                                    ticker & n_revs)
   : cvs(cvs),
-    app(app),
+    db(db),
+    project(project),
     branchname(branchname),
     branch(branch),
     n_revisions(n_revs),
@@ -1341,7 +1336,7 @@ cluster_consumer::store_revisions()
 {
   for (vector<prepared_revision>::const_iterator i = preps.begin();
        i != preps.end(); ++i)
-    if (app.db.put_revision(i->rid, *(i->rev)))
+    if (db.put_revision(i->rid, *(i->rev)))
       {
         store_auxiliary_certs(*i);
         ++n_revisions;
@@ -1372,11 +1367,11 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
         }
     }
 
-  app.db.get_project().put_standard_certs(p.rid,
-                                          branch_name(branchname),
-                                          utf8(cvs.changelog_interner.lookup(p.changelog)),
-                                          date_t::from_unix_epoch(p.time),
-                                          utf8(cvs.author_interner.lookup(p.author)));
+  project.put_standard_certs(p.rid,
+                             branch_name(branchname),
+                             utf8(cvs.changelog_interner.lookup(p.changelog)),
+                             date_t::from_unix_epoch(p.time),
+                             utf8(cvs.author_interner.lookup(p.author)));
 }
 
 void
