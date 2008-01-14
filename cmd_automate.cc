@@ -62,7 +62,7 @@ namespace commands {
   }
 }
 
-static string const interface_version = "7.0";
+static string const interface_version = "7.1";
 
 // Name: interface_version
 // Arguments: none

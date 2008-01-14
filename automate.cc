@@ -1,4 +1,5 @@
 // Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2007 - 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -656,8 +657,8 @@ inventory_itemizer::visit_dir(file_path const & path)
     {
       inventory[path].fs_type = path::directory;
     }
-  // always recurse into subdirectories
-  return true;
+  // don't recurse into ignored subdirectories
+  return not app.lua.hook_ignore_file(path);
 }
 
 void
@@ -712,9 +713,14 @@ namespace
 static void
 inventory_print_states(app_state & app, file_path const & fs_path,
                        inventory_item const & item, roster_t const & old_roster,
-                       roster_t const & new_roster, basic_io::stanza & st)
+                       roster_t const & new_roster, basic_io::stanza & st,
+                       bool & ignored, bool & unknown, bool & unchanged)
 {
   std::vector<std::string> states;
+
+  ignored = false;
+  unknown = false;
+  unchanged = false;
 
   // if both nodes exist, the only interesting case is
   // when the node ids aren't equal (so we have different nodes
@@ -763,14 +769,23 @@ inventory_print_states(app_state & app, file_path const & fs_path,
       if (!item.new_node.exists)
         {
           if (app.lua.hook_ignore_file(fs_path))
-            states.push_back("ignored");
+            {
+              states.push_back("ignored");
+              ignored = true;
+            }
           else
-            states.push_back("unknown");
+            {
+              states.push_back("unknown");
+              unknown = true;
+            }
         }
       else if (item.new_node.type != item.fs_type)
         states.push_back("invalid");
       else
-        states.push_back("known");
+        {
+          states.push_back("known");
+          unchanged = true;
+        }
     }
 
   st.push_str_multi(syms::status, states);
@@ -778,11 +793,12 @@ inventory_print_states(app_state & app, file_path const & fs_path,
 
 static void
 inventory_print_changes(inventory_item const & item, roster_t const & old_roster,
-                        basic_io::stanza & st)
+                        basic_io::stanza & st, bool & unchanged)
 {
   // old nodes do not have any recorded content changes and attributes,
   // so we can't print anything for them here
-  if (!item.new_node.exists) return;
+  if (!item.new_node.exists)
+    return;
 
   std::vector<string> changes;
 
@@ -832,7 +848,10 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
     }
 
   if (!changes.empty())
-    st.push_str_multi(syms::changes, changes);
+    {
+      st.push_str_multi(syms::changes, changes);
+      unchanged = false;
+    }
 }
 
 // Name: inventory
@@ -851,7 +870,11 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
 CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              N_("Prints a summary of files found in the workspace"),
              "",
-             options::opts::depth | options::opts::exclude)
+             options::opts::depth |
+             options::opts::exclude |
+             options::opts::no_ignored |
+             options::opts::no_unknown |
+             options::opts::no_unchanged)
 {
   app.require_workspace();
 
@@ -883,6 +906,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end();
        ++i)
     {
+      bool print_this, ignored, unknown, unchanged;
       basic_io::stanza st;
       inventory_item const & item = i->second;
 
@@ -922,10 +946,22 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      inventory_print_states(app, i->first, item, old_roster, new_roster, st);
-      inventory_print_changes(item, old_roster, st);
+      inventory_print_states(app, i->first, item, old_roster, new_roster, st, ignored, unknown, unchanged);
+      inventory_print_changes(item, old_roster, st, unchanged);
 
-      pr.print_stanza(st);
+      print_this = true;
+
+      if (ignored && app.opts.no_ignored)
+        print_this = false;
+
+      if (unknown && app.opts.no_unknown)
+        print_this = false;
+
+      if (unchanged && app.opts.no_unchanged)
+        print_this = false;
+
+      if (print_this)
+        pr.print_stanza(st);
     }
 
   output.write(pr.buf.data(), pr.buf.size());

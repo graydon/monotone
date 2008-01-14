@@ -396,7 +396,7 @@ GOPT(nostd, "nostd", bool, false,
   nostd = true;
 }
 #endif
- 
+
 OPT(pidfile, "pid-file", system_path, ,
      gettext_noop("record process id of server"))
 #ifdef option_bodies
@@ -528,6 +528,35 @@ OPTION(globals, xargs, true, "xargs,@",
 }
 #endif
 
+OPTSET(automate_inventory_opts)
+// These options take arguments, so they can be used with automate stdio.
+OPTVAR(automate_inventory_opts, bool, no_ignored, false)
+OPTVAR(automate_inventory_opts, bool, no_unknown, false)
+OPTVAR(automate_inventory_opts, bool, no_unchanged, false)
+
+OPTION(automate_inventory_opts, no_ignored, false, "no-ignored",
+       gettext_noop("don't output ignored files"))
+#ifdef option_bodies
+{
+  no_ignored = true;
+}
+#endif
+
+OPTION(automate_inventory_opts, no_unknown, false, "no-unknown",
+       gettext_noop("don't output unknown files"))
+#ifdef option_bodies
+{
+  no_unknown = true;
+}
+#endif
+
+OPTION(automate_inventory_opts, no_unchanged, false, "no-unchanged",
+       gettext_noop("don't output unchanged files"))
+#ifdef option_bodies
+{
+  no_unchanged = true;
+}
+#endif
 
 // Local Variables:
 // mode: C++
