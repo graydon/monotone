@@ -11,7 +11,7 @@
 #include "outdated_indicator.hh"
 #include "vocab.hh"
 
-class app_state;
+class database;
 
 class tag_t
 {
@@ -27,13 +27,13 @@ typedef bool suspended_indicator;
 
 class project_t
 {
-  app_state & app;
+  database & db;
   std::map<std::pair<branch_name, suspended_indicator>, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 
 public:
-  project_t(app_state & app);
+  project_t(database & db);
 
   void get_branch_list(std::set<branch_name> & names, bool allow_suspend_certs = true);
   void get_branch_list(globish const & glob, std::set<branch_name> & names,

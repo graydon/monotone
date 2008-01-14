@@ -296,13 +296,13 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
-  complete(app, idx(args, 0)(), r);
+  complete(app.db, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  guess_branch(r, app);
+  guess_branch(r, app.db);
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
@@ -551,7 +551,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s") % describe_revision(app.db, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -560,11 +560,11 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), revid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), revid);
       N(app.db.revision_exists(revid),
         F("no such revision '%s'") % revid);
 
-      guess_branch(revid, app);
+      guess_branch(revid, app.db);
 
       I(!app.opts.branchname().empty());
 
@@ -617,7 +617,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app);
+  content_merge_checkout_adaptor wca(app.db);
 
   app.work.perform_content_update(checkout, wca, false);
 
@@ -789,8 +789,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  // this command requires a workspace to be run on
-  app.require_workspace();
+  CMD_REQUIRES_WORKSPACE(app);
 
   // retrieve the path
   file_path path = file_path_external(idx(args,0));
@@ -800,8 +799,8 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
   temp_node_id_source nis;
 
   // get the base and the current roster of this workspace
-  app.work.get_current_roster_shape(current, nis);
-  app.work.get_parent_rosters(parents);
+  work.get_current_roster_shape(current, nis);
+  work.get_parent_rosters(parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
   base = parent_roster(parents.begin());
@@ -907,11 +906,12 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
+  CMD_REQUIRES_WORKSPACE(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
 
@@ -924,12 +924,12 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
   node->attrs[a_key] = make_pair(true, a_value);
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs();
+  work.put_work_rev(new_work);
+  work.update_any_attrs();
 }
 
 // Name: drop_attribute
@@ -951,11 +951,12 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
   N(args.size() ==1 || args.size() == 2,
     F("wrong argument count"));
 
+  CMD_REQUIRES_WORKSPACE(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, nis);
 
   file_path path = file_path_external(idx(args,0));
 
@@ -979,12 +980,12 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
     }
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs();
+  work.put_work_rev(new_work);
+  work.update_any_attrs();
 }
 
 CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
@@ -1007,7 +1008,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   {
     // fail early if there isn't a key
     rsa_keypair_id key;
-    get_user_key(key, app);
+    get_user_key(key, app.db);
   }
 
   app.make_branch_sticky();
@@ -1038,7 +1039,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
            i++)
         {
           // this will prefer --branch if it was set
-          guess_branch(edge_old_revision(i), app, bn_candidate);
+          guess_branch(edge_old_revision(i), app.db, bn_candidate);
           N(branchname() == "" || branchname == bn_candidate,
             F("parent revisions of this commit are in different branches:\n"
               "'%s' and '%s'.\n"
@@ -1277,11 +1278,11 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app);
+      guess_branch(ident, app.db);
 
       I(!app.opts.branchname().empty());
 
@@ -1301,7 +1302,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s") % describe_revision(app.db, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }

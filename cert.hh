@@ -23,7 +23,8 @@
 // about revisions, using certs, without needing anyone's special
 // permission.
 
-class app_state;
+class key_store;
+class database;
 
 struct cert
 {
@@ -62,9 +63,9 @@ void cert_hash_code(cert const & t, hexenc<id> & out);
 typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
-cert_status check_cert(app_state & app, cert const & t);
-bool priv_key_exists(app_state & app, rsa_keypair_id const & id);
-void load_key_pair(app_state & app,
+cert_status check_cert(database & db, cert const & t);
+bool priv_key_exists(key_store & keys, rsa_keypair_id const & id);
+void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
 
@@ -73,19 +74,19 @@ void load_key_pair(app_state & app,
 void make_simple_cert(hexenc<id> const & id,
                       cert_name const & nm,
                       cert_value const & cv,
-                      app_state & app,
+                      database & db,
                       cert & c);
 
 void put_simple_revision_cert(revision_id const & id,
                               cert_name const & nm,
                               cert_value const & val,
-                              app_state & app);
+                              database & db);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
-                       app_state & app);
+                       database & db);
 
 void erase_bogus_certs(std::vector< manifest<cert> > & certs,
-                       app_state & app);
+                       database & db);
 
 // Special certs -- system won't work without them.
 
@@ -94,7 +95,7 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 void
 cert_revision_in_branch(revision_id const & ctx,
                         branch_name const & branchname,
-                        app_state & app);
+                        database & db);
 
 
 // We also define some common cert types, to help establish useful
@@ -103,12 +104,12 @@ cert_revision_in_branch(revision_id const & ctx,
 
 // N()'s out if there is no unique key for us to use
 void
-get_user_key(rsa_keypair_id & key, app_state & app);
+get_user_key(rsa_keypair_id & key, database & db);
 
 void
-guess_branch(revision_id const & id, app_state & app, branch_name & branchname);
+guess_branch(revision_id const & id, database & db, branch_name & branchname);
 void
-guess_branch(revision_id const & id, app_state & app);
+guess_branch(revision_id const & id, database & db);
 
 #define date_cert_name cert_name("date")
 #define author_cert_name cert_name("author")
@@ -121,41 +122,41 @@ guess_branch(revision_id const & id, app_state & app);
 void
 cert_revision_suspended_in_branch(revision_id const & ctx,
                         branch_name const & branchname,
-                        app_state & app);
+                        database & db);
 
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        app_state & app);
+                        database & db);
 
 void
 cert_revision_author(revision_id const & m,
                     std::string const & author,
-                    app_state & app);
+                    database & db);
 
 void
 cert_revision_author_default(revision_id const & m,
-                            app_state & app);
+                            database & db);
 
 void
 cert_revision_tag(revision_id const & m,
                  std::string const & tagname,
-                 app_state & app);
+                 database & db);
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & changelog,
-                        app_state & app);
+                        database & db);
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      app_state & app);
+                      database & db);
 
 void
 cert_revision_testresult(revision_id const & m,
                          std::string const & results,
-                         app_state & app);
+                         database & db);
 
 
 // Local Variables:

@@ -396,7 +396,7 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -424,8 +424,8 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -546,6 +546,8 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
              options::opts::revision | options::opts::depth |
              options::opts::exclude)
 {
+  // FIXME: prepare_diff and dump_diffs should not take 'app' argument.
+
   cset included;
   std::string dummy_header;
   bool new_is_archived;
@@ -658,7 +660,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app.db, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -713,7 +715,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           MM(*i);
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app.db, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -821,7 +823,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
-                                           app);
+                                           app.db);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)

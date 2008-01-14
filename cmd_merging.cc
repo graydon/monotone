@@ -91,7 +91,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
   // figure out which branches the target is in
   vector< revision<cert> > certs;
   app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-  erase_bogus_certs(certs, app);
+  erase_bogus_certs(certs, app.db);
 
   set< branch_name > branches;
   for (vector< revision<cert> >::const_iterator i = certs.begin();
@@ -170,7 +170,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     {
       P(F("updating along branch '%s'") % app.opts.branchname);
       set<revision_id> candidates;
-      pick_update_candidates(old_rid, app, candidates);
+      pick_update_candidates(old_rid, app.db, candidates);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
@@ -181,7 +181,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
           P(F("multiple update candidates:"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s") % describe_revision(app.db, *i));
           P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
@@ -189,7 +189,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app.db, app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -198,7 +198,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   // do this notification before checking to see if we can bail out early,
   // because when you are at one of several heads, and you hit update, you
   // want to know that merging would let you update further.
-  notify_if_multiple_heads(app);
+  notify_if_multiple_heads(app.db);
 
   if (old_rid == chosen_rid)
     {
@@ -272,11 +272,11 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, old_rid, old_roster,
+  content_merge_workspace_adaptor wca(app.db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
   resolve_merge_conflicts(*working_roster, chosen_roster,
-                          result, wca, app);
+                          result, wca, app.lua);
 
   // Make sure it worked...
   I(result.is_clean());
@@ -349,12 +349,12 @@ merge_two(revision_id const & left, revision_id const & right,
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key,app);
+    get_user_key(key, app.db);
   }
 
   revision_id merged;
   transaction_guard guard(app.db);
-  interactive_merge_and_store(left, right, merged, app);
+  interactive_merge_and_store(left, right, merged, app.db, app.lua);
 
   app.get_project().put_standard_certs_from_options(merged,
                                                     branch,
@@ -430,7 +430,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
               continue;
 
             revision_id ancestor;
-            find_common_ancestor_for_merge(*i, *j, ancestor, app);
+            find_common_ancestor_for_merge(*i, *j, ancestor, app.db);
 
             // More than one pair might have the same ancestor (e.g. if we
             // have three heads all with the same parent); as this table
@@ -443,7 +443,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       // Erasing ancestors from ANCESTORS will now produce a set of merge
       // ancestors each of which is not itself an ancestor of any other
       // merge ancestor.
-      erase_ancestors(ancestors, app);
+      erase_ancestors(ancestors, app.db);
       I(ancestors.size() > 0);
 
       // Take the first ancestor from the above set and merge its
@@ -540,13 +540,13 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   P(F("[right] %s") % *dst_i);
 
   // check for special cases
-  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app))
+  if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app.db))
     {
       P(F("branch '%s' is up-to-date with respect to branch '%s'")
           % idx(args, 1)() % idx(args, 0)());
       P(F("no action taken"));
     }
-  else if (is_ancestor(*dst_i, *src_i, app))
+  else if (is_ancestor(*dst_i, *src_i, app.db))
     {
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
@@ -607,14 +607,14 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                      result);
 
         content_merge_database_adaptor
-          dba(app, left_rid, right_rid, left_marking_map, right_marking_map);
+          dba(app.db, left_rid, right_rid, left_marking_map, right_marking_map);
 
         {
           rsa_keypair_id key;
-          get_user_key(key, app);
+          get_user_key(key, app.db);
         }
         resolve_merge_conflicts(left_roster, right_roster,
-                                result, dba, app);
+                                result, dba, app.lua);
 
         {
           dir_t moved_root = left_roster.root();
@@ -625,7 +625,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         // Write new files into the db.
         store_roster_merge_result(left_roster, right_roster, result,
                                   left_rid, right_rid, merged,
-                                  app);
+                                  app.db);
       }
 
       bool log_message_given;
@@ -693,7 +693,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app, idx(args, 0)(), right_id);
+  complete(app.db, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -713,16 +713,16 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   revision_id lca_id;
   database::cached_roster lca;
-  find_common_ancestor_for_merge(left_id, right_id, lca_id, app);
+  find_common_ancestor_for_merge(left_id, right_id, lca_id, app.db);
   app.db.get_roster(lca_id, lca);
 
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, lca_id, lca.first,
+  content_merge_workspace_adaptor wca(app.db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app);
+  resolve_merge_conflicts(*left.first, *right.first, merge_result, wca, app.lua);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -765,15 +765,15 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
+  complete(app.db, idx(args, 0)(), left);
+  complete(app.db, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
     F("%s and %s are the same revision, aborting") % left % right);
-  N(!is_ancestor(left, right, app),
+  N(!is_ancestor(left, right, app.db),
     F("%s is already an ancestor of %s") % left % right);
-  N(!is_ancestor(right, left, app),
+  N(!is_ancestor(right, left, app.db),
     F("%s is already an ancestor of %s") % right % left);
 
   merge_two(left, right, branch, string("explicit merge"), app, std::cout, false);
@@ -788,11 +788,11 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);
-  N(!is_ancestor(l_id, r_id, app),
+  complete(app.db, idx(args,0)(), l_id);
+  complete(app.db, idx(args,1)(), r_id);
+  N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
-  N(!is_ancestor(r_id, l_id, app),
+  N(!is_ancestor(r_id, l_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
   roster_t l_roster, r_roster;
   marking_map l_marking, r_marking;
@@ -821,7 +821,7 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
     }
   else
     {
-      content_merge_database_adaptor adaptor(app, l_id, r_id,
+      content_merge_database_adaptor adaptor(app.db, l_id, r_id,
                                              l_marking, r_marking);
 
       result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
@@ -855,7 +855,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -870,10 +870,10 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app.db, idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -974,7 +974,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   map<file_id, file_path> paths;
   get_content_paths(*working_roster, paths);
 
-  content_merge_workspace_adaptor wca(app, from_rid, from_roster,
+  content_merge_workspace_adaptor wca(app.db, from_rid, from_roster,
                                       left_markings, right_markings, paths);
 
   wca.cache_roster(working_rid, working_roster);
@@ -983,7 +983,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   wca.cache_roster(to_rid, to_roster);
 
   resolve_merge_conflicts(*working_roster, *to_roster,
-                          result, wca, app);
+                          result, wca, app.lua);
 
   I(result.is_clean());
   // temporary node ids may appear
@@ -1049,7 +1049,7 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app, *i) << '\n';
+    cout << describe_revision(app.db, *i) << '\n';
 }
 
 CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
@@ -1110,7 +1110,7 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
   else if (args.size() == 1)
     {
       revision_id rid;
-      complete(app, idx(args, 0)(), rid);
+      complete(app.db, idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }

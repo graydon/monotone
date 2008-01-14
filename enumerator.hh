@@ -14,9 +14,9 @@
 #include <map>
 #include <set>
 #include "vector.hh"
-
 #include "vocab.hh"
-class app_state;
+
+class database;
 
 // The revision_enumerator struct acts as a cursor which emits files,
 // deltas, revisions and certs in dependency-correct order. This is
@@ -52,7 +52,7 @@ struct
 revision_enumerator
 {
   enumerator_callbacks & cb;
-  app_state & app;
+  database & db;
   std::set<revision_id> terminal_nodes;
   std::set<revision_id> enumerated_nodes;
   std::deque<revision_id> revs;
@@ -69,11 +69,11 @@ revision_enumerator
 			    std::vector<revision_id> & parents);
 
   revision_enumerator(enumerator_callbacks & cb,
-                      app_state & app,
+                      database & db,
                       std::set<revision_id> const & initial,
                       std::set<revision_id> const & terminal);
   revision_enumerator(enumerator_callbacks & cb,
-                      app_state & app);
+                      database & db);
   void load_graphs();
   bool all_parents_enumerated(revision_id const & child);
   void files_for_revision(revision_id const & r,

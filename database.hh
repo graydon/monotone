@@ -72,10 +72,13 @@ int sqlite3_finalize(sqlite3_stmt *);
 
 class transaction_guard;
 class app_state;
+class key_store;
 struct revision_t;
 struct query;
 class rev_height;
 struct globish;
+struct date_t;
+struct project_t;
 
 class database
 {
@@ -91,7 +94,7 @@ private:
                    schema_bypass_mode,
                    format_bypass_mode };
 
-  void install_functions(app_state * app);
+  void install_functions();
   struct sqlite3 * sql(enum open_mode mode = normal_mode);
 
   void check_filename();
@@ -596,7 +599,35 @@ public:
   void delete_existing_rosters();
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
+
+  // FIXME: quick hack to make these hooks available via the database context
+  bool hook_exists(std::string const & name);
+  bool hook_expand_selector(std::string const & sel, std::string & exp);
+  bool hook_expand_date(std::string const & sel, std::string & exp);
+  bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+  bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+  bool hook_get_author(rsa_keypair_id const & k,
+                       std::string & author);
+  bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
+                                     std::map<rsa_keypair_id, bool> const & new_results);
+  bool must_drop_attr(std::string const & key);
+
+  utf8 const & get_opt_author();
+  date_t const get_opt_date_or_cur_date();
+  bool has_opt_branch();
+  branch_name const & get_opt_branchname();
+  bool const get_opt_set_default();
+  bool const get_opt_ignore_suspend_certs();
+  void set_opt_branchname(branch_name const & branchname);
+
+  key_store & get_key_store();
+  project_t & get_project();
 };
+
+// not a member function, defined in database_check.cc
+void check_db(database & db);
 
 // Parent maps are used in a number of places to keep track of all the
 // parent rosters of a given revision.

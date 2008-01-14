@@ -1,0 +1,129 @@
+database.cc:
+
+  __app is a member variable of class database, used by:
+
+  normal member functions:
+  database::complete()
+       __app->require_workspace()
+       __app->opts.branchname
+       __app->get_project()
+
+  database::test_migration_step()
+       __app->keys
+
+  database::migrate()
+       __app->keys
+
+  accessor hacks:
+  __app->keys
+    get_key_store()
+
+  __app->lua ...
+    hook_exists()
+    hook_expand_selector()
+    hook_expand_date()
+    hook_get_manifest_cert_trust()
+    hook_get_revision_cert_trust()
+    hook_get_author()
+    hook_accept_testresult_change()
+
+  __app->get_project()
+    get_project()
+
+  __app->opts
+    must_drop_attr()
+    get_opt_author()
+    get_opt_ignore_suspend_certs()
+    get_opt_date_or_cur_date()
+    has_opt_branch()
+    get_opt_branchname()
+    set_opt_branchname()
+
+
+netsync.cc:
+
+  struct session:
+    app.db...
+    app.opts.use_transport_auth
+    needs: rev_enumerator()
+    app.lua.hook_note_netsync_{pubkey,revision,cert}_received
+    app.lua.hook_note_netsync_end
+
+  session::set_session_key():
+    app.opts.use_transport_auth
+    app.opts.signing_key
+    needs: decrypt_rsa()
+
+  session::queue_anonymous_cmd():
+    needs: encript_rsa()
+
+  session::queue_auth_cmd():
+    needs: encript_rsa()
+
+  session::process_hello_cmd():
+    app.db...
+    app.opts.use_transport_auth
+    app.opts.signing_key
+    app.lua.hook_note_netsync_start
+
+  session::process_anonymous_cmd():
+    app.db...
+    app.opts.use_transport_auth
+    app.opts.signing_key
+    app.lua.hook_get_netsync_read_permitted
+    needs: rebuild_merkle_trees()
+
+  session::process_auth_cmd():
+    app.db...
+    app.keys...
+    app.lua.hook_note_netsync_start()
+    app.lua.hook_get_netsync_read_permitted()
+    app.lua.hook_get_netsync_write_permitted()
+    needs: rebuild_merkle_trees()
+
+  session::begin_service():
+    app.opts.use_transport_auth
+    app.opts.signing_key
+    app.keys.get_key_pair()
+
+  build_stream_to_server():
+    app.lua.hook_get_netsync_connect_command()
+    app.lua.hook_use_transport_auth
+      (saving that to "app.opts.use_transport_auth")
+
+  call_server():
+    needs: build_stream_to_server()
+    needs: session()
+
+  serve_connections():
+    app.opts.bind_port()
+    app.opts.bind_address()
+
+  session::rebuild_merkle_trees()
+    (huh? takes another app_state, even if the session already has one?)
+    app.db...
+    app.opts.keys_to_push()
+    app.keys.key_pair_exists()
+    app.keys.ensure_in_database()_netsync_protocol():
+    app.opts.bind_stdio
+
+cmd_diff_log.cc:
+
+  CMD(diff:
+    app.db (read-only?)
+    app.opts.external_diff_args_given
+    app.opts.diff_format
+    app.opts.no_show_encloser
+    app.opts.revision_selectors
+    app.opts.exclude_patterns
+    app.opts.depth
+    app.lua.hook_get_encloser_pattern
+
+    needs: app.require_workspace()
+    needs: app.work.get_parent_rosters()
+    needs: app.work.get_current_roster_shape()
+    needs: app.work.update_current_roster_from_filesystem()
+    needs: node_restriction()
+
+    needs: complete()
+

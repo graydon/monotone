@@ -13,7 +13,7 @@
 #include <set>
 #include "vocab.hh"
 
-class app_state;
+class database;
 
 // this function just encapsulates the (somewhat complex) logic
 // behind picking an update target. the actual updating takes
@@ -25,7 +25,7 @@ class app_state;
 // revision, then 'candidates' will contain exactly the current revision.
 
 void pick_update_candidates(revision_id const & base_ident,
-                            app_state & app,
+                            database & db,
                             std::set<revision_id> &candidates);
 
 // Local Variables:

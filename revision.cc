@@ -25,7 +25,6 @@
 
 #include "botan/botan.h"
 
-#include "app_state.hh"
 #include "basic_io.hh"
 #include "cert.hh"
 #include "cset.hh"
@@ -42,7 +41,6 @@
 #include "safe_map.hh"
 #include "legacy.hh"
 #include "rev_height.hh"
-#include "cmd.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -177,7 +175,7 @@ void
 find_common_ancestor_for_merge(revision_id const & left,
                                revision_id const & right,
                                revision_id & anc,
-                               app_state & app)
+                               database & db)
 {
   interner<ctx> intern;
   set<ctx> leaves;
@@ -193,7 +191,7 @@ find_common_ancestor_for_merge(revision_id const & left,
   multimap<revision_id, revision_id> inverse_graph;
   {
     multimap<revision_id, revision_id> graph;
-    app.db.get_revision_ancestry(graph);
+    db.get_revision_ancestry(graph);
     typedef multimap<revision_id, revision_id>::const_iterator gi;
     for (gi i = graph.begin(); i != graph.end(); ++i)
       inverse_graph.insert(make_pair(i->second, i->first));
@@ -303,12 +301,12 @@ is_ancestor(T const & ancestor_id,
 bool
 is_ancestor(revision_id const & ancestor_id,
             revision_id const & descendent_id,
-            app_state & app)
+            database & db)
 {
   L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
 
   multimap<revision_id, revision_id> graph;
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   return is_ancestor(ancestor_id, descendent_id, graph);
 }
 
@@ -391,7 +389,7 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
 void
 toposort(set<revision_id> const & revisions,
          vector<revision_id> & sorted,
-         app_state & app)
+         database & db)
 {
   map<rev_height, revision_id> work;
 
@@ -399,7 +397,7 @@ toposort(set<revision_id> const & revisions,
        i != revisions.end(); ++i) 
     {
       rev_height height;
-      app.db.get_rev_height(*i, height);
+      db.get_rev_height(*i, height);
       work.insert(make_pair(height, *i));
     }
 
@@ -416,7 +414,7 @@ static void
 accumulate_strict_ancestors(revision_id const & start,
                             set<revision_id> & all_ancestors,
                             multimap<revision_id, revision_id> const & inverse_graph,
-                            app_state & app,
+                            database & db,
                             rev_height const & min_height)
 {
   typedef multimap<revision_id, revision_id>::const_iterator gi;
@@ -436,7 +434,7 @@ accumulate_strict_ancestors(revision_id const & start,
             {
               // prune if we're below min_height
               rev_height h;
-              app.db.get_rev_height(parent, h);
+              db.get_rev_height(parent, h);
               if (h >= min_height)
                 {
                   all_ancestors.insert(parent);
@@ -449,14 +447,14 @@ accumulate_strict_ancestors(revision_id const & start,
 
 // this call is equivalent to running:
 //   erase(remove_if(candidates.begin(), candidates.end(), p));
-//   erase_ancestors(candidates, app);
+//   erase_ancestors(candidates, db);
 // however, by interleaving the two operations, it can in common cases make
 // many fewer calls to the predicate, which can be a significant speed win.
 
 void
 erase_ancestors_and_failures(std::set<revision_id> & candidates,
                              is_failure & p,
-                             app_state & app,
+                             database & db,
                              multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
   // Load up the ancestry graph
@@ -470,7 +468,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
   if (inverse_graph_cache_ptr->empty())
   {
     multimap<revision_id, revision_id> graph;
-    app.db.get_revision_ancestry(graph);
+    db.get_revision_ancestry(graph);
     for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
          i != graph.end(); ++i)
       inverse_graph_cache_ptr->insert(make_pair(i->second, i->first));
@@ -481,11 +479,11 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
   set<revision_id> all_ancestors;
 
   rev_height min_height;
-  app.db.get_rev_height(*candidates.begin(), min_height);
+  db.get_rev_height(*candidates.begin(), min_height);
   for (std::set<revision_id>::const_iterator it = candidates.begin(); it != candidates.end(); it++)
     {
       rev_height h;
-      app.db.get_rev_height(*it, h);
+      db.get_rev_height(*it, h);
       if (h < min_height)
         min_height = h;
     }
@@ -510,7 +508,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
         }
       // okay, it is good enough that all its ancestors should be
       // eliminated
-      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, app, min_height);
+      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, db, min_height);
     }
 
   // now go and eliminate the ancestors
@@ -535,10 +533,10 @@ namespace
   };
 }
 void
-erase_ancestors(set<revision_id> & revisions, app_state & app)
+erase_ancestors(set<revision_id> & revisions, database & db)
 {
   no_failures p;
-  erase_ancestors_and_failures(revisions, p, app);
+  erase_ancestors_and_failures(revisions, p, db);
 }
 
 // This function takes a revision A and a set of revision Bs, calculates the
@@ -549,14 +547,14 @@ erase_ancestors(set<revision_id> & revisions, app_state & app)
 void
 ancestry_difference(revision_id const & a, set<revision_id> const & bs,
                     set<revision_id> & new_stuff,
-                    app_state & app)
+                    database & db)
 {
   new_stuff.clear();
   typedef multimap<revision_id, revision_id>::const_iterator gi;
   multimap<revision_id, revision_id> graph;
   multimap<revision_id, revision_id> inverse_graph;
 
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   for (gi i = graph.begin(); i != graph.end(); ++i)
     inverse_graph.insert(make_pair(i->second, i->first));
 
@@ -604,7 +602,7 @@ void
 select_nodes_modified_by_rev(revision_t const & rev,
                              roster_t const new_roster,
                              set<node_id> & nodes_modified,
-                             app_state & app)
+                             database & db)
 {
   nodes_modified.clear();
 
@@ -613,7 +611,7 @@ select_nodes_modified_by_rev(revision_t const & rev,
     {
       set<node_id> edge_nodes_modified;
       roster_t old_roster;
-      app.db.get_roster(edge_old_revision(i), old_roster);
+      db.get_roster(edge_old_revision(i), old_roster);
       select_nodes_modified_by_cset(edge_changes(i),
                                     old_roster,
                                     new_roster,
@@ -849,9 +847,9 @@ dump(parent_roster_map const & prm, string & out)
 
 struct anc_graph
 {
-  anc_graph(bool existing, app_state & a) :
+  anc_graph(bool existing, database & db) :
     existing_graph(existing),
-    app(a),
+    db(db),
     max_node(0),
     n_nodes("nodes", "n", 1),
     n_certs_in("certs in", "c", 1),
@@ -860,7 +858,7 @@ struct anc_graph
   {}
 
   bool existing_graph;
-  app_state & app;
+  database & db;
   u64 max_node;
 
   ticker n_nodes;
@@ -923,7 +921,7 @@ void anc_graph::write_certs()
         encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
         epoch_data new_epoch(hexdata);
         L(FL("setting epoch for %s to %s") % *i % new_epoch);
-        app.db.set_epoch(branch_name(*i), new_epoch);
+        db.set_epoch(branch_name(*i), new_epoch);
       }
   }
 
@@ -943,9 +941,9 @@ void anc_graph::write_certs()
           cert_value val(j->second.second);
 
           cert new_cert;
-          make_simple_cert(rev.inner(), name, val, app, new_cert);
+          make_simple_cert(rev.inner(), name, val, db, new_cert);
           revision<cert> rcert(new_cert);
-          if (app.db.put_revision_cert(rcert))
+          if (db.put_revision_cert(rcert))
             ++n_certs_out;
         }
     }
@@ -1037,13 +1035,13 @@ anc_graph::rebuild_ancestry()
 
   P(F("rebuilding %d nodes") % max_node);
   {
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
     if (existing_graph)
-      app.db.delete_existing_revs_and_certs();
+      db.delete_existing_revs_and_certs();
     construct_revisions_from_ancestry();
     write_certs();
     if (existing_graph)
-      app.db.delete_existing_manifests();
+      db.delete_existing_manifests();
     guard.commit();
   }
 }
@@ -1063,8 +1061,8 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
 
       // load certs
       vector< manifest<cert> > mcerts;
-      app.db.get_manifest_certs(man, mcerts);
-      erase_bogus_certs(mcerts, app);
+      db.get_manifest_certs(man, mcerts);
+      erase_bogus_certs(mcerts, db);
       for(vector< manifest<cert> >::const_iterator i = mcerts.begin();
           i != mcerts.end(); ++i)
         {
@@ -1095,7 +1093,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       manifest_id man;
       legacy::renames_map renames;
-      legacy::get_manifest_and_renames_for_rev(app, rev, man, renames);
+      legacy::get_manifest_and_renames_for_rev(db, rev, man, renames);
 
       L(FL("node %d = revision %s = manifest %s") % node % rev % man);
       old_rev_to_node.insert(make_pair(rev, node));
@@ -1105,8 +1103,8 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       // load certs
       vector< revision<cert> > rcerts;
-      app.db.get_revision_certs(rev, rcerts);
-      erase_bogus_certs(rcerts, app);
+      db.get_revision_certs(rev, rcerts);
+      erase_bogus_certs(rcerts, db);
       for(vector< revision<cert> >::const_iterator i = rcerts.begin();
           i != rcerts.end(); ++i)
         {
@@ -1466,7 +1464,7 @@ anc_graph::construct_revisions_from_ancestry()
 
           get_node_manifest(child, old_child_mid);
           manifest_data mdat;
-          app.db.get_manifest_version(old_child_mid, mdat);
+          db.get_manifest_version(old_child_mid, mdat);
           legacy::read_manifest_map(mdat, old_child_man);
 
           // Load all the parent rosters into a temporary roster map
@@ -1482,7 +1480,7 @@ anc_graph::construct_revisions_from_ancestry()
                 {
                   shared_ptr<roster_t> ros = shared_ptr<roster_t>(new roster_t());
                   shared_ptr<marking_map> mm = shared_ptr<marking_map>(new marking_map());
-                  app.db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
+                  db.get_roster(safe_get(node_to_new_rev, parent), *ros, *mm);
                   safe_insert(parent_rosters, make_pair(parent, make_pair(ros, mm)));
                 }
             }
@@ -1519,7 +1517,7 @@ anc_graph::construct_revisions_from_ancestry()
             if (i != old_child_man.end())
               {
                 file_data dat;
-                app.db.get_file_version(i->second, dat);
+                db.get_file_version(i->second, dat);
                 legacy::dot_mt_attrs_map attrs;
                 legacy::read_dot_mt_attrs(dat.inner(), attrs);
                 for (legacy::dot_mt_attrs_map::const_iterator j = attrs.begin();
@@ -1534,7 +1532,7 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             string key = k->first;
-                            if (app.opts.attrs_to_drop.find(key) != app.opts.attrs_to_drop.end())
+                            if (db.must_drop_attr(key))
                               {
                                 // ignore it
                               }
@@ -1620,7 +1618,7 @@ anc_graph::construct_revisions_from_ancestry()
           */
 
           L(FL("mapped node %d to revision %s") % child % new_rid);
-          if (app.db.put_revision(new_rid, rev))
+          if (db.put_revision(new_rid, rev))
             ++n_revs_out;
           
           // Mark this child as done, hooray!
@@ -1641,13 +1639,13 @@ anc_graph::construct_revisions_from_ancestry()
 }
 
 void
-build_roster_style_revs_from_manifest_style_revs(app_state & app)
+build_roster_style_revs_from_manifest_style_revs(database & db)
 {
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
   real_sanity.set_relaxed(true);
-  anc_graph graph(true, app);
+  anc_graph graph(true, db);
 
   P(F("converting existing revision graph to new roster-style revisions"));
   multimap<revision_id, revision_id> existing_graph;
@@ -1655,8 +1653,8 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key,app);
-    require_password(key, app);
+    get_user_key(key, db);
+    require_password(key, db.get_key_store());
   }
 
   // cross-check that we're getting everything
@@ -1666,9 +1664,9 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   // This code at least causes this case to throw an assertion; FIXME: make
   // this case actually work.
   set<revision_id> all_rev_ids;
-  app.db.get_revision_ids(all_rev_ids);
+  db.get_revision_ids(all_rev_ids);
 
-  app.db.get_revision_ancestry(existing_graph);
+  db.get_revision_ancestry(existing_graph);
   for (multimap<revision_id, revision_id>::const_iterator i = existing_graph.begin();
        i != existing_graph.end(); ++i)
     {
@@ -1697,25 +1695,25 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
 
 
 void
-build_changesets_from_manifest_ancestry(app_state & app)
+build_changesets_from_manifest_ancestry(database & db)
 {
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
-  anc_graph graph(false, app);
+  anc_graph graph(false, db);
 
   P(F("rebuilding revision graph from manifest certs"));
 
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key,app);
-    require_password(key, app);
+    get_user_key(key, db);
+    require_password(key, db.get_key_store());
   }
 
   vector< manifest<cert> > tmp;
-  app.db.get_manifest_certs(cert_name("ancestor"), tmp);
-  erase_bogus_certs(tmp, app);
+  db.get_manifest_certs(cert_name("ancestor"), tmp);
+  erase_bogus_certs(tmp, db);
 
   for (vector< manifest<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
@@ -1740,28 +1738,28 @@ build_changesets_from_manifest_ancestry(app_state & app)
 // For all other purposes, use toposort above.
 static void
 allrevs_toposorted(vector<revision_id> & revisions,
-                   app_state & app)
+                   database & db)
 {
   // get the complete ancestry
   rev_ancestry_map graph;
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   toposort_rev_ancestry(graph, revisions);
 }
 
 void
-regenerate_caches(app_state & app)
+regenerate_caches(database & db)
 {
   P(F("regenerating cached rosters and heights"));
 
-  app.db.ensure_open_for_format_changes();
+  db.ensure_open_for_format_changes();
 
-  transaction_guard guard(app.db);
+  transaction_guard guard(db);
 
-  app.db.delete_existing_rosters();
-  app.db.delete_existing_heights();
+  db.delete_existing_rosters();
+  db.delete_existing_heights();
 
   vector<revision_id> sorted_ids;
-  allrevs_toposorted(sorted_ids, app);
+  allrevs_toposorted(sorted_ids, db);
 
   ticker done(_("regenerated"), "r", 5);
   done.set_total(sorted_ids.size());
@@ -1771,29 +1769,15 @@ regenerate_caches(app_state & app)
     {
       revision_t rev;
       revision_id const & rev_id = *i;
-      app.db.get_revision(rev_id, rev);
-      app.db.put_roster_for_revision(rev_id, rev);
-      app.db.put_height_for_revision(rev_id, rev);
+      db.get_revision(rev_id, rev);
+      db.put_roster_for_revision(rev_id, rev);
+      db.put_height_for_revision(rev_id, rev);
       ++done;
     }
 
   guard.commit();
 
   P(F("finished regenerating cached rosters and heights"));
-}
-
-CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
-           N_("Shows a revision's height"),
-           "",
-           options::opts::none)
-{
-  if (args.size() != 1)
-    throw usage(execid);
-  revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
-  rev_height height;
-  app.db.get_rev_height(rid, height);
-  P(F("cached height: %s") % height);
 }
 
 // i/o stuff

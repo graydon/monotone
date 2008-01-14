@@ -90,7 +90,7 @@ key_store::read_key_dir()
       data dat;
       read_data(key_dir / *i, dat);
       istringstream is(dat());
-      read_packets(is, kr, app);
+      read_packets(is, kr, *this);
     }
 }
 
@@ -252,6 +252,48 @@ key_store::delete_key(rsa_keypair_id const & ident)
   system_path file;
   get_key_file(ident, file);
   delete_file(file);
+}
+
+bool
+key_store::hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase)
+{
+  return app.lua.hook_get_passphrase(k, phrase);
+}
+
+bool
+key_store::hook_persist_phrase_ok()
+{
+  return app.lua.hook_persist_phrase_ok();
+}
+
+bool
+key_store::hook_get_current_branch_key(rsa_keypair_id & k)
+{
+  return app.lua.hook_get_branch_key(app.opts.branchname, k);
+}
+
+bool
+key_store::has_opt_signing_key()
+{
+  return (app.opts.signing_key() != "");
+}
+
+rsa_keypair_id
+key_store::get_opt_signing_key()
+{
+  return app.opts.signing_key;
+}
+
+const string &
+key_store::get_opt_ssh_sign()
+{
+  return app.opts.ssh_sign;
+}
+
+ssh_agent &
+key_store::get_agent()
+{
+  return app.agent;
 }
 
 // Local Variables:

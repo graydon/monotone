@@ -168,7 +168,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
       N(!null_id(rid), 
         F("no revision for file '%s' in database") % file);
       N(app.db.revision_exists(rid), 
@@ -186,7 +186,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.revs_only);
+  do_annotate(app.db, file_node, rid, app.opts.revs_only);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
@@ -304,7 +304,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(cout, app, rid, idx(args, 0));
 }
@@ -326,6 +326,8 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
 {
   N(args.size() == 1,
     F("wrong argument count"));
+
+  // FIXME: dump_file should not take app arg
 
   file_id ident(idx(args, 0)());
   dump_file(output, app, ident);
@@ -356,17 +358,23 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      app.require_workspace();
+      CMD_REQUIRES_WORKSPACE(app);
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      work.get_parent_rosters(parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      CMD_REQUIRES_DATABASE(app);
 
+      // FIXME: what about app.opts.revision_selectors?
+      complete(db, idx(app.opts.revision_selectors, 0)(), rid);
+    }
+
+  // FIXME: again, dump_file should not take app arg
   dump_file(output, app, rid, idx(args, 0));
 }
 

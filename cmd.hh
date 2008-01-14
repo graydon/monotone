@@ -18,6 +18,8 @@
 #include "sanity.hh"
 
 class app_state;
+class database;
+struct workspace;
 
 namespace commands
 {
@@ -152,23 +154,23 @@ args_to_paths(args_vector const & args)
 }
 
 std::string
-describe_revision(app_state & app,
+describe_revision(database & db,
                   revision_id const & id);
 
 void
-complete(app_state & app,
+complete(database & db,
          std::string const & str,
          revision_id & completion,
          bool must_exist=true);
 
 void
-complete(app_state & app,
+complete(database & db,
          std::string const & str,
          std::set<revision_id> & completion,
          bool must_exist=true);
 
 void
-notify_if_multiple_heads(app_state & app);
+notify_if_multiple_heads(database & db);
 
 void
 process_commit_message_args(bool & given,
@@ -285,8 +287,14 @@ void commands::automate_ ## C :: exec_from_automate                  \
    app_state & app,                                                  \
    std::ostream & output) const
 
-CMD_FWD_DECL(__root__);
+#define CMD_REQUIRES_DATABASE(app)                                   \
+database & db = app.db
 
+#define CMD_REQUIRES_WORKSPACE(app)                                  \
+workspace & work = app.work;                                         \
+app.require_workspace()
+
+CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);
 CMD_FWD_DECL(debug);
