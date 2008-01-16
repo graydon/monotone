@@ -1,4 +1,4 @@
-// Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
+// Copyright (C) 2002, 2008 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -62,14 +62,17 @@ namespace commands {
   }
 }
 
-static string const interface_version = "7.1";
+static string const interface_version = "7.0";
+// Major or minor number only increments once for each monotone release;
+// check the most recent release before incrementing this.
 
 // Name: interface_version
 // Arguments: none
 // Added in: 0.0
 // Purpose: Prints version of automation interface.  Major number increments
 //   whenever a backwards incompatible change is made; minor number increments
-//   whenever any change is made (but is reset when major number increments).
+//   whenever any change is made (but is reset when major number
+//   increments).
 // Output format: "<decimal number>.<decimal number>\n".  Always matches
 //   "[0-9]+\.[0-9]+\n".
 // Error conditions: None.
