@@ -481,7 +481,7 @@ get_user_key(rsa_keypair_id & key, database & db)
 // Does not modify branch state in APP.
 void
 guess_branch(revision_id const & ident, database & db,
-             branch_name & branchname)
+             project_t & project, branch_name & branchname)
 {
   if (db.has_opt_branch() && !db.get_opt_branchname()().empty())
     branchname = db.get_opt_branchname();
@@ -492,7 +492,7 @@ guess_branch(revision_id const & ident, database & db,
           "please provide a branch name"));
 
       set<branch_name> branches;
-      db.get_project().get_revision_branches(ident, branches);
+      project.get_revision_branches(ident, branches);
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
@@ -510,10 +510,10 @@ guess_branch(revision_id const & ident, database & db,
 
 // As above, but set the branch name in the app state.
 void
-guess_branch(revision_id const & ident, database & db)
+guess_branch(revision_id const & ident, database & db, project_t & project)
 {
   branch_name branchname;
-  guess_branch(ident, db, branchname);
+  guess_branch(ident, db, project, branchname);
   db.set_opt_branchname(branchname);
 }
 

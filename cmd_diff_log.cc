@@ -396,7 +396,8 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
 
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -424,8 +425,10 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app.db, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);

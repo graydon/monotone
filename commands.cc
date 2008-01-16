@@ -853,7 +853,7 @@ CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
 }
 
 string
-describe_revision(database & db,
+describe_revision(database & db, project_t & project,
                   revision_id const & id)
 {
   cert_name author_name(author_cert_name);
@@ -865,7 +865,7 @@ describe_revision(database & db,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  db.get_project().get_revision_certs_by_name(id, author_name, tmp);
+  project.get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -874,7 +874,7 @@ describe_revision(database & db,
       description += " ";
       description += tv();
     }
-  db.get_project().get_revision_certs_by_name(id, date_name, tmp);
+  project.get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -933,7 +933,7 @@ complete(database & db,
 
 
 void
-complete(database & db,
+complete(database & db, project_t & project,
          string const & str,
          revision_id & completion,
          bool must_exist)
@@ -947,7 +947,7 @@ complete(database & db,
       string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += ("\n" + describe_revision(db, *i));
+        err += ("\n" + describe_revision(db, project, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 
@@ -955,17 +955,18 @@ complete(database & db,
 }
 
 void
-notify_if_multiple_heads(database & db)
+notify_if_multiple_heads(project_t & project,
+                         branch_name const & branchname)
 {
   set<revision_id> heads;
-  db.get_project().get_branch_heads(db.get_opt_branchname(), heads);
+  project.get_branch_heads(branchname, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % db.get_opt_branchname() % ui.prog_name);
+    P(i18n_format(prefixedline) % branchname % ui.prog_name);
   }
 }
 

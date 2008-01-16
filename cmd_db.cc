@@ -121,7 +121,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 
   revision_id revid;
 
-  complete(app.db, idx(args, 0)(), revid);
+  complete(app.db, app.get_project(), idx(args, 0)(), revid);
   N(app.db.revision_exists(revid),
     F("no such revision '%s'") % revid);
 
@@ -333,7 +333,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app.db, *i) << '\n';
+          else cout << describe_revision(app.db, app.get_project(), *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")

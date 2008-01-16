@@ -62,7 +62,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   transaction_guard guard(app.db, false);
 
   revision_id ident;
-  complete(app.db, idx(args, 0)(), ident);
+  complete(app.db, app.get_project(), idx(args, 0)(), ident);
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the app.db version instead if no project is specified.

@@ -27,9 +27,6 @@ database.cc:
     hook_get_author()
     hook_accept_testresult_change()
 
-  __app->get_project()
-    get_project()
-
   __app->opts
     must_drop_attr()
     get_opt_author()

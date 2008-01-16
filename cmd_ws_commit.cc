@@ -296,13 +296,13 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
-  complete(app.db, idx(args, 0)(), r);
+  complete(app.db, app.get_project(), idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  guess_branch(r, app.db);
+  guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
@@ -551,7 +551,8 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -560,11 +561,12 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), revid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), revid);
       N(app.db.revision_exists(revid),
         F("no such revision '%s'") % revid);
 
-      guess_branch(revid, app.db);
+      guess_branch(revid, app.db, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1039,7 +1041,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
            i++)
         {
           // this will prefer --branch if it was set
-          guess_branch(edge_old_revision(i), app.db, bn_candidate);
+          guess_branch(edge_old_revision(i), app.db, app.get_project(),
+                       bn_candidate);
           N(branchname() == "" || branchname == bn_candidate,
             F("parent revisions of this commit are in different branches:\n"
               "'%s' and '%s'.\n"
@@ -1278,11 +1281,12 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app.db);
+      guess_branch(ident, app.db, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1302,7 +1306,8 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }

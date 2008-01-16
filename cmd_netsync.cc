@@ -349,7 +349,8 @@ CMD(clone, "clone", "", CMD_REF(network),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -358,11 +359,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app.db);
+      guess_branch(ident, app.db, app.get_project());
 
       I(!app.opts.branchname().empty());
 
