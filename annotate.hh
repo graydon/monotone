@@ -13,9 +13,11 @@
 #include "vocab.hh"
 #include "roster.hh"
 class database;
+class project_t;
 
 void
-do_annotate(database & db, file_t file_node, revision_id rid, bool just_revs);
+do_annotate(database & db, project_t & project,
+            file_t file_node, revision_id rid, bool just_revs);
 
 // Local Variables:
 // mode: C++

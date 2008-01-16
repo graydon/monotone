@@ -682,7 +682,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the db version instead if no project is specified.
-  db.get_project().get_revision_certs(rid, ts);
+  app.get_project().get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
