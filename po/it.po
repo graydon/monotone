@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2007-01-23 08:09-0800\n"
-"PO-Revision-Date: 2007-12-28 19:56+0100\n"
+"PO-Revision-Date: 2008-01-13 18:18+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -423,7 +423,7 @@ msgstr "Recupera una variabile dal database"
 #: automate.cc:1941
 #, c-format
 msgid "No variables found or invalid domain specified"
-msgstr ""
+msgstr "Nessuna variabile trovata o dominio specificato non valido"
 
 #: automate.cc:1962
 #: cmd_db.cc:277
@@ -533,15 +533,15 @@ msgid "multiple branch certs found for revision %s, please provide a branch name
 msgstr "trovati certificati con rami multipli per la revisione %s, per favore inserisci il nome di un ramo"
 
 #: charset.cc:56
-#, fuzzy, c-format
+#, c-format
 msgid "failed to convert string from %s to %s: '%s'"
-msgstr "Impossibile scrivere il file di opzioni ‘%s’: %s"
+msgstr "non riesco a convertire una stringa da ‘%s’ a ‘%s’: ‘%s’"
 
 #: charset.cc:317
 #: charset.cc:331
 #, c-format
 msgid "error converting %d UTF-8 bytes to IDNA ACE: %s"
-msgstr ""
+msgstr "errore nella conversione di %d byte UTF-8 in IDNA ACE: %s"
 
 #: cmd.hh:140
 #, c-format
@@ -1760,9 +1760,8 @@ msgstr "INDIRIZZO[:NUMERO-PORTA] [DIRECTORY]"
 
 # TODO: checkout
 #: cmd_netsync.cc:241
-#, fuzzy
 msgid "Checks out a revision from a remote database into a directory"
-msgstr "Checkout una revisione da un database remoto in una directory"
+msgstr "Checkout di una revisione da un database remoto in una directory"
 
 # TODO: ad essere checkout
 #: cmd_netsync.cc:242
@@ -3080,7 +3079,7 @@ msgstr "il database non ha problemi"
 #: dates.cc:330
 #, c-format
 msgid "unrecognized date (monotone only understands ISO 8601 format)"
-msgstr ""
+msgstr "data non riconosciuta (monotone comprende solo le date in formato ISO 8601)"
 
 #: dates.cc:287
 #, c-format
@@ -3097,22 +3096,22 @@ msgstr ""
 msgid "day out of range for its month in '%s'"
 msgstr ""
 
-#: diff_patch.cc:687
+#: diff_patch.cc:688
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "il file ‘%s’ non esiste nello spazio di lavoro"
 
-#: diff_patch.cc:688
+#: diff_patch.cc:689
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "nello spazio di lavoro ‘%s’ è una directory, non un file"
 
-#: diff_patch.cc:692
+#: diff_patch.cc:693
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "il file ‘%s’ hd id ‘%s’ nello spazio di lavoro, era atteso ‘%s’"
 
-#: diff_patch.cc:881
+#: diff_patch.cc:882
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -3406,28 +3405,28 @@ msgstr "make_signature: firma non valida"
 msgid "passphrase for '%s' is incorrect"
 msgstr "passphrase incorretta per ‘%s’"
 
-#: lua.cc:466
-#: lua.cc:477
-#: lua.cc:489
+#: lua.cc:471
+#: lua.cc:482
+#: lua.cc:494
 #: lua_hooks.cc:1035
 #: lua_hooks.cc:1058
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "‘%s’ chiamato con un parametro non valido"
 
-#: lua.cc:572
+#: lua.cc:577
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "La directory ‘%s’ non esiste"
 
-#: lua.cc:574
+#: lua.cc:579
 #: rcs_import.cc:1229
 #: work.cc:1500
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "‘%s’ non è una directory"
 
-#: lua.cc:596
+#: lua.cc:601
 #: lua_hooks.cc:181
 #, c-format
 msgid "lua error while loading rcfile '%s'"
@@ -3994,47 +3993,47 @@ msgstr ""
 #: netxx_pipe.cc:197
 #, c-format
 msgid "CreateNamedPipe(%s,...) call failed: %s"
-msgstr ""
+msgstr "CreateNamedPipe(%s,...) fallita: %s"
 
 #: netxx_pipe.cc:214
 #, c-format
 msgid "CreateFile(%s,...) call failed: %s"
-msgstr ""
+msgstr "CreateFile(%s,...) fallita: %s"
 
 #: netxx_pipe.cc:245
 #, c-format
 msgid "CreateProcess(%s,...) call failed: %s"
-msgstr ""
+msgstr "CreateProcess(%s,...) fallita: %s"
 
 #: netxx_pipe.cc:261
 #, c-format
 msgid "pipe/fork failed: %s"
-msgstr ""
+msgstr "pipe/fork fallita: %s"
 
 #: netxx_pipe.cc:307
 #, c-format
 msgid "WriteFile call failed: %s"
-msgstr ""
+msgstr "WriteFile fallita: %s"
 
 #: netxx_pipe.cc:399
 #, c-format
 msgid "ReadFile call failed: %s"
-msgstr ""
+msgstr "ReadFile fallita: %s"
 
 #: netxx_pipe.cc:434
 #, c-format
 msgid "WaitForMultipleObjects call failed: %s"
-msgstr ""
+msgstr "WaitForMultipleObjects fallita: %s"
 
 #: netxx_pipe.cc:444
 #, c-format
 msgid "WaitForSingleObject call failed: %s"
-msgstr ""
+msgstr "WaitForSingleObject fallita: %s"
 
 #: netxx_pipe.cc:464
 #, c-format
 msgid "GetOverlappedResult call failed: %s"
-msgstr ""
+msgstr "GetOverlappedResult fallita: %s"
 
 #: netxx_pipe.cc:587
 #, c-format
@@ -4080,7 +4079,7 @@ msgstr "parametro ‘%s’ non valido per l'opzione ‘%s’: %s"
 #: option.cc:209
 #, c-format
 msgid "Invalid escape in --xargs file"
-msgstr ""
+msgstr "Escape non validi in ‘--xargs file’"
 
 #: options_list.hh:19
 msgid "override author for commit"
@@ -4382,7 +4381,7 @@ msgstr "il percorso ‘%s’ non è valido"
 #: paths.cc:359
 #, c-format
 msgid "empty path '%s' is invalid"
-msgstr ""
+msgstr "percorso vuoto ‘%s’ non valido"
 
 #: paths.cc:360
 #, c-format
@@ -4408,12 +4407,12 @@ msgstr ""
 #: paths.cc:915
 #, c-format
 msgid "search root '%s' does not exist"
-msgstr ""
+msgstr "la radice di ricerca ‘%s’ non esiste"
 
 #: paths.cc:916
 #, c-format
 msgid "search root '%s' is not a directory"
-msgstr ""
+msgstr "la radice di ricerca ‘%s’ non è una directory"
 
 #: pcrewrap.cc:155
 #, c-format
@@ -4637,22 +4636,22 @@ msgstr ""
 "capisco solo la versione formato ‘1’\n"
 "è necessaria una versione di monotone più nuova per completare l'operazione "
 
-#: roster.cc:2312
+#: roster.cc:2318
 #, c-format
 msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
 msgstr "le restrizioni includono la cancellazione di ‘%s’ ma esclude quella di ‘%s’"
 
-#: roster.cc:2323
+#: roster.cc:2329
 #, c-format
 msgid "restriction excludes addition of '%s' but includes addition of '%s'"
 msgstr "le restrizioni escludono l'aggiunta di ‘%s’ ma includono quella di ‘%s’"
 
-#: roster.cc:2349
+#: roster.cc:2355
 #, c-format
 msgid "restriction excludes addition of root directory"
 msgstr "la restrizione esclude l'aggiunta di una directory root"
 
-#: roster.cc:2353
+#: roster.cc:2359
 #, c-format
 msgid "invalid restriction"
 msgstr "restrizione non valida"
@@ -4689,7 +4688,7 @@ msgstr ""
 #: roster_merge.cc:269
 #, c-format
 msgid "conflict: invalid name _MTN in root directory"
-msgstr ""
+msgstr "conflitto: nome ‘_MTN’ non valido nella directory root"
 
 #: roster_merge.cc:273
 #, c-format
@@ -4803,41 +4802,43 @@ msgstr ""
 #: roster_merge.cc:497
 #, c-format
 msgid "renamed to '%s' on the left"
-msgstr ""
+msgstr "rinominato in ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:498
 #, c-format
 msgid "renamed to '%s' on the right"
-msgstr ""
+msgstr "rinominato in ‘%s’ sulla destra"
 
 #: roster_merge.cc:536
 #, c-format
 msgid "conflict: duplicate name '%s'"
-msgstr ""
+msgstr "conflitto: nome ‘%s’ duplicato"
 
 #: roster_merge.cc:545
 #: roster_merge.cc:577
 #, c-format
 msgid "added as a new file on the left"
-msgstr ""
+msgstr "aggiunto come nuovo file sulla sinistra"
 
+# TODO: aggiunto o aggiunta?
 #: roster_merge.cc:547
 #: roster_merge.cc:579
 #, c-format
 msgid "added as a new directory on the left"
-msgstr ""
+msgstr "aggiunto come nuova directory sulla sinistra"
 
 #: roster_merge.cc:550
 #: roster_merge.cc:566
 #, c-format
 msgid "added as a new file on the right"
-msgstr ""
+msgstr "aggiunto come nuovo file sulla destra"
 
+# TODO: aggiunto o aggiunta?
 #: roster_merge.cc:552
 #: roster_merge.cc:568
 #, c-format
 msgid "added as a new directory on the right"
-msgstr ""
+msgstr "aggiunto come nuova directory sulla destra"
 
 #: roster_merge.cc:561
 #: roster_merge.cc:594
@@ -4876,22 +4877,22 @@ msgstr ""
 #: roster_merge.cc:636
 #, c-format
 msgid "set to '%s' on the left"
-msgstr ""
+msgstr "impostato a ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:638
 #, c-format
 msgid "deleted on the left"
-msgstr ""
+msgstr "cancellato sulla sinistra"
 
 #: roster_merge.cc:641
 #, c-format
 msgid "set to '%s' on the right"
-msgstr ""
+msgstr "impostato a ‘%s’ sulla destra"
 
 #: roster_merge.cc:643
 #, c-format
 msgid "deleted on the right"
-msgstr ""
+msgstr "cancellato sulla destra"
 
 #: roster_merge.cc:663
 #, c-format
@@ -5288,7 +5289,7 @@ msgstr ""
 #: ssh_agent.cc:466
 #, c-format
 msgid "ssh_agent: packet type (%u) != 6"
-msgstr ""
+msgstr "ssh_agent: tipo di pacchetto (%u) != 6"
 
 #: std_hooks.lua:48
 msgid "Press enter"
