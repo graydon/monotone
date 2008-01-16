@@ -22,6 +22,7 @@
 
 struct globish;
 class database;
+class project_t;
 class key_store;
 class lua_hooks;
 class options;
@@ -180,8 +181,8 @@ void run_netsync_protocol(protocol_voice voice,
                           std::list<utf8> const & addrs,
                           globish const & include_pattern,
                           globish const & exclude_pattern,
-                          database & db, key_store & keys,
-                          lua_hooks & lua, options & opts);
+                          database & db, project_t & project,
+                          key_store & keys, lua_hooks & lua, options & opts);
 
 // Local Variables:
 // mode: C++

@@ -299,6 +299,7 @@ session:
   globish_matcher our_matcher;
 
   database & db;
+  project_t & project;
   key_store & keys;
   lua_hooks & lua;
   bool use_transport_auth;
@@ -402,6 +403,7 @@ session:
           globish const & our_include_pattern,
           globish const & our_exclude_pattern,
           database & db,
+          project_t & project,
           key_store & keys,
           lua_hooks & lua,
           options & opts,
@@ -521,6 +523,7 @@ session::session(protocol_role role,
                  globish const & our_include_pattern,
                  globish const & our_exclude_pattern,
                  database & db,
+                 project_t & project,
                  key_store & keys,
                  lua_hooks & lua,
                  options & opts,
@@ -533,6 +536,7 @@ session::session(protocol_role role,
   our_exclude_pattern(our_exclude_pattern),
   our_matcher(our_include_pattern, our_exclude_pattern),
   db(db),
+  project(project),
   keys(keys),
   lua(lua),
   use_transport_auth(opts.use_transport_auth),
@@ -572,7 +576,7 @@ session::session(protocol_role role,
   key_refiner(key_item, voice, *this),
   cert_refiner(cert_item, voice, *this),
   rev_refiner(revision_item, voice, *this),
-  rev_enumerator(*this, db),
+  rev_enumerator(*this, db, project),
   initiated_by_server(initiated_by_server)
 {}
 
@@ -1352,7 +1356,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   // clients always include in the synchronization set, every branch that the
   // user requested
   set<branch_name> all_branches, ok_branches;
-  db.get_project().get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches, false);
   for (set<branch_name>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
     {
@@ -1445,7 +1449,7 @@ session::process_anonymous_cmd(protocol_role their_role,
     }
 
   set<branch_name> all_branches, ok_branches;
-  db.get_project().get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches, false);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   for (set<branch_name>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
@@ -1581,7 +1585,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
 
   set<branch_name> all_branches, ok_branches;
-  db.get_project().get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches, false);
   for (set<branch_name>::const_iterator i = all_branches.begin();
        i != all_branches.end(); i++)
     {
@@ -2396,6 +2400,7 @@ call_server(protocol_role role,
             globish const & include_pattern,
             globish const & exclude_pattern,
             database & db,
+            project_t & project,
             key_store & keys,
             lua_hooks & lua,
             options & opts,
@@ -2428,7 +2433,7 @@ call_server(protocol_role role,
   session sess(role, client_voice,
                include_pattern,
                exclude_pattern,
-               db, keys, lua, opts, address(), server);
+               db, project, keys, lua, opts, address(), server);
 
   while (true)
     {
@@ -2593,7 +2598,7 @@ handle_new_connection(Netxx::Address & addr,
                       globish const & include_pattern,
                       globish const & exclude_pattern,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions,
-                      database & db, key_store & keys,
+                      database & db, project_t & project, key_store & keys,
                       lua_hooks & lua, options & opts)
 {
   L(FL("accepting new connection on %s : %s")
@@ -2620,7 +2625,7 @@ handle_new_connection(Netxx::Address & addr,
 
       shared_ptr<session> sess(new session(role, server_voice,
                                            include_pattern, exclude_pattern,
-                                           db, keys, lua, opts,
+                                           db, project, keys, lua, opts,
                                            lexical_cast<string>(client), str));
       sess->begin_service();
       sessions.insert(make_pair(client.get_socketfd(), sess));
@@ -2763,6 +2768,7 @@ serve_connections(protocol_role role,
                   globish const & include_pattern,
                   globish const & exclude_pattern,
                   database & db,
+                  project_t & project,
                   key_store & keys,
                   lua_hooks & lua,
                   options & opts,
@@ -2894,7 +2900,7 @@ serve_connections(protocol_role role,
 
                       shared_ptr<session> sess(new session(role, client_voice,
                                                            inc, exc,
-                                                           db, keys,
+                                                           db, project, keys,
                                                            lua, opts,
                                                            addr(), server, true));
 
@@ -2935,7 +2941,8 @@ serve_connections(protocol_role role,
                   else if (fd == server)
                     handle_new_connection(addr, server, timeout, role,
                                           include_pattern, exclude_pattern,
-                                          sessions, db, keys, lua, opts);
+                                          sessions, db, project, keys,
+                                          lua, opts);
 
                   // or an existing session woke up
                   else
@@ -3163,7 +3170,7 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
         // FIXME_PROJECTS: probably something like
         // get_project(i->project).get_branch_certs(i->branch)
         // or so.
-        db.get_project().get_branch_certs(*i, certs);
+        project.get_branch_certs(*i, certs);
         for (vector< revision<cert> >::const_iterator j = certs.begin();
              j != certs.end(); j++)
           {
@@ -3292,7 +3299,7 @@ run_netsync_protocol(protocol_voice voice,
                      std::list<utf8> const & addrs,
                      globish const & include_pattern,
                      globish const & exclude_pattern,
-                     database & db, key_store & keys,
+                     database & db, project_t & project, key_store & keys,
                      lua_hooks & lua, options & opts)
 {
   if (include_pattern().find_first_of("'\"") != string::npos)
@@ -3319,13 +3326,13 @@ run_netsync_protocol(protocol_voice voice,
               shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
               shared_ptr<session> sess(new session(role, server_voice,
                                                    include_pattern, exclude_pattern,
-                                                   db, keys, lua, opts,
+                                                   db, project, keys, lua, opts,
                                                    "stdio", str));
               serve_single_connection(sess,constants::netsync_timeout_seconds);
             }
           else
             serve_connections(role, include_pattern, exclude_pattern,
-                              db, keys, lua, opts,
+                              db, project, keys, lua, opts,
                               addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                               static_cast<unsigned long>(constants::netsync_timeout_seconds),
                               static_cast<unsigned long>(constants::netsync_connection_limit));
@@ -3334,7 +3341,7 @@ run_netsync_protocol(protocol_voice voice,
         {
           I(voice == client_voice);
           call_server(role, include_pattern, exclude_pattern,
-                      db, keys, lua, opts,
+                      db, project, keys, lua, opts,
                       addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
         }
