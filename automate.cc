@@ -1422,7 +1422,7 @@ CMD_AUTOMATE(branches, "",
 
   set<branch_name> names;
 
-  app.get_project().get_branch_list(names);
+  app.get_project().get_branch_list(names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
