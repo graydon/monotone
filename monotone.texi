@@ -33,7 +33,7 @@ Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
 Copyright @copyright{} 2006, 2007 William Uther @*
-Copyright @copyright{} 2007 Stephen Leake @*
+Copyright @copyright{} 2007, 2008 Stephen Leake @*
 
 This manual is made available under the GNU GPL version 2.0 or
 greater.  See the accompanying file COPYING for details.
@@ -41,7 +41,7 @@ greater.  See the accompanying file COPYING for details.
 @end titlepage
 
 @ifnottex
-@node Top
+@node Top, Concepts, (dir), (dir)
 @top Top
 
 Monotone is a distributed version control tool. It can help automate
@@ -68,15 +68,15 @@ version control tools.
 @end ifnottex
 
 @menu
-* Concepts::            Taxonomy of monotone
-* Tutorial::            A detailed example of using monotone
-* Advanced Uses::       Going beyond the basics
-* CVS Phrasebook::      Transitional guide for CVS users
-* Command Reference::   Details of each monotone command
-* Hook Reference::      Functions which extend monotone
-* Special Topics::      Extra explanations and details
-* Default hooks::       The standard hook definitions
-* General Index::       Index of concepts and functions
+* Concepts::                    Taxonomy of monotone
+* Tutorial::                    A detailed example of using monotone
+* Advanced Uses::               Going beyond the basics
+* CVS Phrasebook::              Transitional guide for CVS users
+* Command Reference::           Details of each monotone command
+* Hook Reference::              Functions which extend monotone
+* Special Topics::              Extra explanations and details
+* Default hooks::               The standard hook definitions
+* General Index::               Index of concepts and functions
 @end menu
 
 @ifnottex
@@ -85,7 +85,7 @@ Complete table of contents
 
 @contents
 
-@node    Concepts
+@node    Concepts, Tutorial, Top, Top
 @chapter Concepts
 
 This chapter should familiarize you with the concepts, terminology,
@@ -94,17 +94,17 @@ take a moment to read it, as later sections will assume familiarity
 with these terms.
 
 @menu
-* Versions of files::         Tracking changes to single files
-* Versions of trees::         Tracking changes to collections of files
-* Historical records::        Tracking the history of changes
-* Certificates::              Tracking extended information
-* Storage and workflow::      Saving, sending, and receiving changes
-* Forks and merges::          Managing divergence of code
-* Branches::                  Intentional divergence and automatic merging
+* Versions of files::           Tracking changes to single files
+* Versions of trees::           Tracking changes to collections of files
+* Historical records::          Tracking the history of changes
+* Certificates::                Tracking extended information
+* Storage and workflow::        Saving, sending, and receiving changes
+* Forks and merges::            Managing divergence of code
+* Branches::                    Intentional divergence and automatic merging
 @end menu
 
 @page
-@node    Versions of files
+@node    Versions of files, Versions of trees, Concepts, Concepts
 @section Versions of files
 
 Suppose you wish to modify a file @file{file.txt} on your
@@ -282,7 +282,7 @@ document.
 @end ifnotinfo
 
 @page
-@node    Versions of trees
+@node    Versions of trees, Historical records, Versions of files, Concepts
 @section Versions of trees
 
 After you have made many different files, you may wish to capture a
@@ -396,7 +396,7 @@ when possible monotone stores compact descriptions of changes between
 manifests; when necessary it stores complete versions of manifests.
 
 @page
-@node    Historical records
+@node    Historical records, Certificates, Versions of trees, Concepts
 @section Historical records
 
 Suppose you sit down to edit some files. Before you start working, you
@@ -522,7 +522,7 @@ predecessor, thus forming a new unique ID for each point in history.
 @end ifnotinfo
 
 @page
-@node    Certificates
+@node    Certificates, Storage and workflow, Historical records, Concepts
 @section Certificates
 
 Often, you will wish to make a @i{statement} about a revision, such as
@@ -623,7 +623,7 @@ trusted medium, in person, or via a trusted third party. Advanced
 secure key exchange techniques are beyond the scope of this document.
 
 @page
-@node    Storage and workflow
+@node    Storage and workflow, Forks and merges, Certificates, Concepts
 @section Storage and workflow
 
 Monotone moves information in and out of four different types of
@@ -812,7 +812,7 @@ data, which you can trade with promiscuously. There is no trust
 implied in communication.
 
 @page
-@node    Forks and merges
+@node    Forks and merges, Branches, Storage and workflow, Concepts
 @section Forks and merges
 
 So far we have been talking about revisions as though each logically
@@ -907,7 +907,7 @@ grandchild revision which contains both changesets.
 @end ifnotinfo
 
 @page
-@node    Branches
+@node    Branches,  , Forks and merges, Concepts
 @section Branches
 
 Sometimes, people intentionally produce forks which are @emph{not
@@ -1060,7 +1060,7 @@ was initially developed on the branch @code{net.venge.monotone.win32}.
 (For more information, see @ref{Naming Conventions}.)
 
 @page
-@node    Tutorial
+@node    Tutorial, Advanced Uses, Concepts, Top
 @chapter Tutorial
 
 This chapter illustrates the basic uses of monotone by means of an
@@ -1146,7 +1146,7 @@ example team; other tasks involve only one member.
 
 
 @page
-@node    Creating a Database
+@node    Creating a Database, Generating Keys, Tutorial, Tutorial
 @section Creating a Database
 
 The first step Jim, Abe and Beth each need to perform is to create a
@@ -1189,7 +1189,7 @@ $ mtn db init --db=~/beth.mtn
 @end smallexample
 
 @page
-@node    Generating Keys
+@node    Generating Keys, Starting a New Project, Creating a Database, Tutorial
 @section Generating Keys
 
 Now Jim, Abe and Beth must each generate an @sc{rsa} key pair for
@@ -1326,7 +1326,7 @@ changes by mistake; therefore, be sure to check that no other
 Abe and Beth do the same, with their secret passphrases.
 
 @page
-@node    Starting a New Project
+@node    Starting a New Project, Adding Files, Generating Keys, Tutorial
 @section Starting a New Project
 
 Before he can begin work on the project, Jim needs to create a
@@ -1364,7 +1364,7 @@ issues all further monotone commands from their workspace
 directories.
 
 @page
-@node    Adding Files
+@node    Adding Files, Committing Work, Starting a New Project, Tutorial
 @section Adding Files
 
 Next Jim decides to add some files to the project. He writes up
@@ -1537,7 +1537,7 @@ $ mtn diff
 @end smallexample
 
 @page
-@node    Committing Work
+@node    Committing Work, Basic Network Service, Adding Files, Tutorial
 @section Committing Work
 
 Satisfied with the work he's done, Jim wants to save his changes.  He
@@ -1636,7 +1636,7 @@ descendants. Since Jim has not committed any changes to this revision
 yet, it has no descendants.
 
 @page
-@node    Basic Network Service
+@node    Basic Network Service, Synchronising Databases, Committing Work, Tutorial
 @section Basic Network Service
 
 Jim now decides he will make his base revision available to his
@@ -1734,7 +1734,7 @@ This command starts monotone listening on all network interfaces of
 his laptop on the default port 4691, serving everything in his database.
 
 @page
-@node    Synchronising Databases
+@node    Synchronising Databases, Making Changes, Basic Network Service, Tutorial
 @section Synchronising Databases
 
 With Jim's server preparations done, now Abe is ready to fetch Jim's
@@ -1783,7 +1783,7 @@ started, and we'll revisit the issue of network service with them a
 little later as the project grows.
 
 @page
-@node    Making Changes
+@node    Making Changes, Dealing with a Fork, Synchronising Databases, Tutorial
 @section Making Changes
 
 Abe decides to do some work on his part of the code. He has a copy of
@@ -1988,7 +1988,7 @@ mtn: successful exchange with jim-laptop.juicebot.co.jp
 @end smallexample
 
 @page
-@node    Dealing with a Fork
+@node    Dealing with a Fork, Branching and Merging, Making Changes, Tutorial
 @section Dealing with a Fork
 
 Careful readers will note that, in the previous section, the JuiceBot
@@ -2216,7 +2216,7 @@ contains unrelated bugs, and need to back out to a working revision for
 testing).
 
 @page
-@node    Branching and Merging
+@node    Branching and Merging, Network Service Revisited, Dealing with a Fork, Tutorial
 @section Branching and Merging
 
 So by now you're familiar with making changes, sharing them with other
@@ -2333,7 +2333,7 @@ jp.co.juicebot.jb7
 @end smallexample
 
 @page
-@node    Network Service Revisited
+@node    Network Service Revisited,  , Branching and Merging, Tutorial
 @section Network Service Revisited
 
 Up until now, Jim has been using his laptop and database as a sort of
@@ -2590,7 +2590,7 @@ content}, rather than on the @emph{replication path} by which that
 content arrived in your database.
 @end itemize
 
-@node    Advanced Uses
+@node    Advanced Uses, CVS Phrasebook, Tutorial, Top
 @chapter Advanced Uses
 
 This chapter covers slightly less common aspects of using
@@ -2600,26 +2600,26 @@ and tutorial, and possibly spent some time playing with the program to
 familiarize yourself with its operation.
 
 @menu
-* Other Transports::       Using netsync over SSH, or other transports.
-* Selectors::              Selecting revisions by certificate.
-* Restrictions::           Limit workspace changes to specified files.
-* Scripting::              Running monotone from other programs.
-* Inodeprints::            Trading off safety for speed in your workspace.
-* Workspace Collisions::   Workspace files that collide with new versioned files.
-* Quality Assurance::      Integrating testing and review with development.
-* Vars::                   Simple per-database configuration information.
-* Reserved Files::         File names with special meanings.
-* Reserved Certs::         Certificate names with special meanings.
-* Naming Conventions::     Choosing appropriate names for keys and branches.
-* File Attributes::        Marking files as executable, or other attributes.
-* Merging::                Merging with external tools, handling binary files.
-* Migrating and Dumping::  Changing the underlying storage system.
-* Importing from CVS::     Building a monotone database from a CVS repository.
-* Using packets::          Transferring data ``by hand''.
+* Other Transports::            Using netsync over SSH, or other transports.
+* Selectors::                   Selecting revisions by certificate.
+* Restrictions::                Limit workspace changes to specified files.
+* Scripting::                   Running monotone from other programs.
+* Inodeprints::                 Trading off safety for speed in your workspace.
+* Workspace Collisions::        Workspace files that collide with new versioned files.
+* Quality Assurance::           Integrating testing and review with development.
+* Vars::                        Simple per-database configuration information.
+* Reserved Files::              File names with special meanings.
+* Reserved Certs::              Certificate names with special meanings.
+* Naming Conventions::          Choosing appropriate names for keys and branches.
+* File Attributes::             Marking files as executable, or other attributes.
+* Merging::                     Merging with external tools, handling binary files.
+* Migrating and Dumping::       Changing the underlying storage system.
+* Importing from CVS::          Building a monotone database from a CVS repository.
+* Using packets::               Transferring data ``by hand''.
 @end menu
 
 @page
-@node    Other Transports
+@node    Other Transports, Selectors, Advanced Uses, Advanced Uses
 @section Other Transports
 
 Monotone's database synchronization system is based on a protocol
@@ -2678,7 +2678,7 @@ hooks @code{get_netsync_connect_command} and
 @ref{Netsync Transport Hooks}.
 
 @page
-@node    Selectors
+@node    Selectors, Restrictions, Other Transports, Advanced Uses
 @section Selectors
 
 Revisions can be specified on the monotone command line, precisely, by
@@ -2845,7 +2845,7 @@ are no branches or tags beginning with the string @code{graydon} this
 is just as effective as specifying @code{a:graydon}.
 
 @page
-@node    Restrictions
+@node    Restrictions, Scripting, Selectors, Advanced Uses
 @section Restrictions
 
 Several monotone commands accept optional @var{pathname...} arguments in
@@ -2936,7 +2936,7 @@ file based on their current option settings.
 
 
 @page
-@node    Scripting
+@node    Scripting, Inodeprints, Restrictions, Advanced Uses
 @section Scripting
 
 People often want to write programs that call monotone --- for example,
@@ -2961,7 +2961,7 @@ parseable form.
 For details of this interface, see @ref{Automation}.
 
 @page
-@node    Inodeprints
+@node    Inodeprints, Workspace Collisions, Scripting, Advanced Uses
 @section Inodeprints
 
 Fairly often, in order to accomplish its job, monotone has to look at
@@ -2998,7 +2998,7 @@ will want to simply define the @code{use_inodeprints} hook to return
 workspaces you create.  See @ref{Hook Reference} for details.
 
 @page
-@node    Workspace Collisions
+@node    Workspace Collisions, Quality Assurance, Inodeprints, Advanced Uses
 @section Workspace Collisions
 
 Sometimes when you work on a project, several people make similar
@@ -3092,7 +3092,7 @@ contents are safely stored, and can be retrieved later (such as with
 @command{revert}).
 
 @page
-@node    Quality Assurance
+@node    Quality Assurance, Vars, Workspace Collisions, Advanced Uses
 @section Quality Assurance
 
 Monotone was constructed to serve both as a version control tool and
@@ -3152,7 +3152,7 @@ to merge into your workspace.
 For details on these hooks, see the @ref{Hook Reference}.
 
 @page
-@node    Vars
+@node    Vars, Reserved Files, Quality Assurance, Advanced Uses
 @section Vars
 
 Every monotone database has a set of @emph{vars} associated with it.
@@ -3211,7 +3211,7 @@ changes, monotone will notice, and refuse to connect until you have run
 @end table
 
 @page
-@node    Reserved Files
+@node    Reserved Files, Reserved Certs, Vars, Advanced Uses
 @section Reserved Files
 
 A monotone workspace consists of control files and non-control
@@ -3304,7 +3304,7 @@ dumps a log of its recent activity to this file, to aid in debugging.
 
 
 @page
-@node    Reserved Certs
+@node    Reserved Certs, Naming Conventions, Reserved Files, Advanced Uses
 @section Reserved Certs
 
 Every certificate has a name. Some names have meaning which is built
@@ -3386,7 +3386,7 @@ you intend to run on revisions. This cert influences the
 @end table
 
 @page
-@node    Naming Conventions
+@node    Naming Conventions, File Attributes, Reserved Certs, Advanced Uses
 @section Naming Conventions
 
 Some names in monotone are private to your work, such as
@@ -3417,7 +3417,7 @@ author owns the DNS domain @code{venge.net}.
 @end itemize
 
 @page
-@node    File Attributes
+@node    File Attributes, Merging, Naming Conventions, Advanced Uses
 @section File Attributes
 
 Monotone contains a support for storing @dfn{persistent attributes} on
@@ -3465,7 +3465,7 @@ them besides @code{mtn:}; attrs beginning with @code{mtn:} are
 reserved for monotone's own use.
 
 @page
-@node    Merging
+@node    Merging, Migrating and Dumping, File Attributes, Advanced Uses
 @section Merging
 
 Monotone has two merging modes, controlled by the @code{manual_merge}
@@ -3506,7 +3506,7 @@ Remember that monotone switches to manual merging even if only one of
 the files to be merged has the @code{manual_merge} attribute set.
 
 @page
-@node    Migrating and Dumping
+@node    Migrating and Dumping, Importing from CVS, Merging, Advanced Uses
 @section Migrating and Dumping
 
 While the state of your database is logically captured in terms of a
@@ -3544,7 +3544,7 @@ database is @emph{included} in the dump, so you should not try to
 @command{init} your database before a @command{load}.
 
 @page
-@node    Importing from CVS
+@node    Importing from CVS, Using packets, Migrating and Dumping, Advanced Uses
 @section Importing from CVS
 
 Monotone is capable of reading CVS files directly and importing them
@@ -3588,7 +3588,7 @@ $ mtn --db=test.mtn --branch=net.example.wobbler checkout wobber-checkout
 @end smallexample
 
 @page
-@node    Using packets
+@node    Using packets,  , Importing from CVS, Advanced Uses
 @section Using packets
 
 Suppose you made changes to your database, and want to send those
@@ -3779,7 +3779,7 @@ And that's it! The revisions were successfully transferred.
 
 
 @page
-@node    CVS Phrasebook
+@node    CVS Phrasebook, Command Reference, Advanced Uses, Top
 @chapter CVS Phrasebook
 
 This chapter translates common CVS commands into monotone commands. It
@@ -4127,28 +4127,28 @@ and does not need to be in any special location, or readable by other
 users.
 
 
-@node    Command Reference
+@node    Command Reference, Hook Reference, CVS Phrasebook, Top
 @chapter Command Reference
 
 Monotone has a large number of commands. To help navigate through them
 all, commands are grouped into logical categories.
 
 @menu
-* Tree::             Operations on tree states in your database
-* Workspace::        Operations on your workspace
-* Network::          Communication with the network
-* Informative::      Production of descriptive reports
-* Key and Cert Trust::     Keys and Trust Evaluations based on them
-* Certificate::      Creation of certificates
-* Packet I/O::       Production or consumption of packets
-* Database::         Manipulation of your database as a whole
-* Automation::       Running monotone from other programs
-* RCS::              Importing legacy version control files
+* Tree::                        Operations on tree states in your database
+* Workspace::                   Operations on your workspace
+* Network::                     Communication with the network
+* Informative::                 Production of descriptive reports
+* Key and Cert Trust::          Keys and Trust Evaluations based on them
+* Certificate::                 Creation of certificates
+* Packet I/O::                  Production or consumption of packets
+* Database::                    Manipulation of your database as a whole
+* Automation::                  Running monotone from other programs
+* RCS::                         Importing legacy version control files
 @end menu
 
 
 @page
-@node    Tree
+@node    Tree, Workspace, Command Reference, Command Reference
 @section Tree
 
 @ftable @command
@@ -4321,7 +4321,7 @@ If @command{--dry-run} is given, no commit is done.
 
 
 @page
-@node    Workspace
+@node    Workspace, Network, Tree, Command Reference
 @section Workspace
 
 @ftable @command
@@ -4637,7 +4637,7 @@ When running @command{pivot_root}, it is sometimes possible for
 @end ftable
 
 @page
-@node    Network
+@node    Network, Informative, Workspace, Command Reference
 @section Network
 
 @ftable @command
@@ -4749,7 +4749,7 @@ branch name.
 
 
 @page
-@node    Informative
+@node    Informative, Key and Cert Trust, Network, Command Reference
 @section Informative
 
 @ftable @command
@@ -5125,7 +5125,7 @@ the given revisions.
 
 
 @page
-@node    Key and Cert Trust
+@node    Key and Cert Trust, Certificate, Informative, Command Reference
 @section Key and Cert Trust
 
 @ftable @command
@@ -5242,7 +5242,7 @@ work with all signing algorithms.
 
 
 @page
-@node    Certificate
+@node    Certificate, Packet I/O, Key and Cert Trust, Command Reference
 @section Certificate
 
 @ftable @command
@@ -5299,7 +5299,7 @@ testresult 0} or @command{mtn cert @var{id} testresult 1}.
 
 
 @page
-@node    Packet I/O
+@node    Packet I/O, Database, Certificate, Command Reference
 @section Packet I/O
 
 Monotone can produce and consume data in a convenient, portable form
@@ -5359,7 +5359,7 @@ in your database.
 
 
 @page
-@node    Database
+@node    Database, Automation, Packet I/O, Command Reference
 @section Database
 
 @ftable @command
@@ -5624,7 +5624,7 @@ help diagnose failures.
 
 
 @page
-@node    Automation
+@node    Automation, RCS, Database, Command Reference
 @section Automation
 
 This section contains subcommands of the @command{mtn automate} command,
@@ -6336,24 +6336,42 @@ marker.
 
 @end table
 
-@item mtn automate inventory [@var{files...}]
+@item mtn automate inventory [options]... [@var{files...}]
 
 @table @strong
 @item Arguments:
 
 One or more file paths (optional). If present, only show inventory for the given
-files or directories (and their sub-directories). You can use @option{--depth}
-and @option{--exclude} to control what is selected through this restriction.
+files or directories (and their sub-directories).
+
+@table @option
+@item --depth=@var{n}
+Maximum number of directories to descend.
+
+@item --exclude=@var{exclude-glob}
+File or directory to exclude.
+
+@item --no-ignored
+Don't output ignored files or directories.
+
+@item --no-unknown
+Don't output unknown directories.
+
+@item --no-unchanged
+Don't output files that are known but not changed in any way.
+
+@end table
 
 @item Changes:
 
 @itemize
 @item
+7.0 -- added options '--no-ignored', '--no-unknown', '--no-unchanged'
+@item
 6.0 -- converted to basic_io format (restriction support, various fixes)
 @item
 1.0 -- initial, line-based format
 @end itemize
-@c FIXME: check this number when merge to main branch
 
 @item Purpose:
 
@@ -6813,7 +6831,8 @@ The input is a series of commands. The command name plus arguments are
 provided as 'l' <string> [<string> ...] 'e', where <string> = <size> colon
 <data> . This may optionally be preceded by a set of key=value pairs
 (command options) as 'o' <string> <string> [<string> <string> ...] 'e', where
-strings come in pairs, key followed by value.
+strings come in pairs, key followed by value. For flag options that
+don't take values, specify the second string as zero length; @code{0:}.
 
 The space between the ending 'e' of one group of strings and the beginning
 'l' or 'o' of the next is reserved. Any characters other than whitespace
@@ -8068,7 +8087,7 @@ exits with status 1.
 @end ftable
 
 @page
-@node    RCS
+@node    RCS,  , Automation, Command Reference
 @section RCS
 
 @ftable @command
@@ -8098,7 +8117,7 @@ the tree.
 @end ftable
 
 
-@node    Hook Reference
+@node    Hook Reference, Special Topics, Command Reference, Top
 @chapter Hook Reference
 
 Monotone's behavior can be customized and extended by writing
@@ -8152,7 +8171,7 @@ functions exposing functionality not available with standard Lua.
 @end menu
 
 @page
-@node   Hooks
+@node   Hooks, Additional Lua Functions, Hook Reference, Hook Reference
 @section Hooks
 
 This section documents the existing hook functions and their default
@@ -9050,7 +9069,7 @@ rejects empty log messages.
 @end ftable
 
 @page
-@node   Additional Lua Functions
+@node   Additional Lua Functions,  , Hooks, Hook Reference
 @section Additional Lua Functions
 
 This section documents the additional Lua functions made available to
@@ -9261,7 +9280,7 @@ The exit code is meaningful only if the result value is 0.
 @end ftable
 
 
-@node    Special Topics
+@node    Special Topics, Default hooks, Hook Reference, Top
 @chapter Special Topics
 
 This chapter describes some ``special'' issues which are not directly
@@ -9279,7 +9298,7 @@ specifics of how it works. Most users can ignore these sections.
 @end menu
 
 @page
-@node    Internationalization
+@node    Internationalization, Hash Integrity, Special Topics, Special Topics
 @section Internationalization
 
 Monotone initially dealt with only ASCII characters, in file path
@@ -9509,7 +9528,7 @@ ASCII codes 0x0D (CR), 0x0A (LF), 0x09 (HT), and 0x20 (SP).
 @end itemize
 
 @page
-@node    Hash Integrity
+@node    Hash Integrity, Rebuilding ancestry, Internationalization, Special Topics
 @section Hash Integrity
 
 Some proponents of a competing, proprietary version control system
@@ -9656,7 +9675,7 @@ software, and runs atop @code{botan}, so it is both legal and
 relatively simple to change it to use some other algorithm.
 
 @page
-@node    Rebuilding ancestry
+@node    Rebuilding ancestry, Mark-Merge, Hash Integrity, Special Topics
 @section Rebuilding ancestry
 
 As described in @ref{Historical records}, monotone revisions contain the
@@ -9787,7 +9806,7 @@ Fortunately, this process should be extremely rare; with luck, it will
 never happen at all.  But this way we're prepared.
 
 @page
-@node    Mark-Merge
+@node    Mark-Merge, Regexps, Rebuilding ancestry, Special Topics
 @section Mark-Merge
 
 Monotone makes use of the Mark-Merge (also known as *-merge) algorithm.
@@ -10604,7 +10623,7 @@ Tim
 
 Replies and further discussion concerning this email can be found in the  @uref{http://thread.gmane.org/gmane.comp.version-control.revctrl/92, monotone-devel archives}.
 
-@node    Regexps
+@node    Regexps,  , Mark-Merge, Special Topics
 @section Regular Expression Syntax
 
 Monotone expects user-provided regular expressions in
@@ -10623,7 +10642,7 @@ expected by the Perl-Compatible Regular Expression library (PCRE).
 @include pcre/pcresyntax.texi
 @include pcre/pcrepattern.texi
 
-@node Default hooks
+@node Default hooks, General Index, Special Topics, Top
 @appendix Default hooks
 
 This section contains the entire source code of the standard hook file,
@@ -10633,7 +10652,7 @@ default values for all hooks.
 
 @verbatiminclude std_hooks.lua
 
-@node General Index
+@node General Index,  , Default hooks, Top
 @unnumbered General Index
 
 @printindex cp

@@ -1,0 +1,24 @@
+    path "source"
+new_type "directory"
+ fs_type "directory"
+  status "added" "known"
+
+   path "source/ignored_1"
+fs_type "file"
+ status "ignored"
+
+   path "source/ignored_dir"
+fs_type "directory"
+ status "ignored"
+
+    path "source/source_1"
+new_type "file"
+ fs_type "file"
+  status "added" "known"
+ changes "content"
+
+    path "source/source_2"
+new_type "file"
+ fs_type "file"
+  status "added" "known"
+ changes "content"
