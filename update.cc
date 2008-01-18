@@ -107,30 +107,6 @@ acceptable_descendent(branch_name const & branch,
     }
 }
 
-namespace
-{
-  struct suspended_in_branch : public is_failure
-  {
-    database & db;
-    base64<cert_value > const & branch_encoded;
-    suspended_in_branch(database & db,
-                  base64<cert_value> const & branch_encoded)
-      : db(db), branch_encoded(branch_encoded)
-    {}
-    virtual bool operator()(revision_id const & rid)
-    {
-      vector< revision<cert> > certs;
-      db.get_revision_certs(rid,
-                            cert_name(suspend_cert_name),
-                            branch_encoded,
-                            certs);
-      erase_bogus_certs(certs, db);
-      return !certs.empty();
-    }
-  };
-}
-
-
 static void
 calculate_update_set(revision_id const & base,
                      branch_name const & branch,
@@ -180,30 +156,15 @@ calculate_update_set(revision_id const & base,
   if (db.get_opt_ignore_suspend_certs())
     return;
   
-  bool have_non_suspended_rev = false;
-  
-  for (set<revision_id>::const_iterator it = candidates.begin();
-       it != candidates.end(); it++)
-    {
-      if (!project.revision_is_suspended_in_branch(*it, branch))
-        {
-          have_non_suspended_rev = true;
-          break;
-        }
-    }
-  if (have_non_suspended_rev)
-    {
-      // remove all suspended revisions
-      base64<cert_value> branch_encoded;
-      encode_base64(cert_value(branch()), branch_encoded);
-      suspended_in_branch s(db, branch_encoded);
-      for(std::set<revision_id>::iterator it = candidates.begin();
-          it != candidates.end(); it++)
-        if (s(*it))
-          candidates.erase(*it);
-    }
-}
+   set<revision_id> active_candidates;
+   for (set<revision_id>::const_iterator i = candidates.begin();
+        i != candidates.end(); i++)
+     if (!project.revision_is_suspended_in_branch(*i, branch))
+       safe_insert(active_candidates, *i);
 
+   if (!active_candidates.empty())
+     candidates = active_candidates;
+}
 
 void pick_update_candidates(revision_id const & base_ident,
                             database & db, project_t & project,

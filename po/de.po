@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-12-27 13:07+0100\n"
+"POT-Creation-Date: 2008-01-18 10:32+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -58,7 +58,7 @@ msgstr "ungültiges Verzeichnis ''"
 msgid "monotone bookkeeping directory '%s' already exists in '%s'"
 msgstr "Das monotone-Systemverzeichnis '%s' existiert bereits in '%s'"
 
-#: asciik.cc:369 automate.cc:471
+#: asciik.cc:369 automate.cc:472
 msgid "SELECTOR"
 msgstr "SELEKTOR"
 
@@ -66,13 +66,13 @@ msgstr "SELEKTOR"
 msgid "Prints an ASCII representation of the revisions' graph"
 msgstr "Gibt eine ASCII-Repräsentation des Graphen aus"
 
-#: asciik.cc:375 automate.cc:73 automate.cc:107 automate.cc:157
-#: automate.cc:271 automate.cc:365 automate.cc:393 automate.cc:477
-#: automate.cc:1003 automate.cc:1145 automate.cc:1191 automate.cc:1221
-#: automate.cc:1251 automate.cc:1281 automate.cc:1319 automate.cc:1437
-#: automate.cc:1532 automate.cc:1591 automate.cc:1644 automate.cc:1706
-#: automate.cc:1756 automate.cc:1809 automate.cc:1866 automate.cc:1899
-#: automate.cc:1968 automate.cc:1996 cmd_files.cc:233 cmd_files.cc:328
+#: asciik.cc:375 automate.cc:74 automate.cc:108 automate.cc:158
+#: automate.cc:272 automate.cc:366 automate.cc:394 automate.cc:478
+#: automate.cc:1040 automate.cc:1182 automate.cc:1228 automate.cc:1258
+#: automate.cc:1288 automate.cc:1318 automate.cc:1356 automate.cc:1474
+#: automate.cc:1569 automate.cc:1628 automate.cc:1681 automate.cc:1743
+#: automate.cc:1793 automate.cc:1846 automate.cc:1903 automate.cc:1936
+#: automate.cc:2005 automate.cc:2033 cmd_files.cc:233 cmd_files.cc:328
 #: cmd_files.cc:354 cmd_list.cc:667 cmd_ws_commit.cc:641 cmd_ws_commit.cc:688
 #: cmd_ws_commit.cc:738 cmd_ws_commit.cc:790 cmd_ws_commit.cc:908
 #: cmd_ws_commit.cc:952
@@ -80,61 +80,61 @@ msgstr "Gibt eine ASCII-Repräsentation des Graphen aus"
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Parametern"
 
-#: automate.cc:67
+#: automate.cc:68
 msgid "[BRANCH]"
 msgstr "[ZWEIG]"
 
-#: automate.cc:68
+#: automate.cc:69
 msgid "Prints the heads of the given branch"
 msgstr "Gibt die Köpfe des übergebenen Zweigs aus"
 
-#: automate.cc:101 automate.cc:151 automate.cc:1312
+#: automate.cc:102 automate.cc:152 automate.cc:1349
 msgid "REV1 [REV2 [REV3 [...]]]"
 msgstr "REV1 [REV2 [REV3 [...]]]"
 
-#: automate.cc:102
+#: automate.cc:103
 msgid "Prints the ancestors of the given revisions"
 msgstr "Gibt die Vorfahren der übergebenen Revisionen aus"
 
-#: automate.cc:114 automate.cc:164 automate.cc:211 automate.cc:238
-#: automate.cc:277 automate.cc:281 automate.cc:368 automate.cc:396
-#: automate.cc:1326 cmd_list.cc:674 revision.cc:1793
+#: automate.cc:115 automate.cc:165 automate.cc:212 automate.cc:239
+#: automate.cc:278 automate.cc:282 automate.cc:369 automate.cc:397
+#: automate.cc:1363 cmd_list.cc:674 revision.cc:1793
 #, c-format
 msgid "No such revision %s"
 msgstr "Revision %s nicht gefunden"
 
-#: automate.cc:152
+#: automate.cc:153
 msgid "Prints the descendents of the given revisions"
 msgstr "Gibt die Nachfahren der übergebenen Revisionen aus"
 
-#: automate.cc:202 automate.cc:229
+#: automate.cc:203 automate.cc:230
 msgid "[REV1 [REV2 [REV3 [...]]]]"
 msgstr "[REV1 [REV2 [REV3 [...]]]]"
 
-#: automate.cc:203
+#: automate.cc:204
 msgid "Erases the ancestors in a list of revisions"
 msgstr "Entfernt die Vorfahren von einer Liste von Revisionen"
 
-#: automate.cc:230
+#: automate.cc:231
 msgid "Topologically sorts a list of revisions"
 msgstr "Sortiert eine Liste von Revisionen topologisch"
 
-#: automate.cc:264
+#: automate.cc:265
 msgid "NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"
 msgstr "NEUE_REV [ALTE_REV1 [ALTE_REV2 [...]]]"
 
-#: automate.cc:265
+#: automate.cc:266
 msgid "Lists the ancestors of the first revision given, not in the others"
 msgstr ""
 "Gibt die Vorfahren der ersten Revision aus, die nicht ebenfalls Vorfahren "
 "der anderen übergebenen Revisionen sind"
 
-#: automate.cc:308
+#: automate.cc:309
 msgid "Lists the leaves of the revision graph"
 msgstr "Gibt die Blätter des Revisionsgraphen aus"
 
-#: automate.cc:313 automate.cc:337 automate.cc:431 automate.cc:1049
-#: automate.cc:1076 automate.cc:1385 cmd_automate.cc:82 cmd_automate.cc:338
+#: automate.cc:314 automate.cc:338 automate.cc:432 automate.cc:1086
+#: automate.cc:1113 automate.cc:1422 cmd_automate.cc:85 cmd_automate.cc:341
 #: cmd_db.cc:38 cmd_db.cc:49 cmd_db.cc:60 cmd_db.cc:73 cmd_db.cc:86
 #: cmd_db.cc:99 cmd_db.cc:214 cmd_db.cc:225 cmd_db.cc:236 cmd_db.cc:247
 #: cmd_list.cc:572
@@ -142,43 +142,43 @@ msgstr "Gibt die Blätter des Revisionsgraphen aus"
 msgid "no arguments needed"
 msgstr "keine Parameter benötigt"
 
-#: automate.cc:332
+#: automate.cc:333
 msgid "Lists the roots of the revision graph"
 msgstr "Gibt die Wurzeln des Revisionsgraphen aus"
 
-#: automate.cc:359 automate.cc:387 cmd_list.cc:661 revision.cc:1785
+#: automate.cc:360 automate.cc:388 cmd_list.cc:661 revision.cc:1785
 msgid "REV"
 msgstr "REV"
 
-#: automate.cc:360
+#: automate.cc:361
 msgid "Prints the parents of a revision"
 msgstr "Gibt die Eltern einer Revision aus"
 
-#: automate.cc:388
+#: automate.cc:389
 msgid "Prints the children of a revision"
 msgstr "Gibt die Kinder einer Revision aus"
 
-#: automate.cc:426
+#: automate.cc:427
 msgid "Prints the complete ancestry graph"
 msgstr "Gibt den kompletten Revisionsgraphen aus"
 
-#: automate.cc:472
+#: automate.cc:473
 msgid "Lists the revisions that match a selector"
 msgstr "Gibt die Revisionen aus, die auf einem Selektor passen"
 
-#: automate.cc:851 cmd_diff_log.cc:481 cmd_ws_commit.cc:146
+#: automate.cc:873 cmd_diff_log.cc:481 cmd_ws_commit.cc:146
 #: cmd_ws_commit.cc:376 cmd_ws_commit.cc:411 cmd_ws_commit.cc:496
 #: cmd_ws_commit.cc:990
 msgid "[PATH]..."
 msgstr "[PFAD]..."
 
-#: automate.cc:852
+#: automate.cc:874
 msgid "Prints a summary of files found in the workspace"
 msgstr ""
 "Gibt eine Zusammenfassung der Dateien, die im Arbeitsbereich gefunden "
 "wurden, aus"
 
-#: automate.cc:864 automate.cc:1056 cmd_files.cc:303 cmd_files.cc:364
+#: automate.cc:890 automate.cc:1093 cmd_files.cc:303 cmd_files.cc:364
 #: cmd_merging.cc:160 cmd_merging.cc:678 cmd_ws_commit.cc:163
 #: cmd_ws_commit.cc:806
 #, c-format
@@ -187,42 +187,42 @@ msgstr ""
 "Dieses Kommando kann nur in einem Arbeitsbereich mit einem Vorfahren genutzt "
 "werden."
 
-#: automate.cc:997 automate.cc:1139 cmd_merging.cc:1055
+#: automate.cc:1034 automate.cc:1176 cmd_merging.cc:1055
 msgid "[REVID]"
 msgstr "[REVISIONS_ID]"
 
-#: automate.cc:998
+#: automate.cc:1035
 msgid "Shows change information for a revision"
 msgstr "Zeigt die Änderungen, die in einer Revision vorgenommen wurden"
 
-#: automate.cc:1028 automate.cc:1163 automate.cc:1652 automate.cc:1713
-#: automate.cc:1718
+#: automate.cc:1065 automate.cc:1200 automate.cc:1689 automate.cc:1750
+#: automate.cc:1755
 #, c-format
 msgid "no revision %s found in database"
 msgstr "Revision %s nicht in Datenbank gefunden"
 
-#: automate.cc:1044
+#: automate.cc:1081
 msgid "Shows the revision on which the workspace is based"
 msgstr "Gibt die Revision zurück, auf der der Arbeitsbereich basiert"
 
-#: automate.cc:1071
+#: automate.cc:1108
 msgid "Shows the revision of the current workspace"
 msgstr "Gibt die Revision des derzeitigen Arbeitsbereiches zurück"
 
-#: automate.cc:1140
+#: automate.cc:1177
 msgid "Shows the manifest associated with a revision"
 msgstr "Zeigt das Manifest, welches einer Revision zugeordnet ist"
 
-#: automate.cc:1185 automate.cc:1214
+#: automate.cc:1222 automate.cc:1251
 msgid "REVID"
 msgstr "REVISIONS_ID"
 
-#: automate.cc:1186
+#: automate.cc:1223
 msgid "Prints the revision data in packet format"
 msgstr "Gibt die Revisionsdaten im Paketformat aus"
 
-#: automate.cc:1199 automate.cc:1229 automate.cc:1290 automate.cc:1292
-#: automate.cc:1873 cmd_db.cc:127 cmd_diff_log.cc:401 cmd_diff_log.cc:431
+#: automate.cc:1236 automate.cc:1266 automate.cc:1327 automate.cc:1329
+#: automate.cc:1910 cmd_db.cc:127 cmd_diff_log.cc:401 cmd_diff_log.cc:431
 #: cmd_diff_log.cc:433 cmd_files.cc:175 cmd_files.cc:265 cmd_merging.cc:194
 #: cmd_merging.cc:860 cmd_merging.cc:875 cmd_merging.cc:878 cmd_netsync.cc:359
 #: cmd_ws_commit.cc:565 cmd_ws_commit.cc:1282 commands.cc:908
@@ -230,171 +230,171 @@ msgstr "Gibt die Revisionsdaten im Paketformat aus"
 msgid "no such revision '%s'"
 msgstr "Revision nicht gefunden: '%s'"
 
-#: automate.cc:1215
+#: automate.cc:1252
 msgid "Prints the certs associated with a revision in packet format"
 msgstr ""
 "Gibt die Zertifikate, die einer Revision zugeordnet sind, im Paketformat aus"
 
-#: automate.cc:1245 cmd_files.cc:322
+#: automate.cc:1282 cmd_files.cc:322
 msgid "FILEID"
 msgstr "DATEI_ID"
 
-#: automate.cc:1246
+#: automate.cc:1283
 msgid "Prints the file data in packet format"
 msgstr "Gibt die Dateidaten im Paketformat aus"
 
-#: automate.cc:1259
+#: automate.cc:1296
 #, c-format
 msgid "no such file '%s'"
 msgstr "Datei nicht gefunden: '%s'"
 
-#: automate.cc:1275
+#: automate.cc:1312
 msgid "OLD_FILE NEW_FILE"
 msgstr "ALTE_DATEI NEUE_DATEI"
 
-#: automate.cc:1276
+#: automate.cc:1313
 msgid "Prints the file delta in packet format"
 msgstr "Gibt ein Datei-Delta im Paketformat aus"
 
-#: automate.cc:1313
+#: automate.cc:1350
 msgid "Prints revisions that are common ancestors of a list of revisions"
 msgstr ""
 "Gibt die Revisionen aus, die gemeinsame Vorfahren einer Liste von Revisionen "
 "sind"
 
-#: automate.cc:1380
+#: automate.cc:1417
 msgid "Prints all branch certs in the revision graph"
 msgstr "Gibt alle Zweigzertifikate des Revisionsgraphen aus"
 
-#: automate.cc:1431
+#: automate.cc:1468
 msgid "[BRANCH_PATTERN]"
 msgstr "[ZWEIG_MUSTER]"
 
-#: automate.cc:1432
+#: automate.cc:1469
 msgid "Prints all tags attached to a set of branches"
 msgstr "Gibt alle Marken zurück, die einer Menge von Zweigen zugeordnet sind"
 
-#: automate.cc:1526
+#: automate.cc:1563
 msgid "KEYID PASSPHRASE"
 msgstr "SCHLÜSSEL_ID PASSWORT"
 
-#: automate.cc:1527
+#: automate.cc:1564
 msgid "Generates a key"
 msgstr "Erzeugt einen Schlüssel"
 
-#: automate.cc:1547 cmd_key_cert.cc:52
+#: automate.cc:1584 cmd_key_cert.cc:52
 #, c-format
 msgid "key '%s' already exists"
 msgstr "Schlüssel '%s' existiert bereits"
 
-#: automate.cc:1585
+#: automate.cc:1622
 msgid "OPTION"
 msgstr "OPTION"
 
-#: automate.cc:1586
+#: automate.cc:1623
 msgid "Shows the value of an option"
 msgstr "Zeigt den Wert einer Option im Arbeitsbereich"
 
-#: automate.cc:1614
+#: automate.cc:1651
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: automate.cc:1637
+#: automate.cc:1674
 msgid "REV FILE"
 msgstr "REVISION DATEI"
 
-#: automate.cc:1638
+#: automate.cc:1675
 msgid ""
 "Lists the revisions that changed the content relative to another revision"
 msgstr ""
 "Gibt alle Revisionen aus, die den Inhalt von DATEI relativ zu REVISION "
 "geändert haben"
 
-#: automate.cc:1657 automate.cc:1723
+#: automate.cc:1694 automate.cc:1760
 #, c-format
 msgid "file %s is unknown for revision %s"
 msgstr "Datei %s existiert nicht in der Revision %s"
 
-#: automate.cc:1699
+#: automate.cc:1736
 msgid "REV1 FILE REV2"
 msgstr "REV1 DATEI REV2"
 
-#: automate.cc:1700
+#: automate.cc:1737
 msgid ""
 "Prints the name of a file in a target revision relative to a given revision"
 msgstr ""
 "Gibt den Namen von DATEI aus REV1 zurück, so wie sie in der REV2 benannt ist"
 
-#: automate.cc:1750
+#: automate.cc:1787
 msgid "[FILEID] CONTENTS"
 msgstr "[DATEIID] INHALT"
 
-#: automate.cc:1751
+#: automate.cc:1788
 msgid "Stores a file in the database"
 msgstr "Speichert eine Datei in der Datenbank"
 
-#: automate.cc:1773 cmd_files.cc:253
+#: automate.cc:1810 cmd_files.cc:253
 #, c-format
 msgid "no file version %s found in database"
 msgstr "Dateiversion %s nicht in Datenbank gefunden"
 
-#: automate.cc:1803
+#: automate.cc:1840
 msgid "REVISION-DATA"
 msgstr "REVISIONS-DATEN"
 
-#: automate.cc:1804
+#: automate.cc:1841
 msgid "Stores a revision into the database"
 msgstr "Speichert eine Revision in der Datenbank"
 
-#: automate.cc:1843
+#: automate.cc:1880
 #, c-format
 msgid "missing prerequisite for revision %s"
 msgstr "fehlende Voraussetzung für Revision %s"
 
-#: automate.cc:1860
+#: automate.cc:1897
 msgid "REVISION-ID NAME VALUE"
 msgstr "REVISIONS-ID NAME WERT"
 
-#: automate.cc:1861
+#: automate.cc:1898
 msgid "Adds a revision certificate"
 msgstr "Fügt ein Zertifikat zu einer Revision hinzu"
 
-#: automate.cc:1893
+#: automate.cc:1930
 msgid "[DOMAIN]"
 msgstr "[DOMÄNE]"
 
-#: automate.cc:1894
+#: automate.cc:1931
 msgid "Retrieve database variables"
 msgstr "Gibt Datenbankvariablen zurück"
 
-#: automate.cc:1941
+#: automate.cc:1978
 #, c-format
 msgid "No variables found or invalid domain specified"
 msgstr "Keine Variablen gefunden oder ungültige Domäne angegeben"
 
-#: automate.cc:1962 cmd_db.cc:277
+#: automate.cc:1999 cmd_db.cc:277
 msgid "DOMAIN NAME VALUE"
 msgstr "DOMÄNE NAME WERT"
 
-#: automate.cc:1963 cmd_db.cc:278
+#: automate.cc:2000 cmd_db.cc:278
 msgid "Sets a database variable"
 msgstr "Setzt eine Datenbankvariable"
 
-#: automate.cc:1990
+#: automate.cc:2027
 msgid "DOMAIN [NAME]"
 msgstr "DOMÄNE [NAME]"
 
-#: automate.cc:1991
+#: automate.cc:2028
 msgid "Drops a database variable"
 msgstr "Entfernt eine Datenbankvariable"
 
-#: automate.cc:2005 cmd_db.cc:311
+#: automate.cc:2042 cmd_db.cc:311
 #, c-format
 msgid "no var with name %s in domain %s"
 msgstr "keine Variable mit dem Namen %s in der Domäne %s"
 
-#: automate.cc:2025
+#: automate.cc:2062
 #, c-format
 msgid "no variables found in domain %s"
 msgstr "keine Variablen in der Domäne %s gefunden"
@@ -511,51 +511,51 @@ msgstr "alle übergebenen Parameter waren monotone-Systempfade; breche ab"
 msgid "Interface for scripted execution"
 msgstr "Schnittstelle für automatische Ausführung"
 
-#: cmd_automate.cc:77
+#: cmd_automate.cc:80
 msgid "Prints the automation interface's version"
 msgstr "Gibt die Version der 'automate' Schnittstelle aus"
 
-#: cmd_automate.cc:154
+#: cmd_automate.cc:157
 #, c-format
 msgid "Bad input to automate stdio: expected ':' after string size"
 msgstr ""
 "Falsche Eingabe für 'automate stdio': erwartete ':' nach Zeichenketten-Länge."
 
-#: cmd_automate.cc:173
+#: cmd_automate.cc:176
 #, c-format
 msgid "Bad input to automate stdio: unexpected EOF"
 msgstr "Falsche Eingabe für 'automate stdio': unerwartetes EOF."
 
-#: cmd_automate.cc:201
+#: cmd_automate.cc:204
 #, c-format
 msgid "Bad input to automate stdio: unknown start token '%c'"
 msgstr "Falsche Eingabe für 'automate stdio': unbekanntes Startzeichen '%c'."
 
-#: cmd_automate.cc:223
+#: cmd_automate.cc:226
 #, c-format
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Falsche Eingabe für 'automate stdio': erwartete Zeichen '%c'."
 
-#: cmd_automate.cc:333
+#: cmd_automate.cc:336
 msgid "Automates several commands in one run"
 msgstr "Ermöglicht die Ausführung mehrerer Kommandos in einem Durchgang"
 
-#: cmd_automate.cc:353
+#: cmd_automate.cc:356
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Falsche Eingabe für 'automate stdio': Kommandoname fehlt."
 
-#: cmd_automate.cc:378 cmd_automate.cc:461
+#: cmd_automate.cc:381 cmd_automate.cc:464
 #, c-format
 msgid "no completions for this command"
 msgstr "keine Vervollständigungen für dieses Kommando"
 
-#: cmd_automate.cc:382 cmd_automate.cc:465
+#: cmd_automate.cc:385 cmd_automate.cc:468
 #, c-format
 msgid "multiple completions possible for this command"
 msgstr "mehrere Vervollständigungen für dieses Kommando möglich"
 
-#: cmd_automate.cc:426
+#: cmd_automate.cc:429
 #, c-format
 msgid ""
 "It is illegal to call the mtn_automate() lua extension,\n"
@@ -565,13 +565,13 @@ msgstr ""
 "in einer Funktion aufzurufen, die nicht in 'register_command()'\n"
 "definiert ist."
 
-#: cmd_automate.cc:436
+#: cmd_automate.cc:439
 #, c-format
 msgid "Bad input to mtn_automate() lua extension: command name is missing"
 msgstr ""
 "Falsche Eingabe für 'mtn_automate()'-Lua-Erweiterung: Kommandoname fehlt."
 
-#: cmd_automate.cc:454
+#: cmd_automate.cc:457
 #, c-format
 msgid "no command found"
 msgstr "kein Kommando gefunden"
@@ -3196,22 +3196,22 @@ msgstr "Datum zu früh (monotone geht lediglich bis 1970-01-01T00:00:00 zurück)
 msgid "day out of range for its month in '%s'"
 msgstr "Tag für seinen Monat außerhalb des Bereichs in '%s'"
 
-#: diff_patch.cc:687
+#: diff_patch.cc:688
 #, c-format
 msgid "file '%s' does not exist in workspace"
 msgstr "Datei '%s' existiert nicht im Arbeitsbereich"
 
-#: diff_patch.cc:688
+#: diff_patch.cc:689
 #, c-format
 msgid "'%s' in workspace is a directory, not a file"
 msgstr "'%s' im Arbeitsbereich ist ein Verzeichnis, keine Datei"
 
-#: diff_patch.cc:692
+#: diff_patch.cc:693
 #, c-format
 msgid "file %s in workspace has id %s, wanted %s"
 msgstr "Datei %s im Arbeitsbereich hat die ID %s, erwartete %s"
 
-#: diff_patch.cc:881
+#: diff_patch.cc:882
 #, c-format
 msgid ""
 "help required for 3-way merge\n"
@@ -3509,22 +3509,22 @@ msgstr "make_signature: Signatur ist ungültig"
 msgid "passphrase for '%s' is incorrect"
 msgstr "Passwort für '%s' ist nicht korrekt"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489 lua_hooks.cc:1035 lua_hooks.cc:1058
+#: lua.cc:471 lua.cc:482 lua.cc:494 lua_hooks.cc:1035 lua_hooks.cc:1058
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 
-#: lua.cc:572
+#: lua.cc:577
 #, c-format
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:574 rcs_import.cc:1229 work.cc:1500
+#: lua.cc:579 rcs_import.cc:1229 work.cc:1500
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: lua.cc:596 lua_hooks.cc:181
+#: lua.cc:601 lua_hooks.cc:181
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
@@ -4460,6 +4460,18 @@ msgstr "zeige Versionsinformationen an und beende dann das Programm"
 msgid "insert command line arguments taken from the given file"
 msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
 
+#: options_list.hh:538
+msgid "don't output ignored files"
+msgstr "gib keine ignorierten Dateien aus"
+
+#: options_list.hh:546
+msgid "don't output unknown files"
+msgstr "gib keine unbekannten Dateien aus"
+
+#: options_list.hh:554
+msgid "don't output unchanged files"
+msgstr "gib keine unveränderten Dateien aus"
+
 #: packet.cc:121
 #, c-format
 msgid "malformed packet: invalid identifier"
@@ -4759,26 +4771,26 @@ msgstr ""
 "Eine neuere Version von monotone wird benötigt, um die Operation vollständig "
 "durchzuführen."
 
-#: roster.cc:2312
+#: roster.cc:2318
 #, c-format
 msgid "restriction includes deletion of '%s' but excludes deletion of '%s'"
 msgstr ""
 "Die Beschränkung schließt das Löschen von '%s' ein, jedoch das Löschen von '%"
 "s' aus."
 
-#: roster.cc:2323
+#: roster.cc:2329
 #, c-format
 msgid "restriction excludes addition of '%s' but includes addition of '%s'"
 msgstr ""
 "Beschränkung schließt das Hinzufügen von '%s' ein, jedoch das Hinzufügen von "
 "'%s' aus."
 
-#: roster.cc:2349
+#: roster.cc:2355
 #, c-format
 msgid "restriction excludes addition of root directory"
 msgstr "Beschränkung schließt das Hinzufügen des Wurzelverzeichnisses aus"
 
-#: roster.cc:2353
+#: roster.cc:2359
 #, c-format
 msgid "invalid restriction"
 msgstr "ungültige Beschränkung"

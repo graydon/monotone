@@ -2979,7 +2979,7 @@ void database::complete(selector_type ty,
                 }
               else
                 {
-                  __app->get_project().get_branch_list(globish(i->second), branch_names);
+                  __app->get_project().get_branch_list(globish(i->second), branch_names, true);
                 }
 
                 L(FL("found %d matching branches") % branch_names.size());
