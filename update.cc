@@ -54,10 +54,11 @@ using boost::lexical_cast;
 static void
 get_test_results_for_revision(revision_id const & id,
                               map<rsa_keypair_id, bool> & results,
-                              database & db)
+                              database & db, project_t & project)
 {
   vector< revision<cert> > certs;
-  db.get_project().get_revision_certs_by_name(id, cert_name(testresult_cert_name), certs);
+  project.get_revision_certs_by_name(id, cert_name(testresult_cert_name),
+                                     certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -80,12 +81,12 @@ acceptable_descendent(branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target,
-                      database & db)
+                      database & db, project_t & project)
 {
   L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
-  if (!db.get_project().revision_is_in_branch(target, branch))
+  if (!project.revision_is_in_branch(target, branch))
     {
       L(FL("%s not in branch %s") % target % branch);
       return false;
@@ -93,7 +94,7 @@ acceptable_descendent(branch_name const & branch,
 
   // step 2: check the testresults
   map<rsa_keypair_id, bool> target_results;
-  get_test_results_for_revision(target, target_results, db);
+  get_test_results_for_revision(target, target_results, db, project);
   if (db.hook_accept_testresult_change(base_results, target_results))
     {
       L(FL("%s is acceptable update candidate") % target);
@@ -133,17 +134,17 @@ namespace
 static void
 calculate_update_set(revision_id const & base,
                      branch_name const & branch,
-                     database & db,
+                     database & db, project_t & project,
                      set<revision_id> & candidates)
 {
   map<rsa_keypair_id, bool> base_results;
-  get_test_results_for_revision(base, base_results, db);
+  get_test_results_for_revision(base, base_results, db, project);
 
   candidates.clear();
   // we possibly insert base into the candidate set as well; returning a set
   // containing just it means that we are up to date; returning an empty set
   // means that there is no acceptable update.
-  if (acceptable_descendent(branch, base, base_results, base, db))
+  if (acceptable_descendent(branch, base, base_results, base, db, project))
     candidates.insert(base);
 
   // keep a visited set to avoid repeating work
@@ -165,7 +166,8 @@ calculate_update_set(revision_id const & base,
       visited.insert(target);
 
       // then, possibly insert this revision as a candidate
-      if (acceptable_descendent(branch, base, base_results, target, db))
+      if (acceptable_descendent(branch, base, base_results,
+                                target, db, project))
         candidates.insert(target);
 
       // and traverse its children as well
@@ -174,24 +176,29 @@ calculate_update_set(revision_id const & base,
     }
 
   erase_ancestors(candidates, db);
+
+  if (db.get_opt_ignore_suspend_certs())
+    return;
   
   bool have_non_suspended_rev = false;
   
-  for (set<revision_id>::const_iterator it = candidates.begin(); it != candidates.end(); it++)
+  for (set<revision_id>::const_iterator it = candidates.begin();
+       it != candidates.end(); it++)
     {
-      if (!db.get_project().revision_is_suspended_in_branch(*it, branch))
+      if (!project.revision_is_suspended_in_branch(*it, branch))
         {
           have_non_suspended_rev = true;
           break;
         }
     }
-  if (!db.get_opt_ignore_suspend_certs() && have_non_suspended_rev)
+  if (have_non_suspended_rev)
     {
       // remove all suspended revisions
       base64<cert_value> branch_encoded;
       encode_base64(cert_value(branch()), branch_encoded);
       suspended_in_branch s(db, branch_encoded);
-      for(std::set<revision_id>::iterator it = candidates.begin(); it != candidates.end(); it++)
+      for(std::set<revision_id>::iterator it = candidates.begin();
+          it != candidates.end(); it++)
         if (s(*it))
           candidates.erase(*it);
     }
@@ -199,7 +206,7 @@ calculate_update_set(revision_id const & base,
 
 
 void pick_update_candidates(revision_id const & base_ident,
-                            database & db,
+                            database & db, project_t & project,
                             set<revision_id> & candidates)
 {
   branch_name const & branchname = db.get_opt_branchname();
@@ -208,7 +215,7 @@ void pick_update_candidates(revision_id const & base_ident,
   I(!null_id(base_ident));
 
   calculate_update_set(base_ident, branchname,
-                       db, candidates);
+                       db, project, candidates);
 }
 
 

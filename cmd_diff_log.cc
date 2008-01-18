@@ -378,7 +378,7 @@ prepare_diff(cset & included,
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -396,7 +396,8 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
 
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), r_old_id);
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
 
@@ -406,7 +407,7 @@ prepare_diff(cset & included,
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -424,8 +425,10 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app.db, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       N(app.db.revision_exists(r_old_id),
         F("no such revision '%s'") % r_old_id);
@@ -438,7 +441,7 @@ prepare_diff(cset & included,
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -689,7 +692,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
           mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, parents, new_roster, app);
+                                  app.opts.depth, parents, new_roster,
+                                  app.work);
         }
       else
         {
@@ -700,7 +704,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
           mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, roster, app);
+                                  app.opts.depth, roster, app.work);
         }
     }
 

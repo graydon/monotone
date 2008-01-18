@@ -58,7 +58,7 @@ class annotate_lineage_mapping;
 class annotate_context
 {
 public:
-  annotate_context(file_id fid, database & db);
+  annotate_context(file_id fid, database & db, project_t & project);
 
   shared_ptr<annotate_lineage_mapping> initial_lineage() const;
 
@@ -75,7 +75,7 @@ public:
   /// return true if we have no more unassigned lines
   bool is_complete() const;
 
-  void dump(database & db, bool just_revs) const;
+  void dump(bool just_revs) const;
 
   string get_line(int line_index) const
   {
@@ -83,8 +83,13 @@ public:
   }
 
 private:
-  void build_revisions_to_annotations(database & db,
-                                      map<revision_id, string> & r2a) const;
+  void build_revisions_to_annotations(map<revision_id, string> & r2a) const;
+
+  database & db;
+  project_t & project;
+
+  /// keep a count so we can tell quickly whether we can terminate
+  size_t annotated_lines_completed;
 
   vector<string> file_lines;
   vector<revision_id> annotations;
@@ -92,9 +97,6 @@ private:
   /// equivalent_lines[n] = m means that line n should be blamed to the same
   /// revision as line m
   map<int, int> equivalent_lines;
-
-  /// keep a count so we can tell quickly whether we can terminate
-  size_t annotated_lines_completed;
 
   // elements of the set are indexes into the array of lines in the
   // UDOI lineages add entries here when they notice that they copied
@@ -205,8 +207,9 @@ typedef multi_index_container<
   > work_units;
 
 
-annotate_context::annotate_context(file_id fid, database & db)
-  : annotated_lines_completed(0)
+annotate_context::annotate_context(file_id fid, database & db,
+                                   project_t & project)
+  : db(db), project(project), annotated_lines_completed(0)
 {
   // initialize file_lines
   file_data fpacked;
@@ -372,8 +375,7 @@ cert_string_value(vector< revision<cert> > const & certs,
 
 void
 annotate_context::build_revisions_to_annotations
-(database & db,
- map<revision_id, string> & revs_to_notations) const
+(map<revision_id, string> & revs_to_notations) const
 {
   I(annotations.size() == file_lines.size());
 
@@ -392,7 +394,7 @@ annotate_context::build_revisions_to_annotations
        i != seen.end(); i++)
     {
       vector< revision<cert> > certs;
-      db.get_project().get_revision_certs(*i, certs);
+      project.get_revision_certs(*i, certs);
       erase_bogus_certs(certs, db);
 
       string author(cert_string_value(certs, author_cert_name,
@@ -425,7 +427,7 @@ annotate_context::build_revisions_to_annotations
 }
 
 void
-annotate_context::dump(database & db, bool just_revs) const
+annotate_context::dump(bool just_revs) const
 {
   revision_id nullid;
   I(annotations.size() == file_lines.size());
@@ -434,7 +436,7 @@ annotate_context::dump(database & db, bool just_revs) const
   string empty_note;
   if (!just_revs)
     {
-      build_revisions_to_annotations(db, revs_to_notations);
+      build_revisions_to_annotations(revs_to_notations);
       size_t max_note_length = revs_to_notations.begin()->second.size();
       empty_note.insert(string::size_type(0), max_note_length - 2, ' ');
     }
@@ -816,13 +818,14 @@ do_annotate_node(annotate_node_work const & work_unit,
 }
 
 void
-do_annotate (database & db, file_t file_node, revision_id rid, bool just_revs)
+do_annotate (database & db, project_t & project, file_t file_node,
+             revision_id rid, bool just_revs)
 {
   L(FL("annotating file %s with content %s in revision %s")
     % file_node->self % file_node->content % rid);
 
   shared_ptr<annotate_context>
-    acp(new annotate_context(file_node->content, db));
+    acp(new annotate_context(file_node->content, db, project));
 
   shared_ptr<annotate_lineage_mapping> lineage
     = acp->initial_lineage();
@@ -861,7 +864,7 @@ do_annotate (database & db, file_t file_node, revision_id rid, bool just_revs)
   acp->annotate_equivalent_lines();
   I(acp->is_complete());
 
-  acp->dump(db, just_revs);
+  acp->dump(just_revs);
 }
 
 // Local Variables:

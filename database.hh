@@ -623,7 +623,6 @@ public:
   void set_opt_branchname(branch_name const & branchname);
 
   key_store & get_key_store();
-  project_t & get_project();
 };
 
 // not a member function, defined in database_check.cc

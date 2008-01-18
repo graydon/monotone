@@ -3567,12 +3567,6 @@ database::get_key_store()
   return __app->keys;
 }
 
-project_t &
-database::get_project()
-{
-  return __app->get_project();
-}
-
 bool
 database::must_drop_attr(string const & key)
 {

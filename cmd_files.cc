@@ -168,7 +168,8 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), rid);
       N(!null_id(rid), 
         F("no revision for file '%s' in database") % file);
       N(app.db.revision_exists(rid), 
@@ -186,7 +187,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app.db, file_node, rid, app.opts.revs_only);
+  do_annotate(app.db, app.get_project(), file_node, rid, app.opts.revs_only);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
@@ -247,21 +248,21 @@ CMD_AUTOMATE(identify, N_("PATH"),
 }
 
 static void
-dump_file(std::ostream & output, app_state & app, file_id & ident)
+dump_file(std::ostream & output, database & db, file_id & ident)
 {
-  N(app.db.file_version_exists(ident),
+  N(db.file_version_exists(ident),
     F("no file version %s found in database") % ident);
 
   file_data dat;
   L(FL("dumping file %s") % ident);
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
 static void
-dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename)
+dump_file(std::ostream & output, database & db, revision_id rid, utf8 filename)
 {
-  N(app.db.revision_exists(rid), 
+  N(db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 
   // Paths are interpreted as standard external ones when we're in a
@@ -270,7 +271,7 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
 
   roster_t roster;
   marking_map marks;
-  app.db.get_roster(rid, roster, marks);
+  db.get_roster(rid, roster, marks);
   N(roster.has_node(fp), 
     F("no file '%s' found in revision '%s'") % fp % rid);
   
@@ -279,7 +280,7 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
     F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  dump_file(output, app, file_node->content);
+  dump_file(output, db, file_node->content);
 }
 
 CMD(cat, "cat", "", CMD_REF(informative),
@@ -304,9 +305,10 @@ CMD(cat, "cat", "", CMD_REF(informative),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), rid);
 
-  dump_file(cout, app, rid, idx(args, 0));
+  dump_file(cout, app.db, rid, idx(args, 0));
 }
 
 // Name: get_file
@@ -327,13 +329,11 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  // FIXME: dump_file should not take app arg
-
   file_id ident(idx(args, 0)());
-  dump_file(output, app, ident);
+  dump_file(output, app.db, ident);
 }
 
-// Name: get_fileof
+// Name: get_file_of
 // Arguments:
 //   1: a filename
 //
@@ -355,6 +355,8 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  CMD_REQUIRES_DATABASE(app);
+
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
@@ -367,15 +369,11 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       rid = parent_id(parents.begin());
     }
   else
-    {
-      CMD_REQUIRES_DATABASE(app);
-
-      // FIXME: what about app.opts.revision_selectors?
-      complete(db, idx(app.opts.revision_selectors, 0)(), rid);
-    }
+    complete(db, app.get_project(),
+             idx(app.opts.revision_selectors, 0)(), rid);
 
   // FIXME: again, dump_file should not take app arg
-  dump_file(output, app, rid, idx(args, 0));
+  dump_file(output, db, rid, idx(args, 0));
 }
 
 // Local Variables:

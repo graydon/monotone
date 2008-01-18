@@ -171,7 +171,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_roster, new_roster, app);
+                        old_roster, new_roster, app.work);
 
   if (app.opts.missing)
     {
@@ -197,7 +197,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       // replace the original mask with a more restricted one
       mask = node_restriction(missing_files, std::vector<file_path>(),
                               app.opts.depth,
-                              old_roster, new_roster, app);
+                              old_roster, new_roster, app.work);
     }
 
   // We want the restricted roster to include all the changes
@@ -296,13 +296,13 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
-  complete(app.db, idx(args, 0)(), r);
+  complete(app.db, app.get_project(), idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  guess_branch(r, app.db);
+  guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
@@ -359,7 +359,7 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
       // we'll treat this as a user (fatal) error.  it really wouldn't make
       // sense to add a dir to .mtn-ignore and then try to add it to the
       // project with a mkdir statement, but one never can tell...
-      N(app.opts.no_ignore || !app.lua.hook_ignore_file(fp),
+      N(app.opts.no_ignore || !app.work.ignore_file(fp),
         F("ignoring directory '%s' [see .mtn-ignore]") % fp);
 
       paths.insert(fp);
@@ -391,7 +391,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
   if (app.opts.unknown)
     {
       path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
-                            app.opts.depth, app);
+                            app.opts.depth, app.work);
       set<file_path> ignored;
 
       // if no starting paths have been specified use the workspace root
@@ -427,7 +427,7 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            current_roster_shape, app);
+                            current_roster_shape, app.work);
       app.work.find_missing(current_roster_shape, mask, paths);
     }
   else
@@ -510,7 +510,7 @@ CMD(status, "status", "", CMD_REF(informative), N_("[PATH]..."),
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_rosters, new_roster, app);
+                        old_rosters, new_roster, app.work);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, rev);
@@ -551,7 +551,8 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -560,11 +561,12 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), revid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), revid);
       N(app.db.revision_exists(revid),
         F("no such revision '%s'") % revid);
 
-      guess_branch(revid, app.db);
+      guess_branch(revid, app.db, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1018,7 +1020,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        old_rosters, new_roster, app);
+                        old_rosters, new_roster, app.work);
 
   app.work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
@@ -1039,7 +1041,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
            i++)
         {
           // this will prefer --branch if it was set
-          guess_branch(edge_old_revision(i), app.db, bn_candidate);
+          guess_branch(edge_old_revision(i), app.db, app.get_project(),
+                       bn_candidate);
           N(branchname() == "" || branchname == bn_candidate,
             F("parent revisions of this commit are in different branches:\n"
               "'%s' and '%s'.\n"
@@ -1278,11 +1281,12 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app.db);
+      guess_branch(ident, app.db, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1302,7 +1306,8 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }

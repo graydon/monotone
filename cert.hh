@@ -25,6 +25,7 @@
 
 class key_store;
 class database;
+class project_t;
 
 struct cert
 {
@@ -107,9 +108,10 @@ void
 get_user_key(rsa_keypair_id & key, database & db);
 
 void
-guess_branch(revision_id const & id, database & db, branch_name & branchname);
+guess_branch(revision_id const & id, database & db, project_t & project,
+             branch_name & branchname);
 void
-guess_branch(revision_id const & id, database & db);
+guess_branch(revision_id const & id, database & db, project_t & project);
 
 #define date_cert_name cert_name("date")
 #define author_cert_name cert_name("author")

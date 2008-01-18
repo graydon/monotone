@@ -657,16 +657,17 @@ struct inventory_itemizer : public tree_walker
 {
   path_restriction const & mask;
   inventory_map & inventory;
-  app_state & app;
   inodeprint_map ipm;
+  workspace & work;
 
-  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) :
-    mask(m), inventory(i), app(a)
+  inventory_itemizer(path_restriction const & m, inventory_map & i,
+                     workspace & work) :
+    mask(m), inventory(i), work(work)
   {
-    if (app.work.in_inodeprints_mode())
+    if (work.in_inodeprints_mode())
       {
         data dat;
-        app.work.read_inodeprints(dat);
+        work.read_inodeprints(dat);
         read_inodeprint_map(dat, ipm);
       }
   }
@@ -682,7 +683,7 @@ inventory_itemizer::visit_dir(file_path const & path)
       inventory[path].fs_type = path::directory;
     }
   // don't recurse into ignored subdirectories
-  return not app.lua.hook_ignore_file(path);
+  return !work.ignore_file(path);
 }
 
 void
@@ -705,9 +706,10 @@ inventory_itemizer::visit_file(file_path const & path)
 }
 
 static void
-inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
+inventory_filesystem(path_restriction const & mask, inventory_map & inventory,
+                     workspace & work)
 {
-  inventory_itemizer itemizer(mask, inventory, app);
+  inventory_itemizer itemizer(mask, inventory, work);
   file_path const root;
   // The constructor file_path() returns ""; the root directory. walk_tree
   // does not visit that node, so set fs_type now, if it meets the
@@ -735,7 +737,7 @@ namespace
 }
 
 static void
-inventory_print_states(app_state & app, file_path const & fs_path,
+inventory_print_states(workspace & work, file_path const & fs_path,
                        inventory_item const & item, roster_t const & old_roster,
                        roster_t const & new_roster, basic_io::stanza & st,
                        bool & ignored, bool & unknown, bool & unchanged)
@@ -792,7 +794,7 @@ inventory_print_states(app_state & app, file_path const & fs_path,
     {
       if (!item.new_node.exists)
         {
-          if (app.lua.hook_ignore_file(fs_path))
+          if (work.ignore_file(fs_path))
             {
               states.push_back("ignored");
               ignored = true;
@@ -920,11 +922,12 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   vector<file_path> includes = args_to_paths(args);
   vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
-  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
+  node_restriction nmask(includes, excludes, app.opts.depth,
+                         old_roster, new_roster, app.work);
   inventory_rosters(old_roster, new_roster, nmask, inventory);
 
-  path_restriction pmask(includes, excludes, app.opts.depth, app);
-  inventory_filesystem(pmask, inventory, app);
+  path_restriction pmask(includes, excludes, app.opts.depth, app.work);
+  inventory_filesystem(pmask, inventory, app.work);
 
   basic_io::printer pr;
 
@@ -971,7 +974,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      inventory_print_states(app, i->first, item, old_roster, new_roster, st, ignored, unknown, unchanged);
+      inventory_print_states(app.work, i->first, item, old_roster, new_roster, st, ignored, unknown, unchanged);
       inventory_print_changes(item, old_roster, st, unchanged);
 
       print_this = true;
@@ -1297,7 +1300,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
 
   N(db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  db.get_project().get_revision_certs(r_id, certs);
+  app.get_project().get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1464,7 +1467,7 @@ CMD_AUTOMATE(branches, "",
 
   set<branch_name> names;
 
-  db.get_project().get_branch_list(names);
+  app.get_project().get_branch_list(names);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -1531,13 +1534,13 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
   prt.print_stanza(stz);
 
   set<tag_t> tags;
-  db.get_project().get_tags(tags);
+  app.get_project().get_tags(tags);
 
   for (set<tag_t>::const_iterator tag = tags.begin();
        tag != tags.end(); ++tag)
     {
       set<branch_name> branches;
-      db.get_project().get_revision_branches(tag->ident, branches);
+      app.get_project().get_revision_branches(tag->ident, branches);
 
       bool show(!filtering);
       vector<string> branch_names;

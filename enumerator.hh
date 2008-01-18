@@ -17,6 +17,7 @@
 #include "vocab.hh"
 
 class database;
+class project_t;
 
 // The revision_enumerator struct acts as a cursor which emits files,
 // deltas, revisions and certs in dependency-correct order. This is
@@ -48,11 +49,12 @@ enumerator_item
   hexenc<id> ident_b;
 };
 
-struct
+class
 revision_enumerator
 {
   enumerator_callbacks & cb;
   database & db;
+  project_t & project;
   std::set<revision_id> terminal_nodes;
   std::set<revision_id> enumerated_nodes;
   std::deque<revision_id> revs;
@@ -61,24 +63,20 @@ revision_enumerator
   std::multimap<revision_id, revision_id> inverse_graph;
   std::multimap<revision_id, hexenc<id> >  revision_certs;
 
-  void note_cert(revision_id const & rid,
-		 hexenc<id> const & cert_hash);
-  void get_revision_certs(revision_id const & rid,
-			  std::vector<hexenc<id> > & certs);
-  void get_revision_parents(revision_id const & rid,
-			    std::vector<revision_id> & parents);
-
-  revision_enumerator(enumerator_callbacks & cb,
-                      database & db,
-                      std::set<revision_id> const & initial,
-                      std::set<revision_id> const & terminal);
-  revision_enumerator(enumerator_callbacks & cb,
-                      database & db);
-  void load_graphs();
   bool all_parents_enumerated(revision_id const & child);
   void files_for_revision(revision_id const & r,
                           std::set<file_id> & full_files,
                           std::set<std::pair<file_id,file_id> > & del_files);
+  void get_revision_certs(revision_id const & rid,
+			  std::vector<hexenc<id> > & certs);
+
+public:
+  revision_enumerator(enumerator_callbacks & cb,
+                      database & db, project_t & project);
+  void get_revision_parents(revision_id const & rid,
+			    std::vector<revision_id> & parents);
+  void note_cert(revision_id const & rid,
+		 hexenc<id> const & cert_hash);
   void step();
   bool done();
 };

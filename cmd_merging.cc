@@ -170,7 +170,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     {
       P(F("updating along branch '%s'") % app.opts.branchname);
       set<revision_id> candidates;
-      pick_update_candidates(old_rid, app.db, candidates);
+      pick_update_candidates(old_rid, app.db, app.get_project(), candidates);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
@@ -181,7 +181,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
           P(F("multiple update candidates:"));
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app.db, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
@@ -189,7 +190,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app.db, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app.db, app.get_project(),
+               app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -198,7 +200,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   // do this notification before checking to see if we can bail out early,
   // because when you are at one of several heads, and you hit update, you
   // want to know that merging would let you update further.
-  notify_if_multiple_heads(app.db);
+  notify_if_multiple_heads(app.get_project(), app.opts.branchname);
 
   if (old_rid == chosen_rid)
     {
@@ -693,7 +695,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app.db, idx(args, 0)(), right_id);
+  complete(app.db, app.get_project(), idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -765,8 +767,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app.db, idx(args, 0)(), left);
-  complete(app.db, idx(args, 1)(), right);
+  complete(app.db, app.get_project(), idx(args, 0)(), left);
+  complete(app.db, app.get_project(), idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -788,8 +790,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app.db, idx(args,0)(), l_id);
-  complete(app.db, idx(args,1)(), r_id);
+  complete(app.db, app.get_project(), idx(args,0)(), l_id);
+  complete(app.db, app.get_project(), idx(args,1)(), r_id);
   N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app.db),
@@ -855,7 +857,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -870,10 +873,12 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app.db, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app.db, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app.db, app.get_project(),
+               idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -934,7 +939,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     node_restriction mask(args_to_paths(args),
                           args_to_paths(app.opts.exclude_patterns),
                           app.opts.depth,
-                          *from_roster, to_true_roster, app);
+                          *from_roster, to_true_roster, app.work);
 
     roster_t restricted_roster;
     make_restricted_roster(*from_roster, to_true_roster,
@@ -1049,7 +1054,7 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app.db, *i) << '\n';
+    cout << describe_revision(app.db, app.get_project(), *i) << '\n';
 }
 
 CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
@@ -1110,7 +1115,7 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
   else if (args.size() == 1)
     {
       revision_id rid;
-      complete(app.db, idx(args, 0)(), rid);
+      complete(app.db, app.get_project(), idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }
