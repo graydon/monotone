@@ -104,33 +104,6 @@ key_store::maybe_read_key_dir()
 }
 
 void
-key_store::ensure_in_database(rsa_keypair_id const & ident)
-{
-  maybe_read_key_dir();
-  map<rsa_keypair_id, keypair>::iterator i = keys.find(ident);
-
-  // if this object does not have the key, the database had better.
-  if (i == keys.end())
-    {
-      I(app.db.public_key_exists(ident));
-      return;
-    }
-  
-  if (app.db.put_key(ident, i->second.pub))
-    L(FL("loaded public key '%s' into db") % ident);
-}
-
-bool
-key_store::try_ensure_in_db(hexenc<id> const & hash)
-{
-  map<hexenc<id>, rsa_keypair_id>::const_iterator i = hashes.find(hash);
-  if (i == hashes.end())
-    return false;
-  ensure_in_database(i->second);
-  return true;
-}
-
-void
 key_store::get_key_ids(globish const & pattern,
                        vector<rsa_keypair_id> & priv)
 {
@@ -159,19 +132,47 @@ key_store::key_pair_exists(rsa_keypair_id const & ident)
   return keys.find(ident) != keys.end();
 }
 
+bool
+key_store::maybe_get_key_pair(rsa_keypair_id const & ident,
+                              keypair & kp)
+{
+  maybe_read_key_dir();
+  map<rsa_keypair_id, keypair>::const_iterator i = keys.find(ident);
+  if (i == keys.end())
+    return false;
+  kp = i->second;
+  return true;
+}
+
 void
 key_store::get_key_pair(rsa_keypair_id const & ident,
                         keypair & kp)
 {
+  bool found = maybe_get_key_pair(ident, kp);
+  I(found);
+}
+
+bool
+key_store::maybe_get_key_pair(hexenc<id> const & hash,
+                              rsa_keypair_id & keyid,
+                              keypair & kp)
+{
   maybe_read_key_dir();
-  map<rsa_keypair_id, keypair>::const_iterator i = keys.find(ident);
-  I(i != keys.end());
-  kp = i->second;
+  map<hexenc<id>, rsa_keypair_id>::const_iterator hi = hashes.find(hash);
+  if (hi == hashes.end())
+    return false;
+
+  map<rsa_keypair_id, keypair>::const_iterator ki = keys.find(hi->second);
+  if (ki == keys.end())
+    return false;
+  keyid = hi->second;
+  kp = ki->second;
+  return true;
 }
 
 void
 key_store::get_key_file(rsa_keypair_id const & ident,
-                 system_path & file)
+                        system_path & file)
 {
   // filename is the keypair id, except that some characters can't be put in
   // filenames (especially on windows).
@@ -179,7 +180,7 @@ key_store::get_key_file(rsa_keypair_id const & ident,
   for (unsigned int i = 0; i < leaf.size(); ++i)
     if (leaf.at(i) == '+')
       leaf.at(i) = '_';
-  
+
   file = key_dir / path_component(leaf);
 }
 

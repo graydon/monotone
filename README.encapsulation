@@ -33,9 +33,6 @@ database.cc:
 key_store.cc:
   app is a member variable of class key_store, used by:
 
-  key_store::ensure_in_database()
-       app.db
-
   key_store::hook_get_passphrase()
        app.lua.hook_get_passphrase()
 

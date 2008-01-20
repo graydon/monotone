@@ -1625,7 +1625,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 
   utf8 passphrase = idx(args, 1);
 
-  key_store & keys = db.get_key_store();
+  key_store & keys = app.keys;
   bool exists = keys.key_pair_exists(ident);
   if (db.database_specified())
     {
