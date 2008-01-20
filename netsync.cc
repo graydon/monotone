@@ -1530,7 +1530,11 @@ session::process_auth_cmd(protocol_role their_role,
     {
       // If it's not in the db, it still could be in the keystore if we
       // have the private key that goes with it.
-      if (!keys.try_ensure_in_db(their_key_hash))
+      rsa_keypair_id their_key_id;
+      keypair their_keypair;
+      if (keys.maybe_get_key_pair(their_key_hash, their_key_id, their_keypair))
+        db.put_key(their_key_id, their_keypair.pub);
+      else
         {
           this->saved_nonce = id("");
 
@@ -1539,7 +1543,8 @@ session::process_auth_cmd(protocol_role their_role,
                                       their_include_pattern,
                                       their_exclude_pattern);
           error(unknown_key,
-                (F("remote public key hash '%s' is unknown") % their_key_hash).str());
+                (F("remote public key hash '%s' is unknown")
+                 % their_key_hash).str());
         }
     }
 
@@ -3260,8 +3265,9 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
         {
           if (!db.public_key_exists(*key))
             {
-              if (keys.key_pair_exists(*key))
-                keys.ensure_in_database(*key);
+              keypair kp;
+              if (keys.maybe_get_key_pair(*key, kp))
+                db.put_key(*key, kp.pub);
               else
                 W(F("Cannot find key '%s'") % *key);
             }
