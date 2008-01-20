@@ -8,20 +8,20 @@ mtn_setup()
 -- 2) mtn mv dir1 dir2
 -- 3) edit dir2/test.txt & change content
 -- 4) mtn diff dir2/test.txt
--- 
+--
 -- Note that (4) will not fail unless you perform both
 -- steps (2) and (3).
--- 
+--
 -- Note also that running "mtn diff" with no path
 -- argument works fine.
 --
 -- The problem here is that when diff is restricted
--- to "dir2/test.txt" (node 3) the roster does not *have* 
--- anything called "dir2" because that rename has been 
+-- to "dir2/test.txt" (node 3) the roster does not *have*
+-- anything called "dir2" because that rename has been
 -- excluded. The file is still called "dir1/test.txt" under
--- the restriction. This is rather odd, since we restricted 
+-- the restriction. This is rather odd, since we restricted
 -- it using the name "dir2/test.txt" which is valid under
--- the full post-state roster. The bad name exists in 
+-- the full post-state roster. The bad name exists in
 -- the restricted cset and faults in check_restricted_cset.
 --
 -- the original roster contains
@@ -48,5 +48,5 @@ commit()
 check(mtn("mv", "dir1", "dir2"), 0, false, false)
 writefile("dir2/test.txt", "boohoo")
 check(mtn("diff"), 0, false, false)
-check(mtn("diff", "dir2/test.txt"), 1, false, false)
+xfail(mtn("diff", "dir2/test.txt"), 0, false, false)
 
