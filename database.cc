@@ -676,17 +676,17 @@ database::version(ostream & out)
 }
 
 void
-database::migrate()
+database::migrate(key_store & keys)
 {
   ensure_open_for_maintenance();
-  migrate_sql_schema(__sql, get_filename(), __app->keys);
+  migrate_sql_schema(__sql, get_filename(), keys);
 }
 
 void
-database::test_migration_step(string const & schema)
+database::test_migration_step(string const & schema, key_store & keys)
 {
   ensure_open_for_maintenance();
-  ::test_migration_step(__sql, get_filename(), __app->keys, schema);
+  ::test_migration_step(__sql, get_filename(), keys, schema);
 }
 
 void

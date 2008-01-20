@@ -97,7 +97,7 @@ CMD(db_migrate, "migrate", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.migrate();
+  app.db.migrate(app.keys);
 }
 
 CMD(db_execute, "execute", "", CMD_REF(db), "",
@@ -370,7 +370,7 @@ CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
 {
   if (args.size() != 1)
     throw usage(execid);
-  app.db.test_migration_step(idx(args,0)());
+  app.db.test_migration_step(idx(args,0)(), app.keys);
 }
 
 CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),

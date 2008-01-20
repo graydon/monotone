@@ -585,7 +585,7 @@ CMD_AUTOMATE(keys, "",
       db.get_key_ids(dbkeys);
       guard.commit();
     }
-  key_store & keys = db.get_key_store();
+  key_store & keys = app.keys;
   keys.get_key_ids(kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();

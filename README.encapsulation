@@ -8,12 +8,6 @@ database.cc:
        __app->opts.branchname
        __app->get_project()
 
-  database::test_migration_step()
-       __app->keys
-
-  database::migrate()
-       __app->keys
-
   accessor hacks:
   __app->keys
     get_key_store()
