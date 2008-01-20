@@ -97,9 +97,13 @@ function certvalue(rev, name)
   check(safe_mtn("automate", "certs", rev), 0, false)
   local parsed = parse_basic_io(readfile("ts-stdout"))
   local cname
+  local goodsig
+  -- note: this relies on the name and signature elements appearing
+  -- before the value element, in each stanza.
   for _,l in pairs(parsed) do
     if l.name == "name" then cname = l.values[1] end
-    if cname == name and l.name == "value" then return l.values[1] end
+    if l.name == "signature" then goodsig = l.values[1] end
+    if cname == name and l.name == "value" then return l.values[1], goodsig end
   end
   return nil
 end

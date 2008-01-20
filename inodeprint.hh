@@ -23,8 +23,6 @@ typedef std::map<file_path, hexenc<inodeprint>,
 
 std::ostream & operator<<(std::ostream & out, inodeprint_entry const & e);
 
-class app_state;
-
 void read_inodeprint_map(data const & dat,
                          inodeprint_map & ipm);
 

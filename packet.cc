@@ -19,6 +19,7 @@
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "cert.hh"
 
 using std::istream;
@@ -108,11 +109,11 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
 struct
 feed_packet_consumer
 {
-  app_state & app;
+  key_store & keys;
   size_t & count;
   packet_consumer & cons;
-  feed_packet_consumer(size_t & count, packet_consumer & c, app_state & app_)
-   : app(app_), count(count), cons(c)
+  feed_packet_consumer(size_t & count, packet_consumer & c, key_store & keys)
+   : keys(keys), count(count), cons(c)
   {}
   void validate_id(string const & id) const
   {
@@ -244,9 +245,9 @@ feed_packet_consumer
     validate_key(args);
     validate_base64(body);
     keypair kp;
-    migrate_private_key(app,
+    migrate_private_key(keys,
                         rsa_keypair_id(args),
-                        base64<arc4<rsa_priv_key> >(body),
+                        base64<old_arc4_rsa_priv_key>(body),
                         kp);
     cons.consume_key_pair(rsa_keypair_id(args), kp);
   }
@@ -279,10 +280,10 @@ feed_packet_consumer
 };
 
 static size_t
-extract_packets(string const & s, packet_consumer & cons, app_state & app)
+extract_packets(string const & s, packet_consumer & cons, key_store & keys)
 {
   size_t count = 0;
-  feed_packet_consumer feeder(count, cons, app);
+  feed_packet_consumer feeder(count, cons, keys);
 
   string::const_iterator p, tbeg, tend, abeg, aend, bbeg, bend;
 
@@ -353,7 +354,7 @@ extract_packets(string const & s, packet_consumer & cons, app_state & app)
 }
 
 size_t
-read_packets(istream & in, packet_consumer & cons, app_state & app)
+read_packets(istream & in, packet_consumer & cons, key_store & keys)
 {
   string accum, tmp;
   size_t count = 0;
@@ -370,7 +371,7 @@ read_packets(istream & in, packet_consumer & cons, app_state & app)
         {
           endpos += end.size();
           string tmp = accum.substr(0, endpos);
-          count += extract_packets(tmp, cons, app);
+          count += extract_packets(tmp, cons, keys);
           if (endpos < accum.size() - 1)
             accum = accum.substr(endpos+1);
           else
@@ -393,7 +394,7 @@ UNIT_TEST(packet, validators)
   packet_writer pw(oss);
   app_state app;
   size_t count;
-  feed_packet_consumer f(count, pw, app);
+  feed_packet_consumer f(count, pw, app.keys);
 
 #define N_THROW(expr) UNIT_TEST_CHECK_NOT_THROW(expr, informative_failure)
 #define Y_THROW(expr) UNIT_TEST_CHECK_THROW(expr, informative_failure)
@@ -526,7 +527,7 @@ UNIT_TEST(packet, roundabout)
       ostringstream oss;
       packet_writer pw(oss);
       istringstream iss(tmp);
-      read_packets(iss, pw, aaa);
+      read_packets(iss, pw, aaa.keys);
       UNIT_TEST_CHECK(oss.str() == tmp);
       tmp = oss.str();
     }

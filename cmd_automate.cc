@@ -340,9 +340,12 @@ CMD_AUTOMATE(stdio, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  CMD_REQUIRES_DATABASE(app);
+  // FIXME: additionally requires some app.opts...
+
     // initialize the database early so any calling process is notified
     // immediately if a version discrepancy exists
-  app.db.ensure_open();
+  db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);

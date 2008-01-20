@@ -10,8 +10,8 @@
 #include "base.hh"
 #include "legacy.hh"
 #include "basic_io.hh"
-#include "app_state.hh"
 #include "constants.hh"
+#include "database.hh"
 
 using std::make_pair;
 using std::string;
@@ -122,13 +122,13 @@ namespace legacy
 
   // cf. revision.cc:parse_revision in the pre-roster code.
   void
-  get_manifest_and_renames_for_rev(app_state & app,
+  get_manifest_and_renames_for_rev(database & db,
                                    revision_id const & ident,
                                    manifest_id & mid,
                                    renames_map & renames)
   {
     revision_data dat;
-    app.db.get_revision(ident, dat);
+    db.get_revision(ident, dat);
     basic_io::input_source src(dat.inner()(), "revision");
     basic_io::tokenizer tok(src);
     basic_io::parser pars(tok);
