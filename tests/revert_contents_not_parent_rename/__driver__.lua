@@ -1,6 +1,8 @@
 mtn_setup()
 
--- this bug appears to be related to tests/restricted_diff_bug
+-- this was a bug until 0.38 and appeared to be related to
+-- tests/restricted_diff_bug, however was resolved by some clever
+-- path handling tricks in revert
 
 mkdir("dir1")
 addfile("dir1/test.txt", "booya")
@@ -13,11 +15,10 @@ writefile("dir2/test.txt", "boohoo")
 
 -- presumably this should only revert the content of test.txt
 -- because it only includes that node
--- note that it is the parents name that has changed
 
 check(mtn("revert", "dir2/test.txt"), 0, false, false)
 
 reverted=sha1("dir2/test.txt")
-xfail(original == reverted)
+check(original == reverted)
 
 
