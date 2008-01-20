@@ -16,6 +16,7 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "app_state.hh"
+#include "keys.hh"
 
 using std::cin;
 using std::cout;
@@ -223,6 +224,14 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
+
+  // early short-circuit to avoid failure after lots of work
+  rsa_keypair_id key;
+  get_user_key(key, app.db);
+  require_password(key, app.keys);
+
   build_changesets_from_manifest_ancestry(app.db);
 }
 
@@ -233,6 +242,14 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
 {
   N(args.size() == 0,
     F("no arguments needed"));
+
+  app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
+
+  // early short-circuit to avoid failure after lots of work
+  rsa_keypair_id key;
+  get_user_key(key, app.db);
+  require_password(key, app.keys);
 
   build_roster_style_revs_from_manifest_style_revs(app.db);
 }

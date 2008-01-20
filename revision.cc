@@ -30,7 +30,6 @@
 #include "cset.hh"
 #include "constants.hh"
 #include "interner.hh"
-#include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
 #include "mtn-sanity.hh"
@@ -1641,21 +1640,11 @@ anc_graph::construct_revisions_from_ancestry()
 void
 build_roster_style_revs_from_manifest_style_revs(database & db)
 {
-  db.ensure_open_for_format_changes();
-  db.check_is_not_rosterified();
-
   real_sanity.set_relaxed(true);
   anc_graph graph(true, db);
 
   P(F("converting existing revision graph to new roster-style revisions"));
   multimap<revision_id, revision_id> existing_graph;
-
-  {
-    // early short-circuit to avoid failure after lots of work
-    rsa_keypair_id key;
-    get_user_key(key, db);
-    require_password(key, db.get_key_store());
-  }
 
   // cross-check that we're getting everything
   // in fact the code in this function is wrong, because if a revision has no
@@ -1697,19 +1686,9 @@ build_roster_style_revs_from_manifest_style_revs(database & db)
 void
 build_changesets_from_manifest_ancestry(database & db)
 {
-  db.ensure_open_for_format_changes();
-  db.check_is_not_rosterified();
-
   anc_graph graph(false, db);
 
   P(F("rebuilding revision graph from manifest certs"));
-
-  {
-    // early short-circuit to avoid failure after lots of work
-    rsa_keypair_id key;
-    get_user_key(key, db);
-    require_password(key, db.get_key_store());
-  }
 
   vector< manifest<cert> > tmp;
   db.get_manifest_certs(cert_name("ancestor"), tmp);
