@@ -4,10 +4,10 @@
 #include "mt_version.hh"
 
 extern sanity & global_sanity;
-mtn_sanity real_sanity;
+static mtn_sanity real_sanity;
 sanity & global_sanity = real_sanity;
 
-mtn_sanity::mtn_sanity() : relaxed(false)
+mtn_sanity::mtn_sanity()
 {}
 
 mtn_sanity::~mtn_sanity()
@@ -21,12 +21,6 @@ mtn_sanity::initialize(int argc, char ** argv, char const * lc_all)
   std::string full_version_string;
   get_full_version(full_version_string);
   PERM_MM(full_version_string);
-}
-
-void
-mtn_sanity::set_relaxed(bool rel)
-{
-  relaxed = rel;
 }
 
 void
