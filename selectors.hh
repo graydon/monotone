@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <set>
 
-class app_state;
+class database;
 
 namespace selectors
 {
@@ -40,10 +40,10 @@ namespace selectors
                     std::vector<std::pair<selector_type, std::string> > const & limit,
                     selector_type & type,
                     std::set<std::string> & completions,
-                    app_state & app);
+                    database & db);
   std::vector<std::pair<selector_type, std::string> >
   parse_selector(std::string const & str,
-                 app_state & app);
+                 database & db);
 
 }; // namespace selectors
 

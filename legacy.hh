@@ -17,7 +17,7 @@
 #include "paths.hh"
 #include "vocab.hh"
 
-class app_state;
+class database;
 
 namespace legacy
 {
@@ -41,7 +41,7 @@ namespace legacy
   typedef std::map<revision_id, std::map<file_path, file_path> > renames_map;
 
   void
-  get_manifest_and_renames_for_rev(app_state & app,
+  get_manifest_and_renames_for_rev(database & db,
                                    revision_id const & ident,
                                    manifest_id & mid,
                                    renames_map & renames);

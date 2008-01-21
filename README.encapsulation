@@ -1,0 +1,58 @@
+database.cc:
+
+  __app is a member variable of class database, used by:
+
+  normal member functions:
+  database::complete()
+       __app->require_workspace()
+       __app->opts.branchname
+       __app->get_project()
+
+  accessor hacks:
+  __app->keys
+    get_key_store()
+
+  __app->lua ...
+    hook_exists()
+    hook_expand_selector()
+    hook_expand_date()
+    hook_get_manifest_cert_trust()
+    hook_get_revision_cert_trust()
+    hook_get_author()
+    hook_accept_testresult_change()
+
+  __app->opts
+    must_drop_attr()
+    get_opt_author()
+    get_opt_ignore_suspend_certs()
+    get_opt_date_or_cur_date()
+    has_opt_branch()
+    get_opt_branchname()
+    set_opt_branchname()
+
+key_store.cc:
+  app is a member variable of class key_store, used by:
+
+  key_store::hook_get_passphrase()
+       app.lua.hook_get_passphrase()
+
+  key_store::hook_persist_phrase_ok()
+       app.lua.hook_persist_phrase_ok()
+
+  key_store::hook_get_current_branch_key()
+       app.lua.hook_get_branch_key()
+       app.opts.branchname
+
+  key_store::has_opt_signing_key()
+  key_store::get_opt_signing_key()
+       app.opts.signing_key
+
+  key_store::get_opt_ssh_sign()
+       app.opts.ssh_sign
+
+  key_store::get_agent()
+       app.agent
+
+lua_hooks.cc:
+  << evil mess involving a map from lua_*state* pointers 
+     to app_state pointers >>

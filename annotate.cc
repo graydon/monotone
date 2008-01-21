@@ -17,13 +17,14 @@
 #include <boost/multi_index/key_extractors.hpp>
 
 #include "annotate.hh"
-#include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
 #include "cset.hh"
+#include "database.hh"
 #include "interner.hh"
 #include "lcs.hh"
 #include "platform.hh"
+#include "project.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
@@ -57,7 +58,7 @@ class annotate_lineage_mapping;
 class annotate_context
 {
 public:
-  annotate_context(file_id fid, app_state & app);
+  annotate_context(file_id fid, database & db, project_t & project);
 
   shared_ptr<annotate_lineage_mapping> initial_lineage() const;
 
@@ -74,7 +75,7 @@ public:
   /// return true if we have no more unassigned lines
   bool is_complete() const;
 
-  void dump(app_state & app, bool just_revs) const;
+  void dump(bool just_revs) const;
 
   string get_line(int line_index) const
   {
@@ -82,8 +83,13 @@ public:
   }
 
 private:
-  void build_revisions_to_annotations(app_state & app,
-                                      map<revision_id, string> & r2a) const;
+  void build_revisions_to_annotations(map<revision_id, string> & r2a) const;
+
+  database & db;
+  project_t & project;
+
+  /// keep a count so we can tell quickly whether we can terminate
+  size_t annotated_lines_completed;
 
   vector<string> file_lines;
   vector<revision_id> annotations;
@@ -91,9 +97,6 @@ private:
   /// equivalent_lines[n] = m means that line n should be blamed to the same
   /// revision as line m
   map<int, int> equivalent_lines;
-
-  /// keep a count so we can tell quickly whether we can terminate
-  size_t annotated_lines_completed;
 
   // elements of the set are indexes into the array of lines in the
   // UDOI lineages add entries here when they notice that they copied
@@ -204,12 +207,13 @@ typedef multi_index_container<
   > work_units;
 
 
-annotate_context::annotate_context(file_id fid, app_state & app)
-  : annotated_lines_completed(0)
+annotate_context::annotate_context(file_id fid, database & db,
+                                   project_t & project)
+  : db(db), project(project), annotated_lines_completed(0)
 {
   // initialize file_lines
   file_data fpacked;
-  app.db.get_file_version(fid, fpacked);
+  db.get_file_version(fid, fpacked);
   string encoding = constants::default_encoding; // FIXME
   split_into_lines(fpacked.inner()(), encoding, file_lines);
   L(FL("annotate_context::annotate_context initialized "
@@ -371,8 +375,7 @@ cert_string_value(vector< revision<cert> > const & certs,
 
 void
 annotate_context::build_revisions_to_annotations
-(app_state & app,
- map<revision_id, string> & revs_to_notations) const
+(map<revision_id, string> & revs_to_notations) const
 {
   I(annotations.size() == file_lines.size());
 
@@ -391,8 +394,8 @@ annotate_context::build_revisions_to_annotations
        i != seen.end(); i++)
     {
       vector< revision<cert> > certs;
-      app.get_project().get_revision_certs(*i, certs);
-      erase_bogus_certs(certs, app);
+      project.get_revision_certs(*i, certs);
+      erase_bogus_certs(certs, db);
 
       string author(cert_string_value(certs, author_cert_name,
                                       true, false, "@< "));
@@ -424,7 +427,7 @@ annotate_context::build_revisions_to_annotations
 }
 
 void
-annotate_context::dump(app_state & app, bool just_revs) const
+annotate_context::dump(bool just_revs) const
 {
   revision_id nullid;
   I(annotations.size() == file_lines.size());
@@ -433,7 +436,7 @@ annotate_context::dump(app_state & app, bool just_revs) const
   string empty_note;
   if (!just_revs)
     {
-      build_revisions_to_annotations(app, revs_to_notations);
+      build_revisions_to_annotations(revs_to_notations);
       size_t max_note_length = revs_to_notations.begin()->second.size();
       empty_note.insert(string::size_type(0), max_note_length - 2, ' ');
     }
@@ -678,13 +681,13 @@ annotate_lineage_mapping::set_copied_all_mapped
 
 // fetches the list of file_content markings for the given revision_id and
 // node_id
-static void get_file_content_marks(app_state & app,
+static void get_file_content_marks(database & db,
                                    revision_id const & rev,
                                    node_id const & fid,
                                    set<revision_id> & content_marks)
 {
   marking_t markings;
-  app.db.get_markings(rev, fid, markings);
+  db.get_markings(rev, fid, markings);
 
   I(!markings.file_content.empty());
 
@@ -695,7 +698,7 @@ static void get_file_content_marks(app_state & app,
 
 static void
 do_annotate_node(annotate_node_work const & work_unit,
-                 app_state & app,
+                 database & db,
                  work_units & work_units)
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
@@ -726,7 +729,7 @@ do_annotate_node(annotate_node_work const & work_unit,
       else
         {
           if (work_unit.marked)
-            app.db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
+            db.get_file_content(parent_revision, work_unit.fid, file_in_parent);
           else
             // we are not marked, so parent is marked.
             file_in_parent = work_unit.content;
@@ -753,7 +756,7 @@ do_annotate_node(annotate_node_work const & work_unit,
       else
         {
           file_data data;
-          app.db.get_file_version(file_in_parent, data);
+          db.get_file_version(file_in_parent, data);
           L(FL("building parent lineage for parent file %s")
             % file_in_parent);
           parent_lineage
@@ -773,7 +776,7 @@ do_annotate_node(annotate_node_work const & work_unit,
             {
               // we are marked, thus we don't know a priori whether parent
               // is marked or not.
-              get_file_content_marks(app, parent_revision, work_unit.fid, parents_interesting_ancestors);
+              get_file_content_marks(db, parent_revision, work_unit.fid, parents_interesting_ancestors);
               parent_marked = (parents_interesting_ancestors.size() == 1
                                && *(parents_interesting_ancestors.begin()) == parent_revision);
             }
@@ -782,10 +785,10 @@ do_annotate_node(annotate_node_work const & work_unit,
           
           // if it's marked, we need to look at its parents instead.
           if (parent_marked)
-            app.db.get_revision_parents(parent_revision, parents_interesting_ancestors);
+            db.get_revision_parents(parent_revision, parents_interesting_ancestors);
           
           rev_height parent_height;
-          app.db.get_rev_height(parent_revision, parent_height);
+          db.get_rev_height(parent_revision, parent_height);
           annotate_node_work newunit(work_unit.annotations,
                                      parent_lineage,
                                      parent_revision,
@@ -815,13 +818,14 @@ do_annotate_node(annotate_node_work const & work_unit,
 }
 
 void
-do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
+do_annotate (database & db, project_t & project, file_t file_node,
+             revision_id rid, bool just_revs)
 {
   L(FL("annotating file %s with content %s in revision %s")
     % file_node->self % file_node->content % rid);
 
   shared_ptr<annotate_context>
-    acp(new annotate_context(file_node->content, app));
+    acp(new annotate_context(file_node->content, db, project));
 
   shared_ptr<annotate_lineage_mapping> lineage
     = acp->initial_lineage();
@@ -830,13 +834,13 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
   {
     // prepare the first work_unit
     rev_height height;
-    app.db.get_rev_height(rid, height);
+    db.get_rev_height(rid, height);
     set<revision_id> rids_interesting_ancestors;
-    get_file_content_marks(app, rid, file_node->self, rids_interesting_ancestors);
+    get_file_content_marks(db, rid, file_node->self, rids_interesting_ancestors);
     bool rid_marked = (rids_interesting_ancestors.size() == 1
                        && *(rids_interesting_ancestors.begin()) == rid);
     if (rid_marked)
-      app.db.get_revision_parents(rid, rids_interesting_ancestors);
+      db.get_revision_parents(rid, rids_interesting_ancestors);
     
     annotate_node_work workunit(acp, lineage, rid, file_node->self, height,
                                 rids_interesting_ancestors, file_node->content, rid_marked);
@@ -854,13 +858,13 @@ do_annotate (app_state &app, file_t file_node, revision_id rid, bool just_revs)
       annotate_node_work work = *w;
       work_units.erase(w);
 
-      do_annotate_node(work, app, work_units);
+      do_annotate_node(work, db, work_units);
     }
 
   acp->annotate_equivalent_lines();
   I(acp->is_complete());
 
-  acp->dump(app, just_revs);
+  acp->dump(just_revs);
 }
 
 // Local Variables:

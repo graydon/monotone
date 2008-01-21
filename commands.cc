@@ -853,7 +853,7 @@ CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
 }
 
 string
-describe_revision(app_state & app,
+describe_revision(database & db, project_t & project,
                   revision_id const & id)
 {
   cert_name author_name(author_cert_name);
@@ -865,7 +865,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.get_project().get_revision_certs_by_name(id, author_name, tmp);
+  project.get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -874,7 +874,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.get_project().get_revision_certs_by_name(id, date_name, tmp);
+  project.get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -889,7 +889,7 @@ describe_revision(app_state & app,
 
 
 void
-complete(app_state & app,
+complete(database & db,
          string const & str,
          set<revision_id> & completion,
          bool must_exist)
@@ -904,20 +904,20 @@ complete(app_state & app,
     {
       completion.insert(revision_id(hexenc<id>(id(str))));
       if (must_exist)
-        N(app.db.revision_exists(*completion.begin()),
+        N(db.revision_exists(*completion.begin()),
           F("no such revision '%s'") % *completion.begin());
       return;
     }
 
   vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(str, app));
+    sels(selectors::parse_selector(str, db));
 
   P(F("expanding selection '%s'") % str);
 
   // we jam through an "empty" selection on sel_ident type
   set<string> completions;
   selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  selectors::complete_selector("", sels, ty, completions, db);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
@@ -933,21 +933,21 @@ complete(app_state & app,
 
 
 void
-complete(app_state & app,
+complete(database & db, project_t & project,
          string const & str,
          revision_id & completion,
          bool must_exist)
 {
   set<revision_id> completions;
 
-  complete(app, str, completions, must_exist);
+  complete(db, str, completions, must_exist);
 
   if (completions.size() > 1)
     {
       string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        err += ("\n" + describe_revision(app, *i));
+        err += ("\n" + describe_revision(db, project, *i));
       N(completions.size() == 1, i18n_format(err));
     }
 
@@ -955,17 +955,18 @@ complete(app_state & app,
 }
 
 void
-notify_if_multiple_heads(app_state & app)
+notify_if_multiple_heads(project_t & project,
+                         branch_name const & branchname)
 {
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  project.get_branch_heads(branchname, heads);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.opts.branchname % ui.prog_name);
+    P(i18n_format(prefixedline) % branchname % ui.prog_name);
   }
 }
 
