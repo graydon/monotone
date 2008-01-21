@@ -21,7 +21,7 @@ project_t::project_t(app_state & app)
 {}
 
 void
-project_t::get_branch_list(std::set<branch_name> & names, bool allow_suspend_certs)
+project_t::get_branch_list(std::set<branch_name> & names, bool check_certs_valid)
 {
   if (indicator.outdated())
     {
@@ -37,10 +37,10 @@ project_t::get_branch_list(std::set<branch_name> & names, bool allow_suspend_cer
           const branch_name branch(*i);
           std::set<revision_id> heads;
 
-          if (allow_suspend_certs)
+          if (check_certs_valid)
             get_branch_heads(branch, heads, &inverse_graph_cache);
           
-          if (!allow_suspend_certs || !heads.empty())
+          if (!check_certs_valid || !heads.empty())
             branches.insert(branch);
         }
     }
@@ -51,7 +51,7 @@ project_t::get_branch_list(std::set<branch_name> & names, bool allow_suspend_cer
 void
 project_t::get_branch_list(globish const & glob,
                            std::set<branch_name> & names,
-                           bool allow_suspend_certs)
+                           bool check_certs_valid)
 {
   std::vector<std::string> got;
   app.db.get_branches(glob, got);
@@ -65,10 +65,10 @@ project_t::get_branch_list(globish const & glob,
       const branch_name branch(*i);
       std::set<revision_id> heads;
 
-      if (allow_suspend_certs)
+      if (check_certs_valid)
         get_branch_heads(branch, heads, &inverse_graph_cache);
 
-      if (!allow_suspend_certs || !heads.empty())
+      if (!check_certs_valid || !heads.empty())
         names.insert(branch);
     }
 }

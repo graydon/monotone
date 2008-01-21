@@ -34,7 +34,7 @@
 #include "keys.hh"
 #include "numeric_vocab.hh"
 #include "revision.hh"
-#include "mtn-sanity.hh"
+#include "sanity.hh"
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "ui.hh"
@@ -1646,7 +1646,6 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
   app.db.ensure_open_for_format_changes();
   app.db.check_is_not_rosterified();
 
-  real_sanity.set_relaxed(true);
   anc_graph graph(true, app);
 
   P(F("converting existing revision graph to new roster-style revisions"));
@@ -1691,7 +1690,6 @@ build_roster_style_revs_from_manifest_style_revs(app_state & app)
       graph.add_node_for_oldstyle_revision(*i);
     }
 
-  real_sanity.set_relaxed(false);
   graph.rebuild_ancestry();
 }
 

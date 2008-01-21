@@ -5,13 +5,9 @@
 
 struct mtn_sanity : public sanity
 {
-  bool relaxed;
-
   mtn_sanity();
   ~mtn_sanity();
   void initialize(int, char **, char const *);
-
-  void set_relaxed(bool rel);
 
 private:
   void inform_log(std::string const &msg);
@@ -19,8 +15,6 @@ private:
   void inform_warning(std::string const &msg);
   void inform_error(std::string const &msg);
 };
-
-extern mtn_sanity real_sanity;
 
 #endif
 

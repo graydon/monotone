@@ -6366,7 +6366,7 @@ Don't output files that are known but not changed in any way.
 
 @itemize
 @item
-7.1 -- added options '--no-ignored', '--no-unknown', '--no-unchanged'
+7.0 -- added options '--no-ignored', '--no-unknown', '--no-unchanged'
 @item
 6.0 -- converted to basic_io format (restriction support, various fixes)
 @item

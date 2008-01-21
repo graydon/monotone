@@ -1,4 +1,4 @@
--- Test 'automate inventory' options --ignored=false, --unchanged=false, --unknown=false
+-- Test 'automate inventory' options --no-ignored, --no-unchanged, --no-unknown
 
 mtn_setup()
 

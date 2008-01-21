@@ -710,6 +710,8 @@ namespace
   }
 }
 
+// Set state information for fs_path in 'st', 'ignored', 'unknown', and
+// 'unchanged'.
 static void
 inventory_print_states(app_state & app, file_path const & fs_path,
                        inventory_item const & item, roster_t const & old_roster,
@@ -791,6 +793,7 @@ inventory_print_states(app_state & app, file_path const & fs_path,
   st.push_str_multi(syms::status, states);
 }
 
+// Update state information for item in 'st' and 'unchanged'.
 static void
 inventory_print_changes(inventory_item const & item, roster_t const & old_roster,
                         basic_io::stanza & st, bool & unchanged)
@@ -909,7 +912,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end();
        ++i)
     {
-      bool print_this, ignored, unknown, unchanged;
+      bool ignored, unknown, unchanged;
       basic_io::stanza st;
       inventory_item const & item = i->second;
 
@@ -950,21 +953,19 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         }
 
       inventory_print_states(app, i->first, item, old_roster, new_roster, st, ignored, unknown, unchanged);
-      inventory_print_changes(item, old_roster, st, unchanged);
-
-      print_this = true;
 
       if (ignored && app.opts.no_ignored)
-        print_this = false;
+        continue;
 
       if (unknown && app.opts.no_unknown)
-        print_this = false;
+        continue;
+
+      inventory_print_changes(item, old_roster, st, unchanged);
 
       if (unchanged && app.opts.no_unchanged)
-        print_this = false;
+        continue;
 
-      if (print_this)
-        pr.print_stanza(st);
+      pr.print_stanza(st);
     }
 
   output.write(pr.buf.data(), pr.buf.size());
@@ -1425,7 +1426,7 @@ CMD_AUTOMATE(branches, "",
 
   set<branch_name> names;
 
-  app.get_project().get_branch_list(names);
+  app.get_project().get_branch_list(names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
