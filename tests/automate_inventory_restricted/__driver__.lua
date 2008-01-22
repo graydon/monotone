@@ -333,4 +333,99 @@ index = index + 3 * 10
 
 checkexp ("checked all", #parsed, index-1)
 
+----------
+--  Rename a directory, restrict to target and source. First --bookkeep-only
+
+commit()
+
+check(mtn("mv", "--bookkeep-only", "dir_a", "dir_c"), 0, true, false)
+
+check(mtn("automate", "inventory", "dir_c"), 1, true, false)
+
+canonicalize("ts-stderr")
+check (readfile("ts-stderr") ==
+"mtn: warning: restriction includes unknown path 'dir_c'\n" ..
+"mtn: misuse: 1 unknown path\n")
+
+check(mtn("automate", "inventory", "dir_a"), 0, true, false)
+
+parsed = parse_basic_io(readfile("stdout"))
+index = 1
+
+index = check_inventory (parsed, index,
+{    path = "dir_a",
+ old_type = "directory",
+ new_path = "dir_c",
+  fs_type = "directory",
+   status = {"rename_source", "unknown"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_a/file_0",
+ old_type = "file",
+ new_path = "dir_c/file_0",
+  fs_type = "file",
+   status = {"rename_source", "unknown"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c",
+ new_type = "directory",
+ old_path = "dir_a",
+  fs_type = "none",
+   status = {"rename_target", "missing"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c/file_0",
+ new_type = "file",
+ old_path = "dir_a/file_0",
+  fs_type = "none",
+   status = {"rename_target", "missing"}})
+
+checkexp ("checked all", #parsed, index-1)
+
+-- Now actually renamed
+
+rename ("dir_a", "dir_c")
+
+check(mtn("automate", "inventory", "dir_c"), 0, true, false)
+
+parsed = parse_basic_io(readfile("stdout"))
+index = 1
+
+index = check_inventory (parsed, index,
+{    path = "dir_a",
+ old_type = "directory",
+ new_path = "dir_c",
+  fs_type = "none",
+   status = {"rename_source"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_a/file_0",
+ old_type = "file",
+ new_path = "dir_c/file_0",
+  fs_type = "none",
+   status = {"rename_source"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c",
+ new_type = "directory",
+ old_path = "dir_a",
+  fs_type = "directory",
+   status = {"rename_target", "known"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c/file_0",
+ new_type = "file",
+ old_path = "dir_a/file_0",
+  fs_type = "file",
+   status = {"rename_target", "known"}})
+
+checkexp ("checked all", #parsed, index-1)
+
+check(mtn("automate", "inventory", "dir_a"), 1, true, false)
+
+canonicalize("ts-stderr")
+check (readfile("ts-stderr") ==
+"mtn: warning: restriction includes unknown path 'dir_a'\n" ..
+"mtn: misuse: 1 unknown path\n")
+
 -- end of file
