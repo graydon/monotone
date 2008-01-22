@@ -6341,8 +6341,8 @@ marker.
 @table @strong
 @item Arguments:
 
-One or more file paths (optional). If present, only show inventory for the given
-files or directories (and their sub-directories).
+One or more file paths (optional). If present, only show an inventory for the
+given files or directories (and their sub-directories).
 
 @table @option
 @item --depth=@var{n}
@@ -6360,13 +6360,18 @@ Don't output unknown directories.
 @item --no-unchanged
 Don't output files that are known but not changed in any way.
 
+@item --no-corresponding-renames
+If restricted to a renamed path, do not output the corresponding old / new
+paths for this restriction.
+
 @end table
 
 @item Changes:
 
 @itemize
 @item
-7.0 -- added options '--no-ignored', '--no-unknown', '--no-unchanged'
+7.0 -- added options '--no-ignored', '--no-unknown', '--no-unchanged' and
+'--no-corresponding-renames'
 @item
 6.0 -- converted to basic_io format (restriction support, various fixes)
 @item
@@ -6388,6 +6393,13 @@ new_type "file"
  fs_type "file"
   status "added" "known"
  changes "content"
+
+    path "attributes_altered"
+old_type "file"
+new_type "file"
+ fs_type "file"
+  status "known"
+ changes "attrs"
 
     path "dropped"
 old_type "file"
@@ -6416,6 +6428,13 @@ new_type "file"
  fs_type "file"
   status "known"
  changes "content"
+
+    path "patched_and_attributes_altered"
+old_type "file"
+new_type "file"
+ fs_type "file"
+  status "known"
+ changes "content" "attrs"
 
     path "renamed"
 new_type "file"
@@ -6618,6 +6637,88 @@ old_path "original"
  changes "content"
 @end verbatim
 
+Renamed and restricted to @file{original} or @file{renamed}:
+@verbatim
+    path "original"
+old_type "file"
+new_path "renamed"
+ fs_type "none"
+  status "rename_source"
+
+    path "renamed"
+new_type "file"
+old_path "original"
+ fs_type "file"
+  status "rename_target" "known"
+ changes "content"
+@end verbatim
+
+Renamed and restricted to @file{original} with the @option{--no-corresponding-renames} option:
+@verbatim
+    path "original"
+old_type "file"
+new_path "renamed"
+ fs_type "none"
+  status "rename_source"
+@end verbatim
+
+Renamed and restricted to @file{renamed} with the @option{--no-corresponding-renames} option:
+@verbatim
+    path "renamed"
+new_type "file"
+old_path "original"
+ fs_type "file"
+  status "rename_target" "known"
+ changes "content"
+@end verbatim
+
+File is missing, an unversioned directory is in the way:
+@verbatim
+    path "missing_file"
+old_type "file"
+new_type "file"
+ fs_type "directory"
+  status "invalid"
+ changes "content"
+@end verbatim
+
+Directory is missing, an unversioned file is in the way:
+@verbatim
+    path "missing_directory"
+old_type "directory"
+new_type "directory"
+ fs_type "file"
+  status "invalid"
+@end verbatim
+
+Directory @file{source} renamed to @file{target}, @file{target} is missing, an
+unversioned file is in the way:
+@verbatim
+    path "source"
+old_type "directory"
+new_path "target"
+ fs_type "none"
+  status "rename_source"
+
+    path "source/a"
+old_type "file"
+new_path "target/a"
+ fs_type "none"
+  status "rename_source"
+
+    path "target"
+new_type "directory"
+old_path "source"
+ fs_type "file"
+  status "rename_target" "invalid"
+
+    path "target/a"
+new_type "file"
+old_path "source/a"
+ fs_type "none"
+  status "rename_target" "missing"
+@end verbatim
+
 @item Output format:
 
 Each path is printed in one basic_io stanza. Stanzas are separated by
@@ -6687,7 +6788,6 @@ the file exists in the workspace, but not in the revision manifest.
 @item invalid
 the file exists in the workspace and revision manifest, but with
 different types (one is a directory, the other a file).
-@c FIXME: not shown in examples or tests
 @end table
 
 @item changes

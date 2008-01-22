@@ -546,14 +546,14 @@ new_type = "file",
   status = {"known"},
  changes = {"attrs"}})
 
--- FIXME: Check if changes "content" is properly applied in several states
--- (there is at least one known wrong state where it is applied: when a
--- rename_target item is missing...)
-
 -- FIXME: tests for renaming directories
 -- also test that iff foo/ is renamed to bar/, any previous foo/node is
 -- now listed as bar/node
 
 -- FIXME: add test for 'pivot_root'
+
+-- FIXME: add test for the 'invalid' state:
+-- a) missing file, unversioned directory in the way
+-- b) missing directory, unversioned file is in the way
 
 -- end of file
