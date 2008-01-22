@@ -334,6 +334,101 @@ index = index + 3 * 10
 checkexp ("checked all", #parsed, index-1)
 
 ----------
+-- reset the workspace for further tests
+
+check(mtn("revert", "."), 0, false, false)
+remove("dir_a/file_0")
+
+----------
+-- rename a node and restrict on that renamed node
+
+check(mtn("mv", "dir_a", "dir_c"), 0, false, false)
+
+check(mtn("automate", "inventory", "dir_a"), 0, true, false)
+source_restricted = readfile("stdout")
+
+check(mtn("automate", "inventory", "dir_c"), 0, true, false)
+target_restricted = readfile("stdout")
+
+-- restricting to either path, old or new, should lead to the same output
+check(source_restricted == target_restricted)
+
+-- now check this output
+parsed = parse_basic_io(source_restricted)
+index = 1
+
+index = check_inventory (parsed, index,
+{    path = "dir_a",
+ old_type = "directory",
+ new_path = "dir_c",
+  fs_type = "none",
+   status = {"rename_source"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_a/file_a",
+ old_type = "file",
+ new_path = "dir_c/file_a",
+  fs_type = "none",
+   status = {"rename_source"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c",
+ new_type = "directory",
+ old_path = "dir_a",
+  fs_type = "directory",
+   status = {"rename_target", "known" }})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c/file_a",
+ new_type = "file",
+ old_path = "dir_a/file_a",
+  fs_type = "file",
+   status = {"rename_target", "known" }})
+
+checkexp ("checked all", #parsed, index-1)
+
+----------
+-- keep the above workspace situtation, but exclude the output of the file_a
+-- node in all scenarios
+
+check(mtn("automate", "inventory", "dir_a", "--exclude", "dir_a/file_a"), 0, true, false)
+rename("stdout", "source_source_excluded")
+
+check(mtn("automate", "inventory", "dir_a", "--exclude", "dir_c/file_a"), 0, true, false)
+rename("stdout", "source_target_excluded")
+
+check(mtn("automate", "inventory", "dir_c", "--exclude", "dir_c/file_a"), 0, true, false)
+rename("stdout", "target_target_excluded")
+
+check(mtn("automate", "inventory", "dir_c", "--exclude", "dir_a/file_a"), 0, true, false)
+rename("stdout", "target_source_excluded")
+
+-- all of the above calls should return the same output
+check(samefile("source_source_excluded", "source_target_excluded"))
+check(samefile("target_target_excluded", "target_source_excluded"))
+check(samefile("source_source_excluded", "target_target_excluded"))
+
+-- now check this output
+parsed = parse_basic_io(readfile("source_source_excluded"))
+index = 1
+
+index = check_inventory (parsed, index,
+{    path = "dir_a",
+ old_type = "directory",
+ new_path = "dir_c",
+  fs_type = "none",
+   status = {"rename_source"}})
+
+index = check_inventory (parsed, index,
+{    path = "dir_c",
+ new_type = "directory",
+ old_path = "dir_a",
+  fs_type = "directory",
+   status = {"rename_target", "known" }})
+
+checkexp ("checked all", #parsed, index-1)
+
+----------
 --  Rename a directory, restrict to target and source. First --bookkeep-only
 
 commit()

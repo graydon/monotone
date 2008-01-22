@@ -51,7 +51,7 @@ class app_state;
 //
 // revision A ... included ... revision X ... excluded ... revision B
 
-namespace restricted_path 
+namespace restricted_path
 {
   enum status { included, excluded };
 }
@@ -117,12 +117,15 @@ class node_restriction : public restriction
 class path_restriction : public restriction
 {
  public:
+  enum validity_check { check_paths = 0, skip_check };
+
   path_restriction() : restriction() {}
 
   path_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   app_state & a);
+                   app_state & a,
+                   validity_check vc = check_paths);
 
   bool includes(file_path const & sp) const;
 
