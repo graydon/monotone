@@ -33,6 +33,7 @@ Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
 Copyright @copyright{} 2006, 2007 William Uther @*
+Copyright @copyright{} 2006, 2007, 2008 Thomas Keller @*
 Copyright @copyright{} 2007, 2008 Stephen Leake @*
 
 This manual is made available under the GNU GPL version 2.0 or
@@ -6336,7 +6337,7 @@ marker.
 
 @end table
 
-@item mtn automate inventory [options]... [@var{files...}]
+@item mtn automate inventory [@option{options...}] [@var{files...}]
 
 @table @strong
 @item Arguments:
@@ -6370,8 +6371,8 @@ paths for this restriction.
 
 @itemize
 @item
-7.0 -- added options '--no-ignored', '--no-unknown', '--no-unchanged' and
-'--no-corresponding-renames'
+7.0 -- added options @option{--no-ignored}, @option{--no-unknown},
+@option{--no-unchanged} and @option{--no-corresponding-renames}
 @item
 6.0 -- converted to basic_io format (restriction support, various fixes)
 @item
@@ -6728,75 +6729,84 @@ change in future revisions, except that the first line will always be
 @code{path}.
 
 @table @option
-@item 'path'
-the file or directory path, relative to the workspace root. The file
+@item path
+The file or directory path, relative to the workspace root. The file
 either exists in the workspace, or is listed in the base or revision
 manifest.
+@option{path} is always output.
 
 @item old_type
-gives the type of the file in the base manifest. ``type'' is
-either @option{file}, @option{directory}, or @option{none}.
-@option{old_type} is output only if it is different from the type in
-the revision manifest or workspace.
+The type of the node in the base manifest.
+``type'' is either @option{file} or @option{directory}.
+@option{old_type} is output for all old nodes (i.e. unchanged or dropped paths
+and rename sources).
 
 @item new_type
-the type of the file in the revision manifest. @option{new_type} is
-output only if it is different from the type in the base manifest or
-workspace.
+The type of the node in the revision manifest.
+``type'' is either @option{file} or @option{directory}.
+@option{new_type} is output for all new nodes (i.e. unchanged or added paths
+and rename targets).
 
 @item fs_type
-the type of the file in the workspace (also called the filesystem).
+The type of the node in the workspace (also called the filesystem).
+``type'' is either @option{file}, @option{directory} or @option{none}
+(if the path does not exist in the file system).
 @option{fs_type} is always output.
 
 @item old_path
-the old path for the file, if it has been renamed in the revision
+The old path for the node, if it has been renamed in the revision
 manifest.
+@option{old_path} is only output for rename targets.
 
 @item new_path
-the new path for the file, if it has been renamed in the revision
+The new path for the node, if it has been renamed in the revision
 manifest.
+@option{new_path} is only output for rename sources.
 
 @item status
 @option{status} is always output. Its value is one or more of:
 
 @table @option
 @item rename_source
-the old name of a file that has been renamed.
+@var{path} is part of a rename and denotes the old name of a renamed node.
 
 @item rename_target
-the new name of a file that has been renamed.
+@var{path} is part of a rename and denotes the new name of a renamed node.
 
 @item added
-the file is new in the revision manifest (not in the base
-manifest).
+@var{path} has been added in the revision manifest, but not existent in the
+base manifest.
 
 @item dropped
-the file is deleted in the revision manifest and the workspace.
+@var{path} has been deleted in the revision manifest and the workspace.
 
 @item missing
-the file is deleted in the workspace but not the revision manifest.
+@var{path} has been deleted in the workspace, but still exists in the revision
+manifest.
 
 @item ignored
-the file is ignored by monotone.
+@var{path} is ignored by monotone.
 
 @item known
-the file exists in the workspace, and in the revision manifest.
+@var{path} exists in the workspace, and in the revision manifest.
 
 @item unknown
-the file exists in the workspace, but not in the revision manifest.
+@var{path} exists in the workspace, but not in the revision manifest, i.e.
+is unversioned.
 
 @item invalid
-the file exists in the workspace and revision manifest, but with
-different types (one is a directory, the other a file).
+@var{path} is versioned and exists in the workspace and revision manifest, but
+with incompatible types (a versioned missing file is replaced by an
+unversioned directory and vice versa).
 @end table
 
 @item changes
    @table @option
    @item content
-   the file contents have changed.
+   The contents of a file have been changed.
 
    @item attrs
-   the file attributes have changed.
+   The attributes of a path (file or directory) have been changed.
 
    @end table
 @end table
@@ -6895,18 +6905,15 @@ or invalid prints an error message to stderr and exits with status 1.
 
 none
 
-@item Added in:
+@item Changes:
 
-1.0
-
-@item Modifications:
-@table @strong
-@item 3.1
-
-Added the 'o' item to the recognized input. This change should not
+@itemize
+@item
+3.1 -- Added the 'o' item to the recognized input. This change should not
 break anything.
-
-@end table
+@item
+1.0 -- Initial version.
+@end itemize
 
 @item Purpose:
 

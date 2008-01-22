@@ -19,7 +19,7 @@ div.node hr
 		float: right;
 		height: 0;
 		width: 0;
-		padding: 0; 
+		padding: 0;
 		margin: 0;
 	}
 
@@ -28,7 +28,7 @@ div.node br
 		float: right;
 		height: 0;
 		width: 0;
-		padding: 0; 
+		padding: 0;
 		margin: 0;
 	}
 
@@ -37,7 +37,7 @@ div.node p
 		font-style: italic;
 		font-size: small;
 		margin: 0em;
-		padding: 0em;		
+		padding: 0em;
 		border-bottom: thin solid grey;
 	}
 
@@ -54,33 +54,37 @@ ul.menu li a
 
 span.command
 	{
-  		font-family: sans-serif;
+		font-family: sans-serif;
 		font-weight: bold;
 	}
 
 span.option
-	{ 
-  		font-family: sans-serif;
-		font-weight: bold;
-		font-style: italic;
+	{
+		font-family: monospace;
 	}
 
 span.file
-	{ 
-  		font-family: monospace;
+	{
+		font-family: monospace;
 		color: #aa00aa;
 	}
 
-dt 
-	{ 
+dl
+	{
+		margin-top: 0.5em;
+		margin-bottom: 0.5em;
+	}
+
+dt
+	{
 		background-color: #eeeeee;
 	}
 
-dd 
-	{ 
+dd
+	{
 		padding-top: 0.5em;
 		padding-bottom: 1.5em;
-		padding-left: 2em;	
+		padding-left: 2em;
 	}
 
 img
@@ -91,3 +95,4 @@ img
 		clear: both;
 		margin-right: auto;
 	}
+
