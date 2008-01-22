@@ -374,27 +374,15 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app.db));
-
-  // we jam through an "empty" selection on sel_ident type
-  set<string> completions;
-  //set<hexenc<id>> completions;
-  selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app.db);
-
-  asciik graph(std::cout, 10);
   set<revision_id> revs;
-  for (set<string>::const_iterator i = completions.begin();
-       i != completions.end(); ++i)
-    {
-      revision_id rid(*i);
-      revs.insert(rid);
-    }
+  complete(app, idx(args, 0)(), revs);
+
   vector<revision_id> sorted;
   toposort(revs, sorted, app.db);
-  vector<revision_id> curr_row;
   reverse(sorted.begin(), sorted.end());
+
+  asciik graph(std::cout, 10);
+
   for (vector<revision_id>::const_iterator rev = sorted.begin();
        rev != sorted.end(); ++rev)
     {

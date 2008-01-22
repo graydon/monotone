@@ -122,7 +122,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 
   revision_id revid;
 
-  complete(app.db, app.get_project(), idx(args, 0)(), revid);
+  complete(app, idx(args, 0)(), revid);
   N(app.db.revision_exists(revid),
     F("no such revision '%s'") % revid);
 

@@ -14,6 +14,7 @@
 #include <set>
 
 #include "commands.hh"
+#include "selectors.hh"
 #include "options.hh"
 #include "sanity.hh"
 
@@ -157,18 +158,6 @@ args_to_paths(args_vector const & args)
 std::string
 describe_revision(database & db, project_t & project,
                   revision_id const & id);
-
-void
-complete(database & db, project_t & project,
-         std::string const & str,
-         revision_id & completion,
-         bool must_exist=true);
-
-void
-complete(database & db,
-         std::string const & str,
-         std::set<revision_id> & completion,
-         bool must_exist=true);
 
 void
 notify_if_multiple_heads(project_t & project, branch_name const & branchname);

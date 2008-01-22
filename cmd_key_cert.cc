@@ -193,7 +193,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   transaction_guard guard(app.db);
 
   revision_id rid;
-  complete(app.db, app.get_project(), idx(args, 0)(), rid);
+  complete(app, idx(args, 0)(), rid);
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -224,9 +224,13 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
   if (args.size() < 4)
     throw usage(execid);
 
-  revision_id rid;
-  complete(app.db, app.get_project(), idx(args, 0)(), rid, false);
-  hexenc<id> ident(rid.inner());
+  set<revision_id> rids;
+  expand_selector(app, idx(args, 0)(), rids);
+  diagnose_ambiguous_expansion(app, idx(args, 0)(), rids);
+
+  hexenc<id> ident;
+  if (!rids.empty())
+    ident = rids.begin()->inner();
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -272,7 +276,7 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
     throw usage(execid);
 
   revision_id r;
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   cert_revision_tag(r, idx(args, 1)(), app.db);
 }
 
@@ -287,7 +291,7 @@ CMD(testresult, "testresult", "", CMD_REF(review),
     throw usage(execid);
 
   revision_id r;
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   cert_revision_testresult(r, idx(args, 1)(), app.db);
 }
 
@@ -301,7 +305,7 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
     throw usage(execid);
 
   revision_id r;
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
   app.get_project().put_revision_in_branch(r, app.opts.branchname);
@@ -316,7 +320,7 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
     throw usage(execid);
 
   revision_id r;
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
   app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
@@ -345,7 +349,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     F("empty comment"));
 
   revision_id r;
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   cert_revision_comment(r, comment, app.db);
 }
 

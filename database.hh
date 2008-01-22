@@ -24,7 +24,6 @@ int sqlite3_finalize(sqlite3_stmt *);
 #include "paths.hh"
 #include "cleanup.hh"
 #include "roster.hh"
-#include "selectors.hh"
 #include "graph.hh"
 
 // FIXME: would be better not to include this everywhere
@@ -533,11 +532,20 @@ public:
   void complete(std::string const & partial,
                 std::set< std::pair<key_id, utf8 > > & completions);
 
-  void complete(selectors::selector_type ty,
-                std::string const & partial,
-                std::vector<std::pair<selectors::selector_type,
-                                      std::string> > const & limit,
-                std::set<std::string> & completions);
+  //
+  // --== Revision selectors ==--
+  //
+public:
+  void select_parent(std::string const & partial,
+                     std::set<revision_id> & completions);
+  void select_cert(std::string const & certname,
+                   std::set<revision_id> & completions);
+  void select_cert(std::string const & certname, std::string const & certvalue,
+                   std::set<revision_id> & completions);
+  void select_author_tag_or_branch(std::string const & partial,
+                                   std::set<revision_id> & completions);
+  void select_date(std::string const & date, std::string const & comparison,
+                   std::set<revision_id> & completions);
 
   //
   // --== The 'db' family of top-level commands ==--
@@ -601,9 +609,6 @@ public:
                                revision_t const & rev);
 
   // FIXME: quick hack to make these hooks available via the database context
-  bool hook_exists(std::string const & name);
-  bool hook_expand_selector(std::string const & sel, std::string & exp);
-  bool hook_expand_date(std::string const & sel, std::string & exp);
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,

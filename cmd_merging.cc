@@ -190,8 +190,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app.db, app.get_project(),
-               app.opts.revision_selectors[0](), chosen_rid);
+      complete(app, app.opts.revision_selectors[0](), chosen_rid);
       N(app.db.revision_exists(chosen_rid),
         F("no such revision '%s'") % chosen_rid);
     }
@@ -695,7 +694,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app.db, app.get_project(), idx(args, 0)(), right_id);
+  complete(app, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -767,8 +766,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app.db, app.get_project(), idx(args, 0)(), left);
-  complete(app.db, app.get_project(), idx(args, 1)(), right);
+  complete(app, idx(args, 0)(), left);
+  complete(app, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -790,8 +789,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app.db, app.get_project(), idx(args,0)(), l_id);
-  complete(app.db, app.get_project(), idx(args,1)(), r_id);
+  complete(app, idx(args,0)(), l_id);
+  complete(app, idx(args,1)(), r_id);
   N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app.db),
@@ -857,8 +856,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
@@ -873,12 +871,10 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
       N(app.db.revision_exists(from_rid),
         F("no such revision '%s'") % from_rid);
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
       N(app.db.revision_exists(to_rid),
         F("no such revision '%s'") % to_rid);
     }
@@ -1115,7 +1111,7 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
   else if (args.size() == 1)
     {
       revision_id rid;
-      complete(app.db, app.get_project(), idx(args, 0)(), rid);
+      complete(app, idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }

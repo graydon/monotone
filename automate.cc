@@ -500,16 +500,10 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
+  set<revision_id> completions;
+  expand_selector(app, idx(args, 0)(), completions);
 
-  vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), db));
-
-  // we jam through an "empty" selection on sel_ident type
-  set<string> completions;
-  selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, db);
-
-  for (set<string>::const_iterator i = completions.begin();
+  for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     output << *i << '\n';
 }

@@ -296,7 +296,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
-  complete(app.db, app.get_project(), idx(args, 0)(), r);
+  complete(app, idx(args, 0)(), r);
   app.db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
@@ -561,7 +561,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, app.get_project(),
+      complete(app,
                idx(app.opts.revision_selectors, 0)(), revid);
       N(app.db.revision_exists(revid),
         F("no such revision '%s'") % revid);
@@ -1281,8 +1281,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 

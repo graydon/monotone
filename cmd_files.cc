@@ -168,8 +168,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
       N(!null_id(rid), 
         F("no revision for file '%s' in database") % file);
       N(app.db.revision_exists(rid), 
@@ -305,8 +304,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       rid = parent_id(parents.begin());
     }
   else
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
   dump_file(cout, app.db, rid, idx(args, 0));
 }
@@ -369,10 +367,8 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       rid = parent_id(parents.begin());
     }
   else
-    complete(db, app.get_project(),
-             idx(app.opts.revision_selectors, 0)(), rid);
+    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
 
-  // FIXME: again, dump_file should not take app arg
   dump_file(output, db, rid, idx(args, 0));
 }
 

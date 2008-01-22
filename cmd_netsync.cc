@@ -359,8 +359,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app.db, app.get_project(),
-               idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
       N(app.db.revision_exists(ident),
         F("no such revision '%s'") % ident);
 

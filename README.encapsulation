@@ -2,20 +2,11 @@ database.cc:
 
   __app is a member variable of class database, used by:
 
-  normal member functions:
-  database::complete()
-       __app->require_workspace()
-       __app->opts.branchname
-       __app->get_project()
-
   accessor hacks:
   __app->keys
     get_key_store()
 
   __app->lua ...
-    hook_exists()
-    hook_expand_selector()
-    hook_expand_date()
     hook_get_manifest_cert_trust()
     hook_get_revision_cert_trust()
     hook_get_author()

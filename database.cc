@@ -2856,245 +2856,95 @@ database::complete(string const & partial,
     completions.insert(make_pair(key_id(res[i][0]), utf8(res[i][1])));
 }
 
-using selectors::selector_type;
+// revision selectors
 
-static void selector_to_certname(selector_type ty,
-                                 cert_name & name,
-                                 string & prefix,
-                                 string & suffix)
+void
+database::select_parent(string const & partial,
+                        set<revision_id> & completions)
 {
-  prefix = suffix = "*";
-  switch (ty)
-    {
-    case selectors::sel_author:
-      prefix = suffix = "";
-      name = author_cert_name;
-      break;
-    case selectors::sel_branch:
-      prefix = suffix = "";
-      name = branch_cert_name;
-      break;
-    case selectors::sel_head:
-      prefix = suffix = "";
-      name = branch_cert_name;
-      break;
-    case selectors::sel_date:
-    case selectors::sel_later:
-    case selectors::sel_earlier:
-      name = date_cert_name;
-      break;
-    case selectors::sel_tag:
-      prefix = suffix = "";
-      name = tag_cert_name;
-      break;
-    case selectors::sel_ident:
-    case selectors::sel_cert:
-    case selectors::sel_unknown:
-    case selectors::sel_parent:
-      I(false); // don't do this.
-      break;
-    }
-}
-
-void database::complete(selector_type ty,
-                        string const & partial,
-                        vector<pair<selector_type, string> > const & limit,
-                        set<string> & completions)
-{
-  //L(FL("database::complete for partial '%s'") % partial);
+  results res;
   completions.clear();
 
-  // step 1: the limit is transformed into an SQL select statement which
-  // selects a set of IDs from the revision_certs table which match the
-  // limit.  this is done by building an SQL select statement for each term
-  // in the limit and then INTERSECTing them all.
+  string pattern = partial + "*";
 
-  query lim;
-  lim.sql_cmd = "(";
-  if (limit.empty())
-    {
-      lim.sql_cmd += "SELECT id FROM revision_certs";
-    }
-  else
-    {
-      bool first_limit = true;
-      for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
-           i != limit.end(); ++i)
-        {
-          if (first_limit)
-            first_limit = false;
-          else
-            lim.sql_cmd += " INTERSECT ";
+  fetch(res, 1, any_rows,
+        query("SELECT DISTINCT parent FROM revision_ancestry WHERE child GLOB ?")
+        % text(pattern));
 
-          if (i->first == selectors::sel_ident)
-            {
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id GLOB ?";
-              lim % text(i->second + "*");
-            }
-          else if (i->first == selectors::sel_parent)
-            {
-              lim.sql_cmd += "SELECT parent AS id FROM revision_ancestry WHERE child GLOB ?";
-              lim % text(i->second + "*"); 
-            }
-          else if (i->first == selectors::sel_cert)
-            {
-              if (i->second.length() > 0)
-                {
-                  size_t spot = i->second.find("=");
-
-                  if (spot != (size_t)-1)
-                    {
-                      string certname;
-                      string certvalue;
-
-                      certname = i->second.substr(0, spot);
-                      spot++;
-                      certvalue = i->second.substr(spot);
-                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                      lim % text(certname) % text(certvalue);
-                    }
-                  else
-                    {
-                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=?";
-                      lim % text(i->second);
-                    }
-
-                }
-            }
-          else if (i->first == selectors::sel_unknown)
-            {
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
-              lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
-              lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
-              lim % text(i->second + "*");
-            }
-          else if (i->first == selectors::sel_head)
-            {
-              // get branch names
-              set<branch_name> branch_names;
-              if (i->second.size() == 0)
-                {
-                  __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.insert(__app->opts.branchname);
-                }
-              else
-                {
-                  __app->get_project().get_branch_list(globish(i->second), branch_names, true);
-                }
-
-                L(FL("found %d matching branches") % branch_names.size());
-
-              // for each branch name, get the branch heads
-              set<revision_id> heads;
-              for (set<branch_name>::const_iterator bn = branch_names.begin();
-                   bn != branch_names.end(); bn++)
-                {
-                  set<revision_id> branch_heads;
-                  __app->get_project().get_branch_heads(*bn, branch_heads);
-                  heads.insert(branch_heads.begin(), branch_heads.end());
-                  L(FL("after get_branch_heads for %s, heads has %d entries") % (*bn) % heads.size());
-                }
-
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id IN (";
-              if (heads.size())
-                {
-                  set<revision_id>::const_iterator r = heads.begin();
-                  lim.sql_cmd += "?";
-                  lim % text(r->inner()());
-                  r++;
-                  while (r != heads.end())
-                    {
-                      lim.sql_cmd += ", ?";
-                      lim % text(r->inner()());
-                      r++;
-                    }
-                }
-              lim.sql_cmd += ") ";
-            }
-          else
-            {
-              cert_name certname;
-              string prefix;
-              string suffix;
-              selector_to_certname(i->first, certname, prefix, suffix);
-              L(FL("processing selector type %d with i->second '%s'") % ty % i->second);
-              if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
-                {
-                  __app->require_workspace("the empty branch selector b: refers to the current branch");
-                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
-                }
-              else
-                {
-                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
-                  lim % text(certname());
-                  switch (i->first)
-                    {
-                    case selectors::sel_earlier:
-                      lim.sql_cmd += "value <= ?";
-                      lim % blob(i->second);
-                      break;
-                    case selectors::sel_later:
-                      lim.sql_cmd += "value > ?";
-                      lim % blob(i->second);
-                      break;
-                    default:
-                      lim.sql_cmd += "CAST(value AS TEXT) glob ?";
-                      lim % text(prefix + i->second + suffix);
-                      break;
-                    }
-                }
-            }
-          //L(FL("found selector type %d, selecting_head is now %d") % i->first % selecting_head);
-        }
-    }
-  lim.sql_cmd += ")";
-
-  // step 2: depending on what we've been asked to disambiguate, we
-  // will complete either some idents, or cert values, or "unknown"
-  // which generally means "author, tag or branch"
-
-  if (ty == selectors::sel_ident || ty == selectors::sel_parent)
-    {
-      lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
-    }
-  else
-    {
-      string prefix = "*";
-      string suffix = "*";
-      lim.sql_cmd = "SELECT value FROM revision_certs WHERE";
-      if (ty == selectors::sel_unknown)
-        {
-          lim.sql_cmd += " (name=? OR name=? OR name=?)";
-          lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
-        }
-      else
-        {
-          cert_name certname;
-          selector_to_certname(ty, certname, prefix, suffix);
-          lim.sql_cmd += " (name=?)";
-          lim % text(certname());
-        }
-
-      lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";
-      lim % text(prefix + partial + suffix);
-    }
-
-  results res;
-  fetch(res, one_col, any_rows, lim);
   for (size_t i = 0; i < res.size(); ++i)
-    {
-      if (ty == selectors::sel_ident)
-        completions.insert(res[i][0]);
-      else
-        {
-          data row_decoded(res[i][0]);
-          completions.insert(row_decoded());
-        }
-    }
+    completions.insert(revision_id(res[i][0]));
 }
 
+void
+database::select_cert(string const & certname,
+                      set<revision_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 1, any_rows,
+        query("SELECT DISTINCT id FROM revision_certs WHERE name = ?")
+        % text(certname));
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(revision_id(res[i][0]));
+}
+
+void
+database::select_cert(string const & certname, string const & certvalue,
+                      set<revision_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  fetch(res, 1, any_rows,
+        query("SELECT DISTINCT id FROM revision_certs"
+              " WHERE name = ? AND CAST(value AS TEXT) GLOB ?")
+        % text(certname) % text(certvalue));
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(revision_id(res[i][0]));
+}
+
+void
+database::select_author_tag_or_branch(string const & partial,
+                                      set<revision_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  string pattern = partial + "*";
+
+  fetch(res, 1, any_rows,
+        query("SELECT DISTINCT id FROM revision_certs"
+              " WHERE (name=? OR name=? OR name=?)"
+              " AND CAST(value AS TEXT) GLOB ?")
+        % text(author_cert_name()) % text(tag_cert_name())
+        % text(branch_cert_name()) % text(pattern));
+
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(revision_id(res[i][0]));
+}
+
+void
+database::select_date(string const & date, string const & comparison,
+                      set<revision_id> & completions)
+{
+  results res;
+  completions.clear();
+
+  query q;
+  q.sql_cmd = ("SELECT DISTINCT id FROM revision_certs "
+               "WHERE name = ? AND CAST(value AS TEXT) ");
+  q.sql_cmd += comparison;
+  q.sql_cmd += " ?";
+
+  fetch(res, 1, any_rows,
+        q % text(date_cert_name()) % text(date));
+  for (size_t i = 0; i < res.size(); ++i)
+    completions.insert(revision_id(res[i][0]));
+}
+                      
 // epochs
 
 void
@@ -3514,24 +3364,6 @@ database::close()
 }
 
 // FIXME: the quick hack lua link in functions
-bool
-database::hook_exists(std::string const & name)
-{
-  return __app->lua.hook_exists(name);
-}
-
-bool
-database::hook_expand_selector(std::string const & sel, std::string & exp)
-{
-  return __app->lua.hook_expand_selector(sel, exp);
-};
-
-bool
-database::hook_expand_date(std::string const & sel, std::string & exp)
-{
-  return __app->lua.hook_expand_date(sel, exp);
-};
-
 bool
 database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val)
