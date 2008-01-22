@@ -116,7 +116,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -168,7 +168,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -217,7 +217,7 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       revs.insert(rid);
     }
   erase_ancestors(revs, db);
@@ -246,7 +246,7 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       revs.insert(rid);
     }
   vector<revision_id> sorted;
@@ -287,11 +287,11 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
   set<revision_id> bs;
   args_vector::const_iterator i = args.begin();
   a = revision_id((*i)());
-  N(db.revision_exists(a), F("No such revision %s") % a);
+  N(db.revision_exists(a), F("no such revision '%s'") % a);
   for (++i; i != args.end(); ++i)
     {
       revision_id b((*i)());
-      N(db.revision_exists(b), F("No such revision %s") % b);
+      N(db.revision_exists(b), F("no such revision '%s'") % b);
       bs.insert(b);
     }
   set<revision_id> ancestors;
@@ -384,7 +384,7 @@ CMD_AUTOMATE(parents, N_("REV"),
   CMD_REQUIRES_DATABASE(app);
 
   revision_id rid(idx(args, 0)());
-  N(db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   set<revision_id> parents;
   db.get_revision_parents(rid, parents);
   for (set<revision_id>::const_iterator i = parents.begin();
@@ -414,7 +414,7 @@ CMD_AUTOMATE(children, N_("REV"),
   CMD_REQUIRES_DATABASE(app);
 
   revision_id rid(idx(args, 0)());
-  N(db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   set<revision_id> children;
   db.get_revision_children(rid, children);
   for (set<revision_id>::const_iterator i = children.begin();
@@ -1397,7 +1397,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       ancestors.clear();
       ancestors.insert(rid);
       frontier.push_back(rid);

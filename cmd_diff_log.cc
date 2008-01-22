@@ -397,8 +397,6 @@ prepare_diff(cset & included,
       revision_id r_old_id;
 
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
 
       app.db.get_roster(r_old_id, old_roster);
       app.work.get_current_roster_shape(new_roster, nis);
@@ -426,11 +424,6 @@ prepare_diff(cset & included,
 
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
-
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
-      N(app.db.revision_exists(r_new_id),
-        F("no such revision '%s'") % r_new_id);
 
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);

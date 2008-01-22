@@ -606,10 +606,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app,
-               idx(app.opts.revision_selectors, 0)(), revid);
-      N(app.db.revision_exists(revid),
-        F("no such revision '%s'") % revid);
+      complete(app, idx(app.opts.revision_selectors, 0)(), revid);
 
       guess_branch(revid, app.db, app.get_project());
 
@@ -1327,8 +1324,6 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
     {
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
 
       guess_branch(ident, app.db, app.get_project());
 

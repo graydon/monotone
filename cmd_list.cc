@@ -676,7 +676,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   transaction_guard guard(db, false);
 
   revision_id rid(idx(args, 0)());
-  N(db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;

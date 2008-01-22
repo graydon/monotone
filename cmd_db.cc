@@ -123,8 +123,6 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   revision_id revid;
 
   complete(app, idx(args, 0)(), revid);
-  N(app.db.revision_exists(revid),
-    F("no such revision '%s'") % revid);
 
   // Check that the revision does not have any children
   std::set<revision_id> children;
@@ -398,7 +396,7 @@ CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
   if (args.size() != 1)
     throw usage(execid);
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
   rev_height height;
   app.db.get_rev_height(rid, height);
   P(F("cached height: %s") % height);

@@ -191,8 +191,6 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   else
     {
       complete(app, app.opts.revision_selectors[0](), chosen_rid);
-      N(app.db.revision_exists(chosen_rid),
-        F("no such revision '%s'") % chosen_rid);
     }
   I(!null_id(chosen_rid));
 
@@ -857,8 +855,6 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   if (app.opts.revision_selectors.size() == 1)
     {
       complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
-      N(app.db.revision_exists(to_rid),
-        F("no such revision '%s'") % to_rid);
       std::set<revision_id> parents;
       app.db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -872,11 +868,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   else if (app.opts.revision_selectors.size() == 2)
     {
       complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
-      N(app.db.revision_exists(from_rid),
-        F("no such revision '%s'") % from_rid);
       complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
-      N(app.db.revision_exists(to_rid),
-        F("no such revision '%s'") % to_rid);
     }
   else
     throw usage(execid);

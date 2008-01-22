@@ -169,11 +169,6 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
   else
     {
       complete(app, idx(app.opts.revision_selectors, 0)(), rid);
-      N(!null_id(rid), 
-        F("no revision for file '%s' in database") % file);
-      N(app.db.revision_exists(rid), 
-        F("no such revision '%s'") % rid);
-
       app.db.get_roster(rid, roster);
     }
 

@@ -360,11 +360,8 @@ CMD(clone, "clone", "", CMD_REF(network),
     {
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
 
       guess_branch(ident, app.db, app.get_project());
-
       I(!app.opts.branchname().empty());
 
       N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
