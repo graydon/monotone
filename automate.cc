@@ -546,7 +546,8 @@ typedef std::map<file_path, inventory_item> inventory_map;
 static void
 inventory_rosters(roster_t const & old_roster,
                   roster_t const & new_roster,
-                  node_restriction const & mask,
+                  node_restriction const & nmask,
+                  path_restriction const & pmask,
                   inventory_map & inventory)
 {
   std::map<int, file_path> old_paths;
@@ -555,24 +556,30 @@ inventory_rosters(roster_t const & old_roster,
   node_map const & old_nodes = old_roster.all_nodes();
   for (node_map::const_iterator i = old_nodes.begin(); i != old_nodes.end(); ++i)
     {
-      if (mask.includes(old_roster, i->first))
+      if (nmask.includes(old_roster, i->first))
         {
           file_path fp;
           old_roster.get_name(i->first, fp);
-          get_node_info(old_roster.get_node(i->first), inventory[fp].old_node);
-          old_paths[inventory[fp].old_node.id] = fp;
+          if (pmask.includes(fp))
+            {
+              get_node_info(old_roster.get_node(i->first), inventory[fp].old_node);
+              old_paths[inventory[fp].old_node.id] = fp;
+            }
         }
     }
 
   node_map const & new_nodes = new_roster.all_nodes();
   for (node_map::const_iterator i = new_nodes.begin(); i != new_nodes.end(); ++i)
     {
-      if (mask.includes(new_roster, i->first))
+      if (nmask.includes(new_roster, i->first))
         {
           file_path fp;
           new_roster.get_name(i->first, fp);
-          get_node_info(new_roster.get_node(i->first), inventory[fp].new_node);
-          new_paths[inventory[fp].new_node.id] = fp;
+          if (pmask.includes(fp))
+            {
+              get_node_info(new_roster.get_node(i->first), inventory[fp].new_node);
+              new_paths[inventory[fp].new_node.id] = fp;
+            }
         }
     }
 
@@ -584,10 +591,10 @@ inventory_rosters(roster_t const & old_roster,
           // There is no new node available; this is either a drop or a
           // rename to outside the current path restriction.
 
-          if (new_roster.has_node (i->first))
+          if (new_roster.has_node(i->first))
             {
               // record rename to outside restriction
-              new_roster.get_name (i->first, inventory[i->second].new_path);
+              new_roster.get_name(i->first, inventory[i->second].new_path);
               continue;
             }
           else
@@ -617,10 +624,10 @@ inventory_rosters(roster_t const & old_roster,
           // There is no old node available; this is either added or a
           // rename from outside the current path restriction.
 
-          if (old_roster.has_node (i->first))
+          if (old_roster.has_node(i->first))
             {
               // record rename from outside restriction
-              old_roster.get_name (i->first, inventory[i->second].old_path);
+              old_roster.get_name(i->first, inventory[i->second].old_path);
             }
           else
             // added; no old path
@@ -634,14 +641,14 @@ inventory_rosters(roster_t const & old_roster,
 // paths as well, so the tree walker code will correctly identify them later
 // on or skips them if they should be excluded
 static void
-inventory_expand_paths(roster_t const & old_roster,
-                       roster_t const & new_roster,
-                       node_restriction const & mask,
-                       vector<file_path> & includes,
-                       vector<file_path> & excludes)
+inventory_determine_corresponding_paths(roster_t const & old_roster,
+                                        roster_t const & new_roster,
+                                        vector<file_path> const & includes,
+                                        vector<file_path> const & excludes,
+                                        vector<file_path> & additional_includes,
+                                        vector<file_path> & additional_excludes)
 {
   // at first check the includes vector
-  vector<file_path> new_includes;
   for (int i=0, s=includes.size(); i<s; i++)
     {
       file_path fp = includes.at(i);
@@ -656,7 +663,7 @@ inventory_expand_paths(roster_t const & old_roster,
               if (fp != new_path &&
                   find(includes.begin(), includes.end(), new_path) == includes.end())
                 {
-                  new_includes.push_back(new_path);
+                  additional_includes.push_back(new_path);
                 }
             }
         }
@@ -671,14 +678,11 @@ inventory_expand_paths(roster_t const & old_roster,
               if (fp != old_path &&
                   find(includes.begin(), includes.end(), old_path) == includes.end())
                 {
-                  new_includes.push_back(old_path);
+                  additional_includes.push_back(old_path);
                 }
             }
         }
     }
-
-  copy(new_includes.begin(), new_includes.end(),
-       inserter(includes, includes.end()));
 
   // and now the excludes vector
   vector<file_path> new_excludes;
@@ -696,7 +700,7 @@ inventory_expand_paths(roster_t const & old_roster,
               if (fp != new_path &&
                   find(excludes.begin(), excludes.end(), new_path) == excludes.end())
                 {
-                  new_excludes.push_back(new_path);
+                  additional_excludes.push_back(new_path);
                 }
             }
         }
@@ -711,14 +715,11 @@ inventory_expand_paths(roster_t const & old_roster,
               if (fp != old_path &&
                   find(excludes.begin(), excludes.end(), old_path) == excludes.end())
                 {
-                  new_excludes.push_back(old_path);
+                  additional_excludes.push_back(old_path);
                 }
             }
         }
     }
-
-    copy(new_excludes.begin(), new_excludes.end(),
-        inserter(excludes, excludes.end()));
 }
 
 struct inventory_itemizer : public tree_walker
@@ -948,7 +949,8 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              options::opts::exclude |
              options::opts::no_ignored |
              options::opts::no_unknown |
-             options::opts::no_unchanged)
+             options::opts::no_unchanged |
+             options::opts::no_corresponding_renames)
 {
   app.require_workspace();
 
@@ -969,17 +971,27 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   vector<file_path> includes = args_to_paths(args);
   vector<file_path> excludes = args_to_paths(app.opts.exclude_patterns);
 
+  if (!app.opts.no_corresponding_renames)
+    {
+      vector<file_path> add_includes, add_excludes;
+      inventory_determine_corresponding_paths(old_roster, new_roster,
+                                              includes, excludes,
+                                              add_includes, add_excludes);
+
+      copy(add_includes.begin(), add_includes.end(),
+           inserter(includes, includes.end()));
+
+      copy(add_excludes.begin(), add_excludes.end(),
+           inserter(excludes, excludes.end()));
+    }
+
   node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
-  inventory_rosters(old_roster, new_roster, nmask, inventory);
-
-  // ensure that the include/exclude paths contain the corresponding paths
-  // for the old/new roster items if restricted to such
-  inventory_expand_paths(old_roster, new_roster, nmask, includes, excludes);
-
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
   // of them anyways
   path_restriction pmask(includes, excludes, app.opts.depth, app, path_restriction::skip_check);
+
+  inventory_rosters(old_roster, new_roster, nmask, pmask, inventory);
   inventory_filesystem(pmask, inventory, app);
 
   basic_io::printer pr;
@@ -1007,8 +1019,18 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       vector<string> changes;
       inventory_determine_changes(item, old_roster, changes);
 
-      bool is_known = find(states.begin(), states.end(), "known") != states.end();
-      if (is_known && changes.empty() && app.opts.no_unchanged)
+      bool is_tracked =
+        find(states.begin(), states.end(), "unknown") == states.end() &&
+        find(states.begin(), states.end(), "ignored") == states.end();
+
+      bool has_changed =
+        find(states.begin(), states.end(), "rename_source") != states.end() ||
+        find(states.begin(), states.end(), "rename_target") != states.end() ||
+        find(states.begin(), states.end(), "added")         != states.end() ||
+        find(states.begin(), states.end(), "dropped")       != states.end() ||
+        !changes.empty();
+
+      if (is_tracked && !has_changed && app.opts.no_unchanged)
         continue;
 
       //
