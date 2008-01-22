@@ -217,7 +217,19 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   // to get a cset that gets us back to the restricted roster
   // from the current workspace roster
 
+  // the intermediate paths record the paths of all directory nodes
+  // paths we reverted on the fly for descendant nodes below them.
+  // if a children of such a directory node should be recreated, we use
+  // this recorded path here instead of just
+  //  a) the node's old name, which could eventually be wrong if the parent
+  //     path is a rename_target (i.e. a new path), see the
+  //     "revert_drop_not_rename" test
+  //  b) the parent node's new name + the basename of the old name,
+  //     which may be wrong as well in case of a more complex pivot_rename
+
+  std::map<node_id, file_path> intermediate_paths;
   node_map const & nodes = old_roster.all_nodes();
+
   for (node_map::const_iterator i = nodes.begin();
        i != nodes.end(); ++i)
     {
@@ -230,40 +242,73 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       if (!mask.includes(old_roster, nid))
         continue;
 
-      file_path fp;
-      old_roster.get_name(nid, fp);
+      file_path old_path, new_path, old_parent, new_parent;;
+      path_component base;
+
+      old_roster.get_name(nid, old_path);
+      old_path.dirname_basename(old_parent, base);
+
+      // if we recorded the parent node in this rename already
+      // use the intermediate path (i.e. the new new_path after this
+      // action) as target path for the reverted item)
+      const std::map<node_id, file_path>::iterator it =
+        intermediate_paths.find(node->parent);
+      if (it != intermediate_paths.end())
+      {
+          new_path = it->second / base;
+      }
+      else
+      {
+          if (old_roster.is_root(node->parent))
+          {
+            new_path = file_path() / base;
+          }
+          else
+          {
+            new_roster.get_name(node->parent, new_parent);
+            new_path = new_parent / base;
+          }
+      }
 
       if (is_file_t(node))
         {
           file_t f = downcast_to_file_t(node);
-          if (file_exists(fp))
+          if (file_exists(new_path))
             {
               hexenc<id> ident;
-              calculate_ident(fp, ident);
+              calculate_ident(new_path, ident);
               // don't touch unchanged files
               if (ident == f->content.inner())
                 continue;
+              else
+                L(FL("skipping unchanged %s") % new_path);
             }
 
-          P(F("reverting %s") % fp);
-          L(FL("reverting %s to [%s]") % fp % f->content);
+          P(F("reverting %s") % new_path);
+          L(FL("reverting %s to [%s]") % new_path % f->content);
 
           N(app.db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
-            % f->content % fp);
+            % f->content % new_path);
 
           file_data dat;
           L(FL("writing file %s to %s")
-            % f->content % fp);
+            % f->content % new_path);
           app.db.get_file_version(f->content, dat);
-          write_data(fp, dat.inner());
+          write_data(new_path, dat.inner());
         }
       else
         {
-          if (!directory_exists(fp))
+          intermediate_paths.insert(std::pair<node_id, file_path>(nid, new_path));
+
+          if (!directory_exists(new_path))
             {
-              P(F("recreating %s/") % fp);
-              mkdir_p(fp);
+              P(F("recreating %s/") % new_path);
+              mkdir_p(new_path);
+            }
+          else
+            {
+              L(FL("skipping existing %s/") % new_path);
             }
         }
     }
@@ -467,8 +512,8 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
   //cases for more than one source item.
   if (src_paths.size() == 1 && dstr()[dstr().size() -1] == '/')
     if (get_path_status(*src_paths.begin()) != path::directory)
-	    N(get_path_status(dst_path) == path::directory,
-	      F(_("The specified target directory %s/ doesn't exist.")) % dst_path);
+        N(get_path_status(dst_path) == path::directory,
+          F(_("The specified target directory %s/ doesn't exist.")) % dst_path);
 
   app.work.perform_rename(src_paths, dst_path, app.opts.bookkeep_only);
 }
