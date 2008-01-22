@@ -802,20 +802,11 @@ namespace
   }
 }
 
-// Set state information for fs_path in 'st', 'ignored', 'unknown', and
-// 'unchanged'.
 static void
-inventory_print_states(app_state & app, file_path const & fs_path,
-                       inventory_item const & item, roster_t const & old_roster,
-                       roster_t const & new_roster, basic_io::stanza & st,
-                       bool & ignored, bool & unknown, bool & unchanged)
+inventory_determine_states(app_state & app, file_path const & fs_path,
+                           inventory_item const & item, roster_t const & old_roster,
+                           roster_t const & new_roster, vector<string> & states)
 {
-  std::vector<std::string> states;
-
-  ignored = false;
-  unknown = false;
-  unchanged = false;
-
   // if both nodes exist, the only interesting case is
   // when the node ids aren't equal (so we have different nodes
   // with one and the same path in the old and the new roster)
@@ -865,37 +856,31 @@ inventory_print_states(app_state & app, file_path const & fs_path,
           if (app.lua.hook_ignore_file(fs_path))
             {
               states.push_back("ignored");
-              ignored = true;
             }
           else
             {
               states.push_back("unknown");
-              unknown = true;
             }
         }
       else if (item.new_node.type != item.fs_type)
-        states.push_back("invalid");
+        {
+          states.push_back("invalid");
+        }
       else
         {
           states.push_back("known");
-          unchanged = true;
         }
     }
-
-  st.push_str_multi(syms::status, states);
 }
 
-// Update state information for item in 'st' and 'unchanged'.
 static void
-inventory_print_changes(inventory_item const & item, roster_t const & old_roster,
-                        basic_io::stanza & st, bool & unchanged)
+inventory_determine_changes(inventory_item const & item, roster_t const & old_roster,
+                            vector<string> & changes)
 {
   // old nodes do not have any recorded content changes and attributes,
   // so we can't print anything for them here
   if (!item.new_node.exists)
     return;
-
-  std::vector<string> changes;
 
   // this is an existing item
   if (old_roster.has_node(item.new_node.id))
@@ -940,12 +925,6 @@ inventory_print_changes(inventory_item const & item, roster_t const & old_roster
 
       if (item.new_node.attrs.size() > 0)
         changes.push_back("attrs");
-    }
-
-  if (!changes.empty())
-    {
-      st.push_str_multi(syms::changes, changes);
-      unchanged = false;
     }
 }
 
@@ -1008,11 +987,35 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   for (inventory_map::const_iterator i = inventory.begin(); i != inventory.end();
        ++i)
     {
-      bool ignored, unknown, unchanged;
-      basic_io::stanza st;
+      file_path const & fp = i->first;
       inventory_item const & item = i->second;
 
-      st.push_file_pair(syms::path, i->first);
+      //
+      // check if we should output this element at all
+      //
+      vector<string> states;
+      inventory_determine_states(app, fp, item, old_roster, new_roster, states);
+
+      if (find(states.begin(), states.end(), "ignored") != states.end() &&
+          app.opts.no_ignored)
+        continue;
+
+      if (find(states.begin(), states.end(), "unknown") != states.end() &&
+          app.opts.no_unknown)
+        continue;
+
+      vector<string> changes;
+      inventory_determine_changes(item, old_roster, changes);
+
+      bool is_known = find(states.begin(), states.end(), "known") != states.end();
+      if (is_known && changes.empty() && app.opts.no_unchanged)
+        continue;
+
+      //
+      // begin building the output stanza
+      //
+      basic_io::stanza st;
+      st.push_file_pair(syms::path, fp);
 
       if (item.old_node.exists)
         {
@@ -1024,8 +1027,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
             }
 
           if (item.new_path.as_internal().length() > 0)
-            // new_path is only present if different from either inventory map path or old_path
-            st.push_file_pair(syms::new_path, item.new_path);
+            {
+              st.push_file_pair(syms::new_path, item.new_path);
+            }
         }
 
       if (item.new_node.exists)
@@ -1038,7 +1042,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
             }
 
           if (item.old_path.as_internal().length() > 0)
-            st.push_file_pair(syms::old_path, item.old_path);
+            {
+              st.push_file_pair(syms::old_path, item.old_path);
+            }
         }
 
       switch (item.fs_type)
@@ -1048,18 +1054,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         case path::nonexistent: st.push_str_pair(syms::fs_type, "none"); break;
         }
 
-      inventory_print_states(app, i->first, item, old_roster, new_roster, st, ignored, unknown, unchanged);
+      //
+      // finally output the previously recorded states and changes
+      //
+      I(!states.empty());
+      st.push_str_multi(syms::status, states);
 
-      if (ignored && app.opts.no_ignored)
-        continue;
-
-      if (unknown && app.opts.no_unknown)
-        continue;
-
-      inventory_print_changes(item, old_roster, st, unchanged);
-
-      if (unchanged && app.opts.no_unchanged)
-        continue;
+      if (!changes.empty())
+        st.push_str_multi(syms::changes, changes);
 
       pr.print_stanza(st);
     }
