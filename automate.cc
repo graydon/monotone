@@ -629,6 +629,98 @@ inventory_rosters(roster_t const & old_roster,
     }
 }
 
+// check if the include/exclude paths contains paths to renamed nodes
+// if yes, add the corresponding old/new name of these nodes to the
+// paths as well, so the tree walker code will correctly identify them later
+// on or skips them if they should be excluded
+static void
+inventory_expand_paths(roster_t const & old_roster,
+                       roster_t const & new_roster,
+                       node_restriction const & mask,
+                       vector<file_path> & includes,
+                       vector<file_path> & excludes)
+{
+  // at first check the includes vector
+  vector<file_path> new_includes;
+  for (int i=0, s=includes.size(); i<s; i++)
+    {
+      file_path fp = includes.at(i);
+
+      if (old_roster.has_node(fp))
+        {
+          node_t node = old_roster.get_node(fp);
+          if (new_roster.has_node(node->self))
+            {
+              file_path new_path;
+              new_roster.get_name(node->self, new_path);
+              if (fp != new_path &&
+                  find(includes.begin(), includes.end(), new_path) == includes.end())
+                {
+                  new_includes.push_back(new_path);
+                }
+            }
+        }
+
+      if (new_roster.has_node(fp))
+        {
+          node_t node = new_roster.get_node(fp);
+          if (old_roster.has_node(node->self))
+            {
+              file_path old_path;
+              old_roster.get_name(node->self, old_path);
+              if (fp != old_path &&
+                  find(includes.begin(), includes.end(), old_path) == includes.end())
+                {
+                  new_includes.push_back(old_path);
+                }
+            }
+        }
+    }
+
+  copy(new_includes.begin(), new_includes.end(),
+       inserter(includes, includes.end()));
+
+  // and now the excludes vector
+  vector<file_path> new_excludes;
+  for (int i=0, s=excludes.size(); i<s; i++)
+    {
+      file_path fp = excludes.at(i);
+
+      if (old_roster.has_node(fp))
+        {
+          node_t node = old_roster.get_node(fp);
+          if (new_roster.has_node(node->self))
+            {
+              file_path new_path;
+              new_roster.get_name(node->self, new_path);
+              if (fp != new_path &&
+                  find(excludes.begin(), excludes.end(), new_path) == excludes.end())
+                {
+                  new_excludes.push_back(new_path);
+                }
+            }
+        }
+
+      if (new_roster.has_node(fp))
+        {
+          node_t node = new_roster.get_node(fp);
+          if (old_roster.has_node(node->self))
+            {
+              file_path old_path;
+              old_roster.get_name(node->self, old_path);
+              if (fp != old_path &&
+                  find(excludes.begin(), excludes.end(), old_path) == excludes.end())
+                {
+                  new_excludes.push_back(old_path);
+                }
+            }
+        }
+    }
+
+    copy(new_excludes.begin(), new_excludes.end(),
+        inserter(excludes, excludes.end()));
+}
+
 struct inventory_itemizer : public tree_walker
 {
   path_restriction const & mask;
@@ -900,6 +992,10 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
   node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
   inventory_rosters(old_roster, new_roster, nmask, inventory);
+
+  // ensure that the include/exclude paths contain the corresponding paths
+  // for the old/new roster items if restricted to such
+  inventory_expand_paths(old_roster, new_roster, nmask, includes, excludes);
 
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
