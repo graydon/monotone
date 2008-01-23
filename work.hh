@@ -65,6 +65,7 @@ class path_restriction;
 class node_restriction;
 struct content_merge_adaptor;
 class lua_hooks;
+class database;
 
 struct workspace
 {
@@ -75,31 +76,38 @@ struct workspace
   void find_unknown_and_ignored(path_restriction const & mask,
                                 std::vector<file_path> const & roots,
                                 std::set<file_path> & unknown,
-                                std::set<file_path> & ignored);
+                                std::set<file_path> & ignored,
+				database & db);
 
   void perform_additions(std::set<file_path> const & targets,
+			 database & db,
                          bool recursive = false,
                          bool respect_ignore = true);
 
-  void perform_deletions(std::set<file_path> const & targets, bool recursive, 
+  void perform_deletions(std::set<file_path> const & targets,
+			 database & db,
+			 bool recursive, 
                          bool bookkeep_only);
 
   void perform_rename(std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
+                      database & db,
                       bool bookkeep_only);
 
   void perform_pivot_root(file_path const & new_root,
                           file_path const & put_old,
+                          database & db,
                           bool bookkeep_only);
 
   void perform_content_update(cset const & cs,
                               content_merge_adaptor const & ca,
+                              database & db,
                               bool messages = true);
 
-  void update_any_attrs();
+  void update_any_attrs(database & db);
   void init_attributes(file_path const & path, editable_roster_base & er);
 
-  bool has_changes();
+  bool has_changes(database & db);
 
   // write out a new (partial) revision describing the current workspace;
   // the important pieces of this are the base revision id and the "shape"
@@ -118,12 +126,13 @@ struct workspace
   // hashes, call update_current_roster_from_filesystem on the result of
   // this function.  Under almost all conditions, NIS should be a
   // temp_node_id_source.
-  void get_current_roster_shape(roster_t & ros, node_id_source & nis);
+  void get_current_roster_shape(roster_t & ros,
+                                database & db, node_id_source & nis);
 
   // This returns a map whose keys are revision_ids and whose values are
   // rosters, there being one such pair for each parent of the current
   // revision.
-  void get_parent_rosters(parent_map & parents);
+  void get_parent_rosters(parent_map & parents, database & db);
 
   // This updates the file-content hashes in ROSTER, which is assumed to be
   // the "current" roster returned by one of the above get_*_roster_shape
@@ -194,7 +203,7 @@ struct workspace
   void write_inodeprints(data const & dat);
 
   void enable_inodeprints();
-  void maybe_update_inodeprints();
+  void maybe_update_inodeprints(database &);
 
   // the 'ignore file', .mtn-ignore in the root of the workspace, contains a
   // set of regular expressions that match pathnames.  any file or directory
@@ -203,11 +212,10 @@ struct workspace
   bool ignore_file(file_path const & path);
 
   // constructor and locals.
-  workspace(database & db, lua_hooks & lua)
-    : db(db), lua(lua)
+  workspace(lua_hooks & lua)
+    : lua(lua)
   {}
 private:
-  database & db;
   lua_hooks & lua;
 };
 

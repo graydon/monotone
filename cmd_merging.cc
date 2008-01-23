@@ -154,7 +154,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 
   // Figure out where we are
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
 
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
@@ -245,7 +245,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
 
   MM(*working_roster);
-  app.work.get_current_roster_shape(*working_roster, nis);
+  app.work.get_current_roster_shape(*working_roster, app.db, nis);
   app.work.update_current_roster_from_filesystem(*working_roster);
 
   revision_t working_rev;
@@ -284,7 +284,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   // Now finally modify the workspace
   cset update;
   make_cset(*working_roster, merged_roster, update);
-  app.work.perform_content_update(update, wca);
+  app.work.perform_content_update(update, wca, app.db);
 
   revision_t remaining;
   make_revision_for_workspace(chosen_rid, chosen_roster,
@@ -292,8 +292,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 
   // small race condition here...
   app.work.put_work_rev(remaining);
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
 
   if (!app.opts.branchname().empty())
     app.make_branch_sticky();
@@ -672,12 +672,12 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   {
     parent_map parents;
-    app.work.get_parent_rosters(parents);
+    app.work.get_parent_rosters(parents, app.db);
     N(parents.size() == 1,
       F("this command can only be used in a single-parent workspace"));
 
     temp_node_id_source nis;
-    app.work.get_current_roster_shape(*working_roster, nis);
+    app.work.get_current_roster_shape(*working_roster, app.db, nis);
     app.work.update_current_roster_from_filesystem(*working_roster);
 
     N(parent_roster(parents.begin()) == *working_roster,
@@ -741,10 +741,10 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   make_cset(*left.first, merge_result.roster, update);
 
   // small race condition here...
-  app.work.perform_content_update(update, wca);
+  app.work.perform_content_update(update, wca, app.db);
   app.work.put_work_rev(merged_rev);
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
 
   P(F("updated to result of merge\n"
       " [left] %s\n"
@@ -914,7 +914,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // Get the WORKING roster
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
   MM(*working_roster);
-  app.work.get_current_roster_shape(*working_roster, nis);
+  app.work.get_current_roster_shape(*working_roster, app.db, nis);
 
   app.work.update_current_roster_from_filesystem(*working_roster);
 
@@ -947,7 +947,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   }
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
 
   revision_t working_rev;
   revision_id working_rid;
@@ -987,7 +987,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   MM(update);
   make_cset(*working_roster, merged_roster, update);
   E(!update.empty(), F("no changes were applied"));
-  app.work.perform_content_update(update, wca);
+  app.work.perform_content_update(update, wca, app.db);
 
   P(F("applied changes to workspace"));
 
@@ -998,7 +998,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 
   // small race condition here...
   app.work.put_work_rev(remaining);
-  app.work.update_any_attrs();
+  app.work.update_any_attrs(app.db);
 
   // add a note to the user log file about what we did
   {
@@ -1060,8 +1060,8 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
       revision_id rid(fake_id());
 
       app.require_workspace();
-      app.work.get_parent_rosters(parents);
-      app.work.get_current_roster_shape(roster, nis);
+      app.work.get_parent_rosters(parents, app.db);
+      app.work.get_current_roster_shape(roster, app.db, nis);
       app.work.update_current_roster_from_filesystem(roster);
 
       if (parents.size() == 0)

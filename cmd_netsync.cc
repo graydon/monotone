@@ -384,10 +384,10 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   content_merge_checkout_adaptor wca(app.db);
 
-  app.work.perform_content_update(checkout, wca, false);
+  app.work.perform_content_update(checkout, wca, app.db, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
   guard.commit();
   remove_on_fail.commit();
 }

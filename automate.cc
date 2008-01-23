@@ -903,7 +903,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents, app.db);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
   // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
@@ -913,7 +913,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
 
-  work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, app.db, nis);
 
   inventory_map inventory;
   vector<file_path> includes = args_to_paths(args);
@@ -1075,8 +1075,8 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
       parent_map old_rosters;
       revision_t rev;
 
-      work.get_parent_rosters(old_rosters);
-      work.get_current_roster_shape(new_roster, nis);
+      work.get_parent_rosters(old_rosters, db);
+      work.get_current_roster_shape(new_roster, db, nis);
       work.update_current_roster_from_filesystem(new_roster);
 
       make_revision(old_rosters, new_roster, rev);
@@ -1113,7 +1113,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents, app.db);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -1138,6 +1138,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
     F("no arguments needed"));
 
   CMD_REQUIRES_WORKSPACE(app);
+  CMD_REQUIRES_DATABASE(app);
 
   parent_map parents;
   roster_t new_roster;
@@ -1145,10 +1146,10 @@ CMD_AUTOMATE(get_current_revision_id, "",
   revision_t rev;
   temp_node_id_source nis;
 
-  work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(new_roster, db, nis);
   work.update_current_roster_from_filesystem(new_roster);
 
-  work.get_parent_rosters(parents);
+  work.get_parent_rosters(parents, db);
   make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -1202,6 +1203,8 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
              "",
              options::opts::none)
 {
+  CMD_REQUIRES_DATABASE(app);
+
   N(args.size() < 2,
     F("wrong argument count"));
 
@@ -1215,13 +1218,11 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
       temp_node_id_source nis;
 
-      work.get_current_roster_shape(new_roster, nis);
+      work.get_current_roster_shape(new_roster, db, nis);
       work.update_current_roster_from_filesystem(new_roster);
     }
   else
     {
-      CMD_REQUIRES_DATABASE(app);
-
       revision_id rid = revision_id(idx(args, 0)());
       N(db.revision_exists(rid),
         F("no revision %s found in database") % rid);

@@ -293,7 +293,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       app.require_workspace();
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      app.work.get_parent_rosters(parents, app.db);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
@@ -356,7 +356,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       CMD_REQUIRES_WORKSPACE(app);
 
       parent_map parents;
-      work.get_parent_rosters(parents);
+      work.get_parent_rosters(parents, db);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());

@@ -154,7 +154,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           if (edge_old_revision(i) != revid)
             continue;
 
-          N(!app.work.has_changes(),
+          N(!app.work.has_changes(app.db),
             F("Cannot kill revision %s,\n"
               "because it would leave the current workspace in an invalid\n"
               "state, from which monotone cannot recover automatically since\n"

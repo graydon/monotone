@@ -378,7 +378,7 @@ CMD(known, "known", "", CMD_REF(list), "",
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -424,7 +424,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored, app.db);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -445,7 +445,7 @@ CMD(missing, "missing", "", CMD_REF(list), "",
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, nis);
+  app.work.get_current_roster_shape(current_roster_shape, app.db, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
@@ -470,10 +470,10 @@ CMD(changed, "changed", "", CMD_REF(list), "",
 
   app.require_workspace();
 
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
