@@ -8,14 +8,14 @@
 // PURPOSE.
 
 #include "base.hh"
+#include "work.hh"
+
 #include <sstream>
 #include <cstring>
 #include <cerrno>
 #include <queue>
 
 #include "lexical_cast.hh"
-
-#include "work.hh"
 #include "basic_io.hh"
 #include "cset.hh"
 #include "file_io.hh"

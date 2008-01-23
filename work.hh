@@ -11,12 +11,15 @@
 // PURPOSE.
 
 #include <set>
-#include <map>
-
+#include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
-#include "roster.hh"
 #include "database.hh"
+
+class path_restriction;
+class node_restriction;
+struct content_merge_adaptor;
+class lua_hooks;
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -60,12 +63,6 @@
 // whenever a file is modified.  this expectation is not true under all
 // conditions, but works in practice (it is, for instance, the same
 // expectation used by "make").  nonetheless, this mode is off by default.
-
-class path_restriction;
-class node_restriction;
-struct content_merge_adaptor;
-class lua_hooks;
-class database;
 
 struct workspace
 {
