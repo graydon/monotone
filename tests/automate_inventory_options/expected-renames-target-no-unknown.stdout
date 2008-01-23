@@ -1,0 +1,22 @@
+    path "target"
+new_type "directory"
+old_path "source"
+ fs_type "directory"
+  status "rename_target" "known"
+
+   path "target/ignored_1"
+fs_type "file"
+ status "ignored"
+
+    path "target/source_1"
+new_type "file"
+old_path "source/source_1"
+ fs_type "file"
+  status "rename_target" "known"
+
+    path "target/source_2"
+new_type "file"
+old_path "source/source_2"
+ fs_type "file"
+  status "rename_target" "known"
+ changes "content"

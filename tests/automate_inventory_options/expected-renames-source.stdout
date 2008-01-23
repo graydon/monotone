@@ -1,0 +1,17 @@
+    path "source"
+old_type "directory"
+new_path "target"
+ fs_type "none"
+  status "rename_source"
+
+    path "source/source_1"
+old_type "file"
+new_path "target/source_1"
+ fs_type "none"
+  status "rename_source"
+
+    path "source/source_2"
+old_type "file"
+new_path "target/source_2"
+ fs_type "none"
+  status "rename_source"
