@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <set>
-#include <map>
+#include "safe_map.hh"
 #include "vector.hh"
 #include "lexical_cast.hh"
 

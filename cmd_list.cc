@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <map>
+#include "safe_map.hh"
 #include <utility>
 #include <iostream>
 #include <iterator>

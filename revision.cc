@@ -40,6 +40,7 @@
 #include "safe_map.hh"
 #include "legacy.hh"
 #include "rev_height.hh"
+#include "outdated_indicator.hh"
 
 using std::back_inserter;
 using std::copy;
