@@ -1,5 +1,27 @@
 -- Test that 'automate inventory' properly ignores directories given in .mtn_ignore
 
+function sortContentsByLine(input)
+  local lines = {}
+  local theStart = 1
+  local delimiter = "\n"
+  local theSplitStart, theSplitEnd = string.find(input, delimiter, theStart)
+
+  while theSplitStart do
+    table.insert(lines, string.sub(input, theStart, theSplitStart - 1))
+    theStart = theSplitEnd + 1
+    theSplitStart, theSplitEnd = string.find(input, delimiter, theStart)
+  end
+  table.insert(lines, string.sub(input, theStart))
+  table.sort(lines)
+  
+  local len = table.getn(lines)
+  local output = lines[1]
+  for i = 2, len do
+    output = output .. delimiter .. lines[i]
+  end
+  return output
+end
+
 mtn_setup()
 
 check(get("local_hooks.lua"))
@@ -28,7 +50,9 @@ check(mtn("automate", "inventory", "--rcfile=local_hooks.lua", "source"), 0, tru
 canonicalize("stdout")
 canonicalize("ts-stderr")
 
-check (readfile("expected.stderr") == readfile("ts-stderr"))
 check (readfile("expected.stdout") == readfile("stdout"))
+
+check (sortContentsByLine(readfile("expected.stderr")) == sortContentsByLine(readfile("ts-stderr")))
+
 
 -- end of file
