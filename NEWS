@@ -37,11 +37,13 @@
         - 'automate drop_db_variables' which drops one database variable
           (like the 'unset' command) or all variables within a given domain.
 
-        - 'automate inventory' now accepts options '--no-ignored',
-          '--no-unknown', '--no-unchanged'. In addition, it no longer
-          recurses into ignored directories. The typical case of
-          listing files that need attention now runs at least four
-          times faster.
+        - 'automate inventory' now accepts the options '--no-ignored',
+          '--no-unknown', '--no-unchanged' and '--no-corresponding-renames'.
+          Please consult the monotone documentation for more information about
+          these new options.
+          In addition, 'automate inventory' no longer recurses into ignored
+          directories. The typical case of listing files that need attention
+          now runs at least four times faster.
 
 Wed Dec 12 21:21:15 UTC 2007
 
