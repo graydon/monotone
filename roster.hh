@@ -322,7 +322,6 @@ struct temp_node_id_source
 
 template <> void dump(roster_t const & val, std::string & out);
 
-class app_state;
 class database;
 struct revision_t;
 
@@ -412,7 +411,7 @@ make_roster_for_revision(revision_t const & rev,
                          revision_id const & rid,
                          roster_t & result,
                          marking_map & marking,
-                         app_state & app);
+                         database & db);
 
 // This is for revisions that are not necessarily going to be written to the
 // db; you can specify your own node_id_source.

@@ -30,10 +30,12 @@ using std::vector;
 
 app_state::app_state()
   : db(system_path()),
-    keys(*this), work(db, lua),
+    keys(*this), work(lua),
+//    search_root(current_root_path()),
+//    diff_format(unified_diff),
     branch_is_sticky(false),
     mtn_automate_allowed(false),
-    project(*this)
+    project(db)
 {
   db.set_app(this);
   lua.set_app(this);

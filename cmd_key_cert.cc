@@ -53,7 +53,7 @@ CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
 
   keypair kp;
   P(F("generating key-pair '%s'") % ident);
-  generate_key_pair(app.lua, ident, kp);
+  generate_key_pair(app.keys, ident, kp);
   P(F("storing key-pair '%s' in %s/") 
     % ident % app.keys.get_key_dir());
   app.keys.put_key_pair(ident, kp);
@@ -117,7 +117,7 @@ CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
 
   keypair key;
   app.keys.get_key_pair(ident, key);
-  change_key_passphrase(app.lua, ident, key.priv);
+  change_key_passphrase(app.keys, ident, key.priv);
   app.keys.delete_key(ident);
   app.keys.put_key_pair(ident, key);
   P(F("passphrase changed"));
@@ -134,12 +134,12 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  get_user_key(id, app.db);
+  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   utf8 new_phrase;
-  get_passphrase(app.lua, id, new_phrase, true, true);
+  get_passphrase(app.keys, id, new_phrase, true, true, "enter new passphrase");
   Pipe p;
   p.start_msg();
   if (new_phrase().length())
@@ -174,10 +174,10 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
+  get_user_key(id, app.db);
+  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   app.agent.add_identity(*priv, id());
 }
 
@@ -199,7 +199,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   internalize_cert_name(idx(args, 1), cname);
 
   rsa_keypair_id key;
-  get_user_key(key, app);
+  get_user_key(key, app.db);
 
   cert_value val;
   if (args.size() == 3)
@@ -224,9 +224,13 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
   if (args.size() < 4)
     throw usage(execid);
 
-  revision_id rid;
-  complete(app, idx(args, 0)(), rid, false);
-  hexenc<id> ident(rid.inner());
+  set<revision_id> rids;
+  expand_selector(app, idx(args, 0)(), rids);
+  diagnose_ambiguous_expansion(app, idx(args, 0)(), rids);
+
+  hexenc<id> ident;
+  if (!rids.empty())
+    ident = rids.begin()->inner();
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -273,7 +277,7 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_tag(r, idx(args, 1)(), app);
+  cert_revision_tag(r, idx(args, 1)(), app.db);
 }
 
 
@@ -288,7 +292,7 @@ CMD(testresult, "testresult", "", CMD_REF(review),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_testresult(r, idx(args, 1)(), app);
+  cert_revision_testresult(r, idx(args, 1)(), app.db);
 }
 
 
@@ -302,7 +306,7 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
   app.get_project().put_revision_in_branch(r, app.opts.branchname);
 }
@@ -317,7 +321,7 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
   app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
 }
@@ -346,7 +350,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_comment(r, comment, app);
+  cert_revision_comment(r, comment, app.db);
 }
 
 // Local Variables:

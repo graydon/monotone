@@ -13,11 +13,6 @@
 class app_state;
 class lua_hooks;
 
-#include <map>
-#include "vector.hh"
-
-#include <boost/shared_ptr.hpp>
-
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
@@ -28,13 +23,6 @@ class lua_hooks;
 #include "work.hh"
 #include "ssh_agent.hh"
 
-namespace Botan
-{
-  class PK_Signer;
-  class RSA_PrivateKey;
-  class PK_Verifier;
-  class RSA_PublicKey;
-};
 
 // This class is supposed to hold all (or.. well, most) of the state
 // of the application, barring some unfortunate static objects like
@@ -56,18 +44,6 @@ public:
   bool found_workspace;
   bool branch_is_sticky;
   bool mtn_automate_allowed;
-
-  // These are used to cache signers/verifiers (if the hook allows).
-  // They can't be function-static variables in key.cc, since they
-  // must be destroyed before the Botan deinitialize() function is
-  // called.
-
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Signer>,
-        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
-        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   void allow_workspace();
   void process_options();
