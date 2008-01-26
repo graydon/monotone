@@ -1027,7 +1027,8 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       // check if we should output this element at all
       //
       vector<string> states;
-      inventory_determine_states(app, fp, item, old_roster, new_roster, states);
+      inventory_determine_states(app.work, fp, item,
+                                 old_roster, new_roster, states);
 
       if (find(states.begin(), states.end(), "ignored") != states.end() &&
           app.opts.no_ignored)
