@@ -433,7 +433,6 @@ public:
                        std::string & author);
   bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
                                      std::map<rsa_keypair_id, bool> const & new_results);
-  bool must_drop_attr(std::string const & key);
 
   utf8 const & get_opt_author();
   date_t const get_opt_date_or_cur_date();

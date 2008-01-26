@@ -3611,13 +3611,6 @@ database::get_key_store()
   return __app->keys;
 }
 
-bool
-database::must_drop_attr(string const & key)
-{
-  return (__app->opts.attrs_to_drop.find(key) !=
-          __app->opts.attrs_to_drop.end());
-}
-
 utf8 const &
 database::get_opt_author()
 {

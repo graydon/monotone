@@ -219,10 +219,12 @@ make_restricted_revision(parent_map const & old_rosters,
                          commands::command_id const & cmd_name);
 
 void
-build_changesets_from_manifest_ancestry(database & db);
+build_changesets_from_manifest_ancestry(database & db,
+                                        std::set<std::string> const & attrs_to_drop);
 
 void
-build_roster_style_revs_from_manifest_style_revs(database & db);
+build_roster_style_revs_from_manifest_style_revs(database & db,
+                                                 std::set<std::string> const & attrs_to_drop);
 
 void
 regenerate_caches(database & db);

@@ -13,7 +13,6 @@ database.cc:
     hook_accept_testresult_change()
 
   __app->opts
-    must_drop_attr()
     get_opt_author()
     get_opt_ignore_suspend_certs()
     get_opt_date_or_cur_date()
