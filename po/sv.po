@@ -149,7 +149,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-26 14:43+0100\n"
-"PO-Revision-Date: 2008-01-26 15:01+0100\n"
+"PO-Revision-Date: 2008-01-26 15:09+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -4515,7 +4515,7 @@ msgstr "visa inte okända filer"
 
 #: options_list.hh:554
 msgid "don't output unchanged files"
-msgstr ""
+msgstr "visa inte ändrade filer"
 
 #: options_list.hh:562
 msgid "don't output corresponding renames if restricted on such nodes"
