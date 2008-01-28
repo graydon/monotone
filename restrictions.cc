@@ -941,7 +941,8 @@ UNIT_TEST(restrictions, ignored_invalid_workspace_paths)
   excludes.push_back(file_path_internal("bar"));
 
   app_state app;
-  path_restriction pmask(includes, excludes, -1, app, path_restriction::skip_check);
+  path_restriction pmask(includes, excludes, -1, app.work,
+                         path_restriction::skip_check);
 
   UNIT_TEST_CHECK( pmask.includes(file_path_internal("foo")));
   UNIT_TEST_CHECK(!pmask.includes(file_path_internal("bar")));
