@@ -647,7 +647,7 @@ char const migrate_to_binary_hashes[] =
   "UPDATE roster_deltas     SET id=unhex(id), base=unhex(base);"
   "UPDATE public_keys       SET hash=unhex(hash);"
 
-  // revision_certs also gets a new indices, so we recreate the
+  // revision_certs also gets a new index, so we recreate the
   // table completely.
   "ALTER TABLE revision_certs RENAME TO tmp;\n"
   "CREATE TABLE revision_certs"
