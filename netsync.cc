@@ -1383,7 +1383,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       // make a signature
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
-      make_signature(keys, signing_key, our_kp.priv, nonce(), sig);
+      make_signature(keys, db, signing_key, our_kp.priv, nonce(), sig);
       decode_base64(sig, sig_raw);
 
       // make a new nonce of our own and send off the 'auth'
@@ -1644,7 +1644,7 @@ session::process_auth_cmd(protocol_role their_role,
   // Check the signature.
   base64<rsa_sha1_signature> sig;
   encode_base64(rsa_sha1_signature(signature), sig);
-  if (check_signature(keys, their_id, their_key, nonce1(), sig))
+  if (db.check_signature(their_id, nonce1(), sig) == cert_ok)
     {
       // Get our private key and sign back.
       L(FL("client signature OK, accepting authentication"));

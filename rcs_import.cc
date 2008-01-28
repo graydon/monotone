@@ -1009,6 +1009,7 @@ cluster_consumer
 {
   cvs_history & cvs;
   database & db;
+  key_store & keys;
   project_t & project;
 
   string const & branchname;
@@ -1039,6 +1040,7 @@ cluster_consumer
 
   cluster_consumer(cvs_history & cvs,
                    database & db,
+                   key_store & keys,
                    project_t & project,
                    string const & branchname,
                    cvs_branch const & branch,
@@ -1070,13 +1072,14 @@ cluster_set;
 void
 import_branch(cvs_history & cvs,
               database & db,
+              key_store & keys,
               project_t & project,
               string const & branchname,
               shared_ptr<cvs_branch> const & branch,
               ticker & n_revs)
 {
   cluster_set clusters;
-  cluster_consumer cons(cvs, db, project, branchname, *branch, n_revs);
+  cluster_consumer cons(cvs, db, keys, project, branchname, *branch, n_revs);
   unsigned long commits_remaining = branch->lineage.size();
 
   // step 1: sort the lineage
@@ -1202,6 +1205,7 @@ import_branch(cvs_history & cvs,
 void
 import_cvs_repo(system_path const & cvsroot,
                 database & db,
+                key_store & keys,
                 project_t & project,
                 branch_name const & branchname)
 
@@ -1240,7 +1244,7 @@ import_cvs_repo(system_path const & cvsroot,
       string branchname = i->first;
       shared_ptr<cvs_branch> branch = i->second;
       L(FL("branch %s has %d entries") % branchname % branch->lineage.size());
-      import_branch(cvs, db, project, branchname, branch, n_revs);
+      import_branch(cvs, db, keys, project, branchname, branch, n_revs);
 
       // free up some memory
       cvs.branches.erase(branchname);
@@ -1250,7 +1254,7 @@ import_cvs_repo(system_path const & cvsroot,
   {
     transaction_guard guard(db);
     L(FL("trunk has %d entries") % cvs.trunk->lineage.size());
-    import_branch(cvs, db, project, cvs.base_branch, cvs.trunk, n_revs);
+    import_branch(cvs, db, keys, project, cvs.base_branch, cvs.trunk, n_revs);
     guard.commit();
   }
 
@@ -1263,7 +1267,7 @@ import_cvs_repo(system_path const & cvsroot,
       {
         string tag = cvs.tag_interner.lookup(i->first);
         ui.set_tick_trailer("marking tag " + tag);
-        project.put_tag(i->second.second, tag);
+        project.put_tag(keys, i->second.second, tag);
         ++n_tags;
       }
     guard.commit();
@@ -1272,12 +1276,14 @@ import_cvs_repo(system_path const & cvsroot,
 
 cluster_consumer::cluster_consumer(cvs_history & cvs,
                                    database & db,
+                                   key_store & keys,
                                    project_t & project,
                                    string const & branchname,
                                    cvs_branch const & branch,
                                    ticker & n_revs)
   : cvs(cvs),
     db(db),
+    keys(keys),
     project(project),
     branchname(branchname),
     branch(branch),
@@ -1367,7 +1373,7 @@ cluster_consumer::store_auxiliary_certs(prepared_revision const & p)
         }
     }
 
-  project.put_standard_certs(p.rid,
+  project.put_standard_certs(keys, p.rid,
                              branch_name(branchname),
                              utf8(cvs.changelog_interner.lookup(p.changelog)),
                              date_t::from_unix_epoch(p.time),

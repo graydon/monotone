@@ -374,7 +374,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     app.db.put_revision(inv_id, rdat);
 
-    app.get_project().put_standard_certs_from_options(inv_id,
+    app.get_project().put_standard_certs_from_options(app.keys, inv_id,
                                                       app.opts.branchname,
                                                       log_message);
     guard.commit();
@@ -1055,7 +1055,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   {
     // fail early if there isn't a key
     rsa_keypair_id key;
-    get_user_key(key, app.db);
+    get_user_key(key, app.keys, app.db);
   }
 
   app.make_branch_sticky();
@@ -1235,7 +1235,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
         app.db.put_revision(restricted_rev_id, rdat);
       }
 
-    app.get_project().put_standard_certs_from_options(restricted_rev_id,
+    app.get_project().put_standard_certs_from_options(app.keys,
+                                                      restricted_rev_id,
                                                       app.opts.branchname,
                                                       log_message);
     guard.commit();

@@ -28,6 +28,7 @@ using std::ostringstream;
 using std::set;
 using std::string;
 using std::ofstream;
+using boost::shared_ptr;
 using Botan::Pipe;
 using Botan::RSA_PrivateKey;
 
@@ -134,8 +135,8 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app.db);
-  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
+  get_user_key(id, app.keys, app.db);
+  N(app.keys.key_pair_exists(id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   utf8 new_phrase;
@@ -174,8 +175,8 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
 
   rsa_keypair_id id;
   keypair key;
-  get_user_key(id, app.db);
-  N(priv_key_exists(app.keys, id), F("the key you specified cannot be found"));
+  get_user_key(id, app.keys, app.db);
+  N(app.keys.key_pair_exists(id), F("the key you specified cannot be found"));
   app.keys.get_key_pair(id, key);
   shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
   app.agent.add_identity(*priv, id());
@@ -199,7 +200,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   internalize_cert_name(idx(args, 1), cname);
 
   rsa_keypair_id key;
-  get_user_key(key, app.db);
+  get_user_key(key, app.keys, app.db);
 
   cert_value val;
   if (args.size() == 3)
@@ -211,7 +212,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
       val = cert_value(dat());
     }
 
-  app.get_project().put_cert(rid, cname, val);
+  app.get_project().put_cert(app.keys, rid, cname, val);
   guard.commit();
 }
 
@@ -277,7 +278,7 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_tag(r, idx(args, 1)(), app.db);
+  cert_revision_tag(r, idx(args, 1)(), app.db, app.keys);
 }
 
 
@@ -292,7 +293,7 @@ CMD(testresult, "testresult", "", CMD_REF(review),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_testresult(r, idx(args, 1)(), app.db);
+  cert_revision_testresult(r, idx(args, 1)(), app.db, app.keys);
 }
 
 
@@ -308,7 +309,7 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
   complete(app, idx(args, 0)(), r);
   guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
-  app.get_project().put_revision_in_branch(r, app.opts.branchname);
+  app.get_project().put_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
@@ -323,7 +324,7 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
   complete(app, idx(args, 0)(), r);
   guess_branch(r, app.db, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
-  app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
+  app.get_project().suspend_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
@@ -350,7 +351,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
 
   revision_id r;
   complete(app, idx(args, 0)(), r);
-  cert_revision_comment(r, comment, app.db);
+  cert_revision_comment(r, comment, app.db, app.keys);
 }
 
 // Local Variables:

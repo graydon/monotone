@@ -2089,7 +2089,7 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);
   make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
-                   cert_value(idx(args, 2)()), db, c);
+                   cert_value(idx(args, 2)()), db, app.keys, c);
   revision<cert> rc(c);
   db.put_revision_cert(rc);
   guard.commit();

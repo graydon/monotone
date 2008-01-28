@@ -348,14 +348,14 @@ merge_two(revision_id const & left, revision_id const & right,
   {
     // early short-circuit to avoid failure after lots of work
     rsa_keypair_id key;
-    get_user_key(key, app.db);
+    get_user_key(key, app.keys, app.db);
   }
 
   revision_id merged;
   transaction_guard guard(app.db);
   interactive_merge_and_store(left, right, merged, app.db, app.lua);
 
-  app.get_project().put_standard_certs_from_options(merged,
+  app.get_project().put_standard_certs_from_options(app.keys, merged,
                                                     branch,
                                                     utf8(log.str()));
 
@@ -550,7 +550,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
-      app.get_project().put_revision_in_branch(*src_i,
+      app.get_project().put_revision_in_branch(app.keys, *src_i,
                                                branch_name(idx(args, 1)()));
       guard.commit();
     }
@@ -610,7 +610,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
         {
           rsa_keypair_id key;
-          get_user_key(key, app.db);
+          get_user_key(key, app.keys, app.db);
         }
         resolve_merge_conflicts(left_roster, right_roster,
                                 result, dba, app.lua);
@@ -636,7 +636,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                             % idx(args, 0) % (*src_i)
                             % idx(args, 1) % (*dst_i)).str());
 
-      app.get_project().put_standard_certs_from_options(merged,
+      app.get_project().put_standard_certs_from_options(app.keys, merged,
                                                         branch_name(idx(args, 1)()),
                                                         log_message);
 

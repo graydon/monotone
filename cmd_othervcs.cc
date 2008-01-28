@@ -52,10 +52,10 @@ CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"),
   // the password (if necessary) up front rather than after some arbitrary
   // amount of work
   rsa_keypair_id key;
-  get_user_key(key, app.db);
-  require_password(key, app.keys);
+  get_user_key(key, app.keys, app.db);
+  require_password(key, app.keys, app.db);
 
-  import_cvs_repo(cvsroot, app.db, app.get_project(), app.opts.branchname);
+  import_cvs_repo(cvsroot, app.db, app.keys, app.get_project(), app.opts.branchname);
 }
 
 

@@ -35,6 +35,7 @@
 #include "cert.hh"
 #include "charset.hh"
 #include "ssh_agent.hh"
+#include "database.hh"
 
 using std::cout;
 using std::make_pair;
@@ -52,7 +53,6 @@ using Botan::PKCS8_PrivateKey;
 using Botan::PK_Decryptor;
 using Botan::PK_Encryptor;
 using Botan::PK_Signer;
-using Botan::PK_Verifier;
 using Botan::Pipe;
 using Botan::RSA_PrivateKey;
 using Botan::RSA_PublicKey;
@@ -361,24 +361,22 @@ change_key_passphrase(key_store & keys,
 }
 
 void
-make_signature(key_store & keys,           // to hook for phrase
-               rsa_keypair_id const & id, // to prompting user for phrase
+make_signature(key_store & keys,
+               database & db,
+               rsa_keypair_id const & id, // to prompt user for phrase
                base64< rsa_priv_key > const & priv,
                string const & tosign,
                base64<rsa_sha1_signature> & signature)
 {
   const string & opt_ssh_sign = keys.get_opt_ssh_sign();
 
-  E(!opt_ssh_sign.empty(),
-    F("--ssh-sign requires a value ['yes', 'no', 'only', or 'check']"));
-  E(opt_ssh_sign == "yes"
-    || opt_ssh_sign == "no"
-    || opt_ssh_sign == "check"
-    || opt_ssh_sign == "only",
-    F("--ssh-sign must be set to 'yes', 'no', 'only', or 'check'"));
-
   keypair key;
   keys.get_key_pair(id, key);
+  I(key.priv == priv);
+
+  // If the database doesn't have this public key, add it now.
+  if (!db.public_key_exists(id))
+    db.put_key(id, key.pub);
 
   string sig_string;
   ssh_agent & agent = keys.get_agent();
@@ -496,64 +494,9 @@ make_signature(key_store & keys,           // to hook for phrase
   L(FL("make_signature: produced %d-byte signature") % sig_string.size());
   encode_base64(rsa_sha1_signature(sig_string), signature);
 
-  E(check_signature(keys, id, key.pub, tosign, signature),
-    F("make_signature: signature is not valid"));
-}
-
-bool
-check_signature(key_store & keys,
-                rsa_keypair_id const & id,
-                base64<rsa_pub_key> const & pub_encoded,
-                string const & alleged_text,
-                base64<rsa_sha1_signature> const & signature)
-{
-  // examine pubkey
-
-  bool persist_phrase = (!keys.verifiers.empty()) || keys.hook_persist_phrase_ok();
-
-  shared_ptr<PK_Verifier> verifier;
-  shared_ptr<RSA_PublicKey> pub_key;
-  if (persist_phrase
-      && keys.verifiers.find(id) != keys.verifiers.end())
-    verifier = keys.verifiers[id].first;
-
-  else
-    {
-      rsa_pub_key pub;
-      decode_base64(pub_encoded, pub);
-      SecureVector<Botan::byte> pub_block;
-      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
-
-      L(FL("building verifier for %d-byte pub key") % pub_block.size());
-      shared_ptr<X509_PublicKey> x509_key =
-          shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
-      pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
-      if (!pub_key)
-          throw informative_failure("Failed to get RSA verifying key");
-
-      verifier = shared_ptr<PK_Verifier>(get_pk_verifier(*pub_key, "EMSA3(SHA-1)"));
-
-      /* XXX This is ugly. We need to keep the key around
-       * as long as the verifier is around, but the shared_ptr will go
-       * away after we leave this scope. Hence we store a pair of
-       * <verifier,key> so they both exist. */
-      if (persist_phrase)
-        keys.verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
-    }
-
-  // examine signature
-  rsa_sha1_signature sig_decoded;
-  decode_base64(signature, sig_decoded);
-
-  // check the text+sig against the key
-  L(FL("checking %d-byte (%d decoded) signature") %
-    signature().size() % sig_decoded().size());
-
-  bool valid_sig = verifier->verify_message(
-          reinterpret_cast<Botan::byte const*>(alleged_text.data()), alleged_text.size(),
-          reinterpret_cast<Botan::byte const*>(sig_decoded().data()), sig_decoded().size());
-
-  return valid_sig;
+  cert_status s = db.check_signature(id, tosign, signature);
+  I(s != cert_unknown);
+  E(s == cert_ok, F("make_signature: signature is not valid"));
 }
 
 void encrypt_rsa(key_store & keys,
@@ -669,20 +612,16 @@ keys_match(rsa_keypair_id const & id1,
 
 void
 require_password(rsa_keypair_id const & key,
-                 key_store & keys)
+                 key_store & keys,
+                 database & db)
 {
-  N(priv_key_exists(keys, key),
-    F("no key pair '%s' found in key store '%s'")
-    % key % keys.get_key_dir());
   keypair kp;
   load_key_pair(keys, key, kp);
   if (keys.hook_persist_phrase_ok())
     {
       string plaintext("hi maude");
       base64<rsa_sha1_signature> sig;
-      make_signature(keys, key, kp.priv, plaintext, sig);
-      N(check_signature(keys, key, kp.pub, plaintext, sig),
-        F("passphrase for '%s' is incorrect") % key);
+      make_signature(keys, db, key, kp.priv, plaintext, sig);
     }
 }
 

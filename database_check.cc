@@ -455,8 +455,6 @@ check_certs(database & db,
             map<rsa_keypair_id, checked_key> & checked_keys,
             size_t & total_certs)
 {
-  key_store & keys = db.get_key_store();
-
   vector< revision<cert> > certs;
   db.get_revision_certs(certs);
 
@@ -476,9 +474,9 @@ check_certs(database & db,
         {
           string signed_text;
           cert_signable_text(i->inner(), signed_text);
-          checked.good_sig = check_signature(keys, i->inner().key,
-                                             checked_keys[i->inner().key].pub_encoded,
-                                             signed_text, i->inner().sig);
+          checked.good_sig
+            = (db.check_signature(i->inner().key,
+                                  signed_text, i->inner().sig) == cert_ok);
         }
 
       checked_keys[i->inner().key].sigs++;

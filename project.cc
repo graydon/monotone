@@ -178,10 +178,11 @@ project_t::revision_is_in_branch(revision_id const & id,
 }
 
 void
-project_t::put_revision_in_branch(revision_id const & id,
+project_t::put_revision_in_branch(key_store & keys,
+                                  revision_id const & id,
                                   branch_name const & branch)
 {
-  cert_revision_in_branch(id, branch, db);
+  cert_revision_in_branch(id, branch, db, keys);
 }
 
 bool
@@ -208,10 +209,11 @@ project_t::revision_is_suspended_in_branch(revision_id const & id,
 }
 
 void
-project_t::suspend_revision_in_branch(revision_id const & id,
-                                  branch_name const & branch)
+project_t::suspend_revision_in_branch(key_store & keys,
+                                      revision_id const & id,
+                                      branch_name const & branch)
 {
-  cert_revision_suspended_in_branch(id, branch, db);
+  cert_revision_suspended_in_branch(id, branch, db, keys);
 }
 
 
@@ -308,46 +310,50 @@ project_t::get_tags(set<tag_t> & tags)
 }
 
 void
-project_t::put_tag(revision_id const & id,
+project_t::put_tag(key_store & keys,
+                   revision_id const & id,
                    string const & name)
 {
-  cert_revision_tag(id, name, db);
+  cert_revision_tag(id, name, db, keys);
 }
 
 
 void
-project_t::put_standard_certs(revision_id const & id,
+project_t::put_standard_certs(key_store & keys,
+                              revision_id const & id,
                               branch_name const & branch,
                               utf8 const & changelog,
                               date_t const & time,
                               utf8 const & author)
 {
-  cert_revision_in_branch(id, branch, db);
-  cert_revision_changelog(id, changelog, db);
-  cert_revision_date_time(id, time, db);
+  cert_revision_in_branch(id, branch, db, keys);
+  cert_revision_changelog(id, changelog, db, keys);
+  cert_revision_date_time(id, time, db, keys);
   if (!author().empty())
-    cert_revision_author(id, author(), db);
+    cert_revision_author(id, author(), db, keys);
   else
-    cert_revision_author_default(id, db);
+    cert_revision_author_default(id, db, keys);
 }
 
 void
-project_t::put_standard_certs_from_options(revision_id const & id,
+project_t::put_standard_certs_from_options(key_store & keys,
+                                           revision_id const & id,
                                            branch_name const & branch,
                                            utf8 const & changelog)
 {
-  put_standard_certs(id,
+  put_standard_certs(keys, id,
                      branch,
                      changelog,
                      db.get_opt_date_or_cur_date(),
                      db.get_opt_author());
 }
 void
-project_t::put_cert(revision_id const & id,
+project_t::put_cert(key_store & keys,
+                    revision_id const & id,
                     cert_name const & name,
                     cert_value const & value)
 {
-  put_simple_revision_cert(id, name, value, db);
+  put_simple_revision_cert(id, name, value, db, keys);
 }
 
 

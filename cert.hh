@@ -65,7 +65,6 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(database & db, cert const & t);
-bool priv_key_exists(key_store & keys, rsa_keypair_id const & id);
 void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
@@ -76,12 +75,14 @@ void make_simple_cert(hexenc<id> const & id,
                       cert_name const & nm,
                       cert_value const & cv,
                       database & db,
+                      key_store & keys,
                       cert & c);
 
 void put_simple_revision_cert(revision_id const & id,
                               cert_name const & nm,
                               cert_value const & val,
-                              database & db);
+                              database & db,
+                              key_store & keys);
 
 void erase_bogus_certs(std::vector< revision<cert> > & certs,
                        database & db);
@@ -96,7 +97,7 @@ void erase_bogus_certs(std::vector< manifest<cert> > & certs,
 void
 cert_revision_in_branch(revision_id const & ctx,
                         branch_name const & branchname,
-                        database & db);
+                        database & db, key_store & keys);
 
 
 // We also define some common cert types, to help establish useful
@@ -105,7 +106,7 @@ cert_revision_in_branch(revision_id const & ctx,
 
 // N()'s out if there is no unique key for us to use
 void
-get_user_key(rsa_keypair_id & key, database & db);
+get_user_key(rsa_keypair_id & key, key_store & keys, database & db);
 
 void
 guess_branch(revision_id const & id, database & db, project_t & project,
@@ -124,41 +125,41 @@ guess_branch(revision_id const & id, database & db, project_t & project);
 void
 cert_revision_suspended_in_branch(revision_id const & ctx,
                         branch_name const & branchname,
-                        database & db);
+                        database & db, key_store & keys);
 
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        database & db);
+                        database & db, key_store & keys);
 
 void
 cert_revision_author(revision_id const & m,
                     std::string const & author,
-                    database & db);
+                    database & db, key_store & keys);
 
 void
 cert_revision_author_default(revision_id const & m,
-                            database & db);
+                            database & db, key_store & keys);
 
 void
 cert_revision_tag(revision_id const & m,
                  std::string const & tagname,
-                 database & db);
+                 database & db, key_store & keys);
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & changelog,
-                        database & db);
+                        database & db, key_store & keys);
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      database & db);
+                      database & db, key_store & keys);
 
 void
 cert_revision_testresult(revision_id const & m,
                          std::string const & results,
-                         database & db);
+                         database & db, key_store & keys);
 
 
 // Local Variables:

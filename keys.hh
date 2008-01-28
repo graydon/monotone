@@ -11,13 +11,11 @@
 // PURPOSE.
 
 #include "vocab.hh"
-#include "botan/rsa.h"
 #include <boost/shared_ptr.hpp>
 
-using Botan::RSA_PrivateKey;
-using boost::shared_ptr;
-
 class key_store;
+class database;
+namespace Botan { class RSA_PrivateKey; }
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it
@@ -40,8 +38,9 @@ void migrate_private_key(key_store & keys,
                          base64< old_arc4_rsa_priv_key > const & old_priv,
                          keypair & kp);
 
-void make_signature(key_store & keys,          // to hook for phrase
-                    rsa_keypair_id const & id, // to prompting user for phrase
+void make_signature(key_store & keys,
+                    database & db,
+                    rsa_keypair_id const & id,
                     base64< rsa_priv_key > const & priv,
                     std::string const & tosign,
                     base64<rsa_sha1_signature> & signature);
@@ -53,7 +52,7 @@ bool check_signature(key_store & keys,
                      base64<rsa_sha1_signature> const & signature);
 
 void require_password(rsa_keypair_id const & id,
-                      key_store & keys);
+                      key_store & keys, database & db);
 
 void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
@@ -75,7 +74,7 @@ get_passphrase(key_store & keys,
                bool force_from_user = false,
                bool generating_key = false);
 
-shared_ptr<RSA_PrivateKey>
+boost::shared_ptr<Botan::RSA_PrivateKey>
 get_private_key(key_store & keys,
                 rsa_keypair_id const & id,
                 base64< rsa_priv_key > const & priv,
@@ -103,12 +102,6 @@ bool keys_match(rsa_keypair_id const & id1,
                 base64<rsa_pub_key> const & key1,
                 rsa_keypair_id const & id2,
                 base64<rsa_pub_key> const & key2);
-/* Doesn't work
-bool keys_match(rsa_keypair_id const & id1,
-                base64< rsa_priv_key > const & key1,
-                rsa_keypair_id const & id2,
-                base64< rsa_priv_key > const & key2);
-*/
 
 // Local Variables:
 // mode: C++

@@ -361,91 +361,46 @@ cert_hash_code(cert const & t, hexenc<id> & out)
   calculate_ident(tdat, out);
 }
 
-bool
-priv_key_exists(key_store & keys, rsa_keypair_id const & id)
-{
-
-  return keys.key_pair_exists(id);
-}
-
-// Loads a key pair for a given key id, from either a lua hook
-// or the key store. This will bomb out if the same keyid exists
-// in both with differing contents.
+// Loads a key pair for a given key id, considering it a user error
+// if that key pair is not available.
 
 void
 load_key_pair(key_store & keys,
               rsa_keypair_id const & id,
               keypair & kp)
 {
-  static map<rsa_keypair_id, keypair> temp_keys;
-  bool persist_ok = (!temp_keys.empty()) || keys.hook_persist_phrase_ok();
-
-  if (persist_ok && temp_keys.find(id) != temp_keys.end())
-    {
-      kp = temp_keys[id];
-    }
-  else
-    {
-      N(keys.key_pair_exists(id),
-        F("no key pair '%s' found in key store '%s'")
-        % id % keys.get_key_dir());
-      keys.get_key_pair(id, kp);
-      if (persist_ok)
-        temp_keys.insert(make_pair(id, kp));
-    }
+  N(keys.key_pair_exists(id),
+    F("no key pair '%s' found in key store '%s'")
+    % id % keys.get_key_dir());
+  keys.get_key_pair(id, kp);
 }
 
-void
-calculate_cert(database & db, cert & t)
+static void
+calculate_cert(key_store & keys, database & db, cert & t)
 {
   string signed_text;
   keypair kp;
   cert_signable_text(t, signed_text);
 
-  load_key_pair(db.get_key_store(), t.key, kp);
+  load_key_pair(keys, t.key, kp);
   db.put_key(t.key, kp.pub);
 
-  make_signature(db.get_key_store(), t.key, kp.priv, signed_text, t.sig);
+  make_signature(keys, db, t.key, kp.priv, signed_text, t.sig);
 }
 
 cert_status
 check_cert(database & db, cert const & t)
 {
-  base64< rsa_pub_key > pub;
-
-  static map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
-  bool persist_ok = (!pubkeys.empty()) || db.get_key_store().hook_persist_phrase_ok();
-
-  if (persist_ok
-      && pubkeys.find(t.key) != pubkeys.end())
-    {
-      pub = pubkeys[t.key];
-    }
-  else
-    {
-      if (!db.public_key_exists(t.key))
-        return cert_unknown;
-      db.get_key(t.key, pub);
-      if (persist_ok)
-        pubkeys.insert(make_pair(t.key, pub));
-    }
-
   string signed_text;
   cert_signable_text(t, signed_text);
-  if (check_signature(db.get_key_store(), t.key, pub, signed_text, t.sig))
-    return cert_ok;
-  else
-    return cert_bad;
+  return db.check_signature(t.key, signed_text, t.sig);
 }
-
 
 // "special certs"
 
 void
-get_user_key(rsa_keypair_id & key, database & db)
+get_user_key(rsa_keypair_id & key, key_store & keys, database & db)
 {
-  key_store & keys = db.get_key_store();
-  
   if (keys.has_opt_signing_key())
     key = keys.get_opt_signing_key();
   else if (keys.hook_get_current_branch_key(key))
@@ -522,14 +477,15 @@ make_simple_cert(hexenc<id> const & id,
                  cert_name const & nm,
                  cert_value const & cv,
                  database & db,
+                 key_store & keys,
                  cert & c)
 {
   rsa_keypair_id key;
-  get_user_key(key, db);
+  get_user_key(key, keys, db);
   base64<cert_value> encoded_val;
   encode_base64(cv, encoded_val);
   cert t(id, nm, encoded_val, key);
-  calculate_cert(db, t);
+  calculate_cert(keys, db, t);
   c = t;
 }
 
@@ -537,10 +493,11 @@ void
 put_simple_revision_cert(revision_id const & id,
                          cert_name const & nm,
                          cert_value const & val,
-                         database & db)
+                         database & db,
+                         key_store & keys)
 {
   cert t;
-  make_simple_cert(id.inner(), nm, val, db, t);
+  make_simple_cert(id.inner(), nm, val, db, keys, t);
   revision<cert> cc(t);
   db.put_revision_cert(cc);
 }
@@ -548,18 +505,21 @@ put_simple_revision_cert(revision_id const & id,
 void
 cert_revision_in_branch(revision_id const & rev,
                         branch_name const & branch,
-                        database & db)
+                        database & db,
+                        key_store & keys)
 {
-  put_simple_revision_cert(rev, branch_cert_name, cert_value(branch()), db);
+  put_simple_revision_cert(rev, branch_cert_name, cert_value(branch()),
+                           db, keys);
 }
 
 void
 cert_revision_suspended_in_branch(revision_id const & rev,
-                        branch_name const & branch,
-                        database & db)
+                                  branch_name const & branch,
+                                  database & db,
+                                  key_store & keys)
 {
   put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
-                            db);
+                            db, keys);
 }
 
 
@@ -568,64 +528,68 @@ cert_revision_suspended_in_branch(revision_id const & rev,
 void
 cert_revision_date_time(revision_id const & m,
                         date_t const & t,
-                        database & db)
+                        database & db,
+                        key_store & keys)
 {
   cert_value val = cert_value(t.as_iso_8601_extended());
-  put_simple_revision_cert(m, date_cert_name, val, db);
+  put_simple_revision_cert(m, date_cert_name, val, db, keys);
 }
 
 void
 cert_revision_author(revision_id const & m,
                      string const & author,
-                     database & db)
+                     database & db,
+                     key_store & keys)
 {
-  put_simple_revision_cert(m, author_cert_name, cert_value(author), db);
+  put_simple_revision_cert(m, author_cert_name, cert_value(author), db, keys);
 }
 
 void
 cert_revision_author_default(revision_id const & m,
-                             database & db)
+                             database & db, key_store & keys)
 {
   string author;
   rsa_keypair_id key;
-  get_user_key(key, db);
+  get_user_key(key, keys, db);
 
   if (!db.hook_get_author(key, author))
     {
       author = key();
     }
-  cert_revision_author(m, author, db);
+  cert_revision_author(m, author, db, keys);
 }
 
 void
 cert_revision_tag(revision_id const & m,
                   string const & tagname,
-                  database & db)
+                  database & db, key_store & keys)
 {
-  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), db);
+  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), db, keys);
 }
 
 
 void
 cert_revision_changelog(revision_id const & m,
                         utf8 const & log,
-                        database & db)
+                        database & db, key_store & keys)
 {
-  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()), db);
+  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()),
+                           db, keys);
 }
 
 void
 cert_revision_comment(revision_id const & m,
                       utf8 const & comment,
-                      database & db)
+                      database & db, key_store & keys)
 {
-  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()), db);
+  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()),
+                           db, keys);
 }
 
 void
 cert_revision_testresult(revision_id const & r,
                          string const & results,
-                         database & db)
+                         database & db, key_store & keys)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -644,7 +608,7 @@ cert_revision_testresult(revision_id const & r,
                               "'pass/fail'");
 
   put_simple_revision_cert(r, testresult_cert_name,
-                           cert_value(lexical_cast<string>(passed)), db);
+                           cert_value(lexical_cast<string>(passed)), db, keys);
 }
 
 // Local Variables:

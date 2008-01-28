@@ -847,9 +847,10 @@ dump(parent_roster_map const & prm, string & out)
 
 struct anc_graph
 {
-  anc_graph(bool existing, database & db) :
+  anc_graph(bool existing, database & db, key_store & keys) :
     existing_graph(existing),
     db(db),
+    keys(keys),
     max_node(0),
     n_nodes("nodes", "n", 1),
     n_certs_in("certs in", "c", 1),
@@ -859,6 +860,7 @@ struct anc_graph
 
   bool existing_graph;
   database & db;
+  key_store & keys;
   u64 max_node;
 
   ticker n_nodes;
@@ -941,7 +943,7 @@ void anc_graph::write_certs()
           cert_value val(j->second.second);
 
           cert new_cert;
-          make_simple_cert(rev.inner(), name, val, db, new_cert);
+          make_simple_cert(rev.inner(), name, val, db, keys, new_cert);
           revision<cert> rcert(new_cert);
           if (db.put_revision_cert(rcert))
             ++n_certs_out;
@@ -1639,10 +1641,10 @@ anc_graph::construct_revisions_from_ancestry(set<string> const & attrs_to_drop)
 }
 
 void
-build_roster_style_revs_from_manifest_style_revs(database & db,
+build_roster_style_revs_from_manifest_style_revs(database & db, key_store & keys,
                                                  set<string> const & attrs_to_drop)
 {
-  anc_graph graph(true, db);
+  anc_graph graph(true, db, keys);
 
   P(F("converting existing revision graph to new roster-style revisions"));
   multimap<revision_id, revision_id> existing_graph;
@@ -1684,10 +1686,10 @@ build_roster_style_revs_from_manifest_style_revs(database & db,
 
 
 void
-build_changesets_from_manifest_ancestry(database & db,
+build_changesets_from_manifest_ancestry(database & db, key_store & keys,
                                         set<string> const & attrs_to_drop)
 {
-  anc_graph graph(false, db);
+  anc_graph graph(false, db, keys);
 
   P(F("rebuilding revision graph from manifest certs"));
 

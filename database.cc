@@ -51,6 +51,11 @@
 #include "outdated_indicator.hh"
 #include "lru_writeback_cache.hh"
 
+#include "botan/botan.h"
+#include "botan/rsa.h"
+#include "botan/keypair.h"
+#include "botan/pem.h"
+
 // defined in schema.c, generated from schema.sql:
 extern char const schema_constant[];
 
@@ -74,6 +79,11 @@ using std::vector;
 
 using boost::shared_ptr;
 using boost::lexical_cast;
+
+using Botan::PK_Verifier;
+using Botan::SecureVector;
+using Botan::X509_PublicKey;
+using Botan::RSA_PublicKey;
 
 int const one_row = 1;
 int const one_col = 1;
@@ -161,6 +171,11 @@ namespace
   typedef hashmap::hash_map<revision_id, set<revision_id> > parent_id_map;
   typedef hashmap::hash_map<revision_id, rev_height> height_map;
 
+  typedef hashmap::hash_map<rsa_keypair_id,
+                            pair<shared_ptr<Botan::PK_Verifier>,
+                                 shared_ptr<Botan::RSA_PublicKey> >
+                            > verifier_cache;
+  
 } // anonymous namespace
 
 class database_impl
@@ -321,6 +336,9 @@ class database_impl
   // --== Keys ==--
   //
   void get_keys(string const & table, vector<rsa_keypair_id> & keys);
+
+  // cache of verifiers for public keys
+  verifier_cache verifiers;
 
   //
   // --== Certs ==--
@@ -2614,13 +2632,22 @@ database::get_pubkey(hexenc<id> const & hash,
 
 void
 database::get_key(rsa_keypair_id const & pub_id,
-                  base64<rsa_pub_key> & pub_encoded)
+                  rsa_pub_key & pub)
 {
   results res;
   imp->fetch(res, one_col, one_row,
              query("SELECT keydata FROM public_keys WHERE id = ?")
              % text(pub_id()));
-  encode_base64(rsa_pub_key(res[0][0]), pub_encoded);
+  pub = rsa_pub_key(res[0][0]);
+}
+
+void
+database::get_key(rsa_keypair_id const & pub_id,
+                  base64<rsa_pub_key> & pub_encoded)
+{
+  rsa_pub_key pub;
+  get_key(pub_id, pub);
+  encode_base64(pub, pub_encoded);
 }
 
 bool
@@ -2658,6 +2685,64 @@ database::delete_public_key(rsa_keypair_id const & pub_id)
 {
   imp->execute(query("DELETE FROM public_keys WHERE id = ?")
                % text(pub_id()));
+}
+
+cert_status
+database::check_signature(rsa_keypair_id const & id,
+                          string const & alleged_text,
+                          base64<rsa_sha1_signature> const & signature)
+{
+  shared_ptr<PK_Verifier> verifier;
+
+  verifier_cache::const_iterator i = imp->verifiers.find(id);
+  if (i != imp->verifiers.end())
+    verifier = i->second.first;
+
+  else
+    {
+      rsa_pub_key pub;
+      SecureVector<Botan::byte> pub_block;
+
+      if (!public_key_exists(id))
+        return cert_unknown;
+
+      get_key(id, pub);
+      pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()),
+                    pub().size());
+
+      L(FL("building verifier for %d-byte pub key") % pub_block.size());
+      shared_ptr<X509_PublicKey> x509_key(Botan::X509::load_key(pub_block));
+      shared_ptr<RSA_PublicKey> pub_key
+        = boost::shared_dynamic_cast<RSA_PublicKey>(x509_key);
+
+      E(pub_key,
+        F("Failed to get RSA verifying key for %s") % id);
+
+      verifier.reset(get_pk_verifier(*pub_key, "EMSA3(SHA-1)"));
+
+      /* XXX This is ugly. We need to keep the key around
+       * as long as the verifier is around, but the shared_ptr will go
+       * away after we leave this scope. Hence we store a pair of
+       * <verifier,key> so they both exist. */
+      imp->verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
+    }
+
+  // examine signature
+  rsa_sha1_signature sig_decoded;
+  decode_base64(signature, sig_decoded);
+
+  // check the text+sig against the key
+  L(FL("checking %d-byte (%d decoded) signature") %
+    signature().size() % sig_decoded().size());
+
+  if (verifier->verify_message(
+        reinterpret_cast<Botan::byte const*>(alleged_text.data()),
+        alleged_text.size(),
+        reinterpret_cast<Botan::byte const*>(sig_decoded().data()),
+        sig_decoded().size()))
+    return cert_ok;
+  else
+    return cert_bad;
 }
 
 // cert management
@@ -3602,13 +3687,6 @@ database::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_re
                                      map<rsa_keypair_id, bool> const & new_results)
 {
   return __app->lua.hook_accept_testresult_change(old_results, new_results);
-}
-
-
-key_store &
-database::get_key_store()
-{
-  return __app->keys;
 }
 
 utf8 const &

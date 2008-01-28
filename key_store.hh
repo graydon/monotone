@@ -73,9 +73,6 @@ public:
   std::map<rsa_keypair_id,
     std::pair<boost::shared_ptr<Botan::PK_Signer>,
         boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
-        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   // FIXME: quick hack to make these hooks and options available via
   //        the key_store context

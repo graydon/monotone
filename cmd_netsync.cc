@@ -22,6 +22,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+using boost::shared_ptr;
+
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
 static const var_key default_include_pattern_key(var_domain("database"),
@@ -78,7 +80,7 @@ find_key(utf8 const & addr,
     {
       if (needed)
         {
-          get_user_key(key, app.db);
+          get_user_key(key, app.keys, app.db);
         }
     }
   app.opts.signing_key = key;
@@ -443,7 +445,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(app.opts.signing_key, app.keys);
+      require_password(app.opts.signing_key, app.keys, app.db);
     }
   else if (!app.opts.bind_stdio)
     W(F("The --no-transport-auth option is usually only used in combination with --stdio"));

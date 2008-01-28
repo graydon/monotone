@@ -1,12 +1,9 @@
 database.cc:
 
-  __app is a member variable of class database, used by:
+  __app is a member variable of class database, used by accessor
+  hacks:
 
-  accessor hacks:
-  __app->keys
-    get_key_store()
-
-  __app->lua ...
+  __app->lua
     hook_get_manifest_cert_trust()
     hook_get_revision_cert_trust()
     hook_get_author()

@@ -17,9 +17,9 @@
 #include "vocab.hh"
 #include "roster.hh"
 #include "graph.hh"
+#include "cert.hh"
 
 class app_state;
-struct cert;
 struct date_t;
 struct globish;
 class key_store;
@@ -245,6 +245,7 @@ public:
                   rsa_keypair_id & ident,
                   base64<rsa_pub_key> & pub_encoded);
 
+  void get_key(rsa_keypair_id const & ident, rsa_pub_key & pub);
   void get_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> & pub_encoded);
 
@@ -252,6 +253,10 @@ public:
                base64<rsa_pub_key> const & pub_encoded);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
+
+  cert_status check_signature(rsa_keypair_id const & id,
+                              std::string const & alleged_text,
+                              base64<rsa_sha1_signature> const & signature);
 
   //
   // --== Certs ==--
@@ -441,8 +446,6 @@ public:
   bool const get_opt_set_default();
   bool const get_opt_ignore_suspend_certs();
   void set_opt_branchname(branch_name const & branchname);
-
-  key_store & get_key_store();
 
 private:
   database_impl *imp;

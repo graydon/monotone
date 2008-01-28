@@ -12,6 +12,7 @@
 #include "vocab.hh"
 
 class database;
+class key_store;
 
 class tag_t
 {
@@ -42,15 +43,17 @@ public:
                         std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
-  void put_tag(revision_id const & id, std::string const & name);
+  void put_tag(key_store & keys, revision_id const & id, std::string const & name);
 
   bool revision_is_in_branch(revision_id const & id, branch_name const & branch);
-  void put_revision_in_branch(revision_id const & id,
+  void put_revision_in_branch(key_store & keys,
+                              revision_id const & id,
                               branch_name const & branch);
 
   bool revision_is_suspended_in_branch(revision_id const & id, branch_name const & branch);
-  void suspend_revision_in_branch(revision_id const & id,
-                              branch_name const & branch);
+  void suspend_revision_in_branch(key_store & keys,
+                                  revision_id const & id,
+                                  branch_name const & branch);
 
   outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
@@ -64,16 +67,19 @@ public:
   outdated_indicator get_branch_certs(branch_name const & branch,
                                       std::vector<revision<cert> > & certs);
 
-  void put_standard_certs(revision_id const & id,
+  void put_standard_certs(key_store & keys,
+                          revision_id const & id,
                           branch_name const & branch,
                           utf8 const & changelog,
                           date_t const & time,
                           utf8 const & author);
-  void put_standard_certs_from_options(revision_id const & id,
+  void put_standard_certs_from_options(key_store & keys,
+                                       revision_id const & id,
                                        branch_name const & branch,
                                        utf8 const & changelog);
 
-  void put_cert(revision_id const & id,
+  void put_cert(key_store & keys,
+                revision_id const & id,
                 cert_name const & name,
                 cert_value const & value);
 };
