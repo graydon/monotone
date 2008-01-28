@@ -173,7 +173,12 @@ make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
                                  randomizer & rng)
 {
   for (size_t i = 0; i != num_nodes; ++i)
-    all_nodes.push_back(hexenc<id>(lexical_cast<string>(i)));
+    {
+      hexenc<id> hex_id;
+      string s(lexical_cast<string>(i));
+      calculate_ident(data(s), hex_id);
+      all_nodes.push_back(hex_id);
+    }
   // We put a single long chain of edges in, to make sure that everything is
   // reconstructable somehow.
   for (size_t i = 1; i != num_nodes; ++i)

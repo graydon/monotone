@@ -1876,7 +1876,7 @@ database::get_leaves(set<revision_id> & leaves)
               "ON revisions.id = revision_ancestry.parent "
               "WHERE revision_ancestry.child IS null"));
   for (size_t i = 0; i < res.size(); ++i)
-    leaves.insert(revision_id(res[i][0]));
+    leaves.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 
