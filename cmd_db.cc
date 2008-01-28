@@ -230,7 +230,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   get_user_key(key, app.db);
   require_password(key, app.keys);
 
-  build_changesets_from_manifest_ancestry(app.db);
+  build_changesets_from_manifest_ancestry(app.db, set<string>());
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -249,7 +249,8 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   get_user_key(key, app.db);
   require_password(key, app.keys);
 
-  build_roster_style_revs_from_manifest_style_revs(app.db);
+  build_roster_style_revs_from_manifest_style_revs(app.db,
+                                                   app.opts.attrs_to_drop);
 }
 
 CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",

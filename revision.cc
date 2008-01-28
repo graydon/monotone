@@ -884,11 +884,11 @@ struct anc_graph
   void add_node_ancestry(u64 child, u64 parent);
   void write_certs();
   void kluge_for_bogus_merge_edges();
-  void rebuild_ancestry();
+  void rebuild_ancestry(set<string> const & attrs_to_drop);
   void get_node_manifest(u64 node, manifest_id & man);
   u64 add_node_for_old_manifest(manifest_id const & man);
   u64 add_node_for_oldstyle_revision(revision_id const & rev);
-  void construct_revisions_from_ancestry();
+  void construct_revisions_from_ancestry(set<string> const & attrs_to_drop);
   void fixup_node_identities(parent_roster_map const & parent_rosters,
                              roster_t & child_roster,
                              legacy::renames_map const & renames);
@@ -1029,7 +1029,7 @@ anc_graph::kluge_for_bogus_merge_edges()
 
 
 void
-anc_graph::rebuild_ancestry()
+anc_graph::rebuild_ancestry(set<string> const & attrs_to_drop)
 {
   kluge_for_bogus_merge_edges();
 
@@ -1038,7 +1038,7 @@ anc_graph::rebuild_ancestry()
     transaction_guard guard(db);
     if (existing_graph)
       db.delete_existing_revs_and_certs();
-    construct_revisions_from_ancestry();
+    construct_revisions_from_ancestry(attrs_to_drop);
     write_certs();
     if (existing_graph)
       db.delete_existing_manifests();
@@ -1387,7 +1387,7 @@ dump(current_rev_debugger const & d, string & out)
 
 
 void
-anc_graph::construct_revisions_from_ancestry()
+anc_graph::construct_revisions_from_ancestry(set<string> const & attrs_to_drop)
 {
   // This is an incredibly cheesy, and also reasonably simple sorting
   // system: we put all the root nodes in the work queue. we take a
@@ -1532,7 +1532,7 @@ anc_graph::construct_revisions_from_ancestry()
                              k != fattrs.end(); ++k)
                           {
                             string key = k->first;
-                            if (db.must_drop_attr(key))
+                            if (attrs_to_drop.find(key) != attrs_to_drop.end())
                               {
                                 // ignore it
                               }
@@ -1639,7 +1639,8 @@ anc_graph::construct_revisions_from_ancestry()
 }
 
 void
-build_roster_style_revs_from_manifest_style_revs(database & db)
+build_roster_style_revs_from_manifest_style_revs(database & db,
+                                                 set<string> const & attrs_to_drop)
 {
   anc_graph graph(true, db);
 
@@ -1678,12 +1679,13 @@ build_roster_style_revs_from_manifest_style_revs(database & db)
       graph.add_node_for_oldstyle_revision(*i);
     }
 
-  graph.rebuild_ancestry();
+  graph.rebuild_ancestry(attrs_to_drop);
 }
 
 
 void
-build_changesets_from_manifest_ancestry(database & db)
+build_changesets_from_manifest_ancestry(database & db,
+                                        set<string> const & attrs_to_drop)
 {
   anc_graph graph(false, db);
 
@@ -1707,7 +1709,7 @@ build_changesets_from_manifest_ancestry(database & db)
       graph.add_node_ancestry(child_node, parent_node);
     }
 
-  graph.rebuild_ancestry();
+  graph.rebuild_ancestry(attrs_to_drop);
 }
 
 
