@@ -3259,7 +3259,7 @@ database::select_parent(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 void
@@ -3274,7 +3274,7 @@ database::select_cert(string const & certname,
              % text(certname));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 void
@@ -3290,7 +3290,7 @@ database::select_cert(string const & certname, string const & certvalue,
              % text(certname) % text(certvalue));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 void
@@ -3310,7 +3310,7 @@ database::select_author_tag_or_branch(string const & partial,
              % text(branch_cert_name()) % text(pattern));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 void
@@ -3329,7 +3329,7 @@ database::select_date(string const & date, string const & comparison,
   imp->fetch(res, 1, any_rows,
              q % text(date_cert_name()) % text(date));
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(res[i][0]));
+    completions.insert(revision_id(encode_hexenc(res[i][0])));
 }
 
 // epochs
