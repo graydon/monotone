@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <map>
+#include "safe_map.hh"
 #include <utility>
 #include <iostream>
 #include <iterator>
@@ -104,7 +104,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(app.db, idx(certs, i));
       cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -378,12 +378,12 @@ CMD(known, "known", "", CMD_REF(list), "",
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        new_roster, app);
+                        new_roster, app.work);
 
   // to be printed sorted
   vector<file_path> print_paths;
@@ -417,14 +417,14 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
 
   vector<file_path> roots = args_to_paths(args);
   path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth, app);
+                        app.opts.depth, app.work);
   set<file_path> unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored, app.db);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -445,11 +445,11 @@ CMD(missing, "missing", "", CMD_REF(list), "",
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, nis);
+  app.work.get_current_roster_shape(current_roster_shape, app.db, nis);
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        current_roster_shape, app);
+                        current_roster_shape, app.work);
 
   set<file_path> missing;
   app.work.find_missing(current_roster_shape, mask, missing);
@@ -470,15 +470,15 @@ CMD(changed, "changed", "", CMD_REF(list), "",
 
   app.require_workspace();
 
-  app.work.get_current_roster_shape(new_roster, nis);
+  app.work.get_current_roster_shape(new_roster, app.db, nis);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents);
+  app.work.get_parent_rosters(parents, app.db);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        parents, new_roster, app);
+                        parents, new_roster, app.work);
 
   revision_t rrev;
   make_restricted_revision(parents, new_roster, mask, rrev);
@@ -570,20 +570,23 @@ CMD_AUTOMATE(keys, "",
 {
   N(args.size() == 0,
     F("no arguments needed"));
-  
+
+  CMD_REQUIRES_DATABASE(app);
+
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
   map<string, boost::tuple<hexenc<id>, hexenc<id>,
                            vector<string>,
                            vector<string> > > items;
-  if (app.db.database_specified())
+  if (db.database_specified())
     {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids(dbkeys);
+      transaction_guard guard(db, false);
+      db.get_key_ids(dbkeys);
       guard.commit();
     }
-  app.keys.get_key_ids(kskeys);
+  key_store & keys = app.keys;
+  keys.get_key_ids(kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
        i != dbkeys.end(); i++)
@@ -591,7 +594,7 @@ CMD_AUTOMATE(keys, "",
       base64<rsa_pub_key> pub_encoded;
       hexenc<id> hash_code;
 
-      app.db.get_key(*i, pub_encoded);
+      db.get_key(*i, pub_encoded);
       key_hash_code(*i, pub_encoded, hash_code);
       items[(*i)()].get<0>() = hash_code;
       items[(*i)()].get<2>().push_back("database");
@@ -602,7 +605,7 @@ CMD_AUTOMATE(keys, "",
     {
       keypair kp;
       hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp);
+      keys.get_key_pair(*i, kp);
       key_hash_code(*i, kp.pub, pubhash);
       key_hash_code(*i, kp.priv, privhash);
       items[(*i)()].get<0>() = pubhash;
@@ -666,17 +669,19 @@ CMD_AUTOMATE(certs, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  CMD_REQUIRES_DATABASE(app);
+
   vector<cert> certs;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
-  // use the app.db version instead if no project is specified.
+  // use the db version instead if no project is specified.
   app.get_project().get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
@@ -687,7 +692,7 @@ CMD_AUTOMATE(certs, N_("REV"),
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
+            !db.public_key_exists(idx(certs, i).key))
           W(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
@@ -703,7 +708,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   for (size_t i = 0; i < certs.size(); ++i)
     {
       basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(db, idx(certs, i));
       cert_value tv;
       cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
@@ -714,8 +719,8 @@ CMD_AUTOMATE(certs, N_("REV"),
       signers.insert(keyid);
 
       bool trusted =
-        app.lua.hook_get_revision_cert_trust(signers, ident,
-                                             name, tv);
+        db.hook_get_revision_cert_trust(signers, ident,
+                                        name, tv);
 
       st.push_str_pair(syms::key, keyid());
 

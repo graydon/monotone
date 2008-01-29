@@ -11,75 +11,71 @@
 // PURPOSE.
 
 #include "vocab.hh"
-#include "botan/rsa.h"
 #include <boost/shared_ptr.hpp>
 
-using Botan::RSA_PrivateKey;
-using boost::shared_ptr;
-
-class lua_hooks;
-class app_state;
+class key_store;
+class database;
+namespace Botan { class RSA_PrivateKey; }
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it
 // could in theory be in transforms.cc too, but that file's already kinda
 // big and this stuff "feels" different, imho.
 
-class lua_hooks;
-
-void generate_key_pair(lua_hooks & lua,              // to hook for phrase
+void generate_key_pair(key_store & keys,             // to hook for phrase
                        rsa_keypair_id const & id,    // to prompting user for phrase
                        keypair & kp_out);
 
 void generate_key_pair(keypair & kp_out,
                        utf8 const phrase);
 
-void change_key_passphrase(lua_hooks & lua,       // to hook for phrase
+void change_key_passphrase(key_store & keys,          // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
                            base64< rsa_priv_key > & encoded_key);
 
-void migrate_private_key(app_state & app,
+void migrate_private_key(key_store & keys,
                          rsa_keypair_id const & id,
-                         base64< arc4<rsa_priv_key> > const & old_priv,
+                         base64< old_arc4_rsa_priv_key > const & old_priv,
                          keypair & kp);
 
-void make_signature(app_state & app,           // to hook for phrase
-                    rsa_keypair_id const & id, // to prompting user for phrase
+void make_signature(key_store & keys,
+                    database & db,
+                    rsa_keypair_id const & id,
                     base64< rsa_priv_key > const & priv,
                     std::string const & tosign,
                     base64<rsa_sha1_signature> & signature);
 
-bool check_signature(app_state & app,
+bool check_signature(key_store & keys,
                      rsa_keypair_id const & id,
                      base64<rsa_pub_key> const & pub,
                      std::string const & alleged_text,
                      base64<rsa_sha1_signature> const & signature);
 
 void require_password(rsa_keypair_id const & id,
-                      app_state & app);
+                      key_store & keys, database & db);
 
-void encrypt_rsa(lua_hooks & lua,
+void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub,
                  std::string const & plaintext,
                  rsa_oaep_sha_data & ciphertext);
 
-void decrypt_rsa(lua_hooks & lua,
+void decrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64< rsa_priv_key > const & priv,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext);
 
 void
-get_passphrase(lua_hooks & lua,
+get_passphrase(key_store & keys,
                rsa_keypair_id const & keyid,
                utf8 & phrase,
                bool confirm_phrase = false,
                bool force_from_user = false,
                bool generating_key = false);
 
-shared_ptr<RSA_PrivateKey>
-get_private_key(lua_hooks & lua,
+boost::shared_ptr<Botan::RSA_PrivateKey>
+get_private_key(key_store & keys,
                 rsa_keypair_id const & id,
                 base64< rsa_priv_key > const & priv,
                 bool force_from_user = false);
@@ -106,12 +102,6 @@ bool keys_match(rsa_keypair_id const & id1,
                 base64<rsa_pub_key> const & key1,
                 rsa_keypair_id const & id2,
                 base64<rsa_pub_key> const & key2);
-/* Doesn't work
-bool keys_match(rsa_keypair_id const & id1,
-                base64< rsa_priv_key > const & key1,
-                rsa_keypair_id const & id2,
-                base64< rsa_priv_key > const & key2);
-*/
 
 // Local Variables:
 // mode: C++

@@ -34,9 +34,6 @@ class lua_hooks
 public:
   lua_hooks();
   ~lua_hooks();
-#ifdef BUILD_UNIT_TESTS
-  void add_test_hooks();
-#endif
   void set_app(app_state *_app);
   bool check_lua_state(lua_State * st) const;
   void add_std_hooks();

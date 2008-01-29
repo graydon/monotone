@@ -22,6 +22,8 @@ using std::set;
 using std::string;
 using std::vector;
 
+using boost::shared_ptr;
+
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
 static const var_key default_include_pattern_key(var_domain("database"),
@@ -78,7 +80,7 @@ find_key(utf8 const & addr,
     {
       if (needed)
         {
-          get_user_key(key, app);
+          get_user_key(key, app.keys, app.db);
         }
     }
   app.opts.signing_key = key;
@@ -162,7 +164,8 @@ CMD(push, "push", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, source_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.get_project(), app.keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -185,7 +188,8 @@ CMD(pull, "pull", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.get_project(), app.keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -206,7 +210,8 @@ CMD(sync, "sync", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.get_project(), app.keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -325,7 +330,8 @@ CMD(clone, "clone", "", CMD_REF(network),
   uris.push_back(addr);
 
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       app.db, app.get_project(), app.keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -345,7 +351,8 @@ CMD(clone, "clone", "", CMD_REF(network),
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s")
+              % describe_revision(app.db, app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -355,11 +362,8 @@ CMD(clone, "clone", "", CMD_REF(network),
     {
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
 
-      guess_branch(ident, app);
-
+      guess_branch(ident, app.db, app.get_project());
       I(!app.opts.branchname().empty());
 
       N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
@@ -380,12 +384,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app);
+  content_merge_checkout_adaptor wca(app.db);
 
-  app.work.perform_content_update(checkout, wca, false);
+  app.work.perform_content_update(checkout, wca, app.db, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
   guard.commit();
   remove_on_fail.commit();
 }
@@ -441,7 +445,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
       N(app.lua.hook_persist_phrase_ok(),
 	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(app.opts.signing_key, app);
+      require_password(app.opts.signing_key, app.keys, app.db);
     }
   else if (!app.opts.bind_stdio)
     W(F("The --no-transport-auth option is usually only used in combination with --stdio"));
@@ -449,7 +453,8 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   app.db.ensure_open();
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""), app);
+                       globish("*"), globish(""),
+                       app.db, app.get_project(), app.keys, app.lua, app.opts);
 }
 
 // Local Variables:
