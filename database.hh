@@ -140,7 +140,7 @@ public:
 private:
   bool file_or_manifest_base_exists(hexenc<id> const & ident,
                                     std::string const & table);
-  bool delta_exists(std::string const & ident,
+  bool delta_exists(hexenc<id> const & ident,
                     std::string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
@@ -350,7 +350,7 @@ public:
 public:
   void prefix_matching_constraint(std::string const & colname,
                                    std::string const & prefix,
-                                   query & constraint);
+                                   std::string & constraint);
 
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);

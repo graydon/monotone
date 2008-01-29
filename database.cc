@@ -211,7 +211,7 @@ class database_impl
              query const & q);
   void execute(query const & q);
 
-  bool table_has_entry(string const & key, string const & column,
+  bool table_has_entry(hexenc<id> const & key, string const & column,
                        string const & table);
 
   //
@@ -271,8 +271,8 @@ class database_impl
   bool roster_base_available(revision_id const & ident);
   
   // "do we have any entry for 'ident' that is a delta"
-  bool delta_exists(string const & ident,
-                    string const & base,
+  bool delta_exists(hexenc<id> const & ident,
+                    hexenc<id> const & base,
                     string const & table);
 
   bool file_or_manifest_base_exists(hexenc<id> const & ident,
@@ -285,23 +285,23 @@ class database_impl
                                             hexenc<id> const & base,
                                             delta & del,
                                             string const & table);
-  void get_roster_base(string const & ident,
+  void get_roster_base(revision_id const & ident,
                        roster_t & roster, marking_map & marking);
-  void get_roster_delta(string const & ident,
-                        string const & base,
+  void get_roster_delta(hexenc<id> const & ident,
+                        hexenc<id> const & base,
                         roster_delta & del);
 
   friend struct file_and_manifest_reconstruction_graph;
   friend struct roster_reconstruction_graph;
 
-  LRUWritebackCache<string, data, datasz> vcache;
+  LRUWritebackCache<hexenc<id>, data, datasz> vcache;
 
   void get_version(hexenc<id> const & ident,
                    data & dat,
                    string const & data_table,
                    string const & delta_table);
 
-  void drop(string const & base,
+  void drop(hexenc<id> const & base,
             string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
@@ -379,6 +379,9 @@ class database_impl
 
   outdated_indicator_factory cert_stamper;
 
+  void prefix_matching_constraint(string const & colname,
+                                  string const & prefix,
+                                  query & constraint);
 };
 
 database_impl::database_impl(system_path const & fn) :
@@ -1138,8 +1141,8 @@ database_impl::fetch(results & res,
 
 bool
 database_impl::table_has_entry(hexenc<id> const & key,
-                               string const & column,
-                               string const & table)
+                               std::string const & column,
+                               std::string const & table)
 {
   results res;
   query q("SELECT 1 FROM " + table + " WHERE " + column + " = ? LIMIT 1");
@@ -1619,8 +1622,8 @@ database_impl::get_version(hexenc<id> const & ident,
   selected_path.pop_back();
   data begin;
 
-  if (vcache.exists(curr()))
-    I(vcache.fetch(curr(), begin));
+  if (vcache.exists(curr))
+    I(vcache.fetch(curr, begin));
   else
     get_file_or_manifest_base_unchecked(curr, begin, data_table);
 
@@ -1632,11 +1635,11 @@ database_impl::get_version(hexenc<id> const & ident,
     {
       hexenc<id> const nxt = hexenc<id>(*i);
 
-      if (!vcache.exists(curr()))
+      if (!vcache.exists(curr))
         {
           string tmp;
           appl->finish(tmp);
-          vcache.insert_clean(curr(), data(tmp));
+          vcache.insert_clean(curr, data(tmp));
         }
 
       L(FL("following delta %s -> %s") % curr % nxt);
@@ -1656,8 +1659,8 @@ database_impl::get_version(hexenc<id> const & ident,
   calculate_ident(dat, final);
   I(final == ident);
 
-  if (!vcache.exists(ident()))
-    vcache.insert_clean(ident(), dat);
+  if (!vcache.exists(ident))
+    vcache.insert_clean(ident, dat);
 }
 
 struct roster_reconstruction_graph : public reconstruction_graph
@@ -1735,7 +1738,7 @@ public:
 };
 
 void
-database_impl::extract_from_deltas(revision_id const & id, extractor & x)
+database_impl::extract_from_deltas(revision_id const & ident, extractor & x)
 {
   reconstruction_path selected_path;
   {
@@ -1821,13 +1824,13 @@ database::get_file_content(revision_id const & id,
 }
 
 void
-database::get_roster_version(revision_id const & id,
+database::get_roster_version(revision_id const & ros_id,
                              cached_roster & cr)
 {
   // if we already have it, exit early
-  if (imp->roster_cache.exists(id))
+  if (imp->roster_cache.exists(ros_id))
     {
-      imp->roster_cache.fetch(id, cr);
+      imp->roster_cache.fetch(ros_id, cr);
       return;
     }
 
@@ -1897,7 +1900,7 @@ bool
 database::file_version_exists(file_id const & id)
 {
   return delta_exists(id.inner(), "file_deltas")
-    || file_or_manifest_base_exists(id.inner(), "files");
+    || imp->file_or_manifest_base_exists(id.inner(), "files");
 }
 
 bool
@@ -3135,9 +3138,9 @@ database::get_manifest_certs(cert_name const & name,
 
 // completions
 void
-database::prefix_matching_constraint(std::string const & colname,
-                                     std::string const & prefix,
-                                     query & constraint)
+database_impl::prefix_matching_constraint(string const & colname,
+                                          string const & prefix,
+                                          query & constraint)
 {
   L(FL("prefix_matching_constraint for '%s'") % prefix);
 
@@ -3185,7 +3188,7 @@ database::complete(string const & partial,
   completions.clear();
   query constraint;
 
-  prefix_matching_constraint("id", partial, constraint);
+  imp->prefix_matching_constraint("id", partial, constraint);
   imp->fetch(res, 1, any_rows,
              query("SELECT id FROM revisions WHERE " +
                    constraint.sql_cmd));
@@ -3203,7 +3206,7 @@ database::complete(string const & partial,
   completions.clear();
   query constraint;
 
-  prefix_matching_constraint("id", partial, constraint);
+  imp->prefix_matching_constraint("id", partial, constraint);
   imp->fetch(res, 1, any_rows,
              query("SELECT id FROM files WHERE " +
                    constraint.sql_cmd));
@@ -3229,7 +3232,7 @@ database::complete(string const & partial,
   completions.clear();
   query constraint;
 
-  prefix_matching_constraint("hash", partial, constraint);
+  imp->prefix_matching_constraint("hash", partial, constraint);
   imp->fetch(res, 2, any_rows,
              query("SELECT hash, id FROM public_keys WHERE " +
                    constraint.sql_cmd));
@@ -3239,7 +3242,6 @@ database::complete(string const & partial,
                                  utf8(res[i][1])));
 }
 
-FIXME: no idea how to merge this in kdiff3... FROM B
 // revision selectors
 
 void
@@ -3247,13 +3249,14 @@ database::select_parent(string const & partial,
                         set<revision_id> & completions)
 {
   results res;
+  query constraint;
+
   completions.clear();
 
-  string pattern = partial + "*";
-
+  imp->prefix_matching_constraint("child", partial, constraint);
   imp->fetch(res, 1, any_rows,
-             query("SELECT DISTINCT parent FROM revision_ancestry WHERE child GLOB ?")
-             % text(pattern));
+             query("SELECT DISTINCT parent FROM revision_ancestry WHERE " +
+                   constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(revision_id(res[i][0]));
@@ -3328,251 +3331,7 @@ database::select_date(string const & date, string const & comparison,
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(revision_id(res[i][0]));
 }
-                      
-FIXME: no idea how to merge this in kdiff3... the following
-       is from C
-using selectors::selector_type;
 
-static void selector_to_certname(selector_type ty,
-                                 cert_name & name,
-                                 string & prefix,
-                                 string & suffix)
-{
-  prefix = suffix = "*";
-  switch (ty)
-    {
-    case selectors::sel_author:
-      prefix = suffix = "";
-      name = author_cert_name;
-      break;
-    case selectors::sel_branch:
-      prefix = suffix = "";
-      name = branch_cert_name;
-      break;
-    case selectors::sel_head:
-      prefix = suffix = "";
-      name = branch_cert_name;
-      break;
-    case selectors::sel_date:
-    case selectors::sel_later:
-    case selectors::sel_earlier:
-      name = date_cert_name;
-      break;
-    case selectors::sel_tag:
-      prefix = suffix = "";
-      name = tag_cert_name;
-      break;
-    case selectors::sel_ident:
-    case selectors::sel_cert:
-    case selectors::sel_unknown:
-    case selectors::sel_parent:
-      I(false); // don't do this.
-      break;
-    }
-}
-
-void database::complete(selector_type ty,
-                        string const & partial,
-                        vector<pair<selector_type, string> > const & limit,
-                        set<string> & completions)
-{
-  //L(FL("database::complete for partial '%s'") % partial);
-  completions.clear();
-
-  // step 1: the limit is transformed into an SQL select statement which
-  // selects a set of IDs from the revision_certs table which match the
-  // limit.  this is done by building an SQL select statement for each term
-  // in the limit and then INTERSECTing them all.
-
-  query lim;
-  lim.sql_cmd = "(";
-  if (limit.empty())
-    {
-      lim.sql_cmd += "SELECT id FROM revision_certs";
-    }
-  else
-    {
-      bool first_limit = true;
-      for (vector<pair<selector_type, string> >::const_iterator i = limit.begin();
-           i != limit.end(); ++i)
-        {
-          if (first_limit)
-            first_limit = false;
-          else
-            lim.sql_cmd += " INTERSECT ";
-
-          if (i->first == selectors::sel_ident)
-            {
-              query constraint;
-              prefix_matching_constraint("id", i->second, constraint);
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE " +
-                             constraint.sql_cmd;
-            }
-          else if (i->first == selectors::sel_parent)
-            {
-              query constraint;
-              prefix_matching_constraint("parent", i->second, constraint);
-              lim.sql_cmd += "SELECT parent AS id "
-                             "FROM revision_ancestry WHERE " +
-                             constraint.sql_cmd;
-            }
-          else if (i->first == selectors::sel_cert)
-            {
-              if (i->second.length() > 0)
-                {
-                  size_t spot = i->second.find("=");
-
-                  if (spot != (size_t)-1)
-                    {
-                      string certname;
-                      string certvalue;
-
-                      certname = i->second.substr(0, spot);
-                      spot++;
-                      certvalue = i->second.substr(spot);
-                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                      lim % text(certname) % text(certvalue);
-                    }
-                  else
-                    {
-                      lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=?";
-                      lim % text(i->second);
-                    }
-
-                }
-            }
-          else if (i->first == selectors::sel_unknown)
-            {
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE (name=? OR name=? OR name=?)";
-              lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
-              lim.sql_cmd += " AND CAST(value AS TEXT) glob ?";
-              lim % text(i->second + "*");
-            }
-          else if (i->first == selectors::sel_head)
-            {
-              // get branch names
-              set<branch_name> branch_names;
-              if (i->second.size() == 0)
-                {
-                  __app->require_workspace("the empty head selector h: refers to the head of the current branch");
-                  branch_names.insert(__app->opts.branchname);
-                }
-              else
-                {
-                  __app->get_project().get_branch_list(globish(i->second), branch_names, true);
-                }
-
-                L(FL("found %d matching branches") % branch_names.size());
-
-              // for each branch name, get the branch heads
-              set<revision_id> heads;
-              for (set<branch_name>::const_iterator bn = branch_names.begin();
-                   bn != branch_names.end(); bn++)
-                {
-                  set<revision_id> branch_heads;
-                  __app->get_project().get_branch_heads(*bn, branch_heads);
-                  heads.insert(branch_heads.begin(), branch_heads.end());
-                  L(FL("after get_branch_heads for %s, heads has %d entries") % (*bn) % heads.size());
-                }
-
-              lim.sql_cmd += "SELECT id FROM revision_certs WHERE id IN (";
-              if (heads.size())
-                {
-                  set<revision_id>::const_iterator r = heads.begin();
-                  lim.sql_cmd += "?";
-                  lim % blob(decode_hexenc(r->inner()()));
-                  r++;
-                  while (r != heads.end())
-                    {
-                      lim.sql_cmd += ", ?";
-                      lim % blob(decode_hexenc(r->inner()()));
-                      r++;
-                    }
-                }
-              lim.sql_cmd += ") ";
-            }
-          else
-            {
-              cert_name certname;
-              string prefix;
-              string suffix;
-              selector_to_certname(i->first, certname, prefix, suffix);
-              L(FL("processing selector type %d with i->second '%s'") % ty % i->second);
-              if ((i->first == selectors::sel_branch) && (i->second.size() == 0))
-                {
-                  __app->require_workspace("the empty branch selector b: refers to the current branch");
-                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND CAST(value AS TEXT) glob ?";
-                  lim % text(branch_cert_name()) % text(__app->opts.branchname());
-                  L(FL("limiting to current branch '%s'") % __app->opts.branchname);
-                }
-              else
-                {
-                  lim.sql_cmd += "SELECT id FROM revision_certs WHERE name=? AND ";
-                  lim % text(certname());
-                  switch (i->first)
-                    {
-                    case selectors::sel_earlier:
-                      lim.sql_cmd += "value <= ?";
-                      lim % blob(i->second);
-                      break;
-                    case selectors::sel_later:
-                      lim.sql_cmd += "value > ?";
-                      lim % blob(i->second);
-                      break;
-                    default:
-                      lim.sql_cmd += "CAST(value AS TEXT) glob ?";
-                      lim % text(prefix + i->second + suffix);
-                      break;
-                    }
-                }
-            }
-          //L(FL("found selector type %d, selecting_head is now %d") % i->first % selecting_head);
-        }
-    }
-  lim.sql_cmd += ")";
-
-  // step 2: depending on what we've been asked to disambiguate, we
-  // will complete either some idents, or cert values, or "unknown"
-  // which generally means "author, tag or branch"
-
-  if (ty == selectors::sel_ident || ty == selectors::sel_parent)
-    {
-      lim.sql_cmd = "SELECT id FROM " + lim.sql_cmd;
-    }
-  else
-    {
-      string prefix = "*";
-      string suffix = "*";
-      lim.sql_cmd = "SELECT value FROM revision_certs WHERE";
-      if (ty == selectors::sel_unknown)
-        {
-          lim.sql_cmd += " (name=? OR name=? OR name=?)";
-          lim % text(author_cert_name()) % text(tag_cert_name()) % text(branch_cert_name());
-        }
-      else
-        {
-          cert_name certname;
-          selector_to_certname(ty, certname, prefix, suffix);
-          lim.sql_cmd += " (name=?)";
-          lim % text(certname());
-        }
-
-      lim.sql_cmd += " AND (CAST(value AS TEXT) GLOB ?) AND (id IN " + lim.sql_cmd + ")";
-      lim % text(prefix + partial + suffix);
-    }
-
-  results res;
-  fetch(res, one_col, any_rows, lim);
-  for (size_t i = 0; i < res.size(); ++i)
-    {
-      if (ty == selectors::sel_ident || ty == selectors::sel_parent)
-        completions.insert(encode_hexenc(res[i][0]));
-      else
-        completions.insert(res[i][0]);
-    }
-}
-
-FIXME: end of difficult stuff to merge
 // epochs
 
 void
