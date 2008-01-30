@@ -21,6 +21,7 @@
 #include "transforms.hh"
 #include "ssh_agent.hh"
 #include "botan/pipe.h"
+#include "botan/rsa.h"
 
 using std::cout;
 using std::ostream_iterator;
