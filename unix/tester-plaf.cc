@@ -359,8 +359,12 @@ void prepare_for_parallel_testcases(int jobs, int jread, int jwrite)
       && (fcntl(jread, F_GETFD) == -1 || fcntl(jwrite, F_GETFD) == -1))
     {
       W(F("jobserver unavailable: using -j1.  Add `+' to parent make rule."));
-      close(jread);
-      close(jwrite);
+      if (jread != -1)
+        close(jread);
+
+      if (jwrite != -1)
+        close(jwrite);
+
       jread = jwrite = -1;
     }
 
@@ -536,8 +540,11 @@ void run_tests_in_children(test_enumerator const & next_test,
 
   I(tokens_held == 0);
   I(children.size() == 0);
-  close(jobsvr_read_dup);
-  jobsvr_read_dup = -1;
+  if (jobsvr_read_dup != -1)
+    {
+      close(jobsvr_read_dup);
+      jobsvr_read_dup = -1;
+    }
   sigaction(SIGCHLD, &osa, 0);
 }
 
