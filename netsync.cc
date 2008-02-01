@@ -1371,20 +1371,22 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   if (use_transport_auth && signing_key() != "")
     {
       // get our key pair
-      keypair our_kp;
-      load_key_pair(keys, signing_key, our_kp);
+      load_key_pair(keys, signing_key);
 
-      // get the hash identifier for our pubkey
-      hexenc<id> our_key_hash;
-      id our_key_hash_raw;
-      key_hash_code(signing_key, our_kp.pub, our_key_hash);
-      decode_hexenc(our_key_hash, our_key_hash_raw);
-
-      // make a signature
+      // make a signature with it;
+      // this also ensures our public key is in the database
       base64<rsa_sha1_signature> sig;
       rsa_sha1_signature sig_raw;
-      make_signature(keys, db, signing_key, our_kp.priv, nonce(), sig);
+      keys.make_signature(db, signing_key, nonce(), sig);
       decode_base64(sig, sig_raw);
+
+      // get the hash identifier for our pubkey
+      base64<rsa_pub_key> our_pub;
+      db.get_key(signing_key, our_pub);
+      hexenc<id> our_key_hash;
+      id our_key_hash_raw;
+      key_hash_code(signing_key, our_pub, our_key_hash);
+      decode_hexenc(our_key_hash, our_key_hash_raw);
 
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,

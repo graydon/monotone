@@ -20,6 +20,11 @@ database.cc:
 key_store.cc:
   app is a member variable of class key_store, used by:
 
+  key_store::make_signature()
+       app.opts.ssh_sign
+       app.agent
+
+
   key_store::hook_get_passphrase()
        app.lua.hook_get_passphrase()
 
@@ -33,12 +38,6 @@ key_store.cc:
   key_store::has_opt_signing_key()
   key_store::get_opt_signing_key()
        app.opts.signing_key
-
-  key_store::get_opt_ssh_sign()
-       app.opts.ssh_sign
-
-  key_store::get_agent()
-       app.agent
 
 lua_hooks.cc:
   << evil mess involving a map from lua_*state* pointers 

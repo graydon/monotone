@@ -365,13 +365,19 @@ cert_hash_code(cert const & t, hexenc<id> & out)
 // if that key pair is not available.
 
 void
-load_key_pair(key_store & keys,
-              rsa_keypair_id const & id,
-              keypair & kp)
+load_key_pair(key_store & keys, rsa_keypair_id const & id)
 {
   N(keys.key_pair_exists(id),
     F("no key pair '%s' found in key store '%s'")
     % id % keys.get_key_dir());
+}
+
+void
+load_key_pair(key_store & keys,
+              rsa_keypair_id const & id,
+              keypair & kp)
+{
+  load_key_pair(keys, id);
   keys.get_key_pair(id, kp);
 }
 
@@ -379,13 +385,9 @@ static void
 calculate_cert(key_store & keys, database & db, cert & t)
 {
   string signed_text;
-  keypair kp;
   cert_signable_text(t, signed_text);
-
-  load_key_pair(keys, t.key, kp);
-  db.put_key(t.key, kp.pub);
-
-  make_signature(keys, db, t.key, kp.priv, signed_text, t.sig);
+  load_key_pair(keys, t.key);
+  keys.make_signature(db, t.key, signed_text, t.sig);
 }
 
 cert_status
