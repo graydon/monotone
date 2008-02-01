@@ -182,7 +182,7 @@ class database_impl
 {
   friend class database;
 
-  database_impl(system_path const & fn);
+  database_impl();
   ~database_impl();
 
   //
@@ -381,8 +381,8 @@ class database_impl
 
 };
 
-database_impl::database_impl(system_path const & fn) :
-  filename(fn),
+database_impl::database_impl() :
+  filename(),
   __sql(NULL),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
@@ -406,8 +406,8 @@ database_impl::~database_impl()
     close();
 }
 
-database::database(system_path const & fn)
-  : imp(new database_impl(fn))
+database::database(lua_hooks & lua)
+  : imp(new database_impl), lua(lua)
 {}
 
 database::~database()
@@ -3654,81 +3654,30 @@ database_impl::close()
   I(!__sql);
 }
 
-// FIXME: the quick hack lua link in functions
-void
-database::set_app(app_state * app)
-{
-  __app = app;
-}
+// the database holds onto the lua_hooks object and uses it to re-expose
+// these two hooks.  it is impractical to pass the lua_hooks object down to
+// all the places where this is used, and they're all going to get
+// reexamined when we do policy branches anyway.  also, arguably this is
+// cleaner, because those places don't have access to *all* the lua hooks,
+// just these two.  (manifest cert trust is only relevant to pre-roster
+// migration, but revision cert trust comes up everywhere erase_bogus_certs
+// is called.)  (A near-term refactor that might make sense: make
+// erase_bogus_certs a project_t member and have the project_t hold the
+// lua_hooks reference.)
 
 bool
 database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val)
 {
-  return __app->lua.hook_get_manifest_cert_trust(signers, id, name, val);
+  return lua.hook_get_manifest_cert_trust(signers, id, name, val);
 };
 
 bool
 database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val)
 {
-  return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
+  return lua.hook_get_revision_cert_trust(signers, id, name, val);
 };
-
-bool
-database::hook_get_author(rsa_keypair_id const & k,
-                          string & author)
-{
-  return __app->lua.hook_get_author(__app->opts.branchname, k, author);
-}
-
-bool
-database::hook_accept_testresult_change(map<rsa_keypair_id, bool> const & old_results,
-                                     map<rsa_keypair_id, bool> const & new_results)
-{
-  return __app->lua.hook_accept_testresult_change(old_results, new_results);
-}
-
-utf8 const &
-database::get_opt_author()
-{
-  return __app->opts.author;
-}
-
-bool const
-database::get_opt_ignore_suspend_certs()
-{
-  return __app->opts.ignore_suspend_certs;
-}
-
-date_t const
-database::get_opt_date_or_cur_date()
-{
-  if (__app->opts.date_given)
-    return __app->opts.date;
-  else
-    return date_t::now();
-}
-
-bool
-database::has_opt_branch()
-{
-  return __app->opts.branch_given;
-}
-
-branch_name const &
-database::get_opt_branchname()
-{
-  return __app->opts.branchname;
-}
-
-void
-database::set_opt_branchname(branch_name const & branchname)
-{
-  __app->opts.branchname = branchname;
-}
-
-
 
 // transaction guards
 

@@ -26,6 +26,7 @@
 class key_store;
 class database;
 class project_t;
+struct options;
 
 struct cert
 {
@@ -113,10 +114,10 @@ void
 get_user_key(rsa_keypair_id & key, key_store & keys, database & db);
 
 void
-guess_branch(revision_id const & id, database & db, project_t & project,
+guess_branch(revision_id const & id, options & opts, project_t & project,
              branch_name & branchname);
 void
-guess_branch(revision_id const & id, database & db, project_t & project);
+guess_branch(revision_id const & id, options & opts, project_t & project);
 
 #define date_cert_name cert_name("date")
 #define author_cert_name cert_name("author")
@@ -140,10 +141,6 @@ void
 cert_revision_author(revision_id const & m,
                     std::string const & author,
                     database & db, key_store & keys);
-
-void
-cert_revision_author_default(revision_id const & m,
-                            database & db, key_store & keys);
 
 void
 cert_revision_tag(revision_id const & m,

@@ -22,6 +22,7 @@
 #include "update.hh"
 #include "vocab.hh"
 #include "revision.hh"
+#include "lua_hooks.hh"
 
 // these functions just encapsulate the (somewhat complex) logic behind
 // picking an update target. the actual updating takes place in
@@ -81,7 +82,8 @@ acceptable_descendent(branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target,
-                      database & db, project_t & project)
+                      database & db, project_t & project,
+                      lua_hooks & lua)
 {
   L(FL("Considering update target %s") % target);
 
@@ -95,7 +97,7 @@ acceptable_descendent(branch_name const & branch,
   // step 2: check the testresults
   map<rsa_keypair_id, bool> target_results;
   get_test_results_for_revision(target, target_results, db, project);
-  if (db.hook_accept_testresult_change(base_results, target_results))
+  if (lua.hook_accept_testresult_change(base_results, target_results))
     {
       L(FL("%s is acceptable update candidate") % target);
       return true;
@@ -107,12 +109,17 @@ acceptable_descendent(branch_name const & branch,
     }
 }
 
-static void
-calculate_update_set(revision_id const & base,
-                     branch_name const & branch,
-                     database & db, project_t & project,
-                     set<revision_id> & candidates)
+void
+pick_update_candidates(set<revision_id> & candidates,
+                       revision_id const & base,
+                       branch_name const & branch,
+                       bool ignore_suspend_certs,
+                       database & db, project_t & project,
+                       lua_hooks & lua)
 {
+  I(!null_id(base));
+  I(!branch().empty());
+
   map<rsa_keypair_id, bool> base_results;
   get_test_results_for_revision(base, base_results, db, project);
 
@@ -120,7 +127,7 @@ calculate_update_set(revision_id const & base,
   // we possibly insert base into the candidate set as well; returning a set
   // containing just it means that we are up to date; returning an empty set
   // means that there is no acceptable update.
-  if (acceptable_descendent(branch, base, base_results, base, db, project))
+  if (acceptable_descendent(branch, base, base_results, base, db, project, lua))
     candidates.insert(base);
 
   // keep a visited set to avoid repeating work
@@ -143,7 +150,7 @@ calculate_update_set(revision_id const & base,
 
       // then, possibly insert this revision as a candidate
       if (acceptable_descendent(branch, base, base_results,
-                                target, db, project))
+                                target, db, project, lua))
         candidates.insert(target);
 
       // and traverse its children as well
@@ -153,7 +160,7 @@ calculate_update_set(revision_id const & base,
 
   erase_ancestors(candidates, db);
 
-  if (db.get_opt_ignore_suspend_certs())
+  if (ignore_suspend_certs)
     return;
   
    set<revision_id> active_candidates;
@@ -165,21 +172,6 @@ calculate_update_set(revision_id const & base,
    if (!active_candidates.empty())
      candidates = active_candidates;
 }
-
-void pick_update_candidates(revision_id const & base_ident,
-                            database & db, project_t & project,
-                            set<revision_id> & candidates)
-{
-  branch_name const & branchname = db.get_opt_branchname();
-  N(branchname() != "",
-    F("cannot determine branch for update"));
-  I(!null_id(base_ident));
-
-  calculate_update_set(base_ident, branchname,
-                       db, project, candidates);
-}
-
-
 
 // Local Variables:
 // mode: C++

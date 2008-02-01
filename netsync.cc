@@ -1356,7 +1356,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   // clients always include in the synchronization set, every branch that the
   // user requested
   set<branch_name> all_branches, ok_branches;
-  project.get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches);
   for (set<branch_name>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
     {
@@ -1451,7 +1451,7 @@ session::process_anonymous_cmd(protocol_role their_role,
     }
 
   set<branch_name> all_branches, ok_branches;
-  project.get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches);
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
   for (set<branch_name>::const_iterator i = all_branches.begin();
       i != all_branches.end(); i++)
@@ -1592,7 +1592,7 @@ session::process_auth_cmd(protocol_role their_role,
     }
 
   set<branch_name> all_branches, ok_branches;
-  project.get_branch_list(all_branches, false);
+  project.get_branch_list(all_branches);
   for (set<branch_name>::const_iterator i = all_branches.begin();
        i != all_branches.end(); i++)
     {

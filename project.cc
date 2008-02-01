@@ -9,6 +9,7 @@
 #include "project.hh"
 #include "revision.hh"
 #include "transforms.hh"
+#include "lua_hooks.hh"
 
 using std::string;
 using std::set;
@@ -21,7 +22,8 @@ project_t::project_t(database & db)
 {}
 
 void
-project_t::get_branch_list(std::set<branch_name> & names, bool check_certs_valid)
+project_t::get_branch_list(std::set<branch_name> & names,
+                           bool check_heads)
 {
   if (indicator.outdated())
     {
@@ -37,10 +39,10 @@ project_t::get_branch_list(std::set<branch_name> & names, bool check_certs_valid
           const branch_name branch(*i);
           std::set<revision_id> heads;
 
-          if (check_certs_valid)
-            get_branch_heads(branch, heads, &inverse_graph_cache);
-          
-          if (!check_certs_valid || !heads.empty())
+          if (check_heads)
+            get_branch_heads(branch, heads, false, &inverse_graph_cache);
+
+          if (!check_heads || !heads.empty())
             branches.insert(branch);
         }
     }
@@ -51,7 +53,7 @@ project_t::get_branch_list(std::set<branch_name> & names, bool check_certs_valid
 void
 project_t::get_branch_list(globish const & glob,
                            std::set<branch_name> & names,
-                           bool check_certs_valid)
+                           bool check_heads)
 {
   std::vector<std::string> got;
   db.get_branches(glob, got);
@@ -65,10 +67,10 @@ project_t::get_branch_list(globish const & glob,
       const branch_name branch(*i);
       std::set<revision_id> heads;
 
-      if (check_certs_valid)
-        get_branch_heads(branch, heads, &inverse_graph_cache);
+      if (check_heads)
+        get_branch_heads(branch, heads, false, &inverse_graph_cache);
 
-      if (!check_certs_valid || !heads.empty())
+      if (!check_heads || !heads.empty())
         names.insert(branch);
     }
 }
@@ -117,12 +119,15 @@ namespace
 }
 
 void
-project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
-                            multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
+project_t::get_branch_heads(branch_name const & name,
+                            std::set<revision_id> & heads,
+                            bool ignore_suspend_certs,
+                            multimap<revision_id, revision_id> * inverse_graph_cache_ptr)
 {
-  std::pair<branch_name, suspended_indicator> cache_index(name,
-    db.get_opt_ignore_suspend_certs());
-  std::pair<outdated_indicator, std::set<revision_id> > & branch = branch_heads[cache_index];
+  std::pair<branch_name, suspended_indicator>
+    cache_index(name, ignore_suspend_certs);
+  std::pair<outdated_indicator, std::set<revision_id> > &
+    branch = branch_heads[cache_index];
   if (branch.first.outdated())
     {
       L(FL("getting heads of branch %s") % name);
@@ -135,9 +140,10 @@ project_t::get_branch_heads(branch_name const & name, std::set<revision_id> & he
                                                     branch.second);
 
       not_in_branch p(db, branch_encoded);
-      erase_ancestors_and_failures(branch.second, p, db, inverse_graph_cache_ptr);
-      
-      if (!db.get_opt_ignore_suspend_certs())
+      erase_ancestors_and_failures(branch.second, p, db,
+                                   inverse_graph_cache_ptr);
+
+      if (!ignore_suspend_certs)
         {
           suspended_in_branch s(db, branch_encoded);
           std::set<revision_id>::iterator it = branch.second.begin();
@@ -324,29 +330,46 @@ project_t::put_standard_certs(key_store & keys,
                               branch_name const & branch,
                               utf8 const & changelog,
                               date_t const & time,
-                              utf8 const & author)
+                              string const & author)
 {
+  I(!branch().empty());
+  I(!changelog().empty());
+  I(time.valid());
+  I(!author.empty());
+
   cert_revision_in_branch(id, branch, db, keys);
   cert_revision_changelog(id, changelog, db, keys);
   cert_revision_date_time(id, time, db, keys);
-  if (!author().empty())
-    cert_revision_author(id, author(), db, keys);
-  else
-    cert_revision_author_default(id, db, keys);
+  cert_revision_author(id, author, db, keys);
 }
 
 void
-project_t::put_standard_certs_from_options(key_store & keys,
+project_t::put_standard_certs_from_options(options const & opts,
+                                           lua_hooks & lua,
+                                           key_store & keys,
                                            revision_id const & id,
                                            branch_name const & branch,
                                            utf8 const & changelog)
 {
-  put_standard_certs(keys, id,
-                     branch,
-                     changelog,
-                     db.get_opt_date_or_cur_date(),
-                     db.get_opt_author());
+  date_t date;
+  if (opts.date_given)
+    date = opts.date;
+  else
+    date = date_t::now();
+
+  string author = opts.author();
+  if (author.empty())
+    {
+      rsa_keypair_id key;
+      get_user_key(key, keys, db);
+
+      if (!lua.hook_get_author(branch, key, author))
+        author = key();
+    }
+
+  put_standard_certs(keys, id, branch, changelog, date, author);
 }
+
 void
 project_t::put_cert(key_store & keys,
                     revision_id const & id,

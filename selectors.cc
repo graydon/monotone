@@ -32,6 +32,7 @@ enum selector_type
     sel_author,
     sel_branch,
     sel_head,
+    sel_any_head,
     sel_date,
     sel_tag,
     sel_ident,
@@ -79,7 +80,7 @@ decode_selector(string const & orig_sel,
           type = sel_branch;
           break;
         case 'h':
-          type = sel_head;
+          type = app.opts.ignore_suspend_certs ? sel_any_head : sel_head;
           break;
         case 'd':
           type = sel_date;
@@ -148,6 +149,7 @@ decode_selector(string const & orig_sel,
 
         case sel_branch:
         case sel_head:
+        case sel_any_head:
           if (sel.empty())
             {
               string msg = (sel_branch == type
@@ -271,11 +273,12 @@ complete_one_selector(selector_type ty, string const & value,
       break;
 
     case sel_head:
+    case sel_any_head:
       {
         // get branch names
         set<branch_name> branch_names;
         I(!value.empty());
-        project.get_branch_list(globish(value), branch_names, true);
+        project.get_branch_list(globish(value), branch_names);
 
         L(FL("found %d matching branches") % branch_names.size());
 
@@ -284,7 +287,7 @@ complete_one_selector(selector_type ty, string const & value,
              bn != branch_names.end(); bn++)
           {
             set<revision_id> branch_heads;
-            project.get_branch_heads(*bn, branch_heads);
+            project.get_branch_heads(*bn, branch_heads, ty == sel_any_head);
             completions.insert(branch_heads.begin(), branch_heads.end());
             L(FL("after get_branch_heads for %s, heads has %d entries")
               % (*bn) % completions.size());

@@ -347,7 +347,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   N(rev.edges.size() == 1,
     F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
 
-  guess_branch(r, app.db, app.get_project());
+  guess_branch(r, app.opts, app.get_project());
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(log_message_given, log_message, app,
@@ -374,7 +374,9 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     app.db.put_revision(inv_id, rdat);
 
-    app.get_project().put_standard_certs_from_options(app.keys, inv_id,
+    app.get_project().put_standard_certs_from_options(app.opts, app.lua,
+                                                      app.keys,
+                                                      inv_id,
                                                       app.opts.branchname,
                                                       log_message);
     guard.commit();
@@ -592,7 +594,8 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                         app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
@@ -611,7 +614,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), revid);
 
-      guess_branch(revid, app.db, app.get_project());
+      guess_branch(revid, app.opts, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1086,7 +1089,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
            i++)
         {
           // this will prefer --branch if it was set
-          guess_branch(edge_old_revision(i), app.db, app.get_project(),
+          guess_branch(edge_old_revision(i), app.opts, app.get_project(),
                        bn_candidate);
           N(branchname() == "" || branchname == bn_candidate,
             F("parent revisions of this commit are in different branches:\n"
@@ -1150,7 +1153,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   // for the divergence check, below
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                     app.opts.ignore_suspend_certs);
   unsigned int old_head_size = heads.size();
 
   {
@@ -1235,7 +1239,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
         app.db.put_revision(restricted_rev_id, rdat);
       }
 
-    app.get_project().put_standard_certs_from_options(app.keys,
+    app.get_project().put_standard_certs_from_options(app.opts, app.lua,
+                                                      app.keys,
                                                       restricted_rev_id,
                                                       app.opts.branchname,
                                                       log_message);
@@ -1253,7 +1258,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   app.work.blank_user_log();
 
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                     app.opts.ignore_suspend_certs);
   if (heads.size() > old_head_size && old_head_size > 0) {
     P(F("note: this revision creates divergence\n"
         "note: you may (or may not) wish to run '%s merge'")
@@ -1329,7 +1335,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app.db, app.get_project());
+      guess_branch(ident, app.opts, app.get_project());
 
       I(!app.opts.branchname().empty());
 
@@ -1344,7 +1350,8 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                         app.opts.ignore_suspend_certs);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);

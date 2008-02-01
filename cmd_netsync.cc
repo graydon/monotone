@@ -344,7 +344,8 @@ CMD(clone, "clone", "", CMD_REF(network),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                         app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
@@ -363,7 +364,7 @@ CMD(clone, "clone", "", CMD_REF(network),
       // use specified revision
       complete(app, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app.db, app.get_project());
+      guess_branch(ident, app.opts, app.get_project());
       I(!app.opts.branchname().empty());
 
       N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),

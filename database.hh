@@ -19,7 +19,7 @@
 #include "graph.hh"
 #include "cert.hh"
 
-class app_state;
+class lua_hooks;
 struct date_t;
 struct globish;
 class key_store;
@@ -75,7 +75,7 @@ class database
   // --== Opening the database and schema checking ==--
   //
 public:
-  database(system_path const & file);
+  database(lua_hooks & lua);
   ~database();
 
   void set_filename(system_path const & file);
@@ -427,29 +427,16 @@ public:
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
 
-  // FIXME: quick hack to make these hooks available via the database context
-  void set_app(app_state * app);
-
+  // We make these lua hooks available via the database context;
+  // see comments above their definition for rationale and plans.
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
-  bool hook_get_author(rsa_keypair_id const & k,
-                       std::string & author);
-  bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,
-                                     std::map<rsa_keypair_id, bool> const & new_results);
-
-  utf8 const & get_opt_author();
-  date_t const get_opt_date_or_cur_date();
-  bool has_opt_branch();
-  branch_name const & get_opt_branchname();
-  bool const get_opt_set_default();
-  bool const get_opt_ignore_suspend_certs();
-  void set_opt_branchname(branch_name const & branchname);
 
 private:
   database_impl *imp;
-  app_state * __app;
+  lua_hooks & lua;
 };
 
 // not a member function, defined in database_check.cc

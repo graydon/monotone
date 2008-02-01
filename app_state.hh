@@ -33,8 +33,8 @@ class lua_hooks;
 class app_state
 {
 public:
-  database db;
   lua_hooks lua;
+  database db;
   key_store keys;
   workspace work;
   ssh_agent agent;

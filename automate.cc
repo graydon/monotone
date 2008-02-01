@@ -87,8 +87,10 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
     branch_option = branch_name(idx(args, 0)());
   }
   set<revision_id> heads;
-  app.get_project().get_branch_heads(branch_option, heads);
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  app.get_project().get_branch_heads(branch_option, heads,
+                                     app.opts.ignore_suspend_certs);
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     output << (*i).inner()() << '\n';
 }
 
@@ -1586,7 +1588,8 @@ CMD_AUTOMATE(branches, "",
 
   set<branch_name> names;
 
-  app.get_project().get_branch_list(names, !app.opts.ignore_suspend_certs);
+  app.get_project().get_branch_list(names,
+                                    !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)

@@ -281,7 +281,8 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
 
   globish exc(app.opts.exclude_patterns);
   set<branch_name> names;
-  app.get_project().get_branch_list(inc, names, !app.opts.ignore_suspend_certs);
+  app.get_project().get_branch_list(inc, names,
+                                    !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -719,8 +720,8 @@ CMD_AUTOMATE(certs, N_("REV"),
       signers.insert(keyid);
 
       bool trusted =
-        db.hook_get_revision_cert_trust(signers, ident,
-                                        name, tv);
+        app.lua.hook_get_revision_cert_trust(signers, ident,
+                                             name, tv);
 
       st.push_str_pair(syms::key, keyid());
 

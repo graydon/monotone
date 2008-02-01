@@ -889,10 +889,11 @@ describe_revision(database & db, project_t & project,
 
 void
 notify_if_multiple_heads(project_t & project,
-                         branch_name const & branchname)
+                         branch_name const & branchname,
+                         bool ignore_suspend_certs)
 {
   set<revision_id> heads;
-  project.get_branch_heads(branchname, heads);
+  project.get_branch_heads(branchname, heads, ignore_suspend_certs);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),

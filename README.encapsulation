@@ -1,22 +1,3 @@
-database.cc:
-
-  __app is a member variable of class database, used by accessor
-  hacks:
-
-  __app->lua
-    hook_get_manifest_cert_trust()
-    hook_get_revision_cert_trust()
-    hook_get_author()
-    hook_accept_testresult_change()
-
-  __app->opts
-    get_opt_author()
-    get_opt_ignore_suspend_certs()
-    get_opt_date_or_cur_date()
-    has_opt_branch()
-    get_opt_branchname()
-    set_opt_branchname()
-
 key_store.cc:
   app is a member variable of class key_store, used by:
 

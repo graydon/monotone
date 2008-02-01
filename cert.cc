@@ -434,14 +434,14 @@ get_user_key(rsa_keypair_id & key, key_store & keys, database & db)
 }
 
 // Guess which branch is appropriate for a commit below IDENT.
-// APP may override.  Branch name is returned in BRANCHNAME.
-// Does not modify branch state in APP.
+// OPTS may override.  Branch name is returned in BRANCHNAME.
+// Does not modify branch state in OPTS.
 void
-guess_branch(revision_id const & ident, database & db,
+guess_branch(revision_id const & ident, options & opts,
              project_t & project, branch_name & branchname)
 {
-  if (db.has_opt_branch() && !db.get_opt_branchname()().empty())
-    branchname = db.get_opt_branchname();
+  if (opts.branch_given && !opts.branchname().empty())
+    branchname = opts.branchname;
   else
     {
       N(!ident.inner()().empty(),
@@ -465,13 +465,14 @@ guess_branch(revision_id const & ident, database & db,
     }
 }
 
-// As above, but set the branch name in the app state.
+// As above, but set the branch name in the options
+// if it wasn't already set.
 void
-guess_branch(revision_id const & ident, database & db, project_t & project)
+guess_branch(revision_id const & ident, options & opts, project_t & project)
 {
   branch_name branchname;
-  guess_branch(ident, db, project, branchname);
-  db.set_opt_branchname(branchname);
+  guess_branch(ident, opts, project, branchname);
+  opts.branchname = branchname;
 }
 
 void
@@ -544,21 +545,6 @@ cert_revision_author(revision_id const & m,
                      key_store & keys)
 {
   put_simple_revision_cert(m, author_cert_name, cert_value(author), db, keys);
-}
-
-void
-cert_revision_author_default(revision_id const & m,
-                             database & db, key_store & keys)
-{
-  string author;
-  rsa_keypair_id key;
-  get_user_key(key, keys, db);
-
-  if (!db.hook_get_author(key, author))
-    {
-      author = key();
-    }
-  cert_revision_author(m, author, db, keys);
 }
 
 void

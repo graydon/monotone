@@ -164,13 +164,17 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     F("this workspace is a new project; cannot update"));
 
   // Figure out where we're going
+  N(!app.opts.branchname().empty(),
+    F("cannot determine branch for update"));
 
   revision_id chosen_rid;
   if (app.opts.revision_selectors.size() == 0)
     {
       P(F("updating along branch '%s'") % app.opts.branchname);
       set<revision_id> candidates;
-      pick_update_candidates(old_rid, app.db, app.get_project(), candidates);
+      pick_update_candidates(candidates, old_rid, app.opts.branchname,
+                             app.opts.ignore_suspend_certs,
+                             app.db, app.get_project(), app.lua);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
@@ -197,7 +201,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   // do this notification before checking to see if we can bail out early,
   // because when you are at one of several heads, and you hit update, you
   // want to know that merging would let you update further.
-  notify_if_multiple_heads(app.get_project(), app.opts.branchname);
+  notify_if_multiple_heads(app.get_project(),
+                           app.opts.branchname, app.opts.ignore_suspend_certs);
 
   if (old_rid == chosen_rid)
     {
@@ -355,8 +360,9 @@ merge_two(revision_id const & left, revision_id const & right,
   transaction_guard guard(app.db);
   interactive_merge_and_store(left, right, merged, app.db, app.lua);
 
-  app.get_project().put_standard_certs_from_options(app.keys, merged,
-                                                    branch,
+  app.get_project().put_standard_certs_from_options(app.opts, app.lua,
+                                                    app.keys,
+                                                    merged, branch,
                                                     utf8(log.str()));
 
   guard.commit();
@@ -385,7 +391,8 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
     F("please specify a branch, with --branch=BRANCH"));
 
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                     app.opts.ignore_suspend_certs);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branchname);
   if (heads.size() == 1)
@@ -453,7 +460,8 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                         app.opts.ignore_suspend_certs);
       pass++;
     }
 
@@ -522,8 +530,10 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  app.get_project().get_branch_heads(branch_name(idx(args, 0)()), src_heads);
-  app.get_project().get_branch_heads(branch_name(idx(args, 1)()), dst_heads);
+  app.get_project().get_branch_heads(branch_name(idx(args, 0)()), src_heads,
+                                     app.opts.ignore_suspend_certs);
+  app.get_project().get_branch_heads(branch_name(idx(args, 1)()), dst_heads,
+                                     app.opts.ignore_suspend_certs);
 
   N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
   N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
@@ -636,7 +646,9 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                             % idx(args, 0) % (*src_i)
                             % idx(args, 1) % (*dst_i)).str());
 
-      app.get_project().put_standard_certs_from_options(app.keys, merged,
+      app.get_project().put_standard_certs_from_options(app.opts, app.lua,
+                                                        app.keys,
+                                                        merged,
                                                         branch_name(idx(args, 1)()),
                                                         log_message);
 
@@ -1031,7 +1043,8 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  app.get_project().get_branch_heads(app.opts.branchname, heads,
+                                     app.opts.ignore_suspend_certs);
 
   if (heads.size() == 0)
     P(F("branch '%s' is empty") % app.opts.branchname);

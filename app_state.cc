@@ -29,15 +29,11 @@ using std::vector;
 using std::vector;
 
 app_state::app_state()
-  : db(system_path()),
-    keys(*this), work(lua),
-//    search_root(current_root_path()),
-//    diff_format(unified_diff),
+  : db(lua), keys(*this), work(lua),
     branch_is_sticky(false),
     mtn_automate_allowed(false),
     project(db)
 {
-  db.set_app(this);
   lua.set_app(this);
   keys.set_key_dir(opts.conf_dir / "keys");
 }

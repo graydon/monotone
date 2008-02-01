@@ -13,6 +13,8 @@
 
 class database;
 class key_store;
+class options;
+class lua_hooks;
 
 class tag_t
 {
@@ -36,10 +38,12 @@ class project_t
 public:
   project_t(database & db);
 
-  void get_branch_list(std::set<branch_name> & names, bool check_certs_valid);
+  void get_branch_list(std::set<branch_name> & names,
+                       bool check_heads = false);
   void get_branch_list(globish const & glob, std::set<branch_name> & names,
-                        bool check_certs_valid);
+                       bool check_heads = false);
   void get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
+                        bool ignore_suspend_certs,
                         std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
@@ -72,8 +76,10 @@ public:
                           branch_name const & branch,
                           utf8 const & changelog,
                           date_t const & time,
-                          utf8 const & author);
-  void put_standard_certs_from_options(key_store & keys,
+                          std::string const & author);
+  void put_standard_certs_from_options(options const & opts,
+                                       lua_hooks & lua,
+                                       key_store & keys,
                                        revision_id const & id,
                                        branch_name const & branch,
                                        utf8 const & changelog);

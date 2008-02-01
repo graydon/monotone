@@ -15,6 +15,7 @@
 
 class database;
 class project_t;
+class lua_hooks;
 
 // this function just encapsulates the (somewhat complex) logic
 // behind picking an update target. the actual updating takes
@@ -25,9 +26,12 @@ class project_t;
 // returned in 'candidates'.  if no revisions are better than the current
 // revision, then 'candidates' will contain exactly the current revision.
 
-void pick_update_candidates(revision_id const & base_ident,
+void pick_update_candidates(std::set<revision_id> & candidates,
+                            revision_id const & base_ident,
+                            branch_name const & branchname,
+                            bool ignore_suspend_certs,
                             database & db, project_t & project,
-                            std::set<revision_id> &candidates);
+                            lua_hooks & lua);
 
 // Local Variables:
 // mode: C++
