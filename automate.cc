@@ -751,7 +751,7 @@ inventory_itemizer::visit_dir(file_path const & path)
       inventory[path].fs_type = path::directory;
     }
   // don't recurse into ignored subdirectories
-  return not app.lua.hook_ignore_file(path);
+  return !app.lua.hook_ignore_file(path);
 }
 
 void
