@@ -853,8 +853,7 @@ CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
 }
 
 string
-describe_revision(database & db, project_t & project,
-                  revision_id const & id)
+describe_revision(project_t & project, revision_id const & id)
 {
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);

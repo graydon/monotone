@@ -13,7 +13,6 @@
 #include <set>
 #include "vocab.hh"
 
-class database;
 class project_t;
 class lua_hooks;
 
@@ -29,8 +28,8 @@ class lua_hooks;
 void pick_update_candidates(std::set<revision_id> & candidates,
                             revision_id const & base_ident,
                             branch_name const & branchname,
+                            project_t & project,
                             bool ignore_suspend_certs,
-                            database & db, project_t & project,
                             lua_hooks & lua);
 
 // Local Variables:

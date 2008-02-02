@@ -17,7 +17,7 @@ class project_t;
 class branch_name;
 
 void test_parse_rcs_file(system_path const & filename, database & db);
-void import_cvs_repo(system_path const & cvsroot, database & db, key_store & keys,
+void import_cvs_repo(system_path const & cvsroot, key_store & keys,
                      project_t & project, branch_name const & branchname);
 
 // Local Variables:

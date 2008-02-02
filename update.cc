@@ -55,7 +55,7 @@ using boost::lexical_cast;
 static void
 get_test_results_for_revision(revision_id const & id,
                               map<rsa_keypair_id, bool> & results,
-                              database & db, project_t & project)
+                              project_t & project)
 {
   vector< revision<cert> > certs;
   project.get_revision_certs_by_name(id, cert_name(testresult_cert_name),
@@ -82,7 +82,7 @@ acceptable_descendent(branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target,
-                      database & db, project_t & project,
+                      project_t & project,
                       lua_hooks & lua)
 {
   L(FL("Considering update target %s") % target);
@@ -96,7 +96,7 @@ acceptable_descendent(branch_name const & branch,
 
   // step 2: check the testresults
   map<rsa_keypair_id, bool> target_results;
-  get_test_results_for_revision(target, target_results, db, project);
+  get_test_results_for_revision(target, target_results, project);
   if (lua.hook_accept_testresult_change(base_results, target_results))
     {
       L(FL("%s is acceptable update candidate") % target);
@@ -113,21 +113,21 @@ void
 pick_update_candidates(set<revision_id> & candidates,
                        revision_id const & base,
                        branch_name const & branch,
+                       project_t & project,
                        bool ignore_suspend_certs,
-                       database & db, project_t & project,
                        lua_hooks & lua)
 {
   I(!null_id(base));
   I(!branch().empty());
 
   map<rsa_keypair_id, bool> base_results;
-  get_test_results_for_revision(base, base_results, db, project);
+  get_test_results_for_revision(base, base_results, project);
 
   candidates.clear();
   // we possibly insert base into the candidate set as well; returning a set
   // containing just it means that we are up to date; returning an empty set
   // means that there is no acceptable update.
-  if (acceptable_descendent(branch, base, base_results, base, db, project, lua))
+  if (acceptable_descendent(branch, base, base_results, base, project, lua))
     candidates.insert(base);
 
   // keep a visited set to avoid repeating work
@@ -135,7 +135,7 @@ pick_update_candidates(set<revision_id> & candidates,
   set<revision_id> children;
   vector<revision_id> to_traverse;
 
-  db.get_revision_children(base, children);
+  project.db.get_revision_children(base, children);
   copy(children.begin(), children.end(), back_inserter(to_traverse));
 
   while (!to_traverse.empty())
@@ -150,15 +150,15 @@ pick_update_candidates(set<revision_id> & candidates,
 
       // then, possibly insert this revision as a candidate
       if (acceptable_descendent(branch, base, base_results,
-                                target, db, project, lua))
+                                target, project, lua))
         candidates.insert(target);
 
       // and traverse its children as well
-      db.get_revision_children(target, children);
+      project.db.get_revision_children(target, children);
       copy(children.begin(), children.end(), back_inserter(to_traverse));
     }
 
-  erase_ancestors(candidates, db);
+  erase_ancestors(candidates, project.db);
 
   if (ignore_suspend_certs)
     return;

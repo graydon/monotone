@@ -156,8 +156,7 @@ args_to_paths(args_vector const & args)
 }
 
 std::string
-describe_revision(database & db, project_t & project,
-                  revision_id const & id);
+describe_revision(project_t & project, revision_id const & id);
 
 void
 notify_if_multiple_heads(project_t & project, branch_name const & branchname,

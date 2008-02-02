@@ -210,45 +210,45 @@ parse_selector(string const & str, selector_list & sels,
 static void
 complete_one_selector(selector_type ty, string const & value,
                       set<revision_id> & completions,
-                      database & db, project_t & project)
+                      project_t & project)
 {
   switch (ty)
     {
     case sel_ident:
-      db.complete(value, completions);
+      project.db.complete(value, completions);
       break;
 
     case sel_parent:
-      db.select_parent(value, completions);
+      project.db.select_parent(value, completions);
       break;
         
     case sel_author:
-      db.select_cert(author_cert_name(), value, completions);
+      project.db.select_cert(author_cert_name(), value, completions);
       break;
 
     case sel_tag:
-      db.select_cert(tag_cert_name(), value, completions);
+      project.db.select_cert(tag_cert_name(), value, completions);
       break;
 
     case sel_branch:
       I(!value.empty());
-      db.select_cert(branch_cert_name(), value, completions);
+      project.db.select_cert(branch_cert_name(), value, completions);
       break;
 
     case sel_unknown:
-      db.select_author_tag_or_branch(value, completions);
+      project.db.select_author_tag_or_branch(value, completions);
       break;
 
     case sel_date:
-      db.select_date(value, "GLOB", completions);
+      project.db.select_date(value, "GLOB", completions);
       break;
 
     case sel_earlier:
-      db.select_date(value, "<=", completions);
+      project.db.select_date(value, "<=", completions);
       break;
 
     case sel_later:
-      db.select_date(value, ">", completions);
+      project.db.select_date(value, ">", completions);
       break;
 
     case sel_cert:
@@ -265,10 +265,10 @@ complete_one_selector(selector_type ty, string const & value,
             spot++;
             certvalue = value.substr(spot);
 
-            db.select_cert(certname, certvalue, completions);
+            project.db.select_cert(certname, certvalue, completions);
           }
         else
-          db.select_cert(value, completions);
+          project.db.select_cert(value, completions);
       }
       break;
 
@@ -300,23 +300,23 @@ complete_one_selector(selector_type ty, string const & value,
 static void
 complete_selector(selector_list const & limit,
                   set<revision_id> & completions,
-                  database & db, project_t & project)
+                  project_t & project)
 {
   if (limit.empty()) // all the ids in the database
     {
-      db.complete("", completions);
+      project.db.complete("", completions);
       return;
     }
 
   selector_list::const_iterator i = limit.begin();
-  complete_one_selector(i->first, i->second, completions, db, project);
+  complete_one_selector(i->first, i->second, completions, project);
   i++;
 
   while (i != limit.end())
     {
       set<revision_id> candidates;
       set<revision_id> intersection;
-      complete_one_selector(i->first, i->second, candidates, db, project);
+      complete_one_selector(i->first, i->second, candidates, project);
 
       intersection.clear();
       set_intersection(completions.begin(), completions.end(),
@@ -348,7 +348,7 @@ complete(app_state & app,
     }
 
   P(F("expanding selection '%s'") % str);
-  complete_selector(sels, completions, app.db, app.get_project());
+  complete_selector(sels, completions, app.get_project());
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
@@ -398,7 +398,7 @@ expand_selector(app_state & app,
       return;
     }
 
-  complete_selector(sels, completions, app.db, app.get_project());
+  complete_selector(sels, completions, app.get_project());
 }
 
 void
@@ -413,7 +413,7 @@ diagnose_ambiguous_expansion(app_state & app,
                 % str).str();
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    err += ("\n" + describe_revision(app.db, app.get_project(), *i));
+    err += ("\n" + describe_revision(app.get_project(), *i));
 
   N(false, i18n_format(err));
 }

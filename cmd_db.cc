@@ -349,7 +349,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app.db, app.get_project(), *i) << '\n';
+          else cout << describe_revision(app.get_project(), *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")

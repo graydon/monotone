@@ -53,7 +53,6 @@ class
 revision_enumerator
 {
   enumerator_callbacks & cb;
-  database & db;
   project_t & project;
   std::set<revision_id> terminal_nodes;
   std::set<revision_id> enumerated_nodes;
@@ -72,7 +71,7 @@ revision_enumerator
 
 public:
   revision_enumerator(enumerator_callbacks & cb,
-                      database & db, project_t & project);
+                      project_t & project);
   void get_revision_parents(revision_id const & rid,
 			    std::vector<revision_id> & parents);
   void note_cert(revision_id const & rid,

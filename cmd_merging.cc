@@ -173,8 +173,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
       P(F("updating along branch '%s'") % app.opts.branchname);
       set<revision_id> candidates;
       pick_update_candidates(candidates, old_rid, app.opts.branchname,
-                             app.opts.ignore_suspend_certs,
-                             app.db, app.get_project(), app.lua);
+                             app.get_project(),
+                             app.opts.ignore_suspend_certs, app.lua);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
@@ -186,7 +186,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s")
-              % describe_revision(app.db, app.get_project(), *i));
+              % describe_revision(app.get_project(), *i));
           P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
@@ -1055,7 +1055,7 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app.db, app.get_project(), *i) << '\n';
+    cout << describe_revision(app.get_project(), *i) << '\n';
 }
 
 CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),

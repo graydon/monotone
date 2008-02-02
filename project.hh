@@ -30,8 +30,19 @@ typedef bool suspended_indicator;
 
 class project_t
 {
+  // In the hypothetical future situation where one monotone process is
+  // using more than one database at a time, it will be essential to use a
+  // project object only with the database it was created from.  To make it
+  // easy to get this right, we expose the database handle inside the
+  // project object, and make it a style rule that you pass around a
+  // database _or_ you pass around a project; not both.
+public:
   database & db;
-  std::map<std::pair<branch_name, suspended_indicator>, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
+
+private:
+  std::map<std::pair<branch_name, suspended_indicator>,
+           std::pair<outdated_indicator, std::set<revision_id> >
+           > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 

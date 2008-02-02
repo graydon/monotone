@@ -165,7 +165,7 @@ CMD(push, "push", "", CMD_REF(network),
 
   run_netsync_protocol(client_voice, source_role, uris,
                        include_pattern, exclude_pattern,
-                       app.db, app.get_project(), app.keys, app.lua, app.opts);
+                       app.get_project(), app.keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -189,7 +189,7 @@ CMD(pull, "pull", "", CMD_REF(network),
 
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.db, app.get_project(), app.keys, app.lua, app.opts);
+                       app.get_project(), app.keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -211,7 +211,7 @@ CMD(sync, "sync", "", CMD_REF(network),
 
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.db, app.get_project(), app.keys, app.lua, app.opts);
+                       app.get_project(), app.keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -331,7 +331,7 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.db, app.get_project(), app.keys, app.lua, app.opts);
+                       app.get_project(), app.keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -353,7 +353,7 @@ CMD(clone, "clone", "", CMD_REF(network),
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s")
-              % describe_revision(app.db, app.get_project(), *i));
+              % describe_revision(app.get_project(), *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -455,7 +455,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
                        globish("*"), globish(""),
-                       app.db, app.get_project(), app.keys, app.lua, app.opts);
+                       app.get_project(), app.keys, app.lua, app.opts);
 }
 
 // Local Variables:

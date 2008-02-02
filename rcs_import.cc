@@ -664,7 +664,8 @@ process_branch(string const & begin_version,
 
 
 static void
-import_rcs_file_with_cvs(string const & filename, database & db, cvs_history & cvs)
+import_rcs_file_with_cvs(string const & filename, database & db,
+                         cvs_history & cvs)
 {
   rcs_file r;
   L(FL("parsing RCS file %s") % filename);
@@ -1008,7 +1009,6 @@ struct
 cluster_consumer
 {
   cvs_history & cvs;
-  database & db;
   key_store & keys;
   project_t & project;
 
@@ -1039,7 +1039,6 @@ cluster_consumer
   revision_id parent_rid, child_rid;
 
   cluster_consumer(cvs_history & cvs,
-                   database & db,
                    key_store & keys,
                    project_t & project,
                    string const & branchname,
@@ -1071,7 +1070,6 @@ cluster_set;
 
 void
 import_branch(cvs_history & cvs,
-              database & db,
               key_store & keys,
               project_t & project,
               string const & branchname,
@@ -1079,7 +1077,7 @@ import_branch(cvs_history & cvs,
               ticker & n_revs)
 {
   cluster_set clusters;
-  cluster_consumer cons(cvs, db, keys, project, branchname, *branch, n_revs);
+  cluster_consumer cons(cvs, keys, project, branchname, *branch, n_revs);
   unsigned long commits_remaining = branch->lineage.size();
 
   // step 1: sort the lineage
@@ -1204,7 +1202,6 @@ import_branch(cvs_history & cvs,
 
 void
 import_cvs_repo(system_path const & cvsroot,
-                database & db,
                 key_store & keys,
                 project_t & project,
                 branch_name const & branchname)
@@ -1225,9 +1222,9 @@ import_cvs_repo(system_path const & cvsroot,
   cvs.bstk.push(cvs.branch_interner.intern(cvs.base_branch));
 
   {
-    transaction_guard guard(db);
-    cvs_tree_walker walker(cvs, db);
-    db.ensure_open();
+    transaction_guard guard(project.db);
+    cvs_tree_walker walker(cvs, project.db);
+    project.db.ensure_open();
     change_current_working_dir(cvsroot);
     walk_tree(file_path(), walker);
     guard.commit();
@@ -1239,12 +1236,12 @@ import_cvs_repo(system_path const & cvsroot,
 
   while (cvs.branches.size() > 0)
     {
-      transaction_guard guard(db);
+      transaction_guard guard(project.db);
       map<string, shared_ptr<cvs_branch> >::const_iterator i = cvs.branches.begin();
       string branchname = i->first;
       shared_ptr<cvs_branch> branch = i->second;
       L(FL("branch %s has %d entries") % branchname % branch->lineage.size());
-      import_branch(cvs, db, keys, project, branchname, branch, n_revs);
+      import_branch(cvs, keys, project, branchname, branch, n_revs);
 
       // free up some memory
       cvs.branches.erase(branchname);
@@ -1252,16 +1249,16 @@ import_cvs_repo(system_path const & cvsroot,
     }
 
   {
-    transaction_guard guard(db);
+    transaction_guard guard(project.db);
     L(FL("trunk has %d entries") % cvs.trunk->lineage.size());
-    import_branch(cvs, db, keys, project, cvs.base_branch, cvs.trunk, n_revs);
+    import_branch(cvs, keys, project, cvs.base_branch, cvs.trunk, n_revs);
     guard.commit();
   }
 
   // now we have a "last" rev for each tag
   {
     ticker n_tags(_("tags"), "t", 1);
-    transaction_guard guard(db);
+    transaction_guard guard(project.db);
     for (map<unsigned long, pair<time_t, revision_id> >::const_iterator i = cvs.resolved_tags.begin();
          i != cvs.resolved_tags.end(); ++i)
       {
@@ -1275,14 +1272,12 @@ import_cvs_repo(system_path const & cvsroot,
 }
 
 cluster_consumer::cluster_consumer(cvs_history & cvs,
-                                   database & db,
                                    key_store & keys,
                                    project_t & project,
                                    string const & branchname,
                                    cvs_branch const & branch,
                                    ticker & n_revs)
   : cvs(cvs),
-    db(db),
     keys(keys),
     project(project),
     branchname(branchname),
@@ -1342,7 +1337,7 @@ cluster_consumer::store_revisions()
 {
   for (vector<prepared_revision>::const_iterator i = preps.begin();
        i != preps.end(); ++i)
-    if (db.put_revision(i->rid, *(i->rev)))
+    if (project.db.put_revision(i->rid, *(i->rev)))
       {
         store_auxiliary_certs(*i);
         ++n_revisions;
