@@ -24,7 +24,6 @@
 
 #include "sqlite/sqlite3.h"
 
-#include "app_state.hh"
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
@@ -48,6 +47,8 @@
 #include "rev_height.hh"
 #include "vocab_hash.hh"
 #include "globish.hh"
+#include "work.hh"
+#include "lua_hooks.hh"
 #include "outdated_indicator.hh"
 #include "lru_writeback_cache.hh"
 
