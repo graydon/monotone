@@ -942,10 +942,7 @@ void anc_graph::write_certs()
           cert_name name(j->second.first);
           cert_value val(j->second.second);
 
-          cert new_cert;
-          make_simple_cert(rev.inner(), name, val, db, keys, new_cert);
-          revision<cert> rcert(new_cert);
-          if (db.put_revision_cert(rcert))
+          if (put_simple_revision_cert(rev, name, val, db, keys))
             ++n_certs_out;
         }
     }

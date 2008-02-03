@@ -13,6 +13,8 @@
 #include "vocab.hh"
 #include <boost/shared_ptr.hpp>
 
+struct options;
+class lua_hooks;
 class key_store;
 class database;
 namespace Botan { class RSA_PrivateKey; }
@@ -21,6 +23,26 @@ namespace Botan { class RSA_PrivateKey; }
 // to read passphrases and manipulate raw, decrypted private keys). it
 // could in theory be in transforms.cc too, but that file's already kinda
 // big and this stuff "feels" different, imho.
+
+void
+get_passphrase(utf8 & phrase,
+               rsa_keypair_id const & keyid,
+               bool confirm_phrase,
+               bool generating_key);
+
+// N()'s out if there is no unique key for us to use
+void get_user_key(rsa_keypair_id & key, options const & opts, lua_hooks & lua,
+                  key_store & keys, database & db);
+
+void cache_user_key(options const & opts, lua_hooks & lua,
+                    key_store & keys, database & db);
+
+void load_key_pair(key_store & keys,
+                   rsa_keypair_id const & id);
+
+void load_key_pair(key_store & keys,
+                   rsa_keypair_id const & id,
+                   keypair & kp);
 
 void generate_key_pair(key_store & keys,             // to hook for phrase
                        rsa_keypair_id const & id,    // to prompting user for phrase
@@ -44,9 +66,6 @@ bool check_signature(key_store & keys,
                      std::string const & alleged_text,
                      base64<rsa_sha1_signature> const & signature);
 
-void require_password(rsa_keypair_id const & id,
-                      key_store & keys, database & db);
-
 void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub,
@@ -59,14 +78,6 @@ void decrypt_rsa(key_store & keys,
                  rsa_oaep_sha_data const & ciphertext,
                  std::string & plaintext);
 
-void
-get_passphrase(key_store & keys,
-               rsa_keypair_id const & keyid,
-               utf8 & phrase,
-               bool confirm_phrase = false,
-               bool force_from_user = false,
-               bool generating_key = false);
-
 boost::shared_ptr<Botan::RSA_PrivateKey>
 get_private_key(key_store & keys,
                 rsa_keypair_id const & id,
@@ -74,14 +85,6 @@ get_private_key(key_store & keys,
                 bool force_from_user = false);
 
 // netsync stuff
-
-void read_pubkey(std::string const & in,
-                 rsa_keypair_id & id,
-                 base64<rsa_pub_key> & pub);
-
-void write_pubkey(rsa_keypair_id const & id,
-                  base64<rsa_pub_key> const & pub,
-                  std::string & out);
 
 void key_hash_code(rsa_keypair_id const & ident,
                    base64<rsa_pub_key> const & pub,

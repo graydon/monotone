@@ -67,23 +67,7 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(database & db, cert const & t);
 
-void load_key_pair(key_store & keys,
-                   rsa_keypair_id const & id);
-
-void load_key_pair(key_store & keys,
-                   rsa_keypair_id const & id,
-                   keypair & kp);
-
-// Only used in cert.cc, and in revision.cc in what looks
-// like migration code.
-void make_simple_cert(hexenc<id> const & id,
-                      cert_name const & nm,
-                      cert_value const & cv,
-                      database & db,
-                      key_store & keys,
-                      cert & c);
-
-void put_simple_revision_cert(revision_id const & id,
+bool put_simple_revision_cert(revision_id const & id,
                               cert_name const & nm,
                               cert_value const & val,
                               database & db,
@@ -108,10 +92,6 @@ cert_revision_in_branch(revision_id const & ctx,
 // We also define some common cert types, to help establish useful
 // conventions. you should use these unless you have a compelling
 // reason not to.
-
-// N()'s out if there is no unique key for us to use
-void
-get_user_key(rsa_keypair_id & key, key_store & keys, database & db);
 
 void
 guess_branch(revision_id const & id, options & opts, project_t & project,

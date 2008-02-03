@@ -226,9 +226,7 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   app.db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  rsa_keypair_id key;
-  get_user_key(key, app.keys, app.db);
-  require_password(key, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   build_changesets_from_manifest_ancestry(app.db, app.keys, set<string>());
 }
@@ -245,9 +243,7 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   app.db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  rsa_keypair_id key;
-  get_user_key(key, app.keys, app.db);
-  require_password(key, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   build_roster_style_revs_from_manifest_style_revs(app.db, app.keys,
                                                    app.opts.attrs_to_drop);

@@ -350,12 +350,6 @@ merge_two(revision_id const & left, revision_id const & right,
       P(F("[right] %s") % right);
     }
 
-  {
-    // early short-circuit to avoid failure after lots of work
-    rsa_keypair_id key;
-    get_user_key(key, app.keys, app.db);
-  }
-
   revision_id merged;
   transaction_guard guard(app.db);
   interactive_merge_and_store(left, right, merged, app.db, app.lua);
@@ -403,6 +397,9 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
   P(FP("%d head on branch '%s'", "%d heads on branch '%s'", heads.size())
       % heads.size() % app.opts.branchname);
+
+  // avoid failure after lots of work
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -456,7 +453,8 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       // corresponding pair of heads.
       revpair p = heads_for_ancestor[*ancestors.begin()];
 
-      merge_two(p.first, p.second, app.opts.branchname, string("merge"), app, std::cout, false);
+      merge_two(p.first, p.second, app.opts.branchname, string("merge"),
+                app, std::cout, false);
 
       ancestors.clear();
       heads_for_ancestor.clear();
@@ -475,7 +473,8 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   revision_id right = *i++;
   I(i == heads.end());
 
-  merge_two(left, right, app.opts.branchname, string("merge"), app, std::cout, false);
+  merge_two(left, right, app.opts.branchname, string("merge"),
+            app, std::cout, false);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -544,18 +543,22 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   set<revision_id>::const_iterator src_i = src_heads.begin();
   set<revision_id>::const_iterator dst_i = dst_heads.begin();
 
-  P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
-  P(F("[left]  %s") % *src_i);
-  P(F("[right] %s") % *dst_i);
-
-  // check for special cases
   if (*src_i == *dst_i || is_ancestor(*src_i, *dst_i, app.db))
     {
       P(F("branch '%s' is up-to-date with respect to branch '%s'")
           % idx(args, 1)() % idx(args, 0)());
       P(F("no action taken"));
+      return;
     }
-  else if (is_ancestor(*dst_i, *src_i, app.db))
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+
+  P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
+  P(F("[left]  %s") % *src_i);
+  P(F("[right] %s") % *dst_i);
+
+  // check for special cases
+  if (is_ancestor(*dst_i, *src_i, app.db))
     {
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
@@ -618,10 +621,6 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor
           dba(app.db, left_rid, right_rid, left_marking_map, right_marking_map);
 
-        {
-          rsa_keypair_id key;
-          get_user_key(key, app.keys, app.db);
-        }
         resolve_merge_conflicts(left_roster, right_roster,
                                 result, dba, app.lua);
 
@@ -787,7 +786,11 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   N(!is_ancestor(right, left, app.db),
     F("%s is already an ancestor of %s") % right % left);
 
-  merge_two(left, right, branch, string("explicit merge"), app, std::cout, false);
+  // avoid failure after lots of work
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+
+  merge_two(left, right, branch, string("explicit merge"),
+            app, std::cout, false);
 }
 
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),

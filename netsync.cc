@@ -281,6 +281,30 @@ require(bool check, string const & context)
     throw bad_decode(F("check of '%s' failed") % context);
 }
 
+static void
+read_pubkey(string const & in,
+            rsa_keypair_id & id,
+            base64<rsa_pub_key> & pub)
+{
+  string tmp_id, tmp_key;
+  size_t pos = 0;
+  extract_variable_length_string(in, tmp_id, pos, "pubkey id");
+  extract_variable_length_string(in, tmp_key, pos, "pubkey value");
+  id = rsa_keypair_id(tmp_id);
+  encode_base64(rsa_pub_key(tmp_key), pub);
+}
+
+static void
+write_pubkey(rsa_keypair_id const & id,
+             base64<rsa_pub_key> const & pub,
+             string & out)
+{
+  rsa_pub_key pub_tmp;
+  decode_base64(pub, pub_tmp);
+  insert_variable_length_string(id(), out);
+  insert_variable_length_string(pub_tmp(), out);
+}
+
 struct netsync_error
 {
   string msg;

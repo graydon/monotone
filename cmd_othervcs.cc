@@ -51,9 +51,7 @@ CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"),
   // make sure we can sign certs using the selected key; also requests
   // the password (if necessary) up front rather than after some arbitrary
   // amount of work
-  rsa_keypair_id key;
-  get_user_key(key, app.keys, app.db);
-  require_password(key, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   import_cvs_repo(cvsroot, app.keys, app.get_project(), app.opts.branchname);
 }
