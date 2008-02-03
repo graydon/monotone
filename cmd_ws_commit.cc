@@ -22,6 +22,7 @@
 #include "ui.hh"
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "keys.hh"
 
 using std::cout;
 using std::make_pair;
@@ -352,6 +353,8 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
 
   process_commit_message_args(log_message_given, log_message, app,
                               utf8((FL("disapproval of revision '%s'") % r).str()));
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -1055,12 +1058,6 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  {
-    // fail early if there isn't a key
-    rsa_keypair_id key;
-    get_user_key(key, app.keys, app.db);
-  }
-
   app.make_branch_sticky();
   app.work.get_parent_rosters(old_rosters, app.db);
   app.work.get_current_roster_shape(new_roster, app.db, nis);
@@ -1150,6 +1147,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   app.lua.hook_validate_commit_message(log_message, new_rev, app.opts.branchname,
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   // for the divergence check, below
   set<revision_id> heads;

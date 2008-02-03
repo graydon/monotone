@@ -10,6 +10,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "lua_hooks.hh"
+#include "keys.hh"
 
 using std::string;
 using std::set;
@@ -361,7 +362,7 @@ project_t::put_standard_certs_from_options(options const & opts,
   if (author.empty())
     {
       rsa_keypair_id key;
-      get_user_key(key, keys, db);
+      get_user_key(key, opts, lua, keys, db);
 
       if (!lua.hook_get_author(branch, key, author))
         author = key();

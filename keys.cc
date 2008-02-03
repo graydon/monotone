@@ -36,6 +36,7 @@
 #include "charset.hh"
 #include "ssh_agent.hh"
 #include "database.hh"
+#include "options.hh"
 
 using std::cout;
 using std::make_pair;
@@ -72,24 +73,77 @@ do_arc4(SecureVector<Botan::byte> & sym_key,
   payload = enc.read_all();
 }
 
-// 'force_from_user' means that we don't use the passphrase cache, and we
-// don't use the get_passphrase hook.
+// "raw" passphrase prompter; unaware of passphrase caching or the laziness
+// hook.  KEYID is used only in prompts.  CONFIRM_PHRASE causes the user to
+// be prompted to type the same thing twice, and will loop if they don't
+// match.  Prompts are worded slightly differently if GENERATING_KEY is true.
 void
-get_passphrase(key_store & keys,
+get_passphrase(utf8 & phrase,
                rsa_keypair_id const & keyid,
-               utf8 & phrase,
                bool confirm_phrase,
-               bool force_from_user,
                bool generating_key)
 {
+  string prompt1, prompt2;
+  char pass1[constants::maxpasswd];
+  char pass2[constants::maxpasswd];
+  int i = 0;
 
+  if (confirm_phrase && !generating_key)
+    prompt1 = (F("enter new passphrase for key ID [%s]: ") % keyid).str();
+  else
+    prompt1 = (F("enter passphrase for key ID [%s]: ") % keyid).str();
+
+  if (confirm_phrase)
+    prompt2 = (F("confirm passphrase for key ID [%s]: ") % keyid).str();
+  
+  try
+    {
+      for (;;)
+        {
+          memset(pass1, 0, constants::maxpasswd);
+          memset(pass2, 0, constants::maxpasswd);
+          ui.ensure_clean_line();
+
+          read_password(prompt1, pass1, constants::maxpasswd);
+          if (!confirm_phrase)
+            break;
+
+          ui.ensure_clean_line();
+          read_password(prompt2, pass2, constants::maxpasswd);
+          if (strcmp(pass1, pass2) == 0)
+            break;
+
+          N(i++ < 2, F("too many failed passphrases"));
+          P(F("passphrases do not match, try again"));
+        }
+
+      external ext_phrase(pass1);
+      system_to_utf8(ext_phrase, phrase);
+    }
+  catch (...)
+    {
+      memset(pass1, 0, constants::maxpasswd);
+      memset(pass2, 0, constants::maxpasswd);
+      throw;
+    }
+  memset(pass1, 0, constants::maxpasswd);
+  memset(pass2, 0, constants::maxpasswd);
+}
+
+// 'force_from_user' means that we don't use the passphrase cache, and we
+// don't use the get_passphrase hook.
+static void
+get_passphrase(key_store & keys,
+               utf8 & phrase,
+               rsa_keypair_id const & keyid,
+               bool force_from_user)
+{
   // we permit the user to relax security here, by caching a passphrase (if
   // they permit it) through the life of a program run. this helps when
   // you're making a half-dozen certs during a commit or merge or
   // something.
   bool persist_phrase = keys.hook_persist_phrase_ok();
   static map<rsa_keypair_id, utf8> phrases;
-
   if (!force_from_user && phrases.find(keyid) != phrases.end())
     {
       phrase = phrases[keyid];
@@ -99,78 +153,119 @@ get_passphrase(key_store & keys,
   string lua_phrase;
   if (!force_from_user && keys.hook_get_passphrase(keyid, lua_phrase))
     {
+      N(!lua_phrase.empty(),
+        F("got empty passphrase from get_passphrase() hook"));
+
       // user is being a slob and hooking lua to return his passphrase
       phrase = utf8(lua_phrase);
-      N(phrase != utf8(""),
-        F("got empty passphrase from get_passphrase() hook"));
+      return;
     }
-  else
+
+  get_passphrase(phrase, keyid, false, false);
+
+  // permit security relaxation. maybe.
+  if (persist_phrase)
     {
-      char pass1[constants::maxpasswd];
-      char pass2[constants::maxpasswd];
-      for (int i = 0; i < 3; ++i)
-        {
-          memset(pass1, 0, constants::maxpasswd);
-          memset(pass2, 0, constants::maxpasswd);
-          ui.ensure_clean_line();
-          string prompt1 = ((confirm_phrase && !generating_key
-                             ? F("enter new passphrase for key ID [%s]: ")
-                             : F("enter passphrase for key ID [%s]: "))
-                            % keyid()).str();
-
-          read_password(prompt1, pass1, constants::maxpasswd);
-          if (confirm_phrase)
-            {
-              ui.ensure_clean_line();
-              read_password((F("confirm passphrase for key ID [%s]: ")
-                             % keyid()).str(),
-                            pass2, constants::maxpasswd);
-              if (strcmp(pass1, pass2) == 0)
-                break;
-              else
-                {
-                  P(F("passphrases do not match, try again"));
-                  N(i < 2, F("too many failed passphrases"));
-                }
-            }
-          else
-            break;
-        }
-
-      try
-        {
-          external ext_phrase(pass1);
-          system_to_utf8(ext_phrase, phrase);
-
-          // permit security relaxation. maybe.
-          if (persist_phrase)
-            {
-              phrases.erase(keyid);
-              safe_insert(phrases, make_pair(keyid, phrase));
-            }
-        }
-      catch (...)
-        {
-          memset(pass1, 0, constants::maxpasswd);
-          memset(pass2, 0, constants::maxpasswd);
-          throw;
-        }
-      memset(pass1, 0, constants::maxpasswd);
-      memset(pass2, 0, constants::maxpasswd);
+      phrases.erase(keyid);
+      safe_insert(phrases, make_pair(keyid, phrase));
     }
 }
 
+// Loads a key pair for a given key id, considering it a user error
+// if that key pair is not available.
 
 void
-generate_key_pair(key_store & keys,             // to hook for phrase
-                  rsa_keypair_id const & id,    // to prompting user for phrase
-                  keypair & kp_out)
+load_key_pair(key_store & keys, rsa_keypair_id const & id)
 {
-  utf8 phrase;
-  get_passphrase(keys, id, phrase, true, true, true);
-  generate_key_pair(kp_out, phrase);
+  N(keys.key_pair_exists(id),
+    F("no key pair '%s' found in key store '%s'")
+    % id % keys.get_key_dir());
 }
 
+void
+load_key_pair(key_store & keys,
+              rsa_keypair_id const & id,
+              keypair & kp)
+{
+  load_key_pair(keys, id);
+  keys.get_key_pair(id, kp);
+}
+
+// Find the key to be used for signing certs.  If possible, ensure the
+// database and the key_store agree on that key, and cache it in decrypted
+// form, so as not to bother the user for their passphrase later.
+
+void
+get_user_key(rsa_keypair_id & key,
+             options const & opts, lua_hooks & lua,
+             key_store & keys, database & db)
+{
+  if (!keys.signing_key().empty())
+    {
+      key = keys.signing_key;
+      return;
+    }
+
+  if (!opts.signing_key().empty())
+    key = opts.signing_key;
+  else if (lua.hook_get_branch_key(opts.branchname, key))
+    ; // the lua hook sets the key
+  else
+    {
+      vector<rsa_keypair_id> all_privkeys;
+      keys.get_key_ids(all_privkeys);
+      N(all_privkeys.size() > 0, 
+        F("you have no private key to make signatures with\n"
+          "perhaps you need to 'genkey <your email>'"));
+      N(all_privkeys.size() < 2,
+        F("you have multiple private keys\n"
+          "pick one to use for signatures by adding "
+          "'-k<keyname>' to your command"));
+
+      key = all_privkeys[0];
+    }
+
+  keys.signing_key = key;
+
+  // Ensure that the specified key actually exists.
+  keypair priv_key;
+  load_key_pair(keys, key, priv_key);
+  
+  // we can only do the steps below if we have a database.
+  if (!db.database_specified())
+    return;
+
+  // If the database doesn't have this public key, add it now; otherwise
+  // make sure the database and key-store agree on the public key.
+  if (!db.public_key_exists(key))
+    db.put_key(key, priv_key.pub);
+  else
+    {
+      base64<rsa_pub_key> pub_key;
+      db.get_key(key, pub_key);
+      E(keys_match(key, pub_key, key, priv_key.pub),
+        F("The key '%s' stored in your database does\n"
+          "not match the version in your local key store!") % key);
+    }
+
+  // If permitted, decrypt and cache the key now.
+  if (keys.hook_persist_phrase_ok())
+    {
+      string plaintext("hi maude");
+      base64<rsa_sha1_signature> sig;
+      keys.make_signature(db, key, plaintext, sig);
+    }
+}
+
+// As above, but does not report which key has been selected; for use when
+// the important thing is to have selected one and cached the decrypted key.
+void
+cache_user_key(options const & opts, lua_hooks & lua,
+               key_store & keys, database & db)
+{
+  rsa_keypair_id key;
+  get_user_key(key, opts, lua, keys, db);
+}
 
 void
 generate_key_pair(keypair & kp_out,
@@ -239,7 +334,7 @@ get_private_key(key_store & keys,
     {
       for (int i = 0; i < 3; ++i)
         {
-          get_passphrase(keys, id, phrase, false, force);
+          get_passphrase(keys, phrase, id, force);
           L(FL("have %d-byte encrypted private key") % decoded_key().size());
 
           try
@@ -294,7 +389,7 @@ migrate_private_key(key_store & keys,
     {
       decrypted_key.set(reinterpret_cast<Botan::byte const *>(decoded_key().data()),
                            decoded_key().size());
-      get_passphrase(keys, id, phrase, false, force);
+      get_passphrase(keys, phrase, id, force);
       SecureVector<Botan::byte> sym_key;
       sym_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()), phrase().size());
       do_arc4(sym_key, decrypted_key);
@@ -346,10 +441,11 @@ change_key_passphrase(key_store & keys,
                       rsa_keypair_id const & id,
                       base64< rsa_priv_key > & encoded_key)
 {
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(keys, id, encoded_key, true);
+  shared_ptr<RSA_PrivateKey> priv
+    = get_private_key(keys, id, encoded_key, true);
 
   utf8 new_phrase;
-  get_passphrase(keys, id, new_phrase, true, true, "enter new passphrase");
+  get_passphrase(new_phrase, id, true, false);
 
   Pipe p;
   p.start_msg();
@@ -403,31 +499,6 @@ void decrypt_rsa(key_store & keys,
 }
 
 void
-read_pubkey(string const & in,
-            rsa_keypair_id & id,
-            base64<rsa_pub_key> & pub)
-{
-  string tmp_id, tmp_key;
-  size_t pos = 0;
-  extract_variable_length_string(in, tmp_id, pos, "pubkey id");
-  extract_variable_length_string(in, tmp_key, pos, "pubkey value");
-  id = rsa_keypair_id(tmp_id);
-  encode_base64(rsa_pub_key(tmp_key), pub);
-}
-
-void
-write_pubkey(rsa_keypair_id const & id,
-             base64<rsa_pub_key> const & pub,
-             string & out)
-{
-  rsa_pub_key pub_tmp;
-  decode_base64(pub, pub_tmp);
-  insert_variable_length_string(id(), out);
-  insert_variable_length_string(pub_tmp(), out);
-}
-
-
-void
 key_hash_code(rsa_keypair_id const & ident,
               base64<rsa_pub_key> const & pub,
               hexenc<id> & out)
@@ -469,23 +540,6 @@ keys_match(rsa_keypair_id const & id1,
   key_hash_code(id1, key1, hash1);
   key_hash_code(id2, key2, hash2);
   return hash1 == hash2;
-}
-
-void
-require_password(rsa_keypair_id const & key,
-                 key_store & keys,
-                 database & db)
-{
-  N(keys.key_pair_exists(key),
-    F("no key pair '%s' found in key store '%s'")
-    % key % keys.get_key_dir());
-
-  if (keys.hook_persist_phrase_ok())
-    {
-      string plaintext("hi maude");
-      base64<rsa_sha1_signature> sig;
-      keys.make_signature(db, key, plaintext, sig);
-    }
 }
 
 #ifdef BUILD_UNIT_TESTS

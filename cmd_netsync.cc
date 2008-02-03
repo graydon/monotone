@@ -75,14 +75,11 @@ find_key(utf8 const & addr,
   parse_uri(addr(), u);
   if (!u.host.empty())
     host = utf8(u.host);
-  if (!app.lua.hook_get_netsync_key(host, include, exclude, key)
-      || key() == "")
-    {
-      if (needed)
-        {
-          get_user_key(key, app.keys, app.db);
-        }
-    }
+  if (needed
+      && (key().empty()
+          || !app.lua.hook_get_netsync_key(host, include, exclude, key)))
+    get_user_key(key, app.opts, app.lua, app.keys, app.db);
+
   app.opts.signing_key = key;
 }
 
@@ -93,13 +90,11 @@ find_key_if_needed(utf8 const & addr,
                    app_state & app,
                    bool needed = true)
 {
-      uri u;
-      parse_uri(addr(), u);
+  uri u;
+  parse_uri(addr(), u);
 
-      if (app.lua.hook_use_transport_auth(u))
-        {
-          find_key(addr, include, exclude, app, needed);
-        }
+  if (app.lua.hook_use_transport_auth(u))
+    find_key(addr, include, exclude, app, needed);
 }
 
 static void
@@ -437,21 +432,22 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   pid_file pid(app.opts.pidfile);
 
+  app.db.ensure_open();
+
   if (app.opts.use_transport_auth)
     {
+      N(app.lua.hook_persist_phrase_ok(),
+	F("need permission to store persistent passphrase "
+          "(see hook persist_phrase_ok())"));
+
       if (!app.opts.bind_uris.empty())
         find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""), app);
       else
         find_key(utf8(), globish("*"), globish(""), app);
-
-      N(app.lua.hook_persist_phrase_ok(),
-	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(app.opts.signing_key, app.keys, app.db);
     }
   else if (!app.opts.bind_stdio)
-    W(F("The --no-transport-auth option is usually only used in combination with --stdio"));
-
-  app.db.ensure_open();
+    W(F("The --no-transport-auth option is usually only used "
+        "in combination with --stdio"));
 
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
                        globish("*"), globish(""),

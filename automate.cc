@@ -2084,18 +2084,14 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-
-  cert c;
   revision_id rid(idx(args, 0)());
 
-  transaction_guard guard(db);
   N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);
-  make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
-                   cert_value(idx(args, 2)()), db, app.keys, c);
-  revision<cert> rc(c);
-  db.put_revision_cert(rc);
-  guard.commit();
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  put_simple_revision_cert(rid, cert_name(idx(args, 1)()),
+                           cert_value(idx(args, 2)()), db, app.keys);
 }
 
 // Name: get_db_variables

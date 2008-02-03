@@ -429,6 +429,10 @@ key_store::make_signature(database & db,
   E(s == cert_ok, F("make_signature: signature is not valid"));
 }
 
+//
+// Hooks into the application configuration
+//
+
 bool
 key_store::hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase)
 {
@@ -439,24 +443,6 @@ bool
 key_store::hook_persist_phrase_ok()
 {
   return s->app.lua.hook_persist_phrase_ok();
-}
-
-bool
-key_store::hook_get_current_branch_key(rsa_keypair_id & k)
-{
-  return s->app.lua.hook_get_branch_key(s->app.opts.branchname, k);
-}
-
-bool
-key_store::has_opt_signing_key()
-{
-  return (s->app.opts.signing_key() != "");
-}
-
-rsa_keypair_id
-key_store::get_opt_signing_key()
-{
-  return s->app.opts.signing_key;
 }
 
 // Local Variables:
