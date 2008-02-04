@@ -348,7 +348,7 @@ nodist_mtn_SOURCES = std_hooks.c schema.c
 unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
 unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 
-tester_SOURCES = tester.cc
+tester_SOURCES = tester.cc transforms.cc
 nodist_tester_SOURCES = testlib.c
 tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
 		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) \

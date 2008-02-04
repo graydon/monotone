@@ -85,11 +85,11 @@ void write_pubkey(rsa_keypair_id const & id,
 
 void key_hash_code(rsa_keypair_id const & ident,
                    base64<rsa_pub_key> const & pub,
-                   hexenc<id> & out);
+                   id & out);
 
 void key_hash_code(rsa_keypair_id const & ident,
                    base64< rsa_priv_key > const & priv,
-                   hexenc<id> & out);
+                   id & out);
 
 bool keys_match(rsa_keypair_id const & id1,
                 base64<rsa_pub_key> const & key1,

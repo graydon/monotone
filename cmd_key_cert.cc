@@ -232,7 +232,7 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
 
   hexenc<id> ident;
   if (!rids.empty())
-    ident = rids.begin()->inner();
+    ident = hexenc<id>(encode_hexenc(rids.begin()->inner()()));
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
