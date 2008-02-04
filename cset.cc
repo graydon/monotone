@@ -290,7 +290,7 @@ print_cset(basic_io::printer & printer,
     {
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, i->first);
-      st.push_hex_pair(syms::content, i->second.inner());
+      st.push_binary_pair(syms::content, i->second.inner());
       printer.print_stanza(st);
     }
 
@@ -299,8 +299,8 @@ print_cset(basic_io::printer & printer,
     {
       basic_io::stanza st;
       st.push_file_pair(syms::patch, i->first);
-      st.push_hex_pair(syms::from, i->second.first.inner());
-      st.push_hex_pair(syms::to, i->second.second.inner());
+      st.push_binary_pair(syms::from, i->second.first.inner());
+      st.push_binary_pair(syms::to, i->second.second.inner());
       printer.print_stanza(st);
     }
 

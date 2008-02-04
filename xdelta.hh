@@ -11,6 +11,7 @@
 // PURPOSE.
 
 #include <boost/shared_ptr.hpp>
+#include "vocab.hh"
 
 void
 compute_delta(std::string const & a,
@@ -21,6 +22,17 @@ void
 apply_delta(std::string const & a,
             std::string const & delta,
             std::string & b);
+
+
+// diffing and patching
+
+void diff(data const & olddata,
+          data const & newdata,
+          delta & del);
+
+void patch(data const & olddata,
+           delta const & del,
+           data & newdata);
 
 
 struct delta_applicator

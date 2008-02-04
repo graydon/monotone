@@ -62,13 +62,17 @@ ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
 
 // instantiate those bits of the template vocabulary actually in use.
 
+EXTERN template class       revision<id>;
+EXTERN template class         roster<id>;
+EXTERN template class       manifest<id>;
+EXTERN template class           file<id>;
+
+// hex encoded ids are no longer typed
 EXTERN template class           hexenc<id>;
-EXTERN template class revision< hexenc<id> >;
-EXTERN template class   roster< hexenc<id> >;
-EXTERN template class manifest< hexenc<id> >;
-EXTERN template class     file< hexenc<id> >;
-EXTERN template class      key< hexenc<id> >;
-EXTERN template class    epoch< hexenc<id> >;
+
+
+EXTERN template class              key<id>;
+EXTERN template class            epoch<id>;
 
 EXTERN template class     hexenc<inodeprint>;
 
@@ -104,8 +108,20 @@ EXTERN template class hexenc<prefix>;
 EXTERN template class base64<merkle>;
 EXTERN template class base64<data>;
 
+
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.
+
+/*
+hum... which operators are really needed and which not?
+EXTERN template std::ostream & operator<< <>(std::ostream &,           id   const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
+*/
+EXTERN template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
+//EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
+
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id> > const &);
@@ -113,6 +129,8 @@ EXTERN template std::ostream & operator<< <>(std::ostream &,   roster< hexenc<id
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
+
+
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 
