@@ -29,7 +29,9 @@ using Botan::RSA_PrivateKey;
 using Botan::RSA_PublicKey;
 using Botan::SecureVector;
 using Botan::X509_PublicKey;
+using Botan::PKCS8_PrivateKey;
 using Botan::PK_Signer;
+using Botan::Pipe;
 
 class key_store_state
 {
@@ -46,7 +48,9 @@ class key_store_state
     pair<shared_ptr<PK_Signer>,
          shared_ptr<RSA_PrivateKey> > > signers;
 
-  key_store_state(app_state &);
+  key_store_state(app_state & app)
+    : have_read(false), app(app)
+  {}
 
 public:  
   // just like put_key_pair except that the key is _not_ written to disk.
@@ -61,9 +65,10 @@ namespace
 {
   struct keyreader : public packet_consumer
   {
-    key_store_state & ks;
+    key_store & ks;
+    key_store_state & kss;
 
-    keyreader(key_store_state & k): ks(k) {}
+    keyreader(key_store & ks, key_store_state & kss): ks(ks), kss(kss) {}
     virtual void consume_file_data(file_id const & ident,
                                    file_data const & dat)
     {E(false, F("Extraneous data in key store."));}
@@ -88,16 +93,24 @@ namespace
     {
       L(FL("reading key pair '%s' from key store") % ident);
 
-      E(ks.put_key_pair_memory(ident, kp),
+      E(kss.put_key_pair_memory(ident, kp),
         F("Key store has multiple keys with id '%s'.") % ident);
 
       L(FL("successfully read key pair '%s' from key store") % ident);
     }
-  };
-}
 
-key_store_state::key_store_state(app_state & a) : have_read(false), app(a)
-{
+    // for backward compatibility
+    virtual void consume_old_private_key(rsa_keypair_id const & ident,
+                                         base64<old_arc4_rsa_priv_key> const & k)
+    {
+      W(F("converting old-format private key '%s'") % ident);
+
+      base64<rsa_pub_key> dummy;
+      ks.migrate_old_key_pair(ident, k, dummy);
+
+      L(FL("successfully read key pair '%s' from key store") % ident);
+    }
+  };
 }
 
 key_store::key_store(app_state & a)
@@ -137,7 +150,7 @@ key_store::read_key_dir()
       return;
     }
 
-  keyreader kr(*s);
+  keyreader kr(*this, *s);
   for (vector<path_component>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
@@ -145,7 +158,7 @@ key_store::read_key_dir()
       data dat;
       read_data(s->key_dir / *i, dat);
       istringstream is(dat());
-      read_packets(is, kr, *this);
+      read_packets(is, kr);
     }
 }
 
@@ -354,7 +367,8 @@ key_store::make_signature(database & db,
 
         if (!pub_key)
           throw informative_failure("Failed to get monotone RSA public key");
-            agent.sign_data(*pub_key, tosign, sig_string);
+
+        agent.sign_data(*pub_key, tosign, sig_string);
       }
       if (sig_string.length() <= 0)
         L(FL("make_signature: monotone and ssh-agent keys do not match, will"
@@ -427,6 +441,93 @@ key_store::make_signature(database & db,
   cert_status s = db.check_signature(id, tosign, signature);
   I(s != cert_unknown);
   E(s == cert_ok, F("make_signature: signature is not valid"));
+}
+
+//
+// Migration from old databases
+//
+
+void
+key_store::migrate_old_key_pair(rsa_keypair_id const & id,
+                                base64<old_arc4_rsa_priv_key> const & old_priv,
+                                base64<rsa_pub_key> const & pub)
+{
+  keypair kp;
+  SecureVector<Botan::byte> arc4_key;
+  utf8 phrase;
+  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+  shared_ptr<RSA_PrivateKey> priv_key;
+
+  // See whether a lua hook will tell us the passphrase.
+  string lua_phrase;
+  if (s->app.lua.hook_get_passphrase(id, lua_phrase))
+    phrase = utf8(lua_phrase);
+  else
+    get_passphrase(phrase, id, false, false);
+
+  int cycles = 1;
+  for (;;)
+    try
+      {
+        arc4_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()),
+                     phrase().size());
+
+        Pipe arc4_decryptor(new Botan::Base64_Decoder,
+                            get_cipher("ARC4", arc4_key, Botan::DECRYPTION));
+        arc4_decryptor.process_msg(old_priv());
+
+        // This is necessary because PKCS8::load_key() cannot currently
+        // recognize an unencrypted, raw-BER blob as such, but gets it
+        // right if it's PEM-coded.
+        SecureVector<Botan::byte> arc4_decrypt(arc4_decryptor.read_all());
+        Pipe p;
+        p.process_msg(Botan::PEM_Code::encode(arc4_decrypt, "PRIVATE KEY"));
+
+        pkcs8_key.reset(Botan::PKCS8::load_key(p));
+        break;
+      }
+    catch (Botan::Exception & e)
+      {
+        L(FL("migrate_old_key_pair: failure %d to load old private key: %s")
+          % cycles % e.what());
+
+        E(cycles <= 3,
+          F("failed to decrypt old private RSA key, "
+            "probably incorrect passphrase"));
+
+        get_passphrase(phrase, id, false, false);
+        cycles++;
+        continue;
+      }
+
+  priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+  I(priv_key);
+
+  // now we can write out the new key
+  Pipe p;
+  p.start_msg();
+  Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
+                            "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
+                            Botan::RAW_BER);
+  rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
+  encode_base64(raw_priv, kp.priv);
+
+  // also the public key (which is derivable from the private key; asking
+  // Botan for the X.509 encoding of the private key implies that we want
+  // it to derive and produce the public key)
+  Pipe p2;
+  p2.start_msg();
+  Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
+  rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
+  encode_base64(raw_pub, kp.pub);
+
+  // if the database had a public key entry for this key, make sure it
+  // matches what we derived from the private key entry, but don't abort the
+  // whole migration if it doesn't.
+  if (!pub().empty() && !keys_match(id, pub, id, kp.pub))
+    W(F("public and private keys for %s don't match") % id);
+
+  put_key_pair(id, kp);
 }
 
 //

@@ -54,7 +54,13 @@ public:
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,
                       base64<rsa_sha1_signature> & signature);
-  
+
+  // Migration from old databases
+
+  void migrate_old_key_pair(rsa_keypair_id const & id,
+                            base64<old_arc4_rsa_priv_key> const & old_priv,
+                            base64<rsa_pub_key> const & pub);
+
   // FIXME: quick hack to make these hooks and options available via
   //        the key_store context
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);

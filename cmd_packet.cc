@@ -123,9 +123,14 @@ namespace
     virtual void consume_key_pair(rsa_keypair_id const & ident,
                                   keypair const & kp)
     {
-      transaction_guard guard(app.db);
       app.keys.put_key_pair(ident, kp);
-      guard.commit();
+    }
+
+    virtual void consume_old_private_key(rsa_keypair_id const & ident,
+                                         base64<old_arc4_rsa_priv_key> const & k)
+    {
+      base64<rsa_pub_key> dummy;
+      app.keys.migrate_old_key_pair(ident, k, dummy);
     }
   };
 }
@@ -140,7 +145,7 @@ CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
   size_t count = 0;
   if (args.empty())
     {
-      count += read_packets(cin, dbw, app.keys);
+      count += read_packets(cin, dbw);
       N(count != 0, F("no packets found on stdin"));
     }
   else
@@ -151,7 +156,7 @@ CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
           data dat;
           read_data(system_path(*i), dat);
           istringstream ss(dat());
-          count += read_packets(ss, dbw, app.keys);
+          count += read_packets(ss, dbw);
         }
       N(count != 0, FP("no packets found in given file",
                        "no packets found in given files",

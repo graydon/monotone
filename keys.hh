@@ -55,11 +55,6 @@ void change_key_passphrase(key_store & keys,          // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
                            base64< rsa_priv_key > & encoded_key);
 
-void migrate_private_key(key_store & keys,
-                         rsa_keypair_id const & id,
-                         base64< old_arc4_rsa_priv_key > const & old_priv,
-                         keypair & kp);
-
 bool check_signature(key_store & keys,
                      rsa_keypair_id const & id,
                      base64<rsa_pub_key> const & pub,

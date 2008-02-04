@@ -16,7 +16,6 @@
 #include "sanity.hh"
 #include "schema_migration.hh"
 #include "key_store.hh"
-#include "keys.hh"
 #include "transforms.hh"
 #include "ui.hh"
 
@@ -498,22 +497,15 @@ migrate_to_external_privkeys(sqlite3 * db, key_store & keys)
     while (stmt.step())
       {
         rsa_keypair_id ident(stmt.column_string(0));
-        base64< old_arc4_rsa_priv_key > old_priv(stmt.column_string(1));
-
-        keypair kp;
-        migrate_private_key(keys, ident, old_priv, kp);
-        MM(kp.pub);
+        base64<old_arc4_rsa_priv_key> old_priv(stmt.column_string(1));
+        base64<rsa_pub_key> pub;
 
         if (stmt.column_nonnull(2))
-          {
-            base64< rsa_pub_key > pub(stmt.column_string(2));
-            MM(pub);
-            N(keys_match(ident, pub, ident, kp.pub),
-              F("public and private keys for %s don't match") % ident);
-          }
+          pub = base64<rsa_pub_key>(stmt.column_string(2));
+
         P(F("moving key '%s' from database to %s")
           % ident % keys.get_key_dir());
-        keys.put_key_pair(ident, kp);
+        keys.migrate_old_key_pair(ident, old_priv, pub);
       }
   }
 

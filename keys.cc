@@ -63,16 +63,6 @@ using Botan::X509_PublicKey;
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.
 
-static void
-do_arc4(SecureVector<Botan::byte> & sym_key,
-        SecureVector<Botan::byte> & payload)
-{
-  L(FL("running arc4 process on %d bytes of data") % payload.size());
-  Pipe enc(get_cipher("ARC4", sym_key, Botan::ENCRYPTION));
-  enc.process_msg(payload);
-  payload = enc.read_all();
-}
-
 // "raw" passphrase prompter; unaware of passphrase caching or the laziness
 // hook.  KEYID is used only in prompts.  CONFIRM_PHRASE causes the user to
 // be prompted to type the same thing twice, and will loop if they don't
@@ -367,75 +357,6 @@ get_private_key(key_store & keys,
   I(false);
 }
 
-// converts an oldstyle arc4 encrypted key into a newstyle pkcs#8 encoded
-// key. the public key is also included
-void
-migrate_private_key(key_store & keys,
-                    rsa_keypair_id const & id,
-                    base64< old_arc4_rsa_priv_key > const & old_priv,
-                    keypair & new_kp)
-{
-  old_arc4_rsa_priv_key decoded_key;
-  SecureVector<Botan::byte> decrypted_key;
-  utf8 phrase;
-
-  bool force = false;
-
-  // need to decrypt the old key
-  shared_ptr<RSA_PrivateKey> priv_key;
-  L(FL("base64-decoding %d-byte old private key") % old_priv().size());
-  decode_base64(old_priv, decoded_key);
-  for (int i = 0; i < 3; ++i)
-    {
-      decrypted_key.set(reinterpret_cast<Botan::byte const *>(decoded_key().data()),
-                           decoded_key().size());
-      get_passphrase(keys, phrase, id, force);
-      SecureVector<Botan::byte> sym_key;
-      sym_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()), phrase().size());
-      do_arc4(sym_key, decrypted_key);
-
-      L(FL("building signer from %d-byte decrypted private key") % decrypted_key.size());
-
-      shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-      try
-        {
-          Pipe p;
-          p.process_msg(Botan::PEM_Code::encode(decrypted_key, "PRIVATE KEY"));
-          pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p));
-        }
-      catch (...)
-        {
-          if (i >= 2)
-            throw informative_failure("failed to decrypt old private RSA key, "
-                                      "probably incorrect passphrase");
-          // don't use the cache bad one next time
-          force = true;
-          continue;
-        }
-
-      priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
-      if (!priv_key)
-          throw informative_failure("Failed to get old RSA key");
-    }
-
-  I(priv_key);
-
-  // now we can write out the new key
-  Pipe p;
-  p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
-  rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
-  encode_base64(raw_priv, new_kp.priv);
-
-  // also the public portion
-  Pipe p2;
-  p2.start_msg();
-  Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
-  rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
-  encode_base64(raw_pub, new_kp.pub);
-}
-
 void
 change_key_passphrase(key_store & keys,
                       rsa_keypair_id const & id,
@@ -541,34 +462,6 @@ keys_match(rsa_keypair_id const & id1,
   key_hash_code(id2, key2, hash2);
   return hash1 == hash2;
 }
-
-#ifdef BUILD_UNIT_TESTS
-#include "unit_tests.hh"
-
-// This is not much of a unit test, but there is no point in strengthening
-// it, because the only thing we still use arc4 for is migrating *really*
-// old in-database private keys out to pkcs#8 files in the keystore.
-UNIT_TEST(key, arc4)
-{
-  static Botan::byte const pt[] = "new fascist tidiness regime in place";
-  static Botan::byte const phr[] = "still spring water";
-
-  SecureVector<Botan::byte> phrase(phr, sizeof phr - 1);
-  SecureVector<Botan::byte> orig(pt, sizeof pt - 1);
-  SecureVector<Botan::byte> data(orig);
-
-  UNIT_TEST_CHECKPOINT("encrypting data");
-  do_arc4(phrase, data);
-
-  UNIT_TEST_CHECK(data != orig);
-
-  UNIT_TEST_CHECKPOINT("decrypting data");
-  do_arc4(phrase, data);
-
-  UNIT_TEST_CHECK(data == orig);
-}
-
-#endif // BUILD_UNIT_TESTS
 
 // Local Variables:
 // mode: C++
