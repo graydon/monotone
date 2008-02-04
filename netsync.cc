@@ -1504,7 +1504,7 @@ session::process_auth_cmd(protocol_role their_role,
 
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
 
-  if (!project.db.public_key_exists(their_key_hash))
+  if (!project.db.public_key_exists(client))
     {
       // If it's not in the db, it still could be in the keystore if we
       // have the private key that goes with it.
@@ -1529,7 +1529,7 @@ session::process_auth_cmd(protocol_role their_role,
   // Get their public key.
   rsa_keypair_id their_id;
   base64<rsa_pub_key> their_key;
-  project.db.get_pubkey(their_key_hash, their_id, their_key);
+  project.db.get_pubkey(client, their_id, their_key);
 
   lua.hook_note_netsync_start(session_id, "server", their_role,
                               peer_id, their_id,
@@ -1805,18 +1805,18 @@ session::data_exists(netcmd_item_type type,
     {
     case key_item:
       return key_refiner.local_item_exists(item)
-        || db.public_key_exists(item);
+        || project.db.public_key_exists(item);
     case file_item:
-      return db.file_version_exists(file_id(item));
+      return project.db.file_version_exists(file_id(item));
     case revision_item:
       return rev_refiner.local_item_exists(item)
-        || db.revision_exists(revision_id(item));
+        || project.db.revision_exists(revision_id(item));
     case cert_item:
       return cert_refiner.local_item_exists(item)
-        || db.revision_cert_exists(revision_id(item));
+        || project.db.revision_cert_exists(revision_id(item));
     case epoch_item:
       return epoch_refiner.local_item_exists(item)
-        || db.epoch_exists(epoch_id(item));
+        || project.db.epoch_exists(epoch_id(item));
     }
   return false;
 }

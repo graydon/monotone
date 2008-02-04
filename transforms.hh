@@ -11,6 +11,7 @@
 // PURPOSE.
 
 #include "vocab.hh"
+#include "gzip.hh"
 
 // this file contans various sorts of string transformations. each
 // transformation should be self-explanatory from its type signature. see
