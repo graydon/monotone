@@ -720,7 +720,7 @@ CMD_AUTOMATE(certs, N_("REV"),
       signers.insert(keyid);
 
       bool trusted =
-        app.lua.hook_get_revision_cert_trust(signers, rid,
+        app.lua.hook_get_revision_cert_trust(signers, ident,
                                              name, tv);
 
       st.push_str_pair(syms::key, keyid());
