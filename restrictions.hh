@@ -30,7 +30,7 @@
 #include "vocab.hh"
 #include "database.hh" // for parent_map
 
-class app_state;
+class workspace;
 
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
@@ -81,21 +81,21 @@ class node_restriction : public restriction
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster,
-                   app_state & a);
+                   workspace & work);
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster1,
                    roster_t const & roster2,
-                   app_state & a);
+                   workspace & work);
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    parent_map const & rosters1,
                    roster_t const & roster2,
-                   app_state & a);
+                   workspace & work);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
@@ -124,7 +124,7 @@ class path_restriction : public restriction
   path_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   app_state & a,
+                   workspace & work,
                    validity_check vc = check_paths);
 
   bool includes(file_path const & sp) const;

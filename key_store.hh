@@ -1,34 +1,34 @@
 #ifndef __KEY_STORE_H__
 #define __KEY_STORE_H__
 
-#include <map>
 #include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
 
 class app_state;
 struct globish;
+class database;
+
+class key_store_state;
 
 class key_store
 {
 private:
-  system_path key_dir;
-  bool have_read;
-  app_state & app;
-  std::map<rsa_keypair_id, keypair> keys;
-  std::map<hexenc<id>, rsa_keypair_id> hashes;
+  key_store_state * s;
 
   void get_key_file(rsa_keypair_id const & ident, system_path & file);
   void write_key(rsa_keypair_id const & ident);
   void read_key_dir();
   void maybe_read_key_dir();
+
 public:
+  rsa_keypair_id signing_key;
+
   key_store(app_state & a);
+  ~key_store();
+
   void set_key_dir(system_path const & kd);
   system_path const & get_key_dir();
-
-  void ensure_in_database(rsa_keypair_id const & ident);
-  bool try_ensure_in_db(hexenc<id> const & hash);
 
   void get_key_ids(std::vector<rsa_keypair_id> & priv);
   void get_key_ids(globish const & pattern,
@@ -38,17 +38,27 @@ public:
 
   void get_key_pair(rsa_keypair_id const & ident,
                     keypair & kp);
+  bool maybe_get_key_pair(rsa_keypair_id const & ident,
+                          keypair & kp);
+  bool maybe_get_key_pair(hexenc<id> const & hash,
+                          rsa_keypair_id & ident,
+                          keypair & kp);
 
   bool put_key_pair(rsa_keypair_id const & ident,
                     keypair const & kp);
 
-  // just like put_key_pair except that the key is _not_ written to disk.
-  // primarily for internal use in reading keys back from disk.
-  bool put_key_pair_memory(rsa_keypair_id const & ident,
-                           keypair const & kp);
-                         
-
   void delete_key(rsa_keypair_id const & ident);
+
+  // Crypto operations
+
+  void make_signature(database & db, rsa_keypair_id const & id,
+                      std::string const & tosign,
+                      base64<rsa_sha1_signature> & signature);
+  
+  // FIXME: quick hack to make these hooks and options available via
+  //        the key_store context
+  bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
+  bool hook_persist_phrase_ok();
 };
 
 // Local Variables:

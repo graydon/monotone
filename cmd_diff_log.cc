@@ -364,7 +364,7 @@ prepare_diff(cset & included,
       revision_id old_rid;
       parent_map parents;
 
-      app.work.get_parent_rosters(parents);
+      app.work.get_parent_rosters(parents, app.db);
 
       // With no arguments, which parent should we diff against?
       N(parents.size() == 1,
@@ -373,12 +373,12 @@ prepare_diff(cset & included,
 
       old_rid = parent_id(parents.begin());
       old_roster = parent_roster(parents.begin());
-      app.work.get_current_roster_shape(new_roster, nis);
+      app.work.get_current_roster_shape(new_roster, app.db, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -397,16 +397,14 @@ prepare_diff(cset & included,
       revision_id r_old_id;
 
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
 
       app.db.get_roster(r_old_id, old_roster);
-      app.work.get_current_roster_shape(new_roster, nis);
+      app.work.get_current_roster_shape(new_roster, app.db, nis);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -427,18 +425,13 @@ prepare_diff(cset & included,
       complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
       complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
-      N(app.db.revision_exists(r_new_id),
-        F("no such revision '%s'") % r_new_id);
-
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
       node_restriction mask(args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster, app.work);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -546,6 +539,8 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
              options::opts::revision | options::opts::depth |
              options::opts::exclude)
 {
+  // FIXME: prepare_diff and dump_diffs should not take 'app' argument.
+
   cset included;
   std::string dummy_header;
   bool new_is_archived;
@@ -682,12 +677,13 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           parent_map parents;
           temp_node_id_source nis;
 
-          app.work.get_parent_rosters(parents);
-          app.work.get_current_roster_shape(new_roster, nis);
+          app.work.get_parent_rosters(parents, app.db);
+          app.work.get_current_roster_shape(new_roster, app.db, nis);
 
           mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, parents, new_roster, app);
+                                  app.opts.depth, parents, new_roster,
+                                  app.work);
         }
       else
         {
@@ -698,7 +694,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
           mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, roster, app);
+                                  app.opts.depth, roster, app.work);
         }
     }
 
@@ -821,7 +817,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
               set<node_id> nodes_modified;
               select_nodes_modified_by_rev(rev, roster,
                                            nodes_modified,
-                                           app);
+                                           app.db);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)

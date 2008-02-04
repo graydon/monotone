@@ -11,9 +11,8 @@
 #include <map>
 #include <set>
 
-#include "app_state.hh"
 #include "constants.hh"
-#include "database_check.hh"
+#include "database.hh"
 #include "keys.hh"
 #include "revision.hh"
 #include "ui.hh"
@@ -21,6 +20,7 @@
 #include "transforms.hh"
 #include "cert.hh"
 #include "rev_height.hh"
+#include "outdated_indicator.hh"
 
 // the database has roughly the following structure
 //
@@ -136,19 +136,19 @@ struct checked_height {
  * check integrity of the SQLite database
  */
 static void
-check_db_integrity_check(app_state & app )
+check_db_integrity_check(database & db)
 {
     L(FL("asking sqlite to check db integrity"));
-    E(app.db.check_integrity(),
+    E(db.check_integrity(),
       F("file structure is corrupted; cannot check further"));
 }
 
 static void
-check_files(app_state & app, map<file_id, checked_file> & checked_files)
+check_files(database & db, map<file_id, checked_file> & checked_files)
 {
   set<file_id> files;
 
-  app.db.get_file_ids(files);
+  db.get_file_ids(files);
   L(FL("checking %d files") % files.size());
 
   ticker ticks(_("files"), "f", files.size()/70+1);
@@ -158,7 +158,7 @@ check_files(app_state & app, map<file_id, checked_file> & checked_files)
     {
       L(FL("checking file %s") % *i);
       file_data data;
-      app.db.get_file_version(*i, data);
+      db.get_file_version(*i, data);
       checked_files[*i].found = true;
       ++ticks;
     }
@@ -169,7 +169,7 @@ check_files(app_state & app, map<file_id, checked_file> & checked_files)
 // first phase of roster checking, checks manifest-related parts of the
 // roster, and general parsability/normalisation
 static void
-check_rosters_manifest(app_state & app,
+check_rosters_manifest(database & db,
                        map<revision_id, checked_roster> & checked_rosters,
                        map<revision_id, checked_revision> & checked_revisions,
                        set<manifest_id> & found_manifests,
@@ -177,7 +177,7 @@ check_rosters_manifest(app_state & app,
 {
   set<revision_id> rosters;
 
-  app.db.get_roster_ids(rosters);
+  db.get_roster_ids(rosters);
   L(FL("checking %d rosters, manifest pass") % rosters.size());
   
   ticker ticks(_("rosters"), "r", rosters.size()/70+1);
@@ -191,7 +191,7 @@ check_rosters_manifest(app_state & app,
       marking_map mm;
       try
         {
-          app.db.get_roster(*i, ros, mm);
+          db.get_roster(*i, ros, mm);
         }
       // When attempting to fetch a roster with no corresponding revision,
       // we fail with E(), not I() (when it tries to look up the manifest_id
@@ -232,7 +232,7 @@ check_rosters_manifest(app_state & app,
 // that the referenced revisions exist.
 // This function assumes that check_revisions has been called!
 static void
-check_rosters_marking(app_state & app,
+check_rosters_marking(database & db,
               map<revision_id, checked_roster> & checked_rosters,
               map<revision_id, checked_revision> & checked_revisions)
 {
@@ -256,7 +256,7 @@ check_rosters_marking(app_state & app,
 
       roster_t ros;
       marking_map mm;
-      app.db.get_roster(ros_id, ros, mm);
+      db.get_roster(ros_id, ros, mm);
 
       for (node_map::const_iterator n = ros.all_nodes().begin();
            n != ros.all_nodes().end(); n++)
@@ -298,7 +298,7 @@ check_rosters_marking(app_state & app,
 }
 
 static void
-check_revisions(app_state & app,
+check_revisions(database & db,
                 map<revision_id, checked_revision> & checked_revisions,
                 map<revision_id, checked_roster> & checked_rosters,
                 set<manifest_id> const & found_manifests,
@@ -306,7 +306,7 @@ check_revisions(app_state & app,
 {
   set<revision_id> revisions;
 
-  app.db.get_revision_ids(revisions);
+  db.get_revision_ids(revisions);
   L(FL("checking %d revisions") % revisions.size());
 
   ticker ticks(_("revisions"), "r", revisions.size()/70+1);
@@ -316,7 +316,7 @@ check_revisions(app_state & app,
     {
       L(FL("checking revision %s") % *i);
       revision_data data;
-      app.db.get_revision(*i, data);
+      db.get_revision(*i, data);
       checked_revisions[*i].found = true;
 
       revision_t rev;
@@ -341,7 +341,7 @@ check_revisions(app_state & app,
           checked_revisions[*i].normalized = true;
 
       // roster checks
-      if (app.db.roster_version_exists(*i))
+      if (db.roster_version_exists(*i))
         {
           checked_revisions[*i].found_roster = true;
           I(checked_rosters[*i].found);
@@ -396,12 +396,12 @@ check_revisions(app_state & app,
 }
 
 static void
-check_ancestry(app_state & app,
+check_ancestry(database & db,
                map<revision_id, checked_revision> & checked_revisions)
 {
   multimap<revision_id, revision_id> graph;
 
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
   L(FL("checking %d ancestry edges") % graph.size());
 
   ticker ticks(_("ancestry"), "a", graph.size()/70+1);
@@ -428,12 +428,12 @@ check_ancestry(app_state & app,
 }
 
 static void
-check_keys(app_state & app,
+check_keys(database & db,
            map<rsa_keypair_id, checked_key> & checked_keys)
 {
   vector<rsa_keypair_id> pubkeys;
 
-  app.db.get_public_keys(pubkeys);
+  db.get_public_keys(pubkeys);
 
   L(FL("checking %d public keys") % pubkeys.size());
 
@@ -442,7 +442,7 @@ check_keys(app_state & app,
   for (vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
     {
-      app.db.get_key(*i, checked_keys[*i].pub_encoded);
+      db.get_key(*i, checked_keys[*i].pub_encoded);
       checked_keys[*i].found = true;
       ++ticks;
     }
@@ -450,14 +450,13 @@ check_keys(app_state & app,
 }
 
 static void
-check_certs(app_state & app,
+check_certs(database & db,
             map<revision_id, checked_revision> & checked_revisions,
             map<rsa_keypair_id, checked_key> & checked_keys,
             size_t & total_certs)
 {
-
   vector< revision<cert> > certs;
-  app.db.get_revision_certs(certs);
+  db.get_revision_certs(certs);
 
   total_certs = certs.size();
 
@@ -475,9 +474,9 @@ check_certs(app_state & app,
         {
           string signed_text;
           cert_signable_text(i->inner(), signed_text);
-          checked.good_sig = check_signature(app, i->inner().key,
-                                             checked_keys[i->inner().key].pub_encoded,
-                                             signed_text, i->inner().sig);
+          checked.good_sig
+            = (db.check_signature(i->inner().key,
+                                  signed_text, i->inner().sig) == cert_ok);
         }
 
       checked_keys[i->inner().key].sigs++;
@@ -490,11 +489,11 @@ check_certs(app_state & app,
 // - check that every rev has a height
 // - check that no two revs have the same height
 static void
-check_heights(app_state & app,
+check_heights(database & db,
               map<revision_id, checked_height> & checked_heights)
 {
   set<revision_id> heights;
-  app.db.get_revision_ids(heights);
+  db.get_revision_ids(heights);
 
   // add revision [], it is the (imaginary) root of all revisions, and
   // should have a height, too
@@ -517,7 +516,7 @@ check_heights(app_state & app,
       rev_height h;
       try
         {
-          app.db.get_rev_height(*i, h);
+          db.get_rev_height(*i, h);
         }
       catch (std::exception & e)
         {
@@ -541,13 +540,13 @@ check_heights(app_state & app,
 // check that every rev's height is a sensible height to assign, given its
 // parents
 static void
-check_heights_relation(app_state & app,
+check_heights_relation(database & db,
                        map<revision_id, checked_height> & checked_heights)
 {
   set<revision_id> heights;
 
   multimap<revision_id, revision_id> graph; // parent, child
-  app.db.get_revision_ancestry(graph);
+  db.get_revision_ancestry(graph);
 
   L(FL("checking heights for %d edges") % graph.size());
 
@@ -569,8 +568,8 @@ check_heights_relation(app_state & app,
         p_id % c_id);
       
       rev_height parent, child;
-      app.db.get_rev_height(p_id, parent);
-      app.db.get_rev_height(c_id, child);
+      db.get_rev_height(p_id, parent);
+      db.get_rev_height(c_id, child);
 
       if (!(child > parent))
         {
@@ -868,7 +867,7 @@ report_heights(map<revision_id, checked_height> const & checked_heights,
 }
 
 void
-check_db(app_state & app)
+check_db(database & db)
 {
   map<file_id, checked_file> checked_files;
   set<manifest_id> found_manifests;
@@ -905,20 +904,20 @@ check_db(app_state & app)
   size_t duplicate_heights = 0;
   size_t incorrect_heights = 0;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
-  check_db_integrity_check(app);
-  check_files(app, checked_files);
-  check_rosters_manifest(app, checked_rosters, checked_revisions,
+  check_db_integrity_check(db);
+  check_files(db, checked_files);
+  check_rosters_manifest(db, checked_rosters, checked_revisions,
                          found_manifests, checked_files);
-  check_revisions(app, checked_revisions, checked_rosters, found_manifests,
+  check_revisions(db, checked_revisions, checked_rosters, found_manifests,
                   missing_rosters);
-  check_rosters_marking(app, checked_rosters, checked_revisions);
-  check_ancestry(app, checked_revisions);
-  check_keys(app, checked_keys);
-  check_certs(app, checked_revisions, checked_keys, total_certs);
-  check_heights(app, checked_heights);
-  check_heights_relation(app, checked_heights);
+  check_rosters_marking(db, checked_rosters, checked_revisions);
+  check_ancestry(db, checked_revisions);
+  check_keys(db, checked_keys);
+  check_certs(db, checked_revisions, checked_keys, total_certs);
+  check_heights(db, checked_heights);
+  check_heights_relation(db, checked_heights);
 
   report_files(checked_files, missing_files, unreferenced_files);
 
