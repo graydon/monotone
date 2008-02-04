@@ -1,0 +1,16 @@
+#
+# old_revision [4ccc559f3c16f31c41ac4cb2357a1d9b51ee51f4]
+#
+# patch "testfile"
+#  from [471a577db9d77994fad74d428645753de962b908]
+#    to [5fa4faad2ca837dee66a3052efcd72353f554056]
+#
+============================================================
+--- testfile	471a577db9d77994fad74d428645753de962b908
++++ testfile	5fa4faad2ca837dee66a3052efcd72353f554056
+@@ -13,4 +13,4 @@ chunks
+ two
+ chunks
+ 
++line changed
+-line to be changed
