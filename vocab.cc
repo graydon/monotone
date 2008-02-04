@@ -13,6 +13,7 @@
 #include "hash_map.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "transforms.hh"
 
 using std::string;
 
@@ -158,13 +159,14 @@ symtab_impl
 
 // Sometimes it's handy to have a non-colliding, meaningless id.
 
-hexenc<id>
+id
 fake_id()
 {
   static u32 counter = 0;
   ++counter;
   I(counter >= 1); // detect overflow
-  return hexenc<id>((FL("00000000000000000000000000000000%08x") % counter).str());
+  string s((FL("00000000000000000000000000000000%08x") % counter).str());
+  return id(decode_hexenc(s));
 }
 
 // instantiation of various vocab functions

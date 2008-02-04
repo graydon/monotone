@@ -138,16 +138,16 @@ public:
                             manifest_data & dat);
 
 private:
-  bool file_or_manifest_base_exists(hexenc<id> const & ident,
+  bool file_or_manifest_base_exists(file_id const & ident,
                                     std::string const & table);
-  bool delta_exists(std::string const & ident,
+  bool delta_exists(id const & ident,
                     std::string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
                       file_delta const & del);
 
-  friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
-                                    hexenc<id> const & new_id,
+  friend void rcs_put_raw_file_edge(file_id const & old_id,
+                                    file_id const & new_id,
                                     delta const & del,
                                     database & db);
 
@@ -238,10 +238,10 @@ public:
 
   void get_public_keys(std::vector<rsa_keypair_id> & pubkeys);
 
-  bool public_key_exists(hexenc<id> const & hash);
+  bool public_key_exists(id const & hash);
   bool public_key_exists(rsa_keypair_id const & ident);
 
-  void get_pubkey(hexenc<id> const & hash,
+  void get_pubkey(id const & hash,
                   rsa_keypair_id & ident,
                   base64<rsa_pub_key> & pub_encoded);
 
@@ -264,12 +264,12 @@ public:
   // note: this section is ridiculous. please do something about it.
 public:
   bool revision_cert_exists(revision<cert> const & cert);
-  bool revision_cert_exists(hexenc<id> const & hash);
+  bool revision_cert_exists(revision_id const & hash);
 
   bool put_revision_cert(revision<cert> const & cert);
 
   // this variant has to be rather coarse and fast, for netsync's use
-  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<hexenc<id>,
+  outdated_indicator get_revision_cert_nobranch_index(std::vector< std::pair<revision_id,
                               std::pair<revision_id, rsa_keypair_id> > > & idx);
 
   // Only used by database_check.cc
@@ -305,9 +305,9 @@ public:
 
   // Used through get_revision_cert_hashes (project.cc)
   outdated_indicator get_revision_certs(revision_id const & ident,
-                          std::vector< hexenc<id> > & hashes);
+                          std::vector<id> & hashes);
 
-  void get_revision_cert(hexenc<id> const & hash,
+  void get_revision_cert(id const & hash,
                          revision<cert> & c);
 
   void get_manifest_certs(manifest_id const & ident,
@@ -348,6 +348,10 @@ public:
   // --== Completion ==--
   //
 public:
+  void prefix_matching_constraint(std::string const & colname,
+                                   std::string const & prefix,
+                                   std::string & constraint);
+
   void complete(std::string const & partial,
                 std::set<revision_id> & completions);
 
@@ -430,9 +434,9 @@ public:
   // We make these lua hooks available via the database context;
   // see comments above their definition for rationale and plans.
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
-    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+    manifest_id const & id, cert_name const & name, cert_value const & val);
   bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
-    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+    revision_id const & id, cert_name const & name, cert_value const & val);
 
 private:
   database_impl *imp;

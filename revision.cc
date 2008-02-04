@@ -338,7 +338,7 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
   while (! stk.empty())
     {
       ctx us = stk.top();
-      revision_id rev(hexenc<id>(intern.lookup(us)));
+      revision_id rev(intern.lookup(us));
 
       pair<gi,gi> parents = graph.equal_range(rev);
       bool pushed = false;
@@ -942,10 +942,7 @@ void anc_graph::write_certs()
           cert_name name(j->second.first);
           cert_value val(j->second.second);
 
-          cert new_cert;
-          make_simple_cert(rev.inner(), name, val, db, keys, new_cert);
-          revision<cert> rcert(new_cert);
-          if (db.put_revision_cert(rcert))
+          if (put_simple_revision_cert(rev, name, val, db, keys))
             ++n_certs_out;
         }
     }
@@ -1703,7 +1700,7 @@ build_changesets_from_manifest_ancestry(database & db, key_store & keys,
       cert_value tv;
       decode_base64(i->inner().value, tv);
       manifest_id child, parent;
-      child = manifest_id(i->inner().ident);
+      child = manifest_id(i->inner().ident.inner());
       parent = manifest_id(tv());
 
       u64 parent_node = graph.add_node_for_old_manifest(parent);
@@ -1779,7 +1776,7 @@ print_edge(basic_io::printer & printer,
            edge_entry const & e)
 {
   basic_io::stanza st;
-  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner());
+  st.push_binary_pair(syms::old_revision, edge_old_revision(e).inner());
   printer.print_stanza(st);
   print_cset(printer, edge_changes(e));
 }
@@ -1794,7 +1791,7 @@ print_insane_revision(basic_io::printer & printer,
   printer.print_stanza(format_stanza);
 
   basic_io::stanza manifest_stanza;
-  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner());
+  manifest_stanza.push_binary_pair(syms::new_manifest, rev.new_manifest.inner());
   printer.print_stanza(manifest_stanza);
 
   for (edge_map::const_iterator edge = rev.edges.begin();
@@ -1912,7 +1909,7 @@ void calculate_ident(revision_t const & cs,
                      revision_id & ident)
 {
   data tmp;
-  hexenc<id> tid;
+  id tid;
   write_revision(cs, tmp);
   calculate_ident(tmp, tid);
   ident = revision_id(tid);

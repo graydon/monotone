@@ -22,6 +22,8 @@ private:
   void maybe_read_key_dir();
 
 public:
+  rsa_keypair_id signing_key;
+
   key_store(app_state & a);
   ~key_store();
 
@@ -38,7 +40,7 @@ public:
                     keypair & kp);
   bool maybe_get_key_pair(rsa_keypair_id const & ident,
                           keypair & kp);
-  bool maybe_get_key_pair(hexenc<id> const & hash,
+  bool maybe_get_key_pair(id const & hash,
                           rsa_keypair_id & ident,
                           keypair & kp);
 
@@ -57,9 +59,6 @@ public:
   //        the key_store context
   bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
   bool hook_persist_phrase_ok();
-  bool hook_get_current_branch_key(rsa_keypair_id & k);
-  bool has_opt_signing_key();
-  rsa_keypair_id get_opt_signing_key();
 };
 
 // Local Variables:

@@ -10,6 +10,7 @@
 #include "revision.hh"
 #include "transforms.hh"
 #include "lua_hooks.hh"
+#include "keys.hh"
 
 using std::string;
 using std::set;
@@ -225,7 +226,7 @@ project_t::suspend_revision_in_branch(key_store & keys,
 
 outdated_indicator
 project_t::get_revision_cert_hashes(revision_id const & rid,
-                                    std::vector<hexenc<id> > & hashes)
+                                    std::vector<id> & hashes)
 {
   return db.get_revision_certs(rid, hashes);
 }
@@ -361,7 +362,7 @@ project_t::put_standard_certs_from_options(options const & opts,
   if (author.empty())
     {
       rsa_keypair_id key;
-      get_user_key(key, keys, db);
+      get_user_key(key, opts, lua, keys, db);
 
       if (!lua.hook_get_author(branch, key, author))
         author = key();

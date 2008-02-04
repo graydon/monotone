@@ -22,6 +22,8 @@
 #include "ui.hh"
 #include "app_state.hh"
 #include "basic_io.hh"
+#include "xdelta.hh"
+#include "keys.hh"
 
 using std::cout;
 using std::make_pair;
@@ -275,10 +277,10 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
           file_t f = downcast_to_file_t(node);
           if (file_exists(new_path))
             {
-              hexenc<id> ident;
+              file_id ident;
               calculate_ident(new_path, ident);
               // don't touch unchanged files
-              if (ident == f->content.inner())
+              if (ident == f->content)
                 continue;
               else
                 L(FL("skipping unchanged %s") % new_path);
@@ -352,6 +354,8 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
 
   process_commit_message_args(log_message_given, log_message, app,
                               utf8((FL("disapproval of revision '%s'") % r).str()));
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -1055,12 +1059,6 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   app.require_workspace();
 
-  {
-    // fail early if there isn't a key
-    rsa_keypair_id key;
-    get_user_key(key, app.keys, app.db);
-  }
-
   app.make_branch_sticky();
   app.work.get_parent_rosters(old_rosters, app.db);
   app.work.get_current_roster_shape(new_roster, app.db, nis);
@@ -1151,6 +1149,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+
   // for the divergence check, below
   set<revision_id> heads;
   app.get_project().get_branch_heads(app.opts.branchname, heads,
@@ -1196,9 +1196,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                     app.db.get_file_version(old_content, old_data);
                     read_data(path, new_data);
                     // sanity check
-                    hexenc<id> tid;
-                    calculate_ident(new_data, tid);
-                    N(tid == new_content.inner(),
+                    file_id tid;
+                    calculate_ident(file_data(new_data), tid);
+                    N(tid == new_content,
                       F("file '%s' modified during commit, aborting")
                       % path);
                     delta del;
@@ -1225,9 +1225,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                 data new_data;
                 read_data(path, new_data);
                 // sanity check
-                hexenc<id> tid;
-                calculate_ident(new_data, tid);
-                N(tid == new_content.inner(),
+                file_id tid;
+                calculate_ident(file_data(new_data), tid);
+                N(tid == new_content,
                   F("file '%s' modified during commit, aborting")
                   % path);
                 app.db.put_file(new_content, file_data(new_data));
