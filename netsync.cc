@@ -391,12 +391,12 @@ session:
   // Enumerator_callbacks methods.
   set<file_id> file_items_sent;
   bool process_this_rev(revision_id const & rev);
-  bool queue_this_cert(hexenc<id> const & c);
-  bool queue_this_file(hexenc<id> const & f);
+  bool queue_this_cert(id const & c);
+  bool queue_this_file(id const & f);
   void note_file_data(file_id const & f);
   void note_file_delta(file_id const & src, file_id const & dst);
   void note_rev(revision_id const & rev);
-  void note_cert(hexenc<id> const & c);
+  void note_cert(id const & c);
 
   session(protocol_role role,
           protocol_voice voice,
@@ -658,23 +658,19 @@ session::~session()
 bool
 session::process_this_rev(revision_id const & rev)
 {
-  id item;
-  decode_hexenc(rev.inner(), item);
-  return (rev_refiner.items_to_send.find(item)
+  return (rev_refiner.items_to_send.find(rev.inner())
           != rev_refiner.items_to_send.end());
 }
 
 bool
-session::queue_this_cert(hexenc<id> const & c)
+session::queue_this_cert(id const & c)
 {
-  id item;
-  decode_hexenc(c, item);
-  return (cert_refiner.items_to_send.find(item)
+  return (cert_refiner.items_to_send.find(c)
           != cert_refiner.items_to_send.end());
 }
 
 bool
-session::queue_this_file(hexenc<id> const & f)
+session::queue_this_file(id const & f)
 {
   return file_items_sent.find(file_id(f)) == file_items_sent.end();
 }
@@ -685,10 +681,8 @@ session::note_file_data(file_id const & f)
   if (role == sink_role)
     return;
   file_data fd;
-  id item;
-  decode_hexenc(f.inner(), item);
   db.get_file_version(f, fd);
-  queue_data_cmd(file_item, item, fd.inner()());
+  queue_data_cmd(file_item, f.inner(), fd.inner()());
   file_items_sent.insert(f);
 }
 
@@ -698,11 +692,8 @@ session::note_file_delta(file_id const & src, file_id const & dst)
   if (role == sink_role)
     return;
   file_delta fdel;
-  id fid1, fid2;
-  decode_hexenc(src.inner(), fid1);
-  decode_hexenc(dst.inner(), fid2);
   db.get_arbitrary_file_delta(src, dst, fdel);
-  queue_delta_cmd(file_item, fid1, fid2, fdel.inner());
+  queue_delta_cmd(file_item, src.inner(), dst.inner(), fdel.inner());
   file_items_sent.insert(dst);
 }
 
@@ -712,26 +703,22 @@ session::note_rev(revision_id const & rev)
   if (role == sink_role)
     return;
   revision_t rs;
-  id item;
-  decode_hexenc(rev.inner(), item);
   db.get_revision(rev, rs);
   data tmp;
   write_revision(rs, tmp);
-  queue_data_cmd(revision_item, item, tmp());
+  queue_data_cmd(revision_item, rev.inner(), tmp());
 }
 
 void
-session::note_cert(hexenc<id> const & c)
+session::note_cert(id const & c)
 {
   if (role == sink_role)
     return;
-  id item;
-  decode_hexenc(c, item);
   revision<cert> cert;
   string str;
   db.get_revision_cert(c, cert);
   write_cert(cert.inner(), str);
-  queue_data_cmd(cert_item, item, str);
+  queue_data_cmd(cert_item, c, str);
 }
 
 
@@ -1304,7 +1291,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
   if (use_transport_auth)
     {
-      hexenc<id> their_key_hash;
+      id their_key_hash;
       encode_base64(their_key, their_key_encoded);
       key_hash_code(their_keyname, their_key_encoded, their_key_hash);
       L(FL("server key has name %s, hash %s") % their_keyname % their_key_hash);
@@ -1348,9 +1335,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       I(db.public_key_exists(their_key_hash));
 
       // save their identity
-      id their_key_hash_decoded;
-      decode_hexenc(their_key_hash, their_key_hash_decoded);
-      this->remote_peer_key_hash = their_key_hash_decoded;
+      this->remote_peer_key_hash = their_key_hash;
     }
 
   // clients always include in the synchronization set, every branch that the
@@ -1375,10 +1360,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       load_key_pair(keys, signing_key, our_kp);
 
       // get the hash identifier for our pubkey
-      hexenc<id> our_key_hash;
-      id our_key_hash_raw;
+      id our_key_hash;
       key_hash_code(signing_key, our_kp.pub, our_key_hash);
-      decode_hexenc(our_key_hash, our_key_hash_raw);
 
       // make a signature
       base64<rsa_sha1_signature> sig;
@@ -1388,7 +1371,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
-                     our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
+                     our_key_hash, nonce, mk_nonce(), sig_raw(),
                      their_key_encoded);
     }
   else
@@ -1521,18 +1504,15 @@ session::process_auth_cmd(protocol_role their_role,
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
 
-  hexenc<id> their_key_hash;
-  encode_hexenc(client, their_key_hash);
-
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
 
-  if (!db.public_key_exists(their_key_hash))
+  if (!db.public_key_exists(client))
     {
       // If it's not in the db, it still could be in the keystore if we
       // have the private key that goes with it.
       rsa_keypair_id their_key_id;
       keypair their_keypair;
-      if (keys.maybe_get_key_pair(their_key_hash, their_key_id, their_keypair))
+      if (keys.maybe_get_key_pair(client, their_key_id, their_keypair))
         db.put_key(their_key_id, their_keypair.pub);
       else
         {
@@ -1544,14 +1524,14 @@ session::process_auth_cmd(protocol_role their_role,
                                       their_exclude_pattern);
           error(unknown_key,
                 (F("remote public key hash '%s' is unknown")
-                 % their_key_hash).str());
+                 % client).str());
         }
     }
 
   // Get their public key.
   rsa_keypair_id their_id;
   base64<rsa_pub_key> their_key;
-  db.get_pubkey(their_key_hash, their_id, their_key);
+  db.get_pubkey(client, their_id, their_key);
 
   lua.hook_note_netsync_start(session_id, "server", their_role,
                               peer_id, their_id,
@@ -1823,24 +1803,22 @@ bool
 session::data_exists(netcmd_item_type type,
                      id const & item)
 {
-  hexenc<id> hitem;
-  encode_hexenc(item, hitem);
   switch (type)
     {
     case key_item:
       return key_refiner.local_item_exists(item)
-        || db.public_key_exists(hitem);
+        || db.public_key_exists(item);
     case file_item:
-      return db.file_version_exists(file_id(hitem));
+      return db.file_version_exists(file_id(item));
     case revision_item:
       return rev_refiner.local_item_exists(item)
-        || db.revision_exists(revision_id(hitem));
+        || db.revision_exists(revision_id(item));
     case cert_item:
       return cert_refiner.local_item_exists(item)
-        || db.revision_cert_exists(hitem);
+        || db.revision_cert_exists(revision_id(item));
     case epoch_item:
       return epoch_refiner.local_item_exists(item)
-        || db.epoch_exists(epoch_id(hitem));
+        || db.epoch_exists(epoch_id(item));
     }
   return false;
 }
@@ -1865,7 +1843,7 @@ session::load_data(netcmd_item_type type,
       {
         branch_name branch;
         epoch_data epoch;
-        db.get_epoch(epoch_id(hitem), branch, epoch);
+        db.get_epoch(epoch_id(item), branch, epoch);
         write_epoch(branch, epoch, out);
       }
       break;
@@ -1873,7 +1851,7 @@ session::load_data(netcmd_item_type type,
       {
         rsa_keypair_id keyid;
         base64<rsa_pub_key> pub_encoded;
-        db.get_pubkey(hitem, keyid, pub_encoded);
+        db.get_pubkey(item, keyid, pub_encoded);
         L(FL("public key '%s' is also called '%s'") % hitem % keyid);
         write_pubkey(keyid, pub_encoded, out);
       }
@@ -1883,7 +1861,7 @@ session::load_data(netcmd_item_type type,
       {
         revision_data mdat;
         data dat;
-        db.get_revision(revision_id(hitem), mdat);
+        db.get_revision(revision_id(item), mdat);
         out = mdat.inner()();
       }
       break;
@@ -1892,7 +1870,7 @@ session::load_data(netcmd_item_type type,
       {
         file_data fdat;
         data dat;
-        db.get_file_version(file_id(hitem), fdat);
+        db.get_file_version(file_id(item), fdat);
         out = fdat.inner()();
       }
       break;
@@ -1900,7 +1878,7 @@ session::load_data(netcmd_item_type type,
     case cert_item:
       {
         revision<cert> c;
-        db.get_revision_cert(hitem, c);
+        db.get_revision_cert(item, c);
         string tmp;
         write_cert(c.inner(), out);
       }
@@ -1975,12 +1953,16 @@ session::process_data_cmd(netcmd_item_type type,
         rsa_keypair_id keyid;
         base64<rsa_pub_key> pub;
         read_pubkey(dat, keyid, pub);
-        hexenc<id> tmp;
+        id tmp;
         key_hash_code(keyid, pub, tmp);
-        if (! (tmp == hitem))
-          throw bad_decode(F("hash check failed for public key '%s' (%s);"
-                             " wanted '%s' got '%s'")
-                           % hitem % keyid % hitem % tmp);
+        if (! (tmp == item))
+          {
+            string htmp(encode_hexenc(tmp())),
+                   hitem(encode_hexenc(item()));
+            throw bad_decode(F("hash check failed for public key '%s' (%s);"
+                               " wanted '%s' got '%s'")
+                             % hitem % keyid % hitem % htmp);
+          }
         if (db.put_key(keyid, pub))
           written_keys.push_back(keyid);
         else
@@ -1993,10 +1975,10 @@ session::process_data_cmd(netcmd_item_type type,
       {
         cert c;
         read_cert(dat, c);
-        hexenc<id> tmp;
+        id tmp;
         cert_hash_code(c, tmp);
-        if (! (tmp == hitem))
-          throw bad_decode(F("hash check failed for revision cert '%s'")  % hitem);
+        if (! (tmp == item))
+          throw bad_decode(F("hash check failed for revision cert '%s'") % hitem);
         if (db.put_revision_cert(revision<cert>(c)))
           written_certs.push_back(c);
       }
@@ -2005,15 +1987,15 @@ session::process_data_cmd(netcmd_item_type type,
     case revision_item:
       {
         L(FL("received revision '%s'") % hitem);
-        if (db.put_revision(revision_id(hitem), revision_data(dat)))
-          written_revisions.push_back(revision_id(hitem));
+        if (db.put_revision(revision_id(item), revision_data(dat)))
+          written_revisions.push_back(revision_id(item));
       }
       break;
 
     case file_item:
       {
         L(FL("received file '%s'") % hitem);
-        db.put_file(file_id(hitem), file_data(dat));
+        db.put_file(file_id(item), file_data(dat));
       }
       break;
     }
@@ -2028,9 +2010,6 @@ session::process_delta_cmd(netcmd_item_type type,
 {
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  hexenc<id> hbase, hident;
-  encode_hexenc(base, hbase);
-  encode_hexenc(ident, hident);
 
   pair<id,id> id_pair = make_pair(base, ident);
 
@@ -2040,7 +2019,7 @@ session::process_delta_cmd(netcmd_item_type type,
     {
     case file_item:
       {
-        file_id src_file(hbase), dst_file(hident);
+        file_id src_file(base), dst_file(ident);
         db.put_file_version(src_file, dst_file, file_delta(del));
       }
       break;
@@ -3134,9 +3113,7 @@ insert_with_parents(revision_id rev,
         {
           revs.insert(rid);
           ++revisions_ticker;
-          id rev_item;
-          decode_hexenc(rid.inner(), rev_item);
-          ref.note_local_item(rev_item);
+          ref.note_local_item(rev.inner());
           vector<revision_id> parents;
           rev_enumerator.get_revision_parents(rid, parents);
           for (vector<revision_id>::const_iterator i = parents.begin();
@@ -3183,12 +3160,10 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
             insert_with_parents(rid, rev_refiner, rev_enumerator,
                                 revision_ids, revisions_ticker);
             // Branch certs go in here, others later on.
-            hexenc<id> tmp;
             id item;
-            cert_hash_code(j->inner(), tmp);
-            decode_hexenc(tmp, item);
+            cert_hash_code(j->inner(), item);
             cert_refiner.note_local_item(item);
-            rev_enumerator.note_cert(rid, tmp);
+            rev_enumerator.note_cert(rid, item);
             if (inserted_keys.find(j->inner().key) == inserted_keys.end())
               inserted_keys.insert(j->inner().key);
           }
@@ -3219,15 +3194,13 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
         j = epochs.find(branch);
         I(j != epochs.end());
         epoch_id eid;
-        id epoch_item;
         epoch_hash_code(j->first, j->second, eid);
-        decode_hexenc(eid.inner(), epoch_item);
-        epoch_refiner.note_local_item(epoch_item);
+        epoch_refiner.note_local_item(eid.inner());
       }
   }
 
   {
-    typedef vector< pair<hexenc<id>,
+    typedef vector< pair<revision_id,
       pair<revision_id, rsa_keypair_id> > > cert_idx;
 
     cert_idx idx;
@@ -3238,18 +3211,16 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
 
     for (cert_idx::const_iterator i = idx.begin(); i != idx.end(); ++i)
       {
-        hexenc<id> const & hash = i->first;
+        revision_id const & hash = i->first;
         revision_id const & ident = i->second.first;
         rsa_keypair_id const & key = i->second.second;
 
-        rev_enumerator.note_cert(ident, hash);
+        rev_enumerator.note_cert(ident, hash.inner());
 
         if (revision_ids.find(ident) == revision_ids.end())
           continue;
 
-        id item;
-        decode_hexenc(hash, item);
-        cert_refiner.note_local_item(item);
+        cert_refiner.note_local_item(hash.inner());
         ++certs_ticker;
         if (inserted_keys.find(key) == inserted_keys.end())
             inserted_keys.insert(key);
@@ -3283,12 +3254,12 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
         {
           base64<rsa_pub_key> pub_encoded;
           db.get_key(*key, pub_encoded);
-          hexenc<id> keyhash;
+          id keyhash;
           key_hash_code(*key, pub_encoded, keyhash);
-          L(FL("noting key '%s' = '%s' to send") % *key % keyhash);
-          id key_item;
-          decode_hexenc(keyhash, key_item);
-          key_refiner.note_local_item(key_item);
+          // FIXME: conditional encode_hexenc
+          hexenc<id> hkeyhash(encode_hexenc(keyhash()));
+          L(FL("noting key '%s' = '%s' to send") % *key % hkeyhash);
+          key_refiner.note_local_item(keyhash);
           ++keys_ticker;
         }
     }

@@ -211,7 +211,7 @@ class database_impl
              query const & q);
   void execute(query const & q);
 
-  bool table_has_entry(hexenc<id> const & key, string const & column,
+  bool table_has_entry(id const & key, string const & column,
                        string const & table);
 
   //
@@ -271,37 +271,37 @@ class database_impl
   bool roster_base_available(revision_id const & ident);
   
   // "do we have any entry for 'ident' that is a delta"
-  bool delta_exists(hexenc<id> const & ident,
-                    hexenc<id> const & base,
+  bool delta_exists(file_id const & ident,
+                    file_id const & base,
                     string const & table);
 
-  bool file_or_manifest_base_exists(hexenc<id> const & ident,
+  bool file_or_manifest_base_exists(id const & ident,
                                     std::string const & table);
 
-  void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
+  void get_file_or_manifest_base_unchecked(id const & new_id,
                                            data & dat,
                                            string const & table);
-  void get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
-                                            hexenc<id> const & base,
+  void get_file_or_manifest_delta_unchecked(id const & ident,
+                                            id const & base,
                                             delta & del,
                                             string const & table);
   void get_roster_base(revision_id const & ident,
                        roster_t & roster, marking_map & marking);
-  void get_roster_delta(hexenc<id> const & ident,
-                        hexenc<id> const & base,
+  void get_roster_delta(id const & ident,
+                        id const & base,
                         roster_delta & del);
 
   friend struct file_and_manifest_reconstruction_graph;
   friend struct roster_reconstruction_graph;
 
-  LRUWritebackCache<hexenc<id>, data, datasz> vcache;
+  LRUWritebackCache<id, data, datasz> vcache;
 
-  void get_version(hexenc<id> const & ident,
+  void get_version(id const & ident,
                    data & dat,
                    string const & data_table,
                    string const & delta_table);
 
-  void drop(hexenc<id> const & base,
+  void drop(id const & base,
             string const & table);
   void put_file_delta(file_id const & ident,
                       file_id const & base,
@@ -310,8 +310,8 @@ class database_impl
   void put_roster_delta(revision_id const & ident,
                         revision_id const & base,
                         roster_delta const & del);
-  void put_version(hexenc<id> const & old_id,
-                   hexenc<id> const & new_id,
+  void put_version(file_id const & old_id,
+                   file_id const & new_id,
                    delta const & del,
                    string const & data_table,
                    string const & delta_table);
@@ -319,7 +319,7 @@ class database_impl
   //
   // --== The ancestry graph ==--
   //
-  void get_ids(string const & table, set< hexenc<id> > & ids);
+  void get_ids(string const & table, set<id> & ids);
 
   //
   // --== Rosters ==--
@@ -353,7 +353,7 @@ class database_impl
   void get_certs(vector<cert> & certs,
                  string const & table);
   
-  void get_certs(hexenc<id> const & ident,
+  void get_certs(id const & ident,
                  vector<cert> & certs,
                  string const & table);
 
@@ -361,12 +361,12 @@ class database_impl
                  vector<cert> & certs,
                  string const & table);
 
-  void get_certs(hexenc<id> const & ident,
+  void get_certs(id const & ident,
                  cert_name const & name,
                  vector<cert> & certs,
                  string const & table);
 
-  void get_certs(hexenc<id> const & ident,
+  void get_certs(id const & ident,
                  cert_name const & name,
                  base64<cert_value> const & val,
                  vector<cert> & certs,
@@ -1140,13 +1140,13 @@ database_impl::fetch(results & res,
 }
 
 bool
-database_impl::table_has_entry(hexenc<id> const & key,
+database_impl::table_has_entry(id const & key,
                                std::string const & column,
                                std::string const & table)
 {
   results res;
   query q("SELECT 1 FROM " + table + " WHERE " + column + " = ? LIMIT 1");
-  fetch(res, one_col, any_rows, q % blob(decode_hexenc(key())));
+  fetch(res, one_col, any_rows, q % blob(key()));
   return !res.empty();
 }
 
@@ -1278,7 +1278,7 @@ database_impl::rollback_transaction()
 
 
 bool
-database_impl::file_or_manifest_base_exists(hexenc<id> const & ident,
+database_impl::file_or_manifest_base_exists(id const & ident,
                                             string const & table)
 {
   // just check for a delayed file, since there are no delayed manifests
@@ -1288,10 +1288,10 @@ database_impl::file_or_manifest_base_exists(hexenc<id> const & ident,
 }
 
 bool
-database::file_or_manifest_base_exists(hexenc<id> const & ident,
+database::file_or_manifest_base_exists(file_id const & ident,
                                        string const & table)
 {
-  return imp->file_or_manifest_base_exists(ident, table);
+  return imp->file_or_manifest_base_exists(ident.inner(), table);
 }
 
 // returns true if we are currently storing (or planning to store) a
@@ -1317,21 +1317,21 @@ database_impl::roster_base_available(revision_id const & ident)
 }
 
 bool
-database::delta_exists(hexenc<id> const & ident,
+database::delta_exists(id const & ident,
                        string const & table)
 {
   return imp->table_has_entry(ident, "id", table);
 }
 
 bool
-database_impl::delta_exists(hexenc<id> const & ident,
-                            hexenc<id> const & base,
+database_impl::delta_exists(file_id const & ident,
+                            file_id const & base,
                             string const & table)
 {
   results res;
   query q("SELECT 1 FROM " + table + " WHERE id = ? and base = ? LIMIT 1");
   fetch(res, one_col, any_rows,
-        q % blob(decode_hexenc(ident())) % blob(decode_hexenc(base())));
+        q % blob(ident.inner()()) % blob(base.inner()()));
   return !res.empty();
 }
 
@@ -1393,7 +1393,7 @@ database_impl::cache_size()
 }
 
 void
-database_impl::get_ids(string const & table, set< hexenc<id> > & ids)
+database_impl::get_ids(string const & table, set<id> & ids)
 {
   results res;
   query q("SELECT id FROM " + table);
@@ -1401,15 +1401,15 @@ database_impl::get_ids(string const & table, set< hexenc<id> > & ids)
 
   for (size_t i = 0; i < res.size(); ++i)
     {
-      ids.insert(hexenc<id>(encode_hexenc(res[i][0])));
+      ids.insert(id(res[i][0]));
     }
 }
 
 // for files and legacy manifest support
 void
-database_impl::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
-                                                    data & dat,
-                                                    string const & table)
+database_impl::get_file_or_manifest_base_unchecked(id const & ident,
+                                                   data & dat,
+                                                   string const & table)
 {
   if (have_delayed_file(file_id(ident)))
     {
@@ -1421,7 +1421,7 @@ database_impl::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
 
   results res;
   query q("SELECT data FROM " + table + " WHERE id = ?");
-  fetch(res, one_col, one_row, q % blob(decode_hexenc(ident())));
+  fetch(res, one_col, one_row, q % blob(ident()));
 
   gzip<data> rdata(res[0][0]);
   data rdata_unpacked;
@@ -1432,17 +1432,17 @@ database_impl::get_file_or_manifest_base_unchecked(hexenc<id> const & ident,
 
 // for files and legacy manifest support
 void
-database_impl::get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
-                                                     hexenc<id> const & base,
-                                                     delta & del,
-                                                     string const & table)
+database_impl::get_file_or_manifest_delta_unchecked(id const & ident,
+                                                    id const & base,
+                                                    delta & del,
+                                                    string const & table)
 {
   I(ident() != "");
   I(base() != "");
   results res;
   query q("SELECT delta FROM " + table + " WHERE id = ? AND base = ?");
   fetch(res, one_col, one_row,
-        q % blob(decode_hexenc(ident())) % blob(decode_hexenc(base())));
+        q % blob(ident()) % blob(base()));
 
   gzip<delta> del_packed(res[0][0]);
   decode_gzip(del_packed, del);
@@ -1464,10 +1464,10 @@ database_impl::get_roster_base(revision_id const & ident,
     }
   results res;
   query q("SELECT checksum, data FROM rosters WHERE id = ?");
-  fetch(res, 2, one_row, q % blob(decode_hexenc(ident.inner()())));
+  fetch(res, 2, one_row, q % blob(ident.inner()()));
 
-  hexenc<id> checksum(res[0][0]);
-  hexenc<id> calculated;
+  id checksum(res[0][0]);
+  id calculated;
   calculate_ident(data(res[0][1]), calculated);
   I(calculated == checksum);
 
@@ -1478,16 +1478,16 @@ database_impl::get_roster_base(revision_id const & ident,
 }
 
 void
-database_impl::get_roster_delta(hexenc<id> const & ident,
-                                hexenc<id> const & base,
+database_impl::get_roster_delta(id const & ident,
+                                id const & base,
                                 roster<delta> & del)
 {
   results res;
   query q("SELECT checksum, delta FROM roster_deltas WHERE id = ? AND base = ?");
-  fetch(res, 2, one_row, q % blob(decode_hexenc(ident())) % blob(decode_hexenc(base())));
+  fetch(res, 2, one_row, q % blob(ident()) % blob(base()));
 
-  hexenc<id> checksum(res[0][0]);
-  hexenc<id> calculated;
+  id checksum(res[0][0]);
+  id calculated;
   calculate_ident(data(res[0][1]), calculated);
   I(calculated == checksum);
 
@@ -1528,12 +1528,14 @@ database_impl::write_delayed_roster(revision_id const & ident,
 
   // ident is a number, and we should calculate a checksum on what
   // we write
-  hexenc<id> checksum;
+  id checksum;
   calculate_ident(data(dat_packed()), checksum);
 
   // and then write it
-  query q("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)");
-  execute(q % blob(decode_hexenc(ident.inner()())) % text(checksum()) % blob(dat_packed()));
+  execute(query("INSERT INTO rosters (id, checksum, data) VALUES (?, ?, ?)")
+          % blob(ident.inner()())
+          % blob(checksum())
+          % blob(dat_packed()));
 }
 
 
@@ -1550,8 +1552,8 @@ database::put_file_delta(file_id const & ident,
   encode_gzip(del.inner(), del_packed);
 
   imp->execute(query("INSERT INTO file_deltas VALUES (?, ?, ?)")
-               % blob(decode_hexenc(ident.inner()()))
-               % blob(decode_hexenc(base.inner()()))
+               % blob(ident.inner()())
+               % blob(base.inner()())
                % blob(del_packed()));
 }
 
@@ -1563,14 +1565,14 @@ database_impl::put_roster_delta(revision_id const & ident,
   gzip<delta> del_packed;
   encode_gzip(del.inner(), del_packed);
 
-  hexenc<id> checksum;
+  id checksum;
   calculate_ident(data(del_packed()), checksum);
 
   query q("INSERT INTO roster_deltas (id, base, checksum, delta) VALUES (?, ?, ?, ?)");
   execute(q
-          % blob(decode_hexenc(ident.inner()()))
-          % blob(decode_hexenc(base.inner()()))
-          % text(checksum())
+          % blob(ident.inner()())
+          % blob(base.inner()())
+          % blob(checksum())
           % blob(del_packed()));
 }
 
@@ -1585,28 +1587,28 @@ struct file_and_manifest_reconstruction_graph : public reconstruction_graph
                                          string const & delta_table)
     : imp(imp), data_table(data_table), delta_table(delta_table)
   {}
-  virtual bool is_base(hexenc<id> const & node) const
+  virtual bool is_base(id const & node) const
   {
     return imp.vcache.exists(node)
       || imp.file_or_manifest_base_exists(node, data_table);
   }
-  virtual void get_next(hexenc<id> const & from, set< hexenc<id> > & next) const
+  virtual void get_next(id const & from, set<id> & next) const
   {
     next.clear();
     results res;
     query q("SELECT base FROM " + delta_table + " WHERE id = ?");
-    imp.fetch(res, one_col, any_rows, q % blob(decode_hexenc(from())));
+    imp.fetch(res, one_col, any_rows, q % blob(from()));
     for (results::const_iterator i = res.begin(); i != res.end(); ++i)
-      next.insert(hexenc<id>(encode_hexenc((*i)[0])));
+      next.insert(id((*i)[0]));
   }
 };
 
 // used for files and legacy manifest migration
 void
-database_impl::get_version(hexenc<id> const & ident,
-                            data & dat,
-                            string const & data_table,
-                            string const & delta_table)
+database_impl::get_version(id const & ident,
+                           data & dat,
+                           string const & data_table,
+                           string const & delta_table)
 {
   I(ident() != "");
 
@@ -1618,7 +1620,7 @@ database_impl::get_version(hexenc<id> const & ident,
 
   I(!selected_path.empty());
 
-  hexenc<id> curr = hexenc<id>(selected_path.back());
+  id curr = id(selected_path.back());
   selected_path.pop_back();
   data begin;
 
@@ -1633,7 +1635,7 @@ database_impl::get_version(hexenc<id> const & ident,
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
-      hexenc<id> const nxt = hexenc<id>(*i);
+      id const nxt = id(*i);
 
       if (!vcache.exists(curr))
         {
@@ -1642,7 +1644,9 @@ database_impl::get_version(hexenc<id> const & ident,
           vcache.insert_clean(curr, data(tmp));
         }
 
-      L(FL("following delta %s -> %s") % curr % nxt);
+      L(FL("following delta %s -> %s")
+        % encode_hexenc(curr())
+        % encode_hexenc(nxt()));
       delta del;
       get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
       apply_delta(appl, del());
@@ -1655,7 +1659,7 @@ database_impl::get_version(hexenc<id> const & ident,
   appl->finish(tmp);
   dat = data(tmp);
 
-  hexenc<id> final;
+  id final;
   calculate_ident(dat, final);
   I(final == ident);
 
@@ -1667,18 +1671,18 @@ struct roster_reconstruction_graph : public reconstruction_graph
 {
   database_impl & imp;
   roster_reconstruction_graph(database_impl & imp) : imp(imp) {}
-  virtual bool is_base(hexenc<id> const & node) const
+  virtual bool is_base(id const & node) const
   {
     return imp.roster_base_available(revision_id(node));
   }
-  virtual void get_next(hexenc<id> const & from, set< hexenc<id> > & next) const
+  virtual void get_next(id const & from, set<id> & next) const
   {
     next.clear();
     results res;
     query q("SELECT base FROM roster_deltas WHERE id = ?");
-    imp.fetch(res, one_col, any_rows, q % blob(decode_hexenc(from())));
+    imp.fetch(res, one_col, any_rows, q % blob(from()));
     for (results::const_iterator i = res.begin(); i != res.end(); ++i)
-      next.insert(hexenc<id>(encode_hexenc((*i)[0])));
+      next.insert(id((*i)[0]));
   }
 };
 
@@ -1755,9 +1759,9 @@ database_impl::extract_from_deltas(revision_id const & ident, extractor & x)
       // recording the deltas visited here in a set as to avoid inspecting
       // them later seems to be of little value, as it imposes a cost here,
       // but can seldom be exploited.
-      set< hexenc<id> > deltas;
+      set<id> deltas;
       graph.get_next(ident.inner(), deltas);
-      for (set< hexenc<id> >::const_iterator i = deltas.begin();
+      for (set<id>::const_iterator i = deltas.begin();
            i != deltas.end(); ++i)
         {
           roster_delta del;
@@ -1772,7 +1776,7 @@ database_impl::extract_from_deltas(revision_id const & ident, extractor & x)
 
   int path_length(selected_path.size());
   int i(0);
-  hexenc<id> target_rev;
+  id target_rev;
 
   for (reconstruction_path::const_iterator p = selected_path.begin();
        p != selected_path.end(); ++p)
@@ -1840,7 +1844,7 @@ database::get_roster_version(revision_id const & ros_id,
     get_reconstruction_path(ros_id.inner(), graph, selected_path);
   }
 
-  hexenc<id> curr = selected_path.back();
+  id curr = selected_path.back();
   selected_path.pop_back();
   // we know that this isn't already in the cache (because of the early exit
   // above), so we should create new objects and spend time filling them in.
@@ -1851,8 +1855,10 @@ database::get_roster_version(revision_id const & ros_id,
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
-      hexenc<id> const nxt = *i;
-      L(FL("following delta %s -> %s") % curr % nxt);
+      id const nxt = *i;
+      L(FL("following delta %s -> %s")
+        % encode_hexenc(curr())
+        % encode_hexenc(nxt()));
       roster_delta del;
       imp->get_roster_delta(nxt, curr, del);
       apply_roster_delta(del, *roster, *marking);
@@ -1883,11 +1889,11 @@ database::get_roster_version(revision_id const & ros_id,
 
 
 void
-database_impl::drop(hexenc<id> const & ident,
+database_impl::drop(id const & ident,
                     string const & table)
 {
   string drop = "DELETE FROM " + table + " WHERE id = ?";
-  execute(query(drop) % blob(decode_hexenc(ident())));
+  execute(query(drop) % blob(ident()));
 }
 
 // ------------------------------------------------------------
@@ -1924,7 +1930,7 @@ void
 database::get_file_ids(set<file_id> & ids)
 {
   ids.clear();
-  set< hexenc<id> > tmp;
+  set<id> tmp;
   imp->get_ids("files", tmp);
   imp->get_ids("file_deltas", tmp);
   add_decoration_to_container(tmp, ids);
@@ -1934,7 +1940,7 @@ void
 database::get_revision_ids(set<revision_id> & ids)
 {
   ids.clear();
-  set< hexenc<id> > tmp;
+  set<id> tmp;
   imp->get_ids("revisions", tmp);
   add_decoration_to_container(tmp, ids);
 }
@@ -1943,7 +1949,7 @@ void
 database::get_roster_ids(set<revision_id> & ids)
 {
   ids.clear();
-  set< hexenc<id> > tmp;
+  set<id> tmp;
   imp->get_ids("rosters", tmp);
   add_decoration_to_container(tmp, ids);
   imp->get_ids("roster_deltas", tmp);
@@ -2014,19 +2020,19 @@ database::put_file_version(file_id const & old_id,
   }
   
   transaction_guard guard(*this);  
-  if (file_or_manifest_base_exists(old_id.inner(), "files"))
+  if (file_or_manifest_base_exists(old_id, "files"))
     {
       // descendent of a head version replaces the head, therefore old head
       // must be disposed of
       imp->drop_or_cancel_file(old_id);
     }
-  if (!file_or_manifest_base_exists(new_id.inner(), "files"))
+  if (!file_or_manifest_base_exists(new_id, "files"))
     {
       imp->schedule_delayed_file(new_id, new_data);
       imp->drop(new_id.inner(), "file_deltas");
     }
     
-  if (!imp->delta_exists(old_id.inner(), new_id.inner(), "file_deltas"))
+  if (!imp->delta_exists(old_id, new_id, "file_deltas"))
     {
       put_file_delta(old_id, new_id, reverse_delta);
       guard.commit();
@@ -2267,7 +2273,7 @@ database::deltify_revision(revision_id const & rid)
                j = edge_changes(i).deltas_applied.begin();
              j != edge_changes(i).deltas_applied.end(); ++j)
           {
-            if (file_or_manifest_base_exists(delta_entry_src(j).inner(), "files") &&
+            if (file_or_manifest_base_exists(delta_entry_src(j), "files") &&
                 file_version_exists(delta_entry_dst(j)))
               {
                 file_data old_data;
@@ -2601,12 +2607,12 @@ database::get_public_keys(vector<rsa_keypair_id> & keys)
 }
 
 bool
-database::public_key_exists(hexenc<id> const & hash)
+database::public_key_exists(id const & hash)
 {
   results res;
   imp->fetch(res, one_col, any_rows,
              query("SELECT id FROM public_keys WHERE hash = ?")
-             % blob(decode_hexenc(hash())));
+             % blob(hash()));
   I((res.size() == 1) || (res.size() == 0));
   if (res.size() == 1)
     return true;
@@ -2627,14 +2633,14 @@ database::public_key_exists(rsa_keypair_id const & id)
 }
 
 void
-database::get_pubkey(hexenc<id> const & hash,
+database::get_pubkey(id const & hash,
                      rsa_keypair_id & id,
                      base64<rsa_pub_key> & pub_encoded)
 {
   results res;
   imp->fetch(res, 2, one_row,
              query("SELECT id, keydata FROM public_keys WHERE hash = ?")
-             % blob(decode_hexenc(hash())));
+             % blob(hash()));
   id = rsa_keypair_id(res[0][0]);
   encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
 }
@@ -2675,14 +2681,14 @@ database::put_key(rsa_keypair_id const & pub_id,
 
   L(FL("putting public key %s") % pub_id);
 
-  hexenc<id> thash;
+  id thash;
   key_hash_code(pub_id, pub_encoded, thash);
   I(!public_key_exists(thash));
 
   rsa_pub_key pub_key;
   decode_base64(pub_encoded, pub_key);
   imp->execute(query("INSERT INTO public_keys VALUES(?, ?, ?)")
-               % blob(decode_hexenc(thash()))
+               % blob(thash())
                % text(pub_id())
                % blob(pub_key()));
 
@@ -2770,7 +2776,7 @@ database_impl::cert_exists(cert const & t,
                   "AND value = ? "
                   "AND keypair = ? "
                   "AND signature = ?")
-    % blob(decode_hexenc(t.ident()))
+    % blob(t.ident.inner()())
     % text(t.name())
     % blob(value())
     % text(t.key())
@@ -2786,7 +2792,7 @@ void
 database_impl::put_cert(cert const & t,
                         string const & table)
 {
-  hexenc<id> thash;
+  id thash;
   cert_hash_code(t, thash);
   cert_value value;
   decode_base64(t.value, value);
@@ -2796,8 +2802,8 @@ database_impl::put_cert(cert const & t,
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
 
   execute(query(insert)
-          % blob(decode_hexenc(thash()))
-          % blob(decode_hexenc(t.ident()))
+          % blob(thash())
+          % blob(t.ident.inner()())
           % text(t.name())
           % blob(value())
           % text(t.key())
@@ -2816,7 +2822,7 @@ database_impl::results_to_certs(results const & res,
       encode_base64(cert_value(res[i][2]), value);
       base64<rsa_sha1_signature> sig;
       encode_base64(rsa_sha1_signature(res[i][4]), sig);
-      t = cert(hexenc<id>(encode_hexenc(res[i][0])),
+      t = cert(revision_id(res[i][0]),
               cert_name(res[i][1]),
               value,
               rsa_keypair_id(res[i][3]),
@@ -2847,7 +2853,7 @@ database_impl::get_certs(vector<cert> & certs,
 
 
 void
-database_impl::get_certs(hexenc<id> const & ident,
+database_impl::get_certs(id const & ident,
                          vector<cert> & certs,
                          string const & table)
 {
@@ -2855,7 +2861,7 @@ database_impl::get_certs(hexenc<id> const & ident,
   query q("SELECT id, name, value, keypair, signature FROM " + table +
           " WHERE id = ?");
 
-  fetch(res, 5, any_rows, q % blob(decode_hexenc(ident())));
+  fetch(res, 5, any_rows, q % blob(ident()));
   results_to_certs(res, certs);
 }
 
@@ -2874,7 +2880,7 @@ database_impl::get_certs(cert_name const & name,
 
 
 void
-database_impl::get_certs(hexenc<id> const & ident,
+database_impl::get_certs(id const & ident,
                          cert_name const & name,
                          vector<cert> & certs,
                          string const & table)
@@ -2884,7 +2890,7 @@ database_impl::get_certs(hexenc<id> const & ident,
           " WHERE id = ? AND name = ?");
 
   fetch(res, 5, any_rows,
-        q % blob(decode_hexenc(ident()))
+        q % blob(ident())
           % text(name()));
   results_to_certs(res, certs);
 }
@@ -2909,7 +2915,7 @@ database_impl::get_certs(cert_name const & name,
 
 
 void
-database_impl::get_certs(hexenc<id> const & ident,
+database_impl::get_certs(id const & ident,
                          cert_name const & name,
                          base64<cert_value> const & value,
                          vector<cert> & certs,
@@ -2922,7 +2928,7 @@ database_impl::get_certs(hexenc<id> const & ident,
   cert_value binvalue;
   decode_base64(value, binvalue);
   fetch(res, 5, any_rows,
-        q % blob(decode_hexenc(ident()))
+        q % blob(ident())
           % text(name())
           % blob(binvalue()));
   results_to_certs(res, certs);
@@ -2960,7 +2966,7 @@ database::put_revision_cert(revision<cert> const & cert)
 }
 
 outdated_indicator
-database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
+database::get_revision_cert_nobranch_index(vector< pair<revision_id,
                                            pair<revision_id, rsa_keypair_id> > > & idx)
 {
   // share some storage
@@ -2975,8 +2981,8 @@ database::get_revision_cert_nobranch_index(vector< pair<hexenc<id>,
   idx.reserve(res.size());
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     {
-      idx.push_back(make_pair(hexenc<id>(encode_hexenc((*i)[0])),
-                              make_pair(revision_id(encode_hexenc((*i)[1])),
+      idx.push_back(make_pair(revision_id((*i)[0]),
+                              make_pair(revision_id((*i)[1]),
                                         rsa_keypair_id((*i)[2]))));
     }
   return imp->cert_stamper.get_indicator();
@@ -3069,7 +3075,7 @@ database::get_revision_certs(revision_id const & id,
 
 outdated_indicator
 database::get_revision_certs(revision_id const & ident,
-                             vector< hexenc<id> > & ts)
+                             vector<id> & ts)
 {
   results res;
   vector<cert> certs;
@@ -3077,15 +3083,15 @@ database::get_revision_certs(revision_id const & ident,
              query("SELECT hash "
                    "FROM revision_certs "
                    "WHERE id = ?")
-             % blob(decode_hexenc(ident.inner()())));
+             % blob(ident.inner()()));
   ts.clear();
   for (size_t i = 0; i < res.size(); ++i)
-    ts.push_back(hexenc<id>(res[i][0]));
+    ts.push_back(id(res[i][0]));
   return imp->cert_stamper.get_indicator();
 }
 
 void
-database::get_revision_cert(hexenc<id> const & hash,
+database::get_revision_cert(id const & hash,
                             revision<cert> & c)
 {
   results res;
@@ -3094,14 +3100,14 @@ database::get_revision_cert(hexenc<id> const & hash,
              query("SELECT id, name, value, keypair, signature "
                    "FROM revision_certs "
                    "WHERE hash = ?")
-             % blob(decode_hexenc(hash())));
+             % blob(hash()));
   imp->results_to_certs(res, certs);
   I(certs.size() == 1);
   c = revision<cert>(certs[0]);
 }
 
 bool
-database::revision_cert_exists(hexenc<id> const & hash)
+database::revision_cert_exists(revision_id const & hash)
 {
   results res;
   vector<cert> certs;
@@ -3109,7 +3115,7 @@ database::revision_cert_exists(hexenc<id> const & hash)
              query("SELECT id "
                    "FROM revision_certs "
                    "WHERE hash = ?")
-             % blob(decode_hexenc(hash())));
+             % blob(hash.inner()()));
   I(res.size() == 0 || res.size() == 1);
   return (res.size() == 1);
 }
@@ -3718,14 +3724,14 @@ database::set_app(app_state * app)
 
 bool
 database::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
-    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+    manifest_id const & id, cert_name const & name, cert_value const & val)
 {
   return __app->lua.hook_get_manifest_cert_trust(signers, id, name, val);
 };
 
 bool
 database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
-    hexenc<id> const & id, cert_name const & name, cert_value const & val)
+    revision_id const & id, cert_name const & name, cert_value const & val)
 {
   return __app->lua.hook_get_revision_cert_trust(signers, id, name, val);
 };

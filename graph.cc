@@ -24,7 +24,7 @@ using std::list;
 using hashmap::hash_set;
 
 void
-get_reconstruction_path(hexenc<id> const & start,
+get_reconstruction_path(id const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path)
 {
@@ -61,7 +61,7 @@ get_reconstruction_path(hexenc<id> const & start,
   }
 
   shared_ptr<reconstruction_path> selected_path;
-  set< hexenc<id> > seen_nodes;
+  set<id> seen_nodes;
 
   while (!selected_path)
     {
@@ -72,7 +72,7 @@ get_reconstruction_path(hexenc<id> const & start,
            i != live_paths.end(); ++i)
         {
           shared_ptr<reconstruction_path> pth = *i;
-          hexenc<id> tip = pth->back();
+          id tip = pth->back();
 
           if (graph.is_base(tip))
             {
@@ -82,13 +82,13 @@ get_reconstruction_path(hexenc<id> const & start,
           else
             {
               // This tip is not a root, so extend the path.
-              set< hexenc<id> > next;
+              set<id> next;
               graph.get_next(tip, next);
               I(!next.empty());
 
               // Replicate the path if there's a fork.
               bool first = true;
-              for (set< hexenc<id> >::const_iterator j = next.begin();
+              for (set<id>::const_iterator j = next.begin();
                     j != next.end(); ++j)
                 {
                   L(FL("considering %s -> %s") % tip % *j);
@@ -144,19 +144,19 @@ get_reconstruction_path(hexenc<id> const & start,
 using boost::lexical_cast;
 using std::pair;
 
-typedef std::multimap< hexenc<id>, hexenc<id> > rg_map;
+typedef std::multimap<id, id> rg_map;
 struct mock_reconstruction_graph : public reconstruction_graph
 {
   rg_map ancestry;
-  set< hexenc<id> > bases;
-  mock_reconstruction_graph(rg_map const & ancestry, set< hexenc<id> > const & bases)
+  set<id> bases;
+  mock_reconstruction_graph(rg_map const & ancestry, set<id> const & bases)
     : ancestry(ancestry), bases(bases)
   {}
-  virtual bool is_base(hexenc<id> const & node) const
+  virtual bool is_base(id const & node) const
   {
     return bases.find(node) != bases.end();
   }
-  virtual void get_next(hexenc<id> const & from, set< hexenc<id> > & next) const
+  virtual void get_next(id const & from, set<id> & next) const
   {
     typedef rg_map::const_iterator ci;
     pair<ci, ci> range = ancestry.equal_range(from);
@@ -168,16 +168,16 @@ struct mock_reconstruction_graph : public reconstruction_graph
 static void
 make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
                                  size_t num_random_bases,
-                                 vector< hexenc<id> > & all_nodes, rg_map & ancestry,
-                                 set< hexenc<id> > & bases,
+                                 vector<id> & all_nodes, rg_map & ancestry,
+                                 set<id> & bases,
                                  randomizer & rng)
 {
   for (size_t i = 0; i != num_nodes; ++i)
     {
-      hexenc<id> hex_id;
+      id hash;
       string s(lexical_cast<string>(i));
-      calculate_ident(data(s), hex_id);
-      all_nodes.push_back(hex_id);
+      calculate_ident(data(s), hash);
+      all_nodes.push_back(hash);
     }
   // We put a single long chain of edges in, to make sure that everything is
   // reconstructable somehow.
@@ -200,7 +200,7 @@ make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
 }
 
 static void
-check_reconstruction_path(hexenc<id> const & start, reconstruction_graph const & graph,
+check_reconstruction_path(id const & start, reconstruction_graph const & graph,
                           reconstruction_path const & path)
 {
   I(!path.empty());
@@ -210,7 +210,7 @@ check_reconstruction_path(hexenc<id> const & start, reconstruction_graph const &
   I(graph.is_base(*last));
   for (reconstruction_path::const_iterator i = path.begin(); i != last; ++i)
     {
-      set< hexenc<id> > children;
+      set<id> children;
       graph.get_next(*i, children);
       reconstruction_path::const_iterator next = i;
       ++next;
@@ -224,14 +224,14 @@ run_get_reconstruction_path_tests_on_random_graph(size_t num_nodes,
                                                   size_t num_random_bases,
                                                   randomizer & rng)
 {
-  vector< hexenc<id> > all_nodes;
+  vector<id> all_nodes;
   rg_map ancestry;
-  set< hexenc<id> > bases;
+  set<id> bases;
   make_random_reconstruction_graph(num_nodes, num_random_edges, num_random_bases,
                                    all_nodes, ancestry, bases,
                                    rng);
   mock_reconstruction_graph graph(ancestry, bases);
-  for (vector< hexenc<id> >::const_iterator i = all_nodes.begin();
+  for (vector<id>::const_iterator i = all_nodes.begin();
        i != all_nodes.end(); ++i)
     {
       reconstruction_path path;

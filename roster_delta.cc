@@ -317,7 +317,7 @@ namespace
         basic_io::stanza st;
         push_nid(syms::add_file, i->second.first, st);
         push_loc(i->first, st);
-        st.push_hex_pair(syms::content, i->second.second.inner());
+        st.push_binary_pair(syms::content, i->second.second.inner());
         printer.print_stanza(st);
       }
     for (roster_delta_t::deltas_applied_t::const_iterator
@@ -325,7 +325,7 @@ namespace
       {
         basic_io::stanza st;
         push_nid(syms::delta, i->first, st);
-        st.push_hex_pair(syms::content, i->second.inner());
+        st.push_binary_pair(syms::content, i->second.inner());
         printer.print_stanza(st);
       }
     for (roster_delta_t::attrs_cleared_t::const_iterator

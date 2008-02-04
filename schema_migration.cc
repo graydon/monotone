@@ -273,9 +273,9 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
         }
     }
 
-  hexenc<id> sha;
-  calculate_ident(data(tmp), sha);
-  sqlite3_result_text(f, sha().c_str(), sha().size(), SQLITE_TRANSIENT);
+  id hash;
+  calculate_ident(data(tmp), hash);
+  sqlite3_result_blob(f, hash().c_str(), hash().size(), SQLITE_TRANSIENT);
 }
 
 static void
@@ -846,9 +846,10 @@ calculate_schema_id(sqlite3 * db, string & ident)
       schema += " PRAGMA user_version = ";
       schema += boost::lexical_cast<string>(code);
     }
-  hexenc<id> tid;
+
+  id tid;
   calculate_ident(data(schema), tid);
-  ident = tid();
+  ident = encode_hexenc(tid());
 }
 
 // Look through the migration_events table and return a pointer to the entry

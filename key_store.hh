@@ -29,7 +29,7 @@ private:
   bool have_read;
   app_state & app;
   std::map<rsa_keypair_id, keypair> keys;
-  std::map<hexenc<id>, rsa_keypair_id> hashes;
+  std::map<id, rsa_keypair_id> hashes;
 
   void get_key_file(rsa_keypair_id const & ident, system_path & file);
   void write_key(rsa_keypair_id const & ident);
@@ -50,7 +50,7 @@ public:
                     keypair & kp);
   bool maybe_get_key_pair(rsa_keypair_id const & ident,
                           keypair & kp);
-  bool maybe_get_key_pair(hexenc<id> const & hash,
+  bool maybe_get_key_pair(id const & hash,
                           rsa_keypair_id & ident,
                           keypair & kp);
 

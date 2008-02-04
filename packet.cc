@@ -74,7 +74,7 @@ packet_writer::consume_revision_data(revision_id const & ident,
 void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[rcert " << t.inner().ident() << '\n'
+  ost << "[rcert " << encode_hexenc(t.inner().ident.inner()()) << '\n'
       << "       " << t.inner().name() << '\n'
       << "       " << t.inner().key() << '\n'
       << "       " << trim_ws(t.inner().value()) << "]\n"
@@ -159,13 +159,14 @@ feed_packet_consumer
     validate_id(args);
     validate_base64(body);
 
+    id hash(decode_hexenc(args));
     data contents;
     unpack(base64<gzip<data> >(body), contents);
     if (is_revision)
-      cons.consume_revision_data(revision_id(hexenc<id>(args)),
+      cons.consume_revision_data(revision_id(hash),
                                  revision_data(contents));
     else
-      cons.consume_file_data(file_id(hexenc<id>(args)),
+      cons.consume_file_data(file_id(hash),
                              file_data(contents));
   }
 
@@ -178,10 +179,12 @@ feed_packet_consumer
     validate_no_more_args(iss);
     validate_base64(body);
 
+    id src_hash(decode_hexenc(src_id)),
+       dst_hash(decode_hexenc(dst_id));
     delta contents;
     unpack(base64<gzip<delta> >(body), contents);
-    cons.consume_file_delta(file_id(hexenc<id>(src_id)),
-                            file_id(hexenc<id>(dst_id)),
+    cons.consume_file_delta(file_id(src_hash),
+                            file_id(dst_hash),
                             file_delta(contents));
   }
   static void read_rest(istream& in, string& dest)
@@ -203,10 +206,12 @@ feed_packet_consumer
     string name;   iss >> name;   validate_certname(name);
     string keyid;  iss >> keyid;  validate_key(keyid);
     string val;    
-    read_rest(iss,val);           validate_arg_base64(val);    
+    read_rest(iss,val);           validate_arg_base64(val);
+
+    revision_id hash(decode_hexenc(certid));
     validate_base64(body);
     // canonicalize the base64 encodings to permit searches
-    cert t = cert(hexenc<id>(certid),
+    cert t = cert(hash,
                   cert_name(name),
                   base64<cert_value>(canonical_base64(val)),
                   rsa_keypair_id(keyid),
@@ -384,7 +389,7 @@ read_packets(istream & in, packet_consumer & cons, key_store & keys)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
+#include "xdelta.hh"
 
 using std::ostringstream;
 
@@ -497,9 +502,10 @@ UNIT_TEST(packet, roundabout)
     encode_base64(cert_value("peaches"), val);
     base64<rsa_sha1_signature> sig;
     encode_base64(rsa_sha1_signature("blah blah there is no way this is a valid signature"), sig);
-    // should be a type violation to use a file id here instead of a revision
-    // id, but no-one checks...
-    cert c(fid.inner(), cert_name("smell"), val,
+
+    // cert now accepts revision_id exclusively, so we need to cast the
+    // file_id to create a cert to test the packet writer with.
+    cert c(revision_id(fid.inner()()), cert_name("smell"), val,
            rsa_keypair_id("fun@moonman.com"), sig);
     pw.consume_revision_cert(revision<cert>(c));
 
