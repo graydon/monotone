@@ -318,26 +318,6 @@ get_private_key(key_store & keys,
   I(false);
 }
 
-void
-change_key_passphrase(key_store & keys,
-                      rsa_keypair_id const & id,
-                      base64< rsa_priv_key > & encoded_key)
-{
-  shared_ptr<RSA_PrivateKey> priv
-    = get_private_key(keys, id, encoded_key, true);
-
-  utf8 new_phrase;
-  get_passphrase(new_phrase, id, true, false);
-
-  Pipe p;
-  p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
-                            "PBE-PKCS5v20(SHA-1,TripleDES/CBC)", Botan::RAW_BER);
-  rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
-
-  encode_base64(decoded_key, encoded_key);
-}
-
 void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub_encoded,

@@ -58,6 +58,8 @@ public:
                        hexenc<id> * maybe_pubhash = NULL,
                        hexenc<id> * maybe_privhash = NULL);
 
+  void change_key_passphrase(rsa_keypair_id const & id);
+
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,
                       base64<rsa_sha1_signature> & signature);

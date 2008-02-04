@@ -100,12 +100,7 @@ CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  keypair key;
-  load_key_pair(app.keys, ident, key);
-
-  change_key_passphrase(app.keys, ident, key.priv);
-  app.keys.delete_key(ident);
-  app.keys.put_key_pair(ident, key);
+  app.keys.change_key_passphrase(ident);
   P(F("passphrase changed"));
 }
 

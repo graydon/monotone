@@ -402,6 +402,31 @@ key_store::create_key_pair(database & db,
 }
 
 void
+key_store::change_key_passphrase(rsa_keypair_id const & id)
+{
+  keypair kp;
+  load_key_pair(*this, id, kp);
+  
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, kp.priv, true);
+
+  utf8 new_phrase;
+  get_passphrase(new_phrase, id, true, false);
+
+  Pipe p;
+  p.start_msg();
+  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
+                            "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
+                            Botan::RAW_BER);
+  rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
+
+  encode_base64(decoded_key, kp.priv);
+  delete_key(id);
+  put_key_pair(id, kp);
+}
+
+
+
+void
 key_store::make_signature(database & db,
                           rsa_keypair_id const & id,
                           string const & tosign,

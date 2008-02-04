@@ -44,16 +44,6 @@ void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
 
-void change_key_passphrase(key_store & keys,          // to hook for phrase
-                           rsa_keypair_id const & id, // to prompting user for phrase
-                           base64< rsa_priv_key > & encoded_key);
-
-bool check_signature(key_store & keys,
-                     rsa_keypair_id const & id,
-                     base64<rsa_pub_key> const & pub,
-                     std::string const & alleged_text,
-                     base64<rsa_sha1_signature> const & signature);
-
 void encrypt_rsa(key_store & keys,
                  rsa_keypair_id const & id,
                  base64<rsa_pub_key> & pub,
