@@ -44,13 +44,6 @@ void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
 
-void generate_key_pair(key_store & keys,             // to hook for phrase
-                       rsa_keypair_id const & id,    // to prompting user for phrase
-                       keypair & kp_out);
-
-void generate_key_pair(keypair & kp_out,
-                       utf8 const phrase);
-
 void change_key_passphrase(key_store & keys,          // to hook for phrase
                            rsa_keypair_id const & id, // to prompting user for phrase
                            base64< rsa_priv_key > & encoded_key);

@@ -233,7 +233,7 @@ class database_impl
   void begin_transaction(bool exclusive);
   void commit_transaction();
   void rollback_transaction();
-  friend class transaction_guard;
+  friend class conditional_transaction_guard;
 
   struct roster_writeback_manager
   {
@@ -3682,21 +3682,10 @@ database::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
 
 // transaction guards
 
-transaction_guard::transaction_guard(database & d, bool exclusive,
-                                     size_t checkpoint_batch_size,
-                                     size_t checkpoint_batch_bytes)
-  : imp(d.imp),
-    checkpoint_batch_size(checkpoint_batch_size),
-    checkpoint_batch_bytes(checkpoint_batch_bytes),
-    checkpointed_calls(0),
-    checkpointed_bytes(0),
-    committed(false), exclusive(exclusive)
+conditional_transaction_guard::~conditional_transaction_guard()
 {
-  imp->begin_transaction(exclusive);
-}
-
-transaction_guard::~transaction_guard()
-{
+  if (!acquired)
+    return;
   if (committed)
     imp->commit_transaction();
   else
@@ -3704,8 +3693,17 @@ transaction_guard::~transaction_guard()
 }
 
 void
-transaction_guard::do_checkpoint()
+conditional_transaction_guard::acquire()
 {
+  I(!acquired);
+  acquired = true;
+  imp->begin_transaction(exclusive);
+}
+
+void
+conditional_transaction_guard::do_checkpoint()
+{
+  I(acquired);
   imp->commit_transaction();
   imp->begin_transaction(exclusive);
   checkpointed_calls = 0;
@@ -3713,9 +3711,10 @@ transaction_guard::do_checkpoint()
 }
 
 void
-transaction_guard::maybe_checkpoint(size_t nbytes)
+conditional_transaction_guard::maybe_checkpoint(size_t nbytes)
 {
-  checkpointed_calls += 1;
+  I(acquired); 
+ checkpointed_calls += 1;
   checkpointed_bytes += nbytes;
   if (checkpointed_calls >= checkpoint_batch_size
       || checkpointed_bytes >= checkpoint_batch_bytes)
@@ -3723,10 +3722,13 @@ transaction_guard::maybe_checkpoint(size_t nbytes)
 }
 
 void
-transaction_guard::commit()
+conditional_transaction_guard::commit()
 {
+  I(acquired);
   committed = true;
 }
+
+
 
 // Local Variables:
 // mode: C++

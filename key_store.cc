@@ -8,6 +8,7 @@
 #include "globish.hh"
 #include "app_state.hh"
 #include "transforms.hh"
+#include "constants.hh"
 
 #include "botan/botan.h"
 #include "botan/rsa.h"
@@ -326,6 +327,79 @@ key_store::delete_key(rsa_keypair_id const & ident)
 //
 // Crypto operations
 //
+
+void
+key_store::create_key_pair(database & db,
+                           rsa_keypair_id const & id,
+                           utf8 const * maybe_passphrase,
+                           hexenc<id> * maybe_pubhash,
+                           hexenc<id> * maybe_privhash)
+{
+  conditional_transaction_guard guard(db);
+
+  bool exists = key_pair_exists(id);
+  if (db.database_specified())
+    {
+      guard.acquire();
+      exists = exists || db.public_key_exists(id);
+    }
+  N(!exists, F("key '%s' already exists") % id);
+
+  utf8 prompted_passphrase;
+  if (!maybe_passphrase)
+    {
+      get_passphrase(prompted_passphrase, id, true, true);
+      maybe_passphrase = &prompted_passphrase;
+    }
+
+  // okay, now we can create the key
+  P(F("generating key-pair '%s'") % id);
+  RSA_PrivateKey priv(constants::keylen);
+
+  // serialize and maybe encrypt the private key
+  SecureVector<Botan::byte> pubkey, privkey;
+  Pipe p;
+  p.start_msg();
+  if ((*maybe_passphrase)().length())
+    Botan::PKCS8::encrypt_key(priv, p,
+                              (*maybe_passphrase)(),
+                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
+                              Botan::RAW_BER);
+  else
+    Botan::PKCS8::encode(priv, p);
+  rsa_priv_key raw_priv_key(p.read_all_as_string());
+
+  // serialize the public key
+  Pipe p2;
+  p2.start_msg();
+  Botan::X509::encode(priv, p2, Botan::RAW_BER);
+  rsa_pub_key raw_pub_key(p2.read_all_as_string());
+
+  // convert to storage format
+  keypair kp;
+  encode_base64(raw_priv_key, kp.priv);
+  encode_base64(raw_pub_key, kp.pub);
+  L(FL("generated %d-byte public key\n"
+      "generated %d-byte (encrypted) private key\n")
+    % kp.pub().size()
+    % kp.priv().size());
+
+  // and save it.
+  P(F("storing key-pair '%s' in %s/") % id % get_key_dir());
+  put_key_pair(id, kp);
+
+  if (db.database_specified())
+    {
+      P(F("storing public key '%s' in %s") % id % db.get_filename());
+      db.put_key(id, kp.pub);
+      guard.commit();
+    }
+
+  if (maybe_pubhash)
+    key_hash_code(id, kp.pub, *maybe_pubhash);
+  if (maybe_privhash)
+    key_hash_code(id, kp.priv, *maybe_privhash);
+}
 
 void
 key_store::make_signature(database & db,

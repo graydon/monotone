@@ -257,45 +257,6 @@ cache_user_key(options const & opts, lua_hooks & lua,
   get_user_key(key, opts, lua, keys, db);
 }
 
-void
-generate_key_pair(keypair & kp_out,
-                  utf8 const phrase)
-{
-  SecureVector<Botan::byte> pubkey, privkey;
-  rsa_pub_key raw_pub_key;
-  rsa_priv_key raw_priv_key;
-
-  // generate private key (and encrypt it)
-  RSA_PrivateKey priv(constants::keylen);
-
-  Pipe p;
-  p.start_msg();
-  if (phrase().length()) {
-    Botan::PKCS8::encrypt_key(priv,
-                              p,
-                              phrase(),
-                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
-                              Botan::RAW_BER);
-  } else {
-    Botan::PKCS8::encode(priv, p);
-  }
-  raw_priv_key = rsa_priv_key(p.read_all_as_string());
-
-  // generate public key
-  Pipe p2;
-  p2.start_msg();
-  Botan::X509::encode(priv, p2, Botan::RAW_BER);
-  raw_pub_key = rsa_pub_key(p2.read_all_as_string());
-
-  // if all that worked, we can return our results to caller
-  encode_base64(raw_priv_key, kp_out.priv);
-  encode_base64(raw_pub_key, kp_out.pub);
-  L(FL("generated %d-byte public key\n"
-      "generated %d-byte (encrypted) private key\n")
-    % kp_out.pub().size()
-    % kp_out.priv().size());
-}
-
 // ask for passphrase then decrypt a private key.
 shared_ptr<RSA_PrivateKey>
 get_private_key(key_store & keys,

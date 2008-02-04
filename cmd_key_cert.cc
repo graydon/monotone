@@ -43,22 +43,8 @@ CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
-  bool exists = app.keys.key_pair_exists(ident);
-  if (app.db.database_specified())
-    exists = exists || app.db.public_key_exists(ident);
 
-  N(!exists, F("key '%s' already exists") % ident);
-
-  utf8 phrase;
-  get_passphrase(phrase, ident, true, true);
-
-  keypair kp;
-  P(F("generating key-pair '%s'") % ident);
-  generate_key_pair(kp, phrase);
-
-  P(F("storing key-pair '%s' in %s/") 
-    % ident % app.keys.get_key_dir());
-  app.keys.put_key_pair(ident, kp);
+  app.keys.create_key_pair(app.db, ident);
 }
 
 CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),

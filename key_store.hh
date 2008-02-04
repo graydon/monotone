@@ -30,6 +30,8 @@ public:
   void set_key_dir(system_path const & kd);
   system_path const & get_key_dir();
 
+  // Basic key I/O
+
   void get_key_ids(std::vector<rsa_keypair_id> & priv);
   void get_key_ids(globish const & pattern,
                    std::vector<rsa_keypair_id> & priv);
@@ -50,6 +52,11 @@ public:
   void delete_key(rsa_keypair_id const & ident);
 
   // Crypto operations
+
+  void create_key_pair(database & db, rsa_keypair_id const & id,
+                       utf8 const * maybe_passphrase = NULL,
+                       hexenc<id> * maybe_pubhash = NULL,
+                       hexenc<id> * maybe_privhash = NULL);
 
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,

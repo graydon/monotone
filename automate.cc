@@ -1746,28 +1746,14 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 
   utf8 passphrase = idx(args, 1);
 
-  key_store & keys = app.keys;
-  bool exists = keys.key_pair_exists(ident);
-  if (db.database_specified())
-    {
-      transaction_guard guard(db);
-      exists = exists || db.public_key_exists(ident);
-      guard.commit();
-    }
-
-  N(!exists, F("key '%s' already exists") % ident);
-
-  keypair kp;
-  generate_key_pair(kp, passphrase);
-  keys.put_key_pair(ident, kp);
+  hexenc<id> pubhash, privhash;
+  app.keys.create_key_pair(app.db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
   basic_io::stanza stz;
-  hexenc<id> privhash, pubhash;
   vector<string> publocs, privlocs;
-  key_hash_code(ident, kp.pub, pubhash);
-  key_hash_code(ident, kp.priv, privhash);
-
+  if (app.db.database_specified())
+    publocs.push_back("database");
   publocs.push_back("keystore");
   privlocs.push_back("keystore");
 

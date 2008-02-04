@@ -26,7 +26,7 @@ class key_store;
 class outdated_indicator;
 class rev_height;
 struct revision_t;
-class transaction_guard;
+class conditional_transaction_guard;
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -93,7 +93,7 @@ private:
   // --== Transactions ==--
   //
 private:
-  friend class transaction_guard;
+  friend class conditional_transaction_guard;
 
   //
   // --== Write-buffering -- tied into transaction  ==--
@@ -536,8 +536,18 @@ inline marking_map const & parent_marking(parent_map::const_iterator i)
 // full commits at high frequency is too high. The solution for these
 // platforms is to run inside a longer-lived transaction (session-length),
 // and checkpoint at higher granularity (every megabyte or so).
+//
+// A conditional transaction guard is just like a transaction guard,
+// except that it doesn't begin the transaction until you call acquire().
+// If you don't call acquire(), you must not call commit(), do_checkpoint(),
+// or maybe_checkpoint() either.
+//
+// Implementation note: Making transaction_guard inherit from
+// conditional_transaction_guard means we can reuse all the latter's methods
+// and just call acquire() in transaction_guard's constructor.  If we did it
+// the other way around they would wind up being totally unrelated classes.
 
-class transaction_guard
+class conditional_transaction_guard
 {
   database_impl * imp;
   size_t const checkpoint_batch_size;
@@ -545,15 +555,38 @@ class transaction_guard
   size_t checkpointed_calls;
   size_t checkpointed_bytes;
   bool committed;
+  bool acquired;
   bool const exclusive;
+public:
+  conditional_transaction_guard(database & d, bool exclusive=true,
+                                size_t checkpoint_batch_size=1000,
+                                size_t checkpoint_batch_bytes=0xfffff)
+    : imp(d.imp),
+      checkpoint_batch_size(checkpoint_batch_size),
+      checkpoint_batch_bytes(checkpoint_batch_bytes),
+      checkpointed_calls(0),
+      checkpointed_bytes(0),
+      committed(false), acquired(false), exclusive(exclusive)
+  {}
+
+  ~conditional_transaction_guard();
+  void acquire();
+  void commit();
+  void do_checkpoint();
+  void maybe_checkpoint(size_t nbytes);
+};
+
+class transaction_guard : public conditional_transaction_guard
+{
 public:
   transaction_guard(database & d, bool exclusive=true,
                     size_t checkpoint_batch_size=1000,
-                    size_t checkpoint_batch_bytes=0xfffff);
-  ~transaction_guard();
-  void do_checkpoint();
-  void maybe_checkpoint(size_t nbytes);
-  void commit();
+                    size_t checkpoint_batch_bytes=0xfffff)
+    : conditional_transaction_guard(d, exclusive, checkpoint_batch_size,
+                                    checkpoint_batch_bytes)
+  {
+    acquire();
+  }
 };
 
 // Local Variables:
