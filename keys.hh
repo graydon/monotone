@@ -38,13 +38,6 @@ void migrate_private_key(key_store & keys,
                          base64< old_arc4_rsa_priv_key > const & old_priv,
                          keypair & kp);
 
-void make_signature(key_store & keys,
-                    database & db,
-                    rsa_keypair_id const & id,
-                    base64< rsa_priv_key > const & priv,
-                    std::string const & tosign,
-                    base64<rsa_sha1_signature> & signature);
-
 bool check_signature(key_store & keys,
                      rsa_keypair_id const & id,
                      base64<rsa_pub_key> const & pub,

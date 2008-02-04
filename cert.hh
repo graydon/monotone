@@ -65,6 +65,10 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(database & db, cert const & t);
+
+void load_key_pair(key_store & keys,
+                   rsa_keypair_id const & id);
+
 void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);

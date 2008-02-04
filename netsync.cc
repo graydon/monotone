@@ -1356,8 +1356,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   if (use_transport_auth && signing_key() != "")
     {
       // get our key pair
-      keypair our_kp;
-      load_key_pair(keys, signing_key, our_kp);
+      load_key_pair(keys, signing_key);
+
+      // make a signature with it;
+      // this also ensures our public key is in the database
+      base64<rsa_sha1_signature> sig;
+      rsa_sha1_signature sig_raw;
+      keys.make_signature(db, signing_key, nonce(), sig);
+      decode_base64(sig, sig_raw);
 
       // get the hash identifier for our pubkey
       id our_key_hash;
