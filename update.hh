@@ -13,7 +13,8 @@
 #include <set>
 #include "vocab.hh"
 
-class app_state;
+class project_t;
+class lua_hooks;
 
 // this function just encapsulates the (somewhat complex) logic
 // behind picking an update target. the actual updating takes
@@ -24,9 +25,12 @@ class app_state;
 // returned in 'candidates'.  if no revisions are better than the current
 // revision, then 'candidates' will contain exactly the current revision.
 
-void pick_update_candidates(revision_id const & base_ident,
-                            app_state & app,
-                            std::set<revision_id> &candidates);
+void pick_update_candidates(std::set<revision_id> & candidates,
+                            revision_id const & base_ident,
+                            branch_name const & branchname,
+                            project_t & project,
+                            bool ignore_suspend_certs,
+                            lua_hooks & lua);
 
 // Local Variables:
 // mode: C++

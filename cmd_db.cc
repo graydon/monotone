@@ -13,10 +13,10 @@
 
 #include "charset.hh"
 #include "cmd.hh"
-#include "database_check.hh"
 #include "revision.hh"
 #include "constants.hh"
 #include "app_state.hh"
+#include "keys.hh"
 
 using std::cin;
 using std::cout;
@@ -98,7 +98,7 @@ CMD(db_migrate, "migrate", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.migrate();
+  app.db.migrate(app.keys);
 }
 
 CMD(db_execute, "execute", "", CMD_REF(db), "",
@@ -123,8 +123,6 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   revision_id revid;
 
   complete(app, idx(args, 0)(), revid);
-  N(app.db.revision_exists(revid),
-    F("no such revision '%s'") % revid);
 
   // Check that the revision does not have any children
   std::set<revision_id> children;
@@ -156,7 +154,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           if (edge_old_revision(i) != revid)
             continue;
 
-          N(!app.work.has_changes(),
+          N(!app.work.has_changes(app.db),
             F("Cannot kill revision %s,\n"
               "because it would leave the current workspace in an invalid\n"
               "state, from which monotone cannot recover automatically since\n"
@@ -213,7 +211,7 @@ CMD(db_check, "check", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  check_db(app);
+  check_db(app.db);
 }
 
 CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
@@ -224,7 +222,13 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_changesets_from_manifest_ancestry(app);
+  app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
+
+  // early short-circuit to avoid failure after lots of work
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+
+  build_changesets_from_manifest_ancestry(app.db, app.keys, set<string>());
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -235,7 +239,14 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  build_roster_style_revs_from_manifest_style_revs(app);
+  app.db.ensure_open_for_format_changes();
+  app.db.check_is_not_rosterified();
+
+  // early short-circuit to avoid failure after lots of work
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+
+  build_roster_style_revs_from_manifest_style_revs(app.db, app.keys,
+                                                   app.opts.attrs_to_drop);
 }
 
 CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
@@ -246,7 +257,7 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  regenerate_caches(app);
+  regenerate_caches(app.db);
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
@@ -334,7 +345,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app, *i) << '\n';
+          else cout << describe_revision(app.get_project(), *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")
@@ -371,7 +382,21 @@ CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
 {
   if (args.size() != 1)
     throw usage(execid);
-  app.db.test_migration_step(idx(args,0)());
+  app.db.test_migration_step(idx(args,0)(), app.keys);
+}
+
+CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
+           N_("Shows a revision's height"),
+           "",
+           options::opts::none)
+{
+  if (args.size() != 1)
+    throw usage(execid);
+  revision_id rid(idx(args, 0)());
+  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  rev_height height;
+  app.db.get_rev_height(rid, height);
+  P(F("cached height: %s") % height);
 }
 
 // Local Variables:

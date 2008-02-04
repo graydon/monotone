@@ -20,24 +20,25 @@
 
 #include "ssh_agent_platform.hh"
 
-using boost::shared_ptr;
 using Netxx::Stream;
+using Netxx::socket_type;
 using std::min;
 using std::string;
 
-bool
+// helper function for constructor
+socket_type
 ssh_agent_platform::connect() 
 {
   const char *authsocket;
-  int sock;
   struct sockaddr_un sunaddr;
+  socket_type sock;
 
   authsocket = getenv("SSH_AUTH_SOCK");
   
   if (!authsocket || !strlen(authsocket))
     {
       L(FL("ssh_agent: connect: ssh-agent socket not found"));
-      return false;
+      return -1;
     }
 
   sunaddr.sun_family = AF_UNIX;
@@ -47,7 +48,7 @@ ssh_agent_platform::connect()
   if (sock < 0)
     {
       W(F("ssh_agent: connect: could not open socket to ssh-agent"));
-      return false;
+      return -1;
     }
 
   int ret = fcntl(sock, F_SETFD, FD_CLOEXEC);
@@ -55,38 +56,26 @@ ssh_agent_platform::connect()
     {
       close(sock);
       W(F("ssh_agent: connect: could not set up socket for ssh-agent"));
-      return false;
+      return -1;
     }
   ret = ::connect(sock, (struct sockaddr *)&sunaddr, sizeof sunaddr);
   if (ret < 0)
     {
       close(sock);
       W(F("ssh_agent: connect: could not connect to socket for ssh-agent"));
-      return false;
+      return -1;
     }
-  stream = shared_ptr<Stream>(new Stream(sock));
-  return true;
-}
 
-bool
-ssh_agent_platform::disconnect()
-{
-  if (connected())
-    stream->close();
-  return true;
-}
-
-bool
-ssh_agent_platform::connected()
-{
-  return stream != NULL;
+  return sock;
 }
 
 void
 ssh_agent_platform::write_data(string const & data)
 {
-  L(FL("ssh_agent_platform::write_data: asked to write %u bytes") % data.length());
-  stream->write(data.c_str(), data.length());
+  L(FL("ssh_agent_platform::write_data: asked to write %u bytes")
+    % data.length());
+  I(connected());
+  stream.write(data.c_str(), data.length());
 }
 
 void 
@@ -97,14 +86,12 @@ ssh_agent_platform::read_data(u32 const len, string & out)
   char read_buf[bufsize];
   u32 get = len;
   L(FL("ssh_agent: read_data: asked to read %u bytes") % len);
+  I(connected());
+
   while (get > 0)
     {
-      ret = stream->read(read_buf, min(get, bufsize));
+      ret = stream.read(read_buf, min(get, bufsize));
       E(ret >= 0, F("stream read failed (%i)") % ret);
-      /*
-      if (ret > 0)
-	L(FL("ssh_agent: read_data: read %i bytes") % ret);
-      */
       out.append(read_buf, ret);
       get -= ret;
     }

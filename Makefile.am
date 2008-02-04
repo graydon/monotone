@@ -346,7 +346,6 @@ mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
 
 unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
-nodist_unit_tester_SOURCES = test_hooks.c
 unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 
 tester_SOURCES = tester.cc
@@ -505,8 +504,8 @@ TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
-	std_hooks.lua test_hooks.lua testlib.lua lua-testsuite.lua	\
-	$(srcdir)/tests tester-testsuite.lua $(srcdir)/tester-tests	\
+	std_hooks.lua testlib.lua lua-testsuite.lua$(srcdir)/tests	\
+	tester-testsuite.lua $(srcdir)/tester-tests			\
 	unit-testsuite.lua package.m4 package_revision.txt		\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
 	sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
@@ -687,7 +686,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
 
-CLEAN_SOURCES = std_hooks.c test_hooks.c testlib.c schema.c \
+CLEAN_SOURCES = std_hooks.c testlib.c schema.c \
 	package_revision.c package_full_revision.txt \
 	package_full_revision_raw.txt package_full_revision.c
 
