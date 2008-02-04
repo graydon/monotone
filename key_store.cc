@@ -39,7 +39,7 @@ class key_store_state
   bool have_read;
   app_state & app;
   map<rsa_keypair_id, keypair> keys;
-  map<hexenc<id>, rsa_keypair_id> hashes;
+  map<id, rsa_keypair_id> hashes;
 
   // These are used to cache signers (if the hook allows).
   map<rsa_keypair_id,

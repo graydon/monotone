@@ -1366,18 +1366,14 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       decode_base64(sig, sig_raw);
 
       // get the hash identifier for our pubkey
-      id our_key_hash;
-      key_hash_code(signing_key, our_kp.pub, our_key_hash);
-
-      // make a signature
-      base64<rsa_sha1_signature> sig;
-      rsa_sha1_signature sig_raw;
-      make_signature(keys, db, signing_key, our_kp.priv, nonce(), sig);
-      decode_base64(sig, sig_raw);
+      base64<rsa_pub_key> our_pub;
+      db.get_key(signing_key, our_pub);
+      id our_key_hash_raw;
+      key_hash_code(signing_key, our_pub, our_key_hash_raw);
 
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
-                     our_key_hash, nonce, mk_nonce(), sig_raw(),
+                     our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
                      their_key_encoded);
     }
   else
