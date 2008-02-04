@@ -225,7 +225,7 @@ project_t::suspend_revision_in_branch(key_store & keys,
 
 outdated_indicator
 project_t::get_revision_cert_hashes(revision_id const & rid,
-                                    std::vector<hexenc<id> > & hashes)
+                                    std::vector<id> & hashes)
 {
   return db.get_revision_certs(rid, hashes);
 }

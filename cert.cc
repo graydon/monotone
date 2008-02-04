@@ -103,7 +103,6 @@ bogus_cert_p
   }
 };
 
-
 void
 erase_bogus_certs(vector< manifest<cert> > & certs,
                   database & db)
@@ -115,15 +114,15 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
   vector< manifest<cert> > tmp_certs;
 
   // Sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef tuple< manifest_id, cert_name, base64<cert_value> > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
   for (it i = certs.begin(); i != certs.end(); ++i)
     {
-      trust_key key = trust_key(i->inner().ident, 
-                                i->inner().name, 
+      trust_key key = trust_key(manifest_id(i->inner().ident.inner()),
+                                i->inner().name,
                                 i->inner().value);
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
@@ -171,7 +170,7 @@ erase_bogus_certs(vector< revision<cert> > & certs,
   vector< revision<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, 
+  typedef tuple< revision_id,
     cert_name, base64<cert_value> > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
@@ -228,18 +227,18 @@ cert::cert(std::string const & s)
   read_cert(s, *this);
 }
 
-cert::cert(hexenc<id> const & ident,
+cert::cert(revision_id const & ident,
            cert_name const & name,
            base64<cert_value> const & value,
            rsa_keypair_id const & key)
   : ident(ident), name(name), value(value), key(key)
 {}
 
-cert::cert(hexenc<id> const & ident,
-         cert_name const & name,
-         base64<cert_value> const & value,
-         rsa_keypair_id const & key,
-         base64<rsa_sha1_signature> const & sig)
+cert::cert(revision_id const & ident,
+           cert_name const & name,
+           base64<cert_value> const & value,
+           rsa_keypair_id const & key,
+           base64<rsa_sha1_signature> const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -276,7 +275,7 @@ read_cert(string const & in, cert & t)
   id hash = id(extract_substring(in, pos,
                                  constants::merkle_hash_length_in_bytes,
                                  "cert hash"));
-  id ident = id(extract_substring(in, pos,
+  revision_id ident = revision_id(extract_substring(in, pos,
                                   constants::merkle_hash_length_in_bytes,
                                   "cert ident"));
   string name, val, key, sig;
@@ -286,23 +285,20 @@ read_cert(string const & in, cert & t)
   extract_variable_length_string(in, sig, pos, "cert sig");
   assert_end_of_buffer(in, pos, "cert");
 
-  hexenc<id> hid;
   base64<cert_value> bval;
   base64<rsa_sha1_signature> bsig;
 
-  encode_hexenc(ident, hid);
   encode_base64(cert_value(val), bval);
   encode_base64(rsa_sha1_signature(sig), bsig);
 
-  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key), bsig);
+  cert tmp(ident, cert_name(name), bval, rsa_keypair_id(key), bsig);
 
-  hexenc<id> hcheck;
   id check;
-  cert_hash_code(tmp, hcheck);
-  decode_hexenc(hcheck, check);
+  cert_hash_code(tmp, check);
   if (!(check == hash))
     {
-      hexenc<id> hhash;
+      hexenc<id> hcheck, hhash;
+      encode_hexenc(check, hcheck);
       encode_hexenc(hash, hhash);
       throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
                        % hcheck % hhash);
@@ -314,19 +310,16 @@ void
 write_cert(cert const & t, string & out)
 {
   string name, key;
-  hexenc<id> hash;
-  id ident_decoded, hash_decoded;
+  id hash;
   rsa_sha1_signature sig_decoded;
   cert_value value_decoded;
 
   cert_hash_code(t, hash);
   decode_base64(t.value, value_decoded);
   decode_base64(t.sig, sig_decoded);
-  decode_hexenc(t.ident, ident_decoded);
-  decode_hexenc(hash, hash_decoded);
 
-  out.append(hash_decoded());
-  out.append(ident_decoded());
+  out.append(hash());
+  out.append(t.ident.inner()());
   insert_variable_length_string(t.name(), out);
   insert_variable_length_string(value_decoded(), out);
   insert_variable_length_string(t.key(), out);
@@ -342,12 +335,12 @@ cert_signable_text(cert const & t,
 }
 
 void
-cert_hash_code(cert const & t, hexenc<id> & out)
+cert_hash_code(cert const & t, id & out)
 {
   string tmp;
-  tmp.reserve(4+t.ident().size() + t.name().size() + t.value().size() +
-              t.key().size() + t.sig().size());
-  tmp.append(t.ident());
+  tmp.reserve(4+t.ident.inner()().size() + t.name().size() +
+              t.value().size() + t.key().size() + t.sig().size());
+  tmp.append(t.ident.inner()());
   tmp += ':';
   tmp.append(t.name());
   tmp += ':';
@@ -476,7 +469,7 @@ guess_branch(revision_id const & ident, options & opts, project_t & project)
 }
 
 void
-make_simple_cert(hexenc<id> const & id,
+make_simple_cert(revision_id const & id,
                  cert_name const & nm,
                  cert_value const & cv,
                  database & db,
@@ -500,7 +493,7 @@ put_simple_revision_cert(revision_id const & id,
                          key_store & keys)
 {
   cert t;
-  make_simple_cert(id.inner(), nm, val, db, keys, t);
+  make_simple_cert(id, nm, val, db, keys, t);
   revision<cert> cc(t);
   db.put_revision_cert(cc);
 }

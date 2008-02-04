@@ -60,7 +60,7 @@ public:
                                   branch_name const & branch);
 
   outdated_indicator get_revision_cert_hashes(revision_id const & rid,
-                                              std::vector<hexenc<id> > & hashes);
+                                              std::vector<id> & hashes);
   outdated_indicator get_revision_certs(revision_id const & id,
                                         std::vector<revision<cert> > & certs);
   outdated_indicator get_revision_certs_by_name(revision_id const & id,

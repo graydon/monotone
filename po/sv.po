@@ -149,7 +149,7 @@ msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-01-26 14:43+0100\n"
-"PO-Revision-Date: 2008-01-26 15:09+0100\n"
+"PO-Revision-Date: 2008-01-27 22:29+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -4155,7 +4155,7 @@ msgstr "nätverksfel: %s"
 #: netxx_pipe.cc:58
 #, c-format
 msgid "pipe handle is invalid"
-msgstr ""
+msgstr "programkopplingshandtaget är ogiltigt"
 
 #: netxx_pipe.cc:197
 #, c-format
@@ -4175,7 +4175,7 @@ msgstr "Anrop till CreateProcess(%s,...) misslyckades: %s"
 #: netxx_pipe.cc:261
 #, c-format
 msgid "pipe/fork failed: %s"
-msgstr ""
+msgstr "Programkopplingen misslyckades: %s"
 
 #: netxx_pipe.cc:307
 #, c-format

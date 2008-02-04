@@ -35,16 +35,16 @@ struct cert
   // This is to make revision<cert> and manifest<cert> work.
   explicit cert(std::string const & s);
 
-  cert(hexenc<id> const & ident,
+  cert(revision_id const & ident,
       cert_name const & name,
       base64<cert_value> const & value,
       rsa_keypair_id const & key);
-  cert(hexenc<id> const & ident,
+  cert(revision_id const & ident,
       cert_name const & name,
       base64<cert_value> const & value,
       rsa_keypair_id const & key,
       base64<rsa_sha1_signature> const & sig);
-  hexenc<id> ident;
+  revision_id ident;
   cert_name name;
   base64<cert_value> value;
   rsa_keypair_id key;
@@ -60,7 +60,7 @@ EXTERN template class manifest<cert>;
 // These 3 are for netio support.
 void read_cert(std::string const & in, cert & t);
 void write_cert(cert const & t, std::string & out);
-void cert_hash_code(cert const & t, hexenc<id> & out);
+void cert_hash_code(cert const & t, id & out);
 
 typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 
@@ -76,7 +76,7 @@ void load_key_pair(key_store & keys,
 
 // Only used in cert.cc, and in revision.cc in what looks
 // like migration code.
-void make_simple_cert(hexenc<id> const & id,
+void make_simple_cert(revision_id const & id,
                       cert_name const & nm,
                       cert_value const & cv,
                       database & db,
