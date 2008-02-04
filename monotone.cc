@@ -74,34 +74,14 @@ using std::ios_base;
 // will be dumped out.  if the fatal condition is only caught in the lower-
 // level handlers in main.cc, at least we'll get a friendly error message.
 
-
-// Wrapper class to ensure Botan is properly initialized and deinitialized.
-struct botan_library
-{
-  botan_library() {
-    Botan::InitializerOptions options("thread_safe=0 selftest=0 seed_rng=1 "
-                                      "use_engines=0 secure_memory=1 "
-                                      "fips140=0");
-    Botan::LibraryInitializer::initialize(options);
-  }
-  ~botan_library() {
-    Botan::LibraryInitializer::deinitialize();
-  }
-};
-
-// Similarly, for the global ui object.  (We do not want to use global
-// con/destructors for this, as they execute outside the protection of
-// main.cc's signal handlers.)
+// Wrapper class which ensures proper setup and teardown of the global ui
+// object.  (We do not want to use global con/destructors for this, as they
+// execute outside the protection of main.cc's signal handlers.)
 struct ui_library
 {
-  ui_library() {
-    ui.initialize();
-  }
-  ~ui_library() {
-    ui.deinitialize();
-  }
+  ui_library() { ui.initialize(); }
+  ~ui_library() { ui.deinitialize(); }
 };
-
 
 // This is in a separate procedure so it can be called from code that's called
 // before cpp_main(), such as program option object creation code.  It's made
@@ -182,7 +162,9 @@ cpp_main(int argc, char ** argv)
       global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
       
       // Set up secure memory allocation etc
-      botan_library acquire_botan;
+      Botan::LibraryInitializer acquire_botan("thread_safe=0 selftest=0 "
+                                              "seed_rng=1 use_engines=0 "
+                                              "secure_memory=1 fips140=0");
       
       // Record where we are.  This has to happen before any use of
       // boost::filesystem.
