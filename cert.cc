@@ -373,7 +373,7 @@ put_simple_revision_cert(revision_id const & id,
 
   base64<cert_value> encoded_val;
   encode_base64(val, encoded_val);
-  cert t(id.inner(), nm, encoded_val, keys.signing_key);
+  cert t(id, nm, encoded_val, keys.signing_key);
 
   string signed_text;
   cert_signable_text(t, signed_text);
