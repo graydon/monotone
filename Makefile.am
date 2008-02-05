@@ -323,6 +323,7 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-constants.$(OBJEXT) mtn-database.$(OBJEXT)			\
 	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-hmac.$(OBJEXT)	\
 	mtn-inodeprint.$(OBJEXT) mtn-key_store.$(OBJEXT)		\
+	mtn-keys.$(OBJEXT)						\
 	mtn-lcs.$(OBJEXT) mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT)	\
 	mtn-lua_hooks.$(OBJEXT) mtn-merkle_tree.$(OBJEXT)		\
 	mtn-mt_version.$(OBJEXT) mtn-mtn-sanity.$(OBJEXT)		\
