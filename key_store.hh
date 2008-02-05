@@ -1,6 +1,8 @@
 #ifndef __KEY_STORE_H__
 #define __KEY_STORE_H__
 
+#include <iosfwd>
+#include <boost/scoped_ptr.hpp>
 #include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
@@ -14,7 +16,7 @@ class key_store_state;
 class key_store
 {
 private:
-  key_store_state * s;
+  boost::scoped_ptr<key_store_state> s;
 
   void get_key_file(rsa_keypair_id const & ident, system_path & file);
   void write_key(rsa_keypair_id const & ident);
@@ -67,6 +69,12 @@ public:
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,
                       base64<rsa_sha1_signature> & signature);
+
+  // Interoperation with ssh-agent
+
+  void add_key_to_agent(rsa_keypair_id const & id);
+  void export_key_for_agent(rsa_keypair_id const & id,
+                            std::ostream & os);
 
   // Migration from old databases
 

@@ -185,8 +185,12 @@ class database_impl
 {
   friend class database;
 
+  // for scoped_ptr's sake
+public:
   database_impl();
   ~database_impl();
+
+private:
 
   //
   // --== Opening the database and schema checking ==--
@@ -414,9 +418,7 @@ database::database(lua_hooks & lua)
 {}
 
 database::~database()
-{
-  delete imp;
-}
+{}
 
 void
 database::set_filename(system_path const & file)
@@ -3718,9 +3720,9 @@ conditional_transaction_guard::~conditional_transaction_guard()
   if (!acquired)
     return;
   if (committed)
-    imp->commit_transaction();
+    db.imp->commit_transaction();
   else
-    imp->rollback_transaction();
+    db.imp->rollback_transaction();
 }
 
 void
@@ -3728,15 +3730,15 @@ conditional_transaction_guard::acquire()
 {
   I(!acquired);
   acquired = true;
-  imp->begin_transaction(exclusive);
+  db.imp->begin_transaction(exclusive);
 }
 
 void
 conditional_transaction_guard::do_checkpoint()
 {
   I(acquired);
-  imp->commit_transaction();
-  imp->begin_transaction(exclusive);
+  db.imp->commit_transaction();
+  db.imp->begin_transaction(exclusive);
   checkpointed_calls = 0;
   checkpointed_bytes = 0;
 }
@@ -3745,7 +3747,7 @@ void
 conditional_transaction_guard::maybe_checkpoint(size_t nbytes)
 {
   I(acquired); 
- checkpointed_calls += 1;
+  checkpointed_calls += 1;
   checkpointed_bytes += nbytes;
   if (checkpointed_calls >= checkpoint_batch_size
       || checkpointed_bytes >= checkpoint_batch_bytes)

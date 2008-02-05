@@ -276,14 +276,12 @@ ssh_agent_state::write_packet(string const & packet)
 //
 
 ssh_agent::ssh_agent()
-  : s(new ssh_agent_state())
+  : s(new ssh_agent_state)
 {
 }
 
 ssh_agent::~ssh_agent()
-{
-  delete s;
-}
+{}
 
 bool
 ssh_agent::connected()

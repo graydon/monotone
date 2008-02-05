@@ -13,6 +13,7 @@
 #include "vector.hh"
 #include <set>
 #include <map>
+#include <boost/scoped_ptr.hpp>
 
 #include "vocab.hh"
 #include "roster.hh"
@@ -441,7 +442,7 @@ public:
     hexenc<id> const & id, cert_name const & name, cert_value const & val);
 
 private:
-  database_impl *imp;
+  boost::scoped_ptr<database_impl> imp;
   lua_hooks & lua;
 };
 
@@ -555,7 +556,7 @@ inline marking_map const & parent_marking(parent_map::const_iterator i)
 
 class conditional_transaction_guard
 {
-  database_impl * imp;
+  database & db;
   size_t const checkpoint_batch_size;
   size_t const checkpoint_batch_bytes;
   size_t checkpointed_calls;
@@ -564,10 +565,10 @@ class conditional_transaction_guard
   bool acquired;
   bool const exclusive;
 public:
-  conditional_transaction_guard(database & d, bool exclusive=true,
+  conditional_transaction_guard(database & db, bool exclusive=true,
                                 size_t checkpoint_batch_size=1000,
                                 size_t checkpoint_batch_bytes=0xfffff)
-    : imp(d.imp),
+    : db(db),
       checkpoint_batch_size(checkpoint_batch_size),
       checkpoint_batch_bytes(checkpoint_batch_bytes),
       checkpointed_calls(0),

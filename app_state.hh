@@ -21,8 +21,6 @@ class lua_hooks;
 #include "project.hh"
 #include "vocab.hh"
 #include "work.hh"
-#include "ssh_agent.hh"
-
 
 // This class is supposed to hold all (or.. well, most) of the state
 // of the application, barring some unfortunate static objects like
@@ -37,7 +35,6 @@ public:
   database db;
   key_store keys;
   workspace work;
-  ssh_agent agent;
 
   options opts;
 

@@ -11,6 +11,7 @@
 #define __SSH_AGENT_H__
 
 #include "vector.hh"
+#include <boost/scoped_ptr.hpp>
 
 namespace Botan
 {
@@ -33,7 +34,7 @@ struct ssh_agent
   bool connected();
 
 private:
-  ssh_agent_state * s;
+  boost::scoped_ptr<ssh_agent_state> s;
 };
   
 // Local Variables:

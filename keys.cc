@@ -34,7 +34,6 @@
 #include "ui.hh"
 #include "cert.hh"
 #include "charset.hh"
-#include "ssh_agent.hh"
 #include "database.hh"
 #include "options.hh"
 

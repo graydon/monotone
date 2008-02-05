@@ -13,15 +13,10 @@
 #include <fstream>
 #include <iterator>
 
-#include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
 #include "app_state.hh"
 #include "keys.hh"
-#include "transforms.hh"
-#include "ssh_agent.hh"
-#include "botan/pipe.h"
-#include "botan/rsa.h"
 
 using std::cout;
 using std::ostream_iterator;
@@ -29,9 +24,6 @@ using std::ostringstream;
 using std::set;
 using std::string;
 using std::ofstream;
-using boost::shared_ptr;
-using Botan::Pipe;
-using Botan::RSA_PrivateKey;
 
 CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     N_("Generates an RSA key-pair"),
@@ -114,33 +106,15 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
     throw usage(execid);
 
   rsa_keypair_id id;
-  keypair key;
   get_user_key(id, app.opts, app.lua, app.keys, app.db);
-  app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
-  utf8 new_phrase;
-  get_passphrase(new_phrase, id, true, false);
-  Pipe p;
-  p.start_msg();
-  if (new_phrase().length())
-    {
-      Botan::PKCS8::encrypt_key(*priv,
-                                p,
-                                new_phrase(),
-                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
-    }
-  else
-    {
-      Botan::PKCS8::encode(*priv, p);
-    }
-  string decoded_key = p.read_all_as_string();
+
   if (args.size() == 0)
-    cout << decoded_key;
+    app.keys.export_key_for_agent(id, cout);
   else
     {
       string external_path = system_path(idx(args, 0)).as_external();
       ofstream fout(external_path.c_str(), ofstream::out);
-      fout << decoded_key;
+      app.keys.export_key_for_agent(id, fout);
     }
 }
 
@@ -153,11 +127,8 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
     throw usage(execid);
 
   rsa_keypair_id id;
-  keypair key;
   get_user_key(id, app.opts, app.lua, app.keys, app.db);
-  app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.keys, id, key.priv);
-  app.agent.add_identity(*priv, id());
+  app.keys.add_key_to_agent(id);
 }
 
 CMD(cert, "cert", "", CMD_REF(key_and_cert),

@@ -9,6 +9,7 @@
 #include "app_state.hh"
 #include "transforms.hh"
 #include "constants.hh"
+#include "ssh_agent.hh"
 
 #include "botan/botan.h"
 #include "botan/rsa.h"
@@ -23,6 +24,7 @@ using std::pair;
 using std::string;
 using std::vector;
 
+using boost::scoped_ptr;
 using boost::shared_ptr;
 using boost::shared_dynamic_cast;
 
@@ -50,6 +52,9 @@ class key_store_state
     pair<shared_ptr<PK_Signer>,
          shared_ptr<RSA_PrivateKey> > > signers;
 
+  // Initialized when first required.
+  scoped_ptr<ssh_agent> agent;
+
   key_store_state(app_state & app)
     : have_read(false), app(app)
   {}
@@ -61,6 +66,14 @@ public:
   // can get at it.
   bool put_key_pair_memory(rsa_keypair_id const & ident,
                            keypair const & kp);
+
+  // wrapper around accesses to agent, initializes as needed
+  ssh_agent & get_agent()
+  {
+    if (!agent)
+      agent.reset(new ssh_agent);
+    return *agent;
+  }
 };
 
 namespace
@@ -121,9 +134,7 @@ key_store::key_store(app_state & a)
 }
 
 key_store::~key_store()
-{
-  delete s;
-}
+{}
 
 void
 key_store::set_key_dir(system_path const & kd)
@@ -460,7 +471,7 @@ key_store::make_signature(database & db,
     db.put_key(id, key.pub);
 
   string sig_string;
-  ssh_agent & agent = s->app.agent;
+  ssh_agent & agent = s->get_agent();
 
   //sign with ssh-agent (if connected)
   N(agent.connected() || opt_ssh_sign != "only",
@@ -559,6 +570,47 @@ key_store::make_signature(database & db,
   I(s != cert_unknown);
   E(s == cert_ok, F("make_signature: signature is not valid"));
 }
+
+//
+// Interoperation with ssh-agent (see also above)
+//
+
+void
+key_store::add_key_to_agent(rsa_keypair_id const & id)
+{
+  ssh_agent & agent = s->get_agent();
+  N(agent.connected(),
+    F("no ssh-agent is available, cannot add key '%s'") % id);
+
+  keypair key;
+  get_key_pair(id, key);
+
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, key.priv);
+  agent.add_identity(*priv, id());
+}
+
+void
+key_store::export_key_for_agent(rsa_keypair_id const & id,
+                                std::ostream & os)
+{
+  keypair key;
+  get_key_pair(id, key);
+  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, key.priv);
+  utf8 new_phrase;
+  get_passphrase(new_phrase, id, true, false);
+
+  Pipe p(new Botan::DataSink_Stream(os));
+  p.start_msg();
+  if (new_phrase().length())
+    Botan::PKCS8::encrypt_key(*priv,
+                              p,
+                              new_phrase(),
+                              "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
+  else
+    Botan::PKCS8::encode(*priv, p);
+  p.end_msg();
+}
+
 
 //
 // Migration from old databases
