@@ -31,6 +31,7 @@ using Botan::RSA_PublicKey;
 using Botan::SecureVector;
 using Botan::X509_PublicKey;
 using Botan::PKCS8_PrivateKey;
+using Botan::PK_Decryptor;
 using Botan::PK_Signer;
 using Botan::Pipe;
 
@@ -424,7 +425,24 @@ key_store::change_key_passphrase(rsa_keypair_id const & id)
   put_key_pair(id, kp);
 }
 
+void
+key_store::decrypt_rsa(rsa_keypair_id const & id,
+                       rsa_oaep_sha_data const & ciphertext,
+                       string & plaintext)
+{
+  keypair kp;
+  load_key_pair(*this, id, kp);
+  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(*this, id, kp.priv);
 
+  shared_ptr<PK_Decryptor>
+    decryptor(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
+
+  SecureVector<Botan::byte> plain = decryptor->decrypt(
+          reinterpret_cast<Botan::byte const *>(ciphertext().data()),
+          ciphertext().size());
+  plaintext = string(reinterpret_cast<char const*>(plain.begin()),
+                     plain.size());
+}
 
 void
 key_store::make_signature(database & db,

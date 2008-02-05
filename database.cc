@@ -79,8 +79,10 @@ using std::string;
 using std::vector;
 
 using boost::shared_ptr;
+using boost::shared_dynamic_cast;
 using boost::lexical_cast;
 
+using Botan::PK_Encryptor;
 using Botan::PK_Verifier;
 using Botan::SecureVector;
 using Botan::X509_PublicKey;
@@ -2686,6 +2688,35 @@ database::delete_public_key(rsa_keypair_id const & pub_id)
 {
   imp->execute(query("DELETE FROM public_keys WHERE id = ?")
                % text(pub_id()));
+}
+
+void
+database::encrypt_rsa(rsa_keypair_id const & pub_id,
+                      string const & plaintext,
+                      rsa_oaep_sha_data & ciphertext)
+{
+  rsa_pub_key pub;
+  get_key(pub_id, pub);
+
+  SecureVector<Botan::byte> pub_block;
+  pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()),
+                pub().size());
+
+  shared_ptr<X509_PublicKey> x509_key(Botan::X509::load_key(pub_block));
+  shared_ptr<RSA_PublicKey> pub_key
+    = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+  if (!pub_key)
+    throw informative_failure("Failed to get RSA encrypting key");
+
+  shared_ptr<PK_Encryptor>
+    encryptor(get_pk_encryptor(*pub_key, "EME1(SHA-1)"));
+
+  SecureVector<Botan::byte> ct;
+  ct = encryptor->encrypt(
+          reinterpret_cast<Botan::byte const *>(plaintext.data()),
+          plaintext.size());
+  ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()),
+                                        ct.size()));
 }
 
 cert_status

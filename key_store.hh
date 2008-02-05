@@ -60,6 +60,10 @@ public:
 
   void change_key_passphrase(rsa_keypair_id const & id);
 
+  void decrypt_rsa(rsa_keypair_id const & id,
+                   rsa_oaep_sha_data const & ciphertext,
+                   std::string & plaintext);
+
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,
                       base64<rsa_sha1_signature> & signature);

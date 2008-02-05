@@ -254,6 +254,12 @@ public:
 
   void delete_public_key(rsa_keypair_id const & pub_id);
 
+  // Crypto operations
+  
+  void encrypt_rsa(rsa_keypair_id const & pub_id,
+                   std::string const & plaintext,
+                   rsa_oaep_sha_data & ciphertext);
+
   cert_status check_signature(rsa_keypair_id const & id,
                               std::string const & alleged_text,
                               base64<rsa_sha1_signature> const & signature);

@@ -471,16 +471,14 @@ session:
   void queue_anonymous_cmd(protocol_role role,
                            globish const & include_pattern,
                            globish const & exclude_pattern,
-                           id const & nonce2,
-                           base64<rsa_pub_key> server_key_encoded);
+                           id const & nonce2);
   void queue_auth_cmd(protocol_role role,
                       globish const & include_pattern,
                       globish const & exclude_pattern,
                       id const & client,
                       id const & nonce1,
                       id const & nonce2,
-                      string const & signature,
-                      base64<rsa_pub_key> server_key_encoded);
+                      string const & signature);
   void queue_confirm_cmd();
   void queue_refine_cmd(refinement_type ty, merkle_node const & node);
   void queue_data_cmd(netcmd_item_type type,
@@ -786,11 +784,8 @@ session::set_session_key(rsa_oaep_sha_data const & hmac_key_encrypted)
 {
   if (use_transport_auth)
     {
-      keypair our_kp;
-      load_key_pair(keys, signing_key, our_kp);
       string hmac_key;
-      decrypt_rsa(keys, signing_key, our_kp.priv,
-                  hmac_key_encrypted, hmac_key);
+      keys.decrypt_rsa(signing_key, hmac_key_encrypted, hmac_key);
       set_session_key(hmac_key);
     }
 }
@@ -1163,14 +1158,12 @@ void
 session::queue_anonymous_cmd(protocol_role role,
                              globish const & include_pattern,
                              globish const & exclude_pattern,
-                             id const & nonce2,
-                             base64<rsa_pub_key> server_key_encoded)
+                             id const & nonce2)
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
   if (use_transport_auth)
-    encrypt_rsa(keys, remote_peer_key_name, server_key_encoded,
-                nonce2(), hmac_key_encrypted);
+    project.db.encrypt_rsa(remote_peer_key_name, nonce2(), hmac_key_encrypted);
   cmd.write_anonymous_cmd(role, include_pattern, exclude_pattern,
                           hmac_key_encrypted);
   write_netcmd_and_try_flush(cmd);
@@ -1184,14 +1177,12 @@ session::queue_auth_cmd(protocol_role role,
                         id const & client,
                         id const & nonce1,
                         id const & nonce2,
-                        string const & signature,
-                        base64<rsa_pub_key> server_key_encoded)
+                        string const & signature)
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
   I(use_transport_auth);
-  encrypt_rsa(keys, remote_peer_key_name, server_key_encoded,
-              nonce2(), hmac_key_encrypted);
+  project.db.encrypt_rsa(remote_peer_key_name, nonce2(), hmac_key_encrypted);
   cmd.write_auth_cmd(role, include_pattern, exclude_pattern, client,
                      nonce1, hmac_key_encrypted, signature);
   write_netcmd_and_try_flush(cmd);
@@ -1371,6 +1362,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       id their_key_hash_decoded;
       decode_hexenc(their_key_hash, their_key_hash_decoded);
       this->remote_peer_key_hash = their_key_hash_decoded;
+      this->remote_peer_key_name = their_keyname;
     }
 
   // clients always include in the synchronization set, every branch that the
@@ -1410,13 +1402,12 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
-                     our_key_hash_raw, nonce, mk_nonce(), sig_raw(),
-                     their_key_encoded);
+                     our_key_hash_raw, nonce, mk_nonce(), sig_raw());
     }
   else
     {
       queue_anonymous_cmd(this->role, our_include_pattern,
-                          our_exclude_pattern, mk_nonce(), their_key_encoded);
+                          our_exclude_pattern, mk_nonce());
     }
 
   lua.hook_note_netsync_start(session_id, "client", this->role,

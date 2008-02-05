@@ -318,48 +318,6 @@ get_private_key(key_store & keys,
   I(false);
 }
 
-void encrypt_rsa(key_store & keys,
-                 rsa_keypair_id const & id,
-                 base64<rsa_pub_key> & pub_encoded,
-                 string const & plaintext,
-                 rsa_oaep_sha_data & ciphertext)
-{
-  rsa_pub_key pub;
-  decode_base64(pub_encoded, pub);
-  SecureVector<Botan::byte> pub_block;
-  pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()), pub().size());
-
-  shared_ptr<X509_PublicKey> x509_key = shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
-  shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
-  if (!pub_key)
-    throw informative_failure("Failed to get RSA encrypting key");
-
-  shared_ptr<PK_Encryptor> encryptor;
-  encryptor = shared_ptr<PK_Encryptor>(get_pk_encryptor(*pub_key, "EME1(SHA-1)"));
-
-  SecureVector<Botan::byte> ct;
-  ct = encryptor->encrypt(
-          reinterpret_cast<Botan::byte const *>(plaintext.data()), plaintext.size());
-  ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()), ct.size()));
-}
-
-void decrypt_rsa(key_store & keys,
-                 rsa_keypair_id const & id,
-                 base64< rsa_priv_key > const & priv,
-                 rsa_oaep_sha_data const & ciphertext,
-                 string & plaintext)
-{
-  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(keys, id, priv);
-
-  shared_ptr<PK_Decryptor> decryptor;
-  decryptor = shared_ptr<PK_Decryptor>(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
-
-  SecureVector<Botan::byte> plain;
-  plain = decryptor->decrypt(
-        reinterpret_cast<Botan::byte const *>(ciphertext().data()), ciphertext().size());
-  plaintext = string(reinterpret_cast<char const*>(plain.begin()), plain.size());
-}
-
 void
 key_hash_code(rsa_keypair_id const & ident,
               base64<rsa_pub_key> const & pub,
