@@ -112,25 +112,11 @@ EXTERN template class base64<data>;
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.
 
-/*
-hum... which operators are really needed and which not?
-EXTERN template std::ostream & operator<< <>(std::ostream &,           id   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
-*/
-EXTERN template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
-//EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
-
-
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, revision< hexenc<id> > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,   roster< hexenc<id> > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< hexenc<id> > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,     file< hexenc<id> > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<id> > const &);
 
-
+// for some reason, we need this output operator for file<id>, which surely
+// return 
+EXTERN template std::ostream & operator<< <>(std::ostream &,             file<id>   const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 

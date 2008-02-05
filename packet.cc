@@ -42,7 +42,7 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]\n"
+  ost << "[fdata " << encode_hexenc(ident.inner()()) << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -54,8 +54,8 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << '\n'
-      << "        " << new_id.inner()() << "]\n"
+  ost << "[fdelta " << encode_hexenc(old_id.inner()()) << '\n'
+      << "        " << encode_hexenc(new_id.inner()()) << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -66,7 +66,7 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]\n"
+  ost << "[rdata " << encode_hexenc(ident.inner()()) << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -486,11 +486,12 @@ UNIT_TEST(packet, roundabout)
 
     // a rdata packet
     revision_t rev;
-    rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    rev.new_manifest = manifest_id(decode_hexenc(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     shared_ptr<cset> cs(new cset);
     cs->dirs_added.insert(file_path_internal(""));
-    rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
-                                    cs));
+    rev.edges.insert(make_pair(revision_id(decode_hexenc(
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")), cs));
     revision_data rdat;
     write_revision(rev, rdat);
     revision_id rid;
