@@ -290,7 +290,7 @@ print_cset(basic_io::printer & printer,
     {
       basic_io::stanza st;
       st.push_file_pair(syms::add_file, i->first);
-      st.push_hex_pair(syms::content, i->second.inner());
+      st.push_binary_pair(syms::content, i->second.inner());
       printer.print_stanza(st);
     }
 
@@ -299,8 +299,8 @@ print_cset(basic_io::printer & printer,
     {
       basic_io::stanza st;
       st.push_file_pair(syms::patch, i->first);
-      st.push_hex_pair(syms::from, i->second.first.inner());
-      st.push_hex_pair(syms::to, i->second.second.inner());
+      st.push_binary_pair(syms::from, i->second.first.inner());
+      st.push_binary_pair(syms::to, i->second.second.inner());
       printer.print_stanza(st);
     }
 
@@ -469,6 +469,7 @@ dump(cset const & cs, string & out)
 }
 
 #ifdef BUILD_UNIT_TESTS
+#include "transforms.hh"
 #include "unit_tests.hh"
 
 #include "roster.hh"
@@ -687,9 +688,9 @@ UNIT_TEST(cset, cset_written)
   {
     L(FL("TEST: cset writing - normalisation"));
     cset cs; MM(cs);
-    file_id f1(string("1234567800000000000000000000000000000000"));
-    file_id f2(string("9876543212394657263900000000000000000000"));
-    file_id f3(string("0000000000011111111000000000000000000000"));
+    file_id f1(decode_hexenc("1234567800000000000000000000000000000000"));
+    file_id f2(decode_hexenc("9876543212394657263900000000000000000000"));
+    file_id f3(decode_hexenc("0000000000011111111000000000000000000000"));
 
     file_path foo = file_path_internal("foo");
     file_path foo_quux = file_path_internal("foo/quux");
@@ -759,8 +760,8 @@ UNIT_TEST(cset, basic_csets)
 
   editable_roster_base tree(r, nis);
 
-  file_id f1(string("0000000000000000000000000000000000000001"));
-  file_id f2(string("0000000000000000000000000000000000000002"));
+  file_id f1(decode_hexenc("0000000000000000000000000000000000000001"));
+  file_id f2(decode_hexenc("0000000000000000000000000000000000000002"));
 
   file_path root;
   file_path foo = file_path_internal("foo");
@@ -934,8 +935,8 @@ UNIT_TEST(cset, invalid_csets)
   MM(r);
   editable_roster_base tree(r, nis);
 
-  file_id f1(string("0000000000000000000000000000000000000001"));
-  file_id f2(string("0000000000000000000000000000000000000002"));
+  file_id f1(decode_hexenc("0000000000000000000000000000000000000001"));
+  file_id f2(decode_hexenc("0000000000000000000000000000000000000002"));
 
   file_path root;
   file_path foo = file_path_internal("foo");
@@ -1104,7 +1105,7 @@ UNIT_TEST(cset, root_dir)
   MM(r);
   editable_roster_base tree(r, nis);
 
-  file_id f1(string("0000000000000000000000000000000000000001"));
+  file_id f1(decode_hexenc("0000000000000000000000000000000000000001"));
 
   file_path root, baz = file_path_internal("baz");
 

@@ -2470,17 +2470,17 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_hex_pair(basic_io::syms::birth, mark.birth_revision.inner());
+  st.push_binary_pair(basic_io::syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_hex_pair(basic_io::syms::path_mark, i->inner());
+    st.push_binary_pair(basic_io::syms::path_mark, i->inner());
 
   if (is_file)
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
-        st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+        st.push_binary_pair(basic_io::syms::content_mark, i->inner());
     }
   else
     I(mark.file_content.empty());
@@ -2490,7 +2490,7 @@ push_marking(basic_io::stanza & st,
     {
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
+        st.push_binary_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2563,7 +2563,7 @@ roster_t::print_to(basic_io::printer & pr,
           {
             file_t ftmp = downcast_to_file_t(curr);
             st.push_str_pair(basic_io::syms::file, i.path());
-            st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
+            st.push_binary_pair(basic_io::syms::content, ftmp->content.inner());
           }
       }
 

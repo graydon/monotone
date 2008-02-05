@@ -37,6 +37,7 @@
 #include "globish.hh"
 #include "charset.hh"
 #include "safe_map.hh"
+#include "xdelta.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -1684,7 +1685,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
         {
           basic_io::stanza stz;
           stz.push_str_pair(symbol("tag"), tag->name());
-          stz.push_hex_pair(symbol("revision"), tag->ident.inner());
+          stz.push_binary_pair(symbol("revision"), tag->ident.inner());
           stz.push_str_pair(symbol("signer"), tag->key());
           stz.push_str_multi(symbol("branches"), branch_names);
           prt.print_stanza(stz);
@@ -1746,7 +1747,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 
   utf8 passphrase = idx(args, 1);
 
-  hexenc<id> pubhash, privhash;
+  id pubhash, privhash;
   app.keys.create_key_pair(app.db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
@@ -1758,8 +1759,8 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   privlocs.push_back("keystore");
 
   stz.push_str_pair(syms::name, ident());
-  stz.push_hex_pair(syms::public_hash, pubhash);
-  stz.push_hex_pair(syms::private_hash, privhash);
+  stz.push_binary_pair(syms::public_hash, pubhash);
+  stz.push_binary_pair(syms::private_hash, privhash);
   stz.push_str_multi(syms::public_location, publocs);
   stz.push_str_multi(syms::private_location, privlocs);
   prt.print_stanza(stz);
@@ -1864,7 +1865,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
        i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+      st.push_binary_pair(basic_io::syms::content_mark, i->inner());
       prt.print_stanza(st);
     }
     output.write(prt.buf.data(), prt.buf.size());
@@ -2070,7 +2071,7 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-  revision_id rid(idx(args, 0)());
+  revision_id rid(decode_hexenc(idx(args, 0)()));
 
   N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);

@@ -54,7 +54,6 @@ template <typename T>
 void decode_base64(base64<T> const & in, T & out)
 { out = T(xform<Botan::Base64_Decoder>(in())); }
 
-
 // hex encoding
 
 template <typename T>
@@ -96,21 +95,10 @@ template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out);
 
 
-// diffing and patching
-
-void diff(data const & olddata,
-          data const & newdata,
-          delta & del);
-
-void patch(data const & olddata,
-           delta const & del,
-           data & newdata);
-
-
 // version (a.k.a. sha1 fingerprint) calculation
 
 void calculate_ident(data const & dat,
-                     hexenc<id> & ident);
+                     id & ident);
 
 void calculate_ident(file_data const & dat,
                      file_id & ident);
