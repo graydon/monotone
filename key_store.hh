@@ -40,7 +40,7 @@ public:
                     keypair & kp);
   bool maybe_get_key_pair(rsa_keypair_id const & ident,
                           keypair & kp);
-  bool maybe_get_key_pair(hexenc<id> const & hash,
+  bool maybe_get_key_pair(id const & hash,
                           rsa_keypair_id & ident,
                           keypair & kp);
 
