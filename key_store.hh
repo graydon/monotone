@@ -57,8 +57,8 @@ public:
 
   void create_key_pair(database & db, rsa_keypair_id const & id,
                        utf8 const * maybe_passphrase = NULL,
-                       hexenc<id> * maybe_pubhash = NULL,
-                       hexenc<id> * maybe_privhash = NULL);
+                       id * maybe_pubhash = NULL,
+                       id * maybe_privhash = NULL);
 
   void change_key_passphrase(rsa_keypair_id const & id);
 

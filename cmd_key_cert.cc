@@ -17,6 +17,7 @@
 #include "cmd.hh"
 #include "app_state.hh"
 #include "keys.hh"
+#include "transforms.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -177,9 +178,9 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
   expand_selector(app, idx(args, 0)(), rids);
   diagnose_ambiguous_expansion(app, idx(args, 0)(), rids);
 
-  hexenc<id> ident;
+  revision_id ident;
   if (!rids.empty())
-    ident = hexenc<id>(encode_hexenc(rids.begin()->inner()()));
+    ident = *rids.begin();
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -208,7 +209,7 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
             "and value: %s\n"
             "was signed by: %s\n"
             "it would be: %s")
-    % ident
+    % encode_hexenc(ident.inner()())
     % cname
     % value
     % all_signers.str()

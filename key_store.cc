@@ -343,8 +343,8 @@ void
 key_store::create_key_pair(database & db,
                            rsa_keypair_id const & id,
                            utf8 const * maybe_passphrase,
-                           hexenc<id> * maybe_pubhash,
-                           hexenc<id> * maybe_privhash)
+                           id * maybe_pubhash,
+                           id * maybe_privhash)
 {
   conditional_transaction_guard guard(db);
 
