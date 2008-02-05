@@ -56,7 +56,7 @@ class key_store_state
   scoped_ptr<ssh_agent> agent;
 
   key_store_state(app_state & app)
-    : have_read(false), app(app)
+    : key_dir(app.opts.conf_dir / "keys"), have_read(false), app(app)
   {}
 
 public:  
@@ -130,8 +130,7 @@ namespace
 
 key_store::key_store(app_state & a)
   : s(new key_store_state(a))
-{
-}
+{}
 
 key_store::~key_store()
 {}

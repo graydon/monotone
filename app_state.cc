@@ -29,19 +29,14 @@ using std::vector;
 using std::vector;
 
 app_state::app_state()
-  : db(lua), keys(*this), work(lua),
+  : lua(this), keys(*this), db(lua), work(lua),
     branch_is_sticky(false),
     mtn_automate_allowed(false),
     project(db)
-{
-  lua.set_app(this);
-  keys.set_key_dir(opts.conf_dir / "keys");
-}
+{}
 
 app_state::~app_state()
-{
-}
-
+{}
 
 void
 app_state::allow_workspace()
@@ -58,7 +53,7 @@ app_state::allow_workspace()
       // dir's _MTN rather than the new workspace dir's _MTN.
       global_sanity.set_dump_path(system_path(dump_path, false).as_external());
     }
-  load_rcfiles();
+  lua.load_rcfiles(opts);
 }
 
 void
@@ -77,11 +72,13 @@ app_state::process_options()
                       key_option, keydir_option);
 
   // Workspace options are not to override the command line.
-  if (db.get_filename().as_internal().empty() && !database_option.as_internal().empty())
+  if (db.get_filename().as_internal().empty()
+      && !database_option.as_internal().empty())
     db.set_filename(database_option);
 
-  if (keys.get_key_dir().as_internal().empty() && !keydir_option.as_internal().empty())
-    set_key_dir(keydir_option);
+  if (keys.get_key_dir().as_internal().empty()
+      && !keydir_option.as_internal().empty())
+    keys.set_key_dir(keydir_option);
 
   if (opts.branchname().empty() && !branch_option().empty())
     {
@@ -164,7 +161,7 @@ app_state::create_workspace(system_path const & new_dir)
   // dir's _MTN rather than the new workspace dir's _MTN.
   global_sanity.set_dump_path(system_path(dump_path, false).as_external());
 
-  load_rcfiles();
+  lua.load_rcfiles(opts);
 }
 
 void
@@ -184,15 +181,6 @@ app_state::set_database(system_path const & filename)
           work.set_ws_options(database_option, branch_option,
                       key_option, keydir_option);
         }
-    }
-}
-
-void
-app_state::set_key_dir(system_path const & filename)
-{
-  if (!filename.empty())
-    {
-      keys.set_key_dir(filename);
     }
 }
 
@@ -220,35 +208,6 @@ app_state::get_project()
 // _MTN/monotonerc can be loaded between ~/.monotone/monotonerc and other
 // rcfiles.
 
-void
-app_state::load_rcfiles()
-{
-  // Built-in rc settings are defaults.
-
-  if (!opts.nostd)
-    lua.add_std_hooks();
-
-  // ~/.monotone/monotonerc overrides that, and
-  // _MTN/monotonerc overrides *that*.
-
-  if (!opts.norc)
-    {
-      system_path default_rcfile;
-      bookkeeping_path workspace_rcfile;
-      lua.default_rcfilename(default_rcfile);
-      lua.workspace_rcfilename(workspace_rcfile);
-      lua.load_rcfile(default_rcfile, false);
-      lua.load_rcfile(workspace_rcfile, false);
-    }
-
-  // Command-line rcfiles override even that.
-
-  for (args_vector::const_iterator i = opts.extra_rcfiles.begin();
-       i != opts.extra_rcfiles.end(); ++i)
-    {
-      lua.load_rcfile(*i);
-    }
-}
 
 // Local Variables:
 // mode: C++

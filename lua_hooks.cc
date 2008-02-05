@@ -84,7 +84,7 @@ get_app_state(lua_State *L)
     return NULL;
 }
 
-lua_hooks::lua_hooks()
+lua_hooks::lua_hooks(app_state * app)
 {
   st = luaL_newstate();
   I(st);
@@ -109,6 +109,8 @@ lua_hooks::lua_hooks()
     if (!run_string(st, disable_dangerous,
                     "<disabled dangerous functions>"))
     throw oops("lua error while disabling existing functions");
+
+  map_of_lua_to_app.insert(make_pair(st, app));
 }
 
 lua_hooks::~lua_hooks()
@@ -118,12 +120,6 @@ lua_hooks::~lua_hooks()
     lua_close (st);
   if (i != map_of_lua_to_app.end())
     map_of_lua_to_app.erase(i);
-}
-
-void
-lua_hooks::set_app(app_state *_app)
-{
-  map_of_lua_to_app.insert(make_pair(st, _app));
 }
 
 bool
@@ -138,21 +134,6 @@ lua_hooks::add_std_hooks()
   if (!run_string(st, std_hooks_constant, "<std hooks>"))
     throw oops("lua error while setting up standard hooks");
 }
-
-void
-lua_hooks::default_rcfilename(system_path & file)
-{
-  map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
-  I(i != map_of_lua_to_app.end());
-  file = i->second->opts.conf_dir / "monotonerc";
-}
-
-void
-lua_hooks::workspace_rcfilename(bookkeeping_path & file)
-{
-  file = bookkeeping_root / "monotonerc";
-}
-
 
 void
 lua_hooks::load_rcfile(utf8 const & rc)
@@ -203,6 +184,29 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
       N(!required, F("rcfile '%s' does not exist") % rc);
       L(FL("skipping nonexistent rcfile '%s'") % rc);
     }
+}
+
+void
+lua_hooks::load_rcfiles(options & opts)
+{
+  // Built-in rc settings are defaults.
+  if (!opts.nostd)
+    add_std_hooks();
+
+  // ~/.monotone/monotonerc overrides that, and
+  // _MTN/monotonerc overrides *that*.
+
+  if (!opts.norc)
+    {
+      load_rcfile(opts.conf_dir / "monotonerc", false);
+      load_rcfile(bookkeeping_root / "monotonerc", false);
+    }
+
+  // Command-line rcfiles override even that.
+
+  for (args_vector::const_iterator i = opts.extra_rcfiles.begin();
+       i != opts.extra_rcfiles.end(); ++i)
+    load_rcfile(*i);
 }
 
 bool

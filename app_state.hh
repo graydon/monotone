@@ -10,9 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-class app_state;
-class lua_hooks;
-
 #include "database.hh"
 #include "key_store.hh"
 #include "lua_hooks.hh"
@@ -31,12 +28,11 @@ class lua_hooks;
 class app_state
 {
 public:
-  lua_hooks lua;
-  database db;
-  key_store keys;
-  workspace work;
-
   options opts;
+  lua_hooks lua;
+  key_store keys;
+  database db;
+  workspace work;
 
   bool found_workspace;
   bool branch_is_sticky;
@@ -63,14 +59,11 @@ public:
   project_t & get_project(); // get_project(opts.project) or I()
 
   void set_database(system_path const & filename);
-  void set_key_dir(system_path const & filename);
-  void set_diff_format(diff_type dtype);
 
   explicit app_state();
   ~app_state();
 
 private:
-  void load_rcfiles();
   void write_options();
 };
 
