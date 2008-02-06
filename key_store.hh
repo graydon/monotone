@@ -11,17 +11,12 @@ class app_state;
 struct globish;
 class database;
 
-class key_store_state;
+struct key_store_state;
 
 class key_store
 {
 private:
   boost::scoped_ptr<key_store_state> s;
-
-  void get_key_file(rsa_keypair_id const & ident, system_path & file);
-  void write_key(rsa_keypair_id const & ident);
-  void read_key_dir();
-  void maybe_read_key_dir();
 
 public:
   rsa_keypair_id signing_key;
@@ -55,6 +50,8 @@ public:
 
   // Crypto operations
 
+  void cache_decrypted_key(rsa_keypair_id const & id);
+
   void create_key_pair(database & db, rsa_keypair_id const & id,
                        utf8 const * maybe_passphrase = NULL,
                        hexenc<id> * maybe_pubhash = NULL,
@@ -81,11 +78,6 @@ public:
   void migrate_old_key_pair(rsa_keypair_id const & id,
                             base64<old_arc4_rsa_priv_key> const & old_priv,
                             base64<rsa_pub_key> const & pub);
-
-  // FIXME: quick hack to make these hooks and options available via
-  //        the key_store context
-  bool hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase);
-  bool hook_persist_phrase_ok();
 };
 
 // Local Variables:

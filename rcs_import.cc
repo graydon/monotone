@@ -31,7 +31,6 @@
 #include "database.hh"
 #include "file_io.hh"
 #include "interner.hh"
-#include "keys.hh"
 #include "paths.hh"
 #include "platform-wrapped.hh"
 #include "project.hh"

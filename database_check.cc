@@ -13,7 +13,6 @@
 
 #include "constants.hh"
 #include "database.hh"
-#include "keys.hh"
 #include "revision.hh"
 #include "ui.hh"
 #include "vocab.hh"

@@ -8,56 +8,24 @@
 // PURPOSE.
 
 #include "base.hh"
-#include <map>
-#include <iostream>
-#include <unistd.h>
-#include <string.h>
+#include <cstring>
 
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include "botan/botan.h"
-#include "botan/rsa.h"
-#include "botan/keypair.h"
-#include "botan/pem.h"
-
-#include "constants.hh"
 #include "keys.hh"
-#include "key_store.hh"
-#include "lua_hooks.hh"
-#include "netio.hh"
-#include "platform.hh"
-#include "safe_map.hh"
-#include "transforms.hh"
-#include "simplestring_xform.hh"
 #include "sanity.hh"
 #include "ui.hh"
-#include "cert.hh"
+#include "constants.hh"
+#include "platform.hh"
+#include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "charset.hh"
-#include "database.hh"
+#include "lua_hooks.hh"
 #include "options.hh"
+#include "key_store.hh"
+#include "database.hh"
 
-using std::cout;
-using std::make_pair;
-using std::map;
 using std::string;
 using std::vector;
-
-using boost::scoped_ptr;
-using boost::shared_ptr;
-using boost::shared_dynamic_cast;
-
-using Botan::byte;
-using Botan::get_cipher;
-using Botan::PKCS8_PrivateKey;
-using Botan::PK_Decryptor;
-using Botan::PK_Encryptor;
-using Botan::PK_Signer;
-using Botan::Pipe;
-using Botan::RSA_PrivateKey;
-using Botan::RSA_PublicKey;
-using Botan::SecureVector;
-using Botan::X509_PublicKey;
+using std::memset;
 
 // there will probably forever be bugs in this file. it's very
 // hard to get right, portably and securely. sorry about that.
@@ -119,47 +87,6 @@ get_passphrase(utf8 & phrase,
   memset(pass2, 0, constants::maxpasswd);
 }
 
-// 'force_from_user' means that we don't use the passphrase cache, and we
-// don't use the get_passphrase hook.
-static void
-get_passphrase(key_store & keys,
-               utf8 & phrase,
-               rsa_keypair_id const & keyid,
-               bool force_from_user)
-{
-  // we permit the user to relax security here, by caching a passphrase (if
-  // they permit it) through the life of a program run. this helps when
-  // you're making a half-dozen certs during a commit or merge or
-  // something.
-  bool persist_phrase = keys.hook_persist_phrase_ok();
-  static map<rsa_keypair_id, utf8> phrases;
-  if (!force_from_user && phrases.find(keyid) != phrases.end())
-    {
-      phrase = phrases[keyid];
-      return;
-    }
-
-  string lua_phrase;
-  if (!force_from_user && keys.hook_get_passphrase(keyid, lua_phrase))
-    {
-      N(!lua_phrase.empty(),
-        F("got empty passphrase from get_passphrase() hook"));
-
-      // user is being a slob and hooking lua to return his passphrase
-      phrase = utf8(lua_phrase);
-      return;
-    }
-
-  get_passphrase(phrase, keyid, false, false);
-
-  // permit security relaxation. maybe.
-  if (persist_phrase)
-    {
-      phrases.erase(keyid);
-      safe_insert(phrases, make_pair(keyid, phrase));
-    }
-}
-
 // Loads a key pair for a given key id, considering it a user error
 // if that key pair is not available.
 
@@ -214,36 +141,28 @@ get_user_key(rsa_keypair_id & key,
       key = all_privkeys[0];
     }
 
-  keys.signing_key = key;
-
   // Ensure that the specified key actually exists.
   keypair priv_key;
   load_key_pair(keys, key, priv_key);
   
-  // we can only do the steps below if we have a database.
-  if (!db.database_specified())
-    return;
-
-  // If the database doesn't have this public key, add it now; otherwise
-  // make sure the database and key-store agree on the public key.
-  if (!db.public_key_exists(key))
-    db.put_key(key, priv_key.pub);
-  else
+  if (db.database_specified())
     {
-      base64<rsa_pub_key> pub_key;
-      db.get_key(key, pub_key);
-      E(keys_match(key, pub_key, key, priv_key.pub),
-        F("The key '%s' stored in your database does\n"
-          "not match the version in your local key store!") % key);
+      // If the database doesn't have this public key, add it now; otherwise
+      // make sure the database and key-store agree on the public key.
+      if (!db.public_key_exists(key))
+        db.put_key(key, priv_key.pub);
+      else
+        {
+          base64<rsa_pub_key> pub_key;
+          db.get_key(key, pub_key);
+          E(keys_match(key, pub_key, key, priv_key.pub),
+            F("The key '%s' stored in your database does\n"
+              "not match the version in your local key store!") % key);
+        }
     }
 
-  // If permitted, decrypt and cache the key now.
-  if (keys.hook_persist_phrase_ok())
-    {
-      string plaintext("hi maude");
-      base64<rsa_sha1_signature> sig;
-      keys.make_signature(db, key, plaintext, sig);
-    }
+  // Decrypt and cache the key now.
+  keys.cache_decrypted_key(key);
 }
 
 // As above, but does not report which key has been selected; for use when
@@ -254,67 +173,6 @@ cache_user_key(options const & opts, lua_hooks & lua,
 {
   rsa_keypair_id key;
   get_user_key(key, opts, lua, keys, db);
-}
-
-// ask for passphrase then decrypt a private key.
-shared_ptr<RSA_PrivateKey>
-get_private_key(key_store & keys,
-                rsa_keypair_id const & id,
-                base64< rsa_priv_key > const & priv,
-                bool force_from_user)
-{
-  rsa_priv_key decoded_key;
-  utf8 phrase;
-  bool force = force_from_user;
-
-  L(FL("base64-decoding %d-byte private key") % priv().size());
-  decode_base64(priv, decoded_key);
-  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
-  try //with empty passphrase
-    {
-      Pipe p;
-      p.process_msg(decoded_key());
-      pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
-    }
-  catch (...)
-    {
-      L(FL("failed to decrypt key with no passphrase"));
-    }
-  if (!pkcs8_key)
-    {
-      for (int i = 0; i < 3; ++i)
-        {
-          get_passphrase(keys, phrase, id, force);
-          L(FL("have %d-byte encrypted private key") % decoded_key().size());
-
-          try
-            {
-              Pipe p;
-              p.process_msg(decoded_key());
-              pkcs8_key = shared_ptr<PKCS8_PrivateKey>(Botan::PKCS8::load_key(p, phrase()));
-              break;
-            }
-          catch (...)
-            {
-              if (i >= 2)
-                throw informative_failure("failed to decrypt private RSA key, "
-                                          "probably incorrect passphrase");
-              // don't use the cached bad one next time
-              force = true;
-              continue;
-            }
-        }
-    }
-  if (pkcs8_key)
-    {
-      shared_ptr<RSA_PrivateKey> priv_key;
-      priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
-      if (!priv_key)
-        throw informative_failure("Failed to get RSA signing key");
-
-      return priv_key;
-    }
-  I(false);
 }
 
 void

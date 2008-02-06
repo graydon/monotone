@@ -13,7 +13,6 @@
 #include "ssh_agent.hh"
 #include "sanity.hh"
 #include "netio.hh"
-#include "keys.hh"
 #include "botan/numthry.h"
 #include "numeric_vocab.hh"
 #include "netxx/stream.h"

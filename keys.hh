@@ -11,13 +11,11 @@
 // PURPOSE.
 
 #include "vocab.hh"
-#include <boost/shared_ptr.hpp>
 
 struct options;
 class lua_hooks;
 class key_store;
 class database;
-namespace Botan { class RSA_PrivateKey; }
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it
@@ -43,24 +41,6 @@ void load_key_pair(key_store & keys,
 void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id,
                    keypair & kp);
-
-void encrypt_rsa(key_store & keys,
-                 rsa_keypair_id const & id,
-                 base64<rsa_pub_key> & pub,
-                 std::string const & plaintext,
-                 rsa_oaep_sha_data & ciphertext);
-
-void decrypt_rsa(key_store & keys,
-                 rsa_keypair_id const & id,
-                 base64< rsa_priv_key > const & priv,
-                 rsa_oaep_sha_data const & ciphertext,
-                 std::string & plaintext);
-
-boost::shared_ptr<Botan::RSA_PrivateKey>
-get_private_key(key_store & keys,
-                rsa_keypair_id const & id,
-                base64< rsa_priv_key > const & priv,
-                bool force_from_user = false);
 
 // netsync stuff
 

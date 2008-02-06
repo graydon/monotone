@@ -10,6 +10,7 @@
 #include "transforms.hh"
 #include "constants.hh"
 #include "ssh_agent.hh"
+#include "safe_map.hh"
 
 #include "botan/botan.h"
 #include "botan/rsa.h"
@@ -37,20 +38,17 @@ using Botan::PK_Decryptor;
 using Botan::PK_Signer;
 using Botan::Pipe;
 
-class key_store_state
+struct key_store_state
 {
-  friend class key_store;
-
   system_path key_dir;
   bool have_read;
   app_state & app;
   map<rsa_keypair_id, keypair> keys;
   map<hexenc<id>, rsa_keypair_id> hashes;
 
-  // These are used to cache signers (if the hook allows).
-  map<rsa_keypair_id,
-    pair<shared_ptr<PK_Signer>,
-         shared_ptr<RSA_PrivateKey> > > signers;
+  // These are used to cache keys and signers (if the hook allows).
+  map<rsa_keypair_id, shared_ptr<RSA_PrivateKey> > privkey_cache;
+  map<rsa_keypair_id, shared_ptr<PK_Signer> > signer_cache;
 
   // Initialized when first required.
   scoped_ptr<ssh_agent> agent;
@@ -59,11 +57,15 @@ class key_store_state
     : key_dir(app.opts.conf_dir / "keys"), have_read(false), app(app)
   {}
 
-public:  
+  // internal methods
+  void get_key_file(rsa_keypair_id const & ident, system_path & file);
+  void write_key(rsa_keypair_id const & ident, keypair const & kp);
+  void maybe_read_key_dir();
+  shared_ptr<RSA_PrivateKey> decrypt_private_key(rsa_keypair_id const & id,
+                                                 bool force_from_user = false);
+
   // just like put_key_pair except that the key is _not_ written to disk.
-  // primarily for internal use in reading keys back from disk.  public so
-  // keyreader (which is in an anonymous namespace and so can't be friended)
-  // can get at it.
+  // for internal use in reading keys back from disk.
   bool put_key_pair_memory(rsa_keypair_id const & ident,
                            keypair const & kp);
 
@@ -74,16 +76,25 @@ public:
       agent.reset(new ssh_agent);
     return *agent;
   }
+
+  // duplicates of key_store interfaces for use by key_store_state methods
+  // and the keyreader.
+  bool maybe_get_key_pair(rsa_keypair_id const & ident,
+                          keypair & kp);
+  bool put_key_pair(rsa_keypair_id const & ident,
+                    keypair const & kp);
+  void migrate_old_key_pair(rsa_keypair_id const & id,
+                            base64<old_arc4_rsa_priv_key> const & old_priv,
+                            base64<rsa_pub_key> const & pub);
 };
 
 namespace
 {
   struct keyreader : public packet_consumer
   {
-    key_store & ks;
     key_store_state & kss;
 
-    keyreader(key_store & ks, key_store_state & kss): ks(ks), kss(kss) {}
+    keyreader(key_store_state & kss): kss(kss) {}
     virtual void consume_file_data(file_id const & ident,
                                    file_data const & dat)
     {E(false, F("Extraneous data in key store."));}
@@ -121,7 +132,7 @@ namespace
       W(F("converting old-format private key '%s'") % ident);
 
       base64<rsa_pub_key> dummy;
-      ks.migrate_old_key_pair(ident, k, dummy);
+      kss.migrate_old_key_pair(ident, k, dummy);
 
       L(FL("successfully read key pair '%s' from key store") % ident);
     }
@@ -138,7 +149,16 @@ key_store::~key_store()
 void
 key_store::set_key_dir(system_path const & kd)
 {
+  if (s->key_dir == kd)
+    return;
+
+  // Changing the key directory wipes the internal cache of keys.
   s->key_dir = kd;
+  s->have_read = false;
+  s->keys.clear();
+  s->hashes.clear();
+  s->signer_cache.clear();
+  s->privkey_cache.clear();
 }
 
 system_path const &
@@ -148,46 +168,41 @@ key_store::get_key_dir()
 }
 
 void
-key_store::read_key_dir()
+key_store_state::maybe_read_key_dir()
 {
+  if (have_read)
+    return;
+  have_read = true;
+
   vector<path_component> key_files, dirs;
-  if (directory_exists(s->key_dir))
+  if (directory_exists(key_dir))
     {
-      L(FL("reading key dir '%s'") % s->key_dir);
-      read_directory(s->key_dir, key_files, dirs);
+      L(FL("reading key dir '%s'") % key_dir);
+      read_directory(key_dir, key_files, dirs);
     }
   else
     {
-      L(FL("key dir '%s' does not exist") % s->key_dir);
+      L(FL("key dir '%s' does not exist") % key_dir);
       return;
     }
 
-  keyreader kr(*this, *s);
+  keyreader kr(*this);
   for (vector<path_component>::const_iterator i = key_files.begin();
        i != key_files.end(); ++i)
     {
       L(FL("reading keys from file '%s'") % (*i));
       data dat;
-      read_data(s->key_dir / *i, dat);
+      read_data(key_dir / *i, dat);
       istringstream is(dat());
       read_packets(is, kr);
     }
 }
 
 void
-key_store::maybe_read_key_dir()
-{
-  if (s->have_read)
-    return;
-  s->have_read = true;
-  read_key_dir();
-}
-
-void
 key_store::get_key_ids(globish const & pattern,
                        vector<rsa_keypair_id> & priv)
 {
-  maybe_read_key_dir();
+  s->maybe_read_key_dir();
   priv.clear();
   for (map<rsa_keypair_id, keypair>::const_iterator
          i = s->keys.begin(); i != s->keys.end(); ++i)
@@ -198,7 +213,7 @@ key_store::get_key_ids(globish const & pattern,
 void
 key_store::get_key_ids(vector<rsa_keypair_id> & priv)
 {
-  maybe_read_key_dir();
+  s->maybe_read_key_dir();
   priv.clear();
   for (map<rsa_keypair_id, keypair>::const_iterator
          i = s->keys.begin(); i != s->keys.end(); ++i)
@@ -208,20 +223,27 @@ key_store::get_key_ids(vector<rsa_keypair_id> & priv)
 bool
 key_store::key_pair_exists(rsa_keypair_id const & ident)
 {
-  maybe_read_key_dir();
+  s->maybe_read_key_dir();
   return s->keys.find(ident) != s->keys.end();
+}
+
+bool
+key_store_state::maybe_get_key_pair(rsa_keypair_id const & ident,
+                                    keypair & kp)
+{
+  maybe_read_key_dir();
+  map<rsa_keypair_id, keypair>::const_iterator i = keys.find(ident);
+  if (i == keys.end())
+    return false;
+  kp = i->second;
+  return true;
 }
 
 bool
 key_store::maybe_get_key_pair(rsa_keypair_id const & ident,
                               keypair & kp)
 {
-  maybe_read_key_dir();
-  map<rsa_keypair_id, keypair>::const_iterator i = s->keys.find(ident);
-  if (i == s->keys.end())
-    return false;
-  kp = i->second;
-  return true;
+  return s->maybe_get_key_pair(ident, kp);
 }
 
 void
@@ -237,7 +259,7 @@ key_store::maybe_get_key_pair(hexenc<id> const & hash,
                               rsa_keypair_id & keyid,
                               keypair & kp)
 {
-  maybe_read_key_dir();
+  s->maybe_read_key_dir();
   map<hexenc<id>, rsa_keypair_id>::const_iterator hi = s->hashes.find(hash);
   if (hi == s->hashes.end())
     return false;
@@ -251,8 +273,8 @@ key_store::maybe_get_key_pair(hexenc<id> const & hash,
 }
 
 void
-key_store::get_key_file(rsa_keypair_id const & ident,
-                        system_path & file)
+key_store_state::get_key_file(rsa_keypair_id const & ident,
+                              system_path & file)
 {
   // filename is the keypair id, except that some characters can't be put in
   // filenames (especially on windows).
@@ -261,35 +283,42 @@ key_store::get_key_file(rsa_keypair_id const & ident,
     if (leaf.at(i) == '+')
       leaf.at(i) = '_';
 
-  file = s->key_dir / path_component(leaf);
+  file = key_dir / path_component(leaf);
 }
 
 void
-key_store::write_key(rsa_keypair_id const & ident)
+key_store_state::write_key(rsa_keypair_id const & ident,
+                           keypair const & kp)
 {
-  keypair kp;
-  get_key_pair(ident, kp);
   ostringstream oss;
   packet_writer pw(oss);
   pw.consume_key_pair(ident, kp);
   data dat(oss.str());
+
   system_path file;
   get_key_file(ident, file);
 
   // Make sure the private key is not readable by anyone other than the user.
-  L(FL("writing key '%s' to file '%s' in dir '%s'") % ident % file % s->key_dir);
-  write_data_userprivate(file, dat, s->key_dir);
+  L(FL("writing key '%s' to file '%s' in dir '%s'") % ident % file % key_dir);
+  write_data_userprivate(file, dat, key_dir);
+}
+
+bool
+key_store_state::put_key_pair(rsa_keypair_id const & ident,
+                              keypair const & kp)
+{
+  maybe_read_key_dir();
+  bool newkey = put_key_pair_memory(ident, kp);
+  if (newkey)
+    write_key(ident, kp);
+  return newkey;
 }
 
 bool
 key_store::put_key_pair(rsa_keypair_id const & ident,
                         keypair const & kp)
 {
-  maybe_read_key_dir();
-  bool newkey = s->put_key_pair_memory(ident, kp);
-  if (newkey)
-    write_key(ident);
-  return newkey;
+  return s->put_key_pair(ident, kp);
 }
 
 bool
@@ -319,7 +348,7 @@ key_store_state::put_key_pair_memory(rsa_keypair_id const & ident,
 void
 key_store::delete_key(rsa_keypair_id const & ident)
 {
-  maybe_read_key_dir();
+  s->maybe_read_key_dir();
   map<rsa_keypair_id, keypair>::iterator i = s->keys.find(ident);
   if (i != s->keys.end())
     {
@@ -329,15 +358,100 @@ key_store::delete_key(rsa_keypair_id const & ident)
       I(j != s->hashes.end());
       s->hashes.erase(j);
       s->keys.erase(i);
+      s->signer_cache.erase(ident);
+      s->privkey_cache.erase(ident);
     }
   system_path file;
-  get_key_file(ident, file);
+  s->get_key_file(ident, file);
   delete_file(file);
 }
 
 //
 // Crypto operations
 //
+
+shared_ptr<RSA_PrivateKey>
+key_store_state::decrypt_private_key(rsa_keypair_id const & id,
+                                     bool force_from_user)
+{
+  rsa_priv_key decoded_key;
+
+  // See if we have this key in the decrypted key cache.
+  map<rsa_keypair_id, shared_ptr<RSA_PrivateKey> >::const_iterator
+    cpk = privkey_cache.find(id);
+  if (cpk != privkey_cache.end())
+    return cpk->second;
+
+  keypair kp;
+  N(maybe_get_key_pair(id, kp),
+    F("no key pair '%s' found in key store '%s'") % id % key_dir);
+
+  L(FL("base64-decoding %d-byte private key") % kp.priv().size());
+  decode_base64(kp.priv, decoded_key);
+
+  shared_ptr<PKCS8_PrivateKey> pkcs8_key;
+  try // with empty passphrase
+    {
+      Pipe p;
+      p.process_msg(decoded_key());
+      pkcs8_key.reset(Botan::PKCS8::load_key(p, ""));
+    }
+  catch (Botan::Exception & e)
+    {
+      L(FL("failed to load key with no passphrase: %s") % e.what());
+
+      utf8 phrase;
+      string lua_phrase;
+          // See whether a lua hook will tell us the passphrase.
+      if (!force_from_user && app.lua.hook_get_passphrase(id, lua_phrase))
+        phrase = utf8(lua_phrase);
+      else
+        get_passphrase(phrase, id, false, false);
+
+      int cycles = 1;
+      for (;;)
+        try
+          {
+            Pipe p;
+            p.process_msg(decoded_key());
+            pkcs8_key.reset(Botan::PKCS8::load_key(p, phrase()));
+            break;
+          }
+        catch (Botan::Exception & e)
+          {
+            L(FL("decrypt_private_key: failure %d to load encrypted key: %s")
+              % cycles % e.what());
+            E(cycles <= 3,
+              F("failed to decrypt old private RSA key, "
+                "probably incorrect passphrase"));
+
+            get_passphrase(phrase, id, false, false);
+            cycles++;
+            continue;
+          }
+    }
+
+  I(pkcs8_key);
+
+  shared_ptr<RSA_PrivateKey> priv_key;
+  priv_key = shared_dynamic_cast<RSA_PrivateKey>(pkcs8_key);
+  E(priv_key,
+    F("failed to extract RSA private key from PKCS#8 keypair"));
+
+  // Cache the decrypted key if we're allowed.
+  if (app.lua.hook_persist_phrase_ok())
+    safe_insert(privkey_cache, make_pair(id, priv_key));
+
+  return priv_key;
+}
+
+void
+key_store::cache_decrypted_key(const rsa_keypair_id & id)
+{
+  signing_key = id;
+  if (s->app.lua.hook_persist_phrase_ok())
+    s->decrypt_private_key(id);
+}
 
 void
 key_store::create_key_pair(database & db,
@@ -417,8 +531,7 @@ key_store::change_key_passphrase(rsa_keypair_id const & id)
 {
   keypair kp;
   load_key_pair(*this, id, kp);
-  
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, kp.priv, true);
+  shared_ptr<RSA_PrivateKey> priv = s->decrypt_private_key(id, true);
 
   utf8 new_phrase;
   get_passphrase(new_phrase, id, true, false);
@@ -442,7 +555,7 @@ key_store::decrypt_rsa(rsa_keypair_id const & id,
 {
   keypair kp;
   load_key_pair(*this, id, kp);
-  shared_ptr<RSA_PrivateKey> priv_key = get_private_key(*this, id, kp.priv);
+  shared_ptr<RSA_PrivateKey> priv_key = s->decrypt_private_key(id);
 
   shared_ptr<PK_Decryptor>
     decryptor(get_pk_decryptor(*priv_key, "EME1(SHA-1)"));
@@ -518,16 +631,17 @@ key_store::make_signature(database & db,
       // you're making a half-dozen certs during a commit or merge or
       // something.
 
-      bool persist_phrase = !s->signers.empty() || hook_persist_phrase_ok();
+      bool persist_phrase = (!s->signer_cache.empty()
+                             || s->app.lua.hook_persist_phrase_ok());
 
       shared_ptr<PK_Signer> signer;
       shared_ptr<RSA_PrivateKey> priv_key;
-      if (persist_phrase && s->signers.find(id) != s->signers.end())
-        signer = s->signers[id].first;
+      if (persist_phrase && s->signer_cache.find(id) != s->signer_cache.end())
+        signer = s->signer_cache[id];
 
       else
         {
-          priv_key = get_private_key(*this, id, key.priv);
+          priv_key = s->decrypt_private_key(id);
           if (agent.connected()
               && opt_ssh_sign != "only"
               && opt_ssh_sign != "no") {
@@ -536,12 +650,11 @@ key_store::make_signature(database & db,
           }
           signer = shared_ptr<PK_Signer>(get_pk_signer(*priv_key, "EMSA3(SHA-1)"));
 
-          /* XXX This is ugly. We need to keep the key around as long
-           * as the signer is around, but the shared_ptr for the key will go
-           * away after we leave this scope. Hence we store a pair of
-           * <verifier,key> so they both exist. */
+          /* If persist_phrase is true, the RSA_PrivateKey object is
+             cached in s->active_keys and will survive as long as the
+             PK_Signer object does.  */
           if (persist_phrase)
-            s->signers.insert(make_pair(id,make_pair(signer,priv_key)));
+            s->signer_cache.insert(make_pair(id, signer));
         }
 
       sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
@@ -581,10 +694,7 @@ key_store::add_key_to_agent(rsa_keypair_id const & id)
   N(agent.connected(),
     F("no ssh-agent is available, cannot add key '%s'") % id);
 
-  keypair key;
-  get_key_pair(id, key);
-
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = s->decrypt_private_key(id);
   agent.add_identity(*priv, id());
 }
 
@@ -592,9 +702,7 @@ void
 key_store::export_key_for_agent(rsa_keypair_id const & id,
                                 std::ostream & os)
 {
-  keypair key;
-  get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(*this, id, key.priv);
+  shared_ptr<RSA_PrivateKey> priv = s->decrypt_private_key(id);
   utf8 new_phrase;
   get_passphrase(new_phrase, id, true, false);
 
@@ -616,9 +724,10 @@ key_store::export_key_for_agent(rsa_keypair_id const & id,
 //
 
 void
-key_store::migrate_old_key_pair(rsa_keypair_id const & id,
-                                base64<old_arc4_rsa_priv_key> const & old_priv,
-                                base64<rsa_pub_key> const & pub)
+key_store_state::migrate_old_key_pair
+    (rsa_keypair_id const & id,
+     base64<old_arc4_rsa_priv_key> const & old_priv,
+     base64<rsa_pub_key> const & pub)
 {
   keypair kp;
   SecureVector<Botan::byte> arc4_key;
@@ -628,7 +737,7 @@ key_store::migrate_old_key_pair(rsa_keypair_id const & id,
 
   // See whether a lua hook will tell us the passphrase.
   string lua_phrase;
-  if (s->app.lua.hook_get_passphrase(id, lua_phrase))
+  if (app.lua.hook_get_passphrase(id, lua_phrase))
     phrase = utf8(lua_phrase);
   else
     get_passphrase(phrase, id, false, false);
@@ -698,20 +807,13 @@ key_store::migrate_old_key_pair(rsa_keypair_id const & id,
   put_key_pair(id, kp);
 }
 
-//
-// Hooks into the application configuration
-//
-
-bool
-key_store::hook_get_passphrase(rsa_keypair_id const & k, std::string & phrase)
+void
+key_store::migrate_old_key_pair
+    (rsa_keypair_id const & id,
+     base64<old_arc4_rsa_priv_key> const & old_priv,
+     base64<rsa_pub_key> const & pub)
 {
-  return s->app.lua.hook_get_passphrase(k, phrase);
-}
-
-bool
-key_store::hook_persist_phrase_ok()
-{
-  return s->app.lua.hook_persist_phrase_ok();
+  s->migrate_old_key_pair(id, old_priv, pub);
 }
 
 // Local Variables:
