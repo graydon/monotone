@@ -12,6 +12,7 @@
 #include "vocab_cast.hh"
 #include "platform-wrapped.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 #include <fstream>
 
@@ -158,9 +159,10 @@ CMD(push, "push", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, source_role, uris,
                        include_pattern, exclude_pattern,
-                       app.get_project(), app.keys, app.lua, app.opts);
+                       project, app.keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -182,9 +184,10 @@ CMD(pull, "pull", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.get_project(), app.keys, app.lua, app.opts);
+                       project, app.keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -204,9 +207,10 @@ CMD(sync, "sync", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.get_project(), app.keys, app.lua, app.opts);
+                       project, app.keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -324,9 +328,10 @@ CMD(clone, "clone", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       app.get_project(), app.keys, app.lua, app.opts);
+                       project, app.keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -339,8 +344,8 @@ CMD(clone, "clone", "", CMD_REF(network),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads,
-                                         app.opts.ignore_suspend_certs);
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
@@ -348,7 +353,7 @@ CMD(clone, "clone", "", CMD_REF(network),
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s")
-              % describe_revision(app.get_project(), *i));
+              % describe_revision(project, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -357,12 +362,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app.opts, app.get_project());
+      guess_branch(ident, app.opts, project);
       I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+      N(project.revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
         % ident % app.opts.branchname);
     }
@@ -449,9 +454,10 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
     W(F("The --no-transport-auth option is usually only used "
         "in combination with --stdio"));
 
+  project_t project(app.db);
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
                        globish("*"), globish(""),
-                       app.get_project(), app.keys, app.lua, app.opts);
+                       project, app.keys, app.lua, app.opts);
 }
 
 // Local Variables:

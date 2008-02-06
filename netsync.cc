@@ -3184,9 +3184,6 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
       {
         // Get branch certs.
         vector< revision<cert> > certs;
-        // FIXME_PROJECTS: probably something like
-        // get_project(i->project).get_branch_certs(i->branch)
-        // or so.
         project.get_branch_certs(*i, certs);
         for (vector< revision<cert> >::const_iterator j = certs.begin();
              j != certs.end(); j++)

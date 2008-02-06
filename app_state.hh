@@ -10,13 +10,11 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "database.hh"
-#include "key_store.hh"
-#include "lua_hooks.hh"
-#include "options.hh"
 #include "paths.hh"
-#include "project.hh"
-#include "vocab.hh"
+#include "options.hh"
+#include "lua_hooks.hh"
+#include "key_store.hh"
+#include "database.hh"
 #include "work.hh"
 
 // This class is supposed to hold all (or.. well, most) of the state
@@ -51,12 +49,6 @@ public:
   // function updates the workspace).
 
   void make_branch_sticky();
-
-private:
-  project_t project;
-public:
-  //project_t & get_project(string const & name);
-  project_t & get_project(); // get_project(opts.project) or I()
 
   void set_database(system_path const & filename);
 

@@ -30,6 +30,7 @@
 #include "ui.hh"
 #include "vocab_cast.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 using std::cout;
 using std::make_pair;
@@ -57,16 +58,15 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   vector<cert> certs;
 
   transaction_guard guard(app.db, false);
 
   revision_id ident;
-  complete(app, idx(args, 0)(), ident);
+  complete(app,  project, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
-  // FIXME_PROJECTS: after projects are implemented,
-  // use the app.db version instead if no project is specified.
-  app.get_project().get_revision_certs(ident, ts);
+  project.get_revision_certs(ident, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
@@ -279,10 +279,10 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
   else if (args.size() > 1)
     throw usage(execid);
 
+  project_t project(app.db);
   globish exc(app.opts.exclude_patterns);
   set<branch_name> names;
-  app.get_project().get_branch_list(inc, names,
-                                    !app.opts.ignore_suspend_certs);
+  project.get_branch_list(inc, names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -326,7 +326,8 @@ CMD(tags, "tags", "", CMD_REF(list), "",
     options::opts::depth | options::opts::exclude)
 {
   set<tag_t> tags;
-  app.get_project().get_tags(tags);
+  project_t project(app.db);
+  project.get_tags(tags);
 
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
@@ -671,6 +672,7 @@ CMD_AUTOMATE(certs, N_("REV"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
+  project_t project(db);
 
   vector<cert> certs;
 
@@ -683,7 +685,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
   // use the db version instead if no project is specified.
-  app.get_project().get_revision_certs(rid, ts);
+  project.get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());

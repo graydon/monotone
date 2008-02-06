@@ -13,6 +13,7 @@
 #include "constants.hh"
 #include "database.hh"
 #include "app_state.hh"
+#include "project.hh"
 #include "globish.hh"
 #include "cmd.hh"
 
@@ -330,6 +331,7 @@ complete_selector(selector_list const & limit,
 
 void
 complete(app_state & app,
+         project_t & project,
          string const & str,
          set<revision_id> & completions)
 {
@@ -342,13 +344,13 @@ complete(app_state & app,
       && sels[0].second.size() == constants::idlen)
     {
       completions.insert(revision_id(sels[0].second));
-      N(app.db.revision_exists(*completions.begin()),
+      N(project.db.revision_exists(*completions.begin()),
         F("no such revision '%s'") % *completions.begin());
       return;
     }
 
   P(F("expanding selection '%s'") % str);
-  complete_selector(sels, completions, app.get_project());
+  complete_selector(sels, completions, project);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
@@ -360,22 +362,23 @@ complete(app_state & app,
 
       // This may be impossible, but let's make sure.
       // All the callers used to do it.
-      N(app.db.revision_exists(*i),
+      N(project.db.revision_exists(*i),
         F("no such revision '%s'") % *i);
     }
 }
 
 void
 complete(app_state & app,
+         project_t & project,
          string const & str,
          revision_id & completion)
 {
   set<revision_id> completions;
 
-  complete(app, str, completions);
+  complete(app, project, str, completions);
 
   I(completions.size() > 0);
-  diagnose_ambiguous_expansion(app, str, completions);
+  diagnose_ambiguous_expansion(project, str, completions);
 
   completion = *completions.begin();
 }
@@ -383,6 +386,7 @@ complete(app_state & app,
 
 void
 expand_selector(app_state & app,
+                project_t & project,
                 string const & str,
                 set<revision_id> & completions)
 {
@@ -398,11 +402,11 @@ expand_selector(app_state & app,
       return;
     }
 
-  complete_selector(sels, completions, app.get_project());
+  complete_selector(sels, completions, project);
 }
 
 void
-diagnose_ambiguous_expansion(app_state & app,
+diagnose_ambiguous_expansion(project_t & project,
                              string const & str,
                              set<revision_id> const & completions)
 {
@@ -413,7 +417,7 @@ diagnose_ambiguous_expansion(app_state & app,
                 % str).str();
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    err += ("\n" + describe_revision(app.get_project(), *i));
+    err += ("\n" + describe_revision(project, *i));
 
   N(false, i18n_format(err));
 }

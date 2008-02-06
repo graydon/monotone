@@ -115,6 +115,7 @@ Loop:
 #include "simplestring_xform.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 using std::insert_iterator;
 using std::max;
@@ -374,8 +375,9 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  set<revision_id> revs;
-  complete(app, idx(args, 0)(), revs);
+  set<revision_id> revs; 
+  project_t project(app.db);
+  complete(app, project, idx(args, 0)(), revs);
 
   vector<revision_id> sorted;
   toposort(revs, sorted, app.db);

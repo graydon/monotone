@@ -16,6 +16,7 @@
 #include "charset.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "project.hh"
 #include "keys.hh"
 
 using std::cout;
@@ -140,10 +141,11 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(execid);
 
+  project_t project(app.db);
   transaction_guard guard(app.db);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  complete(app,  project, idx(args, 0)(), rid);
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -160,7 +162,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
       val = cert_value(dat());
     }
 
-  app.get_project().put_cert(app.keys, rid, cname, val);
+  project.put_cert(app.keys, rid, cname, val);
   guard.commit();
 }
 
@@ -173,9 +175,11 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
   if (args.size() < 4)
     throw usage(execid);
 
+  project_t project(app.db);
+
   set<revision_id> rids;
-  expand_selector(app, idx(args, 0)(), rids);
-  diagnose_ambiguous_expansion(app, idx(args, 0)(), rids);
+  expand_selector(app,  project, idx(args, 0)(), rids);
+  diagnose_ambiguous_expansion(project, idx(args, 0)(), rids);
 
   hexenc<id> ident;
   if (!rids.empty())
@@ -224,11 +228,12 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
   if (args.size() != 2)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, app.keys, app.db);
-  app.get_project().put_tag(app.keys, r, idx(args, 1)());
+  project.put_tag(app.keys, r, idx(args, 1)());
 }
 
 
@@ -241,8 +246,9 @@ CMD(testresult, "testresult", "", CMD_REF(review),
   if (args.size() != 2)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, app.keys, app.db);
   cert_revision_testresult(r, idx(args, 1)(), app.db, app.keys);
@@ -257,13 +263,14 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app.opts, app.get_project());
+  complete(app, project, idx(args, 0)(), r);
+  guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
 
   cache_user_key(app.opts, app.lua, app.keys, app.db);
-  app.get_project().put_revision_in_branch(app.keys, r, app.opts.branchname);
+  project.put_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
@@ -274,14 +281,14 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app.opts, app.get_project());
+  complete(app, project, idx(args, 0)(), r);
+  guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
 
   cache_user_key(app.opts, app.lua, app.keys, app.db);
-  app.get_project().suspend_revision_in_branch(app.keys, r,
-                                               app.opts.branchname);
+  project.suspend_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
@@ -289,6 +296,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     "",
     options::opts::none)
 {
+  project_t project(app.db);
   if (args.size() != 1 && args.size() != 2)
     throw usage(execid);
 
@@ -307,7 +315,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     F("empty comment"));
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
+  complete(app, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, app.keys, app.db);
   cert_revision_comment(r, comment, app.db, app.keys);

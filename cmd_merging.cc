@@ -24,6 +24,7 @@
 #include "safe_map.hh"
 #include "ui.hh"
 #include "app_state.hh"
+#include "project.hh"
 #include "simplestring_xform.hh"
 #include "keys.hh"
 
@@ -151,6 +152,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     throw usage(execid);
 
   app.require_workspace();
+  project_t project(app.db);
 
   // Figure out where we are
   parent_map parents;
@@ -173,8 +175,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
       P(F("updating along branch '%s'") % app.opts.branchname);
       set<revision_id> candidates;
       pick_update_candidates(candidates, old_rid, app.opts.branchname,
-                             app.get_project(),
-                             app.opts.ignore_suspend_certs, app.lua);
+                             project, app.opts.ignore_suspend_certs, app.lua);
       N(!candidates.empty(),
         F("your request matches no descendents of the current revision\n"
           "in fact, it doesn't even match the current revision\n"
@@ -186,7 +187,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
           for (set<revision_id>::const_iterator i = candidates.begin();
                i != candidates.end(); ++i)
             P(i18n_format("  %s")
-              % describe_revision(app.get_project(), *i));
+              % describe_revision(project, *i));
           P(F("choose one with '%s update -r<id>'") % ui.prog_name);
           E(false, F("multiple update candidates remain after selection"));
         }
@@ -194,14 +195,14 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app, project, app.opts.revision_selectors[0](), chosen_rid);
     }
   I(!null_id(chosen_rid));
 
   // do this notification before checking to see if we can bail out early,
   // because when you are at one of several heads, and you hit update, you
   // want to know that merging would let you update further.
-  notify_if_multiple_heads(app.get_project(),
+  notify_if_multiple_heads(project,
                            app.opts.branchname, app.opts.ignore_suspend_certs);
 
   if (old_rid == chosen_rid)
@@ -312,8 +313,10 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 // bomb out, and therefore so may this.
 static void
 merge_two(revision_id const & left, revision_id const & right,
-          branch_name const & branch, string const & caller, app_state & app,
-          std::ostream & output, bool automate)
+          branch_name const & branch, string const & caller,
+          std::ostream & output, bool automate,
+          project_t & project, options & opts, lua_hooks & lua,
+          key_store & keys)
 {
   // The following mess constructs a neatly formatted log message that looks
   // like this:
@@ -329,14 +332,14 @@ merge_two(revision_id const & left, revision_id const & right,
   ostringstream log;
   size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
 
-  if (branch != app.opts.branchname)
+  if (branch != opts.branchname)
     fieldwidth = max(fieldwidth, strlen("to branch '"));
 
   log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
       << "'\n" << setw(fieldwidth) << "and '" << right
       << "'\n";
 
-  if (branch != app.opts.branchname)
+  if (branch != opts.branchname)
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
 
   // Now it's time for the real work.
@@ -351,13 +354,11 @@ merge_two(revision_id const & left, revision_id const & right,
     }
 
   revision_id merged;
-  transaction_guard guard(app.db);
-  interactive_merge_and_store(left, right, merged, app.db, app.lua);
+  transaction_guard guard(project.db);
+  interactive_merge_and_store(left, right, merged, project.db, lua);
 
-  app.get_project().put_standard_certs_from_options(app.opts, app.lua,
-                                                    app.keys,
-                                                    merged, branch,
-                                                    utf8(log.str()));
+  project.put_standard_certs_from_options(opts, lua, keys, merged, branch,
+                                          utf8(log.str()));
 
   guard.commit();
   if (automate)
@@ -384,9 +385,10 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
+  project_t project(app.db);
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads,
-                                     app.opts.ignore_suspend_certs);
+  project.get_branch_heads(app.opts.branchname, heads,
+                           app.opts.ignore_suspend_certs);
 
   N(heads.size() != 0, F("branch '%s' is empty") % app.opts.branchname);
   if (heads.size() == 1)
@@ -454,12 +456,13 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       revpair p = heads_for_ancestor[*ancestors.begin()];
 
       merge_two(p.first, p.second, app.opts.branchname, string("merge"),
-                app, std::cout, false);
+                std::cout, false,
+                project, app.opts, app.lua, app.keys);
 
       ancestors.clear();
       heads_for_ancestor.clear();
-      app.get_project().get_branch_heads(app.opts.branchname, heads,
-                                         app.opts.ignore_suspend_certs);
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
       pass++;
     }
 
@@ -474,7 +477,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   I(i == heads.end());
 
   merge_two(left, right, app.opts.branchname, string("merge"),
-            app, std::cout, false);
+            std::cout, false, project, app.opts, app.lua, app.keys);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -524,15 +527,16 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   //   'dir' in the merged tree. (ie, it has name "basename(dir)", and its
   //   parent node is "N2.get_node(dirname(dir))")
 
+  project_t project(app.db);
   set<revision_id> src_heads, dst_heads;
 
   if (args.size() != 3)
     throw usage(execid);
 
-  app.get_project().get_branch_heads(branch_name(idx(args, 0)()), src_heads,
-                                     app.opts.ignore_suspend_certs);
-  app.get_project().get_branch_heads(branch_name(idx(args, 1)()), dst_heads,
-                                     app.opts.ignore_suspend_certs);
+  project.get_branch_heads(branch_name(idx(args, 0)()), src_heads,
+                           app.opts.ignore_suspend_certs);
+  project.get_branch_heads(branch_name(idx(args, 1)()), dst_heads,
+                           app.opts.ignore_suspend_certs);
 
   N(src_heads.size() != 0, F("branch '%s' is empty") % idx(args, 0)());
   N(src_heads.size() == 1, F("branch '%s' is not merged") % idx(args, 0)());
@@ -563,8 +567,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
-      app.get_project().put_revision_in_branch(app.keys, *src_i,
-                                               branch_name(idx(args, 1)()));
+      project.put_revision_in_branch(app.keys, *src_i,
+                                     branch_name(idx(args, 1)()));
       guard.commit();
     }
   else
@@ -645,11 +649,11 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                             % idx(args, 0) % (*src_i)
                             % idx(args, 1) % (*dst_i)).str());
 
-      app.get_project().put_standard_certs_from_options(app.opts, app.lua,
-                                                        app.keys,
-                                                        merged,
-                                                        branch_name(idx(args, 1)()),
-                                                        log_message);
+      project.put_standard_certs_from_options(app.opts, app.lua,
+                                              app.keys,
+                                              merged,
+                                              branch_name(idx(args, 1)()),
+                                              log_message);
 
       guard.commit();
       P(F("[merged] %s") % merged);
@@ -673,6 +677,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   app.require_workspace();
 
   // Get the current state of the workspace.
@@ -703,7 +708,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app, idx(args, 0)(), right_id);
+  complete(app, project, idx(args, 0)(), right_id);
   app.db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -771,12 +776,13 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
 {
   revision_id left, right;
   branch_name branch;
+  project_t project(app.db);
 
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app, idx(args, 0)(), left);
-  complete(app, idx(args, 1)(), right);
+  complete(app, project, idx(args, 0)(), left);
+  complete(app, project, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -788,9 +794,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
 
   // avoid failure after lots of work
   cache_user_key(app.opts, app.lua, app.keys, app.db);
-
   merge_two(left, right, branch, string("explicit merge"),
-            app, std::cout, false);
+            std::cout, false, project, app.opts, app.lua, app.keys);
 }
 
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
@@ -799,11 +804,13 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
        "the REV parameters."),
     options::opts::branch | options::opts::date | options::opts::author)
 {
+  project_t project(app.db);
+  
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app, idx(args,0)(), l_id);
-  complete(app, idx(args,1)(), r_id);
+  complete(app, project, idx(args,0)(), l_id);
+  complete(app, project, idx(args,1)(), r_id);
   N(!is_ancestor(l_id, r_id, app.db),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(r_id, l_id, app.db),
@@ -866,10 +873,11 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
 {
   // Work out our arguments
   revision_id from_rid, to_rid;
+  project_t project(app.db);
 
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), to_rid);
       std::set<revision_id> parents;
       app.db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -882,8 +890,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), from_rid);
-      complete(app, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app, project, idx(app.opts.revision_selectors, 1)(), to_rid);
     }
   else
     throw usage(execid);
@@ -1046,8 +1054,10 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  app.get_project().get_branch_heads(app.opts.branchname, heads,
-                                     app.opts.ignore_suspend_certs);
+  project_t project(app.db);
+
+  project.get_branch_heads(app.opts.branchname, heads,
+                           app.opts.ignore_suspend_certs);
 
   if (heads.size() == 0)
     P(F("branch '%s' is empty") % app.opts.branchname);
@@ -1058,7 +1068,7 @@ CMD(heads, "heads", "", CMD_REF(tree), "",
 
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    cout << describe_revision(app.get_project(), *i) << '\n';
+    cout << describe_revision(project, *i) << '\n';
 }
 
 CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
@@ -1118,8 +1128,9 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
     }
   else if (args.size() == 1)
     {
+      project_t project(app.db);
       revision_id rid;
-      complete(app, idx(args, 0)(), rid);
+      complete(app, project, idx(args, 0)(), rid);
       I(!null_id(rid));
       app.db.get_roster(rid, roster, mm);
     }

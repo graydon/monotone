@@ -19,6 +19,7 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -128,6 +129,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     options::opts::revision | options::opts::revs_only)
 {
   revision_id rid;
+  project_t project(app.db);
 
   if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
@@ -168,7 +170,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
       app.db.get_roster(rid, roster);
     }
 
@@ -181,7 +183,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app.get_project(), file_node, rid, app.opts.revs_only);
+  do_annotate(project, file_node, rid, app.opts.revs_only);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
@@ -299,7 +301,10 @@ CMD(cat, "cat", "", CMD_REF(informative),
       rid = parent_id(parents.begin());
     }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      project_t project(app.db);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+    }
 
   dump_file(cout, app.db, rid, idx(args, 0));
 }
@@ -362,7 +367,10 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       rid = parent_id(parents.begin());
     }
   else
-    complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      project_t project(app.db);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+    }
 
   dump_file(output, db, rid, idx(args, 0));
 }

@@ -25,6 +25,7 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 using std::cout;
 using std::deque;
@@ -355,6 +356,8 @@ prepare_diff(cset & included,
   else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
+  project_t project(app.db);
+
   N(app.opts.revision_selectors.size() <= 2,
     F("more than two revisions given"));
 
@@ -396,7 +399,7 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
       app.db.get_roster(r_old_id, old_roster);
       app.work.get_current_roster_shape(new_roster, app.db, nis);
@@ -422,8 +425,8 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, project, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
@@ -552,7 +555,7 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
 
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
+log_certs(ostream & os, project_t & project, revision_id id, cert_name name,
           string label, string separator, bool multiline, bool newline)
 {
   vector< revision<cert> > certs;
@@ -561,7 +564,7 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
   if (multiline)
     newline = true;
 
-  app.get_project().get_revision_certs_by_name(id, name, certs);
+  project.get_revision_certs_by_name(id, name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -584,16 +587,16 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
 }
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
+log_certs(ostream & os, project_t & project, revision_id id, cert_name name,
           string label, bool multiline)
 {
-  log_certs(os, app, id, name, label, label, multiline, true);
+  log_certs(os, project, id, name, label, label, multiline, true);
 }
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name)
+log_certs(ostream & os, project_t & project, revision_id id, cert_name name)
 {
-  log_certs(os, app, id, name, " ", ",", false, false);
+  log_certs(os, project, id, name, " ", ",", false, false);
 }
 
 
@@ -623,6 +626,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
     | options::opts::no_merges | options::opts::no_files
     | options::opts::no_graph)
 {
+  project_t project(app.db);
+
   if (app.opts.from.size() == 0)
     app.require_workspace("try passing a --from revision to start at");
 
@@ -653,7 +658,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -709,7 +714,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           MM(*i);
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -863,15 +868,16 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (app.opts.brief)
             {
               out << rid;
-              log_certs(out, app, rid, author_name);
+              log_certs(out, project, rid, author_name);
               if (app.opts.no_graph)
-                log_certs(out, app, rid, date_name);
+                log_certs(out, project, rid, date_name);
               else
                 {
                   out << '\n';
-                  log_certs(out, app, rid, date_name, string(), string(), false, false);
+                  log_certs(out, project, rid, date_name,
+                            string(), string(), false, false);
                 }
-              log_certs(out, app, rid, branch_name);
+              log_certs(out, project, rid, branch_name);
               out << '\n';
             }
           else
@@ -894,10 +900,10 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                    anc != ancestors.end(); ++anc)
                 out << "Ancestor: " << *anc << '\n';
 
-              log_certs(out, app, rid, author_name, "Author: ", false);
-              log_certs(out, app, rid, date_name,   "Date: ",   false);
-              log_certs(out, app, rid, branch_name, "Branch: ", false);
-              log_certs(out, app, rid, tag_name,    "Tag: ",    false);
+              log_certs(out, project, rid, author_name, "Author: ", false);
+              log_certs(out, project, rid, date_name,   "Date: ",   false);
+              log_certs(out, project, rid, branch_name, "Branch: ", false);
+              log_certs(out, project, rid, tag_name,    "Tag: ",    false);
 
               if (!app.opts.no_files && !csum.cs.empty())
                 {
@@ -906,8 +912,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                   out << '\n';
                 }
 
-              log_certs(out, app, rid, changelog_name, "ChangeLog: ", true);
-              log_certs(out, app, rid, comment_name,   "Comments: ",  true);
+              log_certs(out, project, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(out, project, rid, comment_name,   "Comments: ",  true);
             }
 
           if (app.opts.diffs)

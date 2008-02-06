@@ -21,6 +21,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
+#include "project.hh"
 #include "basic_io.hh"
 #include "cert.hh"
 #include "cmd.hh"
@@ -74,21 +75,20 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-  
-  system_path database_option;
-  branch_name branch_option;
-  rsa_keypair_id key_option;
-  system_path keydir_option;
-  app.work.get_ws_options(database_option, branch_option,
-                          key_option, keydir_option);
+  project_t project(db);
 
-  if (args.size() == 1 ) {
+  branch_name branch;
+  if (args.size() == 1)
     // branchname was explicitly given, use that
-    branch_option = branch_name(idx(args, 0)());
-  }
+    branch = branch_name(idx(args, 0)());
+  else
+    {
+      app.require_workspace();
+      branch = app.opts.branchname;
+    }
+
   set<revision_id> heads;
-  app.get_project().get_branch_heads(branch_option, heads,
-                                     app.opts.ignore_suspend_certs);
+  project.get_branch_heads(branch, heads, app.opts.ignore_suspend_certs);
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -502,8 +502,9 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
+  project_t project(app.db);
   set<revision_id> completions;
-  expand_selector(app, idx(args, 0)(), completions);
+  expand_selector(app, project, idx(args, 0)(), completions);
 
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
@@ -1413,7 +1414,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-
+  project_t project(db);
   packet_writer pw(output);
 
   revision_id r_id(idx(args, 0)());
@@ -1421,7 +1422,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
 
   N(db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.get_project().get_revision_certs(r_id, certs);
+  project.get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1585,19 +1586,15 @@ CMD_AUTOMATE(branches, "",
     F("no arguments needed"));
 
   CMD_REQUIRES_DATABASE(app);
-
+  project_t project(db);
   set<branch_name> names;
 
-  app.get_project().get_branch_list(names,
-                                    !app.opts.ignore_suspend_certs);
+  project.get_branch_list(names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    {
-      // FIXME: should this lua hook be in the database context?
-      if (!app.lua.hook_ignore_branch(*i))
-        output << (*i) << '\n';
-    }
+    if (!app.lua.hook_ignore_branch(*i))
+      output << (*i) << '\n';
 }
 
 // Name: tags
@@ -1641,7 +1638,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-
+  project_t project(db);
   globish incl("*");
   bool filtering(false);
 
@@ -1656,13 +1653,13 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
   prt.print_stanza(stz);
 
   set<tag_t> tags;
-  app.get_project().get_tags(tags);
+  project.get_tags(tags);
 
   for (set<tag_t>::const_iterator tag = tags.begin();
        tag != tags.end(); ++tag)
     {
       set<branch_name> branches;
-      app.get_project().get_revision_branches(tag->ident, branches);
+      project.get_revision_branches(tag->ident, branches);
 
       bool show(!filtering);
       vector<string> branch_names;

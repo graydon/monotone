@@ -16,6 +16,7 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "app_state.hh"
+#include "project.hh"
 #include "keys.hh"
 
 using std::cin;
@@ -122,7 +123,8 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 
   revision_id revid;
 
-  complete(app, idx(args, 0)(), revid);
+  project_t project(app.db);
+  complete(app, project, idx(args, 0)(), revid);
 
   // Check that the revision does not have any children
   std::set<revision_id> children;
@@ -332,6 +334,8 @@ CMD(complete, "complete", "", CMD_REF(informative),
   if (args.size() != 2)
     throw usage(execid);
 
+  project_t project(app.db);
+
   bool verbose = app.opts.verbose;
 
   N(idx(args, 1)().find_first_not_of("abcdef0123456789") == string::npos,
@@ -345,7 +349,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
            i != completions.end(); ++i)
         {
           if (!verbose) cout << i->inner()() << '\n';
-          else cout << describe_revision(app.get_project(), *i) << '\n';
+          else cout << describe_revision(project, *i) << '\n';
         }
     }
   else if (idx(args, 0)() == "file")

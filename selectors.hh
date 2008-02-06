@@ -14,6 +14,7 @@
 #include <set>
 
 class app_state;
+class project_t;
 
 // In the normal case, to expand a selector on the command line, use one of
 // these functions: the former if the selector can legitimately expand to
@@ -21,10 +22,10 @@ class app_state;
 // selector that expands to zero revisions, or a nonexistent revision, as an
 // usage error, and generate progress messages when expanding selectors.
 
-void complete(app_state & app, std::string const & str,
+void complete(app_state & app, project_t & project, std::string const & str,
               std::set<revision_id> & completions);
 
-void complete(app_state & app, std::string const & str,
+void complete(app_state & app, project_t & project, std::string const & str,
               revision_id & completion);
 
 // For extra control, use these functions.  expand_selector is just like the
@@ -32,10 +33,11 @@ void complete(app_state & app, std::string const & str,
 // or usage errors.  diagnose_ambiguous_expansion generates the canonical
 // usage error if the set it is handed has more than one element.
 
-void expand_selector(app_state & app, std::string const & str,
+void expand_selector(app_state & app, project_t & project,
+                     std::string const & str,
                      std::set<revision_id> & completions);
 
-void diagnose_ambiguous_expansion(app_state & app, std::string const & str,
+void diagnose_ambiguous_expansion(project_t & project, std::string const & str,
                                   std::set<revision_id> const & completions);
 
 
