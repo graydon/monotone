@@ -21,6 +21,7 @@
 #include "roster_delta.hh"
 #include "basic_io.hh"
 #include "paths.hh"
+#include "transforms.hh"
 
 using boost::lexical_cast;
 using std::pair;
@@ -411,7 +412,7 @@ namespace
         std::string s;
         parser.hex(s);
         safe_insert(d.files_added,
-                    make_pair(loc, make_pair(nid, file_id(s))));
+                    make_pair(loc, make_pair(nid, file_id(decode_hexenc(s)))));
       }
     while (parser.symp(syms::delta))
       {
@@ -420,7 +421,7 @@ namespace
         parser.esym(syms::content);
         std::string s;
         parser.hex(s);
-        safe_insert(d.deltas_applied, make_pair(nid, file_id(s)));
+        safe_insert(d.deltas_applied, make_pair(nid, file_id(decode_hexenc(s))));
       }
     while (parser.symp(syms::attr_cleared))
       {

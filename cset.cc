@@ -15,6 +15,7 @@
 #include "cset.hh"
 #include "sanity.hh"
 #include "safe_map.hh"
+#include "transforms.hh"
 
 using std::set;
 using std::map;
@@ -393,7 +394,7 @@ parse_cset(basic_io::parser & parser,
       prev_path = p1;
       parser.esym(syms::content);
       parser.hex(t1);
-      safe_insert(cs.files_added, make_pair(p1, file_id(t1)));
+      safe_insert(cs.files_added, make_pair(p1, file_id(decode_hexenc(t1))));
     }
 
   prev_path.clear();
@@ -408,7 +409,8 @@ parse_cset(basic_io::parser & parser,
       parser.esym(syms::to);
       parser.hex(t2);
       safe_insert(cs.deltas_applied,
-                  make_pair(p1, make_pair(file_id(t1), file_id(t2))));
+                  make_pair(p1, make_pair(file_id(decode_hexenc(t1)),
+                                          file_id(decode_hexenc(t2)))));
     }
 
   prev_pair.first.clear();
