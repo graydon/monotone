@@ -12,6 +12,7 @@
 #include "vocab_cast.hh"
 #include "platform-wrapped.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 #include <fstream>
 
@@ -21,6 +22,8 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+
+using boost::shared_ptr;
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
@@ -73,14 +76,11 @@ find_key(utf8 const & addr,
   parse_uri(addr(), u);
   if (!u.host.empty())
     host = utf8(u.host);
-  if (!app.lua.hook_get_netsync_key(host, include, exclude, key)
-      || key() == "")
-    {
-      if (needed)
-        {
-          get_user_key(key, app);
-        }
-    }
+  if (needed
+      && (key().empty()
+          || !app.lua.hook_get_netsync_key(host, include, exclude, key)))
+    get_user_key(key, app.opts, app.lua, app.keys, app.db);
+
   app.opts.signing_key = key;
 }
 
@@ -91,13 +91,11 @@ find_key_if_needed(utf8 const & addr,
                    app_state & app,
                    bool needed = true)
 {
-      uri u;
-      parse_uri(addr(), u);
+  uri u;
+  parse_uri(addr(), u);
 
-      if (app.lua.hook_use_transport_auth(u))
-        {
-          find_key(addr, include, exclude, app, needed);
-        }
+  if (app.lua.hook_use_transport_auth(u))
+    find_key(addr, include, exclude, app, needed);
 }
 
 static void
@@ -161,8 +159,10 @@ CMD(push, "push", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, source_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       project, app.keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -184,8 +184,10 @@ CMD(pull, "pull", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       project, app.keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -205,8 +207,10 @@ CMD(sync, "sync", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       project, app.keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -324,8 +328,10 @@ CMD(clone, "clone", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
+  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+                       include_pattern, exclude_pattern,
+                       project, app.keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -338,14 +344,16 @@ CMD(clone, "clone", "", CMD_REF(network),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s")
+              % describe_revision(project, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -354,15 +362,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app);
-
+      guess_branch(ident, app.opts, project);
       I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+      N(project.revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
         % ident % app.opts.branchname);
     }
@@ -380,12 +385,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app);
+  content_merge_checkout_adaptor wca(app.db);
 
-  app.work.perform_content_update(checkout, wca, false);
+  app.work.perform_content_update(checkout, wca, app.db, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  app.work.update_any_attrs(app.db);
+  app.work.maybe_update_inodeprints(app.db);
   guard.commit();
   remove_on_fail.commit();
 }
@@ -432,24 +437,27 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
 
   pid_file pid(app.opts.pidfile);
 
+  app.db.ensure_open();
+
   if (app.opts.use_transport_auth)
     {
+      N(app.lua.hook_persist_phrase_ok(),
+	F("need permission to store persistent passphrase "
+          "(see hook persist_phrase_ok())"));
+
       if (!app.opts.bind_uris.empty())
         find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""), app);
       else
         find_key(utf8(), globish("*"), globish(""), app);
-
-      N(app.lua.hook_persist_phrase_ok(),
-	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(app.opts.signing_key, app);
     }
   else if (!app.opts.bind_stdio)
-    W(F("The --no-transport-auth option is usually only used in combination with --stdio"));
+    W(F("The --no-transport-auth option is usually only used "
+        "in combination with --stdio"));
 
-  app.db.ensure_open();
-
+  project_t project(app.db);
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""), app);
+                       globish("*"), globish(""),
+                       project, app.keys, app.lua, app.opts);
 }
 
 // Local Variables:

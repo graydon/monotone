@@ -10,31 +10,12 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-class app_state;
-class lua_hooks;
-
-#include <map>
-#include "vector.hh"
-
-#include <boost/shared_ptr.hpp>
-
-#include "database.hh"
-#include "key_store.hh"
-#include "lua_hooks.hh"
-#include "options.hh"
 #include "paths.hh"
-#include "project.hh"
-#include "vocab.hh"
+#include "options.hh"
+#include "lua_hooks.hh"
+#include "key_store.hh"
+#include "database.hh"
 #include "work.hh"
-#include "ssh_agent.hh"
-
-namespace Botan
-{
-  class PK_Signer;
-  class RSA_PrivateKey;
-  class PK_Verifier;
-  class RSA_PublicKey;
-};
 
 // This class is supposed to hold all (or.. well, most) of the state
 // of the application, barring some unfortunate static objects like
@@ -45,29 +26,15 @@ namespace Botan
 class app_state
 {
 public:
-  database db;
+  options opts;
   lua_hooks lua;
   key_store keys;
+  database db;
   workspace work;
-  ssh_agent agent;
-
-  options opts;
 
   bool found_workspace;
   bool branch_is_sticky;
   bool mtn_automate_allowed;
-
-  // These are used to cache signers/verifiers (if the hook allows).
-  // They can't be function-static variables in key.cc, since they
-  // must be destroyed before the Botan deinitialize() function is
-  // called.
-
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Signer>,
-        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
-        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
 
   void allow_workspace();
   void process_options();
@@ -83,21 +50,12 @@ public:
 
   void make_branch_sticky();
 
-private:
-  project_t project;
-public:
-  //project_t & get_project(string const & name);
-  project_t & get_project(); // get_project(opts.project) or I()
-
   void set_database(system_path const & filename);
-  void set_key_dir(system_path const & filename);
-  void set_diff_format(diff_type dtype);
 
   explicit app_state();
   ~app_state();
 
 private:
-  void load_rcfiles();
   void write_options();
 };
 

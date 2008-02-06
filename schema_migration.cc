@@ -11,12 +11,11 @@
 #include <boost/tokenizer.hpp>
 #include "lexical_cast.hh"
 #include "sqlite/sqlite3.h"
-#include <string.h>
+#include <cstring>
 
 #include "sanity.hh"
 #include "schema_migration.hh"
-#include "app_state.hh"
-#include "keys.hh"
+#include "key_store.hh"
 #include "transforms.hh"
 #include "ui.hh"
 
@@ -304,7 +303,7 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
 
 // Here are all of the migration steps.  Almost all of them can be expressed
 // entirely as a series of SQL statements; those statements are packaged
-// into a long, continued string constant for the step.  One step requires a
+// into a long, continued string constant for the step.  A few require a
 // function instead.
 
 char const migrate_merge_url_and_group[] =
@@ -338,7 +337,6 @@ char const migrate_merge_url_and_group[] =
   "INSERT INTO sequence_numbers"
   "  SELECT (url || '/' || groupname), major, minor FROM tmp;"
   "DROP TABLE tmp;"
-
 
   // migrate the netserver_manifests table
   "ALTER TABLE netserver_manifests RENAME TO tmp;"
@@ -484,13 +482,11 @@ char const migrate_add_indexes[] =
   ;
 
 // There is, perhaps, an argument for turning the logic inside the
-// while-loop into a callback function like unbase64().  We would then not
-// need a special case for this step in the master migration loop.  However,
-// we'd have to get the app_state in there somehow, we might in the future
-// need to do other things that can't be easily expressed in pure SQL, and
-// besides I think it's clearer this way.
+// while-loop into a callback function like unbase64().  However, we'd have
+// to get the key_store in there somehow, and besides I think it's clearer
+// this way.
 static void
-migrate_to_external_privkeys(sqlite3 * db, app_state &app)
+migrate_to_external_privkeys(sqlite3 * db, key_store & keys)
 {
   {
     sql stmt(db, 3,
@@ -501,22 +497,15 @@ migrate_to_external_privkeys(sqlite3 * db, app_state &app)
     while (stmt.step())
       {
         rsa_keypair_id ident(stmt.column_string(0));
-        base64< arc4<rsa_priv_key> > old_priv(stmt.column_string(1));
-
-        keypair kp;
-        migrate_private_key(app, ident, old_priv, kp);
-        MM(kp.pub);
+        base64<old_arc4_rsa_priv_key> old_priv(stmt.column_string(1));
+        base64<rsa_pub_key> pub;
 
         if (stmt.column_nonnull(2))
-          {
-            base64< rsa_pub_key > pub(stmt.column_string(2));
-            MM(pub);
-            N(keys_match(ident, pub, ident, kp.pub),
-              F("public and private keys for %s don't match") % ident);
-          }
+          pub = base64<rsa_pub_key>(stmt.column_string(2));
+
         P(F("moving key '%s' from database to %s")
-          % ident % app.keys.get_key_dir());
-        app.keys.put_key_pair(ident, kp);
+          % ident % keys.get_key_dir());
+        keys.migrate_old_key_pair(ident, old_priv, pub);
       }
   }
 
@@ -618,7 +607,7 @@ char const migrate_add_heights_index[] =
 // this is a function because it has to refer to the numeric constant
 // defined in schema_migration.hh.
 static void
-migrate_add_ccode(sqlite3 * db, app_state &)
+migrate_add_ccode(sqlite3 * db, key_store &)
 {
   string cmd = "PRAGMA user_version = ";
   cmd += boost::lexical_cast<string>(mtn_creator_code);
@@ -648,7 +637,7 @@ dump(enum upgrade_regime const & regime, string & out)
     }
 }
 
-typedef void (*migrator_cb)(sqlite3 *, app_state &);
+typedef void (*migrator_cb)(sqlite3 *, key_store &);
 
 // Exactly one of migrator_sql and migrator_func should be non-null in
 // all entries in migration_events, except the very last.
@@ -924,7 +913,8 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
 }
 
 void
-migrate_sql_schema(sqlite3 * db, app_state & app)
+migrate_sql_schema(sqlite3 * db, system_path const & filename,
+                   key_store & keys)
 {
   I(db != NULL);
 
@@ -946,7 +936,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
     m = find_migration(db);
     cat = classify_schema(db, m);
 
-    diagnose_unrecognized_schema(cat, app.db.get_filename());
+    diagnose_unrecognized_schema(cat, filename);
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
@@ -975,7 +965,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
         if (m->migrator_sql)
           sql::exec(db, m->migrator_sql);
         else if (m->migrator_func)
-          m->migrator_func(db, app);
+          m->migrator_func(db, keys);
         else
           break;
 
@@ -1023,7 +1013,8 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 // conformance check will reject them).
 
 void
-test_migration_step(sqlite3 * db, app_state & app, string const & schema)
+test_migration_step(sqlite3 * db, system_path const & filename,
+                    key_store & keys, string const & schema)
 {
   I(db != NULL);
   sql::create_function(db, "sha1", sqlite_sha1_fn);
@@ -1044,12 +1035,12 @@ test_migration_step(sqlite3 * db, app_state & app, string const & schema)
     F("schema %s is up to date") % schema);
 
   L(FL("testing migration from %s to %s\n in database %s")
-    % schema % m[1].id % app.db.get_filename());
+    % schema % m[1].id % filename);
 
   if (m->migrator_sql)
     sql::exec(db, m->migrator_sql);
   else
-    m->migrator_func(db, app);
+    m->migrator_func(db, keys);
 
   // in the unlikely event that we get here ...
   P(F("successful migration to schema %s") % m[1].id);

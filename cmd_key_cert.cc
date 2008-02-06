@@ -13,14 +13,11 @@
 #include <fstream>
 #include <iterator>
 
-#include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "project.hh"
 #include "keys.hh"
-#include "transforms.hh"
-#include "ssh_agent.hh"
-#include "botan/pipe.h"
 
 using std::cout;
 using std::ostream_iterator;
@@ -28,8 +25,6 @@ using std::ostringstream;
 using std::set;
 using std::string;
 using std::ofstream;
-using Botan::Pipe;
-using Botan::RSA_PrivateKey;
 
 CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     N_("Generates an RSA key-pair"),
@@ -41,22 +36,8 @@ CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
-  bool exists = app.keys.key_pair_exists(ident);
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db);
-      exists = exists || app.db.public_key_exists(ident);
-      guard.commit();
-    }
 
-  N(!exists, F("key '%s' already exists") % ident);
-
-  keypair kp;
-  P(F("generating key-pair '%s'") % ident);
-  generate_key_pair(app.lua, ident, kp);
-  P(F("storing key-pair '%s' in %s/") 
-    % ident % app.keys.get_key_dir());
-  app.keys.put_key_pair(ident, kp);
+  app.keys.create_key_pair(app.db, ident);
 }
 
 CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
@@ -112,14 +93,7 @@ CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  N(app.keys.key_pair_exists(ident),
-    F("key '%s' does not exist in the keystore") % ident);
-
-  keypair key;
-  app.keys.get_key_pair(ident, key);
-  change_key_passphrase(app.lua, ident, key.priv);
-  app.keys.delete_key(ident);
-  app.keys.put_key_pair(ident, key);
+  app.keys.change_key_passphrase(ident);
   P(F("passphrase changed"));
 }
 
@@ -133,34 +107,15 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
     throw usage(execid);
 
   rsa_keypair_id id;
-  keypair key;
-  get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
-  app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
-  utf8 new_phrase;
-  get_passphrase(app.lua, id, new_phrase, true, true);
-  Pipe p;
-  p.start_msg();
-  if (new_phrase().length())
-    {
-      Botan::PKCS8::encrypt_key(*priv,
-                                p,
-                                new_phrase(),
-                                "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
-    }
-  else
-    {
-      Botan::PKCS8::encode(*priv, p);
-    }
-  string decoded_key = p.read_all_as_string();
+  get_user_key(id, app.opts, app.lua, app.keys, app.db);
+
   if (args.size() == 0)
-    cout << decoded_key;
+    app.keys.export_key_for_agent(id, cout);
   else
     {
       string external_path = system_path(idx(args, 0)).as_external();
       ofstream fout(external_path.c_str(), ofstream::out);
-      fout << decoded_key;
+      app.keys.export_key_for_agent(id, fout);
     }
 }
 
@@ -173,12 +128,8 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
     throw usage(execid);
 
   rsa_keypair_id id;
-  keypair key;
-  get_user_key(id, app);
-  N(priv_key_exists(app, id), F("the key you specified cannot be found"));
-  app.keys.get_key_pair(id, key);
-  shared_ptr<RSA_PrivateKey> priv = get_private_key(app.lua, id, key.priv);
-  app.agent.add_identity(*priv, id());
+  get_user_key(id, app.opts, app.lua, app.keys, app.db);
+  app.keys.add_key_to_agent(id);
 }
 
 CMD(cert, "cert", "", CMD_REF(key_and_cert),
@@ -190,16 +141,16 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(execid);
 
+  project_t project(app.db);
   transaction_guard guard(app.db);
 
   revision_id rid;
-  complete(app, idx(args, 0)(), rid);
+  complete(app,  project, idx(args, 0)(), rid);
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
 
-  rsa_keypair_id key;
-  get_user_key(key, app);
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
 
   cert_value val;
   if (args.size() == 3)
@@ -211,7 +162,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
       val = cert_value(dat());
     }
 
-  app.get_project().put_cert(rid, cname, val);
+  project.put_cert(app.keys, rid, cname, val);
   guard.commit();
 }
 
@@ -224,9 +175,15 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
   if (args.size() < 4)
     throw usage(execid);
 
-  revision_id rid;
-  complete(app, idx(args, 0)(), rid, false);
-  hexenc<id> ident(rid.inner());
+  project_t project(app.db);
+
+  set<revision_id> rids;
+  expand_selector(app,  project, idx(args, 0)(), rids);
+  diagnose_ambiguous_expansion(project, idx(args, 0)(), rids);
+
+  hexenc<id> ident;
+  if (!rids.empty())
+    ident = rids.begin()->inner();
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -271,9 +228,12 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
   if (args.size() != 2)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  cert_revision_tag(r, idx(args, 1)(), app);
+  complete(app, project, idx(args, 0)(), r);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  project.put_tag(app.keys, r, idx(args, 1)());
 }
 
 
@@ -286,9 +246,12 @@ CMD(testresult, "testresult", "", CMD_REF(review),
   if (args.size() != 2)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  cert_revision_testresult(r, idx(args, 1)(), app);
+  complete(app, project, idx(args, 0)(), r);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cert_revision_testresult(r, idx(args, 1)(), app.db, app.keys);
 }
 
 
@@ -300,11 +263,14 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  complete(app, project, idx(args, 0)(), r);
+  guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
-  app.get_project().put_revision_in_branch(r, app.opts.branchname);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  project.put_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
@@ -315,11 +281,14 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
   if (args.size() != 1)
     throw usage(execid);
 
+  project_t project(app.db);
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  guess_branch(r, app);
+  complete(app, project, idx(args, 0)(), r);
+  guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
-  app.get_project().suspend_revision_in_branch(r, app.opts.branchname);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  project.suspend_revision_in_branch(app.keys, r, app.opts.branchname);
 }
 
 CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
@@ -327,6 +296,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     "",
     options::opts::none)
 {
+  project_t project(app.db);
   if (args.size() != 1 && args.size() != 2)
     throw usage(execid);
 
@@ -345,8 +315,10 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     F("empty comment"));
 
   revision_id r;
-  complete(app, idx(args, 0)(), r);
-  cert_revision_comment(r, comment, app);
+  complete(app, project, idx(args, 0)(), r);
+
+  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cert_revision_comment(r, comment, app.db, app.keys);
 }
 
 // Local Variables:

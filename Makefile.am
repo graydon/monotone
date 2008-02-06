@@ -303,7 +303,7 @@ WIN32_PLATFORM_SOURCES =						\
 # these files contain unit tests
 UNIT_TEST_SOURCES =							\
 	basic_io.cc charset.cc commands.cc crypto_tests.cc cset.cc	\
-	dates.cc diff_patch.cc globish.cc graph.cc keys.cc netcmd.cc	\
+	dates.cc diff_patch.cc globish.cc graph.cc netcmd.cc		\
 	netxx_pipe.cc numeric_vocab.cc option.cc outdated_indicator.cc	\
 	packet.cc paths.cc refiner.cc restrictions.cc rev_height.cc	\
 	revision.cc roster.cc roster_merge.cc simplestring_xform.cc	\
@@ -313,7 +313,7 @@ UNIT_TEST_SOURCES =							\
 # these files do not contain unit tests, but are required for unit testing
 # and must be recompiled for that purpose
 UNIT_TEST_SRC_SUPPORT =							\
-	lua_hooks.cc roster_delta.cc
+	roster_delta.cc
 
 # these files do not contain unit tests; they are required for unit
 # testing, but can be used "as is" from the main build.  (many of
@@ -323,10 +323,11 @@ UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-constants.$(OBJEXT) mtn-database.$(OBJEXT)			\
 	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-hmac.$(OBJEXT)	\
 	mtn-inodeprint.$(OBJEXT) mtn-key_store.$(OBJEXT)		\
+	mtn-keys.$(OBJEXT)						\
 	mtn-lcs.$(OBJEXT) mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT)	\
-	mtn-merkle_tree.$(OBJEXT) mtn-mt_version.$(OBJEXT)		\
-	mtn-mtn-sanity.$(OBJEXT) mtn-options.$(OBJEXT)			\
-	mtn-package_full_revision.$(OBJEXT)				\
+	mtn-lua_hooks.$(OBJEXT) mtn-merkle_tree.$(OBJEXT)		\
+	mtn-mt_version.$(OBJEXT) mtn-mtn-sanity.$(OBJEXT)		\
+	mtn-options.$(OBJEXT) mtn-package_full_revision.$(OBJEXT)	\
 	mtn-package_revision.$(OBJEXT) mtn-project.$(OBJEXT)		\
 	mtn-randomizer.$(OBJEXT) mtn-sanity.$(OBJEXT)			\
 	mtn-schema.$(OBJEXT) mtn-schema_migration.$(OBJEXT)		\
@@ -346,7 +347,6 @@ mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
 
 unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
-nodist_unit_tester_SOURCES = test_hooks.c
 unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 
 tester_SOURCES = tester.cc
@@ -505,8 +505,8 @@ TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
-	std_hooks.lua test_hooks.lua testlib.lua lua-testsuite.lua	\
-	$(srcdir)/tests tester-testsuite.lua $(srcdir)/tester-tests	\
+	std_hooks.lua testlib.lua lua-testsuite.lua$(srcdir)/tests	\
+	tester-testsuite.lua $(srcdir)/tester-tests			\
 	unit-testsuite.lua package.m4 package_revision.txt		\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
 	sqlite/keywordhash.h contrib/README contrib/monoprof.sh		\
@@ -687,7 +687,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
 
-CLEAN_SOURCES = std_hooks.c test_hooks.c testlib.c schema.c \
+CLEAN_SOURCES = std_hooks.c testlib.c schema.c \
 	package_revision.c package_full_revision.txt \
 	package_full_revision_raw.txt package_full_revision.c
 

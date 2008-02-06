@@ -229,9 +229,23 @@ OPT(bookkeep_only, "bookkeep-only", bool, false,
 #endif
 
 GOPT(ssh_sign, "ssh-sign", std::string, "yes",
-     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+     gettext_noop("controls use of ssh-agent.  valid arguments are: "
+                  "'yes' to use ssh-agent to make signatures if possible, "
+                  "'no' to force use of monotone's internal code, "
+                  "'only' to force use of ssh-agent, "
+                  "'check' to sign with both and compare"))
 #ifdef option_bodies
 {
+  if (arg.empty())
+    throw bad_arg_internal(F("--ssh-sign requires a value "
+                             "['yes', 'no', 'only', or 'check']").str());
+  if (arg != "yes"
+      && arg != "no"
+      && arg != "check"
+      && arg != "only") // XXX what does "only" do? not documented
+    throw bad_arg_internal(F("--ssh-sign must be set to 'yes', 'no', "
+                             "'only', or 'check'").str());
+
   ssh_sign = arg;
 }
 #endif

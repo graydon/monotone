@@ -10,9 +10,14 @@
 #include "base.hh"
 #include "selectors.hh"
 #include "sanity.hh"
-#include "app_state.hh"
 #include "constants.hh"
+#include "database.hh"
+#include "app_state.hh"
+#include "project.hh"
+#include "globish.hh"
+#include "cmd.hh"
 
+#include <algorithm>
 #include <boost/tokenizer.hpp>
 
 using std::make_pair;
@@ -20,158 +25,403 @@ using std::pair;
 using std::set;
 using std::string;
 using std::vector;
+using std::set_intersection;
+using std::inserter;
 
-namespace selectors
-{
-
-  static void
-  decode_selector(string const & orig_sel,
-                  selector_type & type,
-                  string & sel,
-                  app_state & app)
+enum selector_type
   {
-    sel = orig_sel;
+    sel_author,
+    sel_branch,
+    sel_head,
+    sel_any_head,
+    sel_date,
+    sel_tag,
+    sel_ident,
+    sel_cert,
+    sel_earlier,
+    sel_later,
+    sel_parent,
+    sel_unknown
+  };
 
-    L(FL("decoding selector '%s'") % sel);
+typedef vector<pair<selector_type, string> > selector_list;
 
-    string tmp;
-    if (sel.size() < 2 || sel[1] != ':')
+static void
+decode_selector(string const & orig_sel,
+                selector_type & type,
+                string & sel,
+                app_state & app)
+{
+  sel = orig_sel;
+
+  L(FL("decoding selector '%s'") % sel);
+
+  string tmp;
+  if (sel.size() < 2 || sel[1] != ':')
+    {
+      if (!app.lua.hook_expand_selector(sel, tmp))
+        {
+          L(FL("expansion of selector '%s' failed") % sel);
+        }
+      else
+        {
+          P(F("expanded selector '%s' -> '%s'") % sel % tmp);
+          sel = tmp;
+        }
+    }
+
+  if (sel.size() >= 2 && sel[1] == ':')
+    {
+      switch (sel[0])
+        {
+        case 'a':
+          type = sel_author;
+          break;
+        case 'b':
+          type = sel_branch;
+          break;
+        case 'h':
+          type = app.opts.ignore_suspend_certs ? sel_any_head : sel_head;
+          break;
+        case 'd':
+          type = sel_date;
+          break;
+        case 'i':
+          type = sel_ident;
+          break;
+        case 't':
+          type = sel_tag;
+          break;
+        case 'c':
+          type = sel_cert;
+          break;
+        case 'l':
+          type = sel_later;
+          break;
+        case 'e':
+          type = sel_earlier;
+          break;
+        case 'p':
+          type = sel_parent;
+          break;
+        default:
+          W(F("unknown selector type: %c") % sel[0]);
+          break;
+        }
+      sel.erase(0,2);
+
+      // validate certain selector values and provide defaults
+      switch (type)
+        {
+        case sel_date:
+        case sel_later:
+        case sel_earlier:
+          if (app.lua.hook_exists("expand_date"))
+            { 
+              N(app.lua.hook_expand_date(sel, tmp),
+                F("selector '%s' is not a valid date\n") % sel);
+            }
+          else
+            {
+              // if expand_date is not available, start with something
+              tmp = sel;
+            }
+
+          // if we still have a too short datetime string, expand it with
+          // default values, but only if the type is earlier or later;
+          // for searching a specific date cert this makes no sense
+          // FIXME: this is highly speculative if expand_date wasn't called
+          // beforehand - tmp could be _anything_ but a partial date string
+          if (tmp.size()<8 && (sel_later==type || sel_earlier==type))
+            tmp += "-01T00:00:00";
+          else if (tmp.size()<11 && (sel_later==type || sel_earlier==type))
+            tmp += "T00:00:00";
+          N(tmp.size()==19 || sel_date==type, 
+            F("selector '%s' is not a valid date (%s)") % sel % tmp);
+            
+          if (sel != tmp)
+            {
+              P (F ("expanded date '%s' -> '%s'\n") % sel % tmp);
+              sel = tmp;
+            }
+          if (sel_date == type && sel.size() < 19)
+            sel = string("*") + sel + "*"; // to be GLOBbed later
+          break;
+
+        case sel_branch:
+        case sel_head:
+        case sel_any_head:
+          if (sel.empty())
+            {
+              string msg = (sel_branch == type
+                            ? F("the empty branch selector b: refers to "
+                                "the current branch")
+                            : F("the empty head selector h: refers to "
+                                "the head of the current branch")
+                            ).str();
+              app.require_workspace(msg);
+              sel = app.opts.branchname();
+            }
+          break;
+
+        case sel_cert:
+          N(!sel.empty(),
+            F("the cert selector c: may not be empty"));
+          break;
+
+        default: break;
+        }
+    }
+}
+
+static void 
+parse_selector(string const & str, selector_list & sels,
+               app_state & app)
+{
+  sels.clear();
+
+  // this rule should always be enabled, even if the user specifies
+  // --norc: if you provide a revision id, you get a revision id.
+  if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
+      && str.size() == constants::idlen)
+    {
+      sels.push_back(make_pair(sel_ident, str));
+    }
+  else
+    {
+      typedef boost::tokenizer<boost::escaped_list_separator<char> > tokenizer;
+      boost::escaped_list_separator<char> slash("\\", "/", "");
+      tokenizer tokens(str, slash);
+
+      vector<string> selector_strings;
+      copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
+
+      for (vector<string>::const_iterator i = selector_strings.begin();
+           i != selector_strings.end(); ++i)
+        {
+          string sel;
+          selector_type type = sel_unknown;
+
+          decode_selector(*i, type, sel, app);
+          sels.push_back(make_pair(type, sel));
+        }
+    }
+}
+
+static void
+complete_one_selector(selector_type ty, string const & value,
+                      set<revision_id> & completions,
+                      project_t & project)
+{
+  switch (ty)
+    {
+    case sel_ident:
+      project.db.complete(value, completions);
+      break;
+
+    case sel_parent:
+      project.db.select_parent(value, completions);
+      break;
+        
+    case sel_author:
+      project.db.select_cert(author_cert_name(), value, completions);
+      break;
+
+    case sel_tag:
+      project.db.select_cert(tag_cert_name(), value, completions);
+      break;
+
+    case sel_branch:
+      I(!value.empty());
+      project.db.select_cert(branch_cert_name(), value, completions);
+      break;
+
+    case sel_unknown:
+      project.db.select_author_tag_or_branch(value, completions);
+      break;
+
+    case sel_date:
+      project.db.select_date(value, "GLOB", completions);
+      break;
+
+    case sel_earlier:
+      project.db.select_date(value, "<=", completions);
+      break;
+
+    case sel_later:
+      project.db.select_date(value, ">", completions);
+      break;
+
+    case sel_cert:
       {
-        if (!app.lua.hook_expand_selector(sel, tmp))
+        I(!value.empty());
+        size_t spot = value.find("=");
+
+        if (spot != (size_t)-1)
           {
-            L(FL("expansion of selector '%s' failed") % sel);
+            string certname;
+            string certvalue;
+
+            certname = value.substr(0, spot);
+            spot++;
+            certvalue = value.substr(spot);
+
+            project.db.select_cert(certname, certvalue, completions);
           }
         else
-          {
-            P(F("expanded selector '%s' -> '%s'") % sel % tmp);
-            sel = tmp;
-          }
+          project.db.select_cert(value, completions);
       }
+      break;
 
-    if (sel.size() >= 2 && sel[1] == ':')
+    case sel_head:
+    case sel_any_head:
       {
-        switch (sel[0])
-          {
-          case 'a':
-            type = sel_author;
-            break;
-          case 'b':
-            type = sel_branch;
-            break;
-          case 'h':
-            type = sel_head;
-            break;
-          case 'd':
-            type = sel_date;
-            break;
-          case 'i':
-            type = sel_ident;
-            break;
-          case 't':
-            type = sel_tag;
-            break;
-          case 'c':
-            type = sel_cert;
-            break;
-          case 'l':
-            type = sel_later;
-            break;
-          case 'e':
-            type = sel_earlier;
-            break;
-          case 'p':
-            type = sel_parent;
-            break;
-          default:
-            W(F("unknown selector type: %c") % sel[0]);
-            break;
-          }
-        sel.erase(0,2);
+        // get branch names
+        set<branch_name> branch_names;
+        I(!value.empty());
+        project.get_branch_list(globish(value), branch_names);
 
-        /* a selector date-related should be validated */	
-        if (sel_date==type || sel_later==type || sel_earlier==type)
-          {
-            if (app.lua.hook_exists("expand_date"))
-              { 
-                N(app.lua.hook_expand_date(sel, tmp),
-                  F("selector '%s' is not a valid date\n") % sel);
-              }
-            else
-              {
-                // if expand_date is not available, start with something
-                tmp = sel;
-              }
+        L(FL("found %d matching branches") % branch_names.size());
 
-            // if we still have a too short datetime string, expand it with
-            // default values, but only if the type is earlier or later;
-            // for searching a specific date cert this makes no sense
-            // FIXME: this is highly speculative if expand_date wasn't called
-            // beforehand - tmp could be _anything_ but a partial date string
-            if (tmp.size()<8 && (sel_later==type || sel_earlier==type))
-              tmp += "-01T00:00:00";
-            else if (tmp.size()<11 && (sel_later==type || sel_earlier==type))
-              tmp += "T00:00:00";
-            N(tmp.size()==19 || sel_date==type, 
-              F("selector '%s' is not a valid date (%s)") % sel % tmp);
-            
-            if (sel != tmp)
-              {
-                P (F ("expanded date '%s' -> '%s'\n") % sel % tmp);
-                sel = tmp;
-              }
+        // for each branch name, get the branch heads
+        for (set<branch_name>::const_iterator bn = branch_names.begin();
+             bn != branch_names.end(); bn++)
+          {
+            set<revision_id> branch_heads;
+            project.get_branch_heads(*bn, branch_heads, ty == sel_any_head);
+            completions.insert(branch_heads.begin(), branch_heads.end());
+            L(FL("after get_branch_heads for %s, heads has %d entries")
+              % (*bn) % completions.size());
           }
       }
-  }
+      break;
+    }
+}
 
-  void
-  complete_selector(string const & orig_sel,
-                    vector<pair<selector_type, string> > const & limit,
-                    selector_type & type,
-                    set<string> & completions,
-                    app_state & app)
-  {
-    string sel;
-    decode_selector(orig_sel, type, sel, app);
-    app.db.complete(type, sel, limit, completions);
-  }
+static void
+complete_selector(selector_list const & limit,
+                  set<revision_id> & completions,
+                  project_t & project)
+{
+  if (limit.empty()) // all the ids in the database
+    {
+      project.db.complete("", completions);
+      return;
+    }
 
-  vector<pair<selector_type, string> >
-  parse_selector(string const & str,
-                 app_state & app)
-  {
-    vector<pair<selector_type, string> > sels;
+  selector_list::const_iterator i = limit.begin();
+  complete_one_selector(i->first, i->second, completions, project);
+  i++;
 
-    // this rule should always be enabled, even if the user specifies
-    // --norc: if you provide a revision id, you get a revision id.
-    if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
-        && str.size() == constants::idlen)
-      {
-        sels.push_back(make_pair(sel_ident, str));
-      }
-    else
-      {
-        typedef boost::tokenizer<boost::escaped_list_separator<char> > tokenizer;
-        boost::escaped_list_separator<char> slash("\\", "/", "");
-        tokenizer tokens(str, slash);
+  while (i != limit.end())
+    {
+      set<revision_id> candidates;
+      set<revision_id> intersection;
+      complete_one_selector(i->first, i->second, candidates, project);
 
-        vector<string> selector_strings;
-        copy(tokens.begin(), tokens.end(), back_inserter(selector_strings));
+      intersection.clear();
+      set_intersection(completions.begin(), completions.end(),
+                       candidates.begin(), candidates.end(),
+                       inserter(intersection, intersection.end()));
 
-        for (vector<string>::const_iterator i = selector_strings.begin();
-             i != selector_strings.end(); ++i)
-          {
-            string sel;
-            selector_type type = sel_unknown;
+      completions = intersection;
+      i++;
+    }
+}
 
-            decode_selector(*i, type, sel, app);
-            sels.push_back(make_pair(type, sel));
-          }
-      }
+void
+complete(app_state & app,
+         project_t & project,
+         string const & str,
+         set<revision_id> & completions)
+{
+  selector_list sels;
+  parse_selector(str, sels, app);
 
-    return sels;
-  }
+  // avoid logging if there's no expansion to be done
+  if (sels.size() == 1
+      && sels[0].first == sel_ident
+      && sels[0].second.size() == constants::idlen)
+    {
+      completions.insert(revision_id(sels[0].second));
+      N(project.db.revision_exists(*completions.begin()),
+        F("no such revision '%s'") % *completions.begin());
+      return;
+    }
 
-}; // namespace selectors
+  P(F("expanding selection '%s'") % str);
+  complete_selector(sels, completions, project);
+
+  N(completions.size() != 0,
+    F("no match for selection '%s'") % str);
+
+  for (set<revision_id>::const_iterator i = completions.begin();
+       i != completions.end(); ++i)
+    {
+      P(F("expanded to '%s'") % *i);
+
+      // This may be impossible, but let's make sure.
+      // All the callers used to do it.
+      N(project.db.revision_exists(*i),
+        F("no such revision '%s'") % *i);
+    }
+}
+
+void
+complete(app_state & app,
+         project_t & project,
+         string const & str,
+         revision_id & completion)
+{
+  set<revision_id> completions;
+
+  complete(app, project, str, completions);
+
+  I(completions.size() > 0);
+  diagnose_ambiguous_expansion(project, str, completions);
+
+  completion = *completions.begin();
+}
+
+
+void
+expand_selector(app_state & app,
+                project_t & project,
+                string const & str,
+                set<revision_id> & completions)
+{
+  selector_list sels;
+  parse_selector(str, sels, app);
+
+  // avoid logging if there's no expansion to be done
+  if (sels.size() == 1
+      && sels[0].first == sel_ident
+      && sels[0].second.size() == constants::idlen)
+    {
+      completions.insert(revision_id(sels[0].second));
+      return;
+    }
+
+  complete_selector(sels, completions, project);
+}
+
+void
+diagnose_ambiguous_expansion(project_t & project,
+                             string const & str,
+                             set<revision_id> const & completions)
+{
+  if (completions.size() <= 1)
+    return;
+
+  string err = (F("selection '%s' has multiple ambiguous expansions:")
+                % str).str();
+  for (set<revision_id>::const_iterator i = completions.begin();
+       i != completions.end(); ++i)
+    err += ("\n" + describe_revision(project, *i));
+
+  N(false, i18n_format(err));
+}
+
 
 // Local Variables:
 // mode: C++

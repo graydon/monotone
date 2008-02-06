@@ -14,10 +14,14 @@
 #include <set>
 
 #include "commands.hh"
+#include "selectors.hh"
 #include "options.hh"
 #include "sanity.hh"
 
 class app_state;
+class database;
+class project_t;
+struct workspace;
 
 namespace commands
 {
@@ -152,23 +156,11 @@ args_to_paths(args_vector const & args)
 }
 
 std::string
-describe_revision(app_state & app,
-                  revision_id const & id);
+describe_revision(project_t & project, revision_id const & id);
 
 void
-complete(app_state & app,
-         std::string const & str,
-         revision_id & completion,
-         bool must_exist=true);
-
-void
-complete(app_state & app,
-         std::string const & str,
-         std::set<revision_id> & completion,
-         bool must_exist=true);
-
-void
-notify_if_multiple_heads(app_state & app);
+notify_if_multiple_heads(project_t & project, branch_name const & branchname,
+                         bool ignore_suspend_certs);
 
 void
 process_commit_message_args(bool & given,
@@ -285,8 +277,14 @@ void commands::automate_ ## C :: exec_from_automate                  \
    app_state & app,                                                  \
    std::ostream & output) const
 
-CMD_FWD_DECL(__root__);
+#define CMD_REQUIRES_DATABASE(app)                                   \
+database & db = app.db
 
+#define CMD_REQUIRES_WORKSPACE(app)                                  \
+workspace & work = app.work;                                         \
+app.require_workspace()
+
+CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);
 CMD_FWD_DECL(debug);
