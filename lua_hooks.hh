@@ -59,8 +59,16 @@ public:
                                    hexenc<id> const & id,
                                    cert_name const & name,
                                    cert_value const & val);
+  bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+                                   revision_id const & id,
+                                   cert_name const & name,
+                                   cert_value const & val);
   bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
                                     hexenc<id> const & id,
+                                    cert_name const & name,
+                                    cert_value const & val);
+  bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+                                    manifest_id const & id,
                                     cert_name const & name,
                                     cert_value const & val);
   bool hook_accept_testresult_change(std::map<rsa_keypair_id, bool> const & old_results,

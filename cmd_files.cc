@@ -206,9 +206,9 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
       read_data_stdin(dat);
     }
 
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  cout << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 // Name: identify
@@ -237,10 +237,9 @@ CMD_AUTOMATE(identify, N_("PATH"),
   data dat;
   read_data_for_command_line(path, dat);
   
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  
-  output << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 static void

@@ -14,6 +14,7 @@
 
 #include "basic_io.hh"
 #include "sanity.hh"
+#include "transforms.hh"
 #include "vocab.hh"
 
 using std::logic_error;
@@ -66,6 +67,11 @@ basic_io::escape(string const & s)
 basic_io::stanza::stanza() : indent(0)
 {}
 
+void basic_io::stanza::push_binary_pair(symbol const & k, id const & v)
+{
+  push_hex_pair(k, hexenc<id>(encode_hexenc(v())));
+}
+
 void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 {
   entries.push_back(make_pair(k, ""));
@@ -78,11 +84,12 @@ void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
     indent = k().size();
 }
 
-void basic_io::stanza::push_hex_triple(symbol const & k,
-                                       string const & n,
-                                       hexenc<id> const & v)
+void basic_io::stanza::push_binary_triple(symbol const & k,
+                                          string const & n,
+                                          id const & v)
 {
-  entries.push_back(make_pair(k, escape(n) + " " + "[" + v() + "]"));
+  string const & s(encode_hexenc(v()));
+  entries.push_back(make_pair(k, escape(n) + " " + "[" + s + "]"));
   if (k().size() > indent)
     indent = k().size();
 }

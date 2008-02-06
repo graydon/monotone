@@ -23,6 +23,7 @@
 #include "app_state.hh"
 #include "project.hh"
 #include "basic_io.hh"
+#include "xdelta.hh"
 #include "keys.hh"
 
 using std::cout;
@@ -277,10 +278,10 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
           file_t f = downcast_to_file_t(node);
           if (file_exists(new_path))
             {
-              hexenc<id> ident;
+              file_id ident;
               calculate_ident(new_path, ident);
               // don't touch unchanged files
-              if (ident == f->content.inner())
+              if (ident == f->content)
                 continue;
               else
                 L(FL("skipping unchanged %s") % new_path);
@@ -1198,9 +1199,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                     app.db.get_file_version(old_content, old_data);
                     read_data(path, new_data);
                     // sanity check
-                    hexenc<id> tid;
-                    calculate_ident(new_data, tid);
-                    N(tid == new_content.inner(),
+                    file_id tid;
+                    calculate_ident(file_data(new_data), tid);
+                    N(tid == new_content,
                       F("file '%s' modified during commit, aborting")
                       % path);
                     delta del;
@@ -1227,9 +1228,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                 data new_data;
                 read_data(path, new_data);
                 // sanity check
-                hexenc<id> tid;
-                calculate_ident(new_data, tid);
-                N(tid == new_content.inner(),
+                file_id tid;
+                calculate_ident(file_data(new_data), tid);
+                N(tid == new_content,
                   F("file '%s' modified during commit, aborting")
                   % path);
                 app.db.put_file(new_content, file_data(new_data));

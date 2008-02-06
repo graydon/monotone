@@ -40,6 +40,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "xdelta.hh"
 
 using std::make_pair;
 using std::map;
@@ -449,8 +450,8 @@ construct_version(vector< piece > const & source_lines,
 // DB is stupid, but it's also stupid to put raw edge insert methods on the
 // DB itself. or is it? hmm.. encapsulation vs. usage guidance..
 void
-rcs_put_raw_file_edge(hexenc<id> const & old_id,
-                      hexenc<id> const & new_id,
+rcs_put_raw_file_edge(file_id const & old_id,
+                      file_id const & new_id,
                       delta const & del,
                       database & db)
 {
@@ -460,7 +461,7 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
       return;
     }
 
-  if (db.file_version_exists(file_id(old_id)))
+  if (db.file_version_exists(old_id))
     {
       // we already have a way to get to this old version,
       // no need to insert another reconstruction path
@@ -469,18 +470,18 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
   else
     {
       I(db.file_or_manifest_base_exists(new_id, "files")
-        || db.delta_exists(new_id(), "file_deltas"));
-      db.put_file_delta(file_id(old_id), file_id(new_id), file_delta(del));
+        || db.delta_exists(new_id.inner(), "file_deltas"));
+      db.put_file_delta(old_id, new_id, file_delta(del));
     }
 }
 
 
 static void
 insert_into_db(data const & curr_data,
-               hexenc<id> const & curr_id,
+               file_id const & curr_id,
                vector< piece > const & next_lines,
                data & next_data,
-               hexenc<id> & next_id,
+               file_id & next_id,
                database & db)
 {
   // inserting into the DB
@@ -494,7 +495,7 @@ insert_into_db(data const & curr_data,
   }
   delta del;
   diff(curr_data, next_data, del);
-  calculate_ident(next_data, next_id);
+  calculate_ident(file_data(next_data), next_id);
   rcs_put_raw_file_edge(next_id, curr_id, del, db);
 }
 
@@ -561,7 +562,7 @@ static void
 process_branch(string const & begin_version,
                vector< piece > const & begin_lines,
                data const & begin_data,
-               hexenc<id> const & begin_id,
+               file_id const & begin_id,
                rcs_file const & r,
                database & db,
                cvs_history & cvs)
@@ -572,7 +573,7 @@ process_branch(string const & begin_version,
                                            (begin_lines.begin(),
                                             begin_lines.end()));
   data curr_data(begin_data), next_data;
-  hexenc<id> curr_id(begin_id), next_id;
+  file_id curr_id(begin_id), next_id;
 
   while(! (r.deltas.find(curr_version) == r.deltas.end()))
     {
@@ -596,7 +597,7 @@ process_branch(string const & begin_version,
            next_version);
 
          insert_into_db(curr_data, curr_id,
-                     *next_lines, next_data, next_id, db);
+                        *next_lines, next_data, next_id, db);
       }
 
       // mark the beginning-of-branch time and state of this file if
@@ -625,7 +626,7 @@ process_branch(string const & begin_version,
         {
           string branch;
           data branch_data;
-          hexenc<id> branch_id;
+          file_id branch_id;
           vector< piece > branch_lines;
           bool priv = false;
           map<string, string>::const_iterator be = cvs.branch_first_entries.find(*i);
@@ -676,14 +677,13 @@ import_rcs_file_with_cvs(string const & filename, database & db,
     I(r.deltatexts.find(r.admin.head) != r.deltatexts.end());
     I(r.deltas.find(r.admin.head) != r.deltas.end());
 
-    hexenc<id> id;
-    data dat(r.deltatexts.find(r.admin.head)->second->text);
-    calculate_ident(dat, id);
-    file_id fid(id);
+    file_id fid;
+    file_data dat(r.deltatexts.find(r.admin.head)->second->text);
+    calculate_ident(dat, fid);
 
-    cvs.set_filename (filename, fid);
+    cvs.set_filename(filename, fid);
     cvs.index_branchpoint_symbols (r);
-    db.put_file(fid, file_data(dat));
+    db.put_file(fid, dat);
 
     {
       // create the head state in case it is a loner
@@ -695,7 +695,7 @@ import_rcs_file_with_cvs(string const & filename, database & db,
 
     global_pieces.reset();
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
-    process_branch(r.admin.head, head_lines, dat, id, r, db, cvs);
+    process_branch(r.admin.head, head_lines, dat.inner(), fid, r, db, cvs);
     global_pieces.reset();
   }
 
