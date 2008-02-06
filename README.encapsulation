@@ -1,24 +1,20 @@
 key_store.cc:
-  app is a member variable of class key_store, used by:
+  app is a member variable of class key_store_state, used by:
 
-  key_store::make_signature()
-       app.opts.ssh_sign
-       app.agent
+  app.opts.conf_dir:
+	constructor
 
+  app.opts.ssh_sign:
+	make_signature
 
-  key_store::hook_get_passphrase()
-       app.lua.hook_get_passphrase()
+  app.lua.hook_get_passphrase:
+	decrypt_private_key
+	migrate_old_key_pair
 
-  key_store::hook_persist_phrase_ok()
-       app.lua.hook_persist_phrase_ok()
-
-  key_store::hook_get_current_branch_key()
-       app.lua.hook_get_branch_key()
-       app.opts.branchname
-
-  key_store::has_opt_signing_key()
-  key_store::get_opt_signing_key()
-       app.opts.signing_key
+  app.lua.hook_persist_phrase_ok:
+	decrypt_private_key
+	cache_decrypted_key
+	make_signature
 
 lua_hooks.cc:
   << evil mess involving a map from lua_*state* pointers 
