@@ -27,6 +27,7 @@
 #include "project.hh"
 #include "simplestring_xform.hh"
 #include "keys.hh"
+#include "key_store.hh"
 
 using std::cout;
 using std::make_pair;
@@ -376,6 +377,9 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
     "",
     options::opts::branch | options::opts::date | options::opts::author)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   typedef std::pair<revision_id, revision_id> revpair;
   typedef set<revision_id>::const_iterator rid_set_iter;
 
@@ -385,7 +389,6 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   N(app.opts.branchname() != "",
     F("please specify a branch, with --branch=BRANCH"));
 
-  project_t project(app.db);
   set<revision_id> heads;
   project.get_branch_heads(app.opts.branchname, heads,
                            app.opts.ignore_suspend_certs);
@@ -401,7 +404,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       % heads.size() % app.opts.branchname);
 
   // avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
@@ -457,7 +460,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
       merge_two(p.first, p.second, app.opts.branchname, string("merge"),
                 std::cout, false,
-                project, app.opts, app.lua, app.keys);
+                project, app.opts, app.lua, keys);
 
       ancestors.clear();
       heads_for_ancestor.clear();
@@ -477,7 +480,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   I(i == heads.end());
 
   merge_two(left, right, app.opts.branchname, string("merge"),
-            std::cout, false, project, app.opts, app.lua, app.keys);
+            std::cout, false, project, app.opts, app.lua, keys);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -494,39 +497,39 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
   process(app, make_command_id("tree merge_into_dir"), a);
 }
 
+//   This is a special merge operator, but very useful for people
+//   maintaining "slightly disparate but related" trees. It does a one-way
+//   merge; less powerful than putting things in the same branch and also
+//   more flexible.
+//
+//   1. Check to see if src and dst branches are merged, if not abort, if so
+//   call heads N1 and N2 respectively.
+//
+//   2. (FIXME: not yet present) Run the hook propagate ("src-branch",
+//   "dst-branch", N1, N2) which gives the user a chance to massage N1 into
+//   a state which is likely to "merge nicely" with N2, eg. edit pathnames,
+//   omit optional files of no interest.
+//
+//   3. Do a normal 2 or 3-way merge on N1 and N2, depending on the
+//   existence of common ancestors.
+//
+//   4. Save the results as the delta (N2,M), the ancestry edges (N1,M)
+//   and (N2,M), and the cert (N2,dst).
+//
+//   There are also special cases we have to check for where no merge is
+//   actually necessary, because there hasn't been any divergence since the
+//   last time propagate was run.
+//
+//   If dir is not the empty string, rename the root of N1 to have the name
+//   'dir' in the merged tree. (ie, it has name "basename(dir)", and its
+//   parent node is "N2.get_node(dirname(dir))")
 CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
     "",
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
 {
-  //   This is a special merge operator, but very useful for people
-  //   maintaining "slightly disparate but related" trees. It does a one-way
-  //   merge; less powerful than putting things in the same branch and also
-  //   more flexible.
-  //
-  //   1. Check to see if src and dst branches are merged, if not abort, if so
-  //   call heads N1 and N2 respectively.
-  //
-  //   2. (FIXME: not yet present) Run the hook propagate ("src-branch",
-  //   "dst-branch", N1, N2) which gives the user a chance to massage N1 into
-  //   a state which is likely to "merge nicely" with N2, eg. edit pathnames,
-  //   omit optional files of no interest.
-  //
-  //   3. Do a normal 2 or 3-way merge on N1 and N2, depending on the
-  //   existence of common ancestors.
-  //
-  //   4. Save the results as the delta (N2,M), the ancestry edges (N1,M)
-  //   and (N2,M), and the cert (N2,dst).
-  //
-  //   There are also special cases we have to check for where no merge is
-  //   actually necessary, because there hasn't been any divergence since the
-  //   last time propagate was run.
-  //
-  //   If dir is not the empty string, rename the root of N1 to have the name
-  //   'dir' in the merged tree. (ie, it has name "basename(dir)", and its
-  //   parent node is "N2.get_node(dirname(dir))")
-
+  key_store keys(app);
   project_t project(app.db);
   set<revision_id> src_heads, dst_heads;
 
@@ -555,7 +558,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       return;
     }
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
   P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
   P(F("[left]  %s") % *src_i);
@@ -567,7 +570,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       P(F("no merge necessary; putting %s in branch '%s'")
         % (*src_i) % idx(args, 1)());
       transaction_guard guard(app.db);
-      project.put_revision_in_branch(app.keys, *src_i,
+      project.put_revision_in_branch(keys, *src_i,
                                      branch_name(idx(args, 1)()));
       guard.commit();
     }
@@ -650,7 +653,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                             % idx(args, 1) % (*dst_i)).str());
 
       project.put_standard_certs_from_options(app.opts, app.lua,
-                                              app.keys,
+                                              keys,
                                               merged,
                                               branch_name(idx(args, 1)()),
                                               log_message);
@@ -774,9 +777,10 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
        "DEST-BRANCH."),
     options::opts::date | options::opts::author)
 {
+  key_store keys(app);
+  project_t project(app.db);
   revision_id left, right;
   branch_name branch;
-  project_t project(app.db);
 
   if (args.size() != 3)
     throw usage(execid);
@@ -793,9 +797,9 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
     F("%s is already an ancestor of %s") % right % left);
 
   // avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
   merge_two(left, right, branch, string("explicit merge"),
-            std::cout, false, project, app.opts, app.lua, app.keys);
+            std::cout, false, project, app.opts, app.lua, keys);
 }
 
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),

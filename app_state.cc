@@ -29,7 +29,7 @@ using std::vector;
 using std::vector;
 
 app_state::app_state()
-  : lua(this), keys(*this), db(lua), work(lua),
+  : lua(this), db(lua), work(lua),
     branch_is_sticky(false),
     mtn_automate_allowed(false)
 {}
@@ -75,9 +75,12 @@ app_state::process_options()
       && !database_option.as_internal().empty())
     db.set_filename(database_option);
 
-  if (keys.get_key_dir().as_internal().empty()
-      && !keydir_option.as_internal().empty())
-    keys.set_key_dir(keydir_option);
+  if (!opts.key_dir_given && !opts.conf_dir_given)
+    {
+      I(opts.key_dir.empty());
+      if (!keydir_option.empty())
+        opts.key_dir = keydir_option;
+    }
 
   if (opts.branchname().empty() && !branch_option().empty())
     {
@@ -100,7 +103,7 @@ app_state::write_options()
   system_path keydir_option;
 
   database_option = db.get_filename();
-  keydir_option = keys.get_key_dir();
+  keydir_option = opts.key_dir;
 
   if (branch_is_sticky)
     branch_option = opts.branchname;

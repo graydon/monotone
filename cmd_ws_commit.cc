@@ -24,6 +24,7 @@
 #include "project.hh"
 #include "basic_io.hh"
 #include "keys.hh"
+#include "key_store.hh"
 
 using std::cout;
 using std::make_pair;
@@ -335,10 +336,11 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     options::opts::branch | options::opts::messages | options::opts::date |
     options::opts::author)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 1)
     throw usage(execid);
-
-  project_t project(app.db);
 
   utf8 log_message("");
   bool log_message_given;
@@ -357,7 +359,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   process_commit_message_args(log_message_given, log_message, app,
                               utf8((FL("disapproval of revision '%s'") % r).str()));
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
   edge_entry const & old_edge (*rev.edges.begin());
   app.db.get_revision_manifest(edge_old_revision(old_edge),
@@ -380,7 +382,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
     calculate_ident(rdat, inv_id);
     app.db.put_revision(inv_id, rdat);
 
-    project.put_standard_certs_from_options(app.opts, app.lua, app.keys,
+    project.put_standard_certs_from_options(app.opts, app.lua, keys,
                                             inv_id, app.opts.branchname,
                                             log_message);
     guard.commit();
@@ -1050,6 +1052,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     | options::opts::date | options::opts::author | options::opts::depth
     | options::opts::exclude)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   utf8 log_message("");
   bool log_message_given;
   revision_t restricted_rev;
@@ -1058,9 +1063,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   temp_node_id_source nis;
   cset excluded;
 
-  project_t project(app.db);
   app.require_workspace();
-
   app.make_branch_sticky();
   app.work.get_parent_rosters(old_rosters, app.db);
   app.work.get_current_roster_shape(new_roster, app.db, nis);
@@ -1151,7 +1154,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                                        message_validated, reason);
   N(message_validated, F("log message rejected by hook: %s") % reason);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
   // for the divergence check, below
   set<revision_id> heads;
@@ -1241,7 +1244,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
         app.db.put_revision(restricted_rev_id, rdat);
       }
 
-    project.put_standard_certs_from_options(app.opts, app.lua, app.keys,
+    project.put_standard_certs_from_options(app.opts, app.lua, keys,
                                             restricted_rev_id,
                                             app.opts.branchname,
                                             log_message);

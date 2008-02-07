@@ -24,7 +24,6 @@ public:
   key_store(app_state & a);
   ~key_store();
 
-  void set_key_dir(system_path const & kd);
   system_path const & get_key_dir();
 
   // Basic key I/O

@@ -212,12 +212,6 @@ cpp_main(int argc, char ** argv)
                 app.db.set_filename(app.opts.dbname);
             }
 
-          if (app.opts.key_dir_given || app.opts.conf_dir_given)
-            {
-              if (!app.opts.key_dir.empty())
-                app.keys.set_key_dir(app.opts.key_dir);
-            }
-
           // at this point we allow a workspace (meaning search for it
           // and if found read _MTN/options, but don't use the data quite
           // yet, and read all the monotonercs).  Processing the data

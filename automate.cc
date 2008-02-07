@@ -29,6 +29,7 @@
 #include "constants.hh"
 #include "inodeprint.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
@@ -1737,6 +1738,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
+  key_store keys(app);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
@@ -1744,7 +1746,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   utf8 passphrase = idx(args, 1);
 
   hexenc<id> pubhash, privhash;
-  app.keys.create_key_pair(app.db, ident, &passphrase, &pubhash, &privhash);
+  keys.create_key_pair(app.db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
   basic_io::stanza stz;
@@ -2067,14 +2069,15 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
     F("wrong argument count"));
 
   CMD_REQUIRES_DATABASE(app);
-  revision_id rid(idx(args, 0)());
+  key_store keys(app);
 
+  revision_id rid(idx(args, 0)());
   N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, db);
   put_simple_revision_cert(rid, cert_name(idx(args, 1)()),
-                           cert_value(idx(args, 2)()), db, app.keys);
+                           cert_value(idx(args, 2)()), db, keys);
 }
 
 // Name: get_db_variables

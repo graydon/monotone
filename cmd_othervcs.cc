@@ -13,6 +13,7 @@
 #include "project.hh"
 #include "rcs_import.hh"
 #include "keys.hh"
+#include "key_store.hh"
 
 using std::vector;
 
@@ -38,6 +39,9 @@ CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"),
     "",
     options::opts::branch)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 1)
     throw usage(execid);
 
@@ -49,14 +53,12 @@ CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"),
                             F("path %s does not exist") % cvsroot,
                             F("'%s' is not a directory") % cvsroot);
 
-  project_t project(app.db);
-
   // make sure we can sign certs using the selected key; also requests
   // the password (if necessary) up front rather than after some arbitrary
   // amount of work
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
-  import_cvs_repo(cvsroot, app.keys, project, app.opts.branchname);
+  import_cvs_repo(cvsroot, keys, project, app.opts.branchname);
 }
 
 

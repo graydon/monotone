@@ -18,6 +18,7 @@
 #include "app_state.hh"
 #include "project.hh"
 #include "keys.hh"
+#include "key_store.hh"
 
 using std::cin;
 using std::cout;
@@ -96,10 +97,12 @@ CMD(db_migrate, "migrate", "", CMD_REF(db), "",
        "introduced in newer versions of monotone."),
     options::opts::none)
 {
+  key_store keys(app);
+
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.migrate(app.keys);
+  app.db.migrate(keys);
 }
 
 CMD(db_execute, "execute", "", CMD_REF(db), "",
@@ -221,6 +224,8 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   N(args.size() == 0,
     F("no arguments needed"));
 
@@ -228,9 +233,9 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
   app.db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
-  build_changesets_from_manifest_ancestry(app.db, app.keys, set<string>());
+  build_changesets_from_manifest_ancestry(app.db, keys, set<string>());
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -238,6 +243,8 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
     "",
     options::opts::drop_attr)
 {
+  key_store keys(app);
+
   N(args.size() == 0,
     F("no arguments needed"));
 
@@ -245,9 +252,9 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
   app.db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
-  build_roster_style_revs_from_manifest_style_revs(app.db, app.keys,
+  build_roster_style_revs_from_manifest_style_revs(app.db, keys,
                                                    app.opts.attrs_to_drop);
 }
 
@@ -384,9 +391,11 @@ CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
               "schema in SCHEMA to its successor."),
            options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() != 1)
     throw usage(execid);
-  app.db.test_migration_step(idx(args,0)(), app.keys);
+  app.db.test_migration_step(idx(args,0)(), keys);
 }
 
 CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),

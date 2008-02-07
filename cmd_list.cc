@@ -23,6 +23,7 @@
 #include "database.hh"
 #include "globish.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "simplestring_xform.hh"
@@ -157,6 +158,8 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  key_store keys(app);
+
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
   globish pattern("*");
@@ -166,12 +169,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     throw usage(execid);
 
   if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids(pattern, pubs);
-      guard.commit();
-    }
-  app.keys.get_key_ids(pattern, privkeys);
+    app.db.get_key_ids(pattern, pubs);
+
+  keys.get_key_ids(pattern, privkeys);
 
   // true if it is in the database, false otherwise
   map<rsa_keypair_id, bool> pubkeys;
@@ -196,7 +196,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           base64<rsa_pub_key> pub_key;
           keypair priv_key;
           app.db.get_key(*i, pub_key);
-          app.keys.get_key_pair(*i, priv_key);
+          keys.get_key_pair(*i, priv_key);
           if (!keys_match(*i, pub_key, *i, priv_key.pub))
             bad_keys.insert(*i);
         }
@@ -218,7 +218,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           else
             {
               keypair kp;
-              app.keys.get_key_pair(keyid, kp);
+              keys.get_key_pair(keyid, kp);
               pub_encoded = kp.pub;
             }
           key_hash_code(keyid, pub_encoded, hash_code);
@@ -229,7 +229,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         }
       if (!all_in_db)
         cout << (F("(*) - only in %s/")
-                 % app.keys.get_key_dir()) << '\n';
+                 % keys.get_key_dir()) << '\n';
       cout << '\n';
     }
 
@@ -241,7 +241,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         {
           keypair kp;
           hexenc<id> hash_code;
-          app.keys.get_key_pair(*i, kp);
+          keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
           cout << hash_code << ' ' << *i << '\n';
         }
@@ -574,6 +574,7 @@ CMD_AUTOMATE(keys, "",
     F("no arguments needed"));
 
   CMD_REQUIRES_DATABASE(app);
+  key_store keys(app);
 
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
@@ -582,12 +583,8 @@ CMD_AUTOMATE(keys, "",
                            vector<string>,
                            vector<string> > > items;
   if (db.database_specified())
-    {
-      transaction_guard guard(db, false);
-      db.get_key_ids(dbkeys);
-      guard.commit();
-    }
-  key_store & keys = app.keys;
+    db.get_key_ids(dbkeys);
+
   keys.get_key_ids(kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();

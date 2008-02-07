@@ -13,7 +13,6 @@
 #include "paths.hh"
 #include "options.hh"
 #include "lua_hooks.hh"
-#include "key_store.hh"
 #include "database.hh"
 #include "work.hh"
 
@@ -28,7 +27,6 @@ class app_state
 public:
   options opts;
   lua_hooks lua;
-  key_store keys;
   database db;
   workspace work;
 
