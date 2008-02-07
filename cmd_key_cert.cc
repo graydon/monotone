@@ -18,6 +18,7 @@
 #include "app_state.hh"
 #include "project.hh"
 #include "keys.hh"
+#include "key_store.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -31,13 +32,15 @@ CMD(genkey, "genkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() != 1)
     throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  app.keys.create_key_pair(app.db, ident);
+  keys.create_key_pair(app.db, ident);
 }
 
 CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
@@ -45,13 +48,14 @@ CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
   bool key_deleted = false;
+  bool checked_db = false;
 
   if (args.size() != 1)
     throw usage(execid);
 
   rsa_keypair_id ident(idx(args, 0)());
-  bool checked_db = false;
   if (app.db.database_specified())
     {
       transaction_guard guard(app.db);
@@ -65,10 +69,10 @@ CMD(dropkey, "dropkey", "", CMD_REF(key_and_cert), N_("KEYID"),
       checked_db = true;
     }
 
-  if (app.keys.key_pair_exists(ident))
+  if (keys.key_pair_exists(ident))
     {
       P(F("dropping key pair '%s' from keystore") % ident);
-      app.keys.delete_key(ident);
+      keys.delete_key(ident);
       key_deleted = true;
     }
 
@@ -87,13 +91,15 @@ CMD(passphrase, "passphrase", "", CMD_REF(key_and_cert), N_("KEYID"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() != 1)
     throw usage(execid);
 
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
-  app.keys.change_key_passphrase(ident);
+  keys.change_key_passphrase(ident);
   P(F("passphrase changed"));
 }
 
@@ -103,19 +109,21 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() > 1)
     throw usage(execid);
 
   rsa_keypair_id id;
-  get_user_key(id, app.opts, app.lua, app.keys, app.db);
+  get_user_key(id, app.opts, app.lua, keys, app.db);
 
   if (args.size() == 0)
-    app.keys.export_key_for_agent(id, cout);
+    keys.export_key_for_agent(id, cout);
   else
     {
       string external_path = system_path(idx(args, 0)).as_external();
       ofstream fout(external_path.c_str(), ofstream::out);
-      app.keys.export_key_for_agent(id, fout);
+      keys.export_key_for_agent(id, fout);
     }
 }
 
@@ -124,12 +132,14 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() > 1)
     throw usage(execid);
 
   rsa_keypair_id id;
-  get_user_key(id, app.opts, app.lua, app.keys, app.db);
-  app.keys.add_key_to_agent(id);
+  get_user_key(id, app.opts, app.lua, keys, app.db);
+  keys.add_key_to_agent(id);
 }
 
 CMD(cert, "cert", "", CMD_REF(key_and_cert),
@@ -138,10 +148,12 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if ((args.size() != 3) && (args.size() != 2))
     throw usage(execid);
 
-  project_t project(app.db);
   transaction_guard guard(app.db);
 
   revision_id rid;
@@ -150,7 +162,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
+  cache_user_key(app.opts, app.lua, keys, app.db);
 
   cert_value val;
   if (args.size() == 3)
@@ -162,7 +174,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
       val = cert_value(dat());
     }
 
-  project.put_cert(app.keys, rid, cname, val);
+  project.put_cert(keys, rid, cname, val);
   guard.commit();
 }
 
@@ -172,10 +184,10 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
     N_("The current settings are used to run the test."),
     options::opts::none)
 {
+  project_t project(app.db);
+
   if (args.size() < 4)
     throw usage(execid);
-
-  project_t project(app.db);
 
   set<revision_id> rids;
   expand_selector(app,  project, idx(args, 0)(), rids);
@@ -225,15 +237,17 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 2)
     throw usage(execid);
 
-  project_t project(app.db);
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
-  project.put_tag(app.keys, r, idx(args, 1)());
+  cache_user_key(app.opts, app.lua, keys, app.db);
+  project.put_tag(keys, r, idx(args, 1)());
 }
 
 
@@ -243,15 +257,17 @@ CMD(testresult, "testresult", "", CMD_REF(review),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 2)
     throw usage(execid);
 
-  project_t project(app.db);
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
-  cert_revision_testresult(r, idx(args, 1)(), app.db, app.keys);
+  cache_user_key(app.opts, app.lua, keys, app.db);
+  cert_revision_testresult(r, idx(args, 1)(), app.db, keys);
 }
 
 
@@ -260,17 +276,19 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
     "",
     options::opts::branch)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 1)
     throw usage(execid);
 
-  project_t project(app.db);
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
   guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
-  project.put_revision_in_branch(app.keys, r, app.opts.branchname);
+  cache_user_key(app.opts, app.lua, keys, app.db);
+  project.put_revision_in_branch(keys, r, app.opts.branchname);
 }
 
 CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
@@ -278,17 +296,19 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
     "",
     options::opts::branch)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   if (args.size() != 1)
     throw usage(execid);
 
-  project_t project(app.db);
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
   guess_branch(r, app.opts, project);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
-  project.suspend_revision_in_branch(app.keys, r, app.opts.branchname);
+  cache_user_key(app.opts, app.lua, keys, app.db);
+  project.suspend_revision_in_branch(keys, r, app.opts.branchname);
 }
 
 CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
@@ -296,7 +316,9 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
   project_t project(app.db);
+
   if (args.size() != 1 && args.size() != 2)
     throw usage(execid);
 
@@ -317,8 +339,8 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, app.keys, app.db);
-  cert_revision_comment(r, comment, app.db, app.keys);
+  cache_user_key(app.opts, app.lua, keys, app.db);
+  cert_revision_comment(r, comment, app.db, keys);
 }
 
 // Local Variables:

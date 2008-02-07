@@ -40,9 +40,10 @@ using Botan::Pipe;
 
 struct key_store_state
 {
-  system_path key_dir;
+  system_path const key_dir;
+  string const ssh_sign_mode;
   bool have_read;
-  app_state & app;
+  lua_hooks & lua;
   map<rsa_keypair_id, keypair> keys;
   map<hexenc<id>, rsa_keypair_id> hashes;
 
@@ -54,7 +55,8 @@ struct key_store_state
   scoped_ptr<ssh_agent> agent;
 
   key_store_state(app_state & app)
-    : key_dir(app.opts.conf_dir / "keys"), have_read(false), app(app)
+    : key_dir(app.opts.key_dir), ssh_sign_mode(app.opts.ssh_sign),
+      have_read(false), lua(app.lua)
   {}
 
   // internal methods
@@ -145,21 +147,6 @@ key_store::key_store(app_state & a)
 
 key_store::~key_store()
 {}
-
-void
-key_store::set_key_dir(system_path const & kd)
-{
-  if (s->key_dir == kd)
-    return;
-
-  // Changing the key directory wipes the internal cache of keys.
-  s->key_dir = kd;
-  s->have_read = false;
-  s->keys.clear();
-  s->hashes.clear();
-  s->signer_cache.clear();
-  s->privkey_cache.clear();
-}
 
 system_path const &
 key_store::get_key_dir()
@@ -403,7 +390,7 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
       utf8 phrase;
       string lua_phrase;
           // See whether a lua hook will tell us the passphrase.
-      if (!force_from_user && app.lua.hook_get_passphrase(id, lua_phrase))
+      if (!force_from_user && lua.hook_get_passphrase(id, lua_phrase))
         phrase = utf8(lua_phrase);
       else
         get_passphrase(phrase, id, false, false);
@@ -439,7 +426,7 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
     F("failed to extract RSA private key from PKCS#8 keypair"));
 
   // Cache the decrypted key if we're allowed.
-  if (app.lua.hook_persist_phrase_ok())
+  if (lua.hook_persist_phrase_ok())
     safe_insert(privkey_cache, make_pair(id, priv_key));
 
   return priv_key;
@@ -449,7 +436,7 @@ void
 key_store::cache_decrypted_key(const rsa_keypair_id & id)
 {
   signing_key = id;
-  if (s->app.lua.hook_persist_phrase_ok())
+  if (s->lua.hook_persist_phrase_ok())
     s->decrypt_private_key(id);
 }
 
@@ -573,8 +560,6 @@ key_store::make_signature(database & db,
                           string const & tosign,
                           base64<rsa_sha1_signature> & signature)
 {
-  const string & opt_ssh_sign = s->app.opts.ssh_sign;
-
   keypair key;
   get_key_pair(id, key);
 
@@ -586,12 +571,12 @@ key_store::make_signature(database & db,
   ssh_agent & agent = s->get_agent();
 
   //sign with ssh-agent (if connected)
-  N(agent.connected() || opt_ssh_sign != "only",
+  N(agent.connected() || s->ssh_sign_mode != "only",
     F("You have chosen to sign only with ssh-agent but ssh-agent"
       " does not seem to be running."));
-  if (opt_ssh_sign == "yes"
-      || opt_ssh_sign == "check"
-      || opt_ssh_sign == "only")
+  if (s->ssh_sign_mode == "yes"
+      || s->ssh_sign_mode == "check"
+      || s->ssh_sign_mode == "only")
     {
       if (agent.connected()) {
         //grab the monotone public key as an RSA_PublicKey
@@ -617,12 +602,12 @@ key_store::make_signature(database & db,
 
   string ssh_sig = sig_string;
 
-  N(ssh_sig.length() > 0 || opt_ssh_sign != "only",
+  N(ssh_sig.length() > 0 || s->ssh_sign_mode != "only",
     F("You don't seem to have your monotone key imported "));
 
   if (ssh_sig.length() <= 0
-      || opt_ssh_sign == "check"
-      || opt_ssh_sign == "no")
+      || s->ssh_sign_mode == "check"
+      || s->ssh_sign_mode == "no")
     {
       SecureVector<Botan::byte> sig;
 
@@ -632,7 +617,7 @@ key_store::make_signature(database & db,
       // something.
 
       bool persist_phrase = (!s->signer_cache.empty()
-                             || s->app.lua.hook_persist_phrase_ok());
+                             || s->lua.hook_persist_phrase_ok());
 
       shared_ptr<PK_Signer> signer;
       shared_ptr<RSA_PrivateKey> priv_key;
@@ -643,8 +628,8 @@ key_store::make_signature(database & db,
         {
           priv_key = s->decrypt_private_key(id);
           if (agent.connected()
-              && opt_ssh_sign != "only"
-              && opt_ssh_sign != "no") {
+              && s->ssh_sign_mode != "only"
+              && s->ssh_sign_mode != "no") {
             L(FL("make_signature: adding private key (%s) to ssh-agent") % id());
             agent.add_identity(*priv_key, id());
           }
@@ -661,7 +646,7 @@ key_store::make_signature(database & db,
       sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
     }
 
-  if (opt_ssh_sign == "check" && ssh_sig.length() > 0)
+  if (s->ssh_sign_mode == "check" && ssh_sig.length() > 0)
     {
       E(ssh_sig == sig_string,
         F("make_signature: ssh signature (%i) != monotone signature (%i)\n"
@@ -737,7 +722,7 @@ key_store_state::migrate_old_key_pair
 
   // See whether a lua hook will tell us the passphrase.
   string lua_phrase;
-  if (app.lua.hook_get_passphrase(id, lua_phrase))
+  if (lua.hook_get_passphrase(id, lua_phrase))
     phrase = utf8(lua_phrase);
   else
     get_passphrase(phrase, id, false, false);

@@ -5,6 +5,7 @@
 #include "netcmd.hh"
 #include "globish.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "cert.hh"
 #include "revision.hh"
 #include "ui.hh"
@@ -37,23 +38,23 @@ static char const ws_internal_db_file_name[] = "mtn.db";
 static void
 extract_address(args_vector const & args,
                 utf8 & addr,
-                app_state & app)
+                options & opts, database & db)
 {
   if (args.size() >= 1)
     {
       addr = idx(args, 0);
-      if (!app.db.var_exists(default_server_key) || app.opts.set_default)
+      if (!db.var_exists(default_server_key) || opts.set_default)
         {
           P(F("setting default server to %s") % addr());
-          app.db.set_var(default_server_key, var_value(addr()));
+          db.set_var(default_server_key, var_value(addr()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_server_key),
+      N(db.var_exists(default_server_key),
         F("no server given and no default server set"));
       var_value addr_value;
-      app.db.get_var(default_server_key, addr_value);
+      db.get_var(default_server_key, addr_value);
       addr = utf8(addr_value());
       L(FL("using default server address: %s") % addr());
     }
@@ -63,10 +64,13 @@ static void
 find_key(utf8 const & addr,
          globish const & include,
          globish const & exclude,
-         app_state & app,
+         options & opts,
+         lua_hooks & lua,
+         key_store & keys,
+         database & db,
          bool needed = true)
 {
-  if (app.opts.signing_key() != "")
+  if (!opts.signing_key().empty())
     return;
 
   rsa_keypair_id key;
@@ -78,62 +82,65 @@ find_key(utf8 const & addr,
     host = utf8(u.host);
   if (needed
       && (key().empty()
-          || !app.lua.hook_get_netsync_key(host, include, exclude, key)))
-    get_user_key(key, app.opts, app.lua, app.keys, app.db);
+          || !lua.hook_get_netsync_key(host, include, exclude, key)))
+    get_user_key(key, opts, lua, keys, db);
 
-  app.opts.signing_key = key;
+  opts.signing_key = key;
 }
 
 static void
 find_key_if_needed(utf8 const & addr,
                    globish const & include,
                    globish const & exclude,
-                   app_state & app,
+                   options & opts,
+                   lua_hooks & lua,
+                   key_store & keys,
+                   database & db,
                    bool needed = true)
 {
   uri u;
   parse_uri(addr(), u);
 
-  if (app.lua.hook_use_transport_auth(u))
-    find_key(addr, include, exclude, app, needed);
+  if (lua.hook_use_transport_auth(u))
+    find_key(addr, include, exclude, opts, lua, keys, db, needed);
 }
 
 static void
 extract_patterns(args_vector const & args,
                  globish & include_pattern, globish & exclude_pattern,
-                 app_state & app)
+                 options & opts, database & db)
 {
-  if (args.size() >= 2 || app.opts.exclude_given)
+  if (args.size() >= 2 || opts.exclude_given)
     {
       E(args.size() >= 2, F("no branch pattern given"));
 
       include_pattern = globish(args.begin() + 1, args.end());
-      exclude_pattern = globish(app.opts.exclude_patterns);
+      exclude_pattern = globish(opts.exclude_patterns);
 
-      if (!app.db.var_exists(default_include_pattern_key)
-          || app.opts.set_default)
+      if (!db.var_exists(default_include_pattern_key)
+          || opts.set_default)
         {
           P(F("setting default branch include pattern to '%s'") % include_pattern);
-          app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
+          db.set_var(default_include_pattern_key, var_value(include_pattern()));
         }
-      if (!app.db.var_exists(default_exclude_pattern_key)
-          || app.opts.set_default)
+      if (!db.var_exists(default_exclude_pattern_key)
+          || opts.set_default)
         {
           P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
+          db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
   else
     {
-      N(app.db.var_exists(default_include_pattern_key),
+      N(db.var_exists(default_include_pattern_key),
         F("no branch pattern given and no default pattern set"));
       var_value pattern_value;
-      app.db.get_var(default_include_pattern_key, pattern_value);
+      db.get_var(default_include_pattern_key, pattern_value);
       include_pattern = globish(pattern_value());
       L(FL("using default branch include pattern: '%s'") % include_pattern);
-      if (app.db.var_exists(default_exclude_pattern_key))
+      if (db.var_exists(default_exclude_pattern_key))
         {
-          app.db.get_var(default_exclude_pattern_key, pattern_value);
+          db.get_var(default_exclude_pattern_key, pattern_value);
           exclude_pattern = globish(pattern_value());
         }
       else
@@ -150,19 +157,22 @@ CMD(push, "push", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
+  extract_address(args, addr, app.opts, app.db);
+  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
+  find_key_if_needed(addr, include_pattern, exclude_pattern,
+                     app.opts, app.lua, keys, app.db);
 
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  project_t project(app.db);
   run_netsync_protocol(client_voice, source_role, uris,
                        include_pattern, exclude_pattern,
-                       project, app.keys, app.lua, app.opts);
+                       project, keys, app.lua, app.opts);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -172,11 +182,15 @@ CMD(pull, "pull", "", CMD_REF(network),
        "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app, false);
+  extract_address(args, addr, app.opts, app.db);
+  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
+  find_key_if_needed(addr, include_pattern, exclude_pattern,
+                     app.opts, app.lua, keys, app.db, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -184,10 +198,9 @@ CMD(pull, "pull", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       project, app.keys, app.lua, app.opts);
+                       project, keys, app.lua, app.opts);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -198,19 +211,22 @@ CMD(sync, "sync", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
+  key_store keys(app);
+  project_t project(app.db);
+
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
+  extract_address(args, addr, app.opts, app.db);
+  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
+  find_key_if_needed(addr, include_pattern, exclude_pattern,
+                     app.opts, app.lua, keys, app.db, false);
 
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  project_t project(app.db);
   run_netsync_protocol(client_voice, source_and_sink_role, uris,
                        include_pattern, exclude_pattern,
-                       project, app.keys, app.lua, app.opts);
+                       project, keys, app.lua, app.opts);
 }
 
 class dir_cleanup_helper
@@ -296,11 +312,13 @@ CMD(clone, "clone", "", CMD_REF(network),
       app.db.set_var(default_server_key, var_value(addr()));
     }
 
+  key_store keys(app);
+  project_t project(app.db);
   globish include_pattern(app.opts.branchname());
   globish exclude_pattern(app.opts.exclude_patterns);
 
   find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app, false);
+                     app.opts, app.lua, keys, app.db, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -328,10 +346,9 @@ CMD(clone, "clone", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  project_t project(app.db);
   run_netsync_protocol(client_voice, sink_role, uris,
                        include_pattern, exclude_pattern,
-                       project, app.keys, app.lua, app.opts);
+                       project, keys, app.lua, app.opts);
 
   change_current_working_dir(workspace_dir);
 
@@ -435,6 +452,8 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   if (!args.empty())
     throw usage(execid);
 
+  key_store keys(app);
+  project_t project(app.db);
   pid_file pid(app.opts.pidfile);
 
   app.db.ensure_open();
@@ -446,18 +465,19 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
           "(see hook persist_phrase_ok())"));
 
       if (!app.opts.bind_uris.empty())
-        find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""), app);
+        find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""),
+                 app.opts, app.lua, keys, app.db);
       else
-        find_key(utf8(), globish("*"), globish(""), app);
+        find_key(utf8(), globish("*"), globish(""),
+                 app.opts, app.lua, keys, app.db);
     }
   else if (!app.opts.bind_stdio)
     W(F("The --no-transport-auth option is usually only used "
         "in combination with --stdio"));
 
-  project_t project(app.db);
   run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
                        globish("*"), globish(""),
-                       project, app.keys, app.lua, app.opts);
+                       project, keys, app.lua, app.opts);
 }
 
 // Local Variables:
