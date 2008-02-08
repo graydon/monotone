@@ -112,9 +112,8 @@ load_key_pair(key_store & keys,
 // form, so as not to bother the user for their passphrase later.
 
 void
-get_user_key(rsa_keypair_id & key,
-             options const & opts, lua_hooks & lua,
-             key_store & keys, database & db)
+get_user_key(options const & opts, lua_hooks & lua,
+             database & db, key_store & keys, rsa_keypair_id & key)
 {
   if (!keys.signing_key().empty())
     {
@@ -169,10 +168,10 @@ get_user_key(rsa_keypair_id & key,
 // the important thing is to have selected one and cached the decrypted key.
 void
 cache_user_key(options const & opts, lua_hooks & lua,
-               key_store & keys, database & db)
+               database & db, key_store & keys)
 {
   rsa_keypair_id key;
-  get_user_key(key, opts, lua, keys, db);
+  get_user_key(opts, lua, db, keys, key);
 }
 
 void

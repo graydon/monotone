@@ -367,7 +367,7 @@ prepare_diff(cset & included,
       revision_id old_rid;
       parent_map parents;
 
-      app.work.get_parent_rosters(parents, app.db);
+      app.work.get_parent_rosters(app.db, parents);
 
       // With no arguments, which parent should we diff against?
       N(parents.size() == 1,
@@ -376,12 +376,12 @@ prepare_diff(cset & included,
 
       old_rid = parent_id(parents.begin());
       old_roster = parent_roster(parents.begin());
-      app.work.get_current_roster_shape(new_roster, app.db, nis);
+      app.work.get_current_roster_shape(app.db, nis, new_roster);
 
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app.work);
+                            old_roster, new_roster);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -402,12 +402,12 @@ prepare_diff(cset & included,
       complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
       app.db.get_roster(r_old_id, old_roster);
-      app.work.get_current_roster_shape(new_roster, app.db, nis);
+      app.work.get_current_roster_shape(app.db, nis, new_roster);
 
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app.work);
+                            old_roster, new_roster);
 
       app.work.update_current_roster_from_filesystem(new_roster, mask);
 
@@ -431,10 +431,10 @@ prepare_diff(cset & included,
       app.db.get_roster(r_old_id, old_roster);
       app.db.get_roster(r_new_id, new_roster);
 
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app.work);
+                            old_roster, new_roster);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -555,7 +555,7 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
 
 
 static void
-log_certs(ostream & os, project_t & project, revision_id id, cert_name name,
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
           string label, string separator, bool multiline, bool newline)
 {
   vector< revision<cert> > certs;
@@ -587,16 +587,16 @@ log_certs(ostream & os, project_t & project, revision_id id, cert_name name,
 }
 
 static void
-log_certs(ostream & os, project_t & project, revision_id id, cert_name name,
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
           string label, bool multiline)
 {
-  log_certs(os, project, id, name, label, label, multiline, true);
+  log_certs(project, os, id, name, label, label, multiline, true);
 }
 
 static void
-log_certs(ostream & os, project_t & project, revision_id id, cert_name name)
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name)
 {
-  log_certs(os, project, id, name, " ", ",", false, false);
+  log_certs(project, os, id, name, " ", ",", false, false);
 }
 
 
@@ -682,13 +682,12 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           parent_map parents;
           temp_node_id_source nis;
 
-          app.work.get_parent_rosters(parents, app.db);
-          app.work.get_current_roster_shape(new_roster, app.db, nis);
+          app.work.get_parent_rosters(app.db, parents);
+          app.work.get_current_roster_shape(app.db, nis, new_roster);
 
-          mask = node_restriction(args_to_paths(args),
+          mask = node_restriction(app.work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, parents, new_roster,
-                                  app.work);
+                                  app.opts.depth, parents, new_roster);
         }
       else
         {
@@ -697,9 +696,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           roster_t roster;
           app.db.get_roster(first_rid, roster);
 
-          mask = node_restriction(args_to_paths(args),
+          mask = node_restriction(app.work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, roster, app.work);
+                                  app.opts.depth, roster);
         }
     }
 
@@ -820,9 +819,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (!use_markings || marked_revs.find(rid) != marked_revs.end())
             {
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rev, roster,
-                                           nodes_modified,
-                                           app.db);
+              select_nodes_modified_by_rev(app.db, rev, roster,
+                                           nodes_modified);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)
@@ -868,16 +866,16 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (app.opts.brief)
             {
               out << rid;
-              log_certs(out, project, rid, author_name);
+              log_certs(project, out, rid, author_name);
               if (app.opts.no_graph)
-                log_certs(out, project, rid, date_name);
+                log_certs(project, out, rid, date_name);
               else
                 {
                   out << '\n';
-                  log_certs(out, project, rid, date_name,
+                  log_certs(project, out, rid, date_name,
                             string(), string(), false, false);
                 }
-              log_certs(out, project, rid, branch_name);
+              log_certs(project, out, rid, branch_name);
               out << '\n';
             }
           else
@@ -900,10 +898,10 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                    anc != ancestors.end(); ++anc)
                 out << "Ancestor: " << *anc << '\n';
 
-              log_certs(out, project, rid, author_name, "Author: ", false);
-              log_certs(out, project, rid, date_name,   "Date: ",   false);
-              log_certs(out, project, rid, branch_name, "Branch: ", false);
-              log_certs(out, project, rid, tag_name,    "Tag: ",    false);
+              log_certs(project, out, rid, author_name, "Author: ", false);
+              log_certs(project, out, rid, date_name,   "Date: ",   false);
+              log_certs(project, out, rid, branch_name, "Branch: ", false);
+              log_certs(project, out, rid, tag_name,    "Tag: ",    false);
 
               if (!app.opts.no_files && !csum.cs.empty())
                 {
@@ -912,8 +910,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                   out << '\n';
                 }
 
-              log_certs(out, project, rid, changelog_name, "ChangeLog: ", true);
-              log_certs(out, project, rid, comment_name,   "Comments: ",  true);
+              log_certs(project, out, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(project, out, rid, comment_name,   "Comments: ",  true);
             }
 
           if (app.opts.diffs)

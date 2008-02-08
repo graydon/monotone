@@ -244,7 +244,7 @@ CMD_AUTOMATE(identify, N_("PATH"),
 }
 
 static void
-dump_file(std::ostream & output, database & db, file_id & ident)
+dump_file(database & db, std::ostream & output, file_id & ident)
 {
   N(db.file_version_exists(ident),
     F("no file version %s found in database") % ident);
@@ -256,7 +256,7 @@ dump_file(std::ostream & output, database & db, file_id & ident)
 }
 
 static void
-dump_file(std::ostream & output, database & db, revision_id rid, utf8 filename)
+dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
 {
   N(db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
@@ -276,7 +276,7 @@ dump_file(std::ostream & output, database & db, revision_id rid, utf8 filename)
     F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  dump_file(output, db, file_node->content);
+  dump_file(db, output, file_node->content);
 }
 
 CMD(cat, "cat", "", CMD_REF(informative),
@@ -295,7 +295,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       app.require_workspace();
 
       parent_map parents;
-      app.work.get_parent_rosters(parents, app.db);
+      app.work.get_parent_rosters(app.db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
@@ -306,7 +306,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
       complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
-  dump_file(cout, app.db, rid, idx(args, 0));
+  dump_file(app.db, cout, rid, idx(args, 0));
 }
 
 // Name: get_file
@@ -328,7 +328,7 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
     F("wrong argument count"));
 
   file_id ident(idx(args, 0)());
-  dump_file(output, app.db, ident);
+  dump_file(app.db, output, ident);
 }
 
 // Name: get_file_of
@@ -361,7 +361,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       CMD_REQUIRES_WORKSPACE(app);
 
       parent_map parents;
-      work.get_parent_rosters(parents, db);
+      work.get_parent_rosters(db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
@@ -372,7 +372,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
       complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
-  dump_file(output, db, rid, idx(args, 0));
+  dump_file(db, output, rid, idx(args, 0));
 }
 
 // Local Variables:

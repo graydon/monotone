@@ -77,25 +77,25 @@ class node_restriction : public restriction
  public:
   node_restriction() : restriction() {}
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   roster_t const & roster,
-                   workspace & work);
+                   roster_t const & roster);
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster1,
-                   roster_t const & roster2,
-                   workspace & work);
+                   roster_t const & roster2);
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    parent_map const & rosters1,
-                   roster_t const & roster2,
-                   workspace & work);
+                   roster_t const & roster2);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
@@ -121,10 +121,10 @@ class path_restriction : public restriction
 
   path_restriction() : restriction() {}
 
-  path_restriction(std::vector<file_path> const & includes,
+  path_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   workspace & work,
                    validity_check vc = check_paths);
 
   bool includes(file_path const & sp) const;

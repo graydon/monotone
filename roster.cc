@@ -1992,9 +1992,9 @@ mark_roster_with_one_parent(roster_t const & parent,
 // WARNING: this function is not tested directly (no unit tests).  Do not put
 // real logic in it.
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         database & db, node_id_source & nis)
+make_roster_for_revision(database & db, node_id_source & nis,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
   MM(rev);
   MM(new_rid);
@@ -2015,12 +2015,12 @@ make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
 }
 
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         database & db)
+make_roster_for_revision(database & db,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
   true_node_id_source nis(db);
-  make_roster_for_revision(rev, new_rid, new_roster, new_markings, db, nis);
+  make_roster_for_revision(db, nis, rev, new_rid, new_roster, new_markings);
 }
 
 

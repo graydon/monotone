@@ -36,9 +36,8 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
 static char const ws_internal_db_file_name[] = "mtn.db";
 
 static void
-extract_address(args_vector const & args,
-                utf8 & addr,
-                options & opts, database & db)
+extract_address(options & opts, database & db,
+                args_vector const & args, utf8 & addr)
 {
   if (args.size() >= 1)
     {
@@ -61,13 +60,13 @@ extract_address(args_vector const & args,
 }
 
 static void
-find_key(utf8 const & addr,
+find_key(options & opts,
+         lua_hooks & lua,
+         database & db,
+         key_store & keys,
+         utf8 const & addr,
          globish const & include,
          globish const & exclude,
-         options & opts,
-         lua_hooks & lua,
-         key_store & keys,
-         database & db,
          bool needed = true)
 {
   if (!opts.signing_key().empty())
@@ -83,32 +82,31 @@ find_key(utf8 const & addr,
   if (needed
       && (key().empty()
           || !lua.hook_get_netsync_key(host, include, exclude, key)))
-    get_user_key(key, opts, lua, keys, db);
+    get_user_key(opts, lua, db, keys, key);
 
   opts.signing_key = key;
 }
 
 static void
-find_key_if_needed(utf8 const & addr,
+find_key_if_needed(options & opts,
+                   lua_hooks & lua,
+                   database & db,
+                   key_store & keys,
+                   utf8 const & addr,
                    globish const & include,
                    globish const & exclude,
-                   options & opts,
-                   lua_hooks & lua,
-                   key_store & keys,
-                   database & db,
                    bool needed = true)
 {
   uri u;
   parse_uri(addr(), u);
 
   if (lua.hook_use_transport_auth(u))
-    find_key(addr, include, exclude, opts, lua, keys, db, needed);
+    find_key(opts, lua, db, keys, addr, include, exclude, needed);
 }
 
 static void
-extract_patterns(args_vector const & args,
-                 globish & include_pattern, globish & exclude_pattern,
-                 options & opts, database & db)
+extract_patterns(options & opts, database & db, args_vector const & args,
+                 globish & include_pattern, globish & exclude_pattern)
 {
   if (args.size() >= 2 || opts.exclude_given)
     {
@@ -162,17 +160,17 @@ CMD(push, "push", "", CMD_REF(network),
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app.opts, app.db);
-  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
-  find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app.opts, app.lua, keys, app.db);
+  extract_address(app.opts, app.db, args, addr);
+  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, app.db, keys,
+                     addr, include_pattern, exclude_pattern);
 
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  run_netsync_protocol(client_voice, source_role, uris,
-                       include_pattern, exclude_pattern,
-                       project, keys, app.lua, app.opts);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, source_role, uris,
+                       include_pattern, exclude_pattern);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -187,10 +185,10 @@ CMD(pull, "pull", "", CMD_REF(network),
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app.opts, app.db);
-  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
-  find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app.opts, app.lua, keys, app.db, false);
+  extract_address(app.opts, app.db, args, addr);
+  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, app.db, keys,
+                     addr, include_pattern, exclude_pattern, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -198,9 +196,9 @@ CMD(pull, "pull", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern,
-                       project, keys, app.lua, app.opts);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, sink_role, uris,
+                       include_pattern, exclude_pattern);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -216,17 +214,17 @@ CMD(sync, "sync", "", CMD_REF(network),
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app.opts, app.db);
-  extract_patterns(args, include_pattern, exclude_pattern, app.opts, app.db);
-  find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app.opts, app.lua, keys, app.db, false);
+  extract_address(app.opts, app.db, args, addr);
+  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, app.db, keys,
+                     addr, include_pattern, exclude_pattern, false);
 
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  run_netsync_protocol(client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern,
-                       project, keys, app.lua, app.opts);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, source_and_sink_role, uris,
+                       include_pattern, exclude_pattern);
 }
 
 class dir_cleanup_helper
@@ -317,8 +315,8 @@ CMD(clone, "clone", "", CMD_REF(network),
   globish include_pattern(app.opts.branchname());
   globish exclude_pattern(app.opts.exclude_patterns);
 
-  find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app.opts, app.lua, keys, app.db, false);
+  find_key_if_needed(app.opts, app.lua, app.db, keys,
+                     addr, include_pattern, exclude_pattern, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -346,9 +344,9 @@ CMD(clone, "clone", "", CMD_REF(network),
   std::list<utf8> uris;
   uris.push_back(addr);
 
-  run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern,
-                       project, keys, app.lua, app.opts);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, sink_role, uris,
+                       include_pattern, exclude_pattern);
 
   change_current_working_dir(workspace_dir);
 
@@ -381,7 +379,7 @@ CMD(clone, "clone", "", CMD_REF(network),
       // use specified revision
       complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app.opts, project);
+      guess_branch(app.opts, project, ident);
       I(!app.opts.branchname().empty());
 
       N(project.revision_is_in_branch(ident, app.opts.branchname),
@@ -404,7 +402,7 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   content_merge_checkout_adaptor wca(app.db);
 
-  app.work.perform_content_update(checkout, wca, app.db, false);
+  app.work.perform_content_update(app.db, checkout, wca, false);
 
   app.work.update_any_attrs(app.db);
   app.work.maybe_update_inodeprints(app.db);
@@ -465,19 +463,19 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
           "(see hook persist_phrase_ok())"));
 
       if (!app.opts.bind_uris.empty())
-        find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""),
-                 app.opts, app.lua, keys, app.db);
+        find_key(app.opts, app.lua, app.db, keys,
+                 *app.opts.bind_uris.begin(), globish("*"), globish(""));
       else
-        find_key(utf8(), globish("*"), globish(""),
-                 app.opts, app.lua, keys, app.db);
+        find_key(app.opts, app.lua, app.db, keys,
+                 utf8(), globish("*"), globish(""));
     }
   else if (!app.opts.bind_stdio)
     W(F("The --no-transport-auth option is usually only used "
         "in combination with --stdio"));
 
-  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""),
-                       project, keys, app.lua, app.opts);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       server_voice, source_and_sink_role, app.opts.bind_uris,
+                       globish("*"), globish(""));
 }
 
 // Local Variables:

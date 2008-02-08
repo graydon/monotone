@@ -123,11 +123,11 @@ namespace
 }
 
 void
-resolve_merge_conflicts(roster_t const & left_roster,
+resolve_merge_conflicts(lua_hooks & lua,
+                        roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
-                        content_merge_adaptor & adaptor,
-                        lua_hooks & lua)
+                        content_merge_adaptor & adaptor)
 {
   // FIXME_ROSTERS: we only have code (below) to invoke the
   // line-merger on content conflicts. Other classes of conflict will
@@ -177,10 +177,10 @@ resolve_merge_conflicts(roster_t const & left_roster,
 }
 
 void
-interactive_merge_and_store(revision_id const & left_rid,
+interactive_merge_and_store(lua_hooks & lua, database & db,
+                            revision_id const & left_rid,
                             revision_id const & right_rid,
-                            revision_id & merged_rid,
-                            database & db, lua_hooks & lua)
+                            revision_id & merged_rid)
 {
   roster_t left_roster, right_roster;
   marking_map left_marking_map, right_marking_map;
@@ -193,37 +193,29 @@ interactive_merge_and_store(revision_id const & left_rid,
 
   roster_merge_result result;
 
-//   {
-//     data tmp;
-//     write_roster_and_marking(left_roster, left_marking_map, tmp);
-//     P(F("merge left roster: [[[\n%s\n]]]") % tmp);
-//     write_roster_and_marking(right_roster, right_marking_map, tmp);
-//     P(F("merge right roster: [[[\n%s\n]]]") % tmp);
-//   }
-
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
   content_merge_database_adaptor dba(db, left_rid, right_rid,
                                      left_marking_map, right_marking_map);
-  resolve_merge_conflicts(left_roster, right_roster,
-                          result, dba, lua);
+  resolve_merge_conflicts(lua, left_roster, right_roster,
+                          result, dba);
 
   // write new files into the db
-  store_roster_merge_result(left_roster, right_roster, result,
-                            left_rid, right_rid, merged_rid,
-                            db);
+  store_roster_merge_result(db,
+                            left_roster, right_roster, result,
+                            left_rid, right_rid, merged_rid);
 }
 
 void
-store_roster_merge_result(roster_t const & left_roster,
+store_roster_merge_result(database & db,
+                          roster_t const & left_roster,
                           roster_t const & right_roster,
                           roster_merge_result & result,
                           revision_id const & left_rid,
                           revision_id const & right_rid,
-                          revision_id & merged_rid,
-                          database & db)
+                          revision_id & merged_rid)
 {
   I(result.is_clean());
   roster_t & merged_roster = result.roster;

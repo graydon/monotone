@@ -913,8 +913,8 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
 }
 
 void
-migrate_sql_schema(sqlite3 * db, system_path const & filename,
-                   key_store & keys)
+migrate_sql_schema(sqlite3 * db, key_store & keys,
+                   system_path const & filename)
 {
   I(db != NULL);
 
@@ -1013,8 +1013,9 @@ migrate_sql_schema(sqlite3 * db, system_path const & filename,
 // conformance check will reject them).
 
 void
-test_migration_step(sqlite3 * db, system_path const & filename,
-                    key_store & keys, string const & schema)
+test_migration_step(sqlite3 * db, key_store & keys,
+                    system_path const & filename,
+                    string const & schema)
 {
   I(db != NULL);
   sql::create_function(db, "sha1", sqlite_sha1_fn);

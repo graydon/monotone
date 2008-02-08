@@ -209,9 +209,9 @@ parse_selector(string const & str, selector_list & sels,
 }
 
 static void
-complete_one_selector(selector_type ty, string const & value,
-                      set<revision_id> & completions,
-                      project_t & project)
+complete_one_selector(project_t & project,
+                      selector_type ty, string const & value,
+                      set<revision_id> & completions)
 {
   switch (ty)
     {
@@ -299,9 +299,9 @@ complete_one_selector(selector_type ty, string const & value,
 }
 
 static void
-complete_selector(selector_list const & limit,
-                  set<revision_id> & completions,
-                  project_t & project)
+complete_selector(project_t & project,
+                  selector_list const & limit,
+                  set<revision_id> & completions)
 {
   if (limit.empty()) // all the ids in the database
     {
@@ -310,14 +310,14 @@ complete_selector(selector_list const & limit,
     }
 
   selector_list::const_iterator i = limit.begin();
-  complete_one_selector(i->first, i->second, completions, project);
+  complete_one_selector(project, i->first, i->second, completions);
   i++;
 
   while (i != limit.end())
     {
       set<revision_id> candidates;
       set<revision_id> intersection;
-      complete_one_selector(i->first, i->second, candidates, project);
+      complete_one_selector(project, i->first, i->second, candidates);
 
       intersection.clear();
       set_intersection(completions.begin(), completions.end(),
@@ -350,7 +350,7 @@ complete(app_state & app,
     }
 
   P(F("expanding selection '%s'") % str);
-  complete_selector(sels, completions, project);
+  complete_selector(project, sels, completions);
 
   N(completions.size() != 0,
     F("no match for selection '%s'") % str);
@@ -402,7 +402,7 @@ expand_selector(app_state & app,
       return;
     }
 
-  complete_selector(sels, completions, project);
+  complete_selector(project, sels, completions);
 }
 
 void

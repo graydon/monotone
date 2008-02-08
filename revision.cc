@@ -172,10 +172,10 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
                                shared_bitmap & total_union);
 
 void
-find_common_ancestor_for_merge(revision_id const & left,
+find_common_ancestor_for_merge(database & db,
+                               revision_id const & left,
                                revision_id const & right,
-                               revision_id & anc,
-                               database & db)
+                               revision_id & anc)
 {
   interner<ctx> intern;
   set<ctx> leaves;
@@ -268,7 +268,6 @@ is_ancestor(T const & ancestor_id,
             T const & descendent_id,
             multimap<T, T> const & graph)
 {
-
   set<T> visited;
   queue<T> queue;
 
@@ -299,9 +298,9 @@ is_ancestor(T const & ancestor_id,
 }
 
 bool
-is_ancestor(revision_id const & ancestor_id,
-            revision_id const & descendent_id,
-            database & db)
+is_ancestor(database & db,
+            revision_id const & ancestor_id,
+            revision_id const & descendent_id)
 {
   L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
 
@@ -387,9 +386,9 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
 }
 
 void
-toposort(set<revision_id> const & revisions,
-         vector<revision_id> & sorted,
-         database & db)
+toposort(database & db,
+         set<revision_id> const & revisions,
+         vector<revision_id> & sorted)
 {
   map<rev_height, revision_id> work;
 
@@ -411,10 +410,10 @@ toposort(set<revision_id> const & revisions,
 }
 
 static void
-accumulate_strict_ancestors(revision_id const & start,
+accumulate_strict_ancestors(database & db,
+                            revision_id const & start,
                             set<revision_id> & all_ancestors,
                             multimap<revision_id, revision_id> const & inverse_graph,
-                            database & db,
                             rev_height const & min_height)
 {
   typedef multimap<revision_id, revision_id>::const_iterator gi;
@@ -452,9 +451,9 @@ accumulate_strict_ancestors(revision_id const & start,
 // many fewer calls to the predicate, which can be a significant speed win.
 
 void
-erase_ancestors_and_failures(std::set<revision_id> & candidates,
+erase_ancestors_and_failures(database & db,
+                             std::set<revision_id> & candidates,
                              is_failure & p,
-                             database & db,
                              multimap<revision_id, revision_id> *inverse_graph_cache_ptr)
 {
   // Load up the ancestry graph
@@ -508,7 +507,7 @@ erase_ancestors_and_failures(std::set<revision_id> & candidates,
         }
       // okay, it is good enough that all its ancestors should be
       // eliminated
-      accumulate_strict_ancestors(rid, all_ancestors, *inverse_graph_cache_ptr, db, min_height);
+      accumulate_strict_ancestors(db, rid, all_ancestors, *inverse_graph_cache_ptr, min_height);
     }
 
   // now go and eliminate the ancestors
@@ -533,10 +532,10 @@ namespace
   };
 }
 void
-erase_ancestors(set<revision_id> & revisions, database & db)
+erase_ancestors(database & db, set<revision_id> & revisions)
 {
   no_failures p;
-  erase_ancestors_and_failures(revisions, p, db);
+  erase_ancestors_and_failures(db, revisions, p);
 }
 
 // This function takes a revision A and a set of revision Bs, calculates the
@@ -545,9 +544,9 @@ erase_ancestors(set<revision_id> & revisions, database & db)
 // that's not in the Bs.  If the output set if non-empty, then A will
 // certainly be in it; but the output set might be empty.
 void
-ancestry_difference(revision_id const & a, set<revision_id> const & bs,
-                    set<revision_id> & new_stuff,
-                    database & db)
+ancestry_difference(database & db, revision_id const & a,
+                    set<revision_id> const & bs,
+                    set<revision_id> & new_stuff)
 {
   new_stuff.clear();
   typedef multimap<revision_id, revision_id>::const_iterator gi;
@@ -599,10 +598,10 @@ ancestry_difference(revision_id const & a, set<revision_id> const & bs,
 }
 
 void
-select_nodes_modified_by_rev(revision_t const & rev,
+select_nodes_modified_by_rev(database & db,
+                             revision_t const & rev,
                              roster_t const new_roster,
-                             set<node_id> & nodes_modified,
-                             database & db)
+                             set<node_id> & nodes_modified)
 {
   nodes_modified.clear();
 
@@ -942,7 +941,7 @@ void anc_graph::write_certs()
           cert_name name(j->second.first);
           cert_value val(j->second.second);
 
-          if (put_simple_revision_cert(rev, name, val, db, keys))
+          if (put_simple_revision_cert(db, keys, rev, name, val))
             ++n_certs_out;
         }
     }
@@ -1061,7 +1060,7 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
       // load certs
       vector< manifest<cert> > mcerts;
       db.get_manifest_certs(man, mcerts);
-      erase_bogus_certs(mcerts, db);
+      erase_bogus_certs(db, mcerts);
       for(vector< manifest<cert> >::const_iterator i = mcerts.begin();
           i != mcerts.end(); ++i)
         {
@@ -1103,7 +1102,7 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       // load certs
       vector< revision<cert> > rcerts;
       db.get_revision_certs(rev, rcerts);
-      erase_bogus_certs(rcerts, db);
+      erase_bogus_certs(db, rcerts);
       for(vector< revision<cert> >::const_iterator i = rcerts.begin();
           i != rcerts.end(); ++i)
         {
@@ -1692,7 +1691,7 @@ build_changesets_from_manifest_ancestry(database & db, key_store & keys,
 
   vector< manifest<cert> > tmp;
   db.get_manifest_certs(cert_name("ancestor"), tmp);
-  erase_bogus_certs(tmp, db);
+  erase_bogus_certs(db, tmp);
 
   for (vector< manifest<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
@@ -1716,8 +1715,8 @@ build_changesets_from_manifest_ancestry(database & db, key_store & keys,
 // must work even when caches (especially, the height cache!) do not exist.
 // For all other purposes, use toposort above.
 static void
-allrevs_toposorted(vector<revision_id> & revisions,
-                   database & db)
+allrevs_toposorted(database & db,
+                   vector<revision_id> & revisions)
 {
   // get the complete ancestry
   rev_ancestry_map graph;
@@ -1738,7 +1737,7 @@ regenerate_caches(database & db)
   db.delete_existing_heights();
 
   vector<revision_id> sorted_ids;
-  allrevs_toposorted(sorted_ids, db);
+  allrevs_toposorted(db, sorted_ids);
 
   ticker done(_("regenerated"), "r", 5);
   done.set_total(sorted_ids.size());

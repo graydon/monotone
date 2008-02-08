@@ -58,7 +58,7 @@ class annotate_lineage_mapping;
 class annotate_context
 {
 public:
-  annotate_context(file_id fid, project_t & project);
+  annotate_context(project_t & project, file_id fid);
 
   shared_ptr<annotate_lineage_mapping> initial_lineage() const;
 
@@ -206,7 +206,7 @@ typedef multi_index_container<
   > work_units;
 
 
-annotate_context::annotate_context(file_id fid, project_t & project)
+annotate_context::annotate_context(project_t & project, file_id fid)
   : project(project), annotated_lines_completed(0)
 {
   // initialize file_lines
@@ -393,7 +393,7 @@ annotate_context::build_revisions_to_annotations
     {
       vector< revision<cert> > certs;
       project.get_revision_certs(*i, certs);
-      erase_bogus_certs(certs, project.db);
+      erase_bogus_certs(project.db, certs);
 
       string author(cert_string_value(certs, author_cert_name,
                                       true, false, "@< "));
@@ -695,8 +695,8 @@ static void get_file_content_marks(database & db,
 }
 
 static void
-do_annotate_node(annotate_node_work const & work_unit,
-                 database & db,
+do_annotate_node(database & db,
+                 annotate_node_work const & work_unit,
                  work_units & work_units)
 {
   L(FL("do_annotate_node for node %s") % work_unit.revision);
@@ -823,7 +823,7 @@ do_annotate (project_t & project, file_t file_node,
     % file_node->self % file_node->content % rid);
 
   shared_ptr<annotate_context>
-    acp(new annotate_context(file_node->content, project));
+    acp(new annotate_context(project, file_node->content));
 
   shared_ptr<annotate_lineage_mapping> lineage
     = acp->initial_lineage();
@@ -858,7 +858,7 @@ do_annotate (project_t & project, file_t file_node,
       annotate_node_work work = *w;
       work_units.erase(w);
 
-      do_annotate_node(work, project.db, work_units);
+      do_annotate_node(project.db, work, work_units);
     }
 
   acp->annotate_equivalent_lines();

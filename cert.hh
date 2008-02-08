@@ -67,26 +67,23 @@ typedef enum {cert_ok, cert_bad, cert_unknown} cert_status;
 void cert_signable_text(cert const & t,std::string & out);
 cert_status check_cert(database & db, cert const & t);
 
-bool put_simple_revision_cert(revision_id const & id,
+bool put_simple_revision_cert(database & db,
+                              key_store & keys,
+                              revision_id const & id,
                               cert_name const & nm,
-                              cert_value const & val,
-                              database & db,
-                              key_store & keys);
+                              cert_value const & val);
 
-void erase_bogus_certs(std::vector< revision<cert> > & certs,
-                       database & db);
-
-void erase_bogus_certs(std::vector< manifest<cert> > & certs,
-                       database & db);
+void erase_bogus_certs(database & db, std::vector< revision<cert> > & certs);
+void erase_bogus_certs(database & db, std::vector< manifest<cert> > & certs);
 
 // Special certs -- system won't work without them.
 
 #define branch_cert_name cert_name("branch")
 
 void
-cert_revision_in_branch(revision_id const & ctx,
-                        branch_name const & branchname,
-                        database & db, key_store & keys);
+cert_revision_in_branch(database & db, key_store & keys,
+                        revision_id const & rev,
+                        branch_name const & branchname);
 
 
 // We also define some common cert types, to help establish useful
@@ -94,10 +91,10 @@ cert_revision_in_branch(revision_id const & ctx,
 // reason not to.
 
 void
-guess_branch(revision_id const & id, options & opts, project_t & project,
+guess_branch(options & opts, project_t & project, revision_id const & rev,
              branch_name & branchname);
 void
-guess_branch(revision_id const & id, options & opts, project_t & project);
+guess_branch(options & opts, project_t & project, revision_id const & rev);
 
 #define date_cert_name cert_name("date")
 #define author_cert_name cert_name("author")
@@ -108,39 +105,39 @@ guess_branch(revision_id const & id, options & opts, project_t & project);
 #define suspend_cert_name cert_name("suspend")
 
 void
-cert_revision_suspended_in_branch(revision_id const & ctx,
-                        branch_name const & branchname,
-                        database & db, key_store & keys);
+cert_revision_suspended_in_branch(database & db, key_store & keys,
+                                  revision_id const & rev,
+                                  branch_name const & branchname);
 
 void
-cert_revision_date_time(revision_id const & m,
-                        date_t const & t,
-                        database & db, key_store & keys);
+cert_revision_date_time(database & db, key_store & keys,
+                        revision_id const & rev,
+                        date_t const & t);
 
 void
-cert_revision_author(revision_id const & m,
-                    std::string const & author,
-                    database & db, key_store & keys);
+cert_revision_author(database & db, key_store & keys,
+                     revision_id const & m,
+                     std::string const & author);
 
 void
-cert_revision_tag(revision_id const & m,
-                 std::string const & tagname,
-                 database & db, key_store & keys);
+cert_revision_tag(database & db, key_store & keys,
+                  revision_id const & rev,
+                  std::string const & tagname);
 
 void
-cert_revision_changelog(revision_id const & m,
-                        utf8 const & changelog,
-                        database & db, key_store & keys);
+cert_revision_changelog(database & db, key_store & keys,
+                        revision_id const & rev,
+                        utf8 const & changelog);
 
 void
-cert_revision_comment(revision_id const & m,
-                      utf8 const & comment,
-                      database & db, key_store & keys);
+cert_revision_comment(database & db, key_store & keys,
+                      revision_id const & m,
+                      utf8 const & comment);
 
 void
-cert_revision_testresult(revision_id const & m,
-                         std::string const & results,
-                         database & db, key_store & keys);
+cert_revision_testresult(database & db, key_store & keys,
+                         revision_id const & m,
+                         std::string const & results);
 
 
 // Local Variables:

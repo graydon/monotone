@@ -498,7 +498,7 @@ content_merge_database_adaptor::content_merge_database_adaptor(database & db,
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
   // called on to do content merging.
-  find_common_ancestor_for_merge(left, right, lca, db);
+  find_common_ancestor_for_merge(db, left, right, lca);
 }
 
 void
@@ -530,10 +530,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 }
 
 static void
-load_and_cache_roster(revision_id const & rid,
+load_and_cache_roster(database & db, revision_id const & rid,
                       map<revision_id, shared_ptr<roster_t const> > & rmap,
-                      shared_ptr<roster_t const> & rout,
-                      database & db)
+                      shared_ptr<roster_t const> & rout)
 {
   map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
@@ -559,7 +558,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // Begin by loading any non-empty file lca roster
   rid = lca;
   if (!lca.inner()().empty())
-    load_and_cache_roster(lca, rosters, anc, db);
+    load_and_cache_roster(db, lca, rosters, anc);
 
   // If there is no LCA, or the LCA's roster doesn't contain the file,
   // then use the file's birth roster.
@@ -587,7 +586,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, db);
+      load_and_cache_roster(db, rid, rosters, anc);
     }
   I(anc);
 }
@@ -662,7 +661,7 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, db);
+      load_and_cache_roster(db, rid, rosters, anc);
     }
   I(anc);
 }

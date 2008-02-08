@@ -981,14 +981,14 @@ void
 database::migrate(key_store & keys)
 {
   ensure_open_for_maintenance();
-  migrate_sql_schema(imp->__sql, get_filename(), keys);
+  migrate_sql_schema(imp->__sql, keys, get_filename());
 }
 
 void
-database::test_migration_step(string const & schema, key_store & keys)
+database::test_migration_step(key_store & keys, string const & schema)
 {
   ensure_open_for_maintenance();
-  ::test_migration_step(imp->__sql, get_filename(), keys, schema);
+  ::test_migration_step(imp->__sql, keys, get_filename(), schema);
 }
 
 void
@@ -2449,7 +2449,7 @@ database::put_roster_for_revision(revision_id const & new_id,
   shared_ptr<marking_map> mm_writeable(new marking_map); MM(*mm_writeable);
   manifest_id roster_manifest_id;
   MM(roster_manifest_id);
-  make_roster_for_revision(rev, new_id, *ros_writeable, *mm_writeable, *this);
+  make_roster_for_revision(*this, rev, new_id, *ros_writeable, *mm_writeable);
   calculate_ident(*ros_writeable, roster_manifest_id);
   I(rev.new_manifest == roster_manifest_id);
   // const'ify the objects, suitable for caching etc.

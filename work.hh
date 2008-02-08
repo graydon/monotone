@@ -70,35 +70,35 @@ struct workspace
                     node_restriction const & mask,
                     std::set<file_path> & missing);
 
-  void find_unknown_and_ignored(path_restriction const & mask,
+  void find_unknown_and_ignored(database & db,
+                                path_restriction const & mask,
                                 std::vector<file_path> const & roots,
                                 std::set<file_path> & unknown,
-                                std::set<file_path> & ignored,
-				database & db);
+                                std::set<file_path> & ignored);
 
-  void perform_additions(std::set<file_path> const & targets,
-			 database & db,
+  void perform_additions(database & db,
+                         std::set<file_path> const & targets,
                          bool recursive = false,
                          bool respect_ignore = true);
 
-  void perform_deletions(std::set<file_path> const & targets,
-			 database & db,
+  void perform_deletions(database & db,
+                         std::set<file_path> const & targets,
 			 bool recursive, 
                          bool bookkeep_only);
 
-  void perform_rename(std::set<file_path> const & src_paths,
+  void perform_rename(database & db,
+                      std::set<file_path> const & src_paths,
                       file_path const & dst_dir,
-                      database & db,
                       bool bookkeep_only);
 
-  void perform_pivot_root(file_path const & new_root,
+  void perform_pivot_root(database & db,
+                          file_path const & new_root,
                           file_path const & put_old,
-                          database & db,
                           bool bookkeep_only);
 
-  void perform_content_update(cset const & cs,
+  void perform_content_update(database & db,
+                              cset const & cs,
                               content_merge_adaptor const & ca,
-                              database & db,
                               bool messages = true);
 
   void update_any_attrs(database & db);
@@ -123,13 +123,13 @@ struct workspace
   // hashes, call update_current_roster_from_filesystem on the result of
   // this function.  Under almost all conditions, NIS should be a
   // temp_node_id_source.
-  void get_current_roster_shape(roster_t & ros,
-                                database & db, node_id_source & nis);
+  void get_current_roster_shape(database & db, node_id_source & nis,
+                                roster_t & ros);
 
   // This returns a map whose keys are revision_ids and whose values are
   // rosters, there being one such pair for each parent of the current
   // revision.
-  void get_parent_rosters(parent_map & parents, database & db);
+  void get_parent_rosters(database & db, parent_map & parents);
 
   // This updates the file-content hashes in ROSTER, which is assumed to be
   // the "current" roster returned by one of the above get_*_roster_shape

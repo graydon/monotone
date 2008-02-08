@@ -147,10 +147,10 @@ private:
                       file_id const & base,
                       file_delta const & del);
 
-  friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
+  friend void rcs_put_raw_file_edge(database & db,
+                                    hexenc<id> const & old_id,
                                     hexenc<id> const & new_id,
-                                    delta const & del,
-                                    database & db);
+                                    delta const & del);
 
 
   //
@@ -390,7 +390,7 @@ public:
   void info(std::ostream &);
   void version(std::ostream &);
   void migrate(key_store &);
-  void test_migration_step(std::string const &, key_store &);
+  void test_migration_step(key_store &, std::string const &);
   // for kill_rev_locally:
   void delete_existing_rev_and_certs(revision_id const & rid);
   // for kill_branch_certs_locally:

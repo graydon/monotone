@@ -380,12 +380,12 @@ CMD(known, "known", "", CMD_REF(list), "",
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, app.db, nis);
+  app.work.get_current_roster_shape(app.db, nis, new_roster);
 
-  node_restriction mask(args_to_paths(args),
+  node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        new_roster, app.work);
+                        new_roster);
 
   // to be printed sorted
   vector<file_path> print_paths;
@@ -418,15 +418,15 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth, app.work);
+  path_restriction mask(app.work, roots, args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth);
   set<file_path> unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored, app.db);
+  app.work.find_unknown_and_ignored(app.db, mask, roots, unknown, ignored);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -447,11 +447,11 @@ CMD(missing, "missing", "", CMD_REF(list), "",
 {
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, app.db, nis);
-  node_restriction mask(args_to_paths(args),
+  app.work.get_current_roster_shape(app.db, nis, current_roster_shape);
+  node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        current_roster_shape, app.work);
+                        current_roster_shape);
 
   set<file_path> missing;
   app.work.find_missing(current_roster_shape, mask, missing);
@@ -472,15 +472,15 @@ CMD(changed, "changed", "", CMD_REF(list), "",
 
   app.require_workspace();
 
-  app.work.get_current_roster_shape(new_roster, app.db, nis);
+  app.work.get_current_roster_shape(app.db, nis, new_roster);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents, app.db);
+  app.work.get_parent_rosters(app.db, parents);
 
-  node_restriction mask(args_to_paths(args),
+  node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        parents, new_roster, app.work);
+                        parents, new_roster);
 
   revision_t rrev;
   make_restricted_revision(parents, new_roster, mask, rrev);

@@ -93,7 +93,7 @@ namespace
                             cert_name(branch_cert_name),
                             branch_encoded,
                             certs);
-      erase_bogus_certs(certs, db);
+      erase_bogus_certs(db, certs);
       return certs.empty();
     }
   };
@@ -113,7 +113,7 @@ namespace
                             cert_name(suspend_cert_name),
                             branch_encoded,
                             certs);
-      erase_bogus_certs(certs, db);
+      erase_bogus_certs(db, certs);
       return !certs.empty();
     }
   };
@@ -141,7 +141,7 @@ project_t::get_branch_heads(branch_name const & name,
                                                     branch.second);
 
       not_in_branch p(db, branch_encoded);
-      erase_ancestors_and_failures(branch.second, p, db,
+      erase_ancestors_and_failures(db, branch.second, p,
                                    inverse_graph_cache_ptr);
 
       if (!ignore_suspend_certs)
@@ -173,7 +173,7 @@ project_t::revision_is_in_branch(revision_id const & id,
 
   int num = certs.size();
 
-  erase_bogus_certs(certs, db);
+  erase_bogus_certs(db, certs);
 
   L(FL("found %d (%d valid) %s branch certs on revision %s")
     % num
@@ -189,7 +189,7 @@ project_t::put_revision_in_branch(key_store & keys,
                                   revision_id const & id,
                                   branch_name const & branch)
 {
-  cert_revision_in_branch(id, branch, db, keys);
+  cert_revision_in_branch(db, keys, id, branch);
 }
 
 bool
@@ -204,7 +204,7 @@ project_t::revision_is_suspended_in_branch(revision_id const & id,
 
   int num = certs.size();
 
-  erase_bogus_certs(certs, db);
+  erase_bogus_certs(db, certs);
 
   L(FL("found %d (%d valid) %s suspend certs on revision %s")
     % num
@@ -220,7 +220,7 @@ project_t::suspend_revision_in_branch(key_store & keys,
                                       revision_id const & id,
                                       branch_name const & branch)
 {
-  cert_revision_suspended_in_branch(id, branch, db, keys);
+  cert_revision_suspended_in_branch(db, keys, id, branch);
 }
 
 
@@ -244,7 +244,7 @@ project_t::get_revision_certs_by_name(revision_id const & id,
                                       std::vector<revision<cert> > & certs)
 {
   outdated_indicator i = db.get_revision_certs(id, name, certs);
-  erase_bogus_certs(certs, db);
+  erase_bogus_certs(db, certs);
   return i;
 }
 
@@ -304,7 +304,7 @@ project_t::get_tags(set<tag_t> & tags)
 {
   std::vector<revision<cert> > certs;
   outdated_indicator i = db.get_revision_certs(tag_cert_name, certs);
-  erase_bogus_certs(certs, db);
+  erase_bogus_certs(db, certs);
   tags.clear();
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
@@ -321,7 +321,7 @@ project_t::put_tag(key_store & keys,
                    revision_id const & id,
                    string const & name)
 {
-  cert_revision_tag(id, name, db, keys);
+  cert_revision_tag(db, keys, id, name);
 }
 
 
@@ -338,10 +338,10 @@ project_t::put_standard_certs(key_store & keys,
   I(time.valid());
   I(!author.empty());
 
-  cert_revision_in_branch(id, branch, db, keys);
-  cert_revision_changelog(id, changelog, db, keys);
-  cert_revision_date_time(id, time, db, keys);
-  cert_revision_author(id, author, db, keys);
+  cert_revision_in_branch(db, keys, id, branch);
+  cert_revision_changelog(db, keys, id, changelog);
+  cert_revision_date_time(db, keys, id, time);
+  cert_revision_author(db, keys, id, author);
 }
 
 void
@@ -362,7 +362,7 @@ project_t::put_standard_certs_from_options(options const & opts,
   if (author.empty())
     {
       rsa_keypair_id key;
-      get_user_key(key, opts, lua, keys, db);
+      get_user_key(opts, lua, db, keys, key);
 
       if (!lua.hook_get_author(branch, key, author))
         author = key();
@@ -377,7 +377,7 @@ project_t::put_cert(key_store & keys,
                     cert_name const & name,
                     cert_value const & value)
 {
-  put_simple_revision_cert(id, name, value, db, keys);
+  put_simple_revision_cert(db, keys, id, name, value);
 }
 
 

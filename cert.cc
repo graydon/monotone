@@ -105,8 +105,8 @@ bogus_cert_p
 
 
 void
-erase_bogus_certs(vector< manifest<cert> > & certs,
-                  database & db)
+erase_bogus_certs(database & db,
+                  vector< manifest<cert> > & certs)
 {
   typedef vector< manifest<cert> >::iterator it;
   it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(db));
@@ -161,8 +161,8 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
 }
 
 void
-erase_bogus_certs(vector< revision<cert> > & certs,
-                  database & db)
+erase_bogus_certs(database & db,
+                  vector< revision<cert> > & certs)
 {
   typedef vector< revision<cert> >::iterator it;
   it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(db));
@@ -370,11 +370,11 @@ check_cert(database & db, cert const & t)
 }
 
 bool
-put_simple_revision_cert(revision_id const & id,
+put_simple_revision_cert(database & db,
+                         key_store & keys,
+                         revision_id const & id,
                          cert_name const & nm,
-                         cert_value const & val,
-                         database & db,
-                         key_store & keys)
+                         cert_value const & val)
 {
   I(!keys.signing_key().empty());
 
@@ -397,8 +397,8 @@ put_simple_revision_cert(revision_id const & id,
 // OPTS may override.  Branch name is returned in BRANCHNAME.
 // Does not modify branch state in OPTS.
 void
-guess_branch(revision_id const & ident, options & opts,
-             project_t & project, branch_name & branchname)
+guess_branch(options & opts, project_t & project,
+             revision_id const & ident, branch_name & branchname)
 {
   if (opts.branch_given && !opts.branchname().empty())
     branchname = opts.branchname;
@@ -428,86 +428,91 @@ guess_branch(revision_id const & ident, options & opts,
 // As above, but set the branch name in the options
 // if it wasn't already set.
 void
-guess_branch(revision_id const & ident, options & opts, project_t & project)
+guess_branch(options & opts, project_t & project, revision_id const & ident)
 {
   branch_name branchname;
-  guess_branch(ident, opts, project, branchname);
+  guess_branch(opts, project, ident, branchname);
   opts.branchname = branchname;
 }
 
 void
-cert_revision_in_branch(revision_id const & rev,
-                        branch_name const & branch,
-                        database & db,
-                        key_store & keys)
+cert_revision_in_branch(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        branch_name const & branch)
 {
-  put_simple_revision_cert(rev, branch_cert_name, cert_value(branch()),
-                           db, keys);
+  put_simple_revision_cert(db, keys, rev, branch_cert_name,
+                           cert_value(branch()));
 }
 
 void
-cert_revision_suspended_in_branch(revision_id const & rev,
-                                  branch_name const & branch,
-                                  database & db,
-                                  key_store & keys)
+cert_revision_suspended_in_branch(database & db,
+                                  key_store & keys,
+                                  revision_id const & rev,
+                                  branch_name const & branch)
 {
-  put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
-                            db, keys);
+  put_simple_revision_cert(db, keys, rev, suspend_cert_name,
+                           cert_value(branch()));
 }
 
 
 // "standard certs"
 
 void
-cert_revision_date_time(revision_id const & m,
-                        date_t const & t,
-                        database & db,
-                        key_store & keys)
+cert_revision_date_time(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        date_t const & t)
 {
   cert_value val = cert_value(t.as_iso_8601_extended());
-  put_simple_revision_cert(m, date_cert_name, val, db, keys);
+  put_simple_revision_cert(db, keys, rev, date_cert_name, val);
 }
 
 void
-cert_revision_author(revision_id const & m,
-                     string const & author,
-                     database & db,
-                     key_store & keys)
+cert_revision_author(database & db,
+                     key_store & keys,
+                     revision_id const & rev,
+                     string const & author)
 {
-  put_simple_revision_cert(m, author_cert_name, cert_value(author), db, keys);
+  put_simple_revision_cert(db, keys, rev, author_cert_name,
+                           cert_value(author));
 }
 
 void
-cert_revision_tag(revision_id const & m,
-                  string const & tagname,
-                  database & db, key_store & keys)
+cert_revision_tag(database & db,
+                  key_store & keys,
+                  revision_id const & rev,
+                  string const & tagname)
 {
-  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), db, keys);
+  put_simple_revision_cert(db, keys, rev, tag_cert_name,
+                           cert_value(tagname));
 }
 
-
 void
-cert_revision_changelog(revision_id const & m,
-                        utf8 const & log,
-                        database & db, key_store & keys)
+cert_revision_changelog(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        utf8 const & log)
 {
-  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()),
-                           db, keys);
+  put_simple_revision_cert(db, keys, rev, changelog_cert_name,
+                           cert_value(log()));
 }
 
 void
-cert_revision_comment(revision_id const & m,
-                      utf8 const & comment,
-                      database & db, key_store & keys)
+cert_revision_comment(database & db,
+                      key_store & keys,
+                      revision_id const & rev,
+                      utf8 const & comment)
 {
-  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()),
-                           db, keys);
+  put_simple_revision_cert(db, keys, rev, comment_cert_name,
+                           cert_value(comment()));
 }
 
 void
-cert_revision_testresult(revision_id const & r,
-                         string const & results,
-                         database & db, key_store & keys)
+cert_revision_testresult(database & db,
+                         key_store & keys,
+                         revision_id const & rev,
+                         string const & results)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -525,8 +530,8 @@ cert_revision_testresult(revision_id const & r,
                               "tried '0/1' 'yes/no', 'true/false', "
                               "'pass/fail'");
 
-  put_simple_revision_cert(r, testresult_cert_name,
-                           cert_value(lexical_cast<string>(passed)), db, keys);
+  put_simple_revision_cert(db, keys, rev, testresult_cert_name,
+                           cert_value(lexical_cast<string>(passed)));
 }
 
 // Local Variables:

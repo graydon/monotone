@@ -380,7 +380,7 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
   complete(app, project, idx(args, 0)(), revs);
 
   vector<revision_id> sorted;
-  toposort(revs, sorted, app.db);
+  toposort(app.db, revs, sorted);
   reverse(sorted.begin(), sorted.end());
 
   asciik graph(std::cout, 10);

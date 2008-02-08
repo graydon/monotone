@@ -223,7 +223,7 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
       N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       revs.insert(rid);
     }
-  erase_ancestors(revs, db);
+  erase_ancestors(db, revs);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
     output << (*i).inner()() << '\n';
 }
@@ -253,7 +253,7 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
       revs.insert(rid);
     }
   vector<revision_id> sorted;
-  toposort(revs, sorted, db);
+  toposort(db, revs, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -298,10 +298,10 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
       bs.insert(b);
     }
   set<revision_id> ancestors;
-  ancestry_difference(a, bs, ancestors, db);
+  ancestry_difference(db, a, bs, ancestors);
 
   vector<revision_id> sorted;
-  toposort(ancestors, sorted, db);
+  toposort(db, ancestors, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -751,9 +751,10 @@ struct inventory_itemizer : public tree_walker
   inodeprint_map ipm;
   workspace & work;
 
-  inventory_itemizer(path_restriction const & m, inventory_map & i,
-                     workspace & work) :
-    mask(m), inventory(i), work(work)
+  inventory_itemizer(workspace & work,
+                     path_restriction const & m,
+                     inventory_map & i)
+    : mask(m), inventory(i), work(work)
   {
     if (work.in_inodeprints_mode())
       {
@@ -797,10 +798,11 @@ inventory_itemizer::visit_file(file_path const & path)
 }
 
 static void
-inventory_filesystem(path_restriction const & mask, inventory_map & inventory,
-                     workspace & work)
+inventory_filesystem(workspace & work,
+                     path_restriction const & mask,
+                     inventory_map & inventory)
 {
-  inventory_itemizer itemizer(mask, inventory, work);
+  inventory_itemizer itemizer(work, mask, inventory);
   file_path const root;
   // The constructor file_path() returns ""; the root directory. walk_tree
   // does not visit that node, so set fs_type now, if it meets the
@@ -980,7 +982,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(parents, app.db);
+  work.get_parent_rosters(app.db, parents);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
   // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
@@ -990,7 +992,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
 
-  work.get_current_roster_shape(new_roster, app.db, nis);
+  work.get_current_roster_shape(app.db, nis, new_roster);
 
   inventory_map inventory;
   vector<file_path> includes = args_to_paths(args);
@@ -1010,14 +1012,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
            inserter(excludes, excludes.end()));
     }
 
-  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app.work);
+  node_restriction nmask(app.work, includes, excludes, app.opts.depth, old_roster, new_roster);
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
   // of them anyways
-  path_restriction pmask(includes, excludes, app.opts.depth, app.work, path_restriction::skip_check);
+  path_restriction pmask(app.work, includes, excludes, app.opts.depth, path_restriction::skip_check);
 
   inventory_rosters(old_roster, new_roster, nmask, pmask, inventory);
-  inventory_filesystem(pmask, inventory, app.work);
+  inventory_filesystem(app.work, pmask, inventory);
 
   basic_io::printer pr;
 
@@ -1202,8 +1204,8 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
       parent_map old_rosters;
       revision_t rev;
 
-      work.get_parent_rosters(old_rosters, db);
-      work.get_current_roster_shape(new_roster, db, nis);
+      work.get_parent_rosters(db, old_rosters);
+      work.get_current_roster_shape(db, nis, new_roster);
       work.update_current_roster_from_filesystem(new_roster);
 
       make_revision(old_rosters, new_roster, rev);
@@ -1240,7 +1242,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(parents, app.db);
+  work.get_parent_rosters(app.db, parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -1273,10 +1275,10 @@ CMD_AUTOMATE(get_current_revision_id, "",
   revision_t rev;
   temp_node_id_source nis;
 
-  work.get_current_roster_shape(new_roster, db, nis);
+  work.get_current_roster_shape(db, nis, new_roster);
   work.update_current_roster_from_filesystem(new_roster);
 
-  work.get_parent_rosters(parents, db);
+  work.get_parent_rosters(db, parents);
   make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -1345,7 +1347,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
       temp_node_id_source nis;
 
-      work.get_current_roster_shape(new_roster, db, nis);
+      work.get_current_roster_shape(db, nis, new_roster);
       work.update_current_roster_from_filesystem(new_roster);
     }
   else
@@ -2075,9 +2077,9 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);
 
-  cache_user_key(app.opts, app.lua, keys, db);
-  put_simple_revision_cert(rid, cert_name(idx(args, 1)()),
-                           cert_value(idx(args, 2)()), db, keys);
+  cache_user_key(app.opts, app.lua, db, keys);
+  put_simple_revision_cert(db, keys, rid, cert_name(idx(args, 1)()),
+                           cert_value(idx(args, 2)()));
 }
 
 // Name: get_db_variables

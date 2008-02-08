@@ -115,7 +115,7 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
     throw usage(execid);
 
   rsa_keypair_id id;
-  get_user_key(id, app.opts, app.lua, keys, app.db);
+  get_user_key(app.opts, app.lua, app.db, keys, id);
 
   if (args.size() == 0)
     keys.export_key_for_agent(id, cout);
@@ -138,7 +138,7 @@ CMD(ssh_agent_add, "ssh_agent_add", "", CMD_REF(key_and_cert), "",
     throw usage(execid);
 
   rsa_keypair_id id;
-  get_user_key(id, app.opts, app.lua, keys, app.db);
+  get_user_key(app.opts, app.lua, app.db, keys, id);
   keys.add_key_to_agent(id);
 }
 
@@ -162,7 +162,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
+  cache_user_key(app.opts, app.lua, app.db, keys);
 
   cert_value val;
   if (args.size() == 3)
@@ -246,7 +246,7 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
+  cache_user_key(app.opts, app.lua, app.db, keys);
   project.put_tag(keys, r, idx(args, 1)());
 }
 
@@ -266,8 +266,8 @@ CMD(testresult, "testresult", "", CMD_REF(review),
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
-  cert_revision_testresult(r, idx(args, 1)(), app.db, keys);
+  cache_user_key(app.opts, app.lua, app.db, keys);
+  cert_revision_testresult(app.db, keys, r, idx(args, 1)());
 }
 
 
@@ -284,10 +284,10 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
 
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
-  guess_branch(r, app.opts, project);
+  guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
+  cache_user_key(app.opts, app.lua, app.db, keys);
   project.put_revision_in_branch(keys, r, app.opts.branchname);
 }
 
@@ -304,10 +304,10 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
 
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
-  guess_branch(r, app.opts, project);
+  guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
+  cache_user_key(app.opts, app.lua, app.db, keys);
   project.suspend_revision_in_branch(keys, r, app.opts.branchname);
 }
 
@@ -339,8 +339,8 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
   revision_id r;
   complete(app, project, idx(args, 0)(), r);
 
-  cache_user_key(app.opts, app.lua, keys, app.db);
-  cert_revision_comment(r, comment, app.db, keys);
+  cache_user_key(app.opts, app.lua, app.db, keys);
+  cert_revision_comment(app.db, keys, r, comment);
 }
 
 // Local Variables:

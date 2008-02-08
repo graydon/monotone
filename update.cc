@@ -53,9 +53,9 @@ using std::vector;
 using boost::lexical_cast;
 
 static void
-get_test_results_for_revision(revision_id const & id,
-                              map<rsa_keypair_id, bool> & results,
-                              project_t & project)
+get_test_results_for_revision(project_t & project,
+                              revision_id const & id,
+                              map<rsa_keypair_id, bool> & results)
 {
   vector< revision<cert> > certs;
   project.get_revision_certs_by_name(id, cert_name(testresult_cert_name),
@@ -78,12 +78,12 @@ get_test_results_for_revision(revision_id const & id,
 }
 
 static bool
-acceptable_descendent(branch_name const & branch,
+acceptable_descendent(lua_hooks & lua,
+                      project_t & project,
+                      branch_name const & branch,
                       revision_id const & base,
                       map<rsa_keypair_id, bool> & base_results,
-                      revision_id const & target,
-                      project_t & project,
-                      lua_hooks & lua)
+                      revision_id const & target)
 {
   L(FL("Considering update target %s") % target);
 
@@ -96,7 +96,7 @@ acceptable_descendent(branch_name const & branch,
 
   // step 2: check the testresults
   map<rsa_keypair_id, bool> target_results;
-  get_test_results_for_revision(target, target_results, project);
+  get_test_results_for_revision(project, target, target_results);
   if (lua.hook_accept_testresult_change(base_results, target_results))
     {
       L(FL("%s is acceptable update candidate") % target);
@@ -110,24 +110,24 @@ acceptable_descendent(branch_name const & branch,
 }
 
 void
-pick_update_candidates(set<revision_id> & candidates,
+pick_update_candidates(lua_hooks & lua,
+                       project_t & project,
+                       set<revision_id> & candidates,
                        revision_id const & base,
                        branch_name const & branch,
-                       project_t & project,
-                       bool ignore_suspend_certs,
-                       lua_hooks & lua)
+                       bool ignore_suspend_certs)
 {
   I(!null_id(base));
   I(!branch().empty());
 
   map<rsa_keypair_id, bool> base_results;
-  get_test_results_for_revision(base, base_results, project);
+  get_test_results_for_revision(project, base, base_results);
 
   candidates.clear();
   // we possibly insert base into the candidate set as well; returning a set
   // containing just it means that we are up to date; returning an empty set
   // means that there is no acceptable update.
-  if (acceptable_descendent(branch, base, base_results, base, project, lua))
+  if (acceptable_descendent(lua, project, branch, base, base_results, base))
     candidates.insert(base);
 
   // keep a visited set to avoid repeating work
@@ -149,8 +149,8 @@ pick_update_candidates(set<revision_id> & candidates,
       visited.insert(target);
 
       // then, possibly insert this revision as a candidate
-      if (acceptable_descendent(branch, base, base_results,
-                                target, project, lua))
+      if (acceptable_descendent(lua, project, branch, base, base_results,
+                                target))
         candidates.insert(target);
 
       // and traverse its children as well
@@ -158,7 +158,7 @@ pick_update_candidates(set<revision_id> & candidates,
       copy(children.begin(), children.end(), back_inserter(to_traverse));
     }
 
-  erase_ancestors(candidates, project.db);
+  erase_ancestors(project.db, candidates);
 
   if (ignore_suspend_certs)
     return;

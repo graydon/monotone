@@ -109,7 +109,7 @@ read_global_options(options & opts, args_vector & args)
 }
 
 // read command-line options and return the command name
-commands::command_id read_options(option::concrete_option_set & optset, options & opts, args_vector & args)
+commands::command_id read_options(options & opts, option::concrete_option_set & optset, args_vector & args)
 {
   commands::command_id cmd;
 
@@ -222,7 +222,7 @@ cpp_main(int argc, char ** argv)
 
           // now grab any command specific options and parse the command
           // this needs to happen after the monotonercs have been read
-          commands::command_id cmd = read_options(optset, app.opts, opt_args);
+          commands::command_id cmd = read_options(app.opts, optset, opt_args);
 
           if (!app.found_workspace)
             global_sanity.set_dump_path((app.opts.conf_dir / "dump")

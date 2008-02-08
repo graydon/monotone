@@ -28,9 +28,7 @@ CMD(rcs_import, "rcs_import", "", CMD_REF(debug), N_("RCSFILE..."),
 
   for (args_vector::const_iterator i = args.begin();
        i != args.end(); ++i)
-    {
-      test_parse_rcs_file(system_path((*i)()), app.db);
-    }
+    test_parse_rcs_file(system_path((*i)()));
 }
 
 
@@ -56,9 +54,9 @@ CMD(cvs_import, "cvs_import", "", CMD_REF(rcs), N_("CVSROOT"),
   // make sure we can sign certs using the selected key; also requests
   // the password (if necessary) up front rather than after some arbitrary
   // amount of work
-  cache_user_key(app.opts, app.lua, keys, app.db);
+  cache_user_key(app.opts, app.lua, app.db, keys);
 
-  import_cvs_repo(cvsroot, keys, project, app.opts.branchname);
+  import_cvs_repo(project, keys, cvsroot, app.opts.branchname);
 }
 
 

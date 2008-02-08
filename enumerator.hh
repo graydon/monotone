@@ -52,8 +52,8 @@ enumerator_item
 class
 revision_enumerator
 {
-  enumerator_callbacks & cb;
   project_t & project;
+  enumerator_callbacks & cb;
   std::set<revision_id> terminal_nodes;
   std::set<revision_id> enumerated_nodes;
   std::deque<revision_id> revs;
@@ -70,8 +70,8 @@ revision_enumerator
 			  std::vector<hexenc<id> > & certs);
 
 public:
-  revision_enumerator(enumerator_callbacks & cb,
-                      project_t & project);
+  revision_enumerator(project_t & project,
+                      enumerator_callbacks & cb);
   void get_revision_parents(revision_id const & rid,
 			    std::vector<revision_id> & parents);
   void note_cert(revision_id const & rid,

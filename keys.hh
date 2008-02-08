@@ -29,11 +29,12 @@ get_passphrase(utf8 & phrase,
                bool generating_key);
 
 // N()'s out if there is no unique key for us to use
-void get_user_key(rsa_keypair_id & key, options const & opts, lua_hooks & lua,
-                  key_store & keys, database & db);
+void get_user_key(options const & opts, lua_hooks & lua,
+                  database & db, key_store & keys, 
+                  rsa_keypair_id & key);
 
 void cache_user_key(options const & opts, lua_hooks & lua,
-                    key_store & keys, database & db);
+                    database & db, key_store & keys);
 
 void load_key_pair(key_store & keys,
                    rsa_keypair_id const & id);

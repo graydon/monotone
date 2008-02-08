@@ -176,13 +176,13 @@ public:
 
 };
 
-void run_netsync_protocol(protocol_voice voice,
+void run_netsync_protocol(options & opts, lua_hooks & lua,
+                          project_t & project, key_store & keys,
+                          protocol_voice voice,
                           protocol_role role,
                           std::list<utf8> const & addrs,
                           globish const & include_pattern,
-                          globish const & exclude_pattern,
-                          project_t & project,
-                          key_store & keys, lua_hooks & lua, options & opts);
+                          globish const & exclude_pattern);
 
 // Local Variables:
 // mode: C++

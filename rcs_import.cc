@@ -449,10 +449,10 @@ construct_version(vector< piece > const & source_lines,
 // DB is stupid, but it's also stupid to put raw edge insert methods on the
 // DB itself. or is it? hmm.. encapsulation vs. usage guidance..
 void
-rcs_put_raw_file_edge(hexenc<id> const & old_id,
+rcs_put_raw_file_edge(database & db,
+                      hexenc<id> const & old_id,
                       hexenc<id> const & new_id,
-                      delta const & del,
-                      database & db)
+                      delta const & del)
 {
   if (old_id == new_id)
     {
@@ -476,12 +476,11 @@ rcs_put_raw_file_edge(hexenc<id> const & old_id,
 
 
 static void
-insert_into_db(data const & curr_data,
+insert_into_db(database & db, data const & curr_data,
                hexenc<id> const & curr_id,
                vector< piece > const & next_lines,
                data & next_data,
-               hexenc<id> & next_id,
-               database & db)
+               hexenc<id> & next_id)
 {
   // inserting into the DB
   // note: curr_lines is a "new" (base) version
@@ -495,7 +494,7 @@ insert_into_db(data const & curr_data,
   delta del;
   diff(curr_data, next_data, del);
   calculate_ident(next_data, next_id);
-  rcs_put_raw_file_edge(next_id, curr_id, del, db);
+  rcs_put_raw_file_edge(db, next_id, curr_id, del);
 }
 
 
@@ -558,12 +557,12 @@ lineage.
 
 
 static void
-process_branch(string const & begin_version,
+process_branch(database & db,
+               string const & begin_version,
                vector< piece > const & begin_lines,
                data const & begin_data,
                hexenc<id> const & begin_id,
                rcs_file const & r,
-               database & db,
                cvs_history & cvs)
 {
   string curr_version = begin_version;
@@ -595,8 +594,8 @@ process_branch(string const & begin_version,
          L(FL("constructed RCS version %s, inserting into database") %
            next_version);
 
-         insert_into_db(curr_data, curr_id,
-                     *next_lines, next_data, next_id, db);
+         insert_into_db(db, curr_data, curr_id,
+                        *next_lines, next_data, next_id);
       }
 
       // mark the beginning-of-branch time and state of this file if
@@ -638,11 +637,11 @@ process_branch(string const & begin_version,
           L(FL("following RCS branch %s = '%s'") % (*i) % branch);
 
           construct_version(*curr_lines, *i, branch_lines, r);
-          insert_into_db(curr_data, curr_id,
-                         branch_lines, branch_data, branch_id, db);
+          insert_into_db(db, curr_data, curr_id,
+                         branch_lines, branch_data, branch_id);
 
           cvs.push_branch(branch, priv);
-          process_branch(*i, branch_lines, branch_data, branch_id, r, db, cvs);
+          process_branch(db, *i, branch_lines, branch_data, branch_id, r, cvs);
           cvs.pop_branch();
 
           L(FL("finished RCS branch %s = '%s'") % (*i) % branch);
@@ -663,7 +662,7 @@ process_branch(string const & begin_version,
 
 
 static void
-import_rcs_file_with_cvs(string const & filename, database & db,
+import_rcs_file_with_cvs(database & db, string const & filename,
                          cvs_history & cvs)
 {
   rcs_file r;
@@ -695,16 +694,15 @@ import_rcs_file_with_cvs(string const & filename, database & db,
 
     global_pieces.reset();
     global_pieces.index_deltatext(r.deltatexts.find(r.admin.head)->second, head_lines);
-    process_branch(r.admin.head, head_lines, dat, id, r, db, cvs);
+    process_branch(db, r.admin.head, head_lines, dat, id, r, cvs);
     global_pieces.reset();
   }
 
   ui.set_tick_trailer("");
 }
 
-
 void
-test_parse_rcs_file(system_path const & filename, database & db)
+test_parse_rcs_file(system_path const & filename)
 {
   cvs_history cvs;
 
@@ -899,7 +897,7 @@ public:
       {
         try
           {
-            import_rcs_file_with_cvs(file, db, cvs);
+            import_rcs_file_with_cvs(db, file, cvs);
           }
         catch (oops const & o)
           {
@@ -1037,9 +1035,9 @@ cluster_consumer
   editable_roster_base editable_ros;
   revision_id parent_rid, child_rid;
 
-  cluster_consumer(cvs_history & cvs,
+  cluster_consumer(project_t & project,
                    key_store & keys,
-                   project_t & project,
+                   cvs_history & cvs,
                    string const & branchname,
                    cvs_branch const & branch,
                    ticker & n_revs);
@@ -1068,15 +1066,15 @@ typedef set<cluster_ptr, cluster_ptr_lt>
 cluster_set;
 
 void
-import_branch(cvs_history & cvs,
+import_branch(project_t & project,
               key_store & keys,
-              project_t & project,
+              cvs_history & cvs,
               string const & branchname,
               shared_ptr<cvs_branch> const & branch,
               ticker & n_revs)
 {
   cluster_set clusters;
-  cluster_consumer cons(cvs, keys, project, branchname, *branch, n_revs);
+  cluster_consumer cons(project, keys, cvs, branchname, *branch, n_revs);
   unsigned long commits_remaining = branch->lineage.size();
 
   // step 1: sort the lineage
@@ -1200,9 +1198,9 @@ import_branch(cvs_history & cvs,
 }
 
 void
-import_cvs_repo(system_path const & cvsroot,
+import_cvs_repo(project_t & project,
                 key_store & keys,
-                project_t & project,
+                system_path const & cvsroot,
                 branch_name const & branchname)
 
 {
@@ -1240,7 +1238,7 @@ import_cvs_repo(system_path const & cvsroot,
       string branchname = i->first;
       shared_ptr<cvs_branch> branch = i->second;
       L(FL("branch %s has %d entries") % branchname % branch->lineage.size());
-      import_branch(cvs, keys, project, branchname, branch, n_revs);
+      import_branch(project, keys, cvs, branchname, branch, n_revs);
 
       // free up some memory
       cvs.branches.erase(branchname);
@@ -1250,7 +1248,7 @@ import_cvs_repo(system_path const & cvsroot,
   {
     transaction_guard guard(project.db);
     L(FL("trunk has %d entries") % cvs.trunk->lineage.size());
-    import_branch(cvs, keys, project, cvs.base_branch, cvs.trunk, n_revs);
+    import_branch(project, keys, cvs, cvs.base_branch, cvs.trunk, n_revs);
     guard.commit();
   }
 
@@ -1270,9 +1268,9 @@ import_cvs_repo(system_path const & cvsroot,
   }
 }
 
-cluster_consumer::cluster_consumer(cvs_history & cvs,
+cluster_consumer::cluster_consumer(project_t & project,
                                    key_store & keys,
-                                   project_t & project,
+                                   cvs_history & cvs,
                                    string const & branchname,
                                    cvs_branch const & branch,
                                    ticker & n_revs)

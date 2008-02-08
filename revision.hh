@@ -123,23 +123,22 @@ void calculate_ident(revision_t const & cs,
 // sanity checking
 
 void
-find_common_ancestor_for_merge(revision_id const & left,
+find_common_ancestor_for_merge(database & db,
+                               revision_id const & left,
                                revision_id const & right,
-                               revision_id & anc,
-                               database & db);
+                               revision_id & anc);
 
 bool
-is_ancestor(revision_id const & ancestor,
-            revision_id const & descendent,
-            database & db);
+is_ancestor(database & db, revision_id const & ancestor,
+            revision_id const & descendent);
 
 void
-toposort(std::set<revision_id> const & revisions,
-         std::vector<revision_id> & sorted,
-         database & db);
+toposort(database & db,
+         std::set<revision_id> const & revisions,
+         std::vector<revision_id> & sorted);
 
 void
-erase_ancestors(std::set<revision_id> & revisions, database & db);
+erase_ancestors(database & db, std::set<revision_id> & revisions);
 
 struct is_failure
 {
@@ -147,24 +146,24 @@ struct is_failure
   virtual ~is_failure() {};
 };
 void
-erase_ancestors_and_failures(std::set<revision_id> & revisions,
+erase_ancestors_and_failures(database & db,
+                             std::set<revision_id> & revisions,
                              is_failure & p,
-                             database & db,
                              std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
 void
-ancestry_difference(revision_id const & a, std::set<revision_id> const & bs,
-                    std::set<revision_id> & new_stuff,
-                    database & db);
+ancestry_difference(database & db, revision_id const & a,
+                    std::set<revision_id> const & bs,
+                    std::set<revision_id> & new_stuff);
 
 
 // FIXME: can probably optimize this passing a lookaside cache of the active
 // frontier set of shared_ptr<roster_t>s, while traversing history.
 void
-select_nodes_modified_by_rev(revision_t const & rev,
+select_nodes_modified_by_rev(database & db,
+                             revision_t const & rev,
                              roster_t const roster,
-                             std::set<node_id> & nodes_modified,
-                             database & db);
+                             std::set<node_id> & nodes_modified);
 
 void
 make_revision(revision_id const & old_rev_id,

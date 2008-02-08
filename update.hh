@@ -25,12 +25,12 @@ class lua_hooks;
 // returned in 'candidates'.  if no revisions are better than the current
 // revision, then 'candidates' will contain exactly the current revision.
 
-void pick_update_candidates(std::set<revision_id> & candidates,
+void pick_update_candidates(lua_hooks & lua,
+                            project_t & project,
+                            std::set<revision_id> & candidates,
                             revision_id const & base_ident,
                             branch_name const & branchname,
-                            project_t & project,
-                            bool ignore_suspend_certs,
-                            lua_hooks & lua);
+                            bool ignore_suspend_certs);
 
 // Local Variables:
 // mode: C++

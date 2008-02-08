@@ -407,21 +407,21 @@ mark_merge_roster(roster_t const & left_roster,
 // This is for revisions that are being written to the db, only.  It assigns
 // permanent node ids.
 void
-make_roster_for_revision(revision_t const & rev,
+make_roster_for_revision(database & db,
+                         revision_t const & rev,
                          revision_id const & rid,
                          roster_t & result,
-                         marking_map & marking,
-                         database & db);
+                         marking_map & marking);
 
 // This is for revisions that are not necessarily going to be written to the
 // db; you can specify your own node_id_source.
 void
-make_roster_for_revision(revision_t const & rev,
+make_roster_for_revision(database & db,
+                         node_id_source & nis,
+                         revision_t const & rev,
                          revision_id const & rid,
                          roster_t & result,
-                         marking_map & marking,
-                         database & db,
-                         node_id_source & nis);
+                         marking_map & marking);
 
 void
 read_roster_and_marking(roster_data const & dat,
