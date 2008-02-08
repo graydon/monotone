@@ -50,7 +50,7 @@ namespace commands {
                  std::ostream & output) const
   {
     make_io_binary();
-    exec_from_automate(args, execid, app, output);
+    exec_from_automate(app, execid, args, output);
   }
 
   void
@@ -400,7 +400,7 @@ CMD_AUTOMATE(stdio, "",
 
               opts = options::opts::globals() | acmd->opts();
               opts.instantiate(&app.opts).from_key_value_pairs(params);
-              acmd->exec_from_automate(args, id, app, os);
+              acmd->exec_from_automate(app, id, args, os);
             }
           else
             opts.instantiate(&app.opts).from_key_value_pairs(params);

@@ -86,14 +86,14 @@ three_way_merge(revision_id const & ancestor_rid, roster_t const & ancestor_rost
 }
 
 static bool
-pick_branch_for_update(revision_id chosen_rid, app_state & app)
+pick_branch_for_update(options & opts, database & db, revision_id chosen_rid)
 {
   bool switched_branch = false;
 
   // figure out which branches the target is in
   vector< revision<cert> > certs;
-  app.db.get_revision_certs(chosen_rid, branch_cert_name, certs);
-  erase_bogus_certs(app.db, certs);
+  db.get_revision_certs(chosen_rid, branch_cert_name, certs);
+  erase_bogus_certs(db, certs);
 
   set< branch_name > branches;
   for (vector< revision<cert> >::const_iterator i = certs.begin();
@@ -104,9 +104,9 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
       branches.insert(branch_name(b()));
     }
 
-  if (branches.find(app.opts.branchname) != branches.end())
+  if (branches.find(opts.branchname) != branches.end())
     {
-      L(FL("using existing branch %s") % app.opts.branchname());
+      L(FL("using existing branch %s") % opts.branchname());
     }
   else
     {
@@ -124,7 +124,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
       else if (branches.size() == 1)
         {
           // one non-matching, inform and update
-          app.opts.branchname = *(branches.begin());
+          opts.branchname = *(branches.begin());
           switched_branch = true;
         }
       else
@@ -132,7 +132,7 @@ pick_branch_for_update(revision_id chosen_rid, app_state & app)
           I(branches.size() == 0);
           W(F("target revision not in any branch\n"
               "next commit will use branch %s")
-            % app.opts.branchname);
+            % opts.branchname);
         }
     }
   return switched_branch;
@@ -221,7 +221,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 
   // Fiddle around with branches, in an attempt to guess what the user
   // wants.
-  bool switched_branch = pick_branch_for_update(chosen_rid, app);
+  bool switched_branch = pick_branch_for_update(app.opts, app.db, chosen_rid);
   if (switched_branch)
     P(F("switching to branch %s") % app.opts.branchname());
 
@@ -646,7 +646,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
       bool log_message_given;
       utf8 log_message;
-      process_commit_message_args(log_message_given, log_message, app);
+      process_commit_message_args(app.opts, log_message_given, log_message);
       if (!log_message_given)
         log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
                                "            to branch '%s' (head %s)\n")

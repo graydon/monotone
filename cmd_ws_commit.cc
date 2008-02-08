@@ -97,16 +97,17 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
 }
 
 static void
-get_log_message_interactively(revision_t const & cs,
-                              app_state & app,
+get_log_message_interactively(lua_hooks & lua, workspace & work,
+                              revision_t const & cs,
+                              branch_name const & branchname,
                               utf8 & log_message)
 {
   utf8 summary;
-  revision_summary(cs, app.opts.branchname, summary);
+  revision_summary(cs, branchname, summary);
   external summary_external;
   utf8_to_system_best_effort(summary, summary_external);
 
-  utf8 branch_comment = utf8((F("branch \"%s\"\n\n") % app.opts.branchname).str());
+  utf8 branch_comment = utf8((F("branch \"%s\"\n\n") % branchname).str());
   external branch_external;
   utf8_to_system_best_effort(branch_comment, branch_external);
 
@@ -123,7 +124,7 @@ get_log_message_interactively(revision_t const & cs,
   external commentary(commentary_str);
 
   utf8 user_log_message;
-  app.work.read_user_log(user_log_message);
+  work.read_user_log(user_log_message);
 
   //if the _MTN/log file was non-empty, we'll append the 'magic' line
   utf8 user_log;
@@ -136,8 +137,8 @@ get_log_message_interactively(revision_t const & cs,
   utf8_to_system_best_effort(user_log, user_log_message_external);
 
   external log_message_external;
-  N(app.lua.hook_edit_comment(commentary, user_log_message_external,
-                              log_message_external),
+  N(lua.hook_edit_comment(commentary, user_log_message_external,
+                          log_message_external),
     F("edit of log message failed"));
 
   N(log_message_external().find(magic_line) == string::npos,
@@ -356,7 +357,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
-  process_commit_message_args(log_message_given, log_message, app,
+  process_commit_message_args(app.opts, log_message_given, log_message,
                               utf8((FL("disapproval of revision '%s'") % r).str()));
 
   cache_user_key(app.opts, app.lua, app.db, keys);
@@ -1113,7 +1114,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     % restricted_rev.new_manifest
     % restricted_rev_id);
 
-  process_commit_message_args(log_message_given, log_message, app);
+  process_commit_message_args(app.opts, log_message_given, log_message);
 
   N(!(log_message_given && app.work.has_contents_user_log()),
     F("_MTN/log is non-empty and log message "
@@ -1124,8 +1125,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   if (!log_message_given)
     {
       // This call handles _MTN/log.
-
-      get_log_message_interactively(restricted_rev, app, log_message);
+      get_log_message_interactively(app.lua, app.work, restricted_rev,
+                                    app.opts.branchname, log_message);
 
       // We only check for empty log messages when the user entered them
       // interactively.  Consensus was that if someone wanted to explicitly

@@ -47,10 +47,10 @@ enum selector_type
 typedef vector<pair<selector_type, string> > selector_list;
 
 static void
-decode_selector(string const & orig_sel,
+decode_selector(app_state & app,
+                string const & orig_sel,
                 selector_type & type,
-                string & sel,
-                app_state & app)
+                string & sel)
 {
   sel = orig_sel;
 
@@ -175,8 +175,7 @@ decode_selector(string const & orig_sel,
 }
 
 static void 
-parse_selector(string const & str, selector_list & sels,
-               app_state & app)
+parse_selector(app_state & app, string const & str, selector_list & sels)
 {
   sels.clear();
 
@@ -202,7 +201,7 @@ parse_selector(string const & str, selector_list & sels,
           string sel;
           selector_type type = sel_unknown;
 
-          decode_selector(*i, type, sel, app);
+          decode_selector(app, *i, type, sel);
           sels.push_back(make_pair(type, sel));
         }
     }
@@ -336,7 +335,7 @@ complete(app_state & app,
          set<revision_id> & completions)
 {
   selector_list sels;
-  parse_selector(str, sels, app);
+  parse_selector(app, str, sels);
 
   // avoid logging if there's no expansion to be done
   if (sels.size() == 1
@@ -391,7 +390,7 @@ expand_selector(app_state & app,
                 set<revision_id> & completions)
 {
   selector_list sels;
-  parse_selector(str, sels, app);
+  parse_selector(app, str, sels);
 
   // avoid logging if there's no expansion to be done
   if (sels.size() == 1

@@ -905,28 +905,28 @@ notify_if_multiple_heads(project_t & project,
 }
 
 void
-process_commit_message_args(bool & given,
+process_commit_message_args(options const & opts,
+                            bool & given,
                             utf8 & log_message,
-                            app_state & app,
-                            utf8 message_prefix)
+                            utf8 const & message_prefix)
 {
   // can't have both a --message and a --message-file ...
-  N(!app.opts.message_given || !app.opts.msgfile_given,
+  N(!opts.message_given || !opts.msgfile_given,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.opts.message_given)
+  if (opts.message_given)
     {
       string msg;
-      join_lines(app.opts.message, msg);
+      join_lines(opts.message, msg);
       log_message = utf8(msg);
       if (message_prefix().length() != 0)
         log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
-  else if (app.opts.msgfile_given)
+  else if (opts.msgfile_given)
     {
       data dat;
-      read_data_for_command_line(app.opts.msgfile, dat);
+      read_data_for_command_line(opts.msgfile, dat);
       external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
       if (message_prefix().length() != 0)

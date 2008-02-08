@@ -183,9 +183,8 @@ changes_summary::print(ostream & os, size_t max_cols) const
 }
 
 static void
-do_external_diff(cset const & cs,
-                 app_state & app,
-                 bool new_is_archived)
+do_external_diff(options & opts, lua_hooks & lua, database & db,
+                 cset const & cs, bool new_is_archived)
 {
   for (map<file_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
@@ -195,13 +194,13 @@ do_external_diff(cset const & cs,
       data data_new;
 
       file_data f_old;
-      app.db.get_file_version(delta_entry_src(i), f_old);
+      db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
 
       if (new_is_archived)
         {
           file_data f_new;
-          app.db.get_file_version(delta_entry_dst(i), f_new);
+          db.get_file_version(delta_entry_dst(i), f_new);
           data_new = f_new.inner();
         }
       else
@@ -214,23 +213,26 @@ do_external_diff(cset const & cs,
           guess_binary(data_new()))
         is_binary = true;
 
-      app.lua.hook_external_diff(delta_entry_path(i),
-                                 data_old,
-                                 data_new,
-                                 is_binary,
-                                 app.opts.external_diff_args_given,
-                                 app.opts.external_diff_args,
-                                 delta_entry_src(i).inner()(),
-                                 delta_entry_dst(i).inner()());
+      lua.hook_external_diff(delta_entry_path(i),
+                             data_old,
+                             data_new,
+                             is_binary,
+                             opts.external_diff_args_given,
+                             opts.external_diff_args,
+                             delta_entry_src(i).inner()(),
+                             delta_entry_dst(i).inner()());
     }
 }
 
 static void
-dump_diffs(cset const & cs,
-           app_state & app,
-           bool new_is_archived,
-           std::ostream & output,
+dump_diffs(lua_hooks & lua,
+           database & db,
+           cset const & cs,
            set<file_path> const & paths,
+           std::ostream & output,
+           diff_type diff_format,
+           bool new_is_archived,
+           bool show_encloser,
            bool limit_paths = false)
 {
   // 60 is somewhat arbitrary, but less than 80
@@ -250,7 +252,7 @@ dump_diffs(cset const & cs,
       if (new_is_archived)
         {
           file_data dat;
-          app.db.get_file_version(i->second, dat);
+          db.get_file_version(i->second, dat);
           unpacked = dat.inner();
         }
       else
@@ -259,15 +261,15 @@ dump_diffs(cset const & cs,
         }
 
       std::string pattern("");
-      if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(i->first, pattern);
+      if (show_encloser)
+        lua.hook_get_encloser_pattern(i->first, pattern);
 
       make_diff(i->first.as_internal(),
                 i->first.as_internal(),
                 i->second,
                 i->second,
                 data(), unpacked,
-                output, app.opts.diff_format, pattern);
+                output, diff_format, pattern);
     }
 
   map<file_path, file_path> reverse_rename_map;
@@ -291,13 +293,13 @@ dump_diffs(cset const & cs,
 
       output << patch_sep << '\n';
 
-      app.db.get_file_version(delta_entry_src(i), f_old);
+      db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
 
       if (new_is_archived)
         {
           file_data f_new;
-          app.db.get_file_version(delta_entry_dst(i), f_new);
+          db.get_file_version(delta_entry_dst(i), f_new);
           data_new = f_new.inner();
         }
       else
@@ -313,34 +315,38 @@ dump_diffs(cset const & cs,
         src_path = re->second;
 
       std::string pattern("");
-      if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(src_path,
-                                          pattern);
+      if (show_encloser)
+        lua.hook_get_encloser_pattern(src_path, pattern);
 
       make_diff(src_path.as_internal(),
                 dst_path.as_internal(),
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                output, app.opts.diff_format, pattern);
+                output, diff_format, pattern);
     }
 }
 
 static void
-dump_diffs(cset const & cs,
-           app_state & app,
+dump_diffs(lua_hooks & lua,
+           database & db,
+           cset const & cs,
+           std::ostream & output,
+           diff_type diff_format,
            bool new_is_archived,
-           std::ostream & output)
+           bool show_encloser)
 {
   set<file_path> dummy;
-  dump_diffs(cs, app, new_is_archived, output, dummy);
+  dump_diffs(lua, db, cs, dummy, output,
+             diff_format, new_is_archived, show_encloser);
 }
 
 // common functionality for diff and automate content_diff to determine
 // revisions and rosters which should be diffed
+// FIXME needs app_state for require_workspace
 static void
-prepare_diff(cset & included,
-             app_state & app,
+prepare_diff(app_state & app,
+             cset & included,
              args_vector args,
              bool & new_is_archived,
              std::string & revheader)
@@ -494,7 +500,7 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
   std::string revs;
   bool new_is_archived;
 
-  prepare_diff(included, app, args, new_is_archived, revs);
+  prepare_diff(app, included, args, new_is_archived, revs);
 
   data summary;
   write_cset(included, summary);
@@ -517,11 +523,13 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
 
   if (app.opts.diff_format == external_diff)
     {
-      do_external_diff(included, app, new_is_archived);
+      do_external_diff(app.opts, app.lua, app.db, included, new_is_archived);
     }
   else
     {
-      dump_diffs(included, app, new_is_archived, cout);
+      dump_diffs(app.lua, app.db, included, cout,
+                 app.opts.diff_format, new_is_archived,
+                 !app.opts.no_show_encloser);
     }
 }
 
@@ -542,15 +550,14 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
              options::opts::revision | options::opts::depth |
              options::opts::exclude)
 {
-  // FIXME: prepare_diff and dump_diffs should not take 'app' argument.
-
   cset included;
   std::string dummy_header;
   bool new_is_archived;
 
-  prepare_diff(included, app, args, new_is_archived, dummy_header);
+  prepare_diff(app, included, args, new_is_archived, dummy_header);
 
-  dump_diffs(included, app, new_is_archived, output);
+  dump_diffs(app.lua, app.db, included, output,
+             app.opts.diff_format, new_is_archived, !app.opts.no_show_encloser);
 }
 
 
@@ -918,8 +925,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
             {
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)
-                dump_diffs(edge_changes(e), app, true, out,
-                           diff_paths, !mask.empty());
+                dump_diffs(app.lua, app.db, edge_changes(e), diff_paths, out,
+                           app.opts.diff_format, true,
+                           !app.opts.no_show_encloser, !mask.empty());
             }
 
           if (next > 0)

@@ -110,9 +110,9 @@ namespace commands
     // all automation commands.  Also, this is also needed by the "stdio"
     // automation, as it executes multiple of these commands sharing the
     // same initialization, hence the friend declaration.
-    virtual void exec_from_automate(args_vector args,
+    virtual void exec_from_automate(app_state & app,
                                     command_id const & execid,
-                                    app_state & app,
+                                    args_vector const & args,
                                     std::ostream & output) const = 0;
     friend class automate_stdio;
 
@@ -163,10 +163,10 @@ notify_if_multiple_heads(project_t & project, branch_name const & branchname,
                          bool ignore_suspend_certs);
 
 void
-process_commit_message_args(bool & given,
+process_commit_message_args(options const & opts,
+                            bool & given,
                             utf8 & log_message,
-                            app_state & app,
-                            utf8 message_prefix = utf8(""));
+                            utf8 const & message_prefix = utf8());
 
 #define CMD_FWD_DECL(C) \
 namespace commands { \
@@ -260,9 +260,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 namespace commands {                                                 \
   class automate_ ## C : public automate                             \
   {                                                                  \
-    void exec_from_automate(args_vector args,                        \
+    void exec_from_automate(app_state & app,                         \
                             command_id const & execid,               \
-                            app_state & app,                         \
+                            args_vector const & args,                \
                             std::ostream & output) const;            \
   public:                                                            \
     automate_ ## C() : automate(#C, params, abstract, desc,          \
@@ -272,9 +272,9 @@ namespace commands {                                                 \
   automate_ ## C C ## _automate;                                     \
 }                                                                    \
 void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
+  (app_state & app,                                                  \
    command_id const & execid,                                        \
-   app_state & app,                                                  \
+   args_vector const & args,                                         \
    std::ostream & output) const
 
 #define CMD_REQUIRES_DATABASE(app)                                   \
