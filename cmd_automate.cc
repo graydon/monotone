@@ -340,11 +340,10 @@ CMD_AUTOMATE(stdio, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
-  // FIXME: additionally requires some app.opts...
+  database db(app);
 
-    // initialize the database early so any calling process is notified
-    // immediately if a version discrepancy exists
+  // initialize the database early so any calling process is notified
+  // immediately if a version discrepancy exists
   db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
@@ -440,8 +439,6 @@ LUAEXT(mtn_automate, )
       int n = lua_gettop(L);
 
       E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
-
-      app_p->db.ensure_open();
 
       L(FL("Starting call to mtn_automate lua hook"));
 

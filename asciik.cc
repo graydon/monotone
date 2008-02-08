@@ -375,12 +375,13 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  set<revision_id> revs; 
-  project_t project(app.db);
+  set<revision_id> revs;
+  database db(app);
+  project_t project(db);
   complete(app, project, idx(args, 0)(), revs);
 
   vector<revision_id> sorted;
-  toposort(app.db, revs, sorted);
+  toposort(db, revs, sorted);
   reverse(sorted.begin(), sorted.end());
 
   asciik graph(std::cout, 10);
@@ -389,7 +390,7 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
        rev != sorted.end(); ++rev)
     {
       set<revision_id> parents;
-      app.db.get_revision_parents(*rev, parents);
+      db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
       graph.print(*rev, parents, rev->inner()());
     }

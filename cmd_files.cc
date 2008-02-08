@@ -42,8 +42,9 @@ CMD(fload, "fload", "", CMD_REF(debug), "",
 
   calculate_ident (f_data, f_id);
 
-  transaction_guard guard(app.db);
-  app.db.put_file(f_id, f_data);
+  database db(app);
+  transaction_guard guard(db);
+  db.put_file(f_id, f_data);
   guard.commit();
 }
 
@@ -62,18 +63,19 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
 
   file_data anc, left, right;
 
-  N(app.db.file_version_exists (anc_id),
+  database db(app);
+  N(db.file_version_exists (anc_id),
     F("ancestor file id does not exist"));
 
-  N(app.db.file_version_exists (left_id),
+  N(db.file_version_exists (left_id),
     F("left file id does not exist"));
 
-  N(app.db.file_version_exists (right_id),
+  N(db.file_version_exists (right_id),
     F("right file id does not exist"));
 
-  app.db.get_file_version(anc_id, anc);
-  app.db.get_file_version(left_id, left);
-  app.db.get_file_version(right_id, right);
+  db.get_file_version(anc_id, anc);
+  db.get_file_version(left_id, left);
+  db.get_file_version(right_id, right);
 
   vector<string> anc_lines, left_lines, right_lines, merged_lines;
 
@@ -103,14 +105,15 @@ CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
 
   file_data src, dst;
 
-  N(app.db.file_version_exists (src_id),
+  database db(app);
+  N(db.file_version_exists (src_id),
     F("source file id does not exist"));
 
-  N(app.db.file_version_exists (dst_id),
+  N(db.file_version_exists (dst_id),
     F("destination file id does not exist"));
 
-  app.db.get_file_version(src_id, src);
-  app.db.get_file_version(dst_id, dst);
+  db.get_file_version(src_id, src);
+  db.get_file_version(dst_id, dst);
 
   string pattern("");
   if (!app.opts.no_show_encloser)
@@ -129,7 +132,8 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     options::opts::revision | options::opts::revs_only)
 {
   revision_id rid;
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
 
   if (app.opts.revision_selectors.size() == 0)
     app.require_workspace();
@@ -166,12 +170,12 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
       // this call will change to something else when the above bug is
       // fixed, and so should not be merged with the identical call in
       // the else branch.
-      app.db.get_roster(rid, roster);
+      db.get_roster(rid, roster);
     }
   else
     {
       complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
-      app.db.get_roster(rid, roster);
+      db.get_roster(rid, roster);
     }
 
   // find the version of the file requested
@@ -289,24 +293,25 @@ CMD(cat, "cat", "", CMD_REF(informative),
   if (args.size() != 1)
     throw usage(execid);
 
+  database db(app);
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
       app.require_workspace();
 
       parent_map parents;
-      app.work.get_parent_rosters(app.db, parents);
+      app.work.get_parent_rosters(db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
     }
   else
     {
-      project_t project(app.db);
+      project_t project(db);
       complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
-  dump_file(app.db, cout, rid, idx(args, 0));
+  dump_file(db, cout, rid, idx(args, 0));
 }
 
 // Name: get_file
@@ -327,8 +332,9 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
   file_id ident(idx(args, 0)());
-  dump_file(app.db, output, ident);
+  dump_file(db, output, ident);
 }
 
 // Name: get_file_of
@@ -353,7 +359,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
@@ -368,7 +374,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
     }
   else
     {
-      project_t project(app.db);
+      project_t project(db);
       complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 

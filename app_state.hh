@@ -13,7 +13,6 @@
 #include "paths.hh"
 #include "options.hh"
 #include "lua_hooks.hh"
-#include "database.hh"
 #include "work.hh"
 
 // This class is supposed to hold all (or.. well, most) of the state
@@ -25,17 +24,19 @@
 class app_state
 {
 public:
+  explicit app_state();
+  ~app_state();
+
   options opts;
   lua_hooks lua;
-  database db;
   workspace work;
 
   bool found_workspace;
   bool branch_is_sticky;
   bool mtn_automate_allowed;
 
-  void allow_workspace();
   void process_options();
+  void allow_workspace();
   void require_workspace(std::string const & explanation = "");
   void create_workspace(system_path const & dir);
 
@@ -45,13 +46,7 @@ public:
   // switch the working to a different branch should invoke
   // make_branch_sticky (before require_workspace because this
   // function updates the workspace).
-
   void make_branch_sticky();
-
-  void set_database(system_path const & filename);
-
-  explicit app_state();
-  ~app_state();
 
 private:
   void write_options();

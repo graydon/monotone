@@ -155,14 +155,15 @@ CMD(push, "push", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
+  database db(app);
   key_store keys(app);
-  project_t project(app.db);
+  project_t project(db);
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(app.opts, app.db, args, addr);
-  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, app.db, keys,
+  extract_address(app.opts, db, args, addr);
+  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, db, keys,
                      addr, include_pattern, exclude_pattern);
 
   std::list<utf8> uris;
@@ -180,14 +181,15 @@ CMD(pull, "pull", "", CMD_REF(network),
        "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
+  database db(app);
   key_store keys(app);
-  project_t project(app.db);
+  project_t project(db);
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(app.opts, app.db, args, addr);
-  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, app.db, keys,
+  extract_address(app.opts, db, args, addr);
+  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, db, keys,
                      addr, include_pattern, exclude_pattern, false);
 
   if (app.opts.signing_key() == "")
@@ -209,14 +211,15 @@ CMD(sync, "sync", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
+  database db(app);
   key_store keys(app);
-  project_t project(app.db);
+  project_t project(db);
 
   utf8 addr;
   globish include_pattern, exclude_pattern;
-  extract_address(app.opts, app.db, args, addr);
-  extract_patterns(app.opts, app.db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, app.db, keys,
+  extract_address(app.opts, db, args, addr);
+  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
+  find_key_if_needed(app.opts, app.lua, db, keys,
                      addr, include_pattern, exclude_pattern, false);
 
   std::list<utf8> uris;
@@ -286,55 +289,61 @@ CMD(clone, "clone", "", CMD_REF(network),
   require_path_is_nonexistent
     (workspace_dir, F("clone destination directory '%s' already exists") % workspace_dir);
 
-   // remember the initial working dir so that relative file:// db URIs will work
+  // remember the initial working dir so that relative file://
+  // db URIs will work
   system_path start_dir(get_current_working_dir());
 
   bool internal_db = !app.opts.dbname_given || app.opts.dbname.empty();
 
   dir_cleanup_helper remove_on_fail(workspace_dir, internal_db);
+
+  // paths.cc's idea of the current workspace root is wrong at this point
+  if (internal_db)
+    app.opts.dbname = system_path(workspace_dir
+                                  / bookkeeping_root_component
+                                  / ws_internal_db_file_name);
+
+  // must do this after setting dbname so that _MTN/options is written
+  // correctly
   app.create_workspace(workspace_dir);
 
-  if (internal_db)
-    app.set_database(system_path(bookkeeping_root / ws_internal_db_file_name));
-  else
-    app.set_database(app.opts.dbname);
+  database db(app);
+  if (get_path_status(db.get_filename()) == path::nonexistent)
+    db.initialize();
 
-  if (get_path_status(app.db.get_filename()) == path::nonexistent)
-    app.db.initialize();
+  db.ensure_open();
 
-  app.db.ensure_open();
-
-  if (!app.db.var_exists(default_server_key) || app.opts.set_default)
+  if (!db.var_exists(default_server_key) || app.opts.set_default)
     {
       P(F("setting default server to %s") % addr);
-      app.db.set_var(default_server_key, var_value(addr()));
+      db.set_var(default_server_key, var_value(addr()));
     }
 
   key_store keys(app);
-  project_t project(app.db);
+  project_t project(db);
   globish include_pattern(app.opts.branchname());
   globish exclude_pattern(app.opts.exclude_patterns);
 
-  find_key_if_needed(app.opts, app.lua, app.db, keys,
+  find_key_if_needed(app.opts, app.lua, db, keys,
                      addr, include_pattern, exclude_pattern, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  if (!app.db.var_exists(default_include_pattern_key)
+  if (!db.var_exists(default_include_pattern_key)
       || app.opts.set_default)
     {
       P(F("setting default branch include pattern to '%s'") % include_pattern);
-      app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
+      db.set_var(default_include_pattern_key, var_value(include_pattern()));
     }
 
   if (app.opts.exclude_given)
     {
-      if (!app.db.var_exists(default_exclude_pattern_key)
+      if (!db.var_exists(default_exclude_pattern_key)
           || app.opts.set_default)
         {
           P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
+          db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
 
@@ -350,7 +359,7 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   change_current_working_dir(workspace_dir);
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   if (app.opts.revision_selectors.size() == 0)
     {
@@ -391,7 +400,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   roster_t current_roster;
 
   L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
-  app.db.get_roster(ident, current_roster);
+  db.get_roster(ident, current_roster);
 
   revision_t workrev;
   make_revision_for_workspace(ident, cset(), workrev);
@@ -400,12 +409,12 @@ CMD(clone, "clone", "", CMD_REF(network),
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app.db);
+  content_merge_checkout_adaptor wca(db);
 
-  app.work.perform_content_update(app.db, checkout, wca, false);
+  app.work.perform_content_update(db, checkout, wca, false);
 
-  app.work.update_any_attrs(app.db);
-  app.work.maybe_update_inodeprints(app.db);
+  app.work.update_any_attrs(db);
+  app.work.maybe_update_inodeprints(db);
   guard.commit();
   remove_on_fail.commit();
 }
@@ -450,11 +459,12 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   if (!args.empty())
     throw usage(execid);
 
+  database db(app);
   key_store keys(app);
-  project_t project(app.db);
+  project_t project(db);
   pid_file pid(app.opts.pidfile);
 
-  app.db.ensure_open();
+  db.ensure_open();
 
   if (app.opts.use_transport_auth)
     {
@@ -463,10 +473,10 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
           "(see hook persist_phrase_ok())"));
 
       if (!app.opts.bind_uris.empty())
-        find_key(app.opts, app.lua, app.db, keys,
+        find_key(app.opts, app.lua, db, keys,
                  *app.opts.bind_uris.begin(), globish("*"), globish(""));
       else
-        find_key(app.opts, app.lua, app.db, keys,
+        find_key(app.opts, app.lua, db, keys,
                  utf8(), globish("*"), globish(""));
     }
   else if (!app.opts.bind_stdio)

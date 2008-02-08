@@ -362,7 +362,8 @@ prepare_diff(app_state & app,
   else if (app.opts.revision_selectors.size() == 1)
     app.require_workspace();
 
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
 
   N(app.opts.revision_selectors.size() <= 2,
     F("more than two revisions given"));
@@ -373,7 +374,7 @@ prepare_diff(app_state & app,
       revision_id old_rid;
       parent_map parents;
 
-      app.work.get_parent_rosters(app.db, parents);
+      app.work.get_parent_rosters(db, parents);
 
       // With no arguments, which parent should we diff against?
       N(parents.size() == 1,
@@ -382,7 +383,7 @@ prepare_diff(app_state & app,
 
       old_rid = parent_id(parents.begin());
       old_roster = parent_roster(parents.begin());
-      app.work.get_current_roster_shape(app.db, nis, new_roster);
+      app.work.get_current_roster_shape(db, nis, new_roster);
 
       node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
@@ -407,8 +408,8 @@ prepare_diff(app_state & app,
 
       complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
-      app.db.get_roster(r_old_id, old_roster);
-      app.work.get_current_roster_shape(app.db, nis, new_roster);
+      db.get_roster(r_old_id, old_roster);
+      app.work.get_current_roster_shape(db, nis, new_roster);
 
       node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
@@ -434,8 +435,8 @@ prepare_diff(app_state & app,
       complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
       complete(app, project, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
-      app.db.get_roster(r_old_id, old_roster);
-      app.db.get_roster(r_new_id, new_roster);
+      db.get_roster(r_old_id, old_roster);
+      db.get_roster(r_new_id, new_roster);
 
       node_restriction mask(app.work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
@@ -499,6 +500,7 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
   cset included;
   std::string revs;
   bool new_is_archived;
+  database db(app);
 
   prepare_diff(app, included, args, new_is_archived, revs);
 
@@ -523,11 +525,11 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
 
   if (app.opts.diff_format == external_diff)
     {
-      do_external_diff(app.opts, app.lua, app.db, included, new_is_archived);
+      do_external_diff(app.opts, app.lua, db, included, new_is_archived);
     }
   else
     {
-      dump_diffs(app.lua, app.db, included, cout,
+      dump_diffs(app.lua, db, included, cout,
                  app.opts.diff_format, new_is_archived,
                  !app.opts.no_show_encloser);
     }
@@ -553,10 +555,11 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
   cset included;
   std::string dummy_header;
   bool new_is_archived;
+  database db(app);
 
   prepare_diff(app, included, args, new_is_archived, dummy_header);
 
-  dump_diffs(app.lua, app.db, included, output,
+  dump_diffs(app.lua, db, included, output,
              app.opts.diff_format, new_is_archived, !app.opts.no_show_encloser);
 }
 
@@ -633,7 +636,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
     | options::opts::no_merges | options::opts::no_files
     | options::opts::no_graph)
 {
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
 
   if (app.opts.from.size() == 0)
     app.require_workspace("try passing a --from revision to start at");
@@ -655,7 +659,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != rev.edges.end(); i++)
         {
           rev_height height;
-          app.db.get_rev_height(edge_old_revision(i), height);
+          db.get_rev_height(edge_old_revision(i), height);
           frontier.push(make_pair(height, edge_old_revision(i)));
         }
     }
@@ -670,7 +674,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                j != rids.end(); ++j)
             {
               rev_height height;
-              app.db.get_rev_height(*j, height);
+              db.get_rev_height(*j, height);
               frontier.push(make_pair(height, *j));
             }
           if (i == app.opts.from.begin())
@@ -689,8 +693,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           parent_map parents;
           temp_node_id_source nis;
 
-          app.work.get_parent_rosters(app.db, parents);
-          app.work.get_current_roster_shape(app.db, nis, new_roster);
+          app.work.get_parent_rosters(db, parents);
+          app.work.get_current_roster_shape(db, nis, new_roster);
 
           mask = node_restriction(app.work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
@@ -701,7 +705,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           // FIXME_RESTRICTIONS: should this add paths from the rosters of
           // all selected revs?
           roster_t roster;
-          app.db.get_roster(first_rid, roster);
+          db.get_roster(first_rid, roster);
 
           mask = node_restriction(app.work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
@@ -742,11 +746,11 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           MM(relatives);
           if (next > 0)
             {
-              app.db.get_revision_children(rid, relatives);
+              db.get_revision_children(rid, relatives);
             }
           else
             {
-              app.db.get_revision_parents(rid, relatives);
+              db.get_revision_parents(rid, relatives);
             }
 
           for (set<revision_id>::const_iterator i = relatives.begin();
@@ -794,7 +798,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         }
 
       seen.insert(rid);
-      app.db.get_revision(rid, rev);
+      db.get_revision(rid, rev);
 
       set<revision_id> marked_revs;
 
@@ -802,7 +806,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           roster_t roster;
           marking_map markings;
-          app.db.get_roster(rid, roster, markings);
+          db.get_roster(rid, roster, markings);
 
           // get all revision ids mentioned in one of the markings
           for (marking_map::const_iterator m = markings.begin();
@@ -826,7 +830,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (!use_markings || marked_revs.find(rid) != marked_revs.end())
             {
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(app.db, rev, roster,
+              select_nodes_modified_by_rev(db, rev, roster,
                                            nodes_modified);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
@@ -862,9 +866,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
       else
         {
           if (next > 0)
-            app.db.get_revision_children(rid, interesting);
+            db.get_revision_children(rid, interesting);
           else // walk backwards by default
-            app.db.get_revision_parents(rid, interesting);
+            db.get_revision_parents(rid, interesting);
         }
 
       if (print_this)
@@ -925,7 +929,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
             {
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)
-                dump_diffs(app.lua, app.db, edge_changes(e), diff_paths, out,
+                dump_diffs(app.lua, db, edge_changes(e), diff_paths, out,
                            app.opts.diff_format, true,
                            !app.opts.no_show_encloser, !mask.empty());
             }
@@ -955,7 +959,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
               continue;
             }
           rev_height height;
-          app.db.get_rev_height(*i, height);
+          db.get_rev_height(*i, height);
           frontier.push(make_pair(height, *i));
         }
     }

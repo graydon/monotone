@@ -206,12 +206,6 @@ cpp_main(int argc, char ** argv)
               return 0;
             }
 
-          if (app.opts.dbname_given)
-            {
-              if (!app.opts.dbname.empty())
-                app.db.set_filename(app.opts.dbname);
-            }
-
           // at this point we allow a workspace (meaning search for it
           // and if found read _MTN/options, but don't use the data quite
           // yet, and read all the monotonercs).  Processing the data

@@ -59,10 +59,11 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   if (args.size() != 1)
     throw usage(execid);
 
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
   vector<cert> certs;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   revision_id ident;
   complete(app,  project, idx(args, 0)(), ident);
@@ -77,7 +78,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
+            !db.public_key_exists(idx(certs, i).key))
           P(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
@@ -105,7 +106,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      cert_status status = check_cert(app.db, idx(certs, i));
+      cert_status status = check_cert(db, idx(certs, i));
       cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -158,6 +159,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   key_store keys(app);
 
   vector<rsa_keypair_id> pubs;
@@ -168,8 +170,8 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
   else if (args.size() > 1)
     throw usage(execid);
 
-  if (app.db.database_specified())
-    app.db.get_key_ids(pattern, pubs);
+  if (db.database_specified())
+    db.get_key_ids(pattern, pubs);
 
   keys.get_key_ids(pattern, privkeys);
 
@@ -190,12 +192,12 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           pubkeys[*i] = false;
           all_in_db = false;
         }
-      else if (app.db.database_specified())
+      else if (db.database_specified())
         {
           // we've found a key that should have both a public and a private version
           base64<rsa_pub_key> pub_key;
           keypair priv_key;
-          app.db.get_key(*i, pub_key);
+          db.get_key(*i, pub_key);
           keys.get_key_pair(*i, priv_key);
           if (!keys_match(*i, pub_key, *i, priv_key.pub))
             bad_keys.insert(*i);
@@ -214,7 +216,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           bool indb = i->second;
 
           if (indb)
-            app.db.get_key(keyid, pub_encoded);
+            db.get_key(keyid, pub_encoded);
           else
             {
               keypair kp;
@@ -279,7 +281,8 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
   else if (args.size() > 1)
     throw usage(execid);
 
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
   globish exc(app.opts.exclude_patterns);
   set<branch_name> names;
   project.get_branch_list(inc, names, !app.opts.ignore_suspend_certs);
@@ -295,8 +298,9 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   map<branch_name, epoch_data> epochs;
-  app.db.get_epochs(epochs);
+  db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
@@ -325,8 +329,9 @@ CMD(tags, "tags", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   set<tag_t> tags;
-  project_t project(app.db);
+  project_t project(db);
   project.get_tags(tags);
 
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
@@ -356,8 +361,9 @@ CMD(vars, "vars", "", CMD_REF(list), "[DOMAIN]",
   else
     throw usage(execid);
 
+  database db(app);
   map<var_key, var_value> vars;
-  app.db.get_vars(vars);
+  db.get_vars(vars);
   for (map<var_key, var_value>::const_iterator i = vars.begin();
        i != vars.end(); ++i)
     {
@@ -376,11 +382,12 @@ CMD(known, "known", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
-  app.work.get_current_roster_shape(app.db, nis, new_roster);
+  app.work.get_current_roster_shape(db, nis, new_roster);
 
   node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -415,6 +422,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   app.require_workspace();
 
   vector<file_path> roots = args_to_paths(args);
@@ -426,7 +434,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(app.db, mask, roots, unknown, ignored);
+  app.work.find_unknown_and_ignored(db, mask, roots, unknown, ignored);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -445,9 +453,10 @@ CMD(missing, "missing", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(app.db, nis, current_roster_shape);
+  app.work.get_current_roster_shape(db, nis, current_roster_shape);
   node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
@@ -466,16 +475,17 @@ CMD(changed, "changed", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   parent_map parents;
   roster_t new_roster;
   temp_node_id_source nis;
 
   app.require_workspace();
 
-  app.work.get_current_roster_shape(app.db, nis, new_roster);
+  app.work.get_current_roster_shape(db, nis, new_roster);
   app.work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(app.db, parents);
+  app.work.get_parent_rosters(db, parents);
 
   node_restriction mask(app.work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
@@ -573,7 +583,7 @@ CMD_AUTOMATE(keys, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   key_store keys(app);
 
   vector<rsa_keypair_id> dbkeys;
@@ -668,7 +678,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   project_t project(db);
 
   vector<cert> certs;

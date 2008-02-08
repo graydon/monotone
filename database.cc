@@ -24,6 +24,7 @@
 
 #include "sqlite/sqlite3.h"
 
+#include "app_state.hh"
 #include "cert.hh"
 #include "cleanup.hh"
 #include "constants.hh"
@@ -187,7 +188,7 @@ class database_impl
 
   // for scoped_ptr's sake
 public:
-  database_impl();
+  explicit database_impl(system_path const &);
   ~database_impl();
 
 private:
@@ -195,7 +196,7 @@ private:
   //
   // --== Opening the database and schema checking ==--
   //
-  system_path filename;
+  system_path const filename;
   struct sqlite3 * __sql;
 
   void install_functions();
@@ -388,8 +389,8 @@ private:
 
 };
 
-database_impl::database_impl() :
-  filename(),
+database_impl::database_impl(system_path const & f) :
+  filename(f),
   __sql(NULL),
   transaction_level(0),
   roster_cache(constants::db_roster_cache_sz,
@@ -413,19 +414,12 @@ database_impl::~database_impl()
     close();
 }
 
-database::database(lua_hooks & lua)
-  : imp(new database_impl), lua(lua)
+database::database(app_state & app)
+  : imp(new database_impl(app.opts.dbname)), lua(app.lua)
 {}
 
 database::~database()
 {}
-
-void
-database::set_filename(system_path const & file)
-{
-  I(!imp->__sql);
-  imp->filename = file;
-}
 
 system_path
 database::get_filename()

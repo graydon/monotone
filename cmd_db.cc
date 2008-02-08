@@ -39,7 +39,8 @@ CMD(db_init, "init", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.initialize();
+  database db(app);
+  db.initialize();
 }
 
 CMD(db_info, "info", "", CMD_REF(db), "",
@@ -50,7 +51,8 @@ CMD(db_info, "info", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.info(cout);
+  database db(app);
+  db.info(cout);
 }
 
 CMD(db_version, "version", "", CMD_REF(db), "",
@@ -61,7 +63,8 @@ CMD(db_version, "version", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.version(cout);
+  database db(app);
+  db.version(cout);
 }
 
 CMD(db_dump, "dump", "", CMD_REF(db), "",
@@ -74,7 +77,8 @@ CMD(db_dump, "dump", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.dump(cout);
+  database db(app);
+  db.dump(cout);
 }
 
 CMD(db_load, "load", "", CMD_REF(db), "",
@@ -87,7 +91,8 @@ CMD(db_load, "load", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.load(cin);
+  database db(app);
+  db.load(cin);
 }
 
 CMD(db_migrate, "migrate", "", CMD_REF(db), "",
@@ -102,7 +107,8 @@ CMD(db_migrate, "migrate", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.migrate(keys);
+  database db(app);
+  db.migrate(keys);
 }
 
 CMD(db_execute, "execute", "", CMD_REF(db), "",
@@ -113,7 +119,8 @@ CMD(db_execute, "execute", "", CMD_REF(db), "",
   if (args.size() != 1)
     throw usage(execid);
 
-  app.db.debug(idx(args, 0)(), cout);
+  database db(app);
+  db.debug(idx(args, 0)(), cout);
 }
 
 CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
@@ -126,12 +133,13 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 
   revision_id revid;
 
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
   complete(app, project, idx(args, 0)(), revid);
 
   // Check that the revision does not have any children
   std::set<revision_id> children;
-  app.db.get_revision_children(revid, children);
+  db.get_revision_children(revid, children);
   N(!children.size(),
     F("revision %s already has children. We cannot kill it.") % revid);
 
@@ -159,7 +167,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           if (edge_old_revision(i) != revid)
             continue;
 
-          N(!app.work.has_changes(app.db),
+          N(!app.work.has_changes(db),
             F("Cannot kill revision %s,\n"
               "because it would leave the current workspace in an invalid\n"
               "state, from which monotone cannot recover automatically since\n"
@@ -171,7 +179,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
             % revid);
 
           revision_t new_work_rev;
-          app.db.get_revision(revid, new_work_rev);
+          db.get_revision(revid, new_work_rev);
           new_work_rev.made_for = made_for_workspace;
           app.work.put_work_rev(new_work_rev);
           
@@ -181,7 +189,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
         }
     }
 
-  app.db.delete_existing_rev_and_certs(revid);
+  db.delete_existing_rev_and_certs(revid);
 }
 
 CMD(db_kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),
@@ -193,7 +201,8 @@ CMD(db_kill_branch_certs_locally, "kill_branch_certs_locally", "", CMD_REF(db),
   if (args.size() != 1)
     throw usage(execid);
 
-  app.db.delete_branch_named(cert_value(idx(args, 0)()));
+  database db(app);
+  db.delete_branch_named(cert_value(idx(args, 0)()));
 }
 
 CMD(db_kill_tag_locally, "kill_tag_locally", "", CMD_REF(db), "TAG",
@@ -204,7 +213,8 @@ CMD(db_kill_tag_locally, "kill_tag_locally", "", CMD_REF(db), "TAG",
   if (args.size() != 1)
     throw usage(execid);
 
-  app.db.delete_tag_named(cert_value(idx(args, 0)()));
+  database db(app);
+  db.delete_tag_named(cert_value(idx(args, 0)()));
 }
 
 CMD(db_check, "check", "", CMD_REF(db), "",
@@ -216,7 +226,8 @@ CMD(db_check, "check", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  check_db(app.db);
+  database db(app);
+  check_db(db);
 }
 
 CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
@@ -224,18 +235,19 @@ CMD(db_changesetify, "changesetify", "", CMD_REF(db), "",
     "",
     options::opts::none)
 {
+  database db(app);
   key_store keys(app);
 
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.db, keys);
+  cache_user_key(app.opts, app.lua, db, keys);
 
-  build_changesets_from_manifest_ancestry(app.db, keys, set<string>());
+  build_changesets_from_manifest_ancestry(db, keys, set<string>());
 }
 
 CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
@@ -243,18 +255,19 @@ CMD(db_rosterify, "rosterify", "", CMD_REF(db), "",
     "",
     options::opts::drop_attr)
 {
+  database db(app);
   key_store keys(app);
 
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.db.ensure_open_for_format_changes();
-  app.db.check_is_not_rosterified();
+  db.ensure_open_for_format_changes();
+  db.check_is_not_rosterified();
 
   // early short-circuit to avoid failure after lots of work
-  cache_user_key(app.opts, app.lua, app.db, keys);
+  cache_user_key(app.opts, app.lua, db, keys);
 
-  build_roster_style_revs_from_manifest_style_revs(app.db, keys,
+  build_roster_style_revs_from_manifest_style_revs(db, keys,
                                                    app.opts.attrs_to_drop);
 }
 
@@ -266,7 +279,8 @@ CMD(db_regenerate_caches, "regenerate_caches", "", CMD_REF(db), "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  regenerate_caches(app.db);
+  database db(app);
+  regenerate_caches(db);
 }
 
 CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
@@ -277,7 +291,8 @@ CMD_HIDDEN(clear_epoch, "clear_epoch", "", CMD_REF(db), "BRANCH",
   if (args.size() != 1)
     throw usage(execid);
 
-  app.db.clear_epoch(branch_name(idx(args, 0)()));
+  database db(app);
+  db.clear_epoch(branch_name(idx(args, 0)()));
 }
 
 CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
@@ -291,7 +306,9 @@ CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
   epoch_data ed(idx(args, 1)());
   N(ed.inner()().size() == constants::epochlen,
     F("The epoch must be %s characters") % constants::epochlen);
-  app.db.set_epoch(branch_name(idx(args, 0)()), ed);
+
+  database db(app);
+  db.set_epoch(branch_name(idx(args, 0)()), ed);
 }
 
 CMD(set, "set", "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
@@ -310,7 +327,9 @@ CMD(set, "set", "", CMD_REF(variables), N_("DOMAIN NAME VALUE"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   v = var_value(idx(args, 2)());
-  app.db.set_var(make_pair(d, n), v);
+
+  database db(app);
+  db.set_var(make_pair(d, n), v);
 }
 
 CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
@@ -327,9 +346,11 @@ CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
   internalize_var_domain(idx(args, 0), d);
   n = var_name(idx(args, 1)());
   var_key k(d, n);
-  N(app.db.var_exists(k), 
+
+  database db(app);
+  N(db.var_exists(k), 
     F("no var with name %s in domain %s") % n % d);
-  app.db.clear_var(k);
+  db.clear_var(k);
 }
 
 CMD(complete, "complete", "", CMD_REF(informative),
@@ -341,7 +362,8 @@ CMD(complete, "complete", "", CMD_REF(informative),
   if (args.size() != 2)
     throw usage(execid);
 
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
 
   bool verbose = app.opts.verbose;
 
@@ -351,7 +373,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
   if (idx(args, 0)() == "revision")
     {
       set<revision_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
+      db.complete(idx(args, 1)(), completions);
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
@@ -362,7 +384,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
   else if (idx(args, 0)() == "file")
     {
       set<file_id> completions;
-      app.db.complete(idx(args, 1)(), completions);
+      db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         cout << i->inner()() << '\n';
@@ -371,7 +393,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
     {
       typedef set< pair<key_id, utf8 > > completions_t;
       completions_t completions;
-      app.db.complete(idx(args, 1)(), completions);
+      db.complete(idx(args, 1)(), completions);
       for (completions_t::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
@@ -391,11 +413,12 @@ CMD_HIDDEN(test_migration_step, "test_migration_step", "", CMD_REF(db),
               "schema in SCHEMA to its successor."),
            options::opts::none)
 {
+  database db(app);
   key_store keys(app);
 
   if (args.size() != 1)
     throw usage(execid);
-  app.db.test_migration_step(keys, idx(args,0)());
+  db.test_migration_step(keys, idx(args,0)());
 }
 
 CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
@@ -406,9 +429,10 @@ CMD_HIDDEN(rev_height, "rev_height", "", CMD_REF(informative), N_("REV"),
   if (args.size() != 1)
     throw usage(execid);
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("no such revision '%s'") % rid);
+  database db(app);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   rev_height height;
-  app.db.get_rev_height(rid, height);
+  db.get_rev_height(rid, height);
   P(F("cached height: %s") % height);
 }
 

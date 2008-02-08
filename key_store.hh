@@ -21,7 +21,7 @@ private:
 public:
   rsa_keypair_id signing_key;
 
-  key_store(app_state & a);
+  explicit key_store(app_state & a);
   ~key_store();
 
   system_path const & get_key_dir();

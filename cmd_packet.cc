@@ -26,6 +26,7 @@ CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"),
     "",
     options::opts::none)
 {
+  database db(app);
   key_store keys(app);
 
   if (args.size() != 1)
@@ -34,9 +35,9 @@ CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"),
   rsa_keypair_id ident(idx(args, 0)());
   bool exists(false);
   base64< rsa_pub_key > key;
-  if (app.db.database_specified() && app.db.public_key_exists(ident))
+  if (db.database_specified() && db.public_key_exists(ident))
     {
-      app.db.get_key(ident, key);
+      db.get_key(ident, key);
       exists = true;
     }
   if (keys.key_pair_exists(ident))
@@ -150,8 +151,9 @@ CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
     N_("If no files are provided, the standard input is used."),
     options::opts::none)
 {
+  database db(app);
   key_store keys(app);
-  packet_db_writer dbw(app.db, keys);
+  packet_db_writer dbw(db, keys);
   size_t count = 0;
   if (args.empty())
     {

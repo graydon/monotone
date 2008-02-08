@@ -75,7 +75,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   project_t project(db);
 
   branch_name branch;
@@ -112,7 +112,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> ancestors;
   vector<revision_id> frontier;
@@ -164,7 +164,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> descendents;
   vector<revision_id> frontier;
@@ -214,7 +214,7 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
              "",
              options::opts::none)
 {
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -243,7 +243,7 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
              "",
              options::opts::none)
 {
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
@@ -284,7 +284,7 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   revision_id a;
   set<revision_id> bs;
@@ -328,7 +328,7 @@ CMD_AUTOMATE(leaves, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> leaves;
   db.get_leaves(leaves);
@@ -354,7 +354,7 @@ CMD_AUTOMATE(roots, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   // the real root revisions are the children of one single imaginary root
   // with an empty revision id
@@ -384,7 +384,7 @@ CMD_AUTOMATE(parents, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   revision_id rid(idx(args, 0)());
   N(db.revision_exists(rid), F("no such revision '%s'") % rid);
@@ -414,7 +414,7 @@ CMD_AUTOMATE(children, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   revision_id rid(idx(args, 0)());
   N(db.revision_exists(rid), F("no such revision '%s'") % rid);
@@ -454,7 +454,7 @@ CMD_AUTOMATE(graph, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   multimap<revision_id, revision_id> edges_mmap;
   map<revision_id, set<revision_id> > child_to_parents;
@@ -502,8 +502,8 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
-  project_t project(app.db);
+  database db(app);
+  project_t project(db);
   set<revision_id> completions;
   expand_selector(app, project, idx(args, 0)(), completions);
 
@@ -978,11 +978,11 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              options::opts::no_unchanged |
              options::opts::no_corresponding_renames)
 {
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(app.db, parents);
+  work.get_parent_rosters(db, parents);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
   // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
@@ -992,7 +992,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
 
-  work.get_current_roster_shape(app.db, nis, new_roster);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   inventory_map inventory;
   vector<file_path> includes = args_to_paths(args);
@@ -1190,7 +1190,7 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   temp_node_id_source nis;
   revision_data dat;
@@ -1239,10 +1239,11 @@ CMD_AUTOMATE(get_base_revision_id, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  database db(app);
   CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  work.get_parent_rosters(app.db, parents);
+  work.get_parent_rosters(db, parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -1267,7 +1268,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
     F("no arguments needed"));
 
   CMD_REQUIRES_WORKSPACE(app);
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   parent_map parents;
   roster_t new_roster;
@@ -1332,7 +1333,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
              "",
              options::opts::none)
 {
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   N(args.size() < 2,
     F("wrong argument count"));
@@ -1384,7 +1385,7 @@ CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   packet_writer pw(output);
 
@@ -1416,7 +1417,7 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   project_t project(db);
   packet_writer pw(output);
 
@@ -1448,7 +1449,7 @@ CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   packet_writer pw(output);
 
@@ -1480,7 +1481,7 @@ CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   packet_writer pw(output);
 
@@ -1520,7 +1521,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   set<revision_id> ancestors, common_ancestors;
   vector<revision_id> frontier;
@@ -1588,7 +1589,7 @@ CMD_AUTOMATE(branches, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   project_t project(db);
   set<branch_name> names;
 
@@ -1640,7 +1641,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   project_t project(db);
   globish incl("*");
   bool filtering(false);
@@ -1739,7 +1740,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   key_store keys(app);
 
   rsa_keypair_id ident;
@@ -1748,12 +1749,12 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   utf8 passphrase = idx(args, 1);
 
   hexenc<id> pubhash, privhash;
-  keys.create_key_pair(app.db, ident, &passphrase, &pubhash, &privhash);
+  keys.create_key_pair(db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
   basic_io::stanza stz;
   vector<string> publocs, privlocs;
-  if (app.db.database_specified())
+  if (db.database_specified())
     publocs.push_back("database");
   publocs.push_back("keystore");
   privlocs.push_back("keystore");
@@ -1840,7 +1841,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   roster_t new_roster;
   revision_id ident;
@@ -1904,7 +1905,7 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   N(args.size() == 3,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   roster_t new_roster, old_roster;
   revision_id ident, old_ident;
@@ -1956,7 +1957,7 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
   N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   file_id sha1sum;
   transaction_guard tr(db);
@@ -2011,7 +2012,7 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   revision_t rev;
   read_revision(revision_data(idx(args, 0)()), rev);
@@ -2070,7 +2071,7 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
   key_store keys(app);
 
   revision_id rid(idx(args, 0)());
@@ -2102,6 +2103,7 @@ CMD_AUTOMATE(get_db_variables, N_("[DOMAIN]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
+  database db(app);
   bool filter_by_domain = false;
   var_domain filter;
   if (args.size() == 1)
@@ -2111,7 +2113,7 @@ CMD_AUTOMATE(get_db_variables, N_("[DOMAIN]"),
     }
 
   map<var_key, var_value> vars;
-  app.db.get_vars(vars);
+  db.get_vars(vars);
 
   var_domain cur_domain;
   basic_io::stanza st;
@@ -2171,7 +2173,7 @@ CMD_AUTOMATE(set_db_variable, N_("DOMAIN NAME VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
@@ -2201,7 +2203,7 @@ CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
   N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
-  CMD_REQUIRES_DATABASE(app);
+  database db(app);
 
   var_domain domain(idx(args, 0)());
 

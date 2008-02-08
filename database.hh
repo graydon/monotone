@@ -20,6 +20,7 @@
 #include "graph.hh"
 #include "cert.hh"
 
+class app_state;
 class lua_hooks;
 struct date_t;
 struct globish;
@@ -76,10 +77,9 @@ class database
   // --== Opening the database and schema checking ==--
   //
 public:
-  database(lua_hooks & lua);
+  explicit database(app_state &);
   ~database();
 
-  void set_filename(system_path const & file);
   system_path get_filename();
   bool is_dbfile(any_path const & file);
   bool database_specified();

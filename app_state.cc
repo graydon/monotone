@@ -29,7 +29,7 @@ using std::vector;
 using std::vector;
 
 app_state::app_state()
-  : lua(this), db(lua), work(lua),
+  : lua(this), work(lua),
     branch_is_sticky(false),
     mtn_automate_allowed(false)
 {}
@@ -71,15 +71,16 @@ app_state::process_options()
                       key_option, keydir_option);
 
   // Workspace options are not to override the command line.
-  if (db.get_filename().as_internal().empty()
-      && !database_option.as_internal().empty())
-    db.set_filename(database_option);
+  if (!opts.dbname_given)
+    {
+      I(opts.dbname.empty());
+      opts.dbname = database_option;
+    }
 
   if (!opts.key_dir_given && !opts.conf_dir_given)
     {
       I(opts.key_dir.empty());
-      if (!keydir_option.empty())
-        opts.key_dir = keydir_option;
+      opts.key_dir = keydir_option;
     }
 
   if (opts.branchname().empty() && !branch_option().empty())
@@ -102,7 +103,7 @@ app_state::write_options()
   rsa_keypair_id key_option;
   system_path keydir_option;
 
-  database_option = db.get_filename();
+  database_option = opts.dbname;
   keydir_option = opts.key_dir;
 
   if (branch_is_sticky)
@@ -164,26 +165,6 @@ app_state::create_workspace(system_path const & new_dir)
   global_sanity.set_dump_path(system_path(dump_path, false).as_external());
 
   lua.load_rcfiles(opts);
-}
-
-void
-app_state::set_database(system_path const & filename)
-{
-  if (!filename.empty())
-    {
-      db.set_filename(filename);
-      
-      if (found_workspace)
-        {
-          system_path database_option(filename);
-          branch_name branch_option;
-          rsa_keypair_id key_option;
-          system_path keydir_option;
-      
-          work.set_ws_options(database_option, branch_option,
-                      key_option, keydir_option);
-        }
-    }
 }
 
 void
