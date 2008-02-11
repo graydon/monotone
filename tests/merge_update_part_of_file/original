@@ -1,0 +1,20 @@
+if true; then
+    true
+fi
+
+if false; then
+    false
+fi
+
+this
+is
+a
+long
+text
+used
+to
+separate
+two
+chunks
+
+line to be changed

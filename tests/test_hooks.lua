@@ -80,3 +80,18 @@ end
 function get_encloser_pattern(name)
    return "^[[:alnum:]$_]"
 end
+
+do
+   local std_get_netsync_connect_command
+      = get_netsync_connect_command
+   function get_netsync_connect_command(uri, args)
+      local argv = std_get_netsync_connect_command(uri, args)
+
+      if argv then
+	 table.insert(argv, "--confdir="..get_confdir())
+	 table.insert(argv, "--rcfile="..get_confdir().."/test_hooks.lua")
+      end
+
+      return argv;
+   end
+end

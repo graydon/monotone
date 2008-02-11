@@ -1,0 +1,27 @@
+#
+# old_revision [b73a4e885d20f1b7e6e4e4898b4be74180ba62e3]
+#
+# patch "testfile"
+#  from [d398dd22a6c828326c2e0777d412aee0e9ddf4e7]
+#    to [5fa4faad2ca837dee66a3052efcd72353f554056]
+#
+============================================================
+--- testfile	d398dd22a6c828326c2e0777d412aee0e9ddf4e7
++++ testfile	5fa4faad2ca837dee66a3052efcd72353f554056
+@@ -2,10 +2,6 @@ fi
+     true
+ fi
+ 
+-if false; then
+-    false
+-fi
+-
+ this
+ is
+ a
+@@ -17,4 +13,4 @@ chunks
+ two
+ chunks
+ 
++line changed
+-line to be changed
