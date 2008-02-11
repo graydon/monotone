@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2008-02-11 15:00+0100\n"
-"PO-Revision-Date: 2008-02-11 15:07+0100\n"
+"PO-Revision-Date: 2008-02-11 15:11+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -3088,12 +3088,12 @@ msgstr "numero di mese non valido in ‘%s’"
 #: dates.cc:314
 #, c-format
 msgid "date too early (monotone only goes back to 1970-01-01T00:00:00)"
-msgstr ""
+msgstr "data troppo vecchia (il minimo supportato è 1970-01-01T00:00:00)"
 
 #: dates.cc:323
 #, c-format
 msgid "day out of range for its month in '%s'"
-msgstr ""
+msgstr "numero di giorno non valido per il proprio mese in ‘%s’"
 
 #: diff_patch.cc:688
 #, c-format
@@ -3261,7 +3261,7 @@ msgstr "pattern ‘%s’ non valido: '[' spaiata"
 #: globish.cc:192
 #, c-format
 msgid "invalid pattern '%s': control character 0x%02x is not allowed"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: carattere di controllo 0x%02x non permesso"
 
 #: globish.cc:94
 #, c-format
