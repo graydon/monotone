@@ -177,7 +177,7 @@ cache_user_key(options const & opts, lua_hooks & lua,
 void
 key_hash_code(rsa_keypair_id const & ident,
               base64<rsa_pub_key> const & pub,
-              hexenc<id> & out)
+              id & out)
 {
   data tdat(ident() + ":" + remove_ws(pub()));
   calculate_ident(tdat, out);
@@ -186,7 +186,7 @@ key_hash_code(rsa_keypair_id const & ident,
 void
 key_hash_code(rsa_keypair_id const & ident,
               base64< rsa_priv_key > const & priv,
-              hexenc<id> & out)
+              id & out)
 {
   data tdat(ident() + ":" + remove_ws(priv()));
   calculate_ident(tdat, out);
@@ -200,7 +200,7 @@ keys_match(rsa_keypair_id const & id1,
            rsa_keypair_id const & id2,
            base64<rsa_pub_key> const & key2)
 {
-  hexenc<id> hash1, hash2;
+  id hash1, hash2;
   key_hash_code(id1, key1, hash1);
   key_hash_code(id2, key2, hash2);
   return hash1 == hash2;
@@ -212,7 +212,7 @@ keys_match(rsa_keypair_id const & id1,
            rsa_keypair_id const & id2,
            base64< rsa_priv_key > const & key2)
 {
-  hexenc<id> hash1, hash2;
+  id hash1, hash2;
   key_hash_code(id1, key1, hash1);
   key_hash_code(id2, key2, hash2);
   return hash1 == hash2;
