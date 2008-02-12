@@ -478,10 +478,10 @@ rcs_put_raw_file_edge(database & db,
 
 static void
 insert_into_db(database & db, data const & curr_data,
-               file_ const & curr_id,
+               file_id const & curr_id,
                vector< piece > const & next_lines,
                data & next_data,
-               file_ & next_id)
+               file_id & next_id)
 {
   // inserting into the DB
   // note: curr_lines is a "new" (base) version
