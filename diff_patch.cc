@@ -22,7 +22,7 @@
 #include "roster.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
-#include "transforms.hh"
+#include "xdelta.hh"
 #include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "revision.hh"
@@ -30,6 +30,7 @@
 #include "file_io.hh"
 #include "pcrewrap.hh"
 #include "lua_hooks.hh"
+#include "transforms.hh"
 
 using std::make_pair;
 using std::map;
@@ -807,18 +808,16 @@ content_merger::try_auto_merge(file_path const & anc_path,
 
       if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
         {
-          hexenc<id> tmp_id;
+          file_id tmp_id;
           file_data merge_data;
           string tmp;
 
           L(FL("internal 3-way merged ok"));
           join_lines(merged_lines, tmp);
-          calculate_ident(data(tmp), tmp_id);
-          file_id merged_fid(tmp_id);
           merge_data = file_data(tmp);
+          calculate_ident(merge_data, merged_id);
 
-          merged_id = merged_fid;
-          adaptor.record_merge(left_id, right_id, merged_fid,
+          adaptor.record_merge(left_id, right_id, merged_id,
                                left_data, right_data, merge_data);
 
           return true;
@@ -879,16 +878,12 @@ content_merger::try_user_merge(file_path const & anc_path,
                       ancestor_unpacked, left_unpacked,
                       right_unpacked, merged_unpacked))
     {
-      hexenc<id> tmp_id;
-      file_data merge_data;
+      file_data merge_data(merged_unpacked);
 
       L(FL("lua merge3 hook merged ok"));
-      calculate_ident(merged_unpacked, tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(merged_unpacked);
+      calculate_ident(merge_data, merged_id);
 
-      merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid,
+      adaptor.record_merge(left_id, right_id, merged_id,
                            left_data, right_data, merge_data);
       return true;
     }
@@ -1461,7 +1456,6 @@ make_diff(string const & filename1,
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
 #include "lexical_cast.hh"
 #include "randomfile.hh"
 

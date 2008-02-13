@@ -50,6 +50,16 @@
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
 
+        Internal
+
+        - switched to storing binary sha1 hashes, instead of an ASCII
+          compliant hexadecimal encoding of the hash.
+          The newly added sqlite function unhex(), the built-in quote()
+          function as well as the built-in hex notation (i.e. x'deadbeef')
+          help with handling these binary hashes.
+
+        - merged the two indexes on revision_certs into a single one.
+
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.
