@@ -19,6 +19,11 @@
           messages, however it may report content conflicts that will be
           resolved automatically by the line merger.
 
+	- The internal copy of PCRE has been updated to version 7.6.
+	  If you use the '--with-system-pcre' configure switch, it
+	  will insist on this version and no other.  See m4/pcre.m4
+	  for further discussion.
+
         Bugs fixed
 
         - for changes near the beginning of a file, mtn's unified diff

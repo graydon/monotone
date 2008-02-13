@@ -10,6 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <map>
 #include "vocab.hh"
 #include "quick_alloc.hh"
 #include "paths.hh"

@@ -285,7 +285,7 @@ Yi.
   range (can be used for hex characters)
 @item [[:@var{xxx}:]]
   positive POSIX named set
-@item [[^:@var{xxx}:]]
+@item [[:^@var{xxx}:]]
   negative POSIX named set
 
 @item alnum
