@@ -1,3 +1,12 @@
+monotone (0.39-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+  * Enable use of system libpcre, set appropriate Build-Depends.  Note
+    use of tight B-Ds and shared library dependencies, consistent
+    with behavior of upstream configure script.
+
+ -- J Maintainer <address@here>  ???, ?? ??? ???? ??:??:?? +????
+
 monotone (0.38-1) unstable; urgency=low
 
   [ Richard Levitte ]
@@ -92,7 +101,7 @@ monotone (0.36-1) unstable; urgency=low
      - if not asked to manage the database, do not delete it.
      - if deleting the database and there is a hot journal, delete that too.
      - delete editor backups of ucf-managed conffiles.
-     - expunge the auto-generated key's passphrase from 
+     - expunge the auto-generated key's passphrase from
        /etc/monotone/passphrases and if that leaves the file empty,
        delete it.
      - do not delete the monotone user or group if leaving /var/lib/monotone

@@ -12,7 +12,7 @@
 	- skipping this regex for all remaining files.
 .mtn-ignore:7: warning: error near char 1 of regex "*": nothing to repeat
 	- skipping this regex for all remaining files.
-.mtn-ignore:8: warning: error near char 3 of regex "(?h)": unrecognized character after (?
+.mtn-ignore:8: warning: error near char 3 of regex "(?h)": unrecognized character after (? or (?-
 	- skipping this regex for all remaining files.
 .mtn-ignore:9: warning: error near char 1 of regex "[:alpha:]": POSIX named classes are supported only within a class
 	- skipping this regex for all remaining files.

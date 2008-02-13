@@ -1,4 +1,26 @@
-# Detect libpcre or fall back to our bundled version.
+# Set up to use either a bundled or a system-provided version of libpcre.
+#
+# If --with-system-pcre is specified and the library cannot be found or is
+# unsuitable, the configure script will error out rather than falling back
+# to the bundled version.  This is to avoid surprising a user who expected
+# their system libpcre to be used.
+#
+# "Unsuitable" is defined as "any version other than the bundled one".  In
+# other words, if you want to use a system PCRE you must provide the exact
+# same version that was shipped with this release of Monotone.  We do this
+# because regexes are part of the visible user interface, but their syntax
+# may change from release to release of PCRE.  We want each version of our
+# program to exhibit the regex syntax that was documented in its manual.
+#
+# If you want to rebuild monotone with a newer system PCRE to get some bug
+# fixes, and you've verified that the newer version of PCRE doesn't change
+# the regex syntax, you can override the check by changing the #defines in
+# pcre/pcre.h that state the bundled library's version number.  You do not
+# have to regenerate 'configure'.
+#
+# We are discussing this with the upstream maintainers of PCRE and hope to
+# find a better solution soon.
+
 AC_DEFUN([MTN_LIB_PCRE],
 [AC_ARG_WITH([system-pcre],
     AC_HELP_STRING([--with-system-pcre],
@@ -13,8 +35,7 @@ AC_DEFUN([MTN_LIB_PCRE],
    [with_system_pcre=no])
  if test "$with_system_pcre" = yes; then
    MTN_FIND_PCRE
- fi
- if test $with_system_pcre = no; then
+ else
    AC_DEFINE([PCRE_STATIC],[1],[Define if using bundled pcre])
    AC_MSG_NOTICE([using the bundled copy of PCRE])
  fi
@@ -34,7 +55,7 @@ AC_DEFUN([MTN_FIND_PCRE],
    if test -n "${PCRE_CFLAGS+set}" || test -n "${PCRE_LIBS+set}"; then
      found_libpcre=yes
    else
-     PKG_CHECK_MODULES([PCRE], [libpcre >= 6.7],
+     PKG_CHECK_MODULES([PCRE], [libpcre],
                        [found_libpcre=yes], [found_libpcre=no])
    fi
    if test $found_libpcre = no; then
@@ -85,5 +106,26 @@ AC_DEFUN([MTN_FIND_PCRE],
      LIBS="$save_LIBS"
      CFLAGS="$save_CFLAGS"])
    if test $ac_cv_lib_pcre_works = no; then
-      with_system_pcre=no
-   fi])
+      AC_MSG_ERROR([system-provided libpcre is not usable.  Correct your settings or use --with-system-pcre=no.])
+   fi
+
+   # This is deliberately not cached.
+   AC_MSG_CHECKING([whether the system libpcre matches the bundled version])
+   sed -n -e 's/#define PCRE_MAJOR[ 	]*/#define BUNDLED_PCRE_MAJOR /p' \
+          -e 's/#define PCRE_MINOR[ 	]*/#define BUNDLED_PCRE_MINOR /p' \
+          $srcdir/pcre/pcre.h > conftest.h
+   save_CFLAGS="$CFLAGS"
+   CFLAGS="$CFLAGS $PCRE_CFLAGS"
+   AC_PREPROC_IFELSE([
+#include "conftest.h"
+#include "pcre.h"
+#if PCRE_MAJOR != BUNDLED_PCRE_MAJOR || PCRE_MINOR != BUNDLED_PCRE_MINOR
+#error PCRE version mismatch
+#endif],
+   [pcre_version_match=yes],
+   [pcre_version_match=no])
+   AC_MSG_RESULT($pcre_version_match)
+   if test $pcre_version_match = no; then
+     AC_MSG_ERROR([system-provided libpcre does not match bundled pcre.  Correct your settings, use --with-system-pcre=no, or read m4/pcre.m4 for advice.])
+   fi
+])
