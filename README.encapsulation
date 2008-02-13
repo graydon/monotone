@@ -19,3 +19,16 @@ key_store.cc:
 lua_hooks.cc:
   << evil mess involving a map from lua_*state* pointers 
      to app_state pointers >>
+
+  This is still required, mainly because of the mtn_automate() function,
+  which needs an app_state for the sub-automate call, which is sort of
+  reentrant (but limited to recursion depth 1 by
+  app_state->mtn_automate_allowed).
+
+
+selectors.cc:
+  decode_selector calls app.require_workspace(). Pretty much
+  everything else depends on that, so we pass down the app_state
+  until there. The app_state keeps track of a 'found_workspace'
+  state.
+
