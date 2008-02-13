@@ -634,7 +634,12 @@ make_revision(revision_id const & old_rev_id,
   make_cset(old_roster, new_roster, *cs);
 
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    {
+      hexenc<id> mid(encode_hexenc(rev.new_manifest.inner()()));
+      L(FL("new manifest_id is %s") % mid);
+    }
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -657,7 +662,12 @@ make_revision(revision_id const & old_rev_id,
   rev.edges.clear();
 
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    {
+      hexenc<id> mid(encode_hexenc(rev.new_manifest.inner()()));
+      L(FL("new manifest_id is %s") % mid);
+    }
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -680,7 +690,12 @@ make_revision(parent_map const & old_rosters,
 
   rev.edges = edges;
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    {
+      hexenc<id> mid(encode_hexenc(rev.new_manifest.inner()()));
+      L(FL("new manifest_id is %s") % mid);
+    }
 }
 
 static void
@@ -692,16 +707,21 @@ recalculate_manifest_id_for_restricted_rev(parent_map const & old_rosters,
   // using one of the restricted csets.  It doesn't matter which of the
   // parent roster/cset pairs we use for this; by construction, they must
   // all produce the same result.
-  revision_id id = parent_id(old_rosters.begin());
-  roster_t restricted_roster = *(safe_get(old_rosters, id).first);
+  revision_id rid = parent_id(old_rosters.begin());
+  roster_t restricted_roster = *(safe_get(old_rosters, rid).first);
 
   temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
-  safe_get(edges, id)->apply_to(er);
+  safe_get(edges, rid)->apply_to(er);
 
   calculate_ident(restricted_roster, rev.new_manifest);
   rev.edges = edges;
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    {
+      hexenc<id> mid(encode_hexenc(rev.new_manifest.inner()()));
+      L(FL("new manifest_id is %s") % mid);
+    }
 }
 
 void
@@ -1819,7 +1839,7 @@ parse_edge(basic_io::parser & parser,
 
   parser.esym(syms::old_revision);
   parser.hex(tmp);
-  old_rev = revision_id(tmp);
+  old_rev = revision_id(decode_hexenc(tmp));
 
   parse_cset(parser, *cs);
 
@@ -1844,7 +1864,7 @@ parse_revision(basic_io::parser & parser,
     % tmp);
   parser.esym(syms::new_manifest);
   parser.hex(tmp);
-  rev.new_manifest = manifest_id(tmp);
+  rev.new_manifest = manifest_id(decode_hexenc(tmp));
   while (parser.symp(syms::old_revision))
     parse_edge(parser, rev.edges);
   rev.check_sane();

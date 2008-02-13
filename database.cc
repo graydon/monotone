@@ -1512,7 +1512,7 @@ database_impl::write_delayed_file(file_id const & ident,
   I(tid == ident);
   // and then write things to the db
   query q("INSERT INTO files (id, data) VALUES (?, ?)");
-  execute(q % blob(decode_hexenc(ident.inner()())) % blob(dat_packed()));
+  execute(q % blob(ident.inner()()) % blob(dat_packed()));
 }
 
 void
@@ -1643,9 +1643,10 @@ database_impl::get_version(id const & ident,
           vcache.insert_clean(curr, data(tmp));
         }
 
-      L(FL("following delta %s -> %s")
-        % encode_hexenc(curr())
-        % encode_hexenc(nxt()));
+      if (global_sanity.debug_p())
+        L(FL("following delta %s -> %s")
+          % encode_hexenc(curr())
+          % encode_hexenc(nxt()));
       delta del;
       get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
       apply_delta(appl, del());
@@ -1855,9 +1856,10 @@ database::get_roster_version(revision_id const & ros_id,
        i != selected_path.rend(); ++i)
     {
       id const nxt = *i;
-      L(FL("following delta %s -> %s")
-        % encode_hexenc(curr())
-        % encode_hexenc(nxt()));
+      if (global_sanity.debug_p())
+        L(FL("following delta %s -> %s")
+          % encode_hexenc(curr())
+          % encode_hexenc(nxt()));
       roster_delta del;
       imp->get_roster_delta(nxt, curr, del);
       apply_roster_delta(del, *roster, *marking);
@@ -1920,7 +1922,7 @@ database::revision_exists(revision_id const & id)
 {
   results res;
   query q("SELECT id FROM revisions WHERE id = ?");
-  imp->fetch(res, one_col, any_rows, q % blob(decode_hexenc(id.inner()())));
+  imp->fetch(res, one_col, any_rows, q % blob(id.inner()()));
   I(res.size() <= 1);
   return res.size() == 1;
 }
@@ -2099,8 +2101,8 @@ database::get_revision_ancestry(rev_ancestry_map & graph)
   imp->fetch(res, 2, any_rows,
              query("SELECT parent,child FROM revision_ancestry"));
   for (size_t i = 0; i < res.size(); ++i)
-    graph.insert(make_pair(revision_id(encode_hexenc(res[i][0])),
-                                revision_id(encode_hexenc(res[i][1]))));
+    graph.insert(make_pair(revision_id(res[i][0]),
+                           revision_id(res[i][1])));
 }
 
 void
@@ -2115,9 +2117,9 @@ database::get_revision_parents(revision_id const & id,
       parents.clear();
       imp->fetch(res, one_col, any_rows,
                  query("SELECT parent FROM revision_ancestry WHERE child = ?")
-                 % blob(decode_hexenc(id.inner()())));
+                 % blob(id.inner()()));
       for (size_t i = 0; i < res.size(); ++i)
-        parents.insert(revision_id(encode_hexenc(res[i][0])));
+        parents.insert(revision_id(res[i][0]));
 
       imp->parent_cache.insert(make_pair(id, parents));
     }
@@ -2135,9 +2137,9 @@ database::get_revision_children(revision_id const & id,
   children.clear();
   imp->fetch(res, one_col, any_rows,
              query("SELECT child FROM revision_ancestry WHERE parent = ?")
-        % blob(decode_hexenc(id.inner()())));
+        % blob(id.inner()()));
   for (size_t i = 0; i < res.size(); ++i)
-    children.insert(revision_id(encode_hexenc(res[i][0])));
+    children.insert(revision_id(res[i][0]));
 }
 
 void
@@ -2151,7 +2153,7 @@ database::get_leaves(set<revision_id> & leaves)
                    "ON revisions.id = revision_ancestry.parent "
                    "WHERE revision_ancestry.child IS null"));
   for (size_t i = 0; i < res.size(); ++i)
-    leaves.insert(revision_id(encode_hexenc(res[i][0])));
+    leaves.insert(revision_id(res[i][0]));
 }
 
 
@@ -2181,7 +2183,7 @@ database::get_revision(revision_id const & id,
   results res;
   imp->fetch(res, one_col, one_row,
              query("SELECT data FROM revisions WHERE id = ?")
-             % blob(decode_hexenc(id.inner()())));
+             % blob(id.inner()()));
 
   gzip<data> gzdata(res[0][0]);
   data rdat;
@@ -2213,7 +2215,7 @@ database::get_rev_height(revision_id const & id,
       results res;
       imp->fetch(res, one_col, one_row,
                  query("SELECT height FROM heights WHERE revision = ?")
-                 % blob(decode_hexenc(id.inner()())));
+                 % blob(id.inner()()));
 
       I(res.size() == 1);
 
@@ -2239,7 +2241,7 @@ database::put_rev_height(revision_id const & id,
   imp->height_cache.erase(id);
   
   imp->execute(query("INSERT INTO heights VALUES(?, ?)")
-               % blob(decode_hexenc(id.inner()()))
+               % blob(id.inner()())
                % blob(height()));
 }
 
@@ -2304,7 +2306,9 @@ database::put_revision(revision_id const & new_id,
 
   if (revision_exists(new_id))
     {
-      L(FL("revision '%s' already exists in db") % new_id);
+      if (global_sanity.debug_p())
+        L(FL("revision '%s' already exists in db")
+          % encode_hexenc(new_id.inner()()));
       return false;
     }
 
@@ -2319,8 +2323,10 @@ database::put_revision(revision_id const & new_id,
       if (!edge_old_revision(i).inner()().empty()
           && !revision_exists(edge_old_revision(i)))
         {
-          W(F("missing prerequisite revision '%s'") % edge_old_revision(i));
-          W(F("dropping revision '%s'") % new_id);
+          W(F("missing prerequisite revision '%s'")
+            % encode_hexenc(edge_old_revision(i).inner()()));
+          W(F("dropping revision '%s'")
+            % encode_hexenc(new_id.inner()()));
           return false;
         }
 
@@ -2330,8 +2336,10 @@ database::put_revision(revision_id const & new_id,
         {
           if (! file_version_exists(a->second))
             {
-              W(F("missing prerequisite file '%s'") % a->second);
-              W(F("dropping revision '%s'") % new_id);
+              W(F("missing prerequisite file '%s'")
+                % encode_hexenc(a->second.inner()()));
+              W(F("dropping revision '%s'")
+                % encode_hexenc(new_id.inner()()));
               return false;
             }
         }
@@ -2346,16 +2354,18 @@ database::put_revision(revision_id const & new_id,
           if (! file_version_exists(delta_entry_src(d)))
             {
               W(F("missing prerequisite file pre-delta '%s'")
-                % delta_entry_src(d));
-              W(F("dropping revision '%s'") % new_id);
+                % encode_hexenc(delta_entry_src(d).inner()()));
+              W(F("dropping revision '%s'")
+                % encode_hexenc(new_id.inner()()));
               return false;
             }
 
           if (! file_version_exists(delta_entry_dst(d)))
             {
               W(F("missing prerequisite file post-delta '%s'")
-                % delta_entry_dst(d));
-              W(F("dropping revision '%s'") % new_id);
+                % encode_hexenc(delta_entry_dst(d).inner()()));
+              W(F("dropping revision '%s'")
+                % encode_hexenc(new_id.inner()()));
               return false;
             }
         }
@@ -2370,15 +2380,15 @@ database::put_revision(revision_id const & new_id,
   gzip<data> d_packed;
   encode_gzip(d.inner(), d_packed);
   imp->execute(query("INSERT INTO revisions VALUES(?, ?)")
-               % blob(decode_hexenc(new_id.inner()()))
+               % blob(new_id.inner()())
                % blob(d_packed()));
 
   for (edge_map::const_iterator e = rev.edges.begin();
        e != rev.edges.end(); ++e)
     {
       imp->execute(query("INSERT INTO revision_ancestry VALUES(?, ?)")
-                   % blob(decode_hexenc(edge_old_revision(e).inner()()))
-                   % blob(decode_hexenc(new_id.inner()())));
+                   % blob(edge_old_revision(e).inner()())
+                   % blob(new_id.inner()()));
     }
   // We don't have to clear out the child's entry in the parent_cache,
   // because the child did not exist before this function was called, so
@@ -2524,17 +2534,17 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
 
   // Kill the certs, ancestry, and revision.
   imp->execute(query("DELETE from revision_certs WHERE id = ?")
-               % blob(decode_hexenc(rid.inner()())));
+               % blob(rid.inner()()));
   imp->cert_stamper.note_change();
 
   imp->execute(query("DELETE from revision_ancestry WHERE child = ?")
-               % blob(decode_hexenc(rid.inner()())));
+               % blob(rid.inner()()));
 
   imp->execute(query("DELETE from heights WHERE revision = ?")
-               % blob(decode_hexenc(rid.inner()())));
+               % blob(rid.inner()()));
 
   imp->execute(query("DELETE from revisions WHERE id = ?")
-               % blob(decode_hexenc(rid.inner()())));
+               % blob(rid.inner()()));
 
   guard.commit();
 }
@@ -3074,7 +3084,7 @@ database::get_revisions_with_cert(cert_name const & name,
   decode_base64(val, binvalue);
   imp->fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
-    revisions.insert(revision_id(encode_hexenc((*i)[0])));
+    revisions.insert(revision_id((*i)[0]));
   return imp->cert_stamper.get_indicator();
 }
 
@@ -3197,16 +3207,20 @@ database_impl::prefix_matching_constraint(string const & colname,
         {
           // no upper bound needed, as the lower bound is
           // 0xffffff...
-          L(FL("prefix_matcher: only lower bound ('%s')")
-            % encode_hexenc(lower_bound));
+          if (global_sanity.debug_p())
+            L(FL("prefix_matcher: only lower bound ('%s')")
+              % encode_hexenc(lower_bound));
+
           constraint = query(colname + " > ?")
                        % blob(lower_bound);
         }
       else
         {
-          L(FL("prefix_matcher: lower bound ('%s') and upper bound ('%s')")
-            % encode_hexenc(lower_bound)
-            % encode_hexenc(upper_bound));
+          if (global_sanity.debug_p())
+            L(FL("prefix_matcher: lower bound ('%s') and upper bound ('%s')")
+              % encode_hexenc(lower_bound)
+              % encode_hexenc(upper_bound));
+
           constraint = query(colname + " BETWEEN ? AND ?")
                        % blob(lower_bound)
                        % blob(upper_bound);
@@ -3228,7 +3242,7 @@ database::complete(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 
@@ -3246,7 +3260,7 @@ database::complete(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(file_id(encode_hexenc(res[i][0])));
+    completions.insert(file_id(res[i][0]));
 
   res.clear();
 
@@ -3255,7 +3269,7 @@ database::complete(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(file_id(encode_hexenc(res[i][0])));
+    completions.insert(file_id(res[i][0]));
 }
 
 void
@@ -3272,7 +3286,7 @@ database::complete(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(make_pair(key_id(encode_hexenc(res[i][0])),
+    completions.insert(make_pair(key_id(res[i][0]),
                                  utf8(res[i][1])));
 }
 
@@ -3293,7 +3307,7 @@ database::select_parent(string const & partial,
                    constraint.sql_cmd));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 void
@@ -3308,7 +3322,7 @@ database::select_cert(string const & certname,
              % text(certname));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 void
@@ -3324,7 +3338,7 @@ database::select_cert(string const & certname, string const & certvalue,
              % text(certname) % text(certvalue));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 void
@@ -3344,7 +3358,7 @@ database::select_author_tag_or_branch(string const & partial,
              % text(branch_cert_name()) % text(pattern));
 
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 void
@@ -3363,7 +3377,7 @@ database::select_date(string const & date, string const & comparison,
   imp->fetch(res, 1, any_rows,
              q % text(date_cert_name()) % text(date));
   for (size_t i = 0; i < res.size(); ++i)
-    completions.insert(revision_id(encode_hexenc(res[i][0])));
+    completions.insert(revision_id(res[i][0]));
 }
 
 // epochs
@@ -3392,7 +3406,7 @@ database::get_epoch(epoch_id const & eid,
   imp->fetch(res, 2, any_rows,
              query("SELECT branch, epoch FROM branch_epochs"
                    " WHERE hash = ?")
-             % blob(decode_hexenc(eid.inner()())));
+             % blob(eid.inner()()));
   I(res.size() == 1);
   branch = branch_name(idx(idx(res, 0), 0));
   epo = epoch_data(encode_hexenc(idx(idx(res, 0), 1)));
@@ -3404,7 +3418,7 @@ database::epoch_exists(epoch_id const & eid)
   results res;
   imp->fetch(res, one_col, any_rows,
              query("SELECT hash FROM branch_epochs WHERE hash = ?")
-             % blob(decode_hexenc(eid.inner()())));
+             % blob(eid.inner()()));
   I(res.size() == 1 || res.size() == 0);
   return res.size() == 1;
 }
@@ -3416,9 +3430,9 @@ database::set_epoch(branch_name const & branch, epoch_data const & epo)
   epoch_hash_code(branch, epo, eid);
   I(epo.inner()().size() == constants::epochlen);
   imp->execute(query("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)")
-               % blob(decode_hexenc(eid.inner()()))
+               % blob(eid.inner()())
                % blob(branch())
-               % blob(decode_hexenc(epo.inner()())));
+               % blob(epo.inner()()));
 }
 
 void

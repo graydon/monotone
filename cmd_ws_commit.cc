@@ -1126,10 +1126,14 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   P(F("beginning commit on branch '%s'") % app.opts.branchname);
 
-  L(FL("new manifest '%s'\n"
-       "new revision '%s'\n")
-    % restricted_rev.new_manifest
-    % restricted_rev_id);
+  if (global_sanity.debug_p())
+    {
+      hexenc<id> mid(encode_hexenc(restricted_rev.new_manifest.inner()()));
+      hexenc<id> rid(encode_hexenc(restricted_rev_id.inner()()));
+
+      L(FL("new manifest '%s'\n"
+           "new revision '%s'\n") % mid % rid);
+    }
 
   process_commit_message_args(app.opts, log_message_given, log_message);
 
@@ -1188,7 +1192,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
       W(F("revision %s already in database") % restricted_rev_id);
     else
       {
-        L(FL("inserting new revision %s") % restricted_rev_id);
+        if (global_sanity.debug_p())
+          L(FL("inserting new revision %s")
+            % encode_hexenc(restricted_rev_id.inner()()));
 
         for (edge_map::const_iterator edge = restricted_rev.edges.begin();
              edge != restricted_rev.edges.end();
@@ -1208,13 +1214,17 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
                 if (db.file_version_exists(new_content))
                   {
-                    L(FL("skipping file delta %s, already in database")
-                      % delta_entry_dst(i));
+                    if (global_sanity.debug_p())
+                      L(FL("skipping file delta %s, already in database")
+                        % encode_hexenc(delta_entry_dst(i).inner()()));
                   }
                 else if (db.file_version_exists(old_content))
                   {
-                    L(FL("inserting delta %s -> %s")
-                      % old_content % new_content);
+                    if (global_sanity.debug_p())
+                      L(FL("inserting delta %s -> %s")
+                        % encode_hexenc(old_content.inner()())
+                        % encode_hexenc(new_content.inner()()));
+
                     file_data old_data;
                     data new_data;
                     db.get_file_version(old_content, old_data);
@@ -1235,7 +1245,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                   // If we don't err out here, the database will later.
                   E(false,
                     F("Your database is missing version %s of file '%s'")
-                    % old_content % path);
+                    % encode_hexenc(old_content.inner()())
+                    % path);
               }
 
             for (map<file_path, file_id>::const_iterator
@@ -1245,7 +1256,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                 file_path path = i->first;
                 file_id new_content = i->second;
 
-                L(FL("inserting full version %s") % new_content);
+                if (global_sanity.debug_p())
+                  L(FL("inserting full version %s")
+                    % encode_hexenc(new_content.inner()()));
                 data new_data;
                 read_data(path, new_data);
                 // sanity check
@@ -1277,7 +1290,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   // small race condition here...
   app.work.put_work_rev(remaining);
-  P(F("committed revision %s") % restricted_rev_id);
+  P(F("committed revision %s")
+    % encode_hexenc(restricted_rev_id.inner()()));
 
   app.work.blank_user_log();
 
