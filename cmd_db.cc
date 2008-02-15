@@ -155,7 +155,6 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   // c) there are uncomitted changes in the working revision of this workspace.
   //    this *eventually* could be handled with a workspace merge scenario, but
   //    is left out for now
-  app.allow_workspace();
   if (app.found_workspace)
     {
       revision_t old_work_rev;

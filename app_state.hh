@@ -32,24 +32,13 @@ public:
   workspace work;
 
   bool found_workspace;
-  bool branch_is_sticky;
   bool mtn_automate_allowed;
+  bool branch_is_sticky;
 
   void process_options();
-  void allow_workspace();
   void require_workspace(std::string const & explanation = "");
   void create_workspace(system_path const & dir);
-
-  // Set the branch name. If you only invoke set_branch, the branch
-  // name is not sticky (and won't be written to the workspace and
-  // reused by subsequent monotone invocations).  Commands which
-  // switch the working to a different branch should invoke
-  // make_branch_sticky (before require_workspace because this
-  // function updates the workspace).
-  void make_branch_sticky();
-
-private:
-  void write_options();
+  void write_options(bool branch_is_sticky);
 };
 
 // Local Variables:

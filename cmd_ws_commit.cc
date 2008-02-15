@@ -1082,7 +1082,6 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   cset excluded;
 
   app.require_workspace();
-  app.make_branch_sticky();
   app.work.get_parent_rosters(db, old_rosters);
   app.work.get_current_roster_shape(db, nis, new_roster);
 
@@ -1268,6 +1267,9 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                                             log_message);
     guard.commit();
   }
+
+  // the workspace should remember the branch we just committed to.
+  app.write_options(true);
 
   // the work revision is now whatever changes remain on top of the revision
   // we just checked in.
