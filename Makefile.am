@@ -321,21 +321,20 @@ UNIT_TEST_SRC_SUPPORT =							\
 UNIT_TEST_OBJ_SUPPORT =							\
 	mtn-app_state.$(OBJEXT) mtn-cert.$(OBJEXT)			\
 	mtn-constants.$(OBJEXT) mtn-database.$(OBJEXT)			\
-	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-hmac.$(OBJEXT)	\
-	mtn-inodeprint.$(OBJEXT) mtn-key_store.$(OBJEXT)		\
-	mtn-keys.$(OBJEXT)						\
-	mtn-lcs.$(OBJEXT) mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT)	\
-	mtn-lua_hooks.$(OBJEXT) mtn-merkle_tree.$(OBJEXT)		\
-	mtn-mt_version.$(OBJEXT) mtn-mtn-sanity.$(OBJEXT)		\
-	mtn-options.$(OBJEXT) mtn-package_full_revision.$(OBJEXT)	\
-	mtn-package_revision.$(OBJEXT) mtn-project.$(OBJEXT)		\
-	mtn-randomizer.$(OBJEXT) mtn-sanity.$(OBJEXT)			\
-	mtn-schema.$(OBJEXT) mtn-schema_migration.$(OBJEXT)		\
-	mtn-selectors.$(OBJEXT) mtn-specialized_lexical_cast.$(OBJEXT)	\
-	mtn-ssh_agent.$(OBJEXT) mtn-std_hooks.$(OBJEXT)			\
-	mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)				\
-	mtn-work_migration.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)		\
-	mtn-gzip.$(OBJEXT)
+	mtn-epoch.$(OBJEXT) mtn-file_io.$(OBJEXT) mtn-gzip.$(OBJEXT)	\
+	mtn-hmac.$(OBJEXT) mtn-inodeprint.$(OBJEXT)			\
+	mtn-key_store.$(OBJEXT) mtn-keys.$(OBJEXT) mtn-lcs.$(OBJEXT)	\
+	mtn-legacy.$(OBJEXT) mtn-lua.$(OBJEXT) mtn-lua_hooks.$(OBJEXT)	\
+	mtn-merkle_tree.$(OBJEXT) mtn-mt_version.$(OBJEXT)		\
+	mtn-mtn-sanity.$(OBJEXT) mtn-options.$(OBJEXT)			\
+	mtn-package_full_revision.$(OBJEXT)				\
+	mtn-package_revision.$(OBJEXT) mtn-pcrewrap.$(OBJEXT)		\
+	mtn-project.$(OBJEXT) mtn-randomizer.$(OBJEXT)			\
+	mtn-sanity.$(OBJEXT) mtn-schema.$(OBJEXT)			\
+	mtn-schema_migration.$(OBJEXT)					\
+	mtn-specialized_lexical_cast.$(OBJEXT) mtn-ssh_agent.$(OBJEXT)	\
+	mtn-std_hooks.$(OBJEXT) mtn-ui.$(OBJEXT) mtn-work.$(OBJEXT)	\
+	mtn-work_migration.$(OBJEXT)
 
 # primaries
 

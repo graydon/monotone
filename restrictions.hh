@@ -72,25 +72,37 @@ class restriction
   long depth;
 };
 
+// When used from the main program, restrictions are always created in a
+// context where it's meaningful to provide a workspace object.  However,
+// restrictions.cc's own unit test harness creates them in a context where
+// it is _not_ meaningful to do that.  I see no good alternative to this
+// little bit of ugliness.
+
+#ifdef BUILD_UNIT_TESTS
+#define WORK_ARGDECL // nothing
+#else
+#define WORK_ARGDECL workspace & work, // note trailing comma
+#endif
+
 class node_restriction : public restriction
 {
  public:
   node_restriction() : restriction() {}
 
-  node_restriction(workspace & work,
+  node_restriction(WORK_ARGDECL
                    std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster);
 
-  node_restriction(workspace & work,
+  node_restriction(WORK_ARGDECL
                    std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster1,
                    roster_t const & roster2);
 
-  node_restriction(workspace & work,
+  node_restriction(WORK_ARGDECL
                    std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
@@ -121,7 +133,7 @@ class path_restriction : public restriction
 
   path_restriction() : restriction() {}
 
-  path_restriction(workspace & work,
+  path_restriction(WORK_ARGDECL
                    std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
@@ -132,6 +144,8 @@ class path_restriction : public restriction
  private:
   std::map<file_path, restricted_path::status> path_map;
 };
+
+#undef WORK_ARGDECL
 
 // Local Variables:
 // mode: C++
