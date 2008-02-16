@@ -14,10 +14,14 @@
 #include <set>
 
 #include "commands.hh"
+#include "selectors.hh"
 #include "options.hh"
 #include "sanity.hh"
 
 class app_state;
+class database;
+class project_t;
+struct workspace;
 
 namespace commands
 {
@@ -106,9 +110,9 @@ namespace commands
     // all automation commands.  Also, this is also needed by the "stdio"
     // automation, as it executes multiple of these commands sharing the
     // same initialization, hence the friend declaration.
-    virtual void exec_from_automate(args_vector args,
+    virtual void exec_from_automate(app_state & app,
                                     command_id const & execid,
-                                    app_state & app,
+                                    args_vector const & args,
                                     std::ostream & output) const = 0;
     friend class automate_stdio;
 
@@ -152,29 +156,17 @@ args_to_paths(args_vector const & args)
 }
 
 std::string
-describe_revision(app_state & app,
-                  revision_id const & id);
+describe_revision(project_t & project, revision_id const & id);
 
 void
-complete(app_state & app,
-         std::string const & str,
-         revision_id & completion,
-         bool must_exist=true);
+notify_if_multiple_heads(project_t & project, branch_name const & branchname,
+                         bool ignore_suspend_certs);
 
 void
-complete(app_state & app,
-         std::string const & str,
-         std::set<revision_id> & completion,
-         bool must_exist=true);
-
-void
-notify_if_multiple_heads(app_state & app);
-
-void
-process_commit_message_args(bool & given,
+process_commit_message_args(options const & opts,
+                            bool & given,
                             utf8 & log_message,
-                            app_state & app,
-                            utf8 message_prefix = utf8(""));
+                            utf8 const & message_prefix = utf8());
 
 #define CMD_FWD_DECL(C) \
 namespace commands { \
@@ -268,9 +260,9 @@ void commands::cmd_ ## C::exec(app_state & app,                      \
 namespace commands {                                                 \
   class automate_ ## C : public automate                             \
   {                                                                  \
-    void exec_from_automate(args_vector args,                        \
+    void exec_from_automate(app_state & app,                         \
                             command_id const & execid,               \
-                            app_state & app,                         \
+                            args_vector const & args,                \
                             std::ostream & output) const;            \
   public:                                                            \
     automate_ ## C() : automate(#C, params, abstract, desc,          \
@@ -280,13 +272,16 @@ namespace commands {                                                 \
   automate_ ## C C ## _automate;                                     \
 }                                                                    \
 void commands::automate_ ## C :: exec_from_automate                  \
-  (args_vector args,                                                 \
+  (app_state & app,                                                  \
    command_id const & execid,                                        \
-   app_state & app,                                                  \
+   args_vector const & args,                                         \
    std::ostream & output) const
 
-CMD_FWD_DECL(__root__);
+#define CMD_REQUIRES_WORKSPACE(app)                                  \
+workspace & work = app.work;                                         \
+app.require_workspace()
 
+CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);
 CMD_FWD_DECL(debug);

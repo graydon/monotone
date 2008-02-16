@@ -30,7 +30,7 @@
 #include "vocab.hh"
 #include "database.hh" // for parent_map
 
-class app_state;
+class workspace;
 
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
@@ -72,30 +72,42 @@ class restriction
   long depth;
 };
 
+// When used from the main program, restrictions are always created in a
+// context where it's meaningful to provide a workspace object.  However,
+// restrictions.cc's own unit test harness creates them in a context where
+// it is _not_ meaningful to do that.  I see no good alternative to this
+// little bit of ugliness.
+
+#ifdef BUILD_UNIT_TESTS
+#define WORK_ARGDECL // nothing
+#else
+#define WORK_ARGDECL workspace & work, // note trailing comma
+#endif
+
 class node_restriction : public restriction
 {
  public:
   node_restriction() : restriction() {}
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(WORK_ARGDECL
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   roster_t const & roster,
-                   app_state & a);
+                   roster_t const & roster);
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(WORK_ARGDECL
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster1,
-                   roster_t const & roster2,
-                   app_state & a);
+                   roster_t const & roster2);
 
-  node_restriction(std::vector<file_path> const & includes,
+  node_restriction(WORK_ARGDECL
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    parent_map const & rosters1,
-                   roster_t const & roster2,
-                   app_state & a);
+                   roster_t const & roster2);
 
   bool includes(roster_t const & roster, node_id nid) const;
 
@@ -121,10 +133,10 @@ class path_restriction : public restriction
 
   path_restriction() : restriction() {}
 
-  path_restriction(std::vector<file_path> const & includes,
+  path_restriction(WORK_ARGDECL
+                   std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   app_state & a,
                    validity_check vc = check_paths);
 
   bool includes(file_path const & sp) const;
@@ -132,6 +144,8 @@ class path_restriction : public restriction
  private:
   std::map<file_path, restricted_path::status> path_map;
 };
+
+#undef WORK_ARGDECL
 
 // Local Variables:
 // mode: C++

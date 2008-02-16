@@ -21,6 +21,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
+#include "project.hh"
 #include "basic_io.hh"
 #include "cert.hh"
 #include "cmd.hh"
@@ -28,6 +29,7 @@
 #include "constants.hh"
 #include "inodeprint.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "file_io.hh"
 #include "packet.hh"
 #include "restrictions.hh"
@@ -73,20 +75,23 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
-  system_path database_option;
-  branch_name branch_option;
-  rsa_keypair_id key_option;
-  system_path keydir_option;
-  app.work.get_ws_options(database_option, branch_option,
-                          key_option, keydir_option);
+  database db(app);
+  project_t project(db);
 
-  if (args.size() == 1 ) {
+  branch_name branch;
+  if (args.size() == 1)
     // branchname was explicitly given, use that
-    branch_option = branch_name(idx(args, 0)());
-  }
+    branch = branch_name(idx(args, 0)());
+  else
+    {
+      app.require_workspace();
+      branch = app.opts.branchname;
+    }
+
   set<revision_id> heads;
-  app.get_project().get_branch_heads(branch_option, heads);
-  for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
+  project.get_branch_heads(branch, heads, app.opts.ignore_suspend_certs);
+  for (set<revision_id>::const_iterator i = heads.begin();
+       i != heads.end(); ++i)
     output << (*i).inner()() << '\n';
 }
 
@@ -107,12 +112,14 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
+  database db(app);
+
   set<revision_id> ancestors;
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -121,7 +128,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
       frontier.pop_back();
       if(!null_id(rid)) {
         set<revision_id> parents;
-        app.db.get_revision_parents(rid, parents);
+        db.get_revision_parents(rid, parents);
         for (set<revision_id>::const_iterator i = parents.begin();
              i != parents.end(); ++i)
           {
@@ -157,12 +164,14 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
+  database db(app);
+
   set<revision_id> descendents;
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -170,7 +179,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
       revision_id rid = frontier.back();
       frontier.pop_back();
       set<revision_id> children;
-      app.db.get_revision_children(rid, children);
+      db.get_revision_children(rid, children);
       for (set<revision_id>::const_iterator i = children.begin();
            i != children.end(); ++i)
         {
@@ -205,14 +214,16 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
              "",
              options::opts::none)
 {
+  database db(app);
+
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       revs.insert(rid);
     }
-  erase_ancestors(revs, app);
+  erase_ancestors(db, revs);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
     output << (*i).inner()() << '\n';
 }
@@ -232,15 +243,17 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
              "",
              options::opts::none)
 {
+  database db(app);
+
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       revs.insert(rid);
     }
   vector<revision_id> sorted;
-  toposort(revs, sorted, app);
+  toposort(db, revs, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -271,22 +284,24 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
+  database db(app);
+
   revision_id a;
   set<revision_id> bs;
   args_vector::const_iterator i = args.begin();
   a = revision_id((*i)());
-  N(app.db.revision_exists(a), F("No such revision %s") % a);
+  N(db.revision_exists(a), F("no such revision '%s'") % a);
   for (++i; i != args.end(); ++i)
     {
       revision_id b((*i)());
-      N(app.db.revision_exists(b), F("No such revision %s") % b);
+      N(db.revision_exists(b), F("no such revision '%s'") % b);
       bs.insert(b);
     }
   set<revision_id> ancestors;
-  ancestry_difference(a, bs, ancestors, app);
+  ancestry_difference(db, a, bs, ancestors);
 
   vector<revision_id> sorted;
-  toposort(ancestors, sorted, app);
+  toposort(db, ancestors, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -313,8 +328,10 @@ CMD_AUTOMATE(leaves, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  database db(app);
+
   set<revision_id> leaves;
-  app.db.get_leaves(leaves);
+  db.get_leaves(leaves);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
     output << (*i).inner()() << '\n';
@@ -337,11 +354,13 @@ CMD_AUTOMATE(roots, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  database db(app);
+
   // the real root revisions are the children of one single imaginary root
   // with an empty revision id
   set<revision_id> roots;
   revision_id nullid;
-  app.db.get_revision_children(nullid, roots);
+  db.get_revision_children(nullid, roots);
   for (set<revision_id>::const_iterator i = roots.begin();
        i != roots.end(); ++i)
       output << i->inner()() << '\n';
@@ -365,10 +384,12 @@ CMD_AUTOMATE(parents, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   set<revision_id> parents;
-  app.db.get_revision_parents(rid, parents);
+  db.get_revision_parents(rid, parents);
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
@@ -393,10 +414,12 @@ CMD_AUTOMATE(children, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   set<revision_id> children;
-  app.db.get_revision_children(rid, children);
+  db.get_revision_children(rid, children);
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
@@ -431,10 +454,12 @@ CMD_AUTOMATE(graph, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  database db(app);
+
   multimap<revision_id, revision_id> edges_mmap;
   map<revision_id, set<revision_id> > child_to_parents;
 
-  app.db.get_revision_ancestry(edges_mmap);
+  db.get_revision_ancestry(edges_mmap);
 
   for (multimap<revision_id, revision_id>::const_iterator i = edges_mmap.begin();
        i != edges_mmap.end(); ++i)
@@ -477,15 +502,12 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app));
+  database db(app);
+  project_t project(db);
+  set<revision_id> completions;
+  expand_selector(app, project, idx(args, 0)(), completions);
 
-  // we jam through an "empty" selection on sel_ident type
-  set<string> completions;
-  selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
-
-  for (set<string>::const_iterator i = completions.begin();
+  for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     output << *i << '\n';
 }
@@ -726,16 +748,18 @@ struct inventory_itemizer : public tree_walker
 {
   path_restriction const & mask;
   inventory_map & inventory;
-  app_state & app;
   inodeprint_map ipm;
+  workspace & work;
 
-  inventory_itemizer(path_restriction const & m, inventory_map & i, app_state & a) :
-    mask(m), inventory(i), app(a)
+  inventory_itemizer(workspace & work,
+                     path_restriction const & m,
+                     inventory_map & i)
+    : mask(m), inventory(i), work(work)
   {
-    if (app.work.in_inodeprints_mode())
+    if (work.in_inodeprints_mode())
       {
         data dat;
-        app.work.read_inodeprints(dat);
+        work.read_inodeprints(dat);
         read_inodeprint_map(dat, ipm);
       }
   }
@@ -751,7 +775,7 @@ inventory_itemizer::visit_dir(file_path const & path)
       inventory[path].fs_type = path::directory;
     }
   // don't recurse into ignored subdirectories
-  return !app.lua.hook_ignore_file(path);
+  return !work.ignore_file(path);
 }
 
 void
@@ -774,9 +798,11 @@ inventory_itemizer::visit_file(file_path const & path)
 }
 
 static void
-inventory_filesystem(path_restriction const & mask, inventory_map & inventory, app_state & app)
+inventory_filesystem(workspace & work,
+                     path_restriction const & mask,
+                     inventory_map & inventory)
 {
-  inventory_itemizer itemizer(mask, inventory, app);
+  inventory_itemizer itemizer(work, mask, inventory);
   file_path const root;
   // The constructor file_path() returns ""; the root directory. walk_tree
   // does not visit that node, so set fs_type now, if it meets the
@@ -804,7 +830,7 @@ namespace
 }
 
 static void
-inventory_determine_states(app_state & app, file_path const & fs_path,
+inventory_determine_states(workspace & work, file_path const & fs_path,
                            inventory_item const & item, roster_t const & old_roster,
                            roster_t const & new_roster, vector<string> & states)
 {
@@ -854,7 +880,7 @@ inventory_determine_states(app_state & app, file_path const & fs_path,
     {
       if (!item.new_node.exists)
         {
-          if (app.lua.hook_ignore_file(fs_path))
+          if (work.ignore_file(fs_path))
             {
               states.push_back("ignored");
             }
@@ -952,10 +978,11 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              options::opts::no_unchanged |
              options::opts::no_corresponding_renames)
 {
-  app.require_workspace();
+  database db(app);
+  CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(db, parents);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
   // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
@@ -965,7 +992,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   roster_t new_roster, old_roster = parent_roster(parents.begin());
   temp_node_id_source nis;
 
-  app.work.get_current_roster_shape(new_roster, nis);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   inventory_map inventory;
   vector<file_path> includes = args_to_paths(args);
@@ -985,14 +1012,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
            inserter(excludes, excludes.end()));
     }
 
-  node_restriction nmask(includes, excludes, app.opts.depth, old_roster, new_roster, app);
+  node_restriction nmask(app.work, includes, excludes, app.opts.depth, old_roster, new_roster);
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
   // of them anyways
-  path_restriction pmask(includes, excludes, app.opts.depth, app, path_restriction::skip_check);
+  path_restriction pmask(app.work, includes, excludes, app.opts.depth, path_restriction::skip_check);
 
   inventory_rosters(old_roster, new_roster, nmask, pmask, inventory);
-  inventory_filesystem(pmask, inventory, app);
+  inventory_filesystem(app.work, pmask, inventory);
 
   basic_io::printer pr;
 
@@ -1006,7 +1033,8 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       // check if we should output this element at all
       //
       vector<string> states;
-      inventory_determine_states(app, fp, item, old_roster, new_roster, states);
+      inventory_determine_states(app.work, fp, item,
+                                 old_roster, new_roster, states);
 
       if (find(states.begin(), states.end(), "ignored") != states.end() &&
           app.opts.no_ignored)
@@ -1162,20 +1190,23 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
+  database db(app);
+
   temp_node_id_source nis;
   revision_data dat;
   revision_id ident;
 
   if (args.size() == 0)
     {
+      CMD_REQUIRES_WORKSPACE(app);
+
       roster_t new_roster;
       parent_map old_rosters;
       revision_t rev;
 
-      app.require_workspace();
-      app.work.get_parent_rosters(old_rosters);
-      app.work.get_current_roster_shape(new_roster, nis);
-      app.work.update_current_roster_from_filesystem(new_roster);
+      work.get_parent_rosters(db, old_rosters);
+      work.get_current_roster_shape(db, nis, new_roster);
+      work.update_current_roster_from_filesystem(new_roster);
 
       make_revision(old_rosters, new_roster, rev);
       calculate_ident(rev, ident);
@@ -1184,9 +1215,9 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
   else
     {
       ident = revision_id(idx(args, 0)());
-      N(app.db.revision_exists(ident),
+      N(db.revision_exists(ident),
         F("no revision %s found in database") % ident);
-      app.db.get_revision(ident, dat);
+      db.get_revision(ident, dat);
     }
 
   L(FL("dumping revision %s") % ident);
@@ -1208,10 +1239,11 @@ CMD_AUTOMATE(get_base_revision_id, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.require_workspace();
+  database db(app);
+  CMD_REQUIRES_WORKSPACE(app);
 
   parent_map parents;
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(db, parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -1235,7 +1267,8 @@ CMD_AUTOMATE(get_current_revision_id, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  app.require_workspace();
+  CMD_REQUIRES_WORKSPACE(app);
+  database db(app);
 
   parent_map parents;
   roster_t new_roster;
@@ -1243,11 +1276,10 @@ CMD_AUTOMATE(get_current_revision_id, "",
   revision_t rev;
   temp_node_id_source nis;
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
-  app.work.update_current_roster_from_filesystem(new_roster);
+  work.get_current_roster_shape(db, nis, new_roster);
+  work.update_current_roster_from_filesystem(new_roster);
 
-  app.work.get_parent_rosters(parents);
+  work.get_parent_rosters(db, parents);
   make_revision(parents, new_roster, rev);
 
   calculate_ident(rev, new_revision_id);
@@ -1301,6 +1333,8 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
              "",
              options::opts::none)
 {
+  database db(app);
+
   N(args.size() < 2,
     F("wrong argument count"));
 
@@ -1310,18 +1344,19 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
   if (args.size() == 0)
     {
+      CMD_REQUIRES_WORKSPACE(app);
+
       temp_node_id_source nis;
 
-      app.require_workspace();
-      app.work.get_current_roster_shape(new_roster, nis);
-      app.work.update_current_roster_from_filesystem(new_roster);
+      work.get_current_roster_shape(db, nis, new_roster);
+      work.update_current_roster_from_filesystem(new_roster);
     }
   else
     {
       revision_id rid = revision_id(idx(args, 0)());
-      N(app.db.revision_exists(rid),
+      N(db.revision_exists(rid),
         F("no revision %s found in database") % rid);
-      app.db.get_roster(rid, new_roster);
+      db.get_roster(rid, new_roster);
     }
 
   calculate_ident(new_roster, mid);
@@ -1350,14 +1385,16 @@ CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   packet_writer pw(output);
 
   revision_id r_id(idx(args, 0)());
   revision_data r_data;
 
-  N(app.db.revision_exists(r_id),
+  N(db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.db.get_revision(r_id, r_data);
+  db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id,r_data);
 }
 
@@ -1380,14 +1417,16 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+  project_t project(db);
   packet_writer pw(output);
 
   revision_id r_id(idx(args, 0)());
   vector< revision<cert> > certs;
 
-  N(app.db.revision_exists(r_id),
+  N(db.revision_exists(r_id),
     F("no such revision '%s'") % r_id);
-  app.get_project().get_revision_certs(r_id, certs);
+  project.get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
 }
@@ -1410,14 +1449,16 @@ CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   packet_writer pw(output);
 
   file_id f_id(idx(args, 0)());
   file_data f_data;
 
-  N(app.db.file_version_exists(f_id),
+  N(db.file_version_exists(f_id),
     F("no such file '%s'") % f_id);
-  app.db.get_file_version(f_id, f_data);
+  db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id,f_data);
 }
 
@@ -1440,18 +1481,20 @@ CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
+  database db(app);
+
   packet_writer pw(output);
 
   file_id f_old_id(idx(args, 0)());
   file_id f_new_id(idx(args, 1)());
   file_data f_old_data, f_new_data;
 
-  N(app.db.file_version_exists(f_old_id),
+  N(db.file_version_exists(f_old_id),
     F("no such revision '%s'") % f_old_id);
-  N(app.db.file_version_exists(f_new_id),
+  N(db.file_version_exists(f_new_id),
     F("no such revision '%s'") % f_new_id);
-  app.db.get_file_version(f_old_id, f_old_data);
-  app.db.get_file_version(f_new_id, f_new_data);
+  db.get_file_version(f_old_id, f_old_data);
+  db.get_file_version(f_new_id, f_new_data);
   delta del;
   diff(f_old_data.inner(), f_new_data.inner(), del);
   pw.consume_file_delta(f_old_id, f_new_id, file_delta(del));
@@ -1478,12 +1521,14 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   N(args.size() > 0,
     F("wrong argument count"));
 
+  database db(app);
+
   set<revision_id> ancestors, common_ancestors;
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid((*i)());
-      N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
       ancestors.clear();
       ancestors.insert(rid);
       frontier.push_back(rid);
@@ -1494,7 +1539,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
           if(!null_id(rid))
             {
               set<revision_id> parents;
-              app.db.get_revision_parents(rid, parents);
+              db.get_revision_parents(rid, parents);
               for (set<revision_id>::const_iterator i = parents.begin();
                    i != parents.end(); ++i)
                 {
@@ -1544,16 +1589,16 @@ CMD_AUTOMATE(branches, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
+  database db(app);
+  project_t project(db);
   set<branch_name> names;
 
-  app.get_project().get_branch_list(names, !app.opts.ignore_suspend_certs);
+  project.get_branch_list(names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
-    {
-      if (!app.lua.hook_ignore_branch(*i))
-        output << (*i) << '\n';
-    }
+    if (!app.lua.hook_ignore_branch(*i))
+      output << (*i) << '\n';
 }
 
 // Name: tags
@@ -1596,6 +1641,8 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
+  database db(app);
+  project_t project(db);
   globish incl("*");
   bool filtering(false);
 
@@ -1610,13 +1657,13 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
   prt.print_stanza(stz);
 
   set<tag_t> tags;
-  app.get_project().get_tags(tags);
+  project.get_tags(tags);
 
   for (set<tag_t>::const_iterator tag = tags.begin();
        tag != tags.end(); ++tag)
     {
       set<branch_name> branches;
-      app.get_project().get_revision_branches(tag->ident, branches);
+      project.get_revision_branches(tag->ident, branches);
 
       bool show(!filtering);
       vector<string> branch_names;
@@ -1624,6 +1671,8 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
       for (set<branch_name>::const_iterator branch = branches.begin();
            branch != branches.end(); ++branch)
         {
+          // FIXME: again, hook_ignore_branch should probably be in the
+          //        database context...
           if (app.lua.hook_ignore_branch(*branch))
             continue;
 
@@ -1691,32 +1740,22 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
+  database db(app);
+  key_store keys(app);
+
   rsa_keypair_id ident;
   internalize_rsa_keypair_id(idx(args, 0), ident);
 
   utf8 passphrase = idx(args, 1);
 
-  bool exists = app.keys.key_pair_exists(ident);
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db);
-      exists = exists || app.db.public_key_exists(ident);
-      guard.commit();
-    }
-
-  N(!exists, F("key '%s' already exists") % ident);
-
-  keypair kp;
-  generate_key_pair(kp, passphrase);
-  app.keys.put_key_pair(ident, kp);
+  hexenc<id> pubhash, privhash;
+  keys.create_key_pair(db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
   basic_io::stanza stz;
-  hexenc<id> privhash, pubhash;
   vector<string> publocs, privlocs;
-  key_hash_code(ident, kp.pub, pubhash);
-  key_hash_code(ident, kp.priv, privhash);
-
+  if (db.database_specified())
+    publocs.push_back("database");
   publocs.push_back("keystore");
   privlocs.push_back("keystore");
 
@@ -1750,15 +1789,14 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  // this command requires a workspace to be run on
-  app.require_workspace();
+  CMD_REQUIRES_WORKSPACE(app);
 
   system_path database_option;
   branch_name branch_option;
   rsa_keypair_id key_option;
   system_path keydir_option;
-  app.work.get_ws_options(database_option, branch_option,
-                          key_option, keydir_option);
+  work.get_ws_options(database_option, branch_option,
+                      key_option, keydir_option);
 
   string opt = args[0]();
 
@@ -1803,14 +1841,16 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
   N(args.size() == 2,
     F("wrong argument count"));
 
+  database db(app);
+
   roster_t new_roster;
   revision_id ident;
   marking_map mm;
 
   ident = revision_id(idx(args, 0)());
-  N(app.db.revision_exists(ident),
+  N(db.revision_exists(ident),
     F("no revision %s found in database") % ident);
-  app.db.get_roster(ident, new_roster, mm);
+  db.get_roster(ident, new_roster, mm);
 
   file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
@@ -1865,18 +1905,20 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   N(args.size() == 3,
     F("wrong argument count"));
 
+  database db(app);
+
   roster_t new_roster, old_roster;
   revision_id ident, old_ident;
 
   ident = revision_id(idx(args, 0)());
-  N(app.db.revision_exists(ident),
+  N(db.revision_exists(ident),
     F("no revision %s found in database") % ident);
-  app.db.get_roster(ident, new_roster);
+  db.get_roster(ident, new_roster);
 
   old_ident = revision_id(idx(args, 2)());
-  N(app.db.revision_exists(old_ident),
+  N(db.revision_exists(old_ident),
     F("no revision %s found in database") % old_ident);
-  app.db.get_roster(old_ident, old_roster);
+  db.get_roster(old_ident, old_roster);
 
   file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
@@ -1915,33 +1957,35 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
   N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
+  database db(app);
+
   file_id sha1sum;
-  transaction_guard tr(app.db);
+  transaction_guard tr(db);
   if (args.size() == 1)
     {
       file_data dat(idx(args, 0)());
       calculate_ident(dat, sha1sum);
 
-      app.db.put_file(sha1sum, dat);
+      db.put_file(sha1sum, dat);
     }
   else if (args.size() == 2)
     {
       file_data dat(idx(args, 1)());
       calculate_ident(dat, sha1sum);
       file_id base_id(idx(args, 0)());
-      N(app.db.file_version_exists(base_id),
+      N(db.file_version_exists(base_id),
         F("no file version %s found in database") % base_id);
 
       // put_file_version won't do anything if the target ID already exists,
       // but we can save the delta calculation by checking here too
-      if (!app.db.file_version_exists(sha1sum))
+      if (!db.file_version_exists(sha1sum))
         {
           file_data olddat;
-          app.db.get_file_version(base_id, olddat);
+          db.get_file_version(base_id, olddat);
           delta del;
           diff(olddat.inner(), dat.inner(), del);
 
-          app.db.put_file_version(base_id, sha1sum, file_delta(del));
+          db.put_file_version(base_id, sha1sum, file_delta(del));
         }
     }
   else I(false);
@@ -1968,6 +2012,8 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   revision_t rev;
   read_revision(revision_data(idx(args, 0)()), rev);
 
@@ -1978,7 +2024,7 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
     {
       // calculate new manifest
       roster_t old_roster;
-      if (!null_id(e->first)) app.db.get_roster(e->first, old_roster);
+      if (!null_id(e->first)) db.get_roster(e->first, old_roster);
       roster_t new_roster = old_roster;
       editable_roster_base eros(new_roster, nis);
       e->second->apply_to(eros);
@@ -1999,7 +2045,7 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
 
   // If the database refuses the revision, make sure this is because it's
   // already there.
-  E(app.db.put_revision(id, rev) || app.db.revision_exists(id),
+  E(db.put_revision(id, rev) || db.revision_exists(id),
     F("missing prerequisite for revision %s") % id);
 
   output << id << '\n';
@@ -2025,17 +2071,16 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
-  cert c;
-  revision_id rid(idx(args, 0)());
+  database db(app);
+  key_store keys(app);
 
-  transaction_guard guard(app.db);
-  N(app.db.revision_exists(rid),
+  revision_id rid(idx(args, 0)());
+  N(db.revision_exists(rid),
     F("no such revision '%s'") % rid);
-  make_simple_cert(rid.inner(), cert_name(idx(args, 1)()),
-                   cert_value(idx(args, 2)()), app, c);
-  revision<cert> rc(c);
-  app.db.put_revision_cert(rc);
-  guard.commit();
+
+  cache_user_key(app.opts, app.lua, db, keys);
+  put_simple_revision_cert(db, keys, rid, cert_name(idx(args, 1)()),
+                           cert_value(idx(args, 2)()));
 }
 
 // Name: get_db_variables
@@ -2058,6 +2103,7 @@ CMD_AUTOMATE(get_db_variables, N_("[DOMAIN]"),
   N(args.size() < 2,
     F("wrong argument count"));
 
+  database db(app);
   bool filter_by_domain = false;
   var_domain filter;
   if (args.size() == 1)
@@ -2067,7 +2113,7 @@ CMD_AUTOMATE(get_db_variables, N_("[DOMAIN]"),
     }
 
   map<var_key, var_value> vars;
-  app.db.get_vars(vars);
+  db.get_vars(vars);
 
   var_domain cur_domain;
   basic_io::stanza st;
@@ -2127,11 +2173,13 @@ CMD_AUTOMATE(set_db_variable, N_("DOMAIN NAME VALUE"),
   N(args.size() == 3,
     F("wrong argument count"));
 
+  database db(app);
+
   var_domain domain = var_domain(idx(args, 0)());
   utf8 name = idx(args, 1);
   utf8 value = idx(args, 2);
   var_key key(domain, var_name(name()));
-  app.db.set_var(key, var_value(value()));
+  db.set_var(key, var_value(value()));
 }
 
 // Name: drop_db_variables
@@ -2155,20 +2203,22 @@ CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
   N(args.size() == 1 || args.size() == 2,
     F("wrong argument count"));
 
+  database db(app);
+
   var_domain domain(idx(args, 0)());
 
   if (args.size() == 2)
     {
       var_name name(idx(args, 1)());
       var_key  key(domain, name);
-      N(app.db.var_exists(key),
+      N(db.var_exists(key),
         F("no var with name %s in domain %s") % name % domain);
-      app.db.clear_var(key);
+      db.clear_var(key);
     }
   else
     {
       map<var_key, var_value> vars;
-      app.db.get_vars(vars);
+      db.get_vars(vars);
       bool found_something = false;
 
       for (map<var_key, var_value>::const_iterator i = vars.begin();
@@ -2177,7 +2227,7 @@ CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
           if (i->first.first == domain)
             {
               found_something = true;
-              app.db.clear_var(i->first);
+              db.clear_var(i->first);
             }
         }
 

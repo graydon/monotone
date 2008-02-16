@@ -18,7 +18,8 @@
 #include <map>
 #include "vector.hh"
 
-class app_state;
+class database;
+class lua_hooks;
 
 struct conflict {};
 
@@ -64,12 +65,12 @@ struct
 content_merge_database_adaptor
   : public content_merge_adaptor
 {
-  app_state & app;
+  database & db;
   revision_id lca;
   marking_map const & left_mm;
   marking_map const & right_mm;
   std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
-  content_merge_database_adaptor(app_state & app,
+  content_merge_database_adaptor(database & db,
                                  revision_id const & left,
                                  revision_id const & right,
                                  marking_map const & left_mm,
@@ -94,20 +95,20 @@ content_merge_workspace_adaptor
   : public content_merge_adaptor
 {
   std::map<file_id, file_data> temporary_store;
-  app_state & app;
+  database & db;
   revision_id const lca;
   boost::shared_ptr<roster_t const> base;
   marking_map const & left_mm;
   marking_map const & right_mm;
   std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
   std::map<file_id, file_path> content_paths;
-  content_merge_workspace_adaptor(app_state & app,
+  content_merge_workspace_adaptor(database & db,
                                   revision_id const & lca,
                                   boost::shared_ptr<roster_t const> base,
                                   marking_map const & left_mm,
                                   marking_map const & right_mm,
                                   std::map<file_id, file_path> const & paths)
-    : app(app), lca(lca), base(base),
+    : db(db), lca(lca), base(base),
       left_mm(left_mm), right_mm(right_mm), content_paths(paths)
   {}
 
@@ -133,9 +134,9 @@ struct
 content_merge_checkout_adaptor
   : public content_merge_adaptor
 {
-  app_state & app;
-  content_merge_checkout_adaptor(app_state & app)
-    : app(app)
+  database & db;
+  content_merge_checkout_adaptor(database & db)
+    : db(db)
   {}
 
   void record_merge(file_id const & left_ident,
@@ -157,18 +158,24 @@ content_merge_checkout_adaptor
 
 struct content_merger
 {
-  app_state & app;
+  lua_hooks & lua;
   roster_t const & anc_ros;
   roster_t const & left_ros;
   roster_t const & right_ros;
 
   content_merge_adaptor & adaptor;
 
-  content_merger(app_state & app,
+  content_merger(lua_hooks & lua,
                  roster_t const & anc_ros,
                  roster_t const & left_ros,
                  roster_t const & right_ros,
-                 content_merge_adaptor & adaptor);
+                 content_merge_adaptor & adaptor)
+    : lua(lua),
+      anc_ros(anc_ros),
+      left_ros(left_ros),
+      right_ros(right_ros),
+      adaptor(adaptor)
+  {}
 
   // merge3 on a file (line by line)
   bool try_auto_merge(file_path const & anc_path,

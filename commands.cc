@@ -24,6 +24,7 @@
 #include "cmd.hh"
 #include "constants.hh"
 #include "app_state.hh"
+#include "project.hh"
 
 #ifndef _WIN32
 #include "lexical_cast.hh"
@@ -853,8 +854,7 @@ CMD_HIDDEN(crash, "crash", "", CMD_REF(debug),
 }
 
 string
-describe_revision(app_state & app,
-                  revision_id const & id)
+describe_revision(project_t & project, revision_id const & id)
 {
   cert_name author_name(author_cert_name);
   cert_name date_name(date_cert_name);
@@ -865,7 +865,7 @@ describe_revision(app_state & app,
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;
-  app.get_project().get_revision_certs_by_name(id, author_name, tmp);
+  project.get_revision_certs_by_name(id, author_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -874,7 +874,7 @@ describe_revision(app_state & app,
       description += " ";
       description += tv();
     }
-  app.get_project().get_revision_certs_by_name(id, date_name, tmp);
+  project.get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
@@ -887,111 +887,46 @@ describe_revision(app_state & app,
   return description;
 }
 
-
 void
-complete(app_state & app,
-         string const & str,
-         set<revision_id> & completion,
-         bool must_exist)
-{
-  // This copies the start of selectors::parse_selector().to avoid
-  // getting a log when there's no expansion happening...:
-  //
-  // this rule should always be enabled, even if the user specifies
-  // --norc: if you provide a revision id, you get a revision id.
-  if (str.find_first_not_of(constants::legal_id_bytes) == string::npos
-      && str.size() == constants::idlen)
-    {
-      completion.insert(revision_id(hexenc<id>(id(str))));
-      if (must_exist)
-        N(app.db.revision_exists(*completion.begin()),
-          F("no such revision '%s'") % *completion.begin());
-      return;
-    }
-
-  vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(str, app));
-
-  P(F("expanding selection '%s'") % str);
-
-  // we jam through an "empty" selection on sel_ident type
-  set<string> completions;
-  selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
-
-  N(completions.size() != 0,
-    F("no match for selection '%s'") % str);
-
-  for (set<string>::const_iterator i = completions.begin();
-       i != completions.end(); ++i)
-    {
-      pair<set<revision_id>::const_iterator, bool> p =
-        completion.insert(revision_id(hexenc<id>(id(*i))));
-      P(F("expanded to '%s'") % *(p.first));
-    }
-}
-
-
-void
-complete(app_state & app,
-         string const & str,
-         revision_id & completion,
-         bool must_exist)
-{
-  set<revision_id> completions;
-
-  complete(app, str, completions, must_exist);
-
-  if (completions.size() > 1)
-    {
-      string err = (F("selection '%s' has multiple ambiguous expansions:") % str).str();
-      for (set<revision_id>::const_iterator i = completions.begin();
-           i != completions.end(); ++i)
-        err += ("\n" + describe_revision(app, *i));
-      N(completions.size() == 1, i18n_format(err));
-    }
-
-  completion = *completions.begin();
-}
-
-void
-notify_if_multiple_heads(app_state & app)
+notify_if_multiple_heads(project_t & project,
+                         branch_name const & branchname,
+                         bool ignore_suspend_certs)
 {
   set<revision_id> heads;
-  app.get_project().get_branch_heads(app.opts.branchname, heads);
+  project.get_branch_heads(branchname, heads, ignore_suspend_certs);
   if (heads.size() > 1) {
     string prefixedline;
     prefix_lines_with(_("note: "),
                       _("branch '%s' has multiple heads\n"
                         "perhaps consider '%s merge'"),
                       prefixedline);
-    P(i18n_format(prefixedline) % app.opts.branchname % ui.prog_name);
+    P(i18n_format(prefixedline) % branchname % ui.prog_name);
   }
 }
 
 void
-process_commit_message_args(bool & given,
+process_commit_message_args(options const & opts,
+                            bool & given,
                             utf8 & log_message,
-                            app_state & app,
-                            utf8 message_prefix)
+                            utf8 const & message_prefix)
 {
   // can't have both a --message and a --message-file ...
-  N(!app.opts.message_given || !app.opts.msgfile_given,
+  N(!opts.message_given || !opts.msgfile_given,
     F("--message and --message-file are mutually exclusive"));
 
-  if (app.opts.message_given)
+  if (opts.message_given)
     {
       string msg;
-      join_lines(app.opts.message, msg);
+      join_lines(opts.message, msg);
       log_message = utf8(msg);
       if (message_prefix().length() != 0)
         log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
-  else if (app.opts.msgfile_given)
+  else if (opts.msgfile_given)
     {
       data dat;
-      read_data_for_command_line(app.opts.msgfile, dat);
+      read_data_for_command_line(opts.msgfile, dat);
       external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
       if (message_prefix().length() != 0)

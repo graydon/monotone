@@ -36,6 +36,7 @@ ATOMIC_NOVERIFY(var_value);   // symbol-of-your-choosing
 ATOMIC(rsa_keypair_id);              // keyname@domain.you.own
 ATOMIC_NOVERIFY(rsa_pub_key);        // some nice numbers
 ATOMIC_NOVERIFY(rsa_priv_key);       // some nice numbers
+ATOMIC_NOVERIFY(old_arc4_rsa_priv_key); // ... in the old storage format
 ATOMIC_NOVERIFY(rsa_sha1_signature); // some other nice numbers
 ATOMIC_NOVERIFY(rsa_oaep_sha_data);
 
@@ -55,7 +56,6 @@ DECORATE(epoch);              // thing associated with an epoch
 ENCODING(gzip);               // thing which is gzipped
 ENCODING(hexenc);             // thing which is hex-encoded
 ENCODING(base64);             // thing which is base64-encoded
-ENCODING(arc4);               // thing which is arc4-encrypted
 
 ATOMIC_NOVERIFY(prefix);      // raw encoding of a merkle tree prefix
 ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
@@ -90,10 +90,9 @@ EXTERN template class roster< delta >;
 EXTERN template class manifest< delta >;
 EXTERN template class     file< delta >;
 
-EXTERN template class         arc4<rsa_priv_key>;
-EXTERN template class base64< arc4<rsa_priv_key> >;
 EXTERN template class base64< rsa_pub_key >;
 EXTERN template class base64< rsa_priv_key >;
+EXTERN template class base64< old_arc4_rsa_priv_key >;
 EXTERN template class base64< rsa_sha1_signature >;
 EXTERN template class hexenc< rsa_sha1_signature >;
 EXTERN template class base64< cert_value >;
@@ -134,8 +133,8 @@ EXTERN template std::ostream & operator<< <>(std::ostream &,           base64< g
 EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< base64< gzip<delta> > > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,     file< base64< gzip<delta> > > const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,         arc4<rsa_priv_key>     const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< arc4<rsa_priv_key> >   const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, base64< old_arc4_rsa_priv_key >   const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_priv_key >   const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_pub_key > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_sha1_signature > const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc< rsa_sha1_signature > const &);

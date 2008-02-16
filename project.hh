@@ -11,7 +11,10 @@
 #include "outdated_indicator.hh"
 #include "vocab.hh"
 
-class app_state;
+class database;
+class key_store;
+class options;
+class lua_hooks;
 
 class tag_t
 {
@@ -27,30 +30,45 @@ typedef bool suspended_indicator;
 
 class project_t
 {
-  app_state & app;
-  std::map<std::pair<branch_name, suspended_indicator>, std::pair<outdated_indicator, std::set<revision_id> > > branch_heads;
+  // In the hypothetical future situation where one monotone process is
+  // using more than one database at a time, it will be essential to use a
+  // project object only with the database it was created from.  To make it
+  // easy to get this right, we expose the database handle inside the
+  // project object, and make it a style rule that you pass around a
+  // database _or_ you pass around a project; not both.
+public:
+  database & db;
+
+private:
+  std::map<std::pair<branch_name, suspended_indicator>,
+           std::pair<outdated_indicator, std::set<revision_id> >
+           > branch_heads;
   std::set<branch_name> branches;
   outdated_indicator indicator;
 
 public:
-  project_t(app_state & app);
+  project_t(database & db);
 
-  void get_branch_list(std::set<branch_name> & names, bool check_certs_valid);
+  void get_branch_list(std::set<branch_name> & names,
+                       bool check_heads = false);
   void get_branch_list(globish const & glob, std::set<branch_name> & names,
-                        bool check_certs_valid);
+                       bool check_heads = false);
   void get_branch_heads(branch_name const & name, std::set<revision_id> & heads,
+                        bool ignore_suspend_certs,
                         std::multimap<revision_id, revision_id> *inverse_graph_cache_ptr = NULL);
 
   outdated_indicator get_tags(std::set<tag_t> & tags);
-  void put_tag(revision_id const & id, std::string const & name);
+  void put_tag(key_store & keys, revision_id const & id, std::string const & name);
 
   bool revision_is_in_branch(revision_id const & id, branch_name const & branch);
-  void put_revision_in_branch(revision_id const & id,
+  void put_revision_in_branch(key_store & keys,
+                              revision_id const & id,
                               branch_name const & branch);
 
   bool revision_is_suspended_in_branch(revision_id const & id, branch_name const & branch);
-  void suspend_revision_in_branch(revision_id const & id,
-                              branch_name const & branch);
+  void suspend_revision_in_branch(key_store & keys,
+                                  revision_id const & id,
+                                  branch_name const & branch);
 
   outdated_indicator get_revision_cert_hashes(revision_id const & rid,
                                               std::vector<hexenc<id> > & hashes);
@@ -64,16 +82,21 @@ public:
   outdated_indicator get_branch_certs(branch_name const & branch,
                                       std::vector<revision<cert> > & certs);
 
-  void put_standard_certs(revision_id const & id,
+  void put_standard_certs(key_store & keys,
+                          revision_id const & id,
                           branch_name const & branch,
                           utf8 const & changelog,
                           date_t const & time,
-                          utf8 const & author);
-  void put_standard_certs_from_options(revision_id const & id,
+                          std::string const & author);
+  void put_standard_certs_from_options(options const & opts,
+                                       lua_hooks & lua,
+                                       key_store & keys,
+                                       revision_id const & id,
                                        branch_name const & branch,
                                        utf8 const & changelog);
 
-  void put_cert(revision_id const & id,
+  void put_cert(key_store & keys,
+                revision_id const & id,
                 cert_name const & name,
                 cert_value const & value);
 };
