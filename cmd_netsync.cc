@@ -367,8 +367,7 @@ CMD(clone, "clone", "", CMD_REF(network),
         % ident % app.opts.branchname);
     }
 
-  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
-  roster_t current_roster;
+  roster_t empty_roster, current_roster;
 
   L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
   app.db.get_roster(ident, current_roster);
@@ -378,7 +377,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   app.work.put_work_rev(workrev);
 
   cset checkout;
-  make_cset(*empty_roster, current_roster, checkout);
+  make_cset(empty_roster, current_roster, checkout);
 
   content_merge_checkout_adaptor wca(app);
 
