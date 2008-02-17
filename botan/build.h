@@ -16,4 +16,8 @@
 #define BOTAN_KARAT_MUL_THRESHOLD 12
 #define BOTAN_KARAT_SQR_THRESHOLD 12
 
+#ifndef WIN32
+#define BOTAN_EXT_ENTROPY_SRC_DEVICE
+#endif
+
 #endif

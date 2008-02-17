@@ -50,6 +50,10 @@
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
 
+        Internal
+
+        - Update Botan to 1.7.3.
+
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.
