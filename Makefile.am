@@ -448,7 +448,7 @@ if WIN32_PLATFORM
   mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
-  lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
+  lib3rdparty_a_CPPFLAGS += -DWIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
   tester_SOURCES += win32/tester-plaf.cc
 else
