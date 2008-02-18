@@ -4,6 +4,23 @@ new_path "target"
  fs_type "none"
   status "rename_source"
 
+    path "source/dropped"
+old_type "file"
+ fs_type "none"
+  status "dropped"
+
+    path "source/missing"
+old_type "file"
+new_path "target/missing"
+ fs_type "none"
+  status "rename_source"
+
+    path "source/rename_source"
+old_type "file"
+new_path "target/rename_target"
+ fs_type "none"
+  status "rename_source"
+
     path "source/source_1"
 old_type "file"
 new_path "target/source_1"

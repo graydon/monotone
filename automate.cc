@@ -1028,6 +1028,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         find(states.begin(), states.end(), "rename_target") != states.end() ||
         find(states.begin(), states.end(), "added")         != states.end() ||
         find(states.begin(), states.end(), "dropped")       != states.end() ||
+        find(states.begin(), states.end(), "missing")       != states.end() ||
         !changes.empty();
 
       if (is_tracked && !has_changed && app.opts.no_unchanged)
