@@ -305,7 +305,7 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   // must do this after setting dbname so that _MTN/options is written
   // correctly
-  app.create_workspace(workspace_dir);
+  workspace::create_workspace(app.opts, app.lua, workspace_dir);
 
   database db(app);
   if (get_path_status(db.get_filename()) == path::nonexistent)

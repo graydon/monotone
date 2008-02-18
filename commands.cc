@@ -768,7 +768,10 @@ namespace commands
     // at this point we process the data from _MTN/options if
     // the command needs it.
     if (cmd->use_workspace_options())
-      app.process_options();
+      {
+        workspace::check_ws_format();
+        workspace::get_ws_options(app.opts);
+      }
 
     cmd->exec(app, ident, args);
   }

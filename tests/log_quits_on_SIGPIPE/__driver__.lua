@@ -6,31 +6,41 @@
 skip_if(ostype=="Windows")
 SIGPIPE = 13 -- what it is on traditional Unixy systems
 
--- Testing this correctly involves avoiding a number of race
--- conditions.  This is the behavior we want:
+-- Quick refresher on named pipe semantics: When initially created,
+-- open() for read will block until another process open()s it for
+-- write, and vice versa.  Once a named pipe has been opened once
+-- for read and once for write, it is functionally identical to an
+-- anonymous pipe.
 --
---    parent               child
---    ------               -----
---    fork
---                         exec
---    open pipe for read   open pipe for write
---                         write to pipe, which blocks
---    close pipe
---                         (kernel generates SIGPIPE)
+-- The kernel allocates a finite amount of buffer space for each pipe.
+-- An attempt to write more than that amount to the pipe will block
+-- until at least some data has been read from the pipe.  (There are
+-- complicated rules for exactly how this works, interacting with
+-- O_NONBLOCK and an atomicity guarantee for small writes, but they do
+-- not concern us here as we are using neither O_NONBLOCK nor multiple
+-- concurrent writers to the pipe.)
 --
--- There is a synchronization point at the open()s, but it is
--- essential to ensure that the child's write operation fills the
--- kernel's pipe buffer and blocks.  If we did not fill the pipe
--- buffer, the write could complete and return before the parent
--- closes its end of the pipe, causing the signal not to be delivered.
+-- A writer process receives SIGPIPE when it attempts to write() to a
+-- pipe that has been opened for read and then closed.  However, if
+-- the writer manages to fit all the data it has into the pipe's
+-- kernel buffer, before the reader closes its end, SIGPIPE will not
+-- be delivered.  Thus, we must arrange for the writer to emit so much
+-- data that it fills the kernel buffer, and for this to happen before
+-- the reader closes its end.  Unfortunately, there is no way to find
+-- out how much buffer space the kernel provides, so we resort to
+-- writing a ridiculous amount of data.  Typical pipe capacities are
+-- 4K and 64K, so "ridiculous" in this case is "approximately 256K."
 --
--- Kernel pipe buffers are known to be as big as 64K.  Thus, it is
--- overkill to make four commits each with an 64K log message, but I
--- like me some overkill.  (There is a temptation to make it sixteen;
--- I can imagine someone deciding to bulk up the pipe buffer to a nice
--- round megabyte.  But the time this test takes is proportional to
--- the number of commits, so I won't.  I tried having a bigger log
--- message but that crashed "mtn commit".)
+-- We would like to make that data realistic -- typical commits to the
+-- monotone repository have between 100 and 200 characters of commit
+-- log -- but in order to get the ridiculous 256K, we would need
+-- several thousand commits, which would take too long to execute.
+-- So instead we make four commits each with 64K commit messages.
+-- (There is a temptation to make it sixteen; I can imagine someone
+-- deciding to bulk up the pipe buffer to a nice round megabyte.
+-- But the time this test takes is proportional to the number of
+-- commits, so I won't.  I tried having a bigger log message but that
+-- crashed "mtn commit".)
 --
 -- The following 1024-byte block of nonsense is courtesy of the Eater
 -- of Meaning.
@@ -73,11 +83,20 @@ check({"mkfifo", "fifo"}, 0, nil, nil)
 -- FIXME: The quoting here will break if any of the strings
 --        produced by mtn() contains a single quote.
 
-logcmd = "exec '" .. table.concat(mtn("log", "--no-graph"), "' '") .. "' >fifo"
-
-proc = bg({"/bin/sh", "-c", logcmd}, -SIGPIPE, nil, false)
+proc = bg({"/bin/sh", "-c", 
+	   "exec '"
+	      .. table.concat(mtn("log", "--no-graph"), "' '")
+	      .. "' >fifo"},
+	  -SIGPIPE, nil, false)
 
 p, e = io.open("fifo", "r")
 if p == nil then err(e) end
+
+-- Read 25 lines of text from the file.  This mimics the behavior of a
+-- pager that is quit after one standard terminal screen.
+for i = 1, 25 do
+   p:read()
+end
 p:close()
+
 proc:finish(3) -- three second timeout

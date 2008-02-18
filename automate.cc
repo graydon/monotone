@@ -1791,26 +1791,7 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
     F("wrong argument count"));
 
   CMD_REQUIRES_WORKSPACE(app);
-
-  system_path database_option;
-  branch_name branch_option;
-  rsa_keypair_id key_option;
-  system_path keydir_option;
-  work.get_ws_options(database_option, branch_option,
-                      key_option, keydir_option);
-
-  string opt = args[0]();
-
-  if (opt == "database")
-    output << database_option << '\n';
-  else if (opt == "branch")
-    output << branch_option << '\n';
-  else if (opt == "key")
-    output << key_option << '\n';
-  else if (opt == "keydir")
-    output << keydir_option << '\n';
-  else
-    N(false, F("'%s' is not a recognized workspace option") % opt);
+  work.print_ws_option(args[0], output);
 }
 
 // Name: get_content_changed

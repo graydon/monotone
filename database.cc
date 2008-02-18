@@ -3688,33 +3688,22 @@ database_impl::check_db_exists()
 {
   switch (get_path_status(filename))
     {
-    case path::nonexistent:
-      N(false, F("database %s does not exist") % filename);
-      break;
     case path::file:
       return;
+
+    case path::nonexistent:
+      N(false, F("database %s does not exist") % filename);
+
     case path::directory:
-      {
-        system_path database_option;
-        branch_name branch_option;
-        rsa_keypair_id key_option;
-        system_path keydir_option;
-        if (workspace::get_ws_options_from_path(
-                    filename,
-                    database_option,
-                    branch_option,
-                    key_option,
-                    keydir_option))
-          {
-            N(database_option.empty(),
-                              F("You gave a database option of: \n"
-                                "%s\n"
-                                "That is actually a workspace.  Did you mean: \n"
-                                "%s") % filename % database_option );
-          }
-        N(false, F("%s is a directory, not a database") % filename);
-      }
-      break;
+      if (directory_is_workspace(filename))
+        {
+          system_path workspace_database;
+          workspace::get_database_option(filename, workspace_database);
+          N(workspace_database.empty(),
+            F("%s is a workspace, not a database\n"
+              "(did you mean %s?)") % filename % workspace_database);
+        }
+      N(false, F("%s is a directory, not a database") % filename);
     }
 }
 

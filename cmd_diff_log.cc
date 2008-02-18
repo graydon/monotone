@@ -639,9 +639,6 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
   database db(app);
   project_t project(db);
 
-  if (app.opts.from.size() == 0)
-    app.require_workspace("try passing a --from revision to start at");
-
   long last = app.opts.last;
   long next = app.opts.next;
 
@@ -653,6 +650,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
   if (app.opts.from.size() == 0)
     {
+      workspace::require_workspace(app.opts,
+                                   F("try passing a --from revision to start at").str());
+
       revision_t rev;
       app.work.get_work_rev(rev);
       for (edge_map::const_iterator i = rev.edges.begin();

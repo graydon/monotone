@@ -10,6 +10,7 @@
 #include "base.hh"
 #include "work.hh"
 
+#include <ostream>
 #include <sstream>
 #include <cstring>
 #include <cerrno>
@@ -76,6 +77,82 @@ get_inodeprints_path(bookkeeping_path & ip_path)
 {
   ip_path = bookkeeping_root / inodeprints_file_name;
   L(FL("inodeprints path is %s") % ip_path);
+}
+
+static void
+get_user_log_path(bookkeeping_path & ul_path)
+{
+  ul_path = bookkeeping_root / user_log_file_name;
+  L(FL("user log path is %s") % ul_path);
+}
+
+//
+
+bool
+directory_is_workspace(system_path const & dir)
+{
+  // as far as the users of this function are concerned, a version 0
+  // workspace (MT directory instead of _MTN) does not count.
+  return directory_exists(dir / bookkeeping_root_component);
+}
+
+bool workspace::found;
+bool workspace::branch_is_sticky;
+
+void
+workspace::require_workspace(options const & opts,
+                             string const & explanation)
+{
+  N(workspace::found,
+    F("workspace required but not found%s%s")
+    % (explanation.empty() ? "" : "\n") % explanation);
+  set_ws_options(opts, false);
+}
+
+void
+workspace::create_workspace(options const & opts,
+                            lua_hooks & lua,
+                            system_path const & new_dir)
+{
+  N(!new_dir.empty(), F("invalid directory ''"));
+
+  L(FL("creating workspace in %s") % new_dir);
+
+  mkdir_p(new_dir);
+  go_to_workspace(new_dir);
+  mark_std_paths_used();
+
+  N(!directory_exists(bookkeeping_root),
+    F("monotone bookkeeping directory '%s' already exists in '%s'")
+    % bookkeeping_root % new_dir);
+
+  L(FL("creating bookkeeping directory '%s' for workspace in '%s'")
+    % bookkeeping_root % new_dir);
+
+  mkdir_p(bookkeeping_root);
+
+  workspace::found = true;
+  workspace::set_ws_options(opts, true);
+  workspace::write_ws_format();
+
+  data empty;
+  bookkeeping_path ul_path;
+  get_user_log_path(ul_path);
+  write_data(ul_path, empty);
+
+  if (lua.hook_use_inodeprints())
+    {
+      bookkeeping_path ip_path;
+      get_inodeprints_path(ip_path);
+      write_data(ip_path, empty);
+    }
+
+  bookkeeping_path dump_path;
+  workspace::get_local_dump_path(dump_path);
+  // The 'false' means that, e.g., if we're running checkout,
+  // then it's okay for dumps to go into our starting working
+  // dir's _MTN rather than the new workspace dir's _MTN.
+  global_sanity.set_dump_path(system_path(dump_path, false).as_external());
 }
 
 // routines for manipulating the bookkeeping directory
@@ -206,13 +283,6 @@ workspace::has_changes(database & db)
 // user log file
 
 void
-workspace::get_user_log_path(bookkeeping_path & ul_path)
-{
-  ul_path = bookkeeping_root / user_log_file_name;
-  L(FL("user log path is %s") % ul_path);
-}
-
-void
 workspace::read_user_log(utf8 & dat)
 {
   bookkeeping_path ul_path;
@@ -256,106 +326,55 @@ workspace::has_contents_user_log()
 
 // _MTN/options handling.
 
-void
-workspace::get_ws_options(system_path & database_option,
-                          branch_name & branch_option,
-                          rsa_keypair_id & key_option,
-                          system_path & keydir_option)
+static void
+read_options_file(any_path const & optspath,
+                  system_path & database_option,
+                  branch_name & branch_option,
+                  rsa_keypair_id & key_option,
+                  system_path & keydir_option)
 {
-  system_path empty_path;
-  get_ws_options_from_path(empty_path, database_option,
-                branch_option, key_option, keydir_option);
-}
-
-bool
-workspace::get_ws_options_from_path(system_path const & workspace,
-                          system_path & database_option,
-                          branch_name & branch_option,
-                          rsa_keypair_id & key_option,
-                          system_path & keydir_option)
-{
-  any_path * o_path;
-  bookkeeping_path ws_o_path;
-  system_path sys_o_path;
-
-  if (workspace.empty())
-    {
-      get_options_path(ws_o_path);
-      o_path = & ws_o_path;
-    }
-  else
-    {
-      get_options_path(workspace, sys_o_path);
-      o_path = & sys_o_path;
-    }
-
+  data dat;
   try
     {
-      if (path_exists(*o_path))
-        {
-          data dat;
-          read_data(*o_path, dat);
-
-          basic_io::input_source src(dat(), o_path->as_external());
-          basic_io::tokenizer tok(src);
-          basic_io::parser parser(tok);
-
-          while (parser.symp())
-            {
-              string opt, val;
-              parser.sym(opt);
-              parser.str(val);
-
-              if (opt == "database")
-                database_option = system_path(val);
-              else if (opt == "branch")
-                branch_option = branch_name(val);
-              else if (opt == "key")
-                internalize_rsa_keypair_id(utf8(val), key_option);
-              else if (opt == "keydir")
-                keydir_option = system_path(val);
-              else
-                W(F("unrecognized key '%s' in options file %s - ignored")
-                  % opt % o_path);
-            }
-          return true;
-        }
-      else
-        return false;
+      read_data(optspath, dat);
     }
-  catch(exception & e)
+  catch (exception & e)
     {
-      W(F("Failed to read options file %s: %s") % *o_path % e.what());
+      W(F("Failed to read options file %s: %s") % optspath % e.what());
+      return;
     }
 
-  return false;
+  basic_io::input_source src(dat(), optspath.as_external());
+  basic_io::tokenizer tok(src);
+  basic_io::parser parser(tok);
+
+  while (parser.symp())
+    {
+      string opt, val;
+      parser.sym(opt);
+      parser.str(val);
+      
+      if (opt == "database")
+        database_option = system_path(val);
+      else if (opt == "branch")
+        branch_option = branch_name(val);
+      else if (opt == "key")
+        internalize_rsa_keypair_id(utf8(val), key_option);
+      else if (opt == "keydir")
+        keydir_option = system_path(val);
+      else
+        W(F("unrecognized key '%s' in options file %s - ignored")
+          % opt % optspath);
+    }
 }
 
-void
-workspace::set_ws_options(system_path & database_option,
-                          branch_name & branch_option,
-                          rsa_keypair_id & key_option,
-                          system_path & keydir_option)
+static void
+write_options_file(bookkeeping_path const & optspath,
+                   system_path const & database_option,
+                   branch_name const & branch_option,
+                   rsa_keypair_id const & key_option,
+                   system_path const & keydir_option)
 {
-  // If caller passes an empty string for any of the incoming options,
-  // we want to leave that option as is in _MTN/options, not write out
-  // an empty option.
-  system_path old_database_option;
-  branch_name old_branch_option;
-  rsa_keypair_id old_key_option;
-  system_path old_keydir_option;
-  get_ws_options(old_database_option, old_branch_option,
-                 old_key_option, old_keydir_option);
-
-  if (database_option.as_internal().empty())
-    database_option = old_database_option;
-  if (branch_option().empty())
-    branch_option = old_branch_option;
-  if (key_option().empty())
-    key_option = old_key_option;
-  if (keydir_option.as_internal().empty())
-    keydir_option = old_keydir_option;
-
   basic_io::stanza st;
   if (!database_option.as_internal().empty())
     st.push_str_pair(symbol("database"), database_option.as_internal());
@@ -372,17 +391,130 @@ workspace::set_ws_options(system_path & database_option,
 
   basic_io::printer pr;
   pr.print_stanza(st);
-
-  bookkeeping_path o_path;
-  get_options_path(o_path);
   try
     {
-      write_data(o_path, data(pr.buf));
+      write_data(optspath, data(pr.buf));
     }
   catch(exception & e)
     {
-      W(F("Failed to write options file %s: %s") % o_path % e.what());
+      W(F("Failed to write options file %s: %s") % optspath % e.what());
     }
+}
+
+void
+workspace::get_ws_options(options & opts)
+{
+  if (!workspace::found)
+    return;
+
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+
+  bookkeeping_path o_path;
+  get_options_path(o_path);
+  read_options_file(o_path,
+                    database_option, branch_option, key_option, keydir_option);
+
+  // Workspace options are not to override the command line.
+  if (!opts.dbname_given)
+    {
+      I(opts.dbname.empty());
+      opts.dbname = database_option;
+    }
+
+  if (!opts.key_dir_given && !opts.conf_dir_given)
+    {
+      I(opts.key_dir.empty());
+      opts.key_dir = keydir_option;
+    }
+
+  if (opts.branchname().empty() && !branch_option().empty())
+    {
+      opts.branchname = branch_option;
+      branch_is_sticky = true;
+    }
+
+  L(FL("branch name is '%s'") % opts.branchname);
+
+  if (!opts.key_given)
+    opts.signing_key = key_option;
+}
+
+void
+workspace::get_database_option(system_path const & workspace,
+                               system_path & database_option)
+{
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+
+  system_path o_path = (workspace
+                        / bookkeeping_root_component
+                        / options_file_name);
+  read_options_file(o_path,
+                    database_option, branch_option, key_option, keydir_option);
+}
+
+void
+workspace::set_ws_options(options const & opts, bool branch_is_sticky)
+{
+  N(workspace::found, F("workspace required but not found"));
+
+  bookkeeping_path o_path;
+  get_options_path(o_path);
+
+  // If any of the incoming options was empty, we want to leave that option
+  // as is in _MTN/options, not write out an empty option.
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+
+  if (file_exists(o_path))
+    read_options_file(o_path,
+                      database_option, branch_option, key_option, keydir_option);
+
+  if (!opts.dbname.as_internal().empty())
+    database_option = opts.dbname;
+  if (!opts.key_dir.as_internal().empty())
+    keydir_option = opts.key_dir;
+  if ((branch_is_sticky || workspace::branch_is_sticky)
+      && !opts.branchname().empty())
+    branch_option = opts.branchname;
+  if (opts.key_given)
+    key_option = opts.signing_key;
+
+  write_options_file(o_path,
+                     database_option, branch_option, key_option, keydir_option);
+}
+
+void
+workspace::print_ws_option(utf8 const & opt, std::ostream & output)
+{
+  N(workspace::found, F("workspace required but not found"));
+
+  bookkeeping_path o_path;
+  get_options_path(o_path);
+
+  system_path database_option;
+  branch_name branch_option;
+  rsa_keypair_id key_option;
+  system_path keydir_option;
+  read_options_file(o_path,
+                    database_option, branch_option, key_option, keydir_option);
+
+  if (opt() == "database")
+    output << database_option << '\n';
+  else if (opt() == "branch")
+    output << branch_option << '\n';
+  else if (opt() == "key")
+    output << key_option << '\n';
+  else if (opt() == "keydir")
+    output << keydir_option << '\n';
+  else
+    N(false, F("'%s' is not a recognized workspace option") % opt);
 }
 
 // local dump file
@@ -390,6 +522,8 @@ workspace::set_ws_options(system_path & database_option,
 void
 workspace::get_local_dump_path(bookkeeping_path & d_path)
 {
+  N(workspace::found, F("workspace required but not found"));
+
   d_path = bookkeeping_root / local_dump_file_name;
   L(FL("local dump path is %s") % d_path);
 }

@@ -8,29 +8,13 @@
 // PURPOSE.
 
 #include "base.hh"
-#include "vector.hh"
-
-#include "botan/pubkey.h"
-#include "botan/rsa.h"
-
 #include "app_state.hh"
-#include "charset.hh"
-#include "database.hh"
-#include "file_io.hh"
-#include "platform.hh"
 #include "sanity.hh"
-#include "ui.hh"
-#include "work.hh"
 
-using std::exception;
-using std::map;
 using std::string;
-using std::vector;
-using std::vector;
 
 app_state::app_state()
   : lua(this), work(lua),
-    branch_is_sticky(false),
     mtn_automate_allowed(false)
 {}
 
@@ -38,153 +22,10 @@ app_state::~app_state()
 {}
 
 void
-app_state::allow_workspace()
+app_state::require_workspace()
 {
-  found_workspace = find_and_go_to_workspace(opts.root);
-
-  if (found_workspace)
-    {
-      bookkeeping_path dump_path;
-      work.get_local_dump_path(dump_path);
-
-      // The 'false' means that, e.g., if we're running checkout,
-      // then it's okay for dumps to go into our starting working
-      // dir's _MTN rather than the new workspace dir's _MTN.
-      global_sanity.set_dump_path(system_path(dump_path, false).as_external());
-    }
-  lua.load_rcfiles(opts);
+  workspace::require_workspace(opts);
 }
-
-void
-app_state::process_options()
-{
-  system_path database_option;
-  branch_name branch_option;
-  rsa_keypair_id key_option;
-  system_path keydir_option;
-
-  if (!found_workspace)
-    return;
-
-  work.check_ws_format();
-  work.get_ws_options(database_option, branch_option,
-                      key_option, keydir_option);
-
-  // Workspace options are not to override the command line.
-  if (!opts.dbname_given)
-    {
-      I(opts.dbname.empty());
-      opts.dbname = database_option;
-    }
-
-  if (!opts.key_dir_given && !opts.conf_dir_given)
-    {
-      I(opts.key_dir.empty());
-      opts.key_dir = keydir_option;
-    }
-
-  if (opts.branchname().empty() && !branch_option().empty())
-    {
-      opts.branchname = branch_option;
-      branch_is_sticky = true;
-    }
-
-  L(FL("branch name is '%s'") % opts.branchname);
-
-  if (!opts.key_given)
-    opts.signing_key = key_option;
-}
-
-void
-app_state::write_options()
-{
-  system_path database_option;
-  branch_name branch_option;
-  rsa_keypair_id key_option;
-  system_path keydir_option;
-
-  database_option = opts.dbname;
-  keydir_option = opts.key_dir;
-
-  if (branch_is_sticky)
-    branch_option = opts.branchname;
-
-  if (opts.key_given)
-    key_option = opts.signing_key;
-
-  work.set_ws_options(database_option, branch_option,
-                      key_option, keydir_option);
-}
-
-void
-app_state::require_workspace(string const & explanation)
-{
-  N(found_workspace,
-    F("workspace required but not found%s%s")
-    % (explanation.empty() ? "" : "\n") % explanation);
-  write_options();
-}
-
-void
-app_state::create_workspace(system_path const & new_dir)
-{
-  N(!new_dir.empty(), F("invalid directory ''"));
-
-  L(FL("creating workspace in %s") % new_dir);
-
-  mkdir_p(new_dir);
-  go_to_workspace(new_dir);
-  mark_std_paths_used();
-
-  N(!directory_exists(bookkeeping_root),
-    F("monotone bookkeeping directory '%s' already exists in '%s'")
-    % bookkeeping_root % new_dir);
-
-  L(FL("creating bookkeeping directory '%s' for workspace in '%s'")
-    % bookkeeping_root % new_dir);
-
-  mkdir_p(bookkeeping_root);
-
-  make_branch_sticky();
-
-  write_options();
-
-  work.write_ws_format();
-  work.blank_user_log();
-
-  if (lua.hook_use_inodeprints())
-    work.enable_inodeprints();
-
-  found_workspace = true;
-
-  bookkeeping_path dump_path;
-  work.get_local_dump_path(dump_path);
-  // The 'false' means that, e.g., if we're running checkout,
-  // then it's okay for dumps to go into our starting working
-  // dir's _MTN rather than the new workspace dir's _MTN.
-  global_sanity.set_dump_path(system_path(dump_path, false).as_external());
-
-  lua.load_rcfiles(opts);
-}
-
-void
-app_state::make_branch_sticky()
-{
-  branch_is_sticky = true;
-  if (found_workspace)
-    {
-      // Already have a workspace, can (must) write options directly,
-      // because no-one else will do so. If we don't have a workspace
-      // yet, then require_workspace (for instance) will call
-      // write_options when it finds one.
-      write_options();
-    }
-}
-
-// rc files are loaded after we've changed to the workspace so that
-// _MTN/monotonerc can be loaded between ~/.monotone/monotonerc and other
-// rcfiles.
-
 
 // Local Variables:
 // mode: C++
