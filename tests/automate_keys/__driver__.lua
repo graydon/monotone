@@ -3,12 +3,14 @@ mtn_setup()
 
 addfile("testfile", "foo bar")
 check(mtn("ci", "-m", "foobar"), 0, false, false)
-check(mtn("genkey", "foo@bar.com"), 0, false, false, string.rep("foo@bar.com\n", 2))
-check(mtn("genkey", "foo@baz.com"), 0, false, false, string.rep("foo@baz.com\n", 2))
-check(mtn("pubkey", "foo@baz.com"), 0, true)
-rename("stdout", "baz")
-check(mtn("dropkey", "foo@baz.com"), 0, false, false)
-check(mtn("read"), 0, false, false, {"baz"})
+remove("_MTN/options")
+check(nodb_mtn("genkey", "foo@bar.com"),
+      0, false, false, string.rep("foo@bar.com\n", 2))
+remove("_MTN/options")
+check(mtn("genkey", "foo@baz.com"),
+      0, false, false, string.rep("foo@baz.com\n", 2))
+remove("_MTN/options")
+check(nodb_mtn("dropkey", "foo@baz.com"), 0, false, false)
 
 -- we now have foo@bar.com in the keystore, tester@test.net in both keystore
 -- and database, and foo@baz.com in only the database

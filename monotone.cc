@@ -109,7 +109,7 @@ read_global_options(options & opts, args_vector & args)
 }
 
 // read command-line options and return the command name
-commands::command_id read_options(option::concrete_option_set & optset, options & opts, args_vector & args)
+commands::command_id read_options(options & opts, option::concrete_option_set & optset, args_vector & args)
 {
   commands::command_id cmd;
 
@@ -206,31 +206,32 @@ cpp_main(int argc, char ** argv)
               return 0;
             }
 
-          if (app.opts.dbname_given)
-            {
-              if (!app.opts.dbname.empty())
-                app.db.set_filename(app.opts.dbname);
-            }
-
-          if (app.opts.key_dir_given || app.opts.conf_dir_given)
-            {
-              if (!app.opts.key_dir.empty())
-                app.keys.set_key_dir(app.opts.key_dir);
-            }
-
-          // at this point we allow a workspace (meaning search for it
-          // and if found read _MTN/options, but don't use the data quite
-          // yet, and read all the monotonercs).  Processing the data
-          // from _MTN/options happens later.
+          // at this point we allow a workspace (meaning search for it,
+          // and if found, change directory to it
           // Certain commands may subsequently require a workspace or fail
           // if we didn't find one at this point.
-          app.allow_workspace();
+          workspace::found = find_and_go_to_workspace(app.opts.root);
+
+          // Load all available monotonercs.  If we found a workspace above,
+          // we'll pick up _MTN/monotonerc as well as the user's monotonerc.
+          app.lua.load_rcfiles(app.opts);
 
           // now grab any command specific options and parse the command
           // this needs to happen after the monotonercs have been read
-          commands::command_id cmd = read_options(optset, app.opts, opt_args);
+          commands::command_id cmd = read_options(app.opts, optset, opt_args);
 
-          if (!app.found_workspace)
+          if (workspace::found)
+            {
+              bookkeeping_path dump_path;
+              workspace::get_local_dump_path(dump_path);
+
+              // The 'false' means that, e.g., if we're running checkout,
+              // then it's okay for dumps to go into our starting working
+              // dir's _MTN rather than the new workspace dir's _MTN.
+              global_sanity.set_dump_path(system_path(dump_path, false)
+                                          .as_external());
+            }
+          else
             global_sanity.set_dump_path((app.opts.conf_dir / "dump")
                                         .as_external());
 

@@ -50,7 +50,7 @@ namespace commands {
                  std::ostream & output) const
   {
     make_io_binary();
-    exec_from_automate(args, execid, app, output);
+    exec_from_automate(app, execid, args, output);
   }
 
   void
@@ -340,9 +340,11 @@ CMD_AUTOMATE(stdio, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-    // initialize the database early so any calling process is notified
-    // immediately if a version discrepancy exists
-  app.db.ensure_open();
+  database db(app);
+
+  // initialize the database early so any calling process is notified
+  // immediately if a version discrepancy exists
+  db.ensure_open();
 
   automate_ostream os(output, app.opts.automate_stdio_size);
   automate_reader ar(std::cin);
@@ -397,7 +399,7 @@ CMD_AUTOMATE(stdio, "",
 
               opts = options::opts::globals() | acmd->opts();
               opts.instantiate(&app.opts).from_key_value_pairs(params);
-              acmd->exec_from_automate(args, id, app, os);
+              acmd->exec_from_automate(app, id, args, os);
             }
           else
             opts.instantiate(&app.opts).from_key_value_pairs(params);
@@ -437,8 +439,6 @@ LUAEXT(mtn_automate, )
       int n = lua_gettop(L);
 
       E(n > 0, F("Bad input to mtn_automate() lua extension: command name is missing"));
-
-      app_p->db.ensure_open();
 
       L(FL("Starting call to mtn_automate lua hook"));
 
