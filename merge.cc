@@ -167,10 +167,11 @@ resolve_merge_conflicts(roster_t const & left_roster,
         {
           P(F("%d content conflicts require user intervention") % remaining);
           result.report_file_content_conflicts(left_roster, right_roster, adaptor);
+
+          try_to_merge_files(app, left_roster, right_roster,
+                             result, adaptor, user_merge);
         }
 
-      try_to_merge_files(app, left_roster, right_roster,
-                         result, adaptor, user_merge);
     }
 
   E(result.is_clean(),
