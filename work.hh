@@ -24,6 +24,20 @@ class lua_hooks;
 //
 // this file defines structures to deal with the "workspace" of a tree
 //
+// at present the presence or absence of a workspace is intrinsically global
+// state, because it affects things like file_path construction (over in
+// paths.cc) and the current working directory.  also, there are a bunch of
+// operations, mostly during program initialization, that are conditional on
+// whether or not we are inside a workspace.  this has two visible
+// consequences to this api: first, you cannot create more than one
+// workspace object, and second, the workspace class has many class methods
+// as well as many instance methods.  class methods can be used when you're
+// not sure yet whether or not there is a workspace.  instance methods can
+// only be used if there definitely is a workspace; the workspace object
+// constructor will throw an N() if there isn't one.  (this can also be
+// triggered by the class method require_workspace, for the sake of a few
+// places that need to do that but not create the workspace object yet.)
+//
 
 //
 // workspace book-keeping files are stored in a directory called _MTN, off
@@ -64,8 +78,28 @@ class lua_hooks;
 // conditions, but works in practice (it is, for instance, the same
 // expectation used by "make").  nonetheless, this mode is off by default.
 
+bool directory_is_workspace(system_path const & dir);
+
 struct workspace
 {
+  // This is a public flag because it's set from monotone.cc using a
+  // function (find_and_go_to_workspace) which cannot presently be moved
+  // from paths.cc.
+  static bool found;
+
+private:
+  // This is used by get_ws_options and set_ws_options.
+  static bool branch_is_sticky;
+
+public:
+  static void require_workspace(options const & opts,
+                                std::string const & explanation = "");
+
+  static void create_workspace(options const & opts,
+                               lua_hooks & lua,
+                               system_path const & new_dir);
+
+  // Methods for manipulating the workspace's content.
   void find_missing(roster_t const & new_roster_shape,
                     node_restriction const & mask,
                     std::set<file_path> & missing);
@@ -146,7 +180,6 @@ struct workspace
   // the user log is then blanked. If the commit does not succeed, no
   // change is made to the user log file.
 
-  void get_user_log_path(bookkeeping_path & ul_path);
   void read_user_log(utf8 & dat);
   void write_user_log(utf8 const & dat);
   void blank_user_log();
@@ -155,43 +188,33 @@ struct workspace
   // the "options map" is another administrative file, stored in
   // _MTN/options. it keeps a list of name/value pairs which are considered
   // "persistent options", associated with a particular workspace and
-  // implied unless overridden on the command line. the set of valid keys
-  // corresponds exactly to the argument list of these functions.
-
-  static bool get_ws_options_from_path(system_path const & workspace,
-                                       system_path & database_option,
-                                       branch_name & branch_option,
-                                       rsa_keypair_id & key_option,
-                                       system_path & keydir_option);
-  void get_ws_options(system_path & database_option,
-                      branch_name & branch_option,
-                      rsa_keypair_id & key_option,
-                      system_path & keydir_option);
-  void set_ws_options(system_path & database_option,
-                      branch_name & branch_option,
-                      rsa_keypair_id & key_option,
-                      system_path & keydir_option);
+  // implied unless overridden on the command line.
+  static void get_ws_options(options & opts);
+  static void get_database_option(system_path const & workspace_root,
+                                  system_path & database_option);
+  static void set_ws_options(options const & opts, bool branch_is_sticky);
+  static void print_ws_option(utf8 const & opt, std::ostream & output);
 
   // the "workspace format version" is a nonnegative integer value, stored
   // in _MTN/format as an unadorned decimal number.  at any given time
   // monotone supports actual use of only one workspace format.
-  // check_ws_format throws an error if the workspace's format number is not
-  // equal to the currently supported format number.  it is automatically
-  // called for all commands defined with CMD() (not CMD_NO_WORKSPACE()).
-  // migrate_ws_format is called only on explicit user request (mtn ws
-  // migrate) and will convert a workspace from any older format to the new
-  // one.  unlike most routines in this class, it is defined in its own
-  // file, work_migration.cc.  finally, write_ws_format is called only when
-  // a workspace is created, and simply writes the current workspace format
-  // number to _MTN/format.
-  void check_ws_format();
+  // check_ws_format throws an error if the workspace exists but its format
+  // number is not equal to the currently supported format number.  it is
+  // automatically called for all commands defined with CMD() (not
+  // CMD_NO_WORKSPACE()).  migrate_ws_format is called only on explicit user
+  // request (mtn ws migrate) and will convert a workspace from any older
+  // format to the new one.  finally, write_ws_format is called only when a
+  // workspace is created, and simply writes the current workspace format
+  // number to _MTN/format.  unlike most routines in this class, these
+  // functions are defined in their own file, work_migration.cc.
+  static void check_ws_format();
+  static void write_ws_format();
   void migrate_ws_format();
-  void write_ws_format();
 
   // the "local dump file' is a debugging file, stored in _MTN/debug.  if we
   // crash, we save some debugging information here.
 
-  void get_local_dump_path(bookkeeping_path & d_path);
+  static void get_local_dump_path(bookkeeping_path & d_path);
 
   // the 'inodeprints file' contains inode fingerprints
 

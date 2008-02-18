@@ -31,14 +31,9 @@ public:
   lua_hooks lua;
   workspace work;
 
-  bool found_workspace;
   bool mtn_automate_allowed;
-  bool branch_is_sticky;
 
-  void process_options();
-  void require_workspace(std::string const & explanation = "");
-  void create_workspace(system_path const & dir);
-  void write_options(bool branch_is_sticky);
+  void require_workspace();
 };
 
 // Local Variables:

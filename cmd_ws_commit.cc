@@ -670,7 +670,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
         (dir, F("checkout directory '%s' already exists") % dir);
   }
 
-  app.create_workspace(dir);
+  workspace::create_workspace(app.opts, app.lua, dir);
 
   shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
   roster_t current_roster;
@@ -1269,7 +1269,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   }
 
   // the workspace should remember the branch we just committed to.
-  app.write_options(true);
+  app.work.set_ws_options(app.opts, true);
 
   // the work revision is now whatever changes remain on top of the revision
   // we just checked in.
@@ -1334,7 +1334,7 @@ CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
   else
     dir = ".";
 
-  app.create_workspace(dir);
+  workspace::create_workspace(app.opts, app.lua, dir);
 
   revision_t rev;
   make_revision_for_workspace(revision_id(), cset(), rev);
@@ -1399,7 +1399,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
      F("import directory '%s' doesn't exists") % dir,
      F("import directory '%s' is a file") % dir);
 
-  app.create_workspace(dir);
+  workspace::create_workspace(app.opts, app.lua, dir);
 
   try
     {
@@ -1408,8 +1408,6 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
       app.work.put_work_rev(rev);
 
       // prepare stuff for 'add' and so on.
-      app.found_workspace = true;       // Yup, this is cheating!
-
       args_vector empty_args;
       options save_opts;
       // add --unknown

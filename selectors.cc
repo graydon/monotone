@@ -159,7 +159,7 @@ decode_selector(app_state & app,
                             : F("the empty head selector h: refers to "
                                 "the head of the current branch")
                             ).str();
-              app.require_workspace(msg);
+              workspace::require_workspace(app.opts, msg);
               sel = app.opts.branchname();
             }
           break;

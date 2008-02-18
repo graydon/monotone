@@ -210,7 +210,7 @@ cpp_main(int argc, char ** argv)
           // and if found, change directory to it
           // Certain commands may subsequently require a workspace or fail
           // if we didn't find one at this point.
-          app.found_workspace = find_and_go_to_workspace(app.opts.root);
+          workspace::found = find_and_go_to_workspace(app.opts.root);
 
           // Load all available monotonercs.  If we found a workspace above,
           // we'll pick up _MTN/monotonerc as well as the user's monotonerc.
@@ -220,10 +220,10 @@ cpp_main(int argc, char ** argv)
           // this needs to happen after the monotonercs have been read
           commands::command_id cmd = read_options(app.opts, optset, opt_args);
 
-          if (app.found_workspace)
+          if (workspace::found)
             {
               bookkeeping_path dump_path;
-              app.work.get_local_dump_path(dump_path);
+              workspace::get_local_dump_path(dump_path);
 
               // The 'false' means that, e.g., if we're running checkout,
               // then it's okay for dumps to go into our starting working
