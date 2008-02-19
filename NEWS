@@ -53,6 +53,9 @@
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
 
+        - 'automate get_current_revision' retrieves restricted revision 
+          represented by current workspace
+        
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.

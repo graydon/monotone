@@ -1194,6 +1194,47 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
+// Name: get_current_revision
+// Arguments:
+//   1: list of restriction paths
+// Added in: 7.0
+
+CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
+             N_("Shows change information for a workspace"),
+             "",
+             options::opts::exclude | options::opts::depth)
+{
+  temp_node_id_source nis;
+  revision_data dat;
+  revision_id ident;
+  
+  roster_t new_roster;
+  parent_map old_rosters;
+  revision_t rev;
+  cset excluded;
+  
+  app.require_workspace();
+  app.work.get_parent_rosters(old_rosters);
+  app.work.get_current_roster_shape(new_roster, nis);
+  
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
+                        old_rosters, new_roster, app);
+  
+  app.work.update_current_roster_from_filesystem(new_roster, mask);
+
+  make_revision(old_rosters, new_roster, rev);
+  make_restricted_revision(old_rosters, new_roster, mask, rev,
+                           excluded, execid);
+  calculate_ident(rev, ident);
+  write_revision(rev, dat);
+  
+  L(FL("dumping revision %s") % ident);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
+
 // Name: get_base_revision_id
 // Arguments: none
 // Added in: 2.0

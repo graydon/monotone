@@ -7376,6 +7376,38 @@ to stderr and exits with status 1.
 
 @end table
 
+@item mtn automate get_current_revision [--exclude @var{excl}] [--depth=@var{depth}] [@var{path} ...]
+
+@table @strong
+@item Arguments:
+
+One or more @var{path} arguments restrict the revision to these paths,
+otherwise all changes in workspace are taken into account.
+
+Options @var{excl} and @var{depth} work just like in @var{mtn commit}.
+
+@item Added in:
+
+7.0
+
+@item Purpose:
+
+Prints change information for the restricted workspace revision.
+
+@item Sample output:
+
+See @var{automate get_revision}
+
+@item Output format:
+
+See @var{automate get_revision}
+
+@item Error conditions:
+
+If any of restriction paths is unknown prints an error message to stderr 
+and exits with status 1.
+
+@end table
 
 
 @item mtn automate get_base_revision_id
