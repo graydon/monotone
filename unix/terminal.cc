@@ -21,8 +21,7 @@ bool have_smart_terminal()
   else
     term = "";
 
-  if (term == "" || term == "emacs" || term == "dumb"
-      || !isatty(2))
+  if (term == "" || term == "dumb" || !isatty(2))
     return false;
   else
     return true;
