@@ -1,9 +1,7 @@
 monotone (0.39-1) UNRELEASED; urgency=low
 
   * New upstream release.
-  * Enable use of system libpcre, set appropriate Build-Depends.  Note
-    use of tight B-Ds and shared library dependencies, consistent
-    with behavior of upstream configure script.
+  * Enable use of system libpcre, set appropriate Build-Depends.
 
  -- J Maintainer <address@here>  ???, ?? ??? ???? ??:??:?? +????
 

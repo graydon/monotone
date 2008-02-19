@@ -358,10 +358,11 @@ find_next_subpattern(string::const_iterator p,
                    
 
 static bool
-do_match(string::const_iterator s, string::const_iterator se,
+do_match(string::const_iterator sb, string::const_iterator se,
          string::const_iterator p, string::const_iterator pe)
 {
   unsigned int sc, pc;
+  string::const_iterator s(sb);
 
   if (global_sanity.debug_p()) // decode() is expensive
     L(FL("subpattern: '%s' against '%s'") % string(s,se) % decode(p,pe));
@@ -369,8 +370,12 @@ do_match(string::const_iterator s, string::const_iterator se,
   while (p < pe)
     {
       pc = widen<unsigned int, char>(*p++);
-      sc = s < se ? widen<unsigned int, char>(*s) : 0;
-      s++;
+      if(s < se) {
+        sc = widen<unsigned int, char>(*s);
+        s++;
+      } else {
+        sc = 0;
+      }
       switch (pc)
         {
         default:           // literal
@@ -460,7 +465,9 @@ do_match(string::const_iterator s, string::const_iterator se,
 
             prest = find_next_subpattern(p, pe, false);
             psub = p;
-            s--;
+            if(s > sb) {
+              s--;
+            }
             do
               {
                 pnext = find_next_subpattern(psub, pe, true);
