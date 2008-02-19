@@ -24,6 +24,9 @@
 	  will insist on this version and no other.  See m4/pcre.m4
 	  for further discussion.
 
+	- "emacs" has been removed from the list of dumb terminal types; 
+	   tickers should now default to --ticker=count with emacs terminals
+
         Bugs fixed
 
         - for changes near the beginning of a file, mtn's unified diff

@@ -1041,7 +1041,7 @@ branch names must be @emph{globally} unique, over all branches in the
 world.  Otherwise, bad things can happen.  Fortunately, we have a handy
 source of globally unique names --- the DNS system.
 
-When naming a branch, always prepend the reversed name of a host that
+When naming a branch, always prepend the reversed, fully qualified, domain name of a host that
 you control or are otherwise authorized to use.  For example, monotone
 development happens on the branch @code{net.venge.monotone}, because
 @code{venge.net} belongs to monotone's primary author.  The idea is that
@@ -2606,6 +2606,7 @@ familiarize yourself with its operation.
 * Restrictions::                Limit workspace changes to specified files.
 * Scripting::                   Running monotone from other programs.
 * Inodeprints::                 Trading off safety for speed in your workspace.
+* Merge Conflicts::             The various conflict types and how to resolve them.
 * Workspace Collisions::        Workspace files that collide with new versioned files.
 * Quality Assurance::           Integrating testing and review with development.
 * Vars::                        Simple per-database configuration information.
@@ -2961,8 +2962,7 @@ parseable form.
 
 For details of this interface, see @ref{Automation}.
 
-@page
-@node    Inodeprints, Workspace Collisions, Scripting, Advanced Uses
+@node    Inodeprints, Merge Conflicts, Scripting, Advanced Uses
 @section Inodeprints
 
 Fairly often, in order to accomplish its job, monotone has to look at
@@ -2999,7 +2999,179 @@ will want to simply define the @code{use_inodeprints} hook to return
 workspaces you create.  See @ref{Hook Reference} for details.
 
 @page
-@node    Workspace Collisions, Quality Assurance, Inodeprints, Advanced Uses
+@node    Merge Conflicts, Workspace Collisions, Inodeprints, Advanced Uses
+@section Merge Conflicts
+
+Several different types of conflicts may be encountered when merging
+two revisions using the database merge commands @command{merge},
+@command{explicit_merge}, @command{propagate} and
+@command{merge_into_dir} or when using the workspace merge commands
+@command{update}, @command{pluck} and @command{merge_into_workspace}.
+The @command{show_conflicts} command can be used to list conflicts
+between database revisions which would be encountered by the database
+merge commands. Unfortunately, this command can't yet list conflicts
+between a database revision and the current workspace revision which
+would be encountered by the workspace merge commands.
+
+@subsection Conflict Types
+
+Monotone versions both files and directories explicitly and it tracks
+individual file and directory identity from birth to death so that
+name changes throughout the full life-cycle can be tracked exactly.
+Partly because of these qualities, monotone also notices several types
+of conflicts that other version control systems may not.
+
+@subheading Missing Root Conflict
+
+Monotone's merge strategy is sometimes referred to as
+@emph{die-die-die} merge, with reference to the fact that when a file
+or directory is deleted there is no means of resurrecting it. Merging
+the deletion of a file or directory will @emph{always} result in that
+file or directory being deleted.
+
+A missing root conflict occurs when some directory has been moved to
+the root directory in one of the merge parents and has been deleted in
+the other merge parent. Because of die-die-die merge the result will
+not contain the directory that has been moved to the root.
+
+Missing root conflicts should be very rare because it is unlikely that
+a project's root directory will change. It is even more unlikely that
+a project's root directory will be changed to some other directory in
+one merge parent and that this directory will also be deleted in the
+other merge parent. Even still, a missing root directory conflict can
+be easily resolved by moving another directory to the root in the
+merge parent where the root directory was previously changed. Because
+of die-die-die merge, no change to resolve the conflict can be made to
+the merge parent that deleted the directory which was moved to the
+root in the other merge parent.
+
+See the @command{pivot_root} command for more information on moving
+another directory to the project root.
+
+@subheading Invalid Name Conflict
+
+Monotone reserves the name @file{_MTN} in a workspace root directory
+for internal use and treats this name as @emph{illegal} for a
+versioned file or directory in the project root. This name is
+@emph{legal} for a versioned file or directory as long as it is not in
+the project root directory.
+
+An invalid name conflict occurs when some directory is moved to the
+project root in one of the merge parents and a file or directory that
+exists in this new root directory is renamed to @file{_MTN} or a new
+file or directory is added with the name @file{_MTN} to this directory
+in the other merge parent.
+
+Invalid name conflicts should be very rare because it is unlikely that
+a project's root directory will change. It is even more unlikely that
+a project's root directory will change and the new root directory will
+contain a file or directory named @file{_MTN}. Even still, an invalid
+name conflict can be easily resolved in several different ways. A
+different root directory can be chosen, the offending @file{_MTN} file
+or directory can be renamed or deleted, or it can be moved to some
+other subdirectory in the project.
+
+See the @command{pivot_root} command for more information on moving
+another directory to the project root.
+
+@subheading Directory Loop Conflict
+
+A directory loop conflict occurs when one directory is moved under a
+second in one of the merge parents and the second directory is moved
+under the first in the other merge parent.
+
+Directory loop conflicts should be rare but can be easily resolved by
+moving one of the conflicting directories out from under the other.
+
+@subheading Orphaned Node Conflict
+
+An orphaned node conflict occurs when a directory and all of its
+contents are deleted in one of the merge parents and further files or
+directories are added to this deleted directory, or renamed into it,
+in the other merge parent.
+
+Orphaned node conflicts do happen occasionally but can be easily
+resolved by renaming the orphaned files or directories out of the
+directory that has been deleted and into another directory that exists
+in both merge parents, or that has been added in the revision
+containing the orphaned files or directories.
+
+@subheading Multiple Name Conflict
+
+A multiple name conflict occurs when a single file or directory has
+been renamed to two different names in the two merge parents.
+Monotone does not allow this and requires that each file and directory
+has exactly one unique name.
+
+Multiple name conflicts do happen occasionally but can be easily
+resolved by renaming the conflicting file or directory in one or both
+of the merge parents so that both agree on the name.
+
+In earlier versions of monotone (those before version 0.39) this type
+of conflict was referred to as a @emph{name conflict}.
+
+@subheading Duplicate Name Conflict
+
+A duplicate name conflict occurs when two distinct files or
+directories have been given the same name in the two merge parents.
+This can occur when each of the merge parents adds a new file or
+directory with the conflicting name, or when one parent adds a new
+file or directory with the conflicting name and the other renames an
+existing file or directory to the conflicting name, or when both
+parents rename an existing file or directory to the conflicting name.
+
+Duplicate name conflicts do happen occasionally but can be easily
+resolved by renaming the conflicting file or directory in one or both
+of the merge parents so that each has a unique name.
+
+In earlier versions of monotone (before version 0.39) this type of
+conflict was referred to as a @emph{rename target conflict} although
+it doesn't necessarily have anything to do with renames.
+
+@subheading Attribute Conflict
+
+An attribute conflict occurs when a versioned attribute on a file or
+directory is set to two different values by the two merge parents or
+if one of the merge parents changes the attribute's value and the
+other deletes the attribute entirely.
+
+Attribute conflicts may happen occasionally but can be easily resolved
+by ensuring that the attribute is set to the same value or is deleted
+in both of the merge parents. Attributes are @emph{not} merged using
+the die-die-die rules and may be resurrected by simply setting their
+values.
+
+@subheading File Content Conflict
+
+This type of conflict is generally the one encountered most commonly
+and represents conflicting changes made to lines of text within two
+versions of a single file.
+
+Monotone does not generally use CVS style conflict markers for content
+conflicts. Instead it makes the content of both conflicting files and
+the content of their common ancestor available for use with your
+favorite merge tool. See the @code{merge3} hook for more information.
+
+Alternatively, rather than using a merge tool it is possible to make
+further changes to one or both of the conflicting file versions so
+that they will merge cleanly. This can also be a very helpful strategy
+if the merge conflicts are due to sections of text in the file being
+moved from one location to another. Rather than struggling to merge
+such conflicting changes with a merge tool, similar rearrangements can
+be made to one of the conflicting files before redoing the merge.
+
+@subsection Conflict Resolution
+
+Resolving the different types of conflicts is accomplished by checking
+out one of the conflicting revisions, making changes as described
+above, committing these changes as a new revision and then running the
+merge again using this new revision as one of the merge parents. This
+process can be repeated as necessary to get two revisions into a state
+where they will merge cleanly, or with a minimum of file content
+conflicts.
+
+@page
+@node    Workspace Collisions, Quality Assurance, Merge Conflicts, Advanced Uses
 @section Workspace Collisions
 
 Sometimes when you work on a project, several people make similar
@@ -3475,7 +3647,7 @@ By default all files are merged in automatic mode, unless the
 @code{manual_merge} attribute for that file is present and
 @code{true}.
 In automatic mode files are merged without user intervention, using
-monotone internal three-way merging algorithm.
+monotone's internal three-way merging algorithm.
 Only if there are conflicts or an ancestor is not available monotone
 switches to manual mode, essentially escalating the merging to the user.
 When working in manual mode, monotone invokes the @code{merge3} hook
