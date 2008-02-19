@@ -64,16 +64,6 @@ CFLAGS ?= $(DEFAULT_CFLAGS)
 # tried it with actual root privileges and don't propose to).
 build: build-arch
 
-# Note regarding PCRE: monotone upstream wants tight control over
-# which version of the library is used with any given release of the
-# program.  In --with-system-pcre mode, configure will error out if it
-# finds any version other than the one bundled with the program.  This
-# is why the package has both >= and << build-dependencies on
-# libpcre3-dev.  There is a documented way to override this, should it
-# be necessary for e.g.  security NMUs: see m4/pcre.m4.  You will also
-# need to change the build dependencies in debian/control *and* the
-# shared library dependencies override in debian/shlibs.local.
-
 config.status: configure
 	dh_testdir
 ifneq "$(wildcard /usr/share/misc/config.sub)" ""
