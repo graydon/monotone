@@ -3021,6 +3021,154 @@ name changes throughout the full life-cycle can be tracked exactly.
 Partly because of these qualities, monotone also notices several types
 of conflicts that other version control systems may not.
 
+The two most common conflicts are described first, then all other
+possible conflicts.
+
+@subheading File Content Conflict
+
+This type of conflict is generally the one encountered most commonly
+and represents conflicting changes made to lines of text within two
+versions of a single file.
+
+Monotone does not generally use CVS style conflict markers for content
+conflicts. Instead it makes the content of both conflicting files and
+the content of their common ancestor available for use with your
+favorite merge tool. See the @code{merge3} hook for more information.
+
+Alternatively, rather than using a merge tool it is possible to make
+further changes to one or both of the conflicting file versions so
+that they will merge cleanly. This can also be a very helpful strategy
+if the merge conflicts are due to sections of text in the file being
+moved from one location to another. Rather than struggling to merge
+such conflicting changes with a merge tool, similar rearrangements can
+be made to one of the conflicting files before redoing the merge.
+
+@subheading Duplicate Name Conflict
+
+A duplicate name conflict occurs when two distinct files or
+directories have been given the same name in the two merge parents.
+This can occur when each of the merge parents adds a new file or
+directory with the conflicting name, or when one parent adds a new
+file or directory with the conflicting name and the other renames an
+existing file or directory to the conflicting name, or when both
+parents rename an existing file or directory to the conflicting name.
+
+In earlier versions of monotone (before version 0.39) this type of
+conflict was referred to as a @emph{rename target conflict} although
+it doesn't necessarily have anything to do with renames.
+
+There are two main situations in which duplicate name conflicts occur:
+
+@itemize
+@item
+Two people both realize a new file should be added, and commit it. In
+this case, the files have the right name and the right contents, but
+monotone reports a conflict because they were added separately.
+
+@item
+Two people each decide to add new files with different content, and
+accidently pick the same name.
+@end itemize
+
+These conflicts are reported when someone tries to merge the two
+revisions containing the new files.
+
+@subsubheading Same file
+For the first case, the conflict is resolved by @command{drop}ing one
+file. The contents should be manually merged first, in case they are
+slightly different. Typically, a user will have one of the files in
+their current workspace; the other can be retrieved via
+@command{automate get_file_of}; the revision id is shown in the merge
+error message. The process can be confusing; here's a detailed
+example.
+
+Suppose Beth and Abe each commit a new file @file{checkout.sh}. When
+Beth attempts to merge the two heads, she gets a message like:
+
+@smallexample
+@group
+mtn: 2 heads on branch 'testbranch'
+mtn: [left]  ae94e6677b8e31692c67d98744dccf5fa9ccffe5
+mtn: [right] dfdf50b19fb971f502671b0cfa6d15d69a0d04bb
+mtn: conflict: duplicate name 'checkout.sh'
+mtn: added as a new file on the left
+mtn: added as a new file on the right
+mtn: error: merge failed due to unresolved conflicts
+@end group
+@end smallexample
+
+The file labeled @code{right} is the file in Beth's workspace. To
+retrieve a copy of Abe's file, Beth executes:
+
+@smallexample
+@group
+mtn automate get_file_of checkout.sh \
+--revision=ae94e6677b8e31692c67d98744dccf5fa9ccffe5 \
+> checkout.sh-merge
+@end group
+@end smallexample
+
+Now Beth manually merges (using her favorite merge tool)
+@file{checkout.sh} and @file{checkout.sh-merge}, leaving the results in
+@file{checkout.sh-merge} (@emph{not} in her copy).
+
+Then Beth drops her copy, and commits that change:
+
+@smallexample
+@group
+mtn drop checkout.sh
+mtn commit --message "resolving conflicting 'checkout.sh'"
+@end group
+@end smallexample
+
+Now Beth can merge the two heads, and update her workspace:
+
+@smallexample
+@group
+mtn merge
+mtn update
+@end group
+@end smallexample
+
+This leaves a copy of Abe's original @file{checkout.sh}. Beth
+overwrites it with her merged version, and commits again:
+
+@smallexample
+@group
+rm checkout.sh
+mv checkout.sh-merge checkout.sh
+mtn commit --message "resolving conflicting 'checkout.sh' - done"
+@end group
+@end smallexample
+
+When Abe later syncs and updates, he will get the merged version.
+
+@subsubheading Different files
+The second case, where two different files accidently have the same
+name, is resolved by renaming one or both of them.
+
+Suppose Beth and Abe each start working on different thermostat models
+(say Honeywell and Westinghouse), but they both name the file
+@file{thermostat}. When Beth attempts to merge, she will get the same
+error message as in the first case. When she retrieves Abe's file, she
+will see that they should be different files. So she renames her file,
+merges, and updates:
+
+@smallexample
+@group
+mtn rename thermostat thermostat-honeywell
+mtn merge
+mtn update
+@end group
+@end smallexample
+
+Now she has her file in @file{thermostat-honeywell}, and Abe's in
+@file{thermostat}. She may rename Abe's file to
+@file{thermostat-westinghouse}, or ask Abe to do that.
+
+If a project has a good file naming convention, this second case
+should be rare.
+
 @subheading Missing Root Conflict
 
 Monotone's merge strategy is sometimes referred to as
@@ -3110,24 +3258,6 @@ of the merge parents so that both agree on the name.
 In earlier versions of monotone (those before version 0.39) this type
 of conflict was referred to as a @emph{name conflict}.
 
-@subheading Duplicate Name Conflict
-
-A duplicate name conflict occurs when two distinct files or
-directories have been given the same name in the two merge parents.
-This can occur when each of the merge parents adds a new file or
-directory with the conflicting name, or when one parent adds a new
-file or directory with the conflicting name and the other renames an
-existing file or directory to the conflicting name, or when both
-parents rename an existing file or directory to the conflicting name.
-
-Duplicate name conflicts do happen occasionally but can be easily
-resolved by renaming the conflicting file or directory in one or both
-of the merge parents so that each has a unique name.
-
-In earlier versions of monotone (before version 0.39) this type of
-conflict was referred to as a @emph{rename target conflict} although
-it doesn't necessarily have anything to do with renames.
-
 @subheading Attribute Conflict
 
 An attribute conflict occurs when a versioned attribute on a file or
@@ -3140,25 +3270,6 @@ by ensuring that the attribute is set to the same value or is deleted
 in both of the merge parents. Attributes are @emph{not} merged using
 the die-die-die rules and may be resurrected by simply setting their
 values.
-
-@subheading File Content Conflict
-
-This type of conflict is generally the one encountered most commonly
-and represents conflicting changes made to lines of text within two
-versions of a single file.
-
-Monotone does not generally use CVS style conflict markers for content
-conflicts. Instead it makes the content of both conflicting files and
-the content of their common ancestor available for use with your
-favorite merge tool. See the @code{merge3} hook for more information.
-
-Alternatively, rather than using a merge tool it is possible to make
-further changes to one or both of the conflicting file versions so
-that they will merge cleanly. This can also be a very helpful strategy
-if the merge conflicts are due to sections of text in the file being
-moved from one location to another. Rather than struggling to merge
-such conflicting changes with a merge tool, similar rearrangements can
-be made to one of the conflicting files before redoing the merge.
 
 @subsection Conflict Resolution
 
