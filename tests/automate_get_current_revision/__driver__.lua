@@ -5,14 +5,14 @@ addfile("zoo", "blah\n")
 check(mtn("commit", "--date=2005-05-21T12:30:51",
           "--branch=testbranch", "--message=blah-blah"), 0, false, false) 
           
--- ensure that bad restriction paths fails
+-- ensure that bad restriction paths fail
 check(mtn("automate", "get_current_revision", "foo-bar"), 1, true, false)
 check(fsize("stdout") == 0)
 
 addfile("foox", "blah\n")
 addfile("barx", "blah2\n")
 
--- ensure that no resrtiction yields the same as '.' as restriction
+-- ensure that no restriction yields the same as '.' as restriction
 check(mtn("automate", "get_current_revision"), 0, true, false)
 no_restrict = get("stdout")
 
@@ -50,8 +50,7 @@ check( not qgrep("barx", "stdout") )
 check(mtn("automate", "get_current_revision", "--depth=0", "ttt", "ttt/xxx", "ttt/xxx/vvv"), 0, true, false)
 check(     qgrep("ttt/xxx/vvv", "stdout") )
 -- XXX: check node_restriction for 
---      looks like yyy gets into revision even if we explicitly
---      forbidden recursion
+--      looks like yyy gets into revision even if we explicitly forbid recursion
 -- check( not qgrep("yyy", "stdout") )
 check( not qgrep("zzz", "stdout") )
 check( not qgrep("foox", "stdout") )

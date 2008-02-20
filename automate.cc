@@ -1094,9 +1094,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if
-//      non-existant)
+//   1: a revision id
 // Added in: 1.0
+// Changed in: 7.0 (REVID argument is now mandatory)
 
 // Purpose: Prints change information for the specified revision id.
 //   There are several changes that are described; each of these is
@@ -1155,40 +1155,21 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 //   the same type will be sorted by the filename they refer to.
 // Error conditions: If the revision specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-CMD_AUTOMATE(get_revision, N_("[REVID]"),
+CMD_AUTOMATE(get_revision, N_("REVID"),
              N_("Shows change information for a revision"),
              "",
              options::opts::none)
 {
-  N(args.size() < 2,
+  N(args.size() == 1,
     F("wrong argument count"));
 
-  temp_node_id_source nis;
   revision_data dat;
   revision_id ident;
 
-  if (args.size() == 0)
-    {
-      roster_t new_roster;
-      parent_map old_rosters;
-      revision_t rev;
-
-      app.require_workspace();
-      app.work.get_parent_rosters(old_rosters);
-      app.work.get_current_roster_shape(new_roster, nis);
-      app.work.update_current_roster_from_filesystem(new_roster);
-
-      make_revision(old_rosters, new_roster, rev);
-      calculate_ident(rev, ident);
-      write_revision(rev, dat);
-    }
-  else
-    {
-      ident = revision_id(idx(args, 0)());
-      N(app.db.revision_exists(ident),
-        F("no revision %s found in database") % ident);
-      app.db.get_revision(ident, dat);
-    }
+  ident = revision_id(idx(args, 0)());
+  N(app.db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  app.db.get_revision(ident, dat);
 
   L(FL("dumping revision %s") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
@@ -1198,6 +1179,8 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
 // Arguments:
 //   1: list of restriction paths
 // Added in: 7.0
+// Purpose: Outputs (an optionally restricted) revision based on
+//          changes in the current workspace
 
 CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
              N_("Shows change information for a workspace"),
@@ -1207,21 +1190,21 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
   temp_node_id_source nis;
   revision_data dat;
   revision_id ident;
-  
+
   roster_t new_roster;
   parent_map old_rosters;
   revision_t rev;
   cset excluded;
-  
+
   app.require_workspace();
   app.work.get_parent_rosters(old_rosters);
   app.work.get_current_roster_shape(new_roster, nis);
-  
+
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_rosters, new_roster, app);
-  
+
   app.work.update_current_roster_from_filesystem(new_roster, mask);
 
   make_revision(old_rosters, new_roster, rev);
@@ -1229,7 +1212,7 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
                            excluded, execid);
   calculate_ident(rev, ident);
   write_revision(rev, dat);
-  
+
   L(FL("dumping revision %s") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
 }

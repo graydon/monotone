@@ -12,6 +12,10 @@
           which returns all database variables similar to 'list vars' in
           basic_io format, optionally restricted by domain.
 
+        - The REVID argument of 'automate get_revision' is now mandatory;
+          to retrieve the current workspace revision, use the new command
+          'automate get_current_revision'
+
         - messages describing conflicts from all of the various merge commands
           have been reworked and should be much more informative.
 
@@ -53,8 +57,8 @@
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
 
-        - 'automate get_current_revision' retrieves restricted revision 
-          represented by current workspace
+        - 'automate get_current_revision' which outputs the revision text of 
+           changes in the current workspace
         
 Wed Dec 12 21:21:15 UTC 2007
 

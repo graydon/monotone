@@ -7272,19 +7272,22 @@ whatever error message would have been given.
 
 @end table
 
-@item mtn automate get_revision
 @item mtn automate get_revision @var{id}
 
 @table @strong
 @item Arguments:
 
-Specifying the option @var{id} argument outputs the changeset
-information for the specified @var{id}. Otherwise, @var{id} is
-determined from the workspace.
+The argument @var{id} specifies the revision id for which the changeset
+information should be printed.
 
 @item Added in:
 
 1.0
+
+@item Changed in:
+
+7.0 (@var{id} is now mandatory)
+
 
 @item Purpose:
 
@@ -7392,7 +7395,8 @@ Options @var{excl} and @var{depth} work just like in @var{mtn commit}.
 
 @item Purpose:
 
-Prints change information for the restricted workspace revision.
+Prints change information for the current workspace, optionally restricted by
+one or more paths.
 
 @item Sample output:
 
