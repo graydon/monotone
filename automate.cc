@@ -1227,9 +1227,10 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
   revision_t rev;
   cset excluded;
 
+  database db(app);
   workspace work(app);
-  work.get_parent_rosters(old_rosters);
-  work.get_current_roster_shape(new_roster, nis);
+  work.get_parent_rosters(db, old_rosters);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   node_restriction mask(args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),

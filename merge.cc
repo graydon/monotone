@@ -167,11 +167,9 @@ resolve_merge_conflicts(lua_hooks & lua,
           P(F("%d content conflicts require user intervention") % remaining);
           result.report_file_content_conflicts(left_roster, right_roster, adaptor);
 
-          try_to_merge_files(app, left_roster, right_roster,
+          try_to_merge_files(lua, left_roster, right_roster,
                              result, adaptor, user_merge);
         }
-
-      try_to_merge_files(lua, left_roster, right_roster,
     }
 
   E(result.is_clean(),
