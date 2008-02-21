@@ -39,6 +39,7 @@
 #include "globish.hh"
 #include "charset.hh"
 #include "safe_map.hh"
+#include "work.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -84,7 +85,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
     branch = branch_name(idx(args, 0)());
   else
     {
-      app.require_workspace();
+      workspace::require_workspace(F("with no argument, this command prints the heads of the workspace's branch"));
       branch = app.opts.branchname;
     }
 
@@ -979,7 +980,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              options::opts::no_corresponding_renames)
 {
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   parent_map parents;
   work.get_parent_rosters(db, parents);
@@ -1012,14 +1013,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
            inserter(excludes, excludes.end()));
     }
 
-  node_restriction nmask(app.work, includes, excludes, app.opts.depth, old_roster, new_roster);
+  node_restriction nmask(work, includes, excludes, app.opts.depth, old_roster, new_roster);
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
   // of them anyways
-  path_restriction pmask(app.work, includes, excludes, app.opts.depth, path_restriction::skip_check);
+  path_restriction pmask(work, includes, excludes, app.opts.depth, path_restriction::skip_check);
 
   inventory_rosters(old_roster, new_roster, nmask, pmask, inventory);
-  inventory_filesystem(app.work, pmask, inventory);
+  inventory_filesystem(work, pmask, inventory);
 
   basic_io::printer pr;
 
@@ -1033,7 +1034,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       // check if we should output this element at all
       //
       vector<string> states;
-      inventory_determine_states(app.work, fp, item,
+      inventory_determine_states(work, fp, item,
                                  old_roster, new_roster, states);
 
       if (find(states.begin(), states.end(), "ignored") != states.end() &&
@@ -1198,7 +1199,7 @@ CMD_AUTOMATE(get_revision, N_("[REVID]"),
 
   if (args.size() == 0)
     {
-      CMD_REQUIRES_WORKSPACE(app);
+      workspace work(app);
 
       roster_t new_roster;
       parent_map old_rosters;
@@ -1240,7 +1241,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
     F("no arguments needed"));
 
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   parent_map parents;
   work.get_parent_rosters(db, parents);
@@ -1267,7 +1268,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
   database db(app);
 
   parent_map parents;
@@ -1344,7 +1345,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
   if (args.size() == 0)
     {
-      CMD_REQUIRES_WORKSPACE(app);
+      workspace work(app);
 
       temp_node_id_source nis;
 
@@ -1789,7 +1790,7 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
   work.print_ws_option(args[0], output);
 }
 

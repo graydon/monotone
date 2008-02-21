@@ -4,6 +4,7 @@
 #include "key_store.hh"
 #include "file_io.hh"
 #include "packet.hh"
+#include "database.hh"
 #include "keys.hh"
 #include "globish.hh"
 #include "app_state.hh"

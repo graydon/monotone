@@ -10,6 +10,7 @@
 #include "base.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "database.hh"
 #include "project.hh"
 #include "rcs_import.hh"
 #include "keys.hh"

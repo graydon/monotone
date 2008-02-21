@@ -19,6 +19,7 @@
 #include "project.hh"
 #include "keys.hh"
 #include "key_store.hh"
+#include "work.hh"
 
 using std::cin;
 using std::cout;
@@ -157,8 +158,9 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   //    is left out for now
   if (workspace::found)
     {
+      workspace work(app);
       revision_t old_work_rev;
-      app.work.get_work_rev(old_work_rev);
+      work.get_work_rev(old_work_rev);
 
       for (edge_map::const_iterator i = old_work_rev.edges.begin();
            i != old_work_rev.edges.end(); i++)
@@ -166,7 +168,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           if (edge_old_revision(i) != revid)
             continue;
 
-          N(!app.work.has_changes(db),
+          N(!work.has_changes(db),
             F("Cannot kill revision %s,\n"
               "because it would leave the current workspace in an invalid\n"
               "state, from which monotone cannot recover automatically since\n"
@@ -180,7 +182,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           revision_t new_work_rev;
           db.get_revision(revid, new_work_rev);
           new_work_rev.made_for = made_for_workspace;
-          app.work.put_work_rev(new_work_rev);
+          work.put_work_rev(new_work_rev);
           
           // extra paranoia... we _should_ never run this section twice
           // since a merged workspace would fail early with work.has_changes()

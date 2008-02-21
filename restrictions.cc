@@ -15,22 +15,11 @@
 #include "file_io.hh"
 
 #ifdef BUILD_UNIT_TESTS
-
-#include "unit_tests.hh"
-#include "roster.hh"
-#include "sanity.hh"
-// see comments in restriction.hh
-#define WORK_ARGDECL // nothing
-#define WORK_ARG // nothing
-#define WORK_IGNORE_FILE(f) false
-
+# include "unit_tests.hh"
+# include "roster.hh"
+# include "sanity.hh"
 #else
-
-#include "work.hh"
-#define WORK_ARGDECL workspace & work,
-#define WORK_ARG work,
-#define WORK_IGNORE_FILE(f) work.ignore_file(f)
-
+# include "work.hh"
 #endif
 
 using std::make_pair;
@@ -72,6 +61,19 @@ map_nodes(map<node_id, restricted_path::status> & node_map,
 }
 
 static void
+map_nodes(map<node_id, restricted_path::status> & node_map,
+          roster_t const & roster,
+          set<file_path> const & included_paths,
+          set<file_path> const & excluded_paths,
+          set<file_path> & known_paths)
+{
+  map_nodes(node_map, roster, included_paths, known_paths,
+            restricted_path::included);
+  map_nodes(node_map, roster, excluded_paths, known_paths,
+            restricted_path::excluded);
+}
+
+static void
 map_paths(map<file_path, restricted_path::status> & path_map,
           set<file_path> const & paths,
           restricted_path::status const status)
@@ -87,78 +89,95 @@ map_paths(map<file_path, restricted_path::status> & path_map,
     }
 }
 
-static void
-validate_roster_paths(WORK_ARGDECL
-                      set<file_path> const & included_paths,
-                      set<file_path> const & excluded_paths,
-                      set<file_path> const & known_paths)
+namespace
 {
-  int bad = 0;
+  struct unknown_p
+  {
+    virtual bool operator()(file_path const &) const = 0;
+  protected:
+    unknown_p() {}
+  };
 
-  for (set<file_path>::const_iterator i = included_paths.begin();
-       i != included_paths.end(); ++i)
+  struct unknown_node : public unknown_p
+  {
+    explicit unknown_node(set<file_path> const & known_paths)
+      : known_paths(known_paths)
+    {}
+    virtual bool operator()(file_path const & p) const
     {
-      // ignored paths are allowed into the restriction but are not
-      // considered invalid if they are found in none of the restriction's
-      // rosters
-      if (known_paths.find(*i) == known_paths.end())
-        {
-          if (!WORK_IGNORE_FILE(*i))
-            {
-              bad++;
-              W(F("restriction includes unknown path '%s'") % *i);
-            }
-        }
+      return known_paths.find(p) == known_paths.end();
     }
+    
+  private:
+    set<file_path> const & known_paths;
+  };
 
-  for (set<file_path>::const_iterator i = excluded_paths.begin();
-       i != excluded_paths.end(); ++i)
+  struct unknown_path : public unknown_p
+  {
+    virtual bool operator()(file_path const & p) const
     {
-      if (known_paths.find(*i) == known_paths.end())
-        {
-          bad++;
-          W(F("restriction excludes unknown path '%s'") % *i);
-        }
+      return !path_exists(p);
     }
+  };
 
-  N(bad == 0, FP("%d unknown path", "%d unknown paths", bad) % bad);
+#ifndef BUILD_UNIT_TESTS
+  // ignored paths are allowed into the restriction but are not considered
+  // invalid if they are found in none of the restriction's rosters
+  // this is only relevant to the main program, not the unit tests
+  struct unknown_unignored_node : public unknown_p
+  {
+    explicit unknown_unignored_node(set<file_path> const & known_paths,
+                                    workspace & work)
+      : known_paths(known_paths), work(work)
+    {}
+    virtual bool operator()(file_path const & p) const
+    {
+      return (known_paths.find(p) == known_paths.end()
+              && !work.ignore_file(p));
+    }
+    
+  private:
+    set<file_path> const & known_paths;
+    workspace & work;
+  };
+
+  struct unknown_unignored_path : public unknown_p
+  {
+    explicit unknown_unignored_path(workspace & work)
+      : work(work)
+    {}
+    virtual bool operator()(file_path const & p) const
+    {
+      return !path_exists(p) && !work.ignore_file(p);
+    }
+  private:
+    workspace & work;
+  };
+#endif
 }
 
-void
-validate_workspace_paths(WORK_ARGDECL
-                         set<file_path> const & included_paths,
-                         set<file_path> const & excluded_paths)
+static void
+validate_paths(set<file_path> const & included_paths,
+               set<file_path> const & excluded_paths,
+               unknown_p const & is_unknown)
 {
   int bad = 0;
 
   for (set<file_path>::const_iterator i = included_paths.begin();
        i != included_paths.end(); ++i)
-    {
-      if (i->empty())
-        continue;
-
-      // ignored paths are allowed into the restriction but are not
-      // considered invalid if they are found in none of the restriction's
-      // rosters
-      if (!path_exists(*i) && !WORK_IGNORE_FILE(*i))
-        {
-          bad++;
-          W(F("restriction includes unknown path '%s'") % *i);
-        }
-    }
+    if (is_unknown(*i))
+      {
+        bad++;
+        W(F("restriction includes unknown path '%s'") % *i);
+      }
 
   for (set<file_path>::const_iterator i = excluded_paths.begin();
        i != excluded_paths.end(); ++i)
-    {
-      if (i->empty())
-        continue;
-
-      if (!path_exists(*i))
-        {
-          bad++;
-          W(F("restriction excludes unknown path '%s'") % *i);
-        }
-    }
+    if (is_unknown(*i))
+      {
+        bad++;
+        W(F("restriction excludes unknown path '%s'") % *i);
+      }
 
   N(bad == 0, FP("%d unknown path", "%d unknown paths", bad) % bad);
 }
@@ -171,22 +190,74 @@ restriction::restriction(std::vector<file_path> const & includes,
     depth(depth)
 {}
 
-node_restriction::node_restriction(WORK_ARGDECL
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   roster_t const & roster) :
+  restriction(includes, excludes, depth)
+{
+  map_nodes(node_map, roster, included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths, unknown_node(known_paths));
+}
+
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   roster_t const & roster1,
+                                   roster_t const & roster2) :
+  restriction(includes, excludes, depth)
+{
+  map_nodes(node_map, roster1, included_paths, excluded_paths, known_paths);
+  map_nodes(node_map, roster2, included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths, unknown_node(known_paths));
+}
+
+node_restriction::node_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   parent_map const & rosters1,
+                                   roster_t const & roster2) :
+  restriction(includes, excludes, depth)
+{
+  for (parent_map::const_iterator i = rosters1.begin();
+       i != rosters1.end(); i++)
+    map_nodes(node_map, parent_roster(i),
+              included_paths, excluded_paths, known_paths);
+  map_nodes(node_map, roster2, included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths, unknown_node(known_paths));
+}
+
+
+path_restriction::path_restriction(std::vector<file_path> const & includes,
+                                   std::vector<file_path> const & excludes,
+                                   long depth,
+                                   validity_check vc) :
+  restriction(includes, excludes, depth)
+{
+  map_paths(path_map, included_paths, restricted_path::included);
+  map_paths(path_map, excluded_paths, restricted_path::excluded);
+
+  if (vc == check_paths)
+    validate_paths(included_paths, excluded_paths, unknown_path());
+}
+
+// The constructor variants that take a workspace argument are only used in
+// the main program, not the unit tests.  Conditional compilation lets us
+// leave work.o out of the unit_tester binary.
+#ifndef BUILD_UNIT_TESTS
+node_restriction::node_restriction(workspace & work,
                                    std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
                                    roster_t const & roster) :
   restriction(includes, excludes, depth)
 {
-  map_nodes(node_map, roster, included_paths, known_paths,
-            restricted_path::included);
-  map_nodes(node_map, roster, excluded_paths, known_paths,
-            restricted_path::excluded);
-
-  validate_roster_paths(WORK_ARG included_paths, excluded_paths, known_paths);
+  map_nodes(node_map, roster, included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths,
+                 unknown_unignored_node(known_paths, work));
 }
 
-node_restriction::node_restriction(WORK_ARGDECL
+node_restriction::node_restriction(workspace & work,
                                    std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
@@ -194,20 +265,14 @@ node_restriction::node_restriction(WORK_ARGDECL
                                    roster_t const & roster2) :
   restriction(includes, excludes, depth)
 {
-  map_nodes(node_map, roster1, included_paths, known_paths,
-            restricted_path::included);
-  map_nodes(node_map, roster1, excluded_paths, known_paths,
-            restricted_path::excluded);
+  map_nodes(node_map, roster1, included_paths, excluded_paths, known_paths);
+  map_nodes(node_map, roster2, included_paths, excluded_paths, known_paths);
 
-  map_nodes(node_map, roster2, included_paths, known_paths,
-            restricted_path::included);
-  map_nodes(node_map, roster2, excluded_paths, known_paths,
-            restricted_path::excluded);
-
-  validate_roster_paths(WORK_ARG included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths,
+                 unknown_unignored_node(known_paths, work));
 }
 
-node_restriction::node_restriction(WORK_ARGDECL
+node_restriction::node_restriction(workspace & work,
                                    std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
@@ -216,25 +281,16 @@ node_restriction::node_restriction(WORK_ARGDECL
   restriction(includes, excludes, depth)
 {
   for (parent_map::const_iterator i = rosters1.begin();
-       i != rosters1.end();
-       i++)
-    {
-      map_nodes(node_map, parent_roster(i), included_paths, known_paths,
-                restricted_path::included);
-      map_nodes(node_map, parent_roster(i), excluded_paths, known_paths,
-                restricted_path::excluded);
-    }
-
-  map_nodes(node_map, roster2, included_paths, known_paths,
-            restricted_path::included);
-  map_nodes(node_map, roster2, excluded_paths, known_paths,
-            restricted_path::excluded);
-
-  validate_roster_paths(WORK_ARG included_paths, excluded_paths, known_paths);
+       i != rosters1.end(); i++)
+    map_nodes(node_map, parent_roster(i),
+              included_paths, excluded_paths, known_paths);
+  map_nodes(node_map, roster2, included_paths, excluded_paths, known_paths);
+  validate_paths(included_paths, excluded_paths,
+                 unknown_unignored_node(known_paths, work));
 }
 
 
-path_restriction::path_restriction(WORK_ARGDECL
+path_restriction::path_restriction(workspace & work,
                                    std::vector<file_path> const & includes,
                                    std::vector<file_path> const & excludes,
                                    long depth,
@@ -245,8 +301,11 @@ path_restriction::path_restriction(WORK_ARGDECL
   map_paths(path_map, excluded_paths, restricted_path::excluded);
 
   if (vc == check_paths)
-    validate_workspace_paths(WORK_ARG included_paths, excluded_paths);
+    validate_paths(included_paths, excluded_paths,
+                   unknown_unignored_path(work));
 }
+#endif
+
 
 bool
 node_restriction::includes(roster_t const & roster, node_id nid) const

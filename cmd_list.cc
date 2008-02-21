@@ -32,6 +32,7 @@
 #include "vocab_cast.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "work.hh"
 
 using std::cout;
 using std::make_pair;
@@ -383,13 +384,13 @@ CMD(known, "known", "", CMD_REF(list), "",
     options::opts::depth | options::opts::exclude)
 {
   database db(app);
+  workspace work(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
+  work.get_current_roster_shape(db, nis, new_roster);
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(db, nis, new_roster);
-
-  node_restriction mask(app.work, args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         new_roster);
@@ -423,10 +424,10 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
     options::opts::depth | options::opts::exclude)
 {
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(app.work, roots, args_to_paths(app.opts.exclude_patterns),
+  path_restriction mask(work, roots, args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth);
   set<file_path> unknown, ignored;
 
@@ -434,7 +435,7 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(db, mask, roots, unknown, ignored);
+  work.find_unknown_and_ignored(db, mask, roots, unknown, ignored);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -454,16 +455,17 @@ CMD(missing, "missing", "", CMD_REF(list), "",
     options::opts::depth | options::opts::exclude)
 {
   database db(app);
+  workspace work(app);
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(db, nis, current_roster_shape);
-  node_restriction mask(app.work, args_to_paths(args),
+  work.get_current_roster_shape(db, nis, current_roster_shape);
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         current_roster_shape);
 
   set<file_path> missing;
-  app.work.find_missing(current_roster_shape, mask, missing);
+  work.find_missing(current_roster_shape, mask, missing);
 
   copy(missing.begin(), missing.end(),
        ostream_iterator<file_path>(cout, "\n"));
@@ -476,18 +478,17 @@ CMD(changed, "changed", "", CMD_REF(list), "",
     options::opts::depth | options::opts::exclude)
 {
   database db(app);
+  workspace work(app);
+
   parent_map parents;
   roster_t new_roster;
   temp_node_id_source nis;
+  work.get_current_roster_shape(db, nis, new_roster);
+  work.update_current_roster_from_filesystem(new_roster);
 
-  app.require_workspace();
+  work.get_parent_rosters(db, parents);
 
-  app.work.get_current_roster_shape(db, nis, new_roster);
-  app.work.update_current_roster_from_filesystem(new_roster);
-
-  app.work.get_parent_rosters(db, parents);
-
-  node_restriction mask(app.work, args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         parents, new_roster);

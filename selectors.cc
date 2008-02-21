@@ -16,6 +16,7 @@
 #include "project.hh"
 #include "globish.hh"
 #include "cmd.hh"
+#include "work.hh"
 
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -153,13 +154,12 @@ decode_selector(app_state & app,
         case sel_any_head:
           if (sel.empty())
             {
-              string msg = (sel_branch == type
-                            ? F("the empty branch selector b: refers to "
-                                "the current branch")
-                            : F("the empty head selector h: refers to "
-                                "the head of the current branch")
-                            ).str();
-              workspace::require_workspace(app.opts, msg);
+              i18n_format msg = sel_branch == type
+                ? F("the empty branch selector b: refers to "
+                    "the current branch")
+                : F("the empty head selector h: refers to "
+                    "the head of the current branch");
+              workspace::require_workspace(msg);
               sel = app.opts.branchname();
             }
           break;

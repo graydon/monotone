@@ -160,20 +160,20 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
     F("you must pass at least one path to 'revert' (perhaps '.')"));
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   parent_map parents;
-  app.work.get_parent_rosters(db, parents);
+  work.get_parent_rosters(db, parents);
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
   old_roster = parent_roster(parents.begin());
 
   {
     temp_node_id_source nis;
-    app.work.get_current_roster_shape(db, nis, new_roster);
+    work.get_current_roster_shape(db, nis, new_roster);
   }
 
-  node_restriction mask(app.work, args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_roster, new_roster);
@@ -185,7 +185,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
       // specified args and then make a restriction that includes only
       // these missing files.
       set<file_path> missing;
-      app.work.find_missing(new_roster, mask, missing);
+      work.find_missing(new_roster, mask, missing);
       if (missing.empty())
         {
           P(F("no missing files to revert"));
@@ -200,7 +200,7 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
           missing_files.push_back(*i);
         }
       // replace the original mask with a more restricted one
-      mask = node_restriction(app.work, missing_files,
+      mask = node_restriction(work, missing_files,
                               std::vector<file_path>(), app.opts.depth,
                               old_roster, new_roster);
     }
@@ -327,9 +327,9 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
   make_revision_for_workspace(parent_id(parents.begin()), preserved, remaining);
 
   // Race.
-  app.work.put_work_rev(remaining);
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
+  work.put_work_rev(remaining);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
 }
 
 CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
@@ -401,7 +401,7 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
     throw usage(execid);
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   set<file_path> paths;
   // spin through args and try to ensure that we won't have any collisions
@@ -416,7 +416,7 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
       // we'll treat this as a user (fatal) error.  it really wouldn't make
       // sense to add a dir to .mtn-ignore and then try to add it to the
       // project with a mkdir statement, but one never can tell...
-      N(app.opts.no_ignore || !app.work.ignore_file(fp),
+      N(app.opts.no_ignore || !work.ignore_file(fp),
         F("ignoring directory '%s' [see .mtn-ignore]") % fp);
 
       paths.insert(fp);
@@ -427,7 +427,7 @@ CMD(mkdir, "mkdir", "", CMD_REF(workspace), N_("[DIRECTORY...]"),
   for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     mkdir_p(*i);
 
-  app.work.perform_additions(db, paths, false, !app.opts.no_ignore);
+  work.perform_additions(db, paths, false, !app.opts.no_ignore);
 }
 
 CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
@@ -440,7 +440,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
     throw usage(execid);
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   vector<file_path> roots = args_to_paths(args);
 
@@ -448,7 +448,7 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
   bool add_recursive = app.opts.recursive;
   if (app.opts.unknown)
     {
-      path_restriction mask(app.work, roots,
+      path_restriction mask(work, roots,
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth);
       set<file_path> ignored;
@@ -457,15 +457,15 @@ CMD(add, "add", "", CMD_REF(workspace), N_("[PATH]..."),
       if (roots.empty())
         roots.push_back(file_path());
 
-      app.work.find_unknown_and_ignored(db, mask, roots, paths, ignored);
+      work.find_unknown_and_ignored(db, mask, roots, paths, ignored);
 
-      app.work.perform_additions(db, ignored,
+      work.perform_additions(db, ignored,
                                  add_recursive, !app.opts.no_ignore);
     }
   else
     paths = set<file_path>(roots.begin(), roots.end());
 
-  app.work.perform_additions(db, paths, add_recursive, !app.opts.no_ignore);
+  work.perform_additions(db, paths, add_recursive, !app.opts.no_ignore);
 }
 
 CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
@@ -477,19 +477,19 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
     throw usage(execid);
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   set<file_path> paths;
   if (app.opts.missing)
     {
       temp_node_id_source nis;
       roster_t current_roster_shape;
-      app.work.get_current_roster_shape(db, nis, current_roster_shape);
-      node_restriction mask(app.work, args_to_paths(args),
+      work.get_current_roster_shape(db, nis, current_roster_shape);
+      node_restriction mask(work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             current_roster_shape);
-      app.work.find_missing(current_roster_shape, mask, paths);
+      work.find_missing(current_roster_shape, mask, paths);
     }
   else
     {
@@ -497,7 +497,7 @@ CMD(drop, "drop", "rm", CMD_REF(workspace), N_("[PATH]..."),
       paths = set<file_path>(roots.begin(), roots.end());
     }
 
-  app.work.perform_deletions(db, paths,
+  work.perform_deletions(db, paths,
                              app.opts.recursive, app.opts.bookkeep_only);
 }
 
@@ -513,7 +513,7 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
     throw usage(execid);
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
 
   utf8 dstr = args.back();
   file_path dst_path = file_path_external(dstr);
@@ -533,7 +533,7 @@ CMD(rename, "rename", "mv", CMD_REF(workspace),
         N(get_path_status(dst_path) == path::directory,
           F(_("The specified target directory %s/ doesn't exist.")) % dst_path);
 
-  app.work.perform_rename(db, src_paths, dst_path, app.opts.bookkeep_only);
+  work.perform_rename(db, src_paths, dst_path, app.opts.bookkeep_only);
 }
 
 
@@ -551,10 +551,10 @@ CMD(pivot_root, "pivot_root", "", CMD_REF(workspace), N_("NEW_ROOT PUT_OLD"),
     throw usage(execid);
 
   database db(app);
-  app.require_workspace();
+  workspace work(app);
   file_path new_root = file_path_external(idx(args, 0));
   file_path put_old = file_path_external(idx(args, 1));
-  app.work.perform_pivot_root(db, new_root, put_old,
+  work.perform_pivot_root(db, new_root, put_old,
                               app.opts.bookkeep_only);
 }
 
@@ -569,16 +569,16 @@ CMD(status, "status", "", CMD_REF(informative), N_("[PATH]..."),
   temp_node_id_source nis;
 
   database db(app);
-  app.require_workspace();
-  app.work.get_parent_rosters(db, old_rosters);
-  app.work.get_current_roster_shape(db, nis, new_roster);
+  workspace work(app);
+  work.get_parent_rosters(db, old_rosters);
+  work.get_current_roster_shape(db, nis, new_roster);
 
-  node_restriction mask(app.work, args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_rosters, new_roster);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
+  work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, rev);
 
   utf8 summary;
@@ -671,6 +671,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   }
 
   workspace::create_workspace(app.opts, app.lua, dir);
+  workspace work(app);
 
   shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
   roster_t current_roster;
@@ -680,17 +681,17 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
 
   revision_t workrev;
   make_revision_for_workspace(revid, cset(), workrev);
-  app.work.put_work_rev(workrev);
+  work.put_work_rev(workrev);
 
   cset checkout;
   make_cset(*empty_roster, current_roster, checkout);
 
   content_merge_checkout_adaptor wca(db);
 
-  app.work.perform_content_update(db, checkout, wca, false);
+  work.perform_content_update(db, checkout, wca, false);
 
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
   guard.commit();
 }
 
@@ -712,8 +713,8 @@ CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
   temp_node_id_source nis;
 
   database db(app);
-  app.require_workspace();
-  app.work.get_current_roster_shape(db, nis, new_roster);
+  workspace work(app);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   file_path path = file_path_external(idx(args, 0));
 
@@ -738,12 +739,12 @@ CMD(attr_drop, "drop", "", CMD_REF(attr), N_("PATH [ATTR]"),
     }
 
   parent_map parents;
-  app.work.get_parent_rosters(db, parents);
+  work.get_parent_rosters(db, parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs(db);
+  work.put_work_rev(new_work);
+  work.update_any_attrs(db);
 }
 
 CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
@@ -760,8 +761,8 @@ CMD(attr_get, "get", "", CMD_REF(attr), N_("PATH [ATTR]"),
   temp_node_id_source nis;
 
   database db(app);
-  app.require_workspace();
-  app.work.get_current_roster_shape(db, nis, new_roster);
+  workspace work(app);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   file_path path = file_path_external(idx(args, 0));
 
@@ -811,8 +812,8 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
   temp_node_id_source nis;
 
   database db(app);
-  app.require_workspace();
-  app.work.get_current_roster_shape(db, nis, new_roster);
+  workspace work(app);
+  work.get_current_roster_shape(db, nis, new_roster);
 
   file_path path = file_path_external(idx(args, 0));
 
@@ -825,12 +826,12 @@ CMD(attr_set, "set", "", CMD_REF(attr), N_("PATH ATTR VALUE"),
   node->attrs[a_key] = make_pair(true, a_value);
 
   parent_map parents;
-  app.work.get_parent_rosters(db, parents);
+  work.get_parent_rosters(db, parents);
 
   revision_t new_work;
   make_revision_for_workspace(parents, new_roster, new_work);
-  app.work.put_work_rev(new_work);
-  app.work.update_any_attrs(db);
+  work.put_work_rev(new_work);
+  work.update_any_attrs(db);
 }
 
 // Name: get_attributes
@@ -861,7 +862,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
     F("wrong argument count"));
 
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   // retrieve the path
   file_path path = file_path_external(idx(args,0));
@@ -979,7 +980,7 @@ CMD_AUTOMATE(set_attribute, N_("PATH KEY VALUE"),
     F("wrong argument count"));
 
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   roster_t new_roster;
   temp_node_id_source nis;
@@ -1025,7 +1026,7 @@ CMD_AUTOMATE(drop_attribute, N_("PATH [KEY]"),
     F("wrong argument count"));
 
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   roster_t new_roster;
   temp_node_id_source nis;
@@ -1071,6 +1072,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 {
   database db(app);
   key_store keys(app);
+  workspace work(app);
   project_t project(db);
 
   utf8 log_message("");
@@ -1081,16 +1083,15 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   temp_node_id_source nis;
   cset excluded;
 
-  app.require_workspace();
-  app.work.get_parent_rosters(db, old_rosters);
-  app.work.get_current_roster_shape(db, nis, new_roster);
+  work.get_parent_rosters(db, old_rosters);
+  work.get_current_roster_shape(db, nis, new_roster);
 
-  node_restriction mask(app.work, args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
                         old_rosters, new_roster);
 
-  app.work.update_current_roster_from_filesystem(new_roster, mask);
+  work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
                            excluded, execid);
   restricted_rev.check_sane();
@@ -1131,7 +1132,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   process_commit_message_args(app.opts, log_message_given, log_message);
 
-  N(!(log_message_given && app.work.has_contents_user_log()),
+  N(!(log_message_given && work.has_contents_user_log()),
     F("_MTN/log is non-empty and log message "
       "was specified on command line\n"
       "perhaps move or delete _MTN/log,\n"
@@ -1140,7 +1141,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   if (!log_message_given)
     {
       // This call handles _MTN/log.
-      get_log_message_interactively(app.lua, app.work, restricted_rev,
+      get_log_message_interactively(app.lua, work, restricted_rev,
                                     app.opts.branchname, log_message);
 
       // We only check for empty log messages when the user entered them
@@ -1157,7 +1158,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
       // hit up-arrow to try again, you get an "_MTN/log non-empty and
       // message given on command line" error... which is annoying.
 
-      app.work.write_user_log(log_message);
+      work.write_user_log(log_message);
     }
 
   // If the hook doesn't exist, allow the message to be used.
@@ -1269,7 +1270,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   }
 
   // the workspace should remember the branch we just committed to.
-  app.work.set_ws_options(app.opts, true);
+  work.set_ws_options(app.opts, true);
 
   // the work revision is now whatever changes remain on top of the revision
   // we just checked in.
@@ -1277,10 +1278,10 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
   make_revision_for_workspace(restricted_rev_id, excluded, remaining);
 
   // small race condition here...
-  app.work.put_work_rev(remaining);
+  work.put_work_rev(remaining);
   P(F("committed revision %s") % restricted_rev_id);
 
-  app.work.blank_user_log();
+  work.blank_user_log();
 
   project.get_branch_heads(app.opts.branchname, heads,
                            app.opts.ignore_suspend_certs);
@@ -1290,8 +1291,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
       % ui.prog_name);
   }
 
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
 
   {
     // Tell lua what happened. Yes, we might lose some information
@@ -1335,10 +1336,11 @@ CMD_NO_WORKSPACE(setup, "setup", "", CMD_REF(tree), N_("[DIRECTORY]"),
     dir = ".";
 
   workspace::create_workspace(app.opts, app.lua, dir);
+  workspace work(app);
 
   revision_t rev;
   make_revision_for_workspace(revision_id(), cset(), rev);
-  app.work.put_work_rev(rev);
+  work.put_work_rev(rev);
 }
 
 CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
@@ -1400,12 +1402,13 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
      F("import directory '%s' is a file") % dir);
 
   workspace::create_workspace(app.opts, app.lua, dir);
+  workspace work(app);
 
   try
     {
       revision_t rev;
       make_revision_for_workspace(ident, cset(), rev);
-      app.work.put_work_rev(rev);
+      work.put_work_rev(rev);
 
       // prepare stuff for 'add' and so on.
       args_vector empty_args;
@@ -1452,9 +1455,13 @@ CMD_NO_WORKSPACE(migrate_workspace, "migrate_workspace", "", CMD_REF(tree),
     throw usage(execid);
 
   if (args.size() == 1)
-    go_to_workspace(system_path(idx(args, 0)));
+    {
+      go_to_workspace(system_path(idx(args, 0)));
+      workspace::found = true;
+    }
 
-  app.work.migrate_ws_format();
+  workspace work(app, false);
+  work.migrate_ws_format();
 }
 
 CMD(refresh_inodeprints, "refresh_inodeprints", "", CMD_REF(tree), "",
@@ -1463,9 +1470,9 @@ CMD(refresh_inodeprints, "refresh_inodeprints", "", CMD_REF(tree), "",
     options::opts::none)
 {
   database db(app);
-  app.require_workspace();
-  app.work.enable_inodeprints();
-  app.work.maybe_update_inodeprints(db);
+  workspace work(app);
+  work.enable_inodeprints();
+  work.maybe_update_inodeprints(db);
 }
 
 

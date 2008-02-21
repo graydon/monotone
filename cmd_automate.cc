@@ -17,6 +17,7 @@
 #include "ui.hh"
 #include "lua.hh"
 #include "lua_hooks.hh"
+#include "database.hh"
 
 using std::istream;
 using std::make_pair;

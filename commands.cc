@@ -25,6 +25,7 @@
 #include "constants.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "work.hh"
 
 #ifndef _WIN32
 #include "lexical_cast.hh"

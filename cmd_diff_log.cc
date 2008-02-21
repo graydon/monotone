@@ -26,6 +26,7 @@
 #include "transforms.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "work.hh"
 
 using std::cout;
 using std::deque;
@@ -357,11 +358,6 @@ prepare_diff(app_state & app,
 
   // initialize before transaction so we have a database to work with.
 
-  if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
-  else if (app.opts.revision_selectors.size() == 1)
-    app.require_workspace();
-
   database db(app);
   project_t project(db);
 
@@ -373,8 +369,9 @@ prepare_diff(app_state & app,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id old_rid;
       parent_map parents;
+      workspace work(app);
 
-      app.work.get_parent_rosters(db, parents);
+      work.get_parent_rosters(db, parents);
 
       // With no arguments, which parent should we diff against?
       N(parents.size() == 1,
@@ -383,14 +380,14 @@ prepare_diff(app_state & app,
 
       old_rid = parent_id(parents.begin());
       old_roster = parent_roster(parents.begin());
-      app.work.get_current_roster_shape(db, nis, new_roster);
+      work.get_current_roster_shape(db, nis, new_roster);
 
-      node_restriction mask(app.work, args_to_paths(args),
+      node_restriction mask(work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             old_roster, new_roster);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      work.update_current_roster_from_filesystem(new_roster, mask);
 
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
@@ -405,18 +402,19 @@ prepare_diff(app_state & app,
     {
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
+      workspace work(app);
 
       complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
       db.get_roster(r_old_id, old_roster);
-      app.work.get_current_roster_shape(db, nis, new_roster);
+      work.get_current_roster_shape(db, nis, new_roster);
 
-      node_restriction mask(app.work, args_to_paths(args),
+      node_restriction mask(work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
                             old_roster, new_roster);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      work.update_current_roster_from_filesystem(new_roster, mask);
 
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
@@ -437,11 +435,6 @@ prepare_diff(app_state & app,
 
       db.get_roster(r_old_id, old_roster);
       db.get_roster(r_new_id, new_roster);
-
-      node_restriction mask(app.work, args_to_paths(args),
-                            args_to_paths(app.opts.exclude_patterns),
-                            app.opts.depth,
-                            old_roster, new_roster);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -465,6 +458,11 @@ prepare_diff(app_state & app,
       //   (which fails for paths with @'s in them) or possibly //rev/file
       //   since versioned paths are required to be relative.
 
+      node_restriction mask(args_to_paths(args),
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
+                            old_roster, new_roster);
+      
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
  
@@ -650,11 +648,11 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
   if (app.opts.from.size() == 0)
     {
-      workspace::require_workspace(app.opts,
-                                   F("try passing a --from revision to start at").str());
+      workspace work(app,
+                     F("try passing a --from revision to start at"));
 
       revision_t rev;
-      app.work.get_work_rev(rev);
+      work.get_work_rev(rev);
       for (edge_map::const_iterator i = rev.edges.begin();
            i != rev.edges.end(); i++)
         {
@@ -689,14 +687,15 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
       // User wants to trace only specific files
       if (app.opts.from.size() == 0)
         {
+          workspace work(app);
           roster_t new_roster;
           parent_map parents;
           temp_node_id_source nis;
 
-          app.work.get_parent_rosters(db, parents);
-          app.work.get_current_roster_shape(db, nis, new_roster);
+          work.get_parent_rosters(db, parents);
+          work.get_current_roster_shape(db, nis, new_roster);
 
-          mask = node_restriction(app.work, args_to_paths(args),
+          mask = node_restriction(work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
                                   app.opts.depth, parents, new_roster);
         }
@@ -707,7 +706,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           roster_t roster;
           db.get_roster(first_rid, roster);
 
-          mask = node_restriction(app.work, args_to_paths(args),
+          mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
                                   app.opts.depth, roster);
         }

@@ -16,6 +16,7 @@
 #include "charset.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "database.hh"
 #include "project.hh"
 #include "keys.hh"
 #include "key_store.hh"

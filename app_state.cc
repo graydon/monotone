@@ -9,23 +9,13 @@
 
 #include "base.hh"
 #include "app_state.hh"
-#include "sanity.hh"
-
-using std::string;
 
 app_state::app_state()
-  : lua(this), work(lua),
-    mtn_automate_allowed(false)
+  : lua(this), mtn_automate_allowed(false)
 {}
 
 app_state::~app_state()
 {}
-
-void
-app_state::require_workspace()
-{
-  workspace::require_workspace(opts);
-}
 
 // Local Variables:
 // mode: C++

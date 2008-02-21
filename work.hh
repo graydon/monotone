@@ -20,6 +20,7 @@ class path_restriction;
 class node_restriction;
 struct content_merge_adaptor;
 class lua_hooks;
+class i18n_format;
 
 //
 // this file defines structures to deal with the "workspace" of a tree
@@ -91,13 +92,23 @@ private:
   // This is used by get_ws_options and set_ws_options.
   static bool branch_is_sticky;
 
+  // This is used by a lot of instance methods.
+  lua_hooks & lua;
+
+  // Interfaces.
 public:
-  static void require_workspace(options const & opts,
-                                std::string const & explanation = "");
+  static void require_workspace(i18n_format const & explanation);
 
   static void create_workspace(options const & opts,
                                lua_hooks & lua,
                                system_path const & new_dir);
+
+  // Constructor.  In normal usage, calling this transitions from the state
+  // where there may or may not be a workspace to the state where there
+  // definitely is.
+  explicit workspace(app_state & app, bool writeback_options = true);
+  explicit workspace(app_state & app, i18n_format const & explanation,
+                     bool writeback_options = true);
 
   // Methods for manipulating the workspace's content.
   void find_missing(roster_t const & new_roster_shape,
@@ -230,13 +241,6 @@ public:
   // that exists, is unknown, and matches one of these regexps is treated as
   // if it did not exist, instead of being an unknown file.
   bool ignore_file(file_path const & path);
-
-  // constructor and locals.
-  workspace(lua_hooks & lua)
-    : lua(lua)
-  {}
-private:
-  lua_hooks & lua;
 };
 
 // Local Variables:
