@@ -10,11 +10,17 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "vocab.hh"
-#include "database.hh"
+class system_path;
+class database;
+class key_store;
+class project_t;
+class branch_name;
 
-void test_parse_rcs_file(system_path const & filename, database & db);
-void import_cvs_repo(system_path const & cvsroot, app_state & app);
+void test_parse_rcs_file(system_path const & filename);
+void import_cvs_repo(project_t & project,
+                     key_store & keys,
+                     system_path const & cvsroot,
+                     branch_name const & branchname);
 
 // Local Variables:
 // mode: C++

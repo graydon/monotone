@@ -9,7 +9,7 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <map>
+#include "safe_map.hh"
 #include <utility>
 #include <iostream>
 #include <iterator>
@@ -23,6 +23,7 @@
 #include "database.hh"
 #include "globish.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "restrictions.hh"
 #include "revision.hh"
 #include "simplestring_xform.hh"
@@ -30,6 +31,8 @@
 #include "ui.hh"
 #include "vocab_cast.hh"
 #include "app_state.hh"
+#include "project.hh"
+#include "work.hh"
 
 using std::cout;
 using std::make_pair;
@@ -57,16 +60,16 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   if (args.size() != 1)
     throw usage(execid);
 
+  database db(app);
+  project_t project(db);
   vector<cert> certs;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   revision_id ident;
-  complete(app, idx(args, 0)(), ident);
+  complete(app,  project, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
-  // FIXME_PROJECTS: after projects are implemented,
-  // use the app.db version instead if no project is specified.
-  app.get_project().get_revision_certs(ident, ts);
+  project.get_revision_certs(ident, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
@@ -76,7 +79,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
+            !db.public_key_exists(idx(certs, i).key))
           P(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
@@ -104,7 +107,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
   for (size_t i = 0; i < certs.size(); ++i)
     {
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(db, idx(certs, i));
       cert_value tv;
       decode_base64(idx(certs, i).value, tv);
       string washed;
@@ -157,6 +160,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
+  key_store keys(app);
+
   vector<rsa_keypair_id> pubs;
   vector<rsa_keypair_id> privkeys;
   globish pattern("*");
@@ -165,13 +171,10 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
   else if (args.size() > 1)
     throw usage(execid);
 
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids(pattern, pubs);
-      guard.commit();
-    }
-  app.keys.get_key_ids(pattern, privkeys);
+  if (db.database_specified())
+    db.get_key_ids(pattern, pubs);
+
+  keys.get_key_ids(pattern, privkeys);
 
   // true if it is in the database, false otherwise
   map<rsa_keypair_id, bool> pubkeys;
@@ -190,13 +193,13 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           pubkeys[*i] = false;
           all_in_db = false;
         }
-      else if (app.db.database_specified())
+      else if (db.database_specified())
         {
           // we've found a key that should have both a public and a private version
           base64<rsa_pub_key> pub_key;
           keypair priv_key;
-          app.db.get_key(*i, pub_key);
-          app.keys.get_key_pair(*i, priv_key);
+          db.get_key(*i, pub_key);
+          keys.get_key_pair(*i, priv_key);
           if (!keys_match(*i, pub_key, *i, priv_key.pub))
             bad_keys.insert(*i);
         }
@@ -214,11 +217,11 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           bool indb = i->second;
 
           if (indb)
-            app.db.get_key(keyid, pub_encoded);
+            db.get_key(keyid, pub_encoded);
           else
             {
               keypair kp;
-              app.keys.get_key_pair(keyid, kp);
+              keys.get_key_pair(keyid, kp);
               pub_encoded = kp.pub;
             }
           key_hash_code(keyid, pub_encoded, hash_code);
@@ -229,7 +232,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         }
       if (!all_in_db)
         cout << (F("(*) - only in %s/")
-                 % app.keys.get_key_dir()) << '\n';
+                 % keys.get_key_dir()) << '\n';
       cout << '\n';
     }
 
@@ -241,7 +244,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         {
           keypair kp;
           hexenc<id> hash_code;
-          app.keys.get_key_pair(*i, kp);
+          keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
           cout << hash_code << ' ' << *i << '\n';
         }
@@ -279,9 +282,11 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
   else if (args.size() > 1)
     throw usage(execid);
 
+  database db(app);
+  project_t project(db);
   globish exc(app.opts.exclude_patterns);
   set<branch_name> names;
-  app.get_project().get_branch_list(inc, names, !app.opts.ignore_suspend_certs);
+  project.get_branch_list(inc, names, !app.opts.ignore_suspend_certs);
 
   for (set<branch_name>::const_iterator i = names.begin();
        i != names.end(); ++i)
@@ -294,8 +299,9 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   map<branch_name, epoch_data> epochs;
-  app.db.get_epochs(epochs);
+  db.get_epochs(epochs);
 
   if (args.size() == 0)
     {
@@ -324,8 +330,10 @@ CMD(tags, "tags", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
   set<tag_t> tags;
-  app.get_project().get_tags(tags);
+  project_t project(db);
+  project.get_tags(tags);
 
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
@@ -354,8 +362,9 @@ CMD(vars, "vars", "", CMD_REF(list), "[DOMAIN]",
   else
     throw usage(execid);
 
+  database db(app);
   map<var_key, var_value> vars;
-  app.db.get_vars(vars);
+  db.get_vars(vars);
   for (map<var_key, var_value>::const_iterator i = vars.begin();
        i != vars.end(); ++i)
     {
@@ -374,16 +383,17 @@ CMD(known, "known", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
+  workspace work(app);
+
   roster_t new_roster;
   temp_node_id_source nis;
+  work.get_current_roster_shape(db, nis, new_roster);
 
-  app.require_workspace();
-  app.work.get_current_roster_shape(new_roster, nis);
-
-  node_restriction mask(args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        new_roster, app);
+                        new_roster);
 
   // to be printed sorted
   vector<file_path> print_paths;
@@ -413,18 +423,19 @@ CMD(unknown, "unknown", "ignored", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
-  app.require_workspace();
+  database db(app);
+  workspace work(app);
 
   vector<file_path> roots = args_to_paths(args);
-  path_restriction mask(roots, args_to_paths(app.opts.exclude_patterns),
-                        app.opts.depth, app);
+  path_restriction mask(work, roots, args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth);
   set<file_path> unknown, ignored;
 
   // if no starting paths have been specified use the workspace root
   if (roots.empty())
     roots.push_back(file_path());
 
-  app.work.find_unknown_and_ignored(mask, roots, unknown, ignored);
+  work.find_unknown_and_ignored(db, mask, roots, unknown, ignored);
 
   utf8 const & realname = execid[execid.size() - 1];
   if (realname() == "ignored")
@@ -443,16 +454,18 @@ CMD(missing, "missing", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
+  workspace work(app);
   temp_node_id_source nis;
   roster_t current_roster_shape;
-  app.work.get_current_roster_shape(current_roster_shape, nis);
-  node_restriction mask(args_to_paths(args),
+  work.get_current_roster_shape(db, nis, current_roster_shape);
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        current_roster_shape, app);
+                        current_roster_shape);
 
   set<file_path> missing;
-  app.work.find_missing(current_roster_shape, mask, missing);
+  work.find_missing(current_roster_shape, mask, missing);
 
   copy(missing.begin(), missing.end(),
        ostream_iterator<file_path>(cout, "\n"));
@@ -464,21 +477,21 @@ CMD(changed, "changed", "", CMD_REF(list), "",
     "",
     options::opts::depth | options::opts::exclude)
 {
+  database db(app);
+  workspace work(app);
+
   parent_map parents;
   roster_t new_roster;
   temp_node_id_source nis;
+  work.get_current_roster_shape(db, nis, new_roster);
+  work.update_current_roster_from_filesystem(new_roster);
 
-  app.require_workspace();
+  work.get_parent_rosters(db, parents);
 
-  app.work.get_current_roster_shape(new_roster, nis);
-  app.work.update_current_roster_from_filesystem(new_roster);
-
-  app.work.get_parent_rosters(parents);
-
-  node_restriction mask(args_to_paths(args),
+  node_restriction mask(work, args_to_paths(args),
                         args_to_paths(app.opts.exclude_patterns),
                         app.opts.depth,
-                        parents, new_roster, app);
+                        parents, new_roster);
 
   revision_t rrev;
   make_restricted_revision(parents, new_roster, mask, rrev);
@@ -570,20 +583,20 @@ CMD_AUTOMATE(keys, "",
 {
   N(args.size() == 0,
     F("no arguments needed"));
-  
+
+  database db(app);
+  key_store keys(app);
+
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
   map<string, boost::tuple<hexenc<id>, hexenc<id>,
                            vector<string>,
                            vector<string> > > items;
-  if (app.db.database_specified())
-    {
-      transaction_guard guard(app.db, false);
-      app.db.get_key_ids(dbkeys);
-      guard.commit();
-    }
-  app.keys.get_key_ids(kskeys);
+  if (db.database_specified())
+    db.get_key_ids(dbkeys);
+
+  keys.get_key_ids(kskeys);
 
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
        i != dbkeys.end(); i++)
@@ -591,7 +604,7 @@ CMD_AUTOMATE(keys, "",
       base64<rsa_pub_key> pub_encoded;
       hexenc<id> hash_code;
 
-      app.db.get_key(*i, pub_encoded);
+      db.get_key(*i, pub_encoded);
       key_hash_code(*i, pub_encoded, hash_code);
       items[(*i)()].get<0>() = hash_code;
       items[(*i)()].get<2>().push_back("database");
@@ -602,7 +615,7 @@ CMD_AUTOMATE(keys, "",
     {
       keypair kp;
       hexenc<id> privhash, pubhash;
-      app.keys.get_key_pair(*i, kp);
+      keys.get_key_pair(*i, kp);
       key_hash_code(*i, kp.pub, pubhash);
       key_hash_code(*i, kp.priv, privhash);
       items[(*i)()].get<0>() = pubhash;
@@ -666,18 +679,21 @@ CMD_AUTOMATE(certs, N_("REV"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+  project_t project(db);
+
   vector<cert> certs;
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   revision_id rid(idx(args, 0)());
-  N(app.db.revision_exists(rid), F("No such revision %s") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
   hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
-  // use the app.db version instead if no project is specified.
-  app.get_project().get_revision_certs(rid, ts);
+  // use the db version instead if no project is specified.
+  project.get_revision_certs(rid, ts);
 
   for (size_t i = 0; i < ts.size(); ++i)
     certs.push_back(idx(ts, i).inner());
@@ -687,7 +703,7 @@ CMD_AUTOMATE(certs, N_("REV"),
     for (size_t i = 0; i < certs.size(); ++i)
       {
         if (checked.find(idx(certs, i).key) == checked.end() &&
-            !app.db.public_key_exists(idx(certs, i).key))
+            !db.public_key_exists(idx(certs, i).key))
           W(F("no public key '%s' found in database")
             % idx(certs, i).key);
         checked.insert(idx(certs, i).key);
@@ -703,7 +719,7 @@ CMD_AUTOMATE(certs, N_("REV"),
   for (size_t i = 0; i < certs.size(); ++i)
     {
       basic_io::stanza st;
-      cert_status status = check_cert(app, idx(certs, i));
+      cert_status status = check_cert(db, idx(certs, i));
       cert_value tv;
       cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;

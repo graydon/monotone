@@ -24,6 +24,7 @@ struct uri;
 class app_state;
 struct lua_State;
 struct globish;
+struct options;
 
 extern app_state* get_app_state(lua_State *L);
 
@@ -31,19 +32,15 @@ class lua_hooks
 {
   struct lua_State * st;
 
-public:
-  lua_hooks();
-  ~lua_hooks();
-#ifdef BUILD_UNIT_TESTS
-  void add_test_hooks();
-#endif
-  void set_app(app_state *_app);
-  bool check_lua_state(lua_State * st) const;
   void add_std_hooks();
-  void workspace_rcfilename(bookkeeping_path & file);
-  void default_rcfilename(system_path & file);
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
+  
+public:
+  lua_hooks(app_state * app);
+  ~lua_hooks();
+  bool check_lua_state(lua_State * st) const;
+  void load_rcfiles(options & opts);
   bool hook_exists(std::string const & func_name);
 
   // cert hooks

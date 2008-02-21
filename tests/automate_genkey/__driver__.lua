@@ -40,7 +40,7 @@ for _,line in pairs(parsed) do
   if string.find(line.name, "private") then locs[key].priv = true end
   if string.find(line.name, "public") then locs[key].pub = true end
 end
-check(locs["foo@baz.com"].db == false)
+check(locs["foo@baz.com"].db == true)
 check(locs["foo@baz.com"].ks == true)
 check(locs["foo@baz.com"].priv == true)
 check(locs["foo@baz.com"].pub == true)

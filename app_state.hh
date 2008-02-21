@@ -10,95 +10,22 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-class app_state;
-class lua_hooks;
-
-#include <map>
-#include "vector.hh"
-
-#include <boost/shared_ptr.hpp>
-
-#include "database.hh"
-#include "key_store.hh"
-#include "lua_hooks.hh"
 #include "options.hh"
-#include "paths.hh"
-#include "project.hh"
-#include "vocab.hh"
-#include "work.hh"
-#include "ssh_agent.hh"
+#include "lua_hooks.hh"
 
-namespace Botan
-{
-  class PK_Signer;
-  class RSA_PrivateKey;
-  class PK_Verifier;
-  class RSA_PublicKey;
-};
-
-// This class is supposed to hold all (or.. well, most) of the state
-// of the application, barring some unfortunate static objects like
-// the debugging / logging system and the command objects, for the
-// time being. The vague intent being to make life easier for anyone
-// who wants to embed this program as a library someday.
+// This class used to hold most of the state of the application (hence the
+// name) but now it's just a wrapper around the options and lua_hooks
+// objects, plus one bit of state needed by the Lua extension interfaces.
 
 class app_state
 {
 public:
-  database db;
-  lua_hooks lua;
-  key_store keys;
-  workspace work;
-  ssh_agent agent;
-
-  options opts;
-
-  bool found_workspace;
-  bool branch_is_sticky;
-  bool mtn_automate_allowed;
-
-  // These are used to cache signers/verifiers (if the hook allows).
-  // They can't be function-static variables in key.cc, since they
-  // must be destroyed before the Botan deinitialize() function is
-  // called.
-
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Signer>,
-        boost::shared_ptr<Botan::RSA_PrivateKey> > > signers;
-  std::map<rsa_keypair_id,
-    std::pair<boost::shared_ptr<Botan::PK_Verifier>,
-        boost::shared_ptr<Botan::RSA_PublicKey> > > verifiers;
-
-  void allow_workspace();
-  void process_options();
-  void require_workspace(std::string const & explanation = "");
-  void create_workspace(system_path const & dir);
-
-  // Set the branch name. If you only invoke set_branch, the branch
-  // name is not sticky (and won't be written to the workspace and
-  // reused by subsequent monotone invocations).  Commands which
-  // switch the working to a different branch should invoke
-  // make_branch_sticky (before require_workspace because this
-  // function updates the workspace).
-
-  void make_branch_sticky();
-
-private:
-  project_t project;
-public:
-  //project_t & get_project(string const & name);
-  project_t & get_project(); // get_project(opts.project) or I()
-
-  void set_database(system_path const & filename);
-  void set_key_dir(system_path const & filename);
-  void set_diff_format(diff_type dtype);
-
   explicit app_state();
   ~app_state();
 
-private:
-  void load_rcfiles();
-  void write_options();
+  options opts;
+  lua_hooks lua;
+  bool mtn_automate_allowed;
 };
 
 // Local Variables:

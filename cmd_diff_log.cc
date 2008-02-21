@@ -25,6 +25,8 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "app_state.hh"
+#include "project.hh"
+#include "work.hh"
 
 using std::cout;
 using std::deque;
@@ -182,9 +184,8 @@ changes_summary::print(ostream & os, size_t max_cols) const
 }
 
 static void
-do_external_diff(cset const & cs,
-                 app_state & app,
-                 bool new_is_archived)
+do_external_diff(options & opts, lua_hooks & lua, database & db,
+                 cset const & cs, bool new_is_archived)
 {
   for (map<file_path, pair<file_id, file_id> >::const_iterator
          i = cs.deltas_applied.begin();
@@ -194,13 +195,13 @@ do_external_diff(cset const & cs,
       data data_new;
 
       file_data f_old;
-      app.db.get_file_version(delta_entry_src(i), f_old);
+      db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
 
       if (new_is_archived)
         {
           file_data f_new;
-          app.db.get_file_version(delta_entry_dst(i), f_new);
+          db.get_file_version(delta_entry_dst(i), f_new);
           data_new = f_new.inner();
         }
       else
@@ -213,23 +214,26 @@ do_external_diff(cset const & cs,
           guess_binary(data_new()))
         is_binary = true;
 
-      app.lua.hook_external_diff(delta_entry_path(i),
-                                 data_old,
-                                 data_new,
-                                 is_binary,
-                                 app.opts.external_diff_args_given,
-                                 app.opts.external_diff_args,
-                                 delta_entry_src(i).inner()(),
-                                 delta_entry_dst(i).inner()());
+      lua.hook_external_diff(delta_entry_path(i),
+                             data_old,
+                             data_new,
+                             is_binary,
+                             opts.external_diff_args_given,
+                             opts.external_diff_args,
+                             delta_entry_src(i).inner()(),
+                             delta_entry_dst(i).inner()());
     }
 }
 
 static void
-dump_diffs(cset const & cs,
-           app_state & app,
-           bool new_is_archived,
-           std::ostream & output,
+dump_diffs(lua_hooks & lua,
+           database & db,
+           cset const & cs,
            set<file_path> const & paths,
+           std::ostream & output,
+           diff_type diff_format,
+           bool new_is_archived,
+           bool show_encloser,
            bool limit_paths = false)
 {
   // 60 is somewhat arbitrary, but less than 80
@@ -249,7 +253,7 @@ dump_diffs(cset const & cs,
       if (new_is_archived)
         {
           file_data dat;
-          app.db.get_file_version(i->second, dat);
+          db.get_file_version(i->second, dat);
           unpacked = dat.inner();
         }
       else
@@ -258,15 +262,15 @@ dump_diffs(cset const & cs,
         }
 
       std::string pattern("");
-      if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(i->first, pattern);
+      if (show_encloser)
+        lua.hook_get_encloser_pattern(i->first, pattern);
 
       make_diff(i->first.as_internal(),
                 i->first.as_internal(),
                 i->second,
                 i->second,
                 data(), unpacked,
-                output, app.opts.diff_format, pattern);
+                output, diff_format, pattern);
     }
 
   map<file_path, file_path> reverse_rename_map;
@@ -290,13 +294,13 @@ dump_diffs(cset const & cs,
 
       output << patch_sep << '\n';
 
-      app.db.get_file_version(delta_entry_src(i), f_old);
+      db.get_file_version(delta_entry_src(i), f_old);
       data_old = f_old.inner();
 
       if (new_is_archived)
         {
           file_data f_new;
-          app.db.get_file_version(delta_entry_dst(i), f_new);
+          db.get_file_version(delta_entry_dst(i), f_new);
           data_new = f_new.inner();
         }
       else
@@ -312,34 +316,38 @@ dump_diffs(cset const & cs,
         src_path = re->second;
 
       std::string pattern("");
-      if (!app.opts.no_show_encloser)
-        app.lua.hook_get_encloser_pattern(src_path,
-                                          pattern);
+      if (show_encloser)
+        lua.hook_get_encloser_pattern(src_path, pattern);
 
       make_diff(src_path.as_internal(),
                 dst_path.as_internal(),
                 delta_entry_src(i),
                 delta_entry_dst(i),
                 data_old, data_new,
-                output, app.opts.diff_format, pattern);
+                output, diff_format, pattern);
     }
 }
 
 static void
-dump_diffs(cset const & cs,
-           app_state & app,
+dump_diffs(lua_hooks & lua,
+           database & db,
+           cset const & cs,
+           std::ostream & output,
+           diff_type diff_format,
            bool new_is_archived,
-           std::ostream & output)
+           bool show_encloser)
 {
   set<file_path> dummy;
-  dump_diffs(cs, app, new_is_archived, output, dummy);
+  dump_diffs(lua, db, cs, dummy, output,
+             diff_format, new_is_archived, show_encloser);
 }
 
 // common functionality for diff and automate content_diff to determine
 // revisions and rosters which should be diffed
+// FIXME needs app_state for require_workspace
 static void
-prepare_diff(cset & included,
-             app_state & app,
+prepare_diff(app_state & app,
+             cset & included,
              args_vector args,
              bool & new_is_archived,
              std::string & revheader)
@@ -350,10 +358,8 @@ prepare_diff(cset & included,
 
   // initialize before transaction so we have a database to work with.
 
-  if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
-  else if (app.opts.revision_selectors.size() == 1)
-    app.require_workspace();
+  database db(app);
+  project_t project(db);
 
   N(app.opts.revision_selectors.size() <= 2,
     F("more than two revisions given"));
@@ -363,8 +369,9 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id old_rid;
       parent_map parents;
+      workspace work(app);
 
-      app.work.get_parent_rosters(parents);
+      work.get_parent_rosters(db, parents);
 
       // With no arguments, which parent should we diff against?
       N(parents.size() == 1,
@@ -373,14 +380,14 @@ prepare_diff(cset & included,
 
       old_rid = parent_id(parents.begin());
       old_roster = parent_roster(parents.begin());
-      app.work.get_current_roster_shape(new_roster, nis);
+      work.get_current_roster_shape(db, nis, new_roster);
 
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      work.update_current_roster_from_filesystem(new_roster, mask);
 
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
@@ -395,20 +402,19 @@ prepare_diff(cset & included,
     {
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id;
+      workspace work(app);
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
-      app.db.get_roster(r_old_id, old_roster);
-      app.work.get_current_roster_shape(new_roster, nis);
+      db.get_roster(r_old_id, old_roster);
+      work.get_current_roster_shape(db, nis, new_roster);
 
-      node_restriction mask(args_to_paths(args),
+      node_restriction mask(work, args_to_paths(args),
                             args_to_paths(app.opts.exclude_patterns),
                             app.opts.depth,
-                            old_roster, new_roster, app);
+                            old_roster, new_roster);
 
-      app.work.update_current_roster_from_filesystem(new_roster, mask);
+      work.update_current_roster_from_filesystem(new_roster, mask);
 
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
@@ -424,21 +430,11 @@ prepare_diff(cset & included,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app, project, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
-      N(app.db.revision_exists(r_old_id),
-        F("no such revision '%s'") % r_old_id);
-      N(app.db.revision_exists(r_new_id),
-        F("no such revision '%s'") % r_new_id);
-
-      app.db.get_roster(r_old_id, old_roster);
-      app.db.get_roster(r_new_id, new_roster);
-
-      node_restriction mask(args_to_paths(args),
-                            args_to_paths(app.opts.exclude_patterns),
-                            app.opts.depth,
-                            old_roster, new_roster, app);
+      db.get_roster(r_old_id, old_roster);
+      db.get_roster(r_new_id, new_roster);
 
       // FIXME: this is *possibly* a UI bug, insofar as we
       // look at the restriction name(s) you provided on the command
@@ -462,6 +458,11 @@ prepare_diff(cset & included,
       //   (which fails for paths with @'s in them) or possibly //rev/file
       //   since versioned paths are required to be relative.
 
+      node_restriction mask(args_to_paths(args),
+                            args_to_paths(app.opts.exclude_patterns),
+                            app.opts.depth,
+                            old_roster, new_roster);
+      
       make_restricted_roster(old_roster, new_roster, restricted_roster, 
                              mask);
  
@@ -497,8 +498,9 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
   cset included;
   std::string revs;
   bool new_is_archived;
+  database db(app);
 
-  prepare_diff(included, app, args, new_is_archived, revs);
+  prepare_diff(app, included, args, new_is_archived, revs);
 
   data summary;
   write_cset(included, summary);
@@ -521,11 +523,13 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
 
   if (app.opts.diff_format == external_diff)
     {
-      do_external_diff(included, app, new_is_archived);
+      do_external_diff(app.opts, app.lua, db, included, new_is_archived);
     }
   else
     {
-      dump_diffs(included, app, new_is_archived, cout);
+      dump_diffs(app.lua, db, included, cout,
+                 app.opts.diff_format, new_is_archived,
+                 !app.opts.no_show_encloser);
     }
 }
 
@@ -549,15 +553,17 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
   cset included;
   std::string dummy_header;
   bool new_is_archived;
+  database db(app);
 
-  prepare_diff(included, app, args, new_is_archived, dummy_header);
+  prepare_diff(app, included, args, new_is_archived, dummy_header);
 
-  dump_diffs(included, app, new_is_archived, output);
+  dump_diffs(app.lua, db, included, output,
+             app.opts.diff_format, new_is_archived, !app.opts.no_show_encloser);
 }
 
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
           string label, string separator, bool multiline, bool newline)
 {
   vector< revision<cert> > certs;
@@ -566,7 +572,7 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
   if (multiline)
     newline = true;
 
-  app.get_project().get_revision_certs_by_name(id, name, certs);
+  project.get_revision_certs_by_name(id, name, certs);
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
@@ -589,16 +595,16 @@ log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
 }
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name,
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
           string label, bool multiline)
 {
-  log_certs(os, app, id, name, label, label, multiline, true);
+  log_certs(project, os, id, name, label, label, multiline, true);
 }
 
 static void
-log_certs(ostream & os, app_state & app, revision_id id, cert_name name)
+log_certs(project_t & project, ostream & os, revision_id id, cert_name name)
 {
-  log_certs(os, app, id, name, " ", ",", false, false);
+  log_certs(project, os, id, name, " ", ",", false, false);
 }
 
 
@@ -628,8 +634,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
     | options::opts::no_merges | options::opts::no_files
     | options::opts::no_graph)
 {
-  if (app.opts.from.size() == 0)
-    app.require_workspace("try passing a --from revision to start at");
+  database db(app);
+  project_t project(db);
 
   long last = app.opts.last;
   long next = app.opts.next;
@@ -642,13 +648,16 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
   if (app.opts.from.size() == 0)
     {
+      workspace work(app,
+                     F("try passing a --from revision to start at"));
+
       revision_t rev;
-      app.work.get_work_rev(rev);
+      work.get_work_rev(rev);
       for (edge_map::const_iterator i = rev.edges.begin();
            i != rev.edges.end(); i++)
         {
           rev_height height;
-          app.db.get_rev_height(edge_old_revision(i), height);
+          db.get_rev_height(edge_old_revision(i), height);
           frontier.push(make_pair(height, edge_old_revision(i)));
         }
     }
@@ -658,12 +667,12 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
               rev_height height;
-              app.db.get_rev_height(*j, height);
+              db.get_rev_height(*j, height);
               frontier.push(make_pair(height, *j));
             }
           if (i == app.opts.from.begin())
@@ -678,27 +687,28 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
       // User wants to trace only specific files
       if (app.opts.from.size() == 0)
         {
+          workspace work(app);
           roster_t new_roster;
           parent_map parents;
           temp_node_id_source nis;
 
-          app.work.get_parent_rosters(parents);
-          app.work.get_current_roster_shape(new_roster, nis);
+          work.get_parent_rosters(db, parents);
+          work.get_current_roster_shape(db, nis, new_roster);
 
-          mask = node_restriction(args_to_paths(args),
+          mask = node_restriction(work, args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, parents, new_roster, app);
+                                  app.opts.depth, parents, new_roster);
         }
       else
         {
           // FIXME_RESTRICTIONS: should this add paths from the rosters of
           // all selected revs?
           roster_t roster;
-          app.db.get_roster(first_rid, roster);
+          db.get_roster(first_rid, roster);
 
           mask = node_restriction(args_to_paths(args),
                                   args_to_paths(app.opts.exclude_patterns), 
-                                  app.opts.depth, roster, app);
+                                  app.opts.depth, roster);
         }
     }
 
@@ -713,7 +723,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           MM(*i);
           set<revision_id> rids;
-          complete(app, (*i)(), rids);
+          complete(app, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -735,11 +745,11 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           MM(relatives);
           if (next > 0)
             {
-              app.db.get_revision_children(rid, relatives);
+              db.get_revision_children(rid, relatives);
             }
           else
             {
-              app.db.get_revision_parents(rid, relatives);
+              db.get_revision_parents(rid, relatives);
             }
 
           for (set<revision_id>::const_iterator i = relatives.begin();
@@ -787,7 +797,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         }
 
       seen.insert(rid);
-      app.db.get_revision(rid, rev);
+      db.get_revision(rid, rev);
 
       set<revision_id> marked_revs;
 
@@ -795,7 +805,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           roster_t roster;
           marking_map markings;
-          app.db.get_roster(rid, roster, markings);
+          db.get_roster(rid, roster, markings);
 
           // get all revision ids mentioned in one of the markings
           for (marking_map::const_iterator m = markings.begin();
@@ -819,9 +829,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (!use_markings || marked_revs.find(rid) != marked_revs.end())
             {
               set<node_id> nodes_modified;
-              select_nodes_modified_by_rev(rev, roster,
-                                           nodes_modified,
-                                           app);
+              select_nodes_modified_by_rev(db, rev, roster,
+                                           nodes_modified);
 
               for (set<node_id>::const_iterator n = nodes_modified.begin();
                    n != nodes_modified.end(); ++n)
@@ -856,9 +865,9 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
       else
         {
           if (next > 0)
-            app.db.get_revision_children(rid, interesting);
+            db.get_revision_children(rid, interesting);
           else // walk backwards by default
-            app.db.get_revision_parents(rid, interesting);
+            db.get_revision_parents(rid, interesting);
         }
 
       if (print_this)
@@ -867,15 +876,16 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           if (app.opts.brief)
             {
               out << rid;
-              log_certs(out, app, rid, author_name);
+              log_certs(project, out, rid, author_name);
               if (app.opts.no_graph)
-                log_certs(out, app, rid, date_name);
+                log_certs(project, out, rid, date_name);
               else
                 {
                   out << '\n';
-                  log_certs(out, app, rid, date_name, string(), string(), false, false);
+                  log_certs(project, out, rid, date_name,
+                            string(), string(), false, false);
                 }
-              log_certs(out, app, rid, branch_name);
+              log_certs(project, out, rid, branch_name);
               out << '\n';
             }
           else
@@ -898,10 +908,10 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                    anc != ancestors.end(); ++anc)
                 out << "Ancestor: " << *anc << '\n';
 
-              log_certs(out, app, rid, author_name, "Author: ", false);
-              log_certs(out, app, rid, date_name,   "Date: ",   false);
-              log_certs(out, app, rid, branch_name, "Branch: ", false);
-              log_certs(out, app, rid, tag_name,    "Tag: ",    false);
+              log_certs(project, out, rid, author_name, "Author: ", false);
+              log_certs(project, out, rid, date_name,   "Date: ",   false);
+              log_certs(project, out, rid, branch_name, "Branch: ", false);
+              log_certs(project, out, rid, tag_name,    "Tag: ",    false);
 
               if (!app.opts.no_files && !csum.cs.empty())
                 {
@@ -910,16 +920,17 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
                   out << '\n';
                 }
 
-              log_certs(out, app, rid, changelog_name, "ChangeLog: ", true);
-              log_certs(out, app, rid, comment_name,   "Comments: ",  true);
+              log_certs(project, out, rid, changelog_name, "ChangeLog: ", true);
+              log_certs(project, out, rid, comment_name,   "Comments: ",  true);
             }
 
           if (app.opts.diffs)
             {
               for (edge_map::const_iterator e = rev.edges.begin();
                    e != rev.edges.end(); ++e)
-                dump_diffs(edge_changes(e), app, true, out,
-                           diff_paths, !mask.empty());
+                dump_diffs(app.lua, db, edge_changes(e), diff_paths, out,
+                           app.opts.diff_format, true,
+                           !app.opts.no_show_encloser, !mask.empty());
             }
 
           if (next > 0)
@@ -947,7 +958,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
               continue;
             }
           rev_height height;
-          app.db.get_rev_height(*i, height);
+          db.get_rev_height(*i, height);
           frontier.push(make_pair(height, *i));
         }
     }
