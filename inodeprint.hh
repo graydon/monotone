@@ -10,6 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <map>
 #include "vocab.hh"
 #include "quick_alloc.hh"
 #include "paths.hh"
@@ -22,8 +23,6 @@ typedef std::map<file_path, hexenc<inodeprint>,
                  QA(inodeprint_entry) > inodeprint_map;
 
 std::ostream & operator<<(std::ostream & out, inodeprint_entry const & e);
-
-class app_state;
 
 void read_inodeprint_map(data const & dat,
                          inodeprint_map & ipm);

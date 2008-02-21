@@ -273,6 +273,68 @@ bare capital letters scattered around.  Here's a quick guide.
              function.  You can easily add an overload to "dump" to
              support new types.
 
+"Application state" objects
+---------------------------
+
+There are nine object types which hold a substantial portion of the
+overall state of the program.  You will see them frequently in
+argument lists.  Most, but not all, of these are allocated only once
+for the entire program.
+
+Because many functions take some of these objects as arguments, we
+have a convention for their position and order: all such arguments
+appear first within the overall argument list, and in the order of 
+the list below.
+
+ * "app_state" is being phased out; it used to be an umbrella object
+   carrying almost all the state of the program, with sub-objects of
+   the types listed below.  Most of those are now allocated
+   separately, but the options and lua_hooks objects are still under
+   the umbrella.  Also, there are a very few operations that are still
+   app_state methods.  Do not introduce new functions which take an
+   app_state argument, unless there is no alternative.
+
+ * "options" holds information from all of the command-line options.
+   It does *not* record the non-option command line arguments.  Some
+   of its fields may default to other information sources as well.
+
+   To the maximum extent practical, "options" objects should not
+   appear in function arguments.  Instead, pass down specific fields
+   that are relevant to the lower-level code.
+
+ * "lua_hooks" holds the Lua interpreter handle and all the associated
+   state, in particular all the hook functions that the user may
+   override.  It is, unfortunately, not possible to pass around single
+   hook functions, so any C++ function that (transitively) calls some
+   hook must get the lua_hooks object somehow.
+
+ * There are three types that encapsulate the database of revisions at
+   different levels of abstraction.  No function should take more than
+   one of the following types.
+
+     - "project_t" represents a development project within the
+       database, that is, a database plus a set of branch names and
+       trust decisions.
+
+     - "database" represents the database as a whole, at a level where
+       trust decisions are irrelevant.  At present, the database
+       object does do some trust checking and has responsibility for
+       all public key operations (signature checks and nonce
+       encryption); these may be moved to the project object in the
+       future.
+
+     - "sqlite3" is the raw SQLite library handle.  Some very
+       low-level internal functions use this instead of a database
+       object.  Introducing more of them is to be avoided.
+
+ * "node_id_source" is not really a top-level state object, but if a
+   function takes one of them, it goes right after the database in the
+   argument list.
+
+ * "key_store" holds the user's private keys, and is responsible for all
+   private key operations (creating signatures and decrypting nonces).
+
+ * "workspace" is responsible for manipulating checked-out source trees.
 
 Reporting errors to the user
 ----------------------------

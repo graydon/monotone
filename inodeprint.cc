@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <iterator>
 
-#include "app_state.hh"
 #include "inodeprint.hh"
 #include "sanity.hh"
 #include "platform.hh"
