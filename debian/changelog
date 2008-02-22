@@ -1,6 +1,7 @@
 monotone (0.39-1) UNRELEASED; urgency=low
 
   * New upstream release.
+    - Can now be built with gcc 4.3 snapshots.  (Closes: #455646)
   * Enable use of system libpcre, set appropriate Build-Depends.
 
  -- J Maintainer <address@here>  ???, ?? ??? ???? ??:??:?? +????

@@ -496,10 +496,10 @@ public:
 
 #if BOOST_VERSION >= 103100
     //! Const iterator used to iterate backwards through a circular buffer.
-    typedef reverse_iterator<const_iterator> const_reverse_iterator;
+    typedef boost::reverse_iterator<const_iterator> const_reverse_iterator;
 
     //! Iterator used to iterate backwards through a circular buffer.
-    typedef reverse_iterator<iterator> reverse_iterator;
+    typedef boost::reverse_iterator<iterator> reverse_iterator;
 #else 
     //! Const iterator used to iterate backwards through a circular buffer.
     typedef typename reverse_iterator_generator<const_iterator>::type const_reverse_iterator;
