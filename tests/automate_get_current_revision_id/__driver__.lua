@@ -9,10 +9,6 @@ function chk()
   check(trim(readfile("current")) == trim(readfile("stdout")))
 end
 
--- check an empty base revision id
-
-chk()
-
 -- check pending changes against an empty base
 
 addfile("foo", "this is file foo")
@@ -20,10 +16,6 @@ addfile("foo", "this is file foo")
 chk()
 
 commit()
-
--- check no changes against a non-empty base
-
-chk()
 
 -- check changes against a non-empty base
 

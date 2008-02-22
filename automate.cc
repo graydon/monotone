@@ -1211,11 +1211,13 @@ CMD_AUTOMATE(get_revision, N_("REVID"),
 
 // Name: get_current_revision
 // Arguments:
-//   1: list of restriction paths
+//   1: zero or more path names
 // Added in: 7.0
 // Purpose: Outputs (an optionally restricted) revision based on
 //          changes in the current workspace
-
+// Error conditions: If there are no changes in the current workspace or the
+// restriction is invalid or has no recorded changes, prints an error message
+// to stderr and exits with status 1. A workspace is required.
 CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
              N_("Shows change information for a workspace"),
              "",
@@ -1245,6 +1247,9 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
   make_revision(old_rosters, new_roster, rev);
   make_restricted_revision(old_rosters, new_roster, mask, rev,
                            excluded, join_words(execid));
+  rev.check_sane();
+  N(rev.is_nontrivial(), F("no changes to commit"));
+  
   calculate_ident(rev, ident);
   write_revision(rev, dat);
 

@@ -5,12 +5,16 @@ addfile("zoo", "blah\n")
 check(mtn("commit", "--date=2005-05-21T12:30:51",
           "--branch=testbranch", "--message=blah-blah"), 0, false, false) 
           
--- ensure that bad restriction paths fail
-check(mtn("automate", "get_current_revision", "foo-bar"), 1, true, false)
+-- ensure clear workspace fails wih error
+check(mtn("automate", "get_current_revision"), 1, true, false)
 check(fsize("stdout") == 0)
 
 addfile("foox", "blah\n")
 addfile("barx", "blah2\n")
+
+-- ensure that bad restriction paths fail
+check(mtn("automate", "get_current_revision", "foo-bar"), 1, true, false)
+check(fsize("stdout") == 0)
 
 -- ensure that no restriction yields the same as '.' as restriction
 check(mtn("automate", "get_current_revision"), 0, true, false)
