@@ -138,7 +138,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
 
   database db(app);
   project_t project(db);
-  complete(app, project, idx(args, 0)(), revid);
+  complete(app.opts, app.lua, project, idx(args, 0)(), revid);
 
   // Check that the revision does not have any children
   std::set<revision_id> children;

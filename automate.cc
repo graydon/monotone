@@ -509,7 +509,7 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
   database db(app);
   project_t project(db);
   set<revision_id> completions;
-  expand_selector(app, project, idx(args, 0)(), completions);
+  expand_selector(app.opts, app.lua, project, idx(args, 0)(), completions);
 
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)

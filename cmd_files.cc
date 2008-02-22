@@ -174,7 +174,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
       db.get_roster(rid, roster);
     }
 
@@ -307,7 +307,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
   else
     {
       project_t project(db);
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
   dump_file(db, cout, rid, idx(args, 0));
@@ -374,7 +374,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   else
     {
       project_t project(db);
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
   dump_file(db, output, rid, idx(args, 0));

@@ -13,7 +13,8 @@
 #include "vocab.hh"
 #include <set>
 
-class app_state;
+class options;
+class lua_hooks;
 class project_t;
 
 // In the normal case, to expand a selector on the command line, use one of
@@ -22,10 +23,12 @@ class project_t;
 // selector that expands to zero revisions, or a nonexistent revision, as an
 // usage error, and generate progress messages when expanding selectors.
 
-void complete(app_state & app, project_t & project, std::string const & str,
+void complete(options const & opts, lua_hooks & lua,
+              project_t & project, std::string const & str,
               std::set<revision_id> & completions);
 
-void complete(app_state & app, project_t & project, std::string const & str,
+void complete(options const & opts, lua_hooks & lua,
+              project_t & project, std::string const & str,
               revision_id & completion);
 
 // For extra control, use these functions.  expand_selector is just like the
@@ -33,8 +36,8 @@ void complete(app_state & app, project_t & project, std::string const & str,
 // or usage errors.  diagnose_ambiguous_expansion generates the canonical
 // usage error if the set it is handed has more than one element.
 
-void expand_selector(app_state & app, project_t & project,
-                     std::string const & str,
+void expand_selector(options const & opts, lua_hooks & lua,
+                     project_t & project, std::string const & str,
                      std::set<revision_id> & completions);
 
 void diagnose_ambiguous_expansion(project_t & project, std::string const & str,

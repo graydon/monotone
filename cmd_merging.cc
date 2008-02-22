@@ -199,7 +199,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app, project, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app.opts, app.lua, project, app.opts.revision_selectors[0](), chosen_rid);
     }
   I(!null_id(chosen_rid));
 
@@ -715,7 +715,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app, project, idx(args, 0)(), right_id);
+  complete(app.opts, app.lua, project, idx(args, 0)(), right_id);
   db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -790,8 +790,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app, project, idx(args, 0)(), left);
-  complete(app, project, idx(args, 1)(), right);
+  complete(app.opts, app.lua, project, idx(args, 0)(), left);
+  complete(app.opts, app.lua, project, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -820,8 +820,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app, project, idx(args,0)(), l_id);
-  complete(app, project, idx(args,1)(), r_id);
+  complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+  complete(app.opts, app.lua, project, idx(args,1)(), r_id);
   N(!is_ancestor(db, l_id, r_id),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(db, r_id, l_id),
@@ -890,7 +890,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   revision_id from_rid, to_rid;
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), to_rid);
       std::set<revision_id> parents;
       db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -903,8 +903,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), from_rid);
-      complete(app, project, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 1)(), to_rid);
     }
   else
     throw usage(execid);
@@ -1144,7 +1144,7 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
       database db(app);
       project_t project(db);
       revision_id rid;
-      complete(app, project, idx(args, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(args, 0)(), rid);
       I(!null_id(rid));
       db.get_roster(rid, roster, mm);
     }

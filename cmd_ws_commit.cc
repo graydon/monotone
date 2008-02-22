@@ -353,7 +353,7 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   revision_id r;
   revision_t rev, rev_inverse;
   shared_ptr<cset> cs_inverse(new cset());
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
   db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
@@ -633,7 +633,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), revid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), revid);
 
       guess_branch(app.opts, project, revid);
 
@@ -1365,7 +1365,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
   if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), ident);
 
       guess_branch(app.opts, project, ident);
 

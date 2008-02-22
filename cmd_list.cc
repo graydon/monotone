@@ -68,7 +68,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   transaction_guard guard(db, false);
 
   revision_id ident;
-  complete(app,  project, idx(args, 0)(), ident);
+  complete(app.opts, app.lua,  project, idx(args, 0)(), ident);
   vector< revision<cert> > ts;
   project.get_revision_certs(ident, ts);
 

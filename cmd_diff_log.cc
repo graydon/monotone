@@ -346,9 +346,10 @@ dump_diffs(lua_hooks & lua,
 
 // common functionality for diff and automate content_diff to determine
 // revisions and rosters which should be diffed
-// FIXME needs app_state for require_workspace
+// FIXME needs app_state in order to create workspace objects (sometimes)
 static void
 prepare_diff(app_state & app,
+             database & db,
              cset & included,
              args_vector args,
              bool & new_is_archived,
@@ -359,8 +360,6 @@ prepare_diff(app_state & app,
   cset excluded;
 
   // initialize before transaction so we have a database to work with.
-
-  database db(app);
   project_t project(db);
 
   N(app.opts.revision_selectors.size() <= 2,
@@ -406,7 +405,7 @@ prepare_diff(app_state & app,
       revision_id r_old_id;
       workspace work(app);
 
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
 
       db.get_roster(r_old_id, old_roster);
       work.get_current_roster_shape(db, nis, new_roster);
@@ -432,8 +431,8 @@ prepare_diff(app_state & app,
       roster_t old_roster, restricted_roster, new_roster;
       revision_id r_old_id, r_new_id;
 
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
-      complete(app, project, idx(app.opts.revision_selectors, 1)(), r_new_id);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), r_old_id);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 1)(), r_new_id);
 
       db.get_roster(r_old_id, old_roster);
       db.get_roster(r_new_id, new_roster);
@@ -502,7 +501,7 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
   bool new_is_archived;
   database db(app);
 
-  prepare_diff(app, included, args, new_is_archived, revs);
+  prepare_diff(app, db, included, args, new_is_archived, revs);
 
   data summary;
   write_cset(included, summary);
@@ -557,7 +556,7 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
   bool new_is_archived;
   database db(app);
 
-  prepare_diff(app, included, args, new_is_archived, dummy_header);
+  prepare_diff(app, db, included, args, new_is_archived, dummy_header);
 
   dump_diffs(app.lua, db, included, output,
              app.opts.diff_format, new_is_archived, !app.opts.no_show_encloser);
@@ -669,7 +668,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
            i != app.opts.from.end(); i++)
         {
           set<revision_id> rids;
-          complete(app, project, (*i)(), rids);
+          complete(app.opts, app.lua, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {
@@ -725,7 +724,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
         {
           MM(*i);
           set<revision_id> rids;
-          complete(app, project, (*i)(), rids);
+          complete(app.opts, app.lua, project, (*i)(), rids);
           for (set<revision_id>::const_iterator j = rids.begin();
                j != rids.end(); ++j)
             {

@@ -389,7 +389,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), ident);
 
       guess_branch(app.opts, project, ident);
       I(!app.opts.branchname().empty());
