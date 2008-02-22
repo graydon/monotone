@@ -27,10 +27,11 @@
 // (commit and revert) to be "tested" first with non-destructive commands
 // (ls unknown/ignored/missing/known, status, diff)
 
+#include <set>
 #include "vocab.hh"
-#include "database.hh" // for parent_map
+#include "rev_types.hh"
 
-class app_state;
+class workspace;
 
 // between any two related revisions, A and B, there is a set of changes (a
 // cset) that describes the operations required to get from A to B. for example:
@@ -80,23 +81,42 @@ class node_restriction : public restriction
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   roster_t const & roster,
-                   app_state & a);
+                   roster_t const & roster);
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    roster_t const & roster1,
-                   roster_t const & roster2,
-                   app_state & a);
+                   roster_t const & roster2);
 
   node_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
                    parent_map const & rosters1,
-                   roster_t const & roster2,
-                   app_state & a);
+                   roster_t const & roster2);
 
+#ifndef BUILD_UNIT_TESTS
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   roster_t const & roster);
+
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   roster_t const & roster1,
+                   roster_t const & roster2);
+
+  node_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   parent_map const & rosters1,
+                   roster_t const & roster2);
+#endif
+  
   bool includes(roster_t const & roster, node_id nid) const;
 
   node_restriction & operator=(node_restriction const & other)
@@ -124,8 +144,15 @@ class path_restriction : public restriction
   path_restriction(std::vector<file_path> const & includes,
                    std::vector<file_path> const & excludes,
                    long depth,
-                   app_state & a,
                    validity_check vc = check_paths);
+
+#ifndef BUILD_UNIT_TESTS
+  path_restriction(workspace & work,
+                   std::vector<file_path> const & includes,
+                   std::vector<file_path> const & excludes,
+                   long depth,
+                   validity_check vc = check_paths);
+#endif
 
   bool includes(file_path const & sp) const;
 

@@ -10,26 +10,19 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-struct sqlite3;
-struct sqlite3_stmt;
-struct cert;
-int sqlite3_finalize(sqlite3_stmt *);
-
 #include "vector.hh"
 #include <set>
-#include <map>
+#include <boost/scoped_ptr.hpp>
+#include "rev_types.hh"
+#include "cert.hh"
 
-#include "numeric_vocab.hh"
-#include "vocab.hh"
-#include "paths.hh"
-#include "cleanup.hh"
-#include "roster.hh"
-#include "selectors.hh"
-#include "graph.hh"
-
-// FIXME: would be better not to include this everywhere
-#include "outdated_indicator.hh"
-#include "lru_writeback_cache.hh"
+class app_state;
+class lua_hooks;
+struct date_t;
+struct globish;
+class key_store;
+class outdated_indicator;
+class rev_height;
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -70,196 +63,37 @@ int sqlite3_finalize(sqlite3_stmt *);
 // it makes the code confusing, I know. this is possibly the worst part of
 // the program. I don't know if there's any way to make it clearer.
 
-class transaction_guard;
-class app_state;
-struct revision_t;
-struct query;
-class rev_height;
-struct globish;
+class database_impl;
 
 class database
 {
   //
   // --== Opening the database and schema checking ==--
   //
-private:
-  system_path filename;
-  app_state * __app;
-  struct sqlite3 * __sql;
-
-  enum open_mode { normal_mode = 0,
-                   schema_bypass_mode,
-                   format_bypass_mode };
-
-  void install_functions(app_state * app);
-  struct sqlite3 * sql(enum open_mode mode = normal_mode);
-
-  void check_filename();
-  void check_db_exists();
-  void check_db_nonexistent();
-  void open();
-  void close();
-  void check_format();
-
 public:
-  database(system_path const & file);
+  explicit database(app_state &);
   ~database();
 
-  void set_app(app_state * app);
-
-  void set_filename(system_path const & file);
   system_path get_filename();
   bool is_dbfile(any_path const & file);
+  bool database_specified();
+  void check_is_not_rosterified();
+
   void ensure_open();
   void ensure_open_for_format_changes();
 private:
   void ensure_open_for_maintenance();
-public:
-  void check_is_not_rosterified();
-  bool database_specified();
-
-  //
-  // --== Basic SQL interface and statement caching ==--
-  //
-private:
-  struct statement {
-    statement() : count(0), stmt(0, sqlite3_finalize) {}
-    int count;
-    cleanup_ptr<sqlite3_stmt*, int> stmt;
-  };
-  std::map<std::string, statement> statement_cache;
-
-  typedef std::vector< std::vector<std::string> > results;
-  void fetch(results & res,
-             int const want_cols, int const want_rows,
-             query const & q);
-  void execute(query const & q);
-
-  bool table_has_entry(std::string const & key, std::string const & column,
-                       std::string const & table);
-
-  //
-  // --== Generic database metadata gathering ==--
-  //
-private:
-  std::string count(std::string const & table);
-  std::string space(std::string const & table,
-                    std::string const & concatenated_columns,
-                    u64 & total);
-  unsigned int page_size();
-  unsigned int cache_size();
 
   //
   // --== Transactions ==--
   //
 private:
-  int transaction_level;
-  bool transaction_exclusive;
-  void begin_transaction(bool exclusive);
-  void commit_transaction();
-  void rollback_transaction();
-  friend class transaction_guard;
-
-  //
-  // --== Write-buffering -- tied into transaction  ==--
-  // --== machinery and delta compression machinery ==--
-  //
-public:
-  typedef boost::shared_ptr<roster_t const> roster_t_cp;
-  typedef boost::shared_ptr<marking_map const> marking_map_cp;
-  typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
-private:
-  struct roster_size_estimator
-  {
-    unsigned long operator() (cached_roster const &);
-  };
-  struct roster_writeback_manager
-  {
-    database & db;
-    roster_writeback_manager(database & db) : db(db) {}
-    void writeout(revision_id const &, cached_roster const &);
-  };
-  LRUWritebackCache<revision_id, cached_roster,
-                    roster_size_estimator, roster_writeback_manager>
-    roster_cache;
-
-  size_t size_delayed_file(file_id const & id, file_data const & dat);
-  bool have_delayed_file(file_id const & id);
-  void load_delayed_file(file_id const & id, file_data & dat);
-  void cancel_delayed_file(file_id const & id);
-  void drop_or_cancel_file(file_id const & id);
-  void schedule_delayed_file(file_id const & id, file_data const & dat);
-
-  std::map<file_id, file_data> delayed_files;
-  size_t delayed_writes_size;
-
-  void flush_delayed_writes();
-  void clear_delayed_writes();
-  void write_delayed_file(file_id const & new_id,
-                          file_data const & dat);
-
-  void write_delayed_roster(revision_id const & new_id,
-                            roster_t const & roster,
-                            marking_map const & marking);
+  friend class conditional_transaction_guard;
 
   //
   // --== Reading/writing delta-compressed objects ==--
   //
-private:
-  // "do we have any entry for 'ident' that is a base version"
-  bool file_or_manifest_base_exists(hexenc<id> const & ident,
-                                    std::string const & table);
-  bool roster_base_stored(revision_id const & ident);
-  bool roster_base_available(revision_id const & ident);
-  
-  // "do we have any entry for 'ident' that is a delta"
-  bool delta_exists(std::string const & ident,
-                    std::string const & table);
-
-  bool delta_exists(std::string const & ident,
-                    std::string const & base,
-                    std::string const & table);
-
-  void get_file_or_manifest_base_unchecked(hexenc<id> const & new_id,
-                                           data & dat,
-                                           std::string const & table);
-  void get_file_or_manifest_delta_unchecked(hexenc<id> const & ident,
-                                            hexenc<id> const & base,
-                                            delta & del,
-                                            std::string const & table);
-  void get_roster_base(std::string const & ident,
-                       roster_t & roster, marking_map & marking);
-  void get_roster_delta(std::string const & ident,
-                        std::string const & base,
-                        roster_delta & del);
-  friend struct file_and_manifest_reconstruction_graph;
-  friend struct roster_reconstruction_graph;
-  void get_version(hexenc<id> const & ident,
-                   data & dat,
-                   std::string const & data_table,
-                   std::string const & delta_table);
-
-  void drop(std::string const & base,
-            std::string const & table);
-  void put_file_delta(file_id const & ident,
-                      file_id const & base,
-                      file_delta const & del);
-private:
-  void put_roster_delta(revision_id const & ident,
-                        revision_id const & base,
-                        roster_delta const & del);
-  void put_version(hexenc<id> const & old_id,
-                   hexenc<id> const & new_id,
-                   delta const & del,
-                   std::string const & data_table,
-                   std::string const & delta_table);
-
-  void put_roster(revision_id const & rev_id,
-                  roster_t_cp const & roster,
-                  marking_map_cp const & marking);
-
 public:
-
   bool file_version_exists(file_id const & ident);
   bool revision_exists(revision_id const & ident);
   bool roster_link_exists_for_revision(revision_id const & ident);
@@ -289,6 +123,21 @@ public:
   void get_manifest_version(manifest_id const & ident,
                             manifest_data & dat);
 
+private:
+  bool file_or_manifest_base_exists(hexenc<id> const & ident,
+                                    std::string const & table);
+  bool delta_exists(std::string const & ident,
+                    std::string const & table);
+  void put_file_delta(file_id const & ident,
+                      file_id const & base,
+                      file_delta const & del);
+
+  friend void rcs_put_raw_file_edge(database & db,
+                                    hexenc<id> const & old_id,
+                                    hexenc<id> const & new_id,
+                                    delta const & del);
+
+
   //
   // --== The ancestry graph ==--
   //
@@ -305,10 +154,6 @@ public:
 
   void get_revision_manifest(revision_id const & cid,
                              manifest_id & mid);
-private:
-  // helper
-  void get_ids(std::string const & table, std::set< hexenc<id> > & ids);
-public:
   void get_revision_ids(std::set<revision_id> & ids);
   // this is exposed for 'db check':
   void get_file_ids(std::set<file_id> & ids);
@@ -316,8 +161,6 @@ public:
   //
   // --== Revision reading/writing ==--
   //
-private:
-  void deltify_revision(revision_id const & rid);
 public:
   void get_revision(revision_id const & ident,
                     revision_t & cs);
@@ -331,12 +174,12 @@ public:
   bool put_revision(revision_id const & new_id,
                     revision_data const & dat);
 
+private:
+  void deltify_revision(revision_id const & rid);
+
   //
   // --== Rosters ==--
   //
-private:
-  u64 next_id_from_table(std::string const & table);
-  void get_roster_version(revision_id const & ros_id, cached_roster & cr);
 public:
   node_id next_node_id();
 
@@ -362,17 +205,18 @@ public:
   void get_file_content(revision_id const & id,
                         node_id const & nid,
                         file_id & content);
+
 private:
-  struct extractor;
-  struct file_content_extractor;
-  struct markings_extractor;
-  void extract_from_deltas(revision_id const & id, extractor & x);
+  void get_roster_version(revision_id const & ros_id,
+                          cached_roster & cr);
+
+  void put_roster(revision_id const & rev_id,
+                  roster_t_cp const & roster,
+                  marking_map_cp const & marking);
 
   //
   // --== Keys ==--
   //
-private:
-  void get_keys(std::string const & table, std::vector<rsa_keypair_id> & keys);
 public:
   void get_key_ids(std::vector<rsa_keypair_id> & pubkeys);
   void get_key_ids(globish const & pattern,
@@ -387,6 +231,7 @@ public:
                   rsa_keypair_id & ident,
                   base64<rsa_pub_key> & pub_encoded);
 
+  void get_key(rsa_keypair_id const & ident, rsa_pub_key & pub);
   void get_key(rsa_keypair_id const & ident,
                base64<rsa_pub_key> & pub_encoded);
 
@@ -395,47 +240,21 @@ public:
 
   void delete_public_key(rsa_keypair_id const & pub_id);
 
+  // Crypto operations
+  
+  void encrypt_rsa(rsa_keypair_id const & pub_id,
+                   std::string const & plaintext,
+                   rsa_oaep_sha_data & ciphertext);
+
+  cert_status check_signature(rsa_keypair_id const & id,
+                              std::string const & alleged_text,
+                              base64<rsa_sha1_signature> const & signature);
+
   //
   // --== Certs ==--
   //
   // note: this section is ridiculous. please do something about it.
-private:
-  bool cert_exists(cert const & t,
-                   std::string const & table);
-  void put_cert(cert const & t, std::string const & table);
-  void results_to_certs(results const & res,
-                        std::vector<cert> & certs);
-  
-  void get_certs(std::vector< cert > & certs,
-                 std::string const & table);
-  
-  void get_certs(hexenc<id> const & ident,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(cert_name const & name,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(hexenc<id> const & ident,
-                 cert_name const & name,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(hexenc<id> const & ident,
-                 cert_name const & name,
-                 base64<cert_value> const & val,
-                 std::vector< cert > & certs,
-                 std::string const & table);
-
-  void get_certs(cert_name const & name,
-                 base64<cert_value> const & val,
-                 std::vector<cert> & certs,
-                 std::string const & table);
-
-  outdated_indicator_factory cert_stamper;
 public:
-
   bool revision_cert_exists(revision<cert> const & cert);
   bool revision_cert_exists(hexenc<id> const & hash);
 
@@ -530,11 +349,20 @@ public:
   void complete(std::string const & partial,
                 std::set< std::pair<key_id, utf8 > > & completions);
 
-  void complete(selectors::selector_type ty,
-                std::string const & partial,
-                std::vector<std::pair<selectors::selector_type,
-                                      std::string> > const & limit,
-                std::set<std::string> & completions);
+  //
+  // --== Revision selectors ==--
+  //
+public:
+  void select_parent(std::string const & partial,
+                     std::set<revision_id> & completions);
+  void select_cert(std::string const & certname,
+                   std::set<revision_id> & completions);
+  void select_cert(std::string const & certname, std::string const & certvalue,
+                   std::set<revision_id> & completions);
+  void select_author_tag_or_branch(std::string const & partial,
+                                   std::set<revision_id> & completions);
+  void select_date(std::string const & date, std::string const & comparison,
+                   std::set<revision_id> & completions);
 
   //
   // --== The 'db' family of top-level commands ==--
@@ -546,8 +374,8 @@ public:
   void load(std::istream &);
   void info(std::ostream &);
   void version(std::ostream &);
-  void migrate();
-  void test_migration_step(std::string const &);
+  void migrate(key_store &);
+  void test_migration_step(key_store &, std::string const &);
   // for kill_rev_locally:
   void delete_existing_rev_and_certs(revision_id const & rid);
   // for kill_branch_certs_locally:
@@ -555,14 +383,8 @@ public:
   // for kill_tag_locally:
   void delete_tag_named(cert_value const & tag);
 
-  // misc
-private:
-  friend void rcs_put_raw_file_edge(hexenc<id> const & old_id,
-                                    hexenc<id> const & new_id,
-                                    delta const & del,
-                                    database & db);
 public:
-    // branches
+  // branches
   outdated_indicator get_branches(std::vector<std::string> & names);
   outdated_indicator get_branches(globish const & glob,
                                   std::vector<std::string> & names);
@@ -596,15 +418,24 @@ public:
   void delete_existing_rosters();
   void put_roster_for_revision(revision_id const & new_id,
                                revision_t const & rev);
+
+  // We make these lua hooks available via the database context;
+  // see comments above their definition for rationale and plans.
+  bool hook_get_manifest_cert_trust(std::set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+  bool hook_get_revision_cert_trust(std::set<rsa_keypair_id> const & signers,
+    hexenc<id> const & id, cert_name const & name, cert_value const & val);
+
+private:
+  boost::scoped_ptr<database_impl> imp;
+  lua_hooks & lua;
 };
+
+// not a member function, defined in database_check.cc
+void check_db(database & db);
 
 // Parent maps are used in a number of places to keep track of all the
 // parent rosters of a given revision.
-typedef std::map<revision_id, database::cached_roster>
-parent_map;
-
-typedef parent_map::value_type
-parent_entry;
 
 inline revision_id const & parent_id(parent_entry const & p)
 {
@@ -616,13 +447,13 @@ inline revision_id const & parent_id(parent_map::const_iterator i)
   return i->first;
 }
 
-inline database::cached_roster const &
+inline cached_roster const &
 parent_cached_roster(parent_entry const & p)
 {
   return p.second;
 }
 
-inline database::cached_roster const &
+inline cached_roster const &
 parent_cached_roster(parent_map::const_iterator i)
 {
   return i->second;
@@ -692,24 +523,57 @@ inline marking_map const & parent_marking(parent_map::const_iterator i)
 // full commits at high frequency is too high. The solution for these
 // platforms is to run inside a longer-lived transaction (session-length),
 // and checkpoint at higher granularity (every megabyte or so).
+//
+// A conditional transaction guard is just like a transaction guard,
+// except that it doesn't begin the transaction until you call acquire().
+// If you don't call acquire(), you must not call commit(), do_checkpoint(),
+// or maybe_checkpoint() either.
+//
+// Implementation note: Making transaction_guard inherit from
+// conditional_transaction_guard means we can reuse all the latter's methods
+// and just call acquire() in transaction_guard's constructor.  If we did it
+// the other way around they would wind up being totally unrelated classes.
 
-class transaction_guard
+class conditional_transaction_guard
 {
-  bool committed;
   database & db;
-  bool exclusive;
   size_t const checkpoint_batch_size;
   size_t const checkpoint_batch_bytes;
   size_t checkpointed_calls;
   size_t checkpointed_bytes;
+  bool committed;
+  bool acquired;
+  bool const exclusive;
+public:
+  conditional_transaction_guard(database & db, bool exclusive=true,
+                                size_t checkpoint_batch_size=1000,
+                                size_t checkpoint_batch_bytes=0xfffff)
+    : db(db),
+      checkpoint_batch_size(checkpoint_batch_size),
+      checkpoint_batch_bytes(checkpoint_batch_bytes),
+      checkpointed_calls(0),
+      checkpointed_bytes(0),
+      committed(false), acquired(false), exclusive(exclusive)
+  {}
+
+  ~conditional_transaction_guard();
+  void acquire();
+  void commit();
+  void do_checkpoint();
+  void maybe_checkpoint(size_t nbytes);
+};
+
+class transaction_guard : public conditional_transaction_guard
+{
 public:
   transaction_guard(database & d, bool exclusive=true,
                     size_t checkpoint_batch_size=1000,
-                    size_t checkpoint_batch_bytes=0xfffff);
-  ~transaction_guard();
-  void do_checkpoint();
-  void maybe_checkpoint(size_t nbytes);
-  void commit();
+                    size_t checkpoint_batch_bytes=0xfffff)
+    : conditional_transaction_guard(d, exclusive, checkpoint_batch_size,
+                                    checkpoint_batch_bytes)
+  {
+    acquire();
+  }
 };
 
 // Local Variables:
