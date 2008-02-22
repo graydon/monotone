@@ -31,6 +31,8 @@
 #include "ui.hh"
 #include "charset.hh"
 #include "app_state.hh"
+#include "database.hh"
+#include "roster.hh"
 
 using std::deque;
 using std::exception;
@@ -218,7 +220,7 @@ workspace::put_work_rev(revision_t const & rev)
 static void
 get_roster_for_rid(database & db,
                    revision_id const & rid,
-                   database::cached_roster & cr)
+                   cached_roster & cr)
 {
   // We may be asked for a roster corresponding to the null rid, which
   // is not in the database.  In this situation, what is wanted is an empty
@@ -247,7 +249,7 @@ workspace::get_parent_rosters(database & db, parent_map & parents)
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); i++)
     {
-      database::cached_roster cr;
+      cached_roster cr;
       get_roster_for_rid(db, edge_old_revision(i), cr);
       safe_insert(parents, make_pair(edge_old_revision(i), cr));
     }

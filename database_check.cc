@@ -19,6 +19,7 @@
 #include "transforms.hh"
 #include "cert.hh"
 #include "rev_height.hh"
+#include "roster.hh"
 #include "outdated_indicator.hh"
 
 // the database has roughly the following structure

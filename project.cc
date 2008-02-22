@@ -11,6 +11,7 @@
 #include "transforms.hh"
 #include "lua_hooks.hh"
 #include "keys.hh"
+#include "options.hh"
 
 using std::string;
 using std::set;

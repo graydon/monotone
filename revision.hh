@@ -11,14 +11,12 @@
 // PURPOSE.
 
 #include <set>
-#include <map>
+#include "vector.hh"
+#include "rev_types.hh"
 
-#include <boost/shared_ptr.hpp>
-
-#include "cset.hh"
-#include "vocab.hh"
-#include "database.hh"
-#include "commands.hh"
+class key_store;
+class node_restriction;
+class path_restriction;
 
 // a revision is a text object. It has a precise, normalizable serial form
 // as UTF-8 text. it also has some sub-components. not all of these
@@ -45,12 +43,6 @@
 // patch "new-file.cc"
 //  from [95b50ede90037557fd0fbbfad6a9fdd67b0bf413]
 //    to [bd39086b9da776fc22abd45734836e8afb59c8c0]
-
-typedef std::map<revision_id, boost::shared_ptr<cset> >
-edge_map;
-
-typedef edge_map::value_type
-edge_entry;
 
 enum made_for { made_for_nobody, made_for_workspace, made_for_database };
 
@@ -215,7 +207,7 @@ make_restricted_revision(parent_map const & old_rosters,
                          node_restriction const & mask,
                          revision_t & rev,
                          cset & excluded,
-                         commands::command_id const & cmd_name);
+                         utf8 const & cmd_name);
 
 void
 build_changesets_from_manifest_ancestry(database & db, key_store & keys,
@@ -229,9 +221,6 @@ void
 regenerate_caches(database & db);
 
 // basic_io access to printers and parsers
-
-namespace basic_io { struct printer; struct parser; }
-
 void
 print_revision(basic_io::printer & printer,
                revision_t const & rev);

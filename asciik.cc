@@ -116,6 +116,8 @@ Loop:
 #include "cmd.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "database.hh"
+#include "revision.hh"
 
 using std::insert_iterator;
 using std::max;

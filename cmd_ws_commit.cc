@@ -25,6 +25,9 @@
 #include "basic_io.hh"
 #include "keys.hh"
 #include "key_store.hh"
+#include "simplestring_xform.hh"
+#include "database.hh"
+#include "roster.hh"
 
 using std::cout;
 using std::make_pair;
@@ -1092,7 +1095,7 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   work.update_current_roster_from_filesystem(new_roster, mask);
   make_restricted_revision(old_rosters, new_roster, mask, restricted_rev,
-                           excluded, execid);
+                           excluded, join_words(execid));
   restricted_rev.check_sane();
   N(restricted_rev.is_nontrivial(), F("no changes to commit"));
 

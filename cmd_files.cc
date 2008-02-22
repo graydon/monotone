@@ -20,7 +20,9 @@
 #include "transforms.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "database.hh"
 #include "work.hh"
+#include "roster.hh"
 
 using std::cout;
 using std::ostream_iterator;

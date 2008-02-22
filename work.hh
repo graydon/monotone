@@ -11,16 +11,16 @@
 // PURPOSE.
 
 #include <set>
-#include "vector.hh"
-#include "vocab.hh"
 #include "paths.hh"
-#include "database.hh"
+#include "rev_types.hh"
 
 class path_restriction;
 class node_restriction;
 struct content_merge_adaptor;
 class lua_hooks;
 class i18n_format;
+struct options;
+class app_state;
 
 //
 // this file defines structures to deal with the "workspace" of a tree

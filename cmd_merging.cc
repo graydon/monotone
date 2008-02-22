@@ -28,6 +28,7 @@
 #include "simplestring_xform.hh"
 #include "keys.hh"
 #include "key_store.hh"
+#include "database.hh"
 
 using std::cout;
 using std::make_pair;
@@ -246,7 +247,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   temp_node_id_source nis;
 
   // Get the OLD and WORKING rosters
-  database::roster_t_cp old_roster
+  roster_t_cp old_roster
     = parent_cached_roster(parents.begin()).first;
   MM(*old_roster);
 
@@ -676,7 +677,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     options::opts::none)
 {
   revision_id left_id, right_id;
-  database::cached_roster left, right;
+  cached_roster left, right;
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
 
   if (args.size() != 1)
@@ -733,7 +734,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
                merge_result);
 
   revision_id lca_id;
-  database::cached_roster lca;
+  cached_roster lca;
   find_common_ancestor_for_merge(db, left_id, right_id, lca_id);
   db.get_roster(lca_id, lca);
 

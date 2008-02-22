@@ -10,14 +10,13 @@
 #include "base.hh"
 #include "safe_map.hh"
 #include "vector.hh"
-
 #include "restrictions.hh"
 #include "file_io.hh"
+#include "roster.hh"
+#include "database.hh" // for parent_roster
 
 #ifdef BUILD_UNIT_TESTS
 # include "unit_tests.hh"
-# include "roster.hh"
-# include "sanity.hh"
 #else
 # include "work.hh"
 #endif

@@ -11,7 +11,7 @@
 // PURPOSE.
 
 #include "vocab.hh"
-#include "roster.hh"
+#include "rev_types.hh"
 
 class project_t;
 

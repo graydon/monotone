@@ -16,10 +16,12 @@
 #include "revision.hh"
 #include "constants.hh"
 #include "app_state.hh"
+#include "database.hh"
 #include "project.hh"
 #include "keys.hh"
 #include "key_store.hh"
 #include "work.hh"
+#include "rev_height.hh"
 
 using std::cin;
 using std::cout;

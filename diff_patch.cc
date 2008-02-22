@@ -30,6 +30,7 @@
 #include "file_io.hh"
 #include "pcrewrap.hh"
 #include "lua_hooks.hh"
+#include "database.hh"
 
 using std::make_pair;
 using std::map;
@@ -539,7 +540,7 @@ load_and_cache_roster(database & db, revision_id const & rid,
     rout = i->second;
   else
     {
-      database::cached_roster cr;
+      cached_roster cr;
       db.get_roster(rid, cr);
       safe_insert(rmap, make_pair(rid, cr.first));
       rout = cr.first;

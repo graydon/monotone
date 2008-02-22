@@ -20,6 +20,7 @@
 #include "cert.hh"
 #include "charset.hh"
 #include "cmd.hh"
+#include "roster.hh"
 #include "database.hh"
 #include "globish.hh"
 #include "keys.hh"

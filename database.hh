@@ -12,12 +12,8 @@
 
 #include "vector.hh"
 #include <set>
-#include <map>
 #include <boost/scoped_ptr.hpp>
-
-#include "vocab.hh"
-#include "roster.hh"
-#include "graph.hh"
+#include "rev_types.hh"
 #include "cert.hh"
 
 class app_state;
@@ -27,8 +23,6 @@ struct globish;
 class key_store;
 class outdated_indicator;
 class rev_height;
-struct revision_t;
-class conditional_transaction_guard;
 
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
@@ -95,15 +89,6 @@ private:
   //
 private:
   friend class conditional_transaction_guard;
-
-  //
-  // --== Write-buffering -- tied into transaction  ==--
-  // --== machinery and delta compression machinery ==--
-  //
-public:
-  typedef boost::shared_ptr<roster_t const> roster_t_cp;
-  typedef boost::shared_ptr<marking_map const> marking_map_cp;
-  typedef std::pair<roster_t_cp, marking_map_cp> cached_roster;
 
   //
   // --== Reading/writing delta-compressed objects ==--
@@ -451,11 +436,6 @@ void check_db(database & db);
 
 // Parent maps are used in a number of places to keep track of all the
 // parent rosters of a given revision.
-typedef std::map<revision_id, database::cached_roster>
-parent_map;
-
-typedef parent_map::value_type
-parent_entry;
 
 inline revision_id const & parent_id(parent_entry const & p)
 {
@@ -467,13 +447,13 @@ inline revision_id const & parent_id(parent_map::const_iterator i)
   return i->first;
 }
 
-inline database::cached_roster const &
+inline cached_roster const &
 parent_cached_roster(parent_entry const & p)
 {
   return p.second;
 }
 
-inline database::cached_roster const &
+inline cached_roster const &
 parent_cached_roster(parent_map::const_iterator i)
 {
   return i->second;

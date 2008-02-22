@@ -25,6 +25,7 @@
 #include "lua_hooks.hh"
 #include "key_store.hh"
 #include "project.hh"
+#include "database.hh"
 #include "cert.hh"
 #include "constants.hh"
 #include "enumerator.hh"
@@ -45,6 +46,7 @@
 #include "hmac.hh"
 #include "globish.hh"
 #include "uri.hh"
+#include "options.hh"
 
 #include "botan/botan.h"
 

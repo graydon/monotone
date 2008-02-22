@@ -41,6 +41,9 @@
 #include "legacy.hh"
 #include "rev_height.hh"
 #include "outdated_indicator.hh"
+#include "database.hh"
+#include "roster.hh"
+#include "graph.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -733,7 +736,7 @@ make_restricted_revision(parent_map const & old_rosters,
                          node_restriction const & mask,
                          revision_t & rev,
                          cset & excluded,
-                         commands::command_id const & cmd_name)
+                         utf8 const & cmd_name)
 {
   edge_map edges;
   bool no_excludes = true;
@@ -755,7 +758,7 @@ make_restricted_revision(parent_map const & old_rosters,
 
   N(old_rosters.size() == 1 || no_excludes,
     F("the command '%s %s' cannot be restricted in a two-parent workspace")
-    % ui.prog_name % join_words(cmd_name)());
+    % ui.prog_name % cmd_name);
 
   recalculate_manifest_id_for_restricted_rev(old_rosters, edges, rev);
 }

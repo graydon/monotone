@@ -24,7 +24,7 @@
 #include "keys.hh"
 #include "key_store.hh"
 #include "netio.hh"
-#include "option.hh"
+#include "options.hh"
 #include "project.hh"
 #include "revision.hh"
 #include "sanity.hh"

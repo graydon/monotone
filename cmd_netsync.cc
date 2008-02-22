@@ -15,6 +15,8 @@
 #include "app_state.hh"
 #include "project.hh"
 #include "work.hh"
+#include "database.hh"
+#include "roster.hh"
 
 #include <fstream>
 

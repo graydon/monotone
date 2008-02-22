@@ -34,12 +34,15 @@
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
+#include "roster.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
 #include "safe_map.hh"
 #include "work.hh"
+#include "database.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -1241,7 +1244,7 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
 
   make_revision(old_rosters, new_roster, rev);
   make_restricted_revision(old_rosters, new_roster, mask, rev,
-                           excluded, execid);
+                           excluded, join_words(execid));
   calculate_ident(rev, ident);
   write_revision(rev, dat);
 

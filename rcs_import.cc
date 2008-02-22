@@ -40,6 +40,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "roster.hh"
 
 using std::make_pair;
 using std::map;

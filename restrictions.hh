@@ -27,8 +27,9 @@
 // (commit and revert) to be "tested" first with non-destructive commands
 // (ls unknown/ignored/missing/known, status, diff)
 
+#include <set>
 #include "vocab.hh"
-#include "database.hh" // for parent_map
+#include "rev_types.hh"
 
 class workspace;
 

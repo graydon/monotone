@@ -3,8 +3,7 @@
 
 #include <set>
 #include "vector.hh"
-
-#include "revision.hh"
+#include "vocab.hh"
 
 class asciik
 {
