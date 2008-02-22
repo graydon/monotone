@@ -1,0 +1,34 @@
+key_store.cc:
+  app is a member variable of class key_store_state, used by:
+
+  app.opts.conf_dir:
+	constructor
+
+  app.opts.ssh_sign:
+	make_signature
+
+  app.lua.hook_get_passphrase:
+	decrypt_private_key
+	migrate_old_key_pair
+
+  app.lua.hook_persist_phrase_ok:
+	decrypt_private_key
+	cache_decrypted_key
+	make_signature
+
+lua_hooks.cc:
+  << evil mess involving a map from lua_*state* pointers 
+     to app_state pointers >>
+
+  This is still required, mainly because of the mtn_automate() function,
+  which needs an app_state for the sub-automate call, which is sort of
+  reentrant (but limited to recursion depth 1 by
+  app_state->mtn_automate_allowed).
+
+
+selectors.cc:
+  decode_selector calls app.require_workspace(). Pretty much
+  everything else depends on that, so we pass down the app_state
+  until there. The app_state keeps track of a 'found_workspace'
+  state.
+

@@ -10,6 +10,7 @@
 #include "base.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "cset.hh"
 #include "simplestring_xform.hh"
 #include "revision.hh"
 #include "file_io.hh"
@@ -112,6 +113,9 @@ workspace::write_ws_format()
 void
 workspace::check_ws_format()
 {
+  if (!workspace::found)
+    return;
+
   unsigned int format = get_ws_format();
 
   // Don't give user false expectations about format 0.

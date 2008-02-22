@@ -12,7 +12,8 @@
 
 #include "vocab.hh"
 
-class app_state;
+class database;
+class lua_hooks;
 class roster_t;
 
 // Destructively alter a roster_merge_result to attempt to remove any
@@ -24,11 +25,11 @@ struct roster_merge_result;
 struct content_merge_adaptor;
 
 void
-resolve_merge_conflicts(roster_t const & left_roster,
+resolve_merge_conflicts(lua_hooks & lua,
+                        roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
-                        content_merge_adaptor & adaptor,
-                        app_state & app);
+                        content_merge_adaptor & adaptor);
 
 // traditional resolve-all-conflicts-as-you-go style merging with 3-way merge
 //   for file texts
@@ -42,17 +43,19 @@ resolve_merge_conflicts(roster_t const & left_roster,
 //   around the revision and its files not being in the db, and the resulting
 //   revision and its merged files not being written back to the db
 void
-interactive_merge_and_store(revision_id const & left, revision_id const & right,
-                            revision_id & merged, app_state & app);
+interactive_merge_and_store(lua_hooks & lua, database & db,
+                            revision_id const & left,
+                            revision_id const & right,
+                            revision_id & merged);
 
 void
-store_roster_merge_result(roster_t const & left_roster,
+store_roster_merge_result(database & db,
+                          roster_t const & left_roster,
                           roster_t const & right_roster,
                           roster_merge_result & result,
                           revision_id const & left_rid,
                           revision_id const & right_rid,
-                          revision_id & merged_rid,
-                          app_state & app);
+                          revision_id & merged_rid);
 
 // Local Variables:
 // mode: C++

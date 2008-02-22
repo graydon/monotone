@@ -19,6 +19,10 @@
 #include "simplestring_xform.hh"
 #include "transforms.hh"
 #include "app_state.hh"
+#include "project.hh"
+#include "database.hh"
+#include "work.hh"
+#include "roster.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -41,8 +45,9 @@ CMD(fload, "fload", "", CMD_REF(debug), "",
 
   calculate_ident (f_data, f_id);
 
-  transaction_guard guard(app.db);
-  app.db.put_file(f_id, f_data);
+  database db(app);
+  transaction_guard guard(db);
+  db.put_file(f_id, f_data);
   guard.commit();
 }
 
@@ -61,18 +66,19 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
 
   file_data anc, left, right;
 
-  N(app.db.file_version_exists (anc_id),
+  database db(app);
+  N(db.file_version_exists (anc_id),
     F("ancestor file id does not exist"));
 
-  N(app.db.file_version_exists (left_id),
+  N(db.file_version_exists (left_id),
     F("left file id does not exist"));
 
-  N(app.db.file_version_exists (right_id),
+  N(db.file_version_exists (right_id),
     F("right file id does not exist"));
 
-  app.db.get_file_version(anc_id, anc);
-  app.db.get_file_version(left_id, left);
-  app.db.get_file_version(right_id, right);
+  db.get_file_version(anc_id, anc);
+  db.get_file_version(left_id, left);
+  db.get_file_version(right_id, right);
 
   vector<string> anc_lines, left_lines, right_lines, merged_lines;
 
@@ -102,14 +108,15 @@ CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
 
   file_data src, dst;
 
-  N(app.db.file_version_exists (src_id),
+  database db(app);
+  N(db.file_version_exists (src_id),
     F("source file id does not exist"));
 
-  N(app.db.file_version_exists (dst_id),
+  N(db.file_version_exists (dst_id),
     F("destination file id does not exist"));
 
-  app.db.get_file_version(src_id, src);
-  app.db.get_file_version(dst_id, dst);
+  db.get_file_version(src_id, src);
+  db.get_file_version(dst_id, dst);
 
   string pattern("");
   if (!app.opts.no_show_encloser)
@@ -128,9 +135,8 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     options::opts::revision | options::opts::revs_only)
 {
   revision_id rid;
-
-  if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
+  database db(app);
+  project_t project(db);
 
   if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
     throw usage(execid);
@@ -152,9 +158,9 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
       // Thus, what we do instead is get the parent rosters, refuse to
       // proceed if there's more than one, and give do_annotate what it
       // wants.  See tests/two_parent_workspace_annotate.
-
+      workspace work(app);
       revision_t rev;
-      app.work.get_work_rev(rev);
+      work.get_work_rev(rev);
       N(rev.edges.size() == 1,
         F("with no revision selected, this command can only be used in "
           "a single-parent workspace"));
@@ -164,17 +170,12 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
       // this call will change to something else when the above bug is
       // fixed, and so should not be merged with the identical call in
       // the else branch.
-      app.db.get_roster(rid, roster);
+      db.get_roster(rid, roster);
     }
   else
     {
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
-      N(!null_id(rid), 
-        F("no revision for file '%s' in database") % file);
-      N(app.db.revision_exists(rid), 
-        F("no such revision '%s'") % rid);
-
-      app.db.get_roster(rid, roster);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      db.get_roster(rid, roster);
     }
 
   // find the version of the file requested
@@ -186,7 +187,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
-  do_annotate(app, file_node, rid, app.opts.revs_only);
+  do_annotate(project, file_node, rid, app.opts.revs_only);
 }
 
 CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
@@ -247,21 +248,21 @@ CMD_AUTOMATE(identify, N_("PATH"),
 }
 
 static void
-dump_file(std::ostream & output, app_state & app, file_id & ident)
+dump_file(database & db, std::ostream & output, file_id & ident)
 {
-  N(app.db.file_version_exists(ident),
+  N(db.file_version_exists(ident),
     F("no file version %s found in database") % ident);
 
   file_data dat;
   L(FL("dumping file %s") % ident);
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
 static void
-dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename)
+dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
 {
-  N(app.db.revision_exists(rid), 
+  N(db.revision_exists(rid), 
     F("no such revision '%s'") % rid);
 
   // Paths are interpreted as standard external ones when we're in a
@@ -270,7 +271,7 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
 
   roster_t roster;
   marking_map marks;
-  app.db.get_roster(rid, roster, marks);
+  db.get_roster(rid, roster, marks);
   N(roster.has_node(fp), 
     F("no file '%s' found in revision '%s'") % fp % rid);
   
@@ -279,7 +280,7 @@ dump_file(std::ostream & output, app_state & app, revision_id rid, utf8 filename
     F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
-  dump_file(output, app, file_node->content);
+  dump_file(db, output, file_node->content);
 }
 
 CMD(cat, "cat", "", CMD_REF(informative),
@@ -292,21 +293,24 @@ CMD(cat, "cat", "", CMD_REF(informative),
   if (args.size() != 1)
     throw usage(execid);
 
+  database db(app);
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      app.require_workspace();
-
+      workspace work(app);
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      work.get_parent_rosters(db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      project_t project(db);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+    }
 
-  dump_file(cout, app, rid, idx(args, 0));
+  dump_file(db, cout, rid, idx(args, 0));
 }
 
 // Name: get_file
@@ -327,11 +331,12 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
   file_id ident(idx(args, 0)());
-  dump_file(output, app, ident);
+  dump_file(db, output, ident);
 }
 
-// Name: get_fileof
+// Name: get_file_of
 // Arguments:
 //   1: a filename
 //
@@ -353,21 +358,26 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   N(args.size() == 1,
     F("wrong argument count"));
 
+  database db(app);
+
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      app.require_workspace();
+      workspace work(app);
 
       parent_map parents;
-      app.work.get_parent_rosters(parents);
+      work.get_parent_rosters(db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
     }
   else
-      complete(app, idx(app.opts.revision_selectors, 0)(), rid);
+    {
+      project_t project(db);
+      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+    }
 
-  dump_file(output, app, rid, idx(args, 0));
+  dump_file(db, output, rid, idx(args, 0));
 }
 
 // Local Variables:

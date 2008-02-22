@@ -10,22 +10,13 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <map>
 #include <set>
-#include "vector.hh"
-
-#include "numeric_vocab.hh"
 #include "paths.hh"
-#include "vocab.hh"
-#include "sanity.hh"
-
-typedef std::map<attr_key, attr_value> attr_map_t;
+#include "rev_types.hh"
 
 // Virtual interface to a tree-of-files which you can edit
 // destructively; this may be the filesystem or an in-memory
 // representation (a roster / mfest).
-
-typedef u32 node_id;
 
 struct editable_tree
 {
@@ -109,9 +100,6 @@ delta_entry_dst(std::map<file_path, std::pair<file_id, file_id> >::const_iterato
 {
   return i->second.second;
 }
-
-
-namespace basic_io { struct printer; struct parser; }
 
 void
 print_cset(basic_io::printer & printer,

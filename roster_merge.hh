@@ -10,10 +10,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include "rev_types.hh"
 #include "diff_patch.hh"
-#include "vocab.hh"
-#include "roster.hh"
-#include "sanity.hh"
+#include "roster.hh" // needs full definition of roster_t available
 
 // interactions between conflict types:
 //   node rename conflicts never participate in structural conflicts

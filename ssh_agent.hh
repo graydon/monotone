@@ -10,47 +10,33 @@
 #ifndef __SSH_AGENT_H__
 #define __SSH_AGENT_H__
 
-#include "numeric_vocab.hh"
-#include "netxx/stream.h"
-#include "botan/rsa.h"
-#include "botan/bigint.h"
-#include <boost/shared_ptr.hpp>
 #include "vector.hh"
-#include "platform.hh"
+#include <boost/scoped_ptr.hpp>
 
-class ssh_agent : ssh_agent_platform
+namespace Botan
 {
-public:
+  class RSA_PublicKey;
+  class RSA_PrivateKey;
+};
+
+class ssh_agent_state;
+
+struct ssh_agent
+{
   ssh_agent();
   ~ssh_agent();
   std::vector<Botan::RSA_PublicKey> const get_keys();
   void sign_data(Botan::RSA_PublicKey const & key,
                  std::string const & data,
                  std::string & out);
-  void add_identity(Botan::RSA_PrivateKey const & key, std::string const & comment);
+  void add_identity(Botan::RSA_PrivateKey const & key,
+                    std::string const & comment);
   bool connected();
 
 private:
-  std::vector<Botan::RSA_PublicKey> keys;
-
-  //helper functions for reading and unpacking data from ssh-agent
-  void fetch_packet(std::string & packet);
-  u32 get_long(char const * buf);
-  u32 get_long_from_buf(std::string const & buf, u32 & loc);
-  void get_string_from_buf(std::string const & buf,
-                           u32 & loc,
-                           u32 & len,
-                           std::string & out);
-
-  //helper functions for packing data to send to ssh-agent
-  void put_long(u32 l, char * buf);
-  void put_long_into_buf(u32 l, std::string & buf);
-  void put_string_into_buf(std::string const & str, std::string & buf);
-  void put_bigint_into_buf(Botan::BigInt const & bi, std::string & buf);
-  void put_public_key_into_buf(Botan::RSA_PublicKey const & key, std::string & buf);
-  void put_private_key_into_buf(Botan::RSA_PrivateKey const & key, std::string & buf);
+  boost::scoped_ptr<ssh_agent_state> s;
 };
-
+  
 // Local Variables:
 // mode: C++
 // fill-column: 76

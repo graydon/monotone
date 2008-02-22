@@ -18,7 +18,7 @@
 #include "roster_merge.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
-#include "app_state.hh"
+#include "database.hh"
 
 using std::make_pair;
 using std::map;
@@ -43,7 +43,7 @@ namespace
   }
 
   void
-  try_to_merge_files(app_state & app,
+  try_to_merge_files(lua_hooks & lua,
                      roster_t const & left_roster, roster_t const & right_roster,
                      roster_merge_result & result, content_merge_adaptor & adaptor,
                      merge_method const method)
@@ -75,7 +75,7 @@ namespace
 
         file_id merged_id;
 
-        content_merger cm(app, *roster_for_file_lca,
+        content_merger cm(lua, *roster_for_file_lca,
                           left_roster, right_roster,
                           adaptor);
 
@@ -124,11 +124,11 @@ namespace
 }
 
 void
-resolve_merge_conflicts(roster_t const & left_roster,
+resolve_merge_conflicts(lua_hooks & lua,
+                        roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
-                        content_merge_adaptor & adaptor,
-                        app_state & app)
+                        content_merge_adaptor & adaptor)
 {
   // FIXME_ROSTERS: we only have code (below) to invoke the
   // line-merger on content conflicts. Other classes of conflict will
@@ -159,7 +159,7 @@ resolve_merge_conflicts(roster_t const & left_roster,
 
       L(FL("examining content conflicts"));
 
-      try_to_merge_files(app, left_roster, right_roster,
+      try_to_merge_files(lua, left_roster, right_roster,
                          result, adaptor, auto_merge);
 
       size_t remaining = result.file_content_conflicts.size();
@@ -168,10 +168,9 @@ resolve_merge_conflicts(roster_t const & left_roster,
           P(F("%d content conflicts require user intervention") % remaining);
           result.report_file_content_conflicts(left_roster, right_roster, adaptor);
 
-          try_to_merge_files(app, left_roster, right_roster,
+          try_to_merge_files(lua, left_roster, right_roster,
                              result, adaptor, user_merge);
         }
-
     }
 
   E(result.is_clean(),
@@ -179,53 +178,45 @@ resolve_merge_conflicts(roster_t const & left_roster,
 }
 
 void
-interactive_merge_and_store(revision_id const & left_rid,
+interactive_merge_and_store(lua_hooks & lua, database & db,
+                            revision_id const & left_rid,
                             revision_id const & right_rid,
-                            revision_id & merged_rid,
-                            app_state & app)
+                            revision_id & merged_rid)
 {
   roster_t left_roster, right_roster;
   marking_map left_marking_map, right_marking_map;
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
 
-  app.db.get_roster(left_rid, left_roster, left_marking_map);
-  app.db.get_roster(right_rid, right_roster, right_marking_map);
-  app.db.get_uncommon_ancestors(left_rid, right_rid,
-                                left_uncommon_ancestors, right_uncommon_ancestors);
+  db.get_roster(left_rid, left_roster, left_marking_map);
+  db.get_roster(right_rid, right_roster, right_marking_map);
+  db.get_uncommon_ancestors(left_rid, right_rid,
+                            left_uncommon_ancestors, right_uncommon_ancestors);
 
   roster_merge_result result;
-
-//   {
-//     data tmp;
-//     write_roster_and_marking(left_roster, left_marking_map, tmp);
-//     P(F("merge left roster: [[[\n%s\n]]]") % tmp);
-//     write_roster_and_marking(right_roster, right_marking_map, tmp);
-//     P(F("merge right roster: [[[\n%s\n]]]") % tmp);
-//   }
 
   roster_merge(left_roster, left_marking_map, left_uncommon_ancestors,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
-  content_merge_database_adaptor dba(app, left_rid, right_rid,
+  content_merge_database_adaptor dba(db, left_rid, right_rid,
                                      left_marking_map, right_marking_map);
-  resolve_merge_conflicts(left_roster, right_roster,
-                          result, dba, app);
+  resolve_merge_conflicts(lua, left_roster, right_roster,
+                          result, dba);
 
   // write new files into the db
-  store_roster_merge_result(left_roster, right_roster, result,
-                            left_rid, right_rid, merged_rid,
-                            app);
+  store_roster_merge_result(db,
+                            left_roster, right_roster, result,
+                            left_rid, right_rid, merged_rid);
 }
 
 void
-store_roster_merge_result(roster_t const & left_roster,
+store_roster_merge_result(database & db,
+                          roster_t const & left_roster,
                           roster_t const & right_roster,
                           roster_merge_result & result,
                           revision_id const & left_rid,
                           revision_id const & right_rid,
-                          revision_id & merged_rid,
-                          app_state & app)
+                          revision_id & merged_rid)
 {
   I(result.is_clean());
   roster_t & merged_roster = result.roster;
@@ -248,9 +239,9 @@ store_roster_merge_result(roster_t const & left_roster,
   write_revision(merged_rev, merged_data);
   calculate_ident(merged_data, merged_rid);
   {
-    transaction_guard guard(app.db);
+    transaction_guard guard(db);
 
-    app.db.put_revision(merged_rid, merged_rev);
+    db.put_revision(merged_rid, merged_rev);
 
     guard.commit();
   }

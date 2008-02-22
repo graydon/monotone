@@ -14,9 +14,9 @@
 #include "vector.hh"
 #include <sstream>
 
-#include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
+#include "database.hh"
 #include "platform-wrapped.hh"
 #include "roster.hh"
 #include "revision.hh"
@@ -1198,14 +1198,14 @@ namespace
   struct true_node_id_source
     : public node_id_source
   {
-    true_node_id_source(app_state & app) : app(app) {}
+    true_node_id_source(database & db) : db(db) {}
     virtual node_id next()
     {
-      node_id n = app.db.next_node_id();
+      node_id n = db.next_node_id();
       I(!temp_node(n));
       return n;
     }
-    app_state & app;
+    database & db;
   };
 
 
@@ -1897,7 +1897,7 @@ namespace {
     cset const & right_cs = edge_changes(i);
 
     I(!null_id(left_rid) && !null_id(right_rid));
-    database::cached_roster left_cached, right_cached;
+    cached_roster left_cached, right_cached;
     db.get_roster(left_rid, left_cached);
     db.get_roster(right_rid, right_cached);
 
@@ -1992,9 +1992,9 @@ mark_roster_with_one_parent(roster_t const & parent,
 // WARNING: this function is not tested directly (no unit tests).  Do not put
 // real logic in it.
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         database & db, node_id_source & nis)
+make_roster_for_revision(database & db, node_id_source & nis,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
   MM(rev);
   MM(new_rid);
@@ -2015,12 +2015,12 @@ make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
 }
 
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         app_state & app)
+make_roster_for_revision(database & db,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
-  true_node_id_source nis(app);
-  make_roster_for_revision(rev, new_rid, new_roster, new_markings, app.db, nis);
+  true_node_id_source nis(db);
+  make_roster_for_revision(db, nis, rev, new_rid, new_roster, new_markings);
 }
 
 
