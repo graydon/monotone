@@ -1,10 +1,11 @@
-monotone (0.39-1) UNRELEASED; urgency=low
+monotone (0.39-1) unstable; urgency=low
 
+  [ Zack Weinberg ]
   * New upstream release.
     - Can now be built with gcc 4.3 snapshots.  (Closes: #455646)
   * Enable use of system libpcre, set appropriate Build-Depends.
 
- -- J Maintainer <address@here>  ???, ?? ??? ???? ??:??:?? +????
+ -- Richard Levitte <richard@levitte.org>  Mon, 25 Feb 2008 10:55:36 -0500
 
 monotone (0.38-1) unstable; urgency=low
 
