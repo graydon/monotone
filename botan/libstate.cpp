@@ -13,6 +13,7 @@
 #include <botan/timers.h>
 #include <botan/charset.h>
 #include <botan/x931_rng.h>
+#include <botan/fips140.h>
 #include <algorithm>
 
 namespace Botan {
@@ -339,9 +340,6 @@ void Library_State::initialize(const InitializerOptions& args,
    timer = modules.timer();
    transcoder = modules.transcoder();
 
-   if(args.config_file() != "")
-      config().load_inifile(args.config_file());
-
    locks["settings"] = get_mutex();
    locks["allocator"] = get_mutex();
    locks["rng"] = get_mutex();
@@ -377,6 +375,12 @@ void Library_State::initialize(const InitializerOptions& args,
 
       if(!rng_is_seeded())
          throw PRNG_Unseeded("Unable to collect sufficient entropy");
+      }
+
+   if(args.fips_mode() || args.self_test())
+      {
+      if(!FIPS140::passes_self_tests())
+         throw Self_Test_Failure("FIPS-140 startup tests");
       }
    }
 
