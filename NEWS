@@ -1,4 +1,4 @@
-??? ??? ?? ??:??:?? UTC 2008
+Mon Feb 25 15:55:36 UTC 2008
 
         0.39 release.
 
@@ -23,12 +23,15 @@
           messages, however it may report content conflicts that will be
           resolved automatically by the line merger.
 
-	- The internal copy of PCRE has been updated to version 7.6.
-	  If you use the '--with-system-pcre' configure switch, it
-	  will insist on at least this version.
+        - The internal copy of PCRE has been updated to version 7.6.
+          If you use the '--with-system-pcre' configure switch, it
+          will insist on at least this version.
 
-	- "emacs" has been removed from the list of dumb terminal types; 
-	   tickers should now default to --ticker=count with emacs terminals
+        - "emacs" has been removed from the list of dumb terminal types; 
+          tickers should now default to --ticker=count with emacs terminals
+
+        - extensive section on merge conflicts and ways to resolve them
+          added to the manual.
 
         Bugs fixed
 
@@ -42,6 +45,8 @@
           "dir1" and "dir1/file1" was dropped, mtn now re-creates file1 at the
           proper place ("dir1/") and leaves no missing files around because
           of the non-existing "dir0/".
+
+        - a few changes needed to build with gcc 4.3.
      
         New features
 
