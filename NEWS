@@ -1,3 +1,11 @@
+??? ??? ?? ??:??:?? UTC 2008
+
+        0.40 release.
+
+        Internal
+
+        - Update Botan to 1.7.3.
+
 Mon Feb 25 15:55:36 UTC 2008
 
         0.39 release.
@@ -60,10 +68,6 @@ Mon Feb 25 15:55:36 UTC 2008
           In addition, 'automate inventory' no longer recurses into ignored
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
-
-        Internal
-
-        - Update Botan to 1.7.3.
 
         - 'automate get_current_revision' which outputs the revision text of 
            changes in the current workspace
