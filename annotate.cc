@@ -32,6 +32,7 @@
 #include "ui.hh"
 #include "vocab.hh"
 #include "rev_height.hh"
+#include "roster.hh"
 
 using std::back_insert_iterator;
 using std::back_inserter;

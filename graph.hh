@@ -20,9 +20,7 @@
 #include <set>
 #include "vector.hh"
 #include <utility>
-
-#include "vocab.hh"
-#include "rev_height.hh"
+#include "rev_types.hh"
 
 struct reconstruction_graph
 {
@@ -31,14 +29,10 @@ struct reconstruction_graph
   virtual ~reconstruction_graph() {};
 };
 
-typedef std::vector<id> reconstruction_path;
-
 void
 get_reconstruction_path(id const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path);
-
-typedef std::multimap<revision_id, revision_id> rev_ancestry_map;
 
 void toposort_rev_ancestry(rev_ancestry_map const & graph,
                           std::vector<revision_id> & revisions);

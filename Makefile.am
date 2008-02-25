@@ -23,7 +23,7 @@ LUAEXT_SOURCES = 							\
 
 MOST_SOURCES = 								\
 	$(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) platform-wrapped.hh	\
-	mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh				\
+	rev_types.hh mtn-sanity.cc mtn-sanity.hh ui.cc ui.hh		\
 	app_state.cc app_state.hh					\
 	commands.cc commands.hh $(CMD_SOURCES)				\
 	diff_patch.cc diff_patch.hh					\

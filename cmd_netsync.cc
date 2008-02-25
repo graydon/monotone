@@ -14,6 +14,9 @@
 #include "platform-wrapped.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "work.hh"
+#include "database.hh"
+#include "roster.hh"
 
 #include <fstream>
 
@@ -386,7 +389,7 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), ident);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), ident);
 
       guess_branch(app.opts, project, ident);
       I(!app.opts.branchname().empty());
@@ -396,25 +399,25 @@ CMD(clone, "clone", "", CMD_REF(network),
         % ident % app.opts.branchname);
     }
 
-  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
-  roster_t current_roster;
+  roster_t empty_roster, current_roster;
 
   L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
   db.get_roster(ident, current_roster);
 
+  workspace work(app);
   revision_t workrev;
   make_revision_for_workspace(ident, cset(), workrev);
-  app.work.put_work_rev(workrev);
+  work.put_work_rev(workrev);
 
   cset checkout;
-  make_cset(*empty_roster, current_roster, checkout);
+  make_cset(empty_roster, current_roster, checkout);
 
   content_merge_checkout_adaptor wca(db);
 
-  app.work.perform_content_update(db, checkout, wca, false);
+  work.perform_content_update(db, checkout, wca, false);
 
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
   guard.commit();
   remove_on_fail.commit();
 }

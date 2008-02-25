@@ -13,6 +13,7 @@
 
 #include "cmd.hh"
 #include "app_state.hh"
+#include "database.hh"
 #include "key_store.hh"
 #include "packet.hh"
 

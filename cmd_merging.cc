@@ -28,6 +28,7 @@
 #include "simplestring_xform.hh"
 #include "keys.hh"
 #include "key_store.hh"
+#include "database.hh"
 
 using std::cout;
 using std::make_pair;
@@ -152,13 +153,13 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   if (app.opts.revision_selectors.size() > 1)
     throw usage(execid);
 
-  app.require_workspace();
   database db(app);
+  workspace work(app);
   project_t project(db);
 
   // Figure out where we are
   parent_map parents;
-  app.work.get_parent_rosters(db, parents);
+  work.get_parent_rosters(db, parents);
 
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
@@ -198,7 +199,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
     }
   else
     {
-      complete(app, project, app.opts.revision_selectors[0](), chosen_rid);
+      complete(app.opts, app.lua, project, app.opts.revision_selectors[0](), chosen_rid);
     }
   I(!null_id(chosen_rid));
 
@@ -213,7 +214,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
       P(F("already up to date at %s") % old_rid);
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
-      app.work.set_ws_options(app.opts, true);
+      work.set_ws_options(app.opts, true);
       return;
     }
 
@@ -246,15 +247,15 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   temp_node_id_source nis;
 
   // Get the OLD and WORKING rosters
-  database::roster_t_cp old_roster
+  roster_t_cp old_roster
     = parent_cached_roster(parents.begin()).first;
   MM(*old_roster);
 
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
 
   MM(*working_roster);
-  app.work.get_current_roster_shape(db, nis, *working_roster);
-  app.work.update_current_roster_from_filesystem(*working_roster);
+  work.get_current_roster_shape(db, nis, *working_roster);
+  work.update_current_roster_from_filesystem(*working_roster);
 
   revision_t working_rev;
   revision_id working_rid;
@@ -292,17 +293,17 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   // Now finally modify the workspace
   cset update;
   make_cset(*working_roster, merged_roster, update);
-  app.work.perform_content_update(db, update, wca);
+  work.perform_content_update(db, update, wca);
 
   revision_t remaining;
   make_revision_for_workspace(chosen_rid, chosen_roster,
                               merged_roster, remaining);
 
   // small race condition here...
-  app.work.put_work_rev(remaining);
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
-  app.work.set_ws_options(app.opts, true);
+  work.put_work_rev(remaining);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
+  work.set_ws_options(app.opts, true);
 
   if (switched_branch)
     P(F("switched branch; next commit will use branch %s") % app.opts.branchname());
@@ -676,15 +677,15 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     options::opts::none)
 {
   revision_id left_id, right_id;
-  database::cached_roster left, right;
+  cached_roster left, right;
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
 
   if (args.size() != 1)
     throw usage(execid);
 
   database db(app);
+  workspace work(app);
   project_t project(db);
-  app.require_workspace();
 
   // Get the current state of the workspace.
 
@@ -694,13 +695,13 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   {
     parent_map parents;
-    app.work.get_parent_rosters(db, parents);
+    work.get_parent_rosters(db, parents);
     N(parents.size() == 1,
       F("this command can only be used in a single-parent workspace"));
 
     temp_node_id_source nis;
-    app.work.get_current_roster_shape(db, nis, *working_roster);
-    app.work.update_current_roster_from_filesystem(*working_roster);
+    work.get_current_roster_shape(db, nis, *working_roster);
+    work.update_current_roster_from_filesystem(*working_roster);
 
     N(parent_roster(parents.begin()) == *working_roster,
       F("'%s' can only be used in a workspace with no pending changes") %
@@ -714,7 +715,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
     calculate_ident(working_rev, working_rid);
   }
 
-  complete(app, project, idx(args, 0)(), right_id);
+  complete(app.opts, app.lua, project, idx(args, 0)(), right_id);
   db.get_roster(right_id, right);
   N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
 
@@ -733,7 +734,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
                merge_result);
 
   revision_id lca_id;
-  database::cached_roster lca;
+  cached_roster lca;
   find_common_ancestor_for_merge(db, left_id, right_id, lca_id);
   db.get_roster(lca_id, lca);
 
@@ -763,10 +764,10 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   make_cset(*left.first, merge_result.roster, update);
 
   // small race condition here...
-  app.work.perform_content_update(db, update, wca);
-  app.work.put_work_rev(merged_rev);
-  app.work.update_any_attrs(db);
-  app.work.maybe_update_inodeprints(db);
+  work.perform_content_update(db, update, wca);
+  work.put_work_rev(merged_rev);
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
 
   P(F("updated to result of merge\n"
       " [left] %s\n"
@@ -789,8 +790,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   if (args.size() != 3)
     throw usage(execid);
 
-  complete(app, project, idx(args, 0)(), left);
-  complete(app, project, idx(args, 1)(), right);
+  complete(app.opts, app.lua, project, idx(args, 0)(), left);
+  complete(app.opts, app.lua, project, idx(args, 1)(), right);
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
@@ -819,8 +820,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;
-  complete(app, project, idx(args,0)(), l_id);
-  complete(app, project, idx(args,1)(), r_id);
+  complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+  complete(app.opts, app.lua, project, idx(args,1)(), r_id);
   N(!is_ancestor(db, l_id, r_id),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(db, r_id, l_id),
@@ -881,14 +882,15 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
        "first revision to the second."),
     options::opts::revision | options::opts::depth | options::opts::exclude)
 {
-  // Work out our arguments
-  revision_id from_rid, to_rid;
   database db(app);
+  workspace work(app);
   project_t project(db);
 
+  // Work out our arguments
+  revision_id from_rid, to_rid;
   if (app.opts.revision_selectors.size() == 1)
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), to_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), to_rid);
       std::set<revision_id> parents;
       db.get_revision_parents(to_rid, parents);
       N(parents.size() == 1,
@@ -901,13 +903,11 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), from_rid);
-      complete(app, project, idx(app.opts.revision_selectors, 1)(), to_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), from_rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 1)(), to_rid);
     }
   else
     throw usage(execid);
-
-  app.require_workspace();
 
   N(!(from_rid == to_rid), F("no changes to apply"));
 
@@ -948,9 +948,9 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // Get the WORKING roster
   shared_ptr<roster_t> working_roster = shared_ptr<roster_t>(new roster_t());
   MM(*working_roster);
-  app.work.get_current_roster_shape(db, nis, *working_roster);
+  work.get_current_roster_shape(db, nis, *working_roster);
 
-  app.work.update_current_roster_from_filesystem(*working_roster);
+  work.update_current_roster_from_filesystem(*working_roster);
 
   // Get the FROM->TO cset...
   cset from_to_to; MM(from_to_to);
@@ -958,7 +958,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   {
     roster_t to_true_roster;
     db.get_roster(to_rid, to_true_roster);
-    node_restriction mask(app.work, args_to_paths(args),
+    node_restriction mask(work, args_to_paths(args),
                           args_to_paths(app.opts.exclude_patterns),
                           app.opts.depth,
                           *from_roster, to_true_roster);
@@ -981,7 +981,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   }
 
   parent_map parents;
-  app.work.get_parent_rosters(db, parents);
+  work.get_parent_rosters(db, parents);
 
   revision_t working_rev;
   revision_id working_rid;
@@ -1021,7 +1021,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   MM(update);
   make_cset(*working_roster, merged_roster, update);
   E(!update.empty(), F("no changes were applied"));
-  app.work.perform_content_update(db, update, wca);
+  work.perform_content_update(db, update, wca);
 
   P(F("applied changes to workspace"));
 
@@ -1031,13 +1031,13 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   make_revision_for_workspace(parents, merged_roster, remaining);
 
   // small race condition here...
-  app.work.put_work_rev(remaining);
-  app.work.update_any_attrs(db);
+  work.put_work_rev(remaining);
+  work.update_any_attrs(db);
 
   // add a note to the user log file about what we did
   {
     utf8 log;
-    app.work.read_user_log(log);
+    work.read_user_log(log);
     std::string log_str = log();
     if (!log_str.empty())
       log_str += "\n";
@@ -1049,7 +1049,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
                   % from_rid % to_rid).str();
-    app.work.write_user_log(utf8(log_str));
+    work.write_user_log(utf8(log_str));
   }
 }
 
@@ -1098,10 +1098,10 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
       temp_node_id_source nis;
       revision_id rid(fake_id());
 
-      app.require_workspace();
-      app.work.get_parent_rosters(db, parents);
-      app.work.get_current_roster_shape(db, nis, roster);
-      app.work.update_current_roster_from_filesystem(roster);
+      workspace work(app);
+      work.get_parent_rosters(db, parents);
+      work.get_current_roster_shape(db, nis, roster);
+      work.update_current_roster_from_filesystem(roster);
 
       if (parents.size() == 0)
         {
@@ -1144,7 +1144,7 @@ CMD(get_roster, "get_roster", "", CMD_REF(debug), N_("[REVID]"),
       database db(app);
       project_t project(db);
       revision_id rid;
-      complete(app, project, idx(args, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(args, 0)(), rid);
       I(!null_id(rid));
       db.get_roster(rid, roster, mm);
     }

@@ -20,6 +20,9 @@
 #include "transforms.hh"
 #include "app_state.hh"
 #include "project.hh"
+#include "database.hh"
+#include "work.hh"
+#include "roster.hh"
 
 using std::cout;
 using std::ostream_iterator;
@@ -135,9 +138,6 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
   database db(app);
   project_t project(db);
 
-  if (app.opts.revision_selectors.size() == 0)
-    app.require_workspace();
-
   if ((args.size() != 1) || (app.opts.revision_selectors.size() > 1))
     throw usage(execid);
 
@@ -158,9 +158,9 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
       // Thus, what we do instead is get the parent rosters, refuse to
       // proceed if there's more than one, and give do_annotate what it
       // wants.  See tests/two_parent_workspace_annotate.
-
+      workspace work(app);
       revision_t rev;
-      app.work.get_work_rev(rev);
+      work.get_work_rev(rev);
       N(rev.edges.size() == 1,
         F("with no revision selected, this command can only be used in "
           "a single-parent workspace"));
@@ -174,7 +174,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
     }
   else
     {
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
       db.get_roster(rid, roster);
     }
 
@@ -296,10 +296,9 @@ CMD(cat, "cat", "", CMD_REF(informative),
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      app.require_workspace();
-
+      workspace work(app);
       parent_map parents;
-      app.work.get_parent_rosters(db, parents);
+      work.get_parent_rosters(db, parents);
       N(parents.size() == 1,
         F("this command can only be used in a single-parent workspace"));
       rid = parent_id(parents.begin());
@@ -307,7 +306,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
   else
     {
       project_t project(db);
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
   dump_file(db, cout, rid, idx(args, 0));
@@ -363,7 +362,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   revision_id rid;
   if (app.opts.revision_selectors.size() == 0)
     {
-      CMD_REQUIRES_WORKSPACE(app);
+      workspace work(app);
 
       parent_map parents;
       work.get_parent_rosters(db, parents);
@@ -374,7 +373,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   else
     {
       project_t project(db);
-      complete(app, project, idx(app.opts.revision_selectors, 0)(), rid);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), rid);
     }
 
   dump_file(db, output, rid, idx(args, 0));

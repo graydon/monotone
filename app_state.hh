@@ -10,16 +10,23 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "paths.hh"
 #include "options.hh"
 #include "lua_hooks.hh"
-#include "work.hh"
 
-// This class is supposed to hold all (or.. well, most) of the state
-// of the application, barring some unfortunate static objects like
-// the debugging / logging system and the command objects, for the
-// time being. The vague intent being to make life easier for anyone
-// who wants to embed this program as a library someday.
+// This class used to hold most of the state of the application (hence the
+// name) but now it's just a wrapper around the options and lua_hooks
+// objects, plus one bit of state needed by the Lua extension interfaces.
+//
+// It is not quite possible to eliminate this object altogether.  The major
+// remaining use is the Lua interface, which has a back-mapping from
+// lua_state (not lua_hooks) objects to app_state objects.  This is mainly
+// needed for the mtn_automate() function, which allows lua-coded extension
+// commands to call the automate commands.
+//
+// Since the options and lua_hooks objects are so frequently required
+// together, it may make sense to merge them together and have that merged
+// object replace the app_state.  Or we could just go back to passing this
+// around instead of separate options and lua_hooks objects.
 
 class app_state
 {
@@ -29,11 +36,7 @@ public:
 
   options opts;
   lua_hooks lua;
-  workspace work;
-
   bool mtn_automate_allowed;
-
-  void require_workspace();
 };
 
 // Local Variables:

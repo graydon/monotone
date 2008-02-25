@@ -10,13 +10,7 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "vocab.hh"
-#include "roster.hh"
-
-#include <boost/shared_ptr.hpp>
-
-#include <map>
-#include "vector.hh"
+#include "rev_types.hh"
 
 class database;
 class lua_hooks;

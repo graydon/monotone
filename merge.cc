@@ -18,6 +18,7 @@
 #include "roster_merge.hh"
 #include "safe_map.hh"
 #include "transforms.hh"
+#include "database.hh"
 
 using std::make_pair;
 using std::map;
@@ -166,10 +167,10 @@ resolve_merge_conflicts(lua_hooks & lua,
         {
           P(F("%d content conflicts require user intervention") % remaining);
           result.report_file_content_conflicts(left_roster, right_roster, adaptor);
-        }
 
-      try_to_merge_files(lua, left_roster, right_roster,
-                         result, adaptor, user_merge);
+          try_to_merge_files(lua, left_roster, right_roster,
+                             result, adaptor, user_merge);
+        }
     }
 
   E(result.is_clean(),

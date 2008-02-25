@@ -40,6 +40,7 @@
 #include "sanity.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "roster.hh"
 #include "xdelta.hh"
 
 using std::make_pair;

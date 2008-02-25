@@ -16,6 +16,7 @@
 #include "charset.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "database.hh"
 #include "project.hh"
 #include "keys.hh"
 #include "key_store.hh"
@@ -163,7 +164,7 @@ CMD(cert, "cert", "", CMD_REF(key_and_cert),
   transaction_guard guard(db);
 
   revision_id rid;
-  complete(app,  project, idx(args, 0)(), rid);
+  complete(app.opts, app.lua,  project, idx(args, 0)(), rid);
 
   cert_name cname;
   internalize_cert_name(idx(args, 1), cname);
@@ -197,7 +198,7 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
     throw usage(execid);
 
   set<revision_id> rids;
-  expand_selector(app,  project, idx(args, 0)(), rids);
+  expand_selector(app.opts, app.lua, project, idx(args, 0)(), rids);
   diagnose_ambiguous_expansion(project, idx(args, 0)(), rids);
 
   revision_id ident;
@@ -252,7 +253,7 @@ CMD(tag, "tag", "", CMD_REF(review), N_("REVISION TAGNAME"),
     throw usage(execid);
 
   revision_id r;
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, db, keys);
   project.put_tag(keys, r, idx(args, 1)());
@@ -273,7 +274,7 @@ CMD(testresult, "testresult", "", CMD_REF(review),
     throw usage(execid);
 
   revision_id r;
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, db, keys);
   cert_revision_testresult(db, keys, r, idx(args, 1)());
@@ -293,7 +294,7 @@ CMD(approve, "approve", "", CMD_REF(review), N_("REVISION"),
     throw usage(execid);
 
   revision_id r;
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
   guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument for approval"));
 
@@ -314,7 +315,7 @@ CMD(suspend, "suspend", "", CMD_REF(review), N_("REVISION"),
     throw usage(execid);
 
   revision_id r;
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
   guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument to suspend"));
 
@@ -349,7 +350,7 @@ CMD(comment, "comment", "", CMD_REF(review), N_("REVISION [COMMENT]"),
     F("empty comment"));
 
   revision_id r;
-  complete(app, project, idx(args, 0)(), r);
+  complete(app.opts, app.lua, project, idx(args, 0)(), r);
 
   cache_user_key(app.opts, app.lua, db, keys);
   cert_revision_comment(db, keys, r, comment);

@@ -30,7 +30,9 @@
 #include "diff_patch.hh"
 #include "ui.hh"
 #include "charset.hh"
-#include "lua_hooks.hh"
+#include "app_state.hh"
+#include "database.hh"
+#include "roster.hh"
 
 using std::deque;
 using std::exception;
@@ -100,13 +102,11 @@ bool workspace::found;
 bool workspace::branch_is_sticky;
 
 void
-workspace::require_workspace(options const & opts,
-                             string const & explanation)
+workspace::require_workspace(i18n_format const & explanation)
 {
+  string e = explanation.str();
   N(workspace::found,
-    F("workspace required but not found%s%s")
-    % (explanation.empty() ? "" : "\n") % explanation);
-  set_ws_options(opts, false);
+    F("workspace required but not found%s%s") % (e.empty() ? "" : "\n") % e);
 }
 
 void
@@ -155,6 +155,25 @@ workspace::create_workspace(options const & opts,
   global_sanity.set_dump_path(system_path(dump_path, false).as_external());
 }
 
+// Normal-use constructor.
+workspace::workspace(app_state & app, bool writeback_options)
+  : lua(app.lua)
+{
+  require_workspace(F(""));
+  if (writeback_options)
+    set_ws_options(app.opts, false);
+}
+
+workspace::workspace(app_state & app, i18n_format const & explanation,
+                     bool writeback_options)
+  : lua(app.lua)
+{
+  require_workspace(explanation);
+  if (writeback_options)
+    set_ws_options(app.opts, false);
+}
+
+
 // routines for manipulating the bookkeeping directory
 
 // revision file contains a partial revision describing the workspace
@@ -201,7 +220,7 @@ workspace::put_work_rev(revision_t const & rev)
 static void
 get_roster_for_rid(database & db,
                    revision_id const & rid,
-                   database::cached_roster & cr)
+                   cached_roster & cr)
 {
   // We may be asked for a roster corresponding to the null rid, which
   // is not in the database.  In this situation, what is wanted is an empty
@@ -230,7 +249,7 @@ workspace::get_parent_rosters(database & db, parent_map & parents)
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); i++)
     {
-      database::cached_roster cr;
+      cached_roster cr;
       get_roster_for_rid(db, edge_old_revision(i), cr);
       safe_insert(parents, make_pair(edge_old_revision(i), cr));
     }

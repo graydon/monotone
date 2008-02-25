@@ -44,6 +44,7 @@
 #include "xdelta.hh"
 #include "epoch.hh"
 #include "graph.hh"
+#include "roster.hh"
 #include "roster_delta.hh"
 #include "rev_height.hh"
 #include "vocab_hash.hh"
@@ -153,7 +154,7 @@ namespace
 
   struct roster_size_estimator
   {
-    unsigned long operator() (database::cached_roster const & cr)
+    unsigned long operator() (cached_roster const & cr)
     {
       I(cr.first);
       I(cr.second);
@@ -246,9 +247,9 @@ private:
   {
     database_impl & imp;
     roster_writeback_manager(database_impl & imp) : imp(imp) {}
-    void writeout(revision_id const &, database::cached_roster const &);
+    void writeout(revision_id const &, cached_roster const &);
   };
-  LRUWritebackCache<revision_id, database::cached_roster,
+  LRUWritebackCache<revision_id, cached_roster,
                     roster_size_estimator, roster_writeback_manager>
     roster_cache;
 
@@ -1244,7 +1245,7 @@ database_impl::clear_delayed_writes()
 
 void
 database_impl::roster_writeback_manager::writeout(revision_id const & id,
-                                                   database::cached_roster const & cr)
+                                                  cached_roster const & cr)
 {
   I(cr.first);
   I(cr.second);
@@ -1453,7 +1454,7 @@ database_impl::get_roster_base(revision_id const & ident,
 {
   if (roster_cache.exists(ident))
     {
-      database::cached_roster cr;
+      cached_roster cr;
       roster_cache.fetch(ident, cr);
       I(cr.first);
       roster = *(cr.first);
@@ -3561,15 +3562,14 @@ database::get_roster(revision_id const & rev_id,
       return;
     }
 
-  database::cached_roster cr;
+  cached_roster cr;
   get_roster(rev_id, cr);
   roster = *cr.first;
   marking = *cr.second;
 }
 
 void
-database::get_roster(revision_id const & rev_id,
-                     database::cached_roster & cr)
+database::get_roster(revision_id const & rev_id, cached_roster & cr)
 {
   get_roster_version(rev_id, cr);
   I(cr.first);
@@ -3604,7 +3604,7 @@ database::put_roster(revision_id const & rev_id,
       revision_id old_rev = *i;
       if (imp->roster_base_stored(old_rev))
         {
-          database::cached_roster cr;
+          cached_roster cr;
           get_roster_version(old_rev, cr);
           roster_delta reverse_delta;
           delta_rosters(*roster, *marking, *(cr.first), *(cr.second), reverse_delta);

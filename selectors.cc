@@ -16,6 +16,7 @@
 #include "project.hh"
 #include "globish.hh"
 #include "cmd.hh"
+#include "work.hh"
 
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -47,7 +48,8 @@ enum selector_type
 typedef vector<pair<selector_type, string> > selector_list;
 
 static void
-decode_selector(app_state & app,
+decode_selector(options const & opts,
+                lua_hooks & lua,
                 string const & orig_sel,
                 selector_type & type,
                 string & sel)
@@ -59,7 +61,7 @@ decode_selector(app_state & app,
   string tmp;
   if (sel.size() < 2 || sel[1] != ':')
     {
-      if (!app.lua.hook_expand_selector(sel, tmp))
+      if (!lua.hook_expand_selector(sel, tmp))
         {
           L(FL("expansion of selector '%s' failed") % sel);
         }
@@ -81,7 +83,7 @@ decode_selector(app_state & app,
           type = sel_branch;
           break;
         case 'h':
-          type = app.opts.ignore_suspend_certs ? sel_any_head : sel_head;
+          type = opts.ignore_suspend_certs ? sel_any_head : sel_head;
           break;
         case 'd':
           type = sel_date;
@@ -116,9 +118,9 @@ decode_selector(app_state & app,
         case sel_date:
         case sel_later:
         case sel_earlier:
-          if (app.lua.hook_exists("expand_date"))
+          if (lua.hook_exists("expand_date"))
             { 
-              N(app.lua.hook_expand_date(sel, tmp),
+              N(lua.hook_expand_date(sel, tmp),
                 F("selector '%s' is not a valid date\n") % sel);
             }
           else
@@ -153,14 +155,13 @@ decode_selector(app_state & app,
         case sel_any_head:
           if (sel.empty())
             {
-              string msg = (sel_branch == type
-                            ? F("the empty branch selector b: refers to "
-                                "the current branch")
-                            : F("the empty head selector h: refers to "
-                                "the head of the current branch")
-                            ).str();
-              workspace::require_workspace(app.opts, msg);
-              sel = app.opts.branchname();
+              i18n_format msg = sel_branch == type
+                ? F("the empty branch selector b: refers to "
+                    "the current branch")
+                : F("the empty head selector h: refers to "
+                    "the head of the current branch");
+              workspace::require_workspace(msg);
+              sel = opts.branchname();
             }
           break;
 
@@ -175,7 +176,9 @@ decode_selector(app_state & app,
 }
 
 static void 
-parse_selector(app_state & app, string const & str, selector_list & sels)
+parse_selector(options const & opts,
+               lua_hooks & lua,
+               string const & str, selector_list & sels)
 {
   sels.clear();
 
@@ -201,7 +204,7 @@ parse_selector(app_state & app, string const & str, selector_list & sels)
           string sel;
           selector_type type = sel_unknown;
 
-          decode_selector(app, *i, type, sel);
+          decode_selector(opts, lua, *i, type, sel);
           sels.push_back(make_pair(type, sel));
         }
     }
@@ -329,13 +332,13 @@ complete_selector(project_t & project,
 }
 
 void
-complete(app_state & app,
+complete(options const & opts, lua_hooks & lua,
          project_t & project,
          string const & str,
          set<revision_id> & completions)
 {
   selector_list sels;
-  parse_selector(app, str, sels);
+  parse_selector(opts, lua, str, sels);
 
   // avoid logging if there's no expansion to be done
   if (sels.size() == 1
@@ -367,14 +370,14 @@ complete(app_state & app,
 }
 
 void
-complete(app_state & app,
+complete(options const & opts, lua_hooks & lua,
          project_t & project,
          string const & str,
          revision_id & completion)
 {
   set<revision_id> completions;
 
-  complete(app, project, str, completions);
+  complete(opts, lua, project, str, completions);
 
   I(completions.size() > 0);
   diagnose_ambiguous_expansion(project, str, completions);
@@ -384,13 +387,13 @@ complete(app_state & app,
 
 
 void
-expand_selector(app_state & app,
+expand_selector(options const & opts, lua_hooks & lua,
                 project_t & project,
                 string const & str,
                 set<revision_id> & completions)
 {
   selector_list sels;
-  parse_selector(app, str, sels);
+  parse_selector(opts, lua, str, sels);
 
   // avoid logging if there's no expansion to be done
   if (sels.size() == 1

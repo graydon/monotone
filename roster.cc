@@ -1901,7 +1901,7 @@ namespace {
     cset const & right_cs = edge_changes(i);
 
     I(!null_id(left_rid) && !null_id(right_rid));
-    database::cached_roster left_cached, right_cached;
+    cached_roster left_cached, right_cached;
     db.get_roster(left_rid, left_cached);
     db.get_roster(right_rid, right_cached);
 
@@ -3528,8 +3528,10 @@ namespace
 
   struct a_scalar
   {
+    // Must use std::set in arguments to avoid "changes meaning" errors.
     virtual void set(revision_id const & scalar_origin_rid,
-                     scalar_val val, set<revision_id> const & this_scalar_mark,
+                     scalar_val val,
+                     std::set<revision_id> const & this_scalar_mark,
                      roster_t & roster, marking_map & markings)
       = 0;
     virtual ~a_scalar() {};

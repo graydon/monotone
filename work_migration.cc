@@ -10,6 +10,7 @@
 #include "base.hh"
 #include "sanity.hh"
 #include "ui.hh"
+#include "cset.hh"
 #include "simplestring_xform.hh"
 #include "revision.hh"
 #include "file_io.hh"

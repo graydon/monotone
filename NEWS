@@ -12,6 +12,10 @@
           which returns all database variables similar to 'list vars' in
           basic_io format, optionally restricted by domain.
 
+        - The REVID argument of 'automate get_revision' is now mandatory;
+          to retrieve the current workspace revision, use the new command
+          'automate get_current_revision'
+
         - messages describing conflicts from all of the various merge commands
           have been reworked and should be much more informative.
 
@@ -21,8 +25,10 @@
 
 	- The internal copy of PCRE has been updated to version 7.6.
 	  If you use the '--with-system-pcre' configure switch, it
-	  will insist on this version and no other.  See m4/pcre.m4
-	  for further discussion.
+	  will insist on at least this version.
+
+	- "emacs" has been removed from the list of dumb terminal types; 
+	   tickers should now default to --ticker=count with emacs terminals
 
         Bugs fixed
 
@@ -60,6 +66,9 @@
 
         - merged the two indexes on revision_certs into a single one.
 
+        - 'automate get_current_revision' which outputs the revision text of 
+           changes in the current workspace
+        
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.

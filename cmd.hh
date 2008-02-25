@@ -277,10 +277,6 @@ void commands::automate_ ## C :: exec_from_automate                  \
    args_vector const & args,                                         \
    std::ostream & output) const
 
-#define CMD_REQUIRES_WORKSPACE(app)                                  \
-workspace & work = app.work;                                         \
-app.require_workspace()
-
 CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
 CMD_FWD_DECL(database);

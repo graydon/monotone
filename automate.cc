@@ -34,12 +34,16 @@
 #include "packet.hh"
 #include "restrictions.hh"
 #include "revision.hh"
+#include "roster.hh"
 #include "transforms.hh"
+#include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "globish.hh"
 #include "charset.hh"
 #include "safe_map.hh"
+#include "work.hh"
 #include "xdelta.hh"
+#include "database.hh"
 
 using std::allocator;
 using std::basic_ios;
@@ -85,7 +89,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
     branch = branch_name(idx(args, 0)());
   else
     {
-      app.require_workspace();
+      workspace::require_workspace(F("with no argument, this command prints the heads of the workspace's branch"));
       branch = app.opts.branchname;
     }
 
@@ -506,7 +510,7 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
   database db(app);
   project_t project(db);
   set<revision_id> completions;
-  expand_selector(app, project, idx(args, 0)(), completions);
+  expand_selector(app.opts, app.lua, project, idx(args, 0)(), completions);
 
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
@@ -980,7 +984,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
              options::opts::no_corresponding_renames)
 {
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   parent_map parents;
   work.get_parent_rosters(db, parents);
@@ -1013,14 +1017,14 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
            inserter(excludes, excludes.end()));
     }
 
-  node_restriction nmask(app.work, includes, excludes, app.opts.depth, old_roster, new_roster);
+  node_restriction nmask(work, includes, excludes, app.opts.depth, old_roster, new_roster);
   // skip the check of the workspace paths because some of them might
   // be missing and the user might want to query the recorded structure
   // of them anyways
-  path_restriction pmask(app.work, includes, excludes, app.opts.depth, path_restriction::skip_check);
+  path_restriction pmask(work, includes, excludes, app.opts.depth, path_restriction::skip_check);
 
   inventory_rosters(old_roster, new_roster, nmask, pmask, inventory);
-  inventory_filesystem(app.work, pmask, inventory);
+  inventory_filesystem(work, pmask, inventory);
 
   basic_io::printer pr;
 
@@ -1034,7 +1038,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       // check if we should output this element at all
       //
       vector<string> states;
-      inventory_determine_states(app.work, fp, item,
+      inventory_determine_states(work, fp, item,
                                  old_roster, new_roster, states);
 
       if (find(states.begin(), states.end(), "ignored") != states.end() &&
@@ -1057,6 +1061,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
         find(states.begin(), states.end(), "rename_target") != states.end() ||
         find(states.begin(), states.end(), "added")         != states.end() ||
         find(states.begin(), states.end(), "dropped")       != states.end() ||
+        find(states.begin(), states.end(), "missing")       != states.end() ||
         !changes.empty();
 
       if (is_tracked && !has_changed && app.opts.no_unchanged)
@@ -1122,9 +1127,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
 // Name: get_revision
 // Arguments:
-//   1: a revision id (optional, determined from the workspace if
-//      non-existant)
+//   1: a revision id
 // Added in: 1.0
+// Changed in: 7.0 (REVID argument is now mandatory)
 
 // Purpose: Prints change information for the specified revision id.
 //   There are several changes that are described; each of these is
@@ -1183,47 +1188,76 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 //   the same type will be sorted by the filename they refer to.
 // Error conditions: If the revision specified is unknown or invalid
 // prints an error message to stderr and exits with status 1.
-CMD_AUTOMATE(get_revision, N_("[REVID]"),
+CMD_AUTOMATE(get_revision, N_("REVID"),
              N_("Shows change information for a revision"),
              "",
              options::opts::none)
 {
-  N(args.size() < 2,
+  N(args.size() == 1,
     F("wrong argument count"));
 
   database db(app);
 
-  temp_node_id_source nis;
   revision_data dat;
   revision_id ident;
 
-  if (args.size() == 0)
-    {
-      CMD_REQUIRES_WORKSPACE(app);
-
-      roster_t new_roster;
-      parent_map old_rosters;
-      revision_t rev;
-
-      work.get_parent_rosters(db, old_rosters);
-      work.get_current_roster_shape(db, nis, new_roster);
-      work.update_current_roster_from_filesystem(new_roster);
-
-      make_revision(old_rosters, new_roster, rev);
-      calculate_ident(rev, ident);
-      write_revision(rev, dat);
-    }
-  else
-    {
-      ident = revision_id(idx(args, 0)());
-      N(db.revision_exists(ident),
-        F("no revision %s found in database") % ident);
-      db.get_revision(ident, dat);
-    }
+  ident = revision_id(idx(args, 0)());
+  N(db.revision_exists(ident),
+    F("no revision %s found in database") % ident);
+  db.get_revision(ident, dat);
 
   L(FL("dumping revision %s") % ident);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
+
+// Name: get_current_revision
+// Arguments:
+//   1: zero or more path names
+// Added in: 7.0
+// Purpose: Outputs (an optionally restricted) revision based on
+//          changes in the current workspace
+// Error conditions: If there are no changes in the current workspace or the
+// restriction is invalid or has no recorded changes, prints an error message
+// to stderr and exits with status 1. A workspace is required.
+CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
+             N_("Shows change information for a workspace"),
+             "",
+             options::opts::exclude | options::opts::depth)
+{
+  temp_node_id_source nis;
+  revision_data dat;
+  revision_id ident;
+
+  roster_t new_roster;
+  parent_map old_rosters;
+  revision_t rev;
+  cset excluded;
+
+  database db(app);
+  workspace work(app);
+  work.get_parent_rosters(db, old_rosters);
+  work.get_current_roster_shape(db, nis, new_roster);
+
+  node_restriction mask(args_to_paths(args),
+                        args_to_paths(app.opts.exclude_patterns),
+                        app.opts.depth,
+                        old_rosters, new_roster);
+
+  work.update_current_roster_from_filesystem(new_roster, mask);
+
+  make_revision(old_rosters, new_roster, rev);
+  make_restricted_revision(old_rosters, new_roster, mask, rev,
+                           excluded, join_words(execid));
+  rev.check_sane();
+  N(rev.is_nontrivial(), F("no changes to commit"));
+  
+  calculate_ident(rev, ident);
+  write_revision(rev, dat);
+
+  L(FL("dumping revision %s") % ident);
+  output.write(dat.inner()().data(), dat.inner()().size());
+}
+
 
 // Name: get_base_revision_id
 // Arguments: none
@@ -1241,7 +1275,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
     F("no arguments needed"));
 
   database db(app);
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
 
   parent_map parents;
   work.get_parent_rosters(db, parents);
@@ -1268,7 +1302,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
   N(args.size() == 0,
     F("no arguments needed"));
 
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
   database db(app);
 
   parent_map parents;
@@ -1345,7 +1379,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
   if (args.size() == 0)
     {
-      CMD_REQUIRES_WORKSPACE(app);
+      workspace work(app);
 
       temp_node_id_source nis;
 
@@ -1790,7 +1824,7 @@ CMD_AUTOMATE(get_option, N_("OPTION"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  CMD_REQUIRES_WORKSPACE(app);
+  workspace work(app);
   work.print_ws_option(args[0], output);
 }
 

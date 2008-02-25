@@ -31,6 +31,7 @@
 #include "sha1.hh"
 #include "simplestring_xform.hh"
 #include "platform.hh"
+#include "work.hh"
 
 
 using std::cout;
