@@ -1620,7 +1620,7 @@ database_impl::get_version(id const & ident,
 
   I(!selected_path.empty());
 
-  id curr = id(selected_path.back());
+  id curr = selected_path.back();
   selected_path.pop_back();
   data begin;
 
@@ -1785,7 +1785,7 @@ database_impl::extract_from_deltas(revision_id const & ident, extractor & x)
       if (i > 0)
         {
           roster_delta del;
-          get_roster_delta(target_rev, *p, del);
+          get_roster_delta(target_rev, id(*p), del);
           bool found = x.look_at_delta(del);
           if (found)
             return;
@@ -1799,7 +1799,7 @@ database_impl::extract_from_deltas(revision_id const & ident, extractor & x)
           x.look_at_roster(roster, mm);
           return;
         }
-      target_rev = *p;
+      target_rev = id(*p);
       ++i;
     }
 }
@@ -1845,7 +1845,7 @@ database::get_roster_version(revision_id const & ros_id,
     get_reconstruction_path(ros_id.inner(), graph, selected_path);
   }
 
-  id curr = selected_path.back();
+  id curr(selected_path.back());
   selected_path.pop_back();
   // we know that this isn't already in the cache (because of the early exit
   // above), so we should create new objects and spend time filling them in.
@@ -1856,7 +1856,7 @@ database::get_roster_version(revision_id const & ros_id,
   for (reconstruction_path::reverse_iterator i = selected_path.rbegin();
        i != selected_path.rend(); ++i)
     {
-      id const nxt = *i;
+      id const nxt(*i);
       if (global_sanity.debug_p())
         L(FL("following delta %s -> %s")
           % encode_hexenc(curr())
