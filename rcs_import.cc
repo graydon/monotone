@@ -17,8 +17,7 @@
 #include <stack>
 #include <stdexcept>
 #include "vector.hh"
-
-#include <unistd.h>
+#include <cstring> // memset
 
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
