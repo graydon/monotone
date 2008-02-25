@@ -102,11 +102,17 @@ bool workspace::found;
 bool workspace::branch_is_sticky;
 
 void
+workspace::require_workspace()
+{
+  N(workspace::found,
+    F("workspace required but not found"));
+}
+
+void
 workspace::require_workspace(i18n_format const & explanation)
 {
-  string e = explanation.str();
   N(workspace::found,
-    F("workspace required but not found%s%s") % (e.empty() ? "" : "\n") % e);
+    F("workspace required but not found\n%s") % explanation.str());
 }
 
 void
@@ -159,7 +165,7 @@ workspace::create_workspace(options const & opts,
 workspace::workspace(app_state & app, bool writeback_options)
   : lua(app.lua)
 {
-  require_workspace(F(""));
+  require_workspace();
   if (writeback_options)
     set_ws_options(app.opts, false);
 }
