@@ -18,6 +18,7 @@
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "cert.hh"
+#include "key_store.hh" // for keypair
 
 using std::istream;
 using std::istringstream;

@@ -1,7 +1,6 @@
 #ifndef __KEY_STORE_H__
 #define __KEY_STORE_H__
 
-#include <iosfwd>
 #include <boost/scoped_ptr.hpp>
 #include "vector.hh"
 #include "vocab.hh"
@@ -10,6 +9,18 @@
 class app_state;
 struct globish;
 class database;
+
+struct keypair
+{
+  base64<rsa_pub_key> pub;
+  base64<rsa_priv_key> priv;
+  keypair()
+  {}
+  keypair(base64<rsa_pub_key> const & a,
+          base64<rsa_priv_key> const & b)
+   : pub(a), priv(b)
+  {}
+};
 
 struct key_store_state;
 

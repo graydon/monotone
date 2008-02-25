@@ -24,6 +24,8 @@ class key_store;
 class outdated_indicator;
 class rev_height;
 
+typedef std::pair<var_domain, var_name> var_key;
+
 // this file defines a public, typed interface to the database.
 // the database class encapsulates all knowledge about sqlite,
 // the schema, and all SQL statements used to access the schema.

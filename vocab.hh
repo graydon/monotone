@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <utility>
 #include <boost/shared_ptr.hpp>
 
 // the purpose of this file is to wrap things which are otherwise strings
@@ -30,7 +29,7 @@ namespace
 class immutable_string
 {
   boost::shared_ptr<std::string> _rep;
-  
+
 public:
   immutable_string()
   {}
@@ -118,29 +117,8 @@ typedef   roster< delta >    roster_delta;
 typedef manifest< delta >  manifest_delta;
 typedef     file< delta >      file_delta;
 
-typedef std::pair<var_domain, var_name> var_key;
-
-
-struct keypair
-{
-  base64<rsa_pub_key> pub;
-  base64<rsa_priv_key> priv;
-  keypair()
-  {}
-  keypair(base64<rsa_pub_key> const & a,
-          base64<rsa_priv_key> const & b)
-   : pub(a), priv(b)
-  {}
-};
-
-// fs::path is our "generic" safe path type, pointing potentially anywhere
-// in the filesystem. if you want to *define* or work with any of these you
-// need to include boost/filesystem/path.hpp.
-
-//namespace boost { namespace filesystem { class path; } }
-//namespace fs = boost::filesystem;
-
-// diff type
+// diff type; this is here and not diff_patch.hh, because options_list.hh
+// needs to refer to it
 enum diff_type
 {
   unified_diff,
