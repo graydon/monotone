@@ -14,6 +14,7 @@
 
 #include <base.hh>
 #include <gzip.hh>
+#include <botan/loadstor.h>
 #include <botan/filters.h>
 #include <botan/bit_ops.h>
 #include <cstring>

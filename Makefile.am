@@ -123,12 +123,12 @@ BOTAN_SOURCES = 							\
 	botan/dlies.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp  \
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp      \
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp      \
-	botan/eng_base.cpp botan/engine.cpp botan/es_file.cpp       \
+	botan/eng_base.cpp botan/engine.cpp		\
 	botan/exceptn.cpp botan/filter.cpp botan/filters.cpp        \
 	botan/fips140.cpp \
 	botan/get_algo.cpp botan/get_enc.cpp botan/get_pbe.cpp      \
 	botan/hash_id.cpp botan/hex.cpp botan/hmac.cpp   \
-	botan/if_algo.cpp botan/inifile.cpp botan/init_def.cpp      \
+	botan/if_algo.cpp botan/init_def.cpp      \
 	botan/kdf.cpp botan/keypair.cpp botan/look_pk.cpp       \
 	botan/make_prm.cpp botan/mdx_hash.cpp       \
 	botan/mem_pool.cpp botan/mgf1.cpp botan/mlock.cpp       \
@@ -182,7 +182,7 @@ BOTAN_SOURCES = 							\
 	botan/hmac.h botan/mp_core.h botan/pkcs10.h botan/sha160.h  \
 	botan/crl_ent.h botan/emsa.h botan/eng_def.h \
 	botan/if_algo.h botan/pkcs8.h \
-	botan/basefilt.h botan/ctr.h botan/engine.h    \
+	botan/basefilt.h botan/ctr.h botan/engine.h botan/es_dev.h	\
 	botan/init.h botan/mp_types.h botan/pk_filts.h botan/symkey.h   \
 	botan/base.h botan/cts.h botan/enums.h botan/kdf.h      \
 	botan/mutex.h botan/pk_keys.h botan/timers.h botan/ber_dec.h    \
@@ -190,7 +190,7 @@ BOTAN_SOURCES = 							\
 	botan/numthry.h botan/pk_ops.h botan/types.h botan/bigint.h \
 	botan/data_src.h botan/es_egd.h botan/look_add.h botan/ofb.h    \
 	botan/pk_util.h botan/ui.h botan/blinding.h botan/defalloc.h    \
-	botan/es_file.h botan/look_pk.h botan/oids.h botan/pubkey.h \
+	botan/look_pk.h botan/oids.h botan/pubkey.h \
 	botan/util.h botan/charset.h botan/hash_id.h            \
 	botan/des.h botan/pkcs5.h                   \
 	botan/x931_rng.h botan/sha256.h \
@@ -447,12 +447,13 @@ if WIN32_PLATFORM
   mtn_SOURCES += win32/main.cc
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
-  lib3rdparty_a_CPPFLAGS += -DWIN32 -DBOTAN_EXT_ENTROPY_SRC_CAPI -DBOTAN_EXT_ENTROPY_SRC_WIN32
+  lib3rdparty_a_CPPFLAGS += -DWIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
   tester_SOURCES += win32/tester-plaf.cc
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
   mtn_SOURCES += unix/main.cc
+  lib3rdparty_a_SOURCES += botan/es_dev.cpp
   tester_SOURCES += unix/tester-plaf.cc
 endif
 
