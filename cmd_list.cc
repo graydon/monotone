@@ -213,7 +213,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
            i != pubkeys.end(); i++)
         {
           base64<rsa_pub_key> pub_encoded;
-          hexenc<id> hash_code;
+          id hash_code;
           rsa_keypair_id keyid = i->first;
           bool indb = i->second;
 
@@ -227,9 +227,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
             }
           key_hash_code(keyid, pub_encoded, hash_code);
           if (indb)
-            cout << hash_code << ' ' << keyid << '\n';
+            cout << encode_hexenc(hash_code()) << ' ' << keyid << '\n';
           else
-            cout << hash_code << ' ' << keyid << "   (*)\n";
+            cout << encode_hexenc(hash_code()) << ' ' << keyid << "   (*)\n";
         }
       if (!all_in_db)
         cout << (F("(*) - only in %s/")
@@ -244,10 +244,10 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
            i != privkeys.end(); i++)
         {
           keypair kp;
-          hexenc<id> hash_code;
+          id hash_code;
           keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
-          cout << hash_code << ' ' << *i << '\n';
+          cout << encode_hexenc(hash_code()) << ' ' << *i << '\n';
         }
       cout << '\n';
     }
@@ -591,7 +591,7 @@ CMD_AUTOMATE(keys, "",
   vector<rsa_keypair_id> dbkeys;
   vector<rsa_keypair_id> kskeys;
   // public_hash, private_hash, public_location, private_location
-  map<string, boost::tuple<hexenc<id>, hexenc<id>,
+  map<string, boost::tuple<id, id,
                            vector<string>,
                            vector<string> > > items;
   if (db.database_specified())
@@ -603,8 +603,7 @@ CMD_AUTOMATE(keys, "",
        i != dbkeys.end(); i++)
     {
       base64<rsa_pub_key> pub_encoded;
-      hexenc<id> hash_code;
-
+      id hash_code;
       db.get_key(*i, pub_encoded);
       key_hash_code(*i, pub_encoded, hash_code);
       items[(*i)()].get<0>() = hash_code;
@@ -615,7 +614,7 @@ CMD_AUTOMATE(keys, "",
        i != kskeys.end(); i++)
     {
       keypair kp;
-      hexenc<id> privhash, pubhash;
+      id privhash, pubhash;
       keys.get_key_pair(*i, kp);
       key_hash_code(*i, kp.pub, pubhash);
       key_hash_code(*i, kp.priv, privhash);
@@ -625,16 +624,16 @@ CMD_AUTOMATE(keys, "",
       items[(*i)()].get<3>().push_back("keystore");
     }
   basic_io::printer prt;
-  for (map<string, boost::tuple<hexenc<id>, hexenc<id>,
-                                     vector<string>,
-                                     vector<string> > >::iterator
+  for (map<string, boost::tuple<id, id,
+                                vector<string>,
+                                vector<string> > >::iterator
          i = items.begin(); i != items.end(); ++i)
     {
       basic_io::stanza stz;
       stz.push_str_pair(syms::name, i->first);
-      stz.push_hex_pair(syms::public_hash, i->second.get<0>());
+      stz.push_binary_pair(syms::public_hash, i->second.get<0>());
       if (!i->second.get<1>()().empty())
-        stz.push_hex_pair(syms::private_hash, i->second.get<1>());
+        stz.push_binary_pair(syms::private_hash, i->second.get<1>());
       stz.push_str_multi(syms::public_location, i->second.get<2>());
       if (!i->second.get<3>().empty())
         stz.push_str_multi(syms::private_location, i->second.get<3>());
@@ -687,9 +686,10 @@ CMD_AUTOMATE(certs, N_("REV"),
 
   transaction_guard guard(db, false);
 
-  revision_id rid(idx(args, 0)());
+  hexenc<id> ident(idx(args, 0)());
+  revision_id rid(decode_hexenc(ident()));
+
   N(db.revision_exists(rid), F("no such revision '%s'") % rid);
-  hexenc<id> ident(rid.inner());
 
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,

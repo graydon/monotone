@@ -165,7 +165,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
 
 void
 revision_enumerator::note_cert(revision_id const & rid,
-			       hexenc<id> const & cert_hash)
+			       id const & cert_hash)
 {
   revision_certs.insert(make_pair(rid, cert_hash));
 }
@@ -173,11 +173,11 @@ revision_enumerator::note_cert(revision_id const & rid,
 
 void
 revision_enumerator::get_revision_certs(revision_id const & rid,
-					vector<hexenc<id> > & hashes)
+					vector<id> & hashes)
 {
   hashes.clear();
   bool found_one = false;
-  typedef multimap<revision_id, hexenc<id> >::const_iterator ci;
+  typedef multimap<revision_id, id>::const_iterator ci;
   pair<ci,ci> range = revision_certs.equal_range(rid);
   for (ci i = range.first; i != range.second; ++i)
     {
@@ -277,9 +277,9 @@ revision_enumerator::step()
             }
 
           // Queue up some or all of the rev's certs
-          vector<hexenc<id> > hashes;
+          vector<id> hashes;
           get_revision_certs(r, hashes);
-          for (vector<hexenc<id> >::const_iterator i = hashes.begin();
+          for (vector<id>::const_iterator i = hashes.begin();
                i != hashes.end(); ++i)
             {
               if (cb.queue_this_cert(*i))

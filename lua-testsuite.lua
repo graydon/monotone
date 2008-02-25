@@ -9,7 +9,7 @@ function safe_mtn(...)
       err("'mtn' environment variable not set")
     end
   end
-  return {monotone_path, "--norc", "--root=" .. test.root,
+  return {monotone_path, "--debug", "--norc", "--root=" .. test.root,
           "--confdir="..test.root, unpack(arg)}
 end
 
