@@ -115,6 +115,9 @@ Loop:
 #include "simplestring_xform.hh"
 #include "cmd.hh"
 #include "app_state.hh"
+#include "project.hh"
+#include "database.hh"
+#include "revision.hh"
 
 using std::insert_iterator;
 using std::max;
@@ -374,32 +377,22 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
   N(args.size() == 1,
     F("wrong argument count"));
 
-  vector<pair<selectors::selector_type, string> >
-    sels(selectors::parse_selector(args[0](), app));
+  set<revision_id> revs;
+  database db(app);
+  project_t project(db);
+  complete(app.opts, app.lua, project, idx(args, 0)(), revs);
 
-  // we jam through an "empty" selection on sel_ident type
-  set<string> completions;
-  //set<hexenc<id>> completions;
-  selectors::selector_type ty = selectors::sel_ident;
-  selectors::complete_selector("", sels, ty, completions, app);
+  vector<revision_id> sorted;
+  toposort(db, revs, sorted);
+  reverse(sorted.begin(), sorted.end());
 
   asciik graph(std::cout, 10);
-  set<revision_id> revs;
-  for (set<string>::const_iterator i = completions.begin();
-       i != completions.end(); ++i)
-    {
-      revision_id rid(*i);
-      revs.insert(rid);
-    }
-  vector<revision_id> sorted;
-  toposort(revs, sorted, app);
-  vector<revision_id> curr_row;
-  reverse(sorted.begin(), sorted.end());
+
   for (vector<revision_id>::const_iterator rev = sorted.begin();
        rev != sorted.end(); ++rev)
     {
       set<revision_id> parents;
-      app.db.get_revision_parents(*rev, parents);
+      db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
       graph.print(*rev, parents, rev->inner()());
     }

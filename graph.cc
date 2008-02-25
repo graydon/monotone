@@ -10,6 +10,7 @@
 #include "numeric_vocab.hh"
 #include "hash_map.hh"
 #include "vocab_hash.hh"
+#include "rev_height.hh"
 
 using boost::shared_ptr;
 using std::string;

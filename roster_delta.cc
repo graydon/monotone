@@ -18,6 +18,7 @@
 
 #include "safe_map.hh"
 #include "parallel_iter.hh"
+#include "roster.hh"
 #include "roster_delta.hh"
 #include "basic_io.hh"
 #include "paths.hh"

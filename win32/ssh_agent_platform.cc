@@ -18,18 +18,16 @@ using std::string;
 #define AGENT_COPYDATA_ID 0x804e50ba   /* random goop */
 #define AGENT_MAX_MSGLEN  8192
 
-bool
-ssh_agent_platform::connect()
+void
+ssh_agent_platform::ssh_agent_platform()
+  : hwnd(NULL), filemap(NULL), filemap_view(NULL), read_len(0)
 {
   char mapname[32];
   L(FL("ssh_agent: connect"));
   hwnd = FindWindow("Pageant", "Pageant");
 
   if (!hwnd)
-    {
-      filemap = NULL;
-      return false;
-    }
+    return;
 
   sprintf(mapname, "PageantRequest%08x", (unsigned)GetCurrentThreadId());
   filemap = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
@@ -37,41 +35,36 @@ ssh_agent_platform::connect()
   if (filemap == NULL || filemap == INVALID_HANDLE_VALUE)
     {
       hwnd = NULL;
-      return false;
+      return;
     }
 
   filemap_view = (char*)MapViewOfFile(filemap, FILE_MAP_WRITE, 0, 0, 0);
 
   if (filemap_view == 0)
     {
-      hwnd = NULL;
       CloseHandle(filemap);
       filemap = NULL;
-      return false;
+      hwnd = NULL;
     }
-
-  return true;
 }
 
-bool
-ssh_agent_platform::disconnect()
+ssh_agent_platform::~ssh_agent_platform()
 {
-  if (filemap != NULL)
-    {
-      CloseHandle(filemap);
-      filemap = NULL;
-      hwnd = NULL;
-      UnmapViewOfFile(filemap_view);
-      filemap_view = NULL;
-    }
-  return true;
+  if (filemap == NULL)
+    return;
+
+  UnmapViewOfFile(filemap_view);
+  filemap_view = NULL;
+  CloseHandle(filemap);
+  filemap = NULL;
+  hwnd = NULL;
 }
 
 
 bool
 ssh_agent_platform::connected()
 {
-  return hwnd != NULL && (IsWindow(hwnd) != 0);
+  return hwnd && IsWindow(hwnd);
 }
 
 void
@@ -82,14 +75,14 @@ ssh_agent_platform::write_data(string const & data)
   COPYDATASTRUCT cds;
   char mapname[32];
 
-  if (!connected())
-    return;
-
+  I(connected());
   sprintf(mapname, "PageantRequest%08x", (unsigned)GetCurrentThreadId());
 
-  L(FL("ssh_agent_platform::write_data: writing %u bytes to %s") % data.length() % mapname);
+  L(FL("ssh_agent_platform::write_data: writing %u bytes to %s")
+    % data.length() % mapname);
 
-  E(data.length() < AGENT_MAX_MSGLEN, F("Asked to write more than %u to pageant.") %  AGENT_MAX_MSGLEN);
+  E(data.length() < AGENT_MAX_MSGLEN,
+    F("Asked to write more than %u to pageant.") %  AGENT_MAX_MSGLEN);
 
   memcpy(filemap_view, data.c_str(), data.length());
   cds.dwData = AGENT_COPYDATA_ID;
@@ -107,12 +100,12 @@ ssh_agent_platform::write_data(string const & data)
 void
 ssh_agent_platform::read_data(u32 const len, string & out)
 {
-  if (!connected())
-    return;
+  I(connected());
 
   L(FL("ssh_agent: read_data: asked to read %u bytes") % len);
 
-  E((read_len + len) < AGENT_MAX_MSGLEN, F("Asked to read more than %u from pageant.") % AGENT_MAX_MSGLEN);
+  E((read_len + len) < AGENT_MAX_MSGLEN,
+    F("Asked to read more than %u from pageant.") % AGENT_MAX_MSGLEN);
 
   out.append(filemap_view + read_len, len);
 
