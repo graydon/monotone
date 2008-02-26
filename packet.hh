@@ -50,11 +50,11 @@ public:
 
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
-                                  base64< rsa_pub_key > const & k) = 0;
+                                  rsa_pub_key const & k) = 0;
   virtual void consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp) = 0;
   virtual void consume_old_private_key(rsa_keypair_id const & ident,
-                               base64< old_arc4_rsa_priv_key > const & k) = 0;
+                                       old_arc4_rsa_priv_key const & k) = 0;
 };
 
 // this writer writes packets into a stream
@@ -75,11 +75,11 @@ struct packet_writer : public packet_consumer
   virtual void consume_revision_cert(revision<cert> const & t);
 
   virtual void consume_public_key(rsa_keypair_id const & ident,
-                                  base64< rsa_pub_key > const & k);
+                                  rsa_pub_key const & k);
   virtual void consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp);
   virtual void consume_old_private_key(rsa_keypair_id const & ident,
-                               base64< old_arc4_rsa_priv_key > const & k);
+                                       old_arc4_rsa_priv_key const & k);
 };
 
 size_t read_packets(std::istream & in, packet_consumer & cons);

@@ -272,8 +272,8 @@ UNIT_TEST(transform, enc)
   gzip<data> gzd1, gzd2;
   base64< gzip<data> > bgzd;
   encode_gzip(d1, gzd1);
-  encode_base64(gzd1, bgzd);
-  decode_base64(bgzd, gzd2);
+  bgzd = encode_base64(gzd1);
+  gzd2 = decode_base64(bgzd);
   UNIT_TEST_CHECK(gzd2 == gzd1);
   decode_gzip(gzd2, d2);
   UNIT_TEST_CHECK(d2 == d1);

@@ -87,8 +87,8 @@ struct key_store_state
   bool put_key_pair(rsa_keypair_id const & ident,
                     keypair const & kp);
   void migrate_old_key_pair(rsa_keypair_id const & id,
-                            base64<old_arc4_rsa_priv_key> const & old_priv,
-                            base64<rsa_pub_key> const & pub);
+                            old_arc4_rsa_priv_key const & old_priv,
+                            rsa_pub_key const & pub);
 };
 
 namespace
@@ -114,7 +114,7 @@ namespace
 
 
     virtual void consume_public_key(rsa_keypair_id const & ident,
-                                    base64< rsa_pub_key > const & k)
+                                    rsa_pub_key const & k)
     {E(false, F("Extraneous data in key store."));}
 
     virtual void consume_key_pair(rsa_keypair_id const & ident,
@@ -130,11 +130,11 @@ namespace
 
     // for backward compatibility
     virtual void consume_old_private_key(rsa_keypair_id const & ident,
-                                         base64<old_arc4_rsa_priv_key> const & k)
+                                         old_arc4_rsa_priv_key const & k)
     {
       W(F("converting old-format private key '%s'") % ident);
 
-      base64<rsa_pub_key> dummy;
+      rsa_pub_key dummy;
       kss.migrate_old_key_pair(ident, k, dummy);
 
       L(FL("successfully read key pair '%s' from key store") % ident);
@@ -362,8 +362,6 @@ shared_ptr<RSA_PrivateKey>
 key_store_state::decrypt_private_key(rsa_keypair_id const & id,
                                      bool force_from_user)
 {
-  rsa_priv_key decoded_key;
-
   // See if we have this key in the decrypted key cache.
   map<rsa_keypair_id, shared_ptr<RSA_PrivateKey> >::const_iterator
     cpk = privkey_cache.find(id);
@@ -374,14 +372,13 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
   N(maybe_get_key_pair(id, kp),
     F("no key pair '%s' found in key store '%s'") % id % key_dir);
 
-  L(FL("base64-decoding %d-byte private key") % kp.priv().size());
-  decode_base64(kp.priv, decoded_key);
+  L(FL("%d-byte private key") % kp.priv().size());
 
   shared_ptr<PKCS8_PrivateKey> pkcs8_key;
   try // with empty passphrase
     {
       Pipe p;
-      p.process_msg(decoded_key());
+      p.process_msg(kp.priv());
       pkcs8_key.reset(Botan::PKCS8::load_key(p, ""));
     }
   catch (Botan::Exception & e)
@@ -401,7 +398,7 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
         try
           {
             Pipe p;
-            p.process_msg(decoded_key());
+            p.process_msg(kp.priv());
             pkcs8_key.reset(Botan::PKCS8::load_key(p, phrase()));
             break;
           }
@@ -470,6 +467,7 @@ key_store::create_key_pair(database & db,
   RSA_PrivateKey priv(constants::keylen);
 
   // serialize and maybe encrypt the private key
+  keypair kp;
   SecureVector<Botan::byte> pubkey, privkey;
   Pipe p;
   p.start_msg();
@@ -480,18 +478,15 @@ key_store::create_key_pair(database & db,
                               Botan::RAW_BER);
   else
     Botan::PKCS8::encode(priv, p);
-  rsa_priv_key raw_priv_key(p.read_all_as_string());
+  kp.priv = rsa_priv_key(p.read_all_as_string());
 
   // serialize the public key
   Pipe p2;
   p2.start_msg();
   Botan::X509::encode(priv, p2, Botan::RAW_BER);
-  rsa_pub_key raw_pub_key(p2.read_all_as_string());
+  kp.pub = rsa_pub_key(p2.read_all_as_string());
 
   // convert to storage format
-  keypair kp;
-  encode_base64(raw_priv_key, kp.priv);
-  encode_base64(raw_pub_key, kp.pub);
   L(FL("generated %d-byte public key\n"
       "generated %d-byte (encrypted) private key\n")
     % kp.pub().size()
@@ -529,9 +524,8 @@ key_store::change_key_passphrase(rsa_keypair_id const & id)
   Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
-  rsa_priv_key decoded_key = rsa_priv_key(p.read_all_as_string());
+  kp.priv = rsa_priv_key(p.read_all_as_string());
 
-  encode_base64(decoded_key, kp.priv);
   delete_key(id);
   put_key_pair(id, kp);
 }
@@ -559,7 +553,7 @@ void
 key_store::make_signature(database & db,
                           rsa_keypair_id const & id,
                           string const & tosign,
-                          base64<rsa_sha1_signature> & signature)
+                          rsa_sha1_signature & signature)
 {
   keypair key;
   get_key_pair(id, key);
@@ -581,11 +575,9 @@ key_store::make_signature(database & db,
     {
       if (agent.connected()) {
         //grab the monotone public key as an RSA_PublicKey
-        rsa_pub_key pub;
-        decode_base64(key.pub, pub);
         SecureVector<Botan::byte> pub_block;
-        pub_block.set(reinterpret_cast<Botan::byte const *>(pub().data()),
-                      pub().size());
+        pub_block.set(reinterpret_cast<Botan::byte const *>(key.pub().data()),
+                      key.pub().size());
         L(FL("make_signature: building %d-byte pub key") % pub_block.size());
         shared_ptr<X509_PublicKey> x509_key =
           shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
@@ -662,7 +654,7 @@ key_store::make_signature(database & db,
     }
 
   L(FL("make_signature: produced %d-byte signature") % sig_string.size());
-  encode_base64(rsa_sha1_signature(sig_string), signature);
+  signature = rsa_sha1_signature(sig_string);
 
   cert_status s = db.check_signature(id, tosign, signature);
   I(s != cert_unknown);
@@ -712,8 +704,8 @@ key_store::export_key_for_agent(rsa_keypair_id const & id,
 void
 key_store_state::migrate_old_key_pair
     (rsa_keypair_id const & id,
-     base64<old_arc4_rsa_priv_key> const & old_priv,
-     base64<rsa_pub_key> const & pub)
+     old_arc4_rsa_priv_key const & old_priv,
+     rsa_pub_key const & pub)
 {
   keypair kp;
   SecureVector<Botan::byte> arc4_key;
@@ -735,8 +727,7 @@ key_store_state::migrate_old_key_pair
         arc4_key.set(reinterpret_cast<Botan::byte const *>(phrase().data()),
                      phrase().size());
 
-        Pipe arc4_decryptor(new Botan::Base64_Decoder,
-                            get_cipher("ARC4", arc4_key, Botan::DECRYPTION));
+        Pipe arc4_decryptor(get_cipher("ARC4", arc4_key, Botan::DECRYPTION));
         arc4_decryptor.process_msg(old_priv());
 
         // This is necessary because PKCS8::load_key() cannot currently
@@ -772,8 +763,7 @@ key_store_state::migrate_old_key_pair
   Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
-  rsa_priv_key raw_priv = rsa_priv_key(p.read_all_as_string());
-  encode_base64(raw_priv, kp.priv);
+  kp.priv = rsa_priv_key(p.read_all_as_string());
 
   // also the public key (which is derivable from the private key; asking
   // Botan for the X.509 encoding of the private key implies that we want
@@ -781,8 +771,7 @@ key_store_state::migrate_old_key_pair
   Pipe p2;
   p2.start_msg();
   Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
-  rsa_pub_key raw_pub = rsa_pub_key(p2.read_all_as_string());
-  encode_base64(raw_pub, kp.pub);
+  kp.pub = rsa_pub_key(p2.read_all_as_string());
 
   // if the database had a public key entry for this key, make sure it
   // matches what we derived from the private key entry, but don't abort the
@@ -796,8 +785,8 @@ key_store_state::migrate_old_key_pair
 void
 key_store::migrate_old_key_pair
     (rsa_keypair_id const & id,
-     base64<old_arc4_rsa_priv_key> const & old_priv,
-     base64<rsa_pub_key> const & pub)
+     old_arc4_rsa_priv_key const & old_priv,
+     rsa_pub_key const & pub)
 {
   s->migrate_old_key_pair(id, old_priv, pub);
 }

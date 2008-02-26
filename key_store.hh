@@ -12,12 +12,12 @@ class database;
 
 struct keypair
 {
-  base64<rsa_pub_key> pub;
-  base64<rsa_priv_key> priv;
+  rsa_pub_key pub;
+  rsa_priv_key priv;
   keypair()
   {}
-  keypair(base64<rsa_pub_key> const & a,
-          base64<rsa_priv_key> const & b)
+  keypair(rsa_pub_key const & a,
+          rsa_priv_key const & b)
    : pub(a), priv(b)
   {}
 };
@@ -75,7 +75,7 @@ public:
 
   void make_signature(database & db, rsa_keypair_id const & id,
                       std::string const & tosign,
-                      base64<rsa_sha1_signature> & signature);
+                      rsa_sha1_signature & signature);
 
   // Interoperation with ssh-agent
 
@@ -86,8 +86,8 @@ public:
   // Migration from old databases
 
   void migrate_old_key_pair(rsa_keypair_id const & id,
-                            base64<old_arc4_rsa_priv_key> const & old_priv,
-                            base64<rsa_pub_key> const & pub);
+                            old_arc4_rsa_priv_key const & old_priv,
+                            rsa_pub_key const & pub);
 };
 
 // Local Variables:

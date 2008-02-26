@@ -152,7 +152,7 @@ get_user_key(options const & opts, lua_hooks & lua,
         db.put_key(key, priv_key.pub);
       else
         {
-          base64<rsa_pub_key> pub_key;
+          rsa_pub_key pub_key;
           db.get_key(key, pub_key);
           E(keys_match(key, pub_key, key, priv_key.pub),
             F("The key '%s' stored in your database does\n"
@@ -176,19 +176,19 @@ cache_user_key(options const & opts, lua_hooks & lua,
 
 void
 key_hash_code(rsa_keypair_id const & ident,
-              base64<rsa_pub_key> const & pub,
+              rsa_pub_key const & pub,
               hexenc<id> & out)
 {
-  data tdat(ident() + ":" + remove_ws(pub()));
+  data tdat(ident() + ":" + remove_ws(encode_base64(pub)()));
   calculate_ident(tdat, out);
 }
 
 void
 key_hash_code(rsa_keypair_id const & ident,
-              base64< rsa_priv_key > const & priv,
+              rsa_priv_key const & priv,
               hexenc<id> & out)
 {
-  data tdat(ident() + ":" + remove_ws(priv()));
+  data tdat(ident() + ":" + remove_ws(encode_base64(priv)()));
   calculate_ident(tdat, out);
 }
 
@@ -196,9 +196,9 @@ key_hash_code(rsa_keypair_id const & ident,
 // (ie are the same key)
 bool
 keys_match(rsa_keypair_id const & id1,
-           base64<rsa_pub_key> const & key1,
+           rsa_pub_key const & key1,
            rsa_keypair_id const & id2,
-           base64<rsa_pub_key> const & key2)
+           rsa_pub_key const & key2)
 {
   hexenc<id> hash1, hash2;
   key_hash_code(id1, key1, hash1);
@@ -208,9 +208,9 @@ keys_match(rsa_keypair_id const & id1,
 
 bool
 keys_match(rsa_keypair_id const & id1,
-           base64< rsa_priv_key > const & key1,
+           rsa_priv_key const & key1,
            rsa_keypair_id const & id2,
-           base64< rsa_priv_key > const & key2)
+           rsa_priv_key const & key2)
 {
   hexenc<id> hash1, hash2;
   key_hash_code(id1, key1, hash1);

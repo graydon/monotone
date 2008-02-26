@@ -577,8 +577,7 @@ log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
+      cert_value tv = decode_base64(i->inner().value);
 
       if (first)
         os << label;

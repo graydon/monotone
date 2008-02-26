@@ -133,8 +133,7 @@ project_t::get_branch_heads(branch_name const & name,
   if (branch.first.outdated())
     {
       L(FL("getting heads of branch %s") % name);
-      base64<cert_value> branch_encoded;
-      encode_base64(cert_value(name()), branch_encoded);
+      base64<cert_value> branch_encoded = encode_base64(cert_value(name()));
 
       outdated_indicator stamp;
       branch.first = db.get_revisions_with_cert(cert_name(branch_cert_name),
@@ -166,8 +165,7 @@ bool
 project_t::revision_is_in_branch(revision_id const & id,
                                  branch_name const & branch)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
+  base64<cert_value> branch_encoded = encode_base64(cert_value(branch()));
 
   vector<revision<cert> > certs;
   db.get_revision_certs(id, branch_cert_name, branch_encoded, certs);
@@ -197,8 +195,7 @@ bool
 project_t::revision_is_suspended_in_branch(revision_id const & id,
                                  branch_name const & branch)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
+  base64<cert_value> branch_encoded = encode_base64(cert_value(branch()));
 
   vector<revision<cert> > certs;
   db.get_revision_certs(id, suspend_cert_name, branch_encoded, certs);
@@ -259,8 +256,7 @@ project_t::get_revision_branches(revision_id const & id,
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      cert_value b;
-      decode_base64(i->inner().value, b);
+      cert_value b = decode_base64(i->inner().value);
       branches.insert(branch_name(b()));
     }
   return i;
@@ -270,9 +266,7 @@ outdated_indicator
 project_t::get_branch_certs(branch_name const & branch,
                             std::vector<revision<cert> > & certs)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
-
+  base64<cert_value> branch_encoded = encode_base64(cert_value(branch()));
   return db.get_revision_certs(branch_cert_name, branch_encoded, certs);
 }
 
@@ -310,8 +304,7 @@ project_t::get_tags(set<tag_t> & tags)
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      cert_value value;
-      decode_base64(i->inner().value, value);
+      cert_value value = decode_base64(i->inner().value);
       tags.insert(tag_t(revision_id(i->inner().ident), utf8(value()), i->inner().key));
     }
   return i;

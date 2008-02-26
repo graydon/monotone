@@ -35,7 +35,7 @@ CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"),
 
   rsa_keypair_id ident(idx(args, 0)());
   bool exists(false);
-  base64< rsa_pub_key > key;
+  rsa_pub_key key;
   if (db.database_specified() && db.public_key_exists(ident))
     {
       db.get_key(ident, key);
@@ -124,7 +124,7 @@ namespace
     }
 
     virtual void consume_public_key(rsa_keypair_id const & ident,
-                                    base64< rsa_pub_key > const & k)
+                                    rsa_pub_key const & k)
     {
       transaction_guard guard(db);
       db.put_key(ident, k);
@@ -138,9 +138,9 @@ namespace
     }
 
     virtual void consume_old_private_key(rsa_keypair_id const & ident,
-                                         base64<old_arc4_rsa_priv_key> const & k)
+                                         old_arc4_rsa_priv_key const & k)
     {
-      base64<rsa_pub_key> dummy;
+      rsa_pub_key dummy;
       keys.migrate_old_key_pair(ident, k, dummy);
     }
   };

@@ -139,14 +139,14 @@ public:
                      id & client,
                      id & nonce1,
                      rsa_oaep_sha_data & hmac_key_encrypted,
-                     std::string & signature) const;
+                     rsa_sha1_signature & signature) const;
   void write_auth_cmd(protocol_role role,
                       globish const & include_pattern,
                       globish const & exclude_pattern,
                       id const & client,
                       id const & nonce1,
                       rsa_oaep_sha_data const & hmac_key_encrypted,
-                      std::string const & signature);
+                      rsa_sha1_signature const & signature);
 
   void read_confirm_cmd() const;
   void write_confirm_cmd();

@@ -140,8 +140,7 @@ erase_bogus_certs(database & db,
   for (trust_map::const_iterator i = trust.begin();
        i != trust.end(); ++i)
     {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
+      cert_value decoded_value = decode_base64(get<2>(i->first));
       if (db.hook_get_manifest_cert_trust(*(i->second.first),
                                           get<0>(i->first),
                                           get<1>(i->first),
@@ -197,8 +196,7 @@ erase_bogus_certs(database & db,
   for (trust_map::const_iterator i = trust.begin();
        i != trust.end(); ++i)
     {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
+      cert_value decoded_value = decode_base64(get<2>(i->first));
       if (db.hook_get_revision_cert_trust(*(i->second.first),
                                           get<0>(i->first),
                                           get<1>(i->first),
@@ -239,7 +237,7 @@ cert::cert(hexenc<id> const & ident,
          cert_name const & name,
          base64<cert_value> const & value,
          rsa_keypair_id const & key,
-         base64<rsa_sha1_signature> const & sig)
+         rsa_sha1_signature const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -287,14 +285,11 @@ read_cert(string const & in, cert & t)
   assert_end_of_buffer(in, pos, "cert");
 
   hexenc<id> hid;
-  base64<cert_value> bval;
-  base64<rsa_sha1_signature> bsig;
-
   encode_hexenc(ident, hid);
-  encode_base64(cert_value(val), bval);
-  encode_base64(rsa_sha1_signature(sig), bsig);
+  base64<cert_value> bval = encode_base64(cert_value(val));
 
-  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key), bsig);
+  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key),
+           rsa_sha1_signature(sig));
 
   hexenc<id> hcheck;
   id check;
@@ -316,12 +311,9 @@ write_cert(cert const & t, string & out)
   string name, key;
   hexenc<id> hash;
   id ident_decoded, hash_decoded;
-  rsa_sha1_signature sig_decoded;
-  cert_value value_decoded;
+  cert_value value_decoded = decode_base64(t.value);
 
   cert_hash_code(t, hash);
-  decode_base64(t.value, value_decoded);
-  decode_base64(t.sig, sig_decoded);
   decode_hexenc(t.ident, ident_decoded);
   decode_hexenc(hash, hash_decoded);
 
@@ -330,7 +322,7 @@ write_cert(cert const & t, string & out)
   insert_variable_length_string(t.name(), out);
   insert_variable_length_string(value_decoded(), out);
   insert_variable_length_string(t.key(), out);
-  insert_variable_length_string(sig_decoded(), out);
+  insert_variable_length_string(t.sig(), out);
 }
 
 void
@@ -344,9 +336,10 @@ cert_signable_text(cert const & t,
 void
 cert_hash_code(cert const & t, hexenc<id> & out)
 {
+  base64<rsa_sha1_signature> sig_encoded(encode_hexenc(t.sig()));
   string tmp;
   tmp.reserve(4+t.ident().size() + t.name().size() + t.value().size() +
-              t.key().size() + t.sig().size());
+              t.key().size() + sig_encoded().size());
   tmp.append(t.ident());
   tmp += ':';
   tmp.append(t.name());
@@ -355,7 +348,7 @@ cert_hash_code(cert const & t, hexenc<id> & out)
   tmp += ':';
   tmp.append(t.key());
   tmp += ':';
-  append_without_ws(tmp,t.sig());
+  append_without_ws(tmp,sig_encoded());
 
   data tdat(tmp);
   calculate_ident(tdat, out);
@@ -378,8 +371,7 @@ put_simple_revision_cert(database & db,
 {
   I(!keys.signing_key().empty());
 
-  base64<cert_value> encoded_val;
-  encode_base64(val, encoded_val);
+  base64<cert_value> encoded_val = encode_base64(val);
   cert t(id.inner(), nm, encoded_val, keys.signing_key);
 
   string signed_text;

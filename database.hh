@@ -231,14 +231,10 @@ public:
 
   void get_pubkey(hexenc<id> const & hash,
                   rsa_keypair_id & ident,
-                  base64<rsa_pub_key> & pub_encoded);
+                  rsa_pub_key & pub);
 
   void get_key(rsa_keypair_id const & ident, rsa_pub_key & pub);
-  void get_key(rsa_keypair_id const & ident,
-               base64<rsa_pub_key> & pub_encoded);
-
-  bool put_key(rsa_keypair_id const & ident,
-               base64<rsa_pub_key> const & pub_encoded);
+  bool put_key(rsa_keypair_id const & ident, rsa_pub_key const & pub);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
 
@@ -250,7 +246,7 @@ public:
 
   cert_status check_signature(rsa_keypair_id const & id,
                               std::string const & alleged_text,
-                              base64<rsa_sha1_signature> const & signature);
+                              rsa_sha1_signature const & signature);
 
   //
   // --== Certs ==--

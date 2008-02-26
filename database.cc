@@ -2620,14 +2620,14 @@ database::public_key_exists(rsa_keypair_id const & id)
 void
 database::get_pubkey(hexenc<id> const & hash,
                      rsa_keypair_id & id,
-                     base64<rsa_pub_key> & pub_encoded)
+                     rsa_pub_key & pub)
 {
   results res;
   imp->fetch(res, 2, one_row,
              query("SELECT id, keydata FROM public_keys WHERE hash = ?")
              % text(hash()));
   id = rsa_keypair_id(res[0][0]);
-  encode_base64(rsa_pub_key(res[0][1]), pub_encoded);
+  pub = rsa_pub_key(res[0][1]);
 }
 
 void
@@ -2641,24 +2641,15 @@ database::get_key(rsa_keypair_id const & pub_id,
   pub = rsa_pub_key(res[0][0]);
 }
 
-void
-database::get_key(rsa_keypair_id const & pub_id,
-                  base64<rsa_pub_key> & pub_encoded)
-{
-  rsa_pub_key pub;
-  get_key(pub_id, pub);
-  encode_base64(pub, pub_encoded);
-}
-
 bool
 database::put_key(rsa_keypair_id const & pub_id,
-                  base64<rsa_pub_key> const & pub_encoded)
+                  rsa_pub_key const & pub)
 {
   if (public_key_exists(pub_id))
     {
-      base64<rsa_pub_key> tmp;
+      rsa_pub_key tmp;
       get_key(pub_id, tmp);
-      if (!keys_match(pub_id, tmp, pub_id, pub_encoded))
+      if (!keys_match(pub_id, tmp, pub_id, pub))
         W(F("key '%s' is not equal to key '%s' in database") % pub_id % pub_id);
       L(FL("skipping existing public key %s") % pub_id);
       return false;
@@ -2667,15 +2658,13 @@ database::put_key(rsa_keypair_id const & pub_id,
   L(FL("putting public key %s") % pub_id);
 
   hexenc<id> thash;
-  key_hash_code(pub_id, pub_encoded, thash);
+  key_hash_code(pub_id, pub, thash);
   I(!public_key_exists(thash));
 
-  rsa_pub_key pub_key;
-  decode_base64(pub_encoded, pub_key);
   imp->execute(query("INSERT INTO public_keys VALUES(?, ?, ?)")
                % text(thash())
                % text(pub_id())
-               % blob(pub_key()));
+               % blob(pub()));
 
   return true;
 }
@@ -2719,7 +2708,7 @@ database::encrypt_rsa(rsa_keypair_id const & pub_id,
 cert_status
 database::check_signature(rsa_keypair_id const & id,
                           string const & alleged_text,
-                          base64<rsa_sha1_signature> const & signature)
+                          rsa_sha1_signature const & signature)
 {
   shared_ptr<PK_Verifier> verifier;
 
@@ -2756,19 +2745,15 @@ database::check_signature(rsa_keypair_id const & id,
       imp->verifiers.insert(make_pair(id, make_pair(verifier, pub_key)));
     }
 
-  // examine signature
-  rsa_sha1_signature sig_decoded;
-  decode_base64(signature, sig_decoded);
-
   // check the text+sig against the key
-  L(FL("checking %d-byte (%d decoded) signature") %
-    signature().size() % sig_decoded().size());
+  L(FL("checking %d-byte signature") %
+    signature().size());
 
   if (verifier->verify_message(
         reinterpret_cast<Botan::byte const*>(alleged_text.data()),
         alleged_text.size(),
-        reinterpret_cast<Botan::byte const*>(sig_decoded().data()),
-        sig_decoded().size()))
+        reinterpret_cast<Botan::byte const*>(signature().data()),
+        signature().size()))
     return cert_ok;
   else
     return cert_bad;
@@ -2781,10 +2766,7 @@ database_impl::cert_exists(cert const & t,
                            string const & table)
 {
   results res;
-  cert_value value;
-  decode_base64(t.value, value);
-  rsa_sha1_signature sig;
-  decode_base64(t.sig, sig);
+  cert_value value = decode_base64(t.value);
   query q = query("SELECT id FROM " + table + " WHERE id = ? "
                   "AND name = ? "
                   "AND value = ? "
@@ -2794,7 +2776,7 @@ database_impl::cert_exists(cert const & t,
     % text(t.name())
     % blob(value())
     % text(t.key())
-    % blob(sig());
+    % blob(t.sig());
 
   fetch(res, 1, any_rows, q);
 
@@ -2808,10 +2790,8 @@ database_impl::put_cert(cert const & t,
 {
   hexenc<id> thash;
   cert_hash_code(t, thash);
-  cert_value value;
-  decode_base64(t.value, value);
+  cert_value value = decode_base64(t.value);
   rsa_sha1_signature sig;
-  decode_base64(t.sig, sig);
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
 
@@ -2821,7 +2801,7 @@ database_impl::put_cert(cert const & t,
           % text(t.name())
           % blob(value())
           % text(t.key())
-          % blob(sig()));
+          % blob(t.sig()));
 }
 
 void
@@ -2832,15 +2812,12 @@ database_impl::results_to_certs(results const & res,
   for (size_t i = 0; i < res.size(); ++i)
     {
       cert t;
-      base64<cert_value> value;
-      encode_base64(cert_value(res[i][2]), value);
-      base64<rsa_sha1_signature> sig;
-      encode_base64(rsa_sha1_signature(res[i][4]), sig);
+      base64<cert_value> value = encode_base64(cert_value(res[i][2]));
       t = cert(hexenc<id>(res[i][0]),
               cert_name(res[i][1]),
               value,
               rsa_keypair_id(res[i][3]),
-              sig);
+              rsa_sha1_signature(res[i][4]));
       certs.push_back(t);
     }
 }
@@ -2919,8 +2896,7 @@ database_impl::get_certs(cert_name const & name,
   query q("SELECT id, name, value, keypair, signature FROM " + table +
           " WHERE name = ? AND value = ?");
 
-  cert_value binvalue;
-  decode_base64(val, binvalue);
+  cert_value binvalue = decode_base64(val);
   fetch(res, 5, any_rows,
         q % text(name())
           % blob(binvalue()));
@@ -2939,8 +2915,7 @@ database_impl::get_certs(hexenc<id> const & ident,
   query q("SELECT id, name, value, keypair, signature FROM " + table +
           " WHERE id = ? AND name = ? AND value = ?");
 
-  cert_value binvalue;
-  decode_base64(value, binvalue);
+  cert_value binvalue = decode_base64(value);
   fetch(res, 5, any_rows,
         q % text(ident())
           % text(name())
@@ -3056,8 +3031,7 @@ database::get_revisions_with_cert(cert_name const & name,
   revisions.clear();
   results res;
   query q("SELECT id FROM revision_certs WHERE name = ? AND value = ?");
-  cert_value binvalue;
-  decode_base64(val, binvalue);
+  cert_value binvalue = decode_base64(val);
   imp->fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     revisions.insert(revision_id((*i)[0]));

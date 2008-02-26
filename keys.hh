@@ -47,17 +47,17 @@ void load_key_pair(key_store & keys,
 // netsync stuff
 
 void key_hash_code(rsa_keypair_id const & ident,
-                   base64<rsa_pub_key> const & pub,
+                   rsa_pub_key const & pub,
                    hexenc<id> & out);
 
 void key_hash_code(rsa_keypair_id const & ident,
-                   base64< rsa_priv_key > const & priv,
+                   rsa_priv_key const & priv,
                    hexenc<id> & out);
 
 bool keys_match(rsa_keypair_id const & id1,
-                base64<rsa_pub_key> const & key1,
+                rsa_pub_key const & key1,
                 rsa_keypair_id const & id2,
-                base64<rsa_pub_key> const & key2);
+                rsa_pub_key const & key2);
 
 // Local Variables:
 // mode: C++
