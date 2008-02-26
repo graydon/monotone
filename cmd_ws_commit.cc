@@ -1307,10 +1307,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     project.get_revision_certs(restricted_rev_id, ctmp);
     for (vector< revision<cert> >::const_iterator i = ctmp.begin();
          i != ctmp.end(); ++i)
-      {
-        cert_value vtmp = decode_base64(i->inner().value);
-        certs.insert(make_pair(i->inner().name, vtmp));
-      }
+      certs.insert(make_pair(i->inner().name, i->inner().value));
+
     revision_data rdat;
     db.get_revision(restricted_rev_id, rdat);
     app.lua.hook_note_commit(restricted_rev_id, rdat, certs);

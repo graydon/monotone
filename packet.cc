@@ -76,7 +76,7 @@ packet_writer::consume_revision_cert(revision<cert> const & t)
   ost << "[rcert " << t.inner().ident() << '\n'
       << "       " << t.inner().name() << '\n'
       << "       " << t.inner().key() << '\n'
-      << "       " << trim_ws(t.inner().value()) << "]\n"
+      << "       " << trim_ws(encode_base64(t.inner().value)()) << "]\n"
       << trim_ws(encode_base64(t.inner().sig)()) << '\n'
       << "[end]\n";
 }
@@ -215,7 +215,7 @@ namespace
       // canonicalize the base64 encodings to permit searches
       cert t = cert(hexenc<id>(certid),
                     cert_name(name),
-                    base64<cert_value>(canonical_base64(val)),
+                    decode_base64_as<cert_value>(val),
                     rsa_keypair_id(keyid),
                     decode_base64_as<rsa_sha1_signature>(body));
       cons.consume_revision_cert(revision<cert>(t));
@@ -496,7 +496,7 @@ UNIT_TEST(packet, roundabout)
     pw.consume_revision_data(rid, rdat);
 
     // a cert packet
-    base64<cert_value> val = encode_base64(cert_value("peaches"));
+    cert_value val("peaches");
     rsa_sha1_signature sig("blah blah there is no way this is a valid signature");
     // should be a type violation to use a file id here instead of a revision
     // id, but no-one checks...

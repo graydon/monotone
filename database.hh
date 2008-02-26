@@ -274,18 +274,18 @@ public:
 
   // Only used by get_branch_certs (project.cc)
   outdated_indicator get_revision_certs(cert_name const & name,
-                          base64<cert_value> const & val,
+                          cert_value const & val,
                           std::vector< revision<cert> > & certs);
 
   // Only used by revision_is_in_branch (project.cc)
   outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
-                          base64<cert_value> const & value,
+                          cert_value const & value,
                           std::vector< revision<cert> > & certs);
 
   // Only used by get_branch_heads (project.cc)
   outdated_indicator get_revisions_with_cert(cert_name const & name,
-                               base64<cert_value> const & value,
+                               cert_value const & value,
                                std::set<revision_id> & revisions);
 
   // Used through project.cc, and by

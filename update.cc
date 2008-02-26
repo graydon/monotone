@@ -63,7 +63,7 @@ get_test_results_for_revision(project_t & project,
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      cert_value cv = decode_base64(i->inner().value);
+      cert_value cv = i->inner().value;
       try
         {
           bool test_ok = lexical_cast<bool>(cv());

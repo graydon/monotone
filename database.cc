@@ -377,12 +377,12 @@ private:
 
   void get_certs(hexenc<id> const & ident,
                  cert_name const & name,
-                 base64<cert_value> const & val,
+                 cert_value const & val,
                  vector<cert> & certs,
                  string const & table);
 
   void get_certs(cert_name const & name,
-                 base64<cert_value> const & val,
+                 cert_value const & val,
                  vector<cert> & certs,
                  string const & table);
 
@@ -2766,7 +2766,6 @@ database_impl::cert_exists(cert const & t,
                            string const & table)
 {
   results res;
-  cert_value value = decode_base64(t.value);
   query q = query("SELECT id FROM " + table + " WHERE id = ? "
                   "AND name = ? "
                   "AND value = ? "
@@ -2774,7 +2773,7 @@ database_impl::cert_exists(cert const & t,
                   "AND signature = ?")
     % text(t.ident())
     % text(t.name())
-    % blob(value())
+    % blob(t.value())
     % text(t.key())
     % blob(t.sig());
 
@@ -2790,7 +2789,6 @@ database_impl::put_cert(cert const & t,
 {
   hexenc<id> thash;
   cert_hash_code(t, thash);
-  cert_value value = decode_base64(t.value);
   rsa_sha1_signature sig;
 
   string insert = "INSERT INTO " + table + " VALUES(?, ?, ?, ?, ?, ?)";
@@ -2799,7 +2797,7 @@ database_impl::put_cert(cert const & t,
           % text(thash())
           % text(t.ident())
           % text(t.name())
-          % blob(value())
+          % blob(t.value())
           % text(t.key())
           % blob(t.sig()));
 }
@@ -2812,12 +2810,11 @@ database_impl::results_to_certs(results const & res,
   for (size_t i = 0; i < res.size(); ++i)
     {
       cert t;
-      base64<cert_value> value = encode_base64(cert_value(res[i][2]));
       t = cert(hexenc<id>(res[i][0]),
-              cert_name(res[i][1]),
-              value,
-              rsa_keypair_id(res[i][3]),
-              rsa_sha1_signature(res[i][4]));
+               cert_name(res[i][1]),
+               cert_value(res[i][2]),
+               rsa_keypair_id(res[i][3]),
+               rsa_sha1_signature(res[i][4]));
       certs.push_back(t);
     }
 }
@@ -2888,7 +2885,7 @@ database_impl::get_certs(hexenc<id> const & ident,
 
 void
 database_impl::get_certs(cert_name const & name,
-                         base64<cert_value> const & val,
+                         cert_value const & val,
                          vector<cert> & certs,
                          string const & table)
 {
@@ -2896,10 +2893,9 @@ database_impl::get_certs(cert_name const & name,
   query q("SELECT id, name, value, keypair, signature FROM " + table +
           " WHERE name = ? AND value = ?");
 
-  cert_value binvalue = decode_base64(val);
   fetch(res, 5, any_rows,
         q % text(name())
-          % blob(binvalue()));
+          % blob(val()));
   results_to_certs(res, certs);
 }
 
@@ -2907,7 +2903,7 @@ database_impl::get_certs(cert_name const & name,
 void
 database_impl::get_certs(hexenc<id> const & ident,
                          cert_name const & name,
-                         base64<cert_value> const & value,
+                         cert_value const & value,
                          vector<cert> & certs,
                          string const & table)
 {
@@ -2915,11 +2911,10 @@ database_impl::get_certs(hexenc<id> const & ident,
   query q("SELECT id, name, value, keypair, signature FROM " + table +
           " WHERE id = ? AND name = ? AND value = ?");
 
-  cert_value binvalue = decode_base64(value);
   fetch(res, 5, any_rows,
         q % text(ident())
           % text(name())
-          % blob(binvalue()));
+          % blob(value()));
   results_to_certs(res, certs);
 }
 
@@ -3013,7 +3008,7 @@ database::get_revision_certs(revision_id const & id,
 outdated_indicator
 database::get_revision_certs(revision_id const & id,
                              cert_name const & name,
-                             base64<cert_value> const & val,
+                             cert_value const & val,
                              vector< revision<cert> > & ts)
 {
   vector<cert> certs;
@@ -3025,14 +3020,13 @@ database::get_revision_certs(revision_id const & id,
 
 outdated_indicator
 database::get_revisions_with_cert(cert_name const & name,
-                                  base64<cert_value> const & val,
+                                  cert_value const & val,
                                   set<revision_id> & revisions)
 {
   revisions.clear();
   results res;
   query q("SELECT id FROM revision_certs WHERE name = ? AND value = ?");
-  cert_value binvalue = decode_base64(val);
-  imp->fetch(res, one_col, any_rows, q % text(name()) % blob(binvalue()));
+  imp->fetch(res, one_col, any_rows, q % text(name()) % blob(val()));
   for (results::const_iterator i = res.begin(); i != res.end(); ++i)
     revisions.insert(revision_id((*i)[0]));
   return imp->cert_stamper.get_indicator();
@@ -3040,7 +3034,7 @@ database::get_revisions_with_cert(cert_name const & name,
 
 outdated_indicator
 database::get_revision_certs(cert_name const & name,
-                             base64<cert_value> const & val,
+                             cert_value const & val,
                              vector< revision<cert> > & ts)
 {
   vector<cert> certs;

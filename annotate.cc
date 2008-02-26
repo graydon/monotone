@@ -353,7 +353,7 @@ cert_string_value(vector< revision<cert> > const & certs,
     {
       if (i->inner().name == name)
         {
-          cert_value tv = decode_base64(i->inner().value);
+          cert_value tv(i->inner().value);
           string::size_type f = 0;
           string::size_type l = string::npos;
           if (from_start)

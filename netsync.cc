@@ -645,10 +645,8 @@ session::~session()
           set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
           for (vector<cert>::const_iterator j = ctmp.begin();
                j != ctmp.end(); ++j)
-            {
-              cert_value vtmp = decode_base64(j->value);
-              certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
-            }
+            certs.insert(make_pair(j->key, make_pair(j->name, j->value)));
+
           revision_data rdat;
           project.db.get_revision(*i, rdat);
           lua.hook_note_netsync_revision_received(*i, rdat, certs,
@@ -658,11 +656,8 @@ session::~session()
       //Certs (not attached to a new revision)
       for (vector<cert>::iterator i = unattached_certs.begin();
            i != unattached_certs.end(); ++i)
-        {
-          cert_value tmp = decode_base64(i->value);
-          lua.hook_note_netsync_cert_received(revision_id(i->ident), i->key,
-                                              i->name, tmp, session_id);
-        }
+        lua.hook_note_netsync_cert_received(revision_id(i->ident), i->key,
+                                            i->name, i->value, session_id);
     }
   lua.hook_note_netsync_end(session_id, error_code,
                             bytes_in, bytes_out,

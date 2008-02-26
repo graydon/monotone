@@ -99,7 +99,7 @@ pick_branch_for_update(options & opts, database & db, revision_id chosen_rid)
   set< branch_name > branches;
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); i++)
-    branches.insert(branch_name(decode_base64(i->inner().value)()));
+    branches.insert(branch_name(i->inner().value()));
 
   if (branches.find(opts.branchname) != branches.end())
     {

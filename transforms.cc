@@ -245,23 +245,6 @@ calculate_ident(revision_data const & dat,
   ident = revision_id(tmp);
 }
 
-string
-canonical_base64(string const & s)
-{
-  try
-    {
-      Botan::Pipe pipe(new Botan::Base64_Decoder(),
-                       new Botan::Base64_Encoder());
-      pipe.process_msg(s);
-      return pipe.read_all_as_string();
-    }
-  catch (Botan::Exception & e)
-    {
-      error_in_transform(e);
-    }
-}
-
-
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 #include <stdlib.h>
