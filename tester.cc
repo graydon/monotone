@@ -9,6 +9,11 @@
 #include <boost/lexical_cast.hpp>
 #include <cstring>
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN // no gui definitions
+#include <windows.h>
+#endif
+
 using std::string;
 using std::map;
 using std::vector;

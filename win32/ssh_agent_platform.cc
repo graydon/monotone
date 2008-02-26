@@ -18,7 +18,6 @@ using std::string;
 #define AGENT_COPYDATA_ID 0x804e50ba   /* random goop */
 #define AGENT_MAX_MSGLEN  8192
 
-void
 ssh_agent_platform::ssh_agent_platform()
   : hwnd(NULL), filemap(NULL), filemap_view(NULL), read_len(0)
 {
