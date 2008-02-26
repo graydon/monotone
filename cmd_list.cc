@@ -339,7 +339,7 @@ CMD(tags, "tags", "", CMD_REF(list), "",
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
       cout << i->name << ' '
-           << i->ident  << ' '
+           << encode_hexenc(i->ident.inner()()) << ' '
            << i->key  << '\n';
     }
 }

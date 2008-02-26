@@ -146,14 +146,21 @@ erase_bogus_certs(database & db,
                                           get<1>(i->first),
                                           decoded_value))
         {
-          L(FL("trust function liked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            {
+            L(FL("trust function liked %d signers of %s cert on manifest %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % encode_hexenc(get<0>(i->first).inner()()));
+            }
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % encode_hexenc(get<0>(i->first).inner()()));
         }
     }
   certs = tmp_certs;
@@ -203,14 +210,19 @@ erase_bogus_certs(database & db,
                                           get<1>(i->first),
                                           decoded_value))
         {
-          L(FL("trust function liked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            L(FL("trust function liked %d signers of %s cert on revision %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % encode_hexenc(get<0>(i->first).inner()()));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % encode_hexenc(get<0>(i->first).inner()()));
         }
     }
   certs = tmp_certs;
@@ -330,7 +342,10 @@ void
 cert_signable_text(cert const & t,
                    string & out)
 {
-  out = (FL("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  out = (FL("[%s@%s:%s]")
+         % t.name
+         % encode_hexenc(t.ident.inner()())
+         % remove_ws(t.value())).str();
   L(FL("cert: signable text %s") % out);
 }
 
@@ -340,7 +355,7 @@ cert_hash_code(cert const & t, id & out)
   string tmp;
   tmp.reserve(4+t.ident.inner()().size() + t.name().size() +
               t.value().size() + t.key().size() + t.sig().size());
-  tmp.append(t.ident.inner()());
+  tmp.append(encode_hexenc(t.ident.inner()()));
   tmp += ':';
   tmp.append(t.name());
   tmp += ':';
@@ -406,11 +421,13 @@ guess_branch(options & opts, project_t & project,
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
-          "please provide a branch name") % ident);
+          "please provide a branch name")
+          % encode_hexenc(ident.inner()()));
 
       N(branches.size() == 1,
         F("multiple branch certs found for revision %s, "
-          "please provide a branch name") % ident);
+          "please provide a branch name")
+          % encode_hexenc(ident.inner()()));
 
       set<branch_name>::iterator i = branches.begin();
       I(i != branches.end());

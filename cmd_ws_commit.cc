@@ -54,7 +54,8 @@ revision_summary(revision_t const & rev, branch_name const & branch, utf8 & summ
       revision_id parent = edge_old_revision(*i);
       // A colon at the end of this string looked nicer, but it made
       // double-click copying from terminals annoying.
-      out += (F("Changes against parent %s") % parent).str() += '\n';
+      out += (F("Changes against parent %s")
+                % encode_hexenc(parent.inner()())).str() += '\n';
 
       cset const & cs = edge_changes(*i);
 

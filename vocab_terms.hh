@@ -15,7 +15,7 @@ ATOMIC_NOVERIFY(external);    // "external" string in unknown system charset
 ATOMIC_NOVERIFY(utf8);        // unknown string in UTF8 charset
 ATOMIC(symbol);               // valid basic io symbol (alphanumeric or _ chars)
 
-ATOMIC_NOVERIFY(id);          // hash of data
+ATOMIC_BINARY(id);            // hash of data
 ATOMIC_NOVERIFY(data);        // meaningless blob
 ATOMIC_NOVERIFY(delta);       // xdelta between 2 datas
 ATOMIC_NOVERIFY(inodeprint);  // fingerprint of an inode
@@ -112,11 +112,17 @@ EXTERN template class base64<data>;
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.
 
+#if 0
 EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
+#endif
 
-// for some reason, we need this output operator for file<id>, which surely
-// return 
-EXTERN template std::ostream & operator<< <>(std::ostream &,             file<id>   const &);
+
+#if 0
+
+// EXTERN template std::ostream & operator<< <>(std::ostream &,           revision<id>   const &);
+
+#endif
+
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 

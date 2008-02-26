@@ -54,6 +54,7 @@ public:
 #define DECORATE(dec) hh_DECORATE(dec)
 #define ATOMIC(ty) hh_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
+#define ATOMIC_BINARY(ty) hh_ATOMIC_BINARY(ty)
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -65,6 +66,7 @@ public:
 
 #undef ATOMIC
 #undef ATOMIC_NOVERIFY
+#undef ATOMIC_BINARY
 #undef DECORATE
 #undef ENCODING
 

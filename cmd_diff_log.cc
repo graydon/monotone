@@ -397,7 +397,7 @@ prepare_diff(app_state & app,
       make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
-      header << "# old_revision [" << old_rid << "]\n";
+      header << "# old_revision [" << encode_hexenc(old_rid.inner()()) << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 1)
     {
@@ -424,7 +424,7 @@ prepare_diff(app_state & app,
       make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
-      header << "# old_revision [" << r_old_id << "]\n";
+      header << "# old_revision [" << encode_hexenc(r_old_id.inner()()) << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 2)
     {

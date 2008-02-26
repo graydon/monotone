@@ -218,7 +218,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
       return;
     }
 
-  P(F("selected update target %s") % chosen_rid);
+  P(F("selected update target %s")
+    % encode_hexenc(chosen_rid.inner()()));
 
   // Fiddle around with branches, in an attempt to guess what the user
   // wants.
@@ -307,7 +308,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 
   if (switched_branch)
     P(F("switched branch; next commit will use branch %s") % app.opts.branchname());
-  P(F("updated to base revision %s") % chosen_rid);
+  P(F("updated to base revision %s")
+    % encode_hexenc(chosen_rid.inner()()));
 }
 
 // Subroutine of CMD(merge) and CMD(explicit_merge).  Merge LEFT with RIGHT,
@@ -337,8 +339,12 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   if (branch != opts.branchname)
     fieldwidth = max(fieldwidth, strlen("to branch '"));
 
-  log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left
-      << "'\n" << setw(fieldwidth) << "and '" << right
+  hexenc<id> left_hid, right_hid;
+  encode_hexenc(left.inner(), left_hid);
+  encode_hexenc(right.inner(), right_hid);
+
+  log << setw(fieldwidth - strlen(" of '")) << caller << " of '" << left_hid
+      << "'\n" << setw(fieldwidth) << "and '" << right_hid
       << "'\n";
 
   if (branch != opts.branchname)
@@ -347,12 +353,12 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   // Now it's time for the real work.
   if (automate)
     {
-      output << left << " " << right << " ";
+      output << left_hid << " " << right_hid << " ";
     }
   else
     {
-      P(F("[left]  %s") % left);
-      P(F("[right] %s") % right);
+      P(F("[left]  %s") % left_hid);
+      P(F("[right] %s") % right_hid);
     }
 
   revision_id merged;
@@ -364,9 +370,9 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
 
   guard.commit();
   if (automate)
-    output << merged << "\n";
+    output << encode_hexenc(merged.inner()()) << "\n";
   else
-    P(F("[merged] %s") % merged);
+    P(F("[merged] %s") % encode_hexenc(merged.inner()()));
 }
 
 // should merge support --message, --message-file?  It seems somewhat weird,

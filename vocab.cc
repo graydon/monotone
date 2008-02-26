@@ -73,6 +73,22 @@ verify(hexenc<id> & val)
 }
 
 inline void
+verify(id & val)
+{
+  if (val.ok)
+    return;
+
+  if (val().empty())
+    return;
+
+  N(val().size() == constants::sha1_digest_length,
+    F("binary ID '%s' size != %d")
+      % encode_hexenc(val())
+      % constants::sha1_digest_length);
+  val.ok = true;
+}
+
+inline void
 verify_full(symbol & val)
 {
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
@@ -179,6 +195,7 @@ fake_id()
 #define DECORATE(dec) cc_DECORATE(dec)
 #define ATOMIC(ty) cc_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
+#define ATOMIC_BINARY(ty) cc_ATOMIC_BINARY(ty)
 
 #ifdef EXTERN
 #undef EXTERN
@@ -196,18 +213,6 @@ template
 void dump<rsa_pub_key>(base64<rsa_pub_key> const&, string &);
 
 template
-void dump(revision_id const & r, string &);
-
-template
-void dump(manifest_id const & r, string &);
-
-template
-void dump(file_id const & r, string &);
-
-template
-void dump(hexenc<id> const & r, string &);
-
-template
 void dump(roster_data const & d, string &);
 
 template
@@ -215,6 +220,83 @@ void dump(roster_delta const & d, string &);
 
 template
 void dump(manifest_data const & d, string &);
+
+/*
+ * specializations for hexenc<id>, which allows the encoded id
+ * to be dumped out, even if id itself must never be dumped
+ * because it's binary.
+ */
+template <>
+void dump <class id>(hexenc<id> const & obj, std::string & out)
+{
+  out = encode_hexenc(obj());
+}
+
+template <>
+std::ostream & 
+operator<< <class id>(std::ostream & out, hexenc<id> const & hex_id)
+{
+  return (out << encode_hexenc(hex_id()));
+}
+
+
+/*
+ * specializations for decorated binary values, which shouldn't
+ * be dumped out as binaries.
+ *
+ * FIXME: these shouldn't be necessary. Heck, you shouldn't even
+ *        use them. They are here to tell you *where* you are
+ *        calling them. Otherwise, you'd just get a linker error
+ *        for undefined references.
+ */
+
+template <>
+void dump <class id>(revision<id> const & obj, std::string & out)
+{
+  W(F("shouldn't dump out binary revision_id contents!"));
+  *((char*) NULL) = 0;
+  out = encode_hexenc(obj.inner()());
+}
+
+template <> std::ostream &
+operator<< <class id>(std::ostream & out, revision<id> const & id)
+{
+  W(F("shouldn't dump out binary revision_id contents!"));
+  *((char*) NULL) = 0;
+  return (out << encode_hexenc(id.inner()()));
+}
+
+template <>
+void dump <class id>(manifest<id> const & obj, std::string & out)
+{
+  W(F("shouldn't dump out binary manifest_id contents!"));
+  *((char*) NULL) = 0;
+  out = encode_hexenc(obj.inner()());
+}
+
+template <> std::ostream &
+operator<< <class id>(std::ostream & out, manifest<id> const & id)
+{
+  W(F("shouldn't dump out binary manifest_id contents!"));
+  *((char*) NULL) = 0;
+  return (out << encode_hexenc(id.inner()()));
+}
+
+template <>
+void dump <class id>(file<id> const & obj, std::string & out)
+{
+  W(F("shouldn't dump out binary file_id contents!"));
+  *((char*) NULL) = 0;
+  out = encode_hexenc(obj.inner()());
+}
+
+template <> std::ostream &
+operator<< <class id>(std::ostream & out, file<id> const & id)
+{
+  W(F("shouldn't dump out binary file_id contets!"));
+  *((char*) NULL) = 0;
+  return (out << encode_hexenc(id.inner()()));
+}
 
 #ifdef BUILD_UNIT_TESTS
 
