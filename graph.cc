@@ -10,6 +10,7 @@
 #include "numeric_vocab.hh"
 #include "hash_map.hh"
 #include "vocab_hash.hh"
+#include "transforms.hh"
 
 using boost::shared_ptr;
 using std::string;
@@ -91,7 +92,10 @@ get_reconstruction_path(id const & start,
               for (set<id>::const_iterator j = next.begin();
                     j != next.end(); ++j)
                 {
-                  L(FL("considering %s -> %s") % tip % *j);
+                  if (global_sanity.debug_p())
+                    L(FL("considering %s -> %s")
+                      % encode_hexenc(tip())
+                      % encode_hexenc((*j)()));
                   if (seen_nodes.find(*j) == seen_nodes.end())
                     {
                       shared_ptr<reconstruction_path> pthN;

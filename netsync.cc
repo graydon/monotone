@@ -1305,7 +1305,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       id their_key_hash;
       encode_base64(their_key, their_key_encoded);
       key_hash_code(their_keyname, their_key_encoded, their_key_hash);
-      L(FL("server key has name %s, hash %s") % their_keyname % their_key_hash);
+      L(FL("server key has name %s, hash %s")
+        % their_keyname
+        % encode_hexenc(their_key_hash()));
       var_key their_key_key(known_servers_domain, var_name(peer_id));
       if (project.db.var_exists(their_key_key))
         {
@@ -1321,7 +1323,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                   "remote host sent key %s\n"
                   "I expected %s\n"
                   "'%s unset %s %s' overrides this check")
-                % their_key_hash % expected_key_hash
+                % encode_hexenc(their_key_hash())
+                % encode_hexenc(expected_key_hash())
                 % ui.prog_name % their_key_key.first % their_key_key.second);
               E(false, F("server key changed"));
             }
@@ -1330,7 +1333,9 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
         {
           P(F("first time connecting to server %s\n"
               "I'll assume it's really them, but you might want to double-check\n"
-              "their key's fingerprint: %s") % peer_id % their_key_hash);
+              "their key's fingerprint: %s")
+            % peer_id
+            % encode_hexenc(their_key_hash()));
           project.db.set_var(their_key_key, var_value(their_key_hash()));
         }
       if (project.db.put_key(their_keyname, their_key_encoded))
@@ -1340,7 +1345,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
         hexenc<id> hnonce;
         encode_hexenc(nonce, hnonce);
         L(FL("received 'hello' netcmd from server '%s' with nonce '%s'")
-          % their_key_hash % hnonce);
+          % encode_hexenc(their_key_hash())
+          % hnonce);
       }
 
       I(project.db.public_key_exists(their_key_hash));
@@ -1537,7 +1543,7 @@ session::process_auth_cmd(protocol_role their_role,
                                       their_exclude_pattern);
           error(unknown_key,
                 (F("remote public key hash '%s' is unknown")
-                 % client).str());
+                 % encode_hexenc(client())).str());
         }
     }
 

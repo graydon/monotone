@@ -16,6 +16,7 @@
 #include "project.hh"
 #include "globish.hh"
 #include "cmd.hh"
+#include "transforms.hh"
 
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -342,9 +343,10 @@ complete(app_state & app,
       && sels[0].first == sel_ident
       && sels[0].second.size() == constants::idlen)
     {
-      completions.insert(revision_id(sels[0].second));
+      completions.insert(revision_id(decode_hexenc(sels[0].second)));
       N(project.db.revision_exists(*completions.begin()),
-        F("no such revision '%s'") % *completions.begin());
+        F("no such revision '%s'")
+          % encode_hexenc(completions.begin()->inner()()));
       return;
     }
 
@@ -357,12 +359,12 @@ complete(app_state & app,
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      P(F("expanded to '%s'") % *i);
+      P(F("expanded to '%s'") % encode_hexenc(i->inner()()));
 
       // This may be impossible, but let's make sure.
       // All the callers used to do it.
       N(project.db.revision_exists(*i),
-        F("no such revision '%s'") % *i);
+        F("no such revision '%s'") % encode_hexenc(i->inner()()));
     }
 }
 
@@ -397,7 +399,7 @@ expand_selector(app_state & app,
       && sels[0].first == sel_ident
       && sels[0].second.size() == constants::idlen)
     {
-      completions.insert(revision_id(sels[0].second));
+      completions.insert(revision_id(decode_hexenc(sels[0].second)));
       return;
     }
 
