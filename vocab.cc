@@ -13,6 +13,7 @@
 #include "hash_map.hh"
 #include "sanity.hh"
 #include "vocab.hh"
+#include "char_classifiers.hh"
 #include "transforms.hh"
 
 using std::string;

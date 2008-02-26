@@ -16,6 +16,7 @@ struct options;
 class lua_hooks;
 class key_store;
 class database;
+struct keypair;
 
 // keys.{hh,cc} does all the "delicate" crypto (meaning: that which needs
 // to read passphrases and manipulate raw, decrypted private keys). it

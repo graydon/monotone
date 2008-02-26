@@ -8,8 +8,6 @@
 // PURPOSE.
 
 #include "base.hh"
-#include <cctype>
-#include <cstdlib>
 #include <map>
 #include <queue>
 #include <set>

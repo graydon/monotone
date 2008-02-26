@@ -18,6 +18,8 @@
 #include "transforms.hh"
 #include "simplestring_xform.hh"
 #include "cert.hh"
+#include "key_store.hh" // for keypair
+#include "char_classifiers.hh"
 
 using std::istream;
 using std::istringstream;

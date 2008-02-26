@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <utility>
 #include <boost/shared_ptr.hpp>
 
 // the purpose of this file is to wrap things which are otherwise strings
@@ -30,7 +29,7 @@ namespace
 class immutable_string
 {
   boost::shared_ptr<std::string> _rep;
-  
+
 public:
   immutable_string()
   {}
@@ -55,36 +54,6 @@ public:
 #define DECORATE(dec) hh_DECORATE(dec)
 #define ATOMIC(ty) hh_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
-
-inline bool is_xdigit(char x)
-{
-  return ((x >= '0' && x <= '9')
-          || (x >= 'a' && x <= 'f'));
-}
-
-inline bool is_alpha(char x)
-{
-  return ((x >= 'a' && x <= 'z')
-          || (x >= 'A' && x <= 'Z'));
-}
-
-inline bool is_alnum(char x)
-{
-  return ((x >= '0' && x <= '9')
-          || (x >= 'a' && x <= 'z')
-          || (x >= 'A' && x <= 'Z'));
-}
-
-inline bool is_space(char x)
-{
-  return (x == ' ')
-    || (x == '\n')
-    || (x == '\t')
-    || (x == '\r')
-    || (x == '\v')
-    || (x == '\f');
-}
-
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -119,29 +88,8 @@ typedef   roster< delta >    roster_delta;
 typedef manifest< delta >  manifest_delta;
 typedef     file< delta >      file_delta;
 
-typedef std::pair<var_domain, var_name> var_key;
-
-
-struct keypair
-{
-  base64<rsa_pub_key> pub;
-  base64<rsa_priv_key> priv;
-  keypair()
-  {}
-  keypair(base64<rsa_pub_key> const & a,
-          base64<rsa_priv_key> const & b)
-   : pub(a), priv(b)
-  {}
-};
-
-// fs::path is our "generic" safe path type, pointing potentially anywhere
-// in the filesystem. if you want to *define* or work with any of these you
-// need to include boost/filesystem/path.hpp.
-
-//namespace boost { namespace filesystem { class path; } }
-//namespace fs = boost::filesystem;
-
-// diff type
+// diff type; this is here and not diff_patch.hh, because options_list.hh
+// needs to refer to it
 enum diff_type
 {
   unified_diff,

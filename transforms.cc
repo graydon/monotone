@@ -9,12 +9,10 @@
 
 #include "base.hh"
 #include <algorithm>
-#include <cctype>
 #include <functional>
 #include <iterator>
 #include <sstream>
 #include "vector.hh"
-
 
 #include <boost/tokenizer.hpp>
 #include <boost/scoped_array.hpp>
@@ -30,6 +28,7 @@
 #include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "xdelta.hh"
+#include "char_classifiers.hh"
 
 using std::string;
 
@@ -84,10 +83,11 @@ error_in_transform(Botan::Exception & e)
 
       // ... downcase the rest of it and replace underscores with spaces.
       for (string::iterator p = w.begin(); p != w.end(); p++)
-        if (::isupper(*p))
-          *p = ::tolower(*p);
-        else if (*p == '_')
-          *p = ' ';
+        {
+          *p = to_lower(*p);
+          if (*p == '_')
+            *p = ' ';
+        }
 
       E(false,
         F("%s\n"
@@ -158,16 +158,12 @@ void pack(T const & in, base64< gzip<T> > & out)
 template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out)
 {
-  string tmp;
-  tmp.reserve(in().size()); // FIXME: do some benchmarking and make this a constant::
-
   try
     {
       Botan::Pipe pipe(new Botan::Base64_Decoder(),
                        new Botan::Gzip_Decompression());
       pipe.process_msg(in());
-      tmp = pipe.read_all_as_string();
-      out = T(tmp);
+      out = T(pipe.read_all_as_string());
     }
   catch (Botan::Exception & e)
     {

@@ -8,10 +8,6 @@
 // PURPOSE.
 
 #include "base.hh"
-#include <sstream>
-#include <cctype>
-#include <cstdlib>
-
 #include "basic_io.hh"
 #include "sanity.hh"
 #include "transforms.hh"

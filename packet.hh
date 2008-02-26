@@ -13,6 +13,7 @@
 #include "vocab.hh"
 
 struct cert;
+struct keypair;
 
 // the idea here is that monotone can produce and consume "packet streams",
 // where each packet is *informative* rather than transactional. that is to

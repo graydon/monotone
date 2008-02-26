@@ -97,6 +97,7 @@ private:
 
   // Interfaces.
 public:
+  static void require_workspace();
   static void require_workspace(i18n_format const & explanation);
 
   static void create_workspace(options const & opts,
