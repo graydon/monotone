@@ -1376,7 +1376,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
     {
       // use branch head revision
       N(!app.opts.branchname().empty(),
-        F("use --revision or --branch to specify what to checkout"));
+        F("use --revision or --branch to specify the parent revision for the import"));
 
       set<revision_id> heads;
       project.get_branch_heads(app.opts.branchname, heads,
@@ -1387,7 +1387,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s")
               % describe_revision(project, *i));
-          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
+          P(F("choose one with '%s import -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
       if (heads.size() > 0)
