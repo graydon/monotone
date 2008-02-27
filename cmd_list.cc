@@ -109,8 +109,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   for (size_t i = 0; i < certs.size(); ++i)
     {
       cert_status status = check_cert(db, idx(certs, i));
-      cert_value tv;
-      decode_base64(idx(certs, i).value, tv);
+      cert_value tv = idx(certs, i).value;
       string washed;
       if (guess_binary(tv()))
         {
@@ -197,7 +196,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
       else if (db.database_specified())
         {
           // we've found a key that should have both a public and a private version
-          base64<rsa_pub_key> pub_key;
+          rsa_pub_key pub_key;
           keypair priv_key;
           db.get_key(*i, pub_key);
           keys.get_key_pair(*i, priv_key);
@@ -212,7 +211,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
       for (map<rsa_keypair_id, bool>::iterator i = pubkeys.begin();
            i != pubkeys.end(); i++)
         {
-          base64<rsa_pub_key> pub_encoded;
+          rsa_pub_key pub_encoded;
           id hash_code;
           rsa_keypair_id keyid = i->first;
           bool indb = i->second;
@@ -602,7 +601,7 @@ CMD_AUTOMATE(keys, "",
   for (vector<rsa_keypair_id>::iterator i = dbkeys.begin();
        i != dbkeys.end(); i++)
     {
-      base64<rsa_pub_key> pub_encoded;
+      rsa_pub_key pub_encoded;
       id hash_code;
       db.get_key(*i, pub_encoded);
       key_hash_code(*i, pub_encoded, hash_code);
@@ -721,11 +720,9 @@ CMD_AUTOMATE(certs, N_("REV"),
     {
       basic_io::stanza st;
       cert_status status = check_cert(db, idx(certs, i));
-      cert_value tv;
+      cert_value tv = idx(certs, i).value;
       cert_name name = idx(certs, i).name;
       set<rsa_keypair_id> signers;
-
-      decode_base64(idx(certs, i).value, tv);
 
       rsa_keypair_id keyid = idx(certs, i).key;
       signers.insert(keyid);

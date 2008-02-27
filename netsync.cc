@@ -286,25 +286,23 @@ require(bool check, string const & context)
 static void
 read_pubkey(string const & in,
             rsa_keypair_id & id,
-            base64<rsa_pub_key> & pub)
+            rsa_pub_key & pub)
 {
   string tmp_id, tmp_key;
   size_t pos = 0;
   extract_variable_length_string(in, tmp_id, pos, "pubkey id");
   extract_variable_length_string(in, tmp_key, pos, "pubkey value");
   id = rsa_keypair_id(tmp_id);
-  encode_base64(rsa_pub_key(tmp_key), pub);
+  pub = rsa_pub_key(tmp_key);
 }
 
 static void
 write_pubkey(rsa_keypair_id const & id,
-             base64<rsa_pub_key> const & pub,
+             rsa_pub_key const & pub,
              string & out)
 {
-  rsa_pub_key pub_tmp;
-  decode_base64(pub, pub_tmp);
   insert_variable_length_string(id(), out);
-  insert_variable_length_string(pub_tmp(), out);
+  insert_variable_length_string(pub(), out);
 }
 
 struct netsync_error
@@ -468,7 +466,7 @@ session:
   void queue_error_cmd(string const & errmsg);
   void queue_done_cmd(netcmd_item_type type, size_t n_items);
   void queue_hello_cmd(rsa_keypair_id const & key_name,
-                       base64<rsa_pub_key> const & pub_encoded,
+                       rsa_pub_key const & pub_encoded,
                        id const & nonce);
   void queue_anonymous_cmd(protocol_role role,
                            globish const & include_pattern,
@@ -480,7 +478,7 @@ session:
                       id const & client,
                       id const & nonce1,
                       id const & nonce2,
-                      string const & signature);
+                      rsa_sha1_signature const & signature);
   void queue_confirm_cmd();
   void queue_refine_cmd(refinement_type ty, merkle_node const & node);
   void queue_data_cmd(netcmd_item_type type,
@@ -505,7 +503,7 @@ session:
                         globish const & their_exclude_pattern,
                         id const & client,
                         id const & nonce1,
-                        string const & signature);
+                        rsa_sha1_signature const & signature);
   bool process_refine_cmd(refinement_type ty, merkle_node const & node);
   bool process_done_cmd(netcmd_item_type type, size_t n_items);
   bool process_data_cmd(netcmd_item_type type,
@@ -647,11 +645,8 @@ session::~session()
           set<pair<rsa_keypair_id, pair<cert_name, cert_value> > > certs;
           for (vector<cert>::const_iterator j = ctmp.begin();
                j != ctmp.end(); ++j)
-            {
-              cert_value vtmp;
-              decode_base64(j->value, vtmp);
-              certs.insert(make_pair(j->key, make_pair(j->name, vtmp)));
-            }
+            certs.insert(make_pair(j->key, make_pair(j->name, j->value)));
+
           revision_data rdat;
           project.db.get_revision(*i, rdat);
           lua.hook_note_netsync_revision_received(*i, rdat, certs,
@@ -661,12 +656,8 @@ session::~session()
       //Certs (not attached to a new revision)
       for (vector<cert>::iterator i = unattached_certs.begin();
            i != unattached_certs.end(); ++i)
-        {
-          cert_value tmp;
-          decode_base64(i->value, tmp);
-          lua.hook_note_netsync_cert_received(revision_id(i->ident), i->key,
-                                              i->name, tmp, session_id);
-        }
+        lua.hook_note_netsync_cert_received(revision_id(i->ident), i->key,
+                                            i->name, i->value, session_id);
     }
   lua.hook_note_netsync_end(session_id, error_code,
                             bytes_in, bytes_out,
@@ -1133,13 +1124,13 @@ session::queue_done_cmd(netcmd_item_type type,
 
 void
 session::queue_hello_cmd(rsa_keypair_id const & key_name,
-                         base64<rsa_pub_key> const & pub_encoded,
+                         rsa_pub_key const & pub,
                          id const & nonce)
 {
-  rsa_pub_key pub;
   if (use_transport_auth)
-    decode_base64(pub_encoded, pub);
-  cmd.write_hello_cmd(key_name, pub, nonce);
+    cmd.write_hello_cmd(key_name, pub, nonce);
+  else
+    cmd.write_hello_cmd(key_name, rsa_pub_key(), nonce);
   write_netcmd_and_try_flush(cmd);
 }
 
@@ -1166,7 +1157,7 @@ session::queue_auth_cmd(protocol_role role,
                         id const & client,
                         id const & nonce1,
                         id const & nonce2,
-                        string const & signature)
+                        rsa_sha1_signature const & signature)
 {
   netcmd cmd;
   rsa_oaep_sha_data hmac_key_encrypted;
@@ -1300,13 +1291,10 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == 0);
 
-  base64<rsa_pub_key> their_key_encoded;
-
   if (use_transport_auth)
     {
       id their_key_hash;
-      encode_base64(their_key, their_key_encoded);
-      key_hash_code(their_keyname, their_key_encoded, their_key_hash);
+      key_hash_code(their_keyname, their_key, their_key_hash);
       L(FL("server key has name %s, hash %s")
         % their_keyname
         % encode_hexenc(their_key_hash()));
@@ -1340,7 +1328,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
             % encode_hexenc(their_key_hash()));
           project.db.set_var(their_key_key, var_value(their_key_hash()));
         }
-      if (project.db.put_key(their_keyname, their_key_encoded))
+      if (project.db.put_key(their_keyname, their_key))
         W(F("saving public key for %s to database") % their_keyname);
 
       {
@@ -1380,20 +1368,18 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
 
       // make a signature with it;
       // this also ensures our public key is in the database
-      base64<rsa_sha1_signature> sig;
-      rsa_sha1_signature sig_raw;
+      rsa_sha1_signature sig;
       keys.make_signature(project.db, signing_key, nonce(), sig);
-      decode_base64(sig, sig_raw);
 
       // get the hash identifier for our pubkey
-      base64<rsa_pub_key> our_pub;
+      rsa_pub_key our_pub;
       project.db.get_key(signing_key, our_pub);
       id our_key_hash_raw;
       key_hash_code(signing_key, our_pub, our_key_hash_raw);
 
       // make a new nonce of our own and send off the 'auth'
       queue_auth_cmd(this->role, our_include_pattern, our_exclude_pattern,
-                     our_key_hash_raw, nonce, mk_nonce(), sig_raw());
+                     our_key_hash_raw, nonce, mk_nonce(), sig);
     }
   else
     {
@@ -1520,7 +1506,7 @@ session::process_auth_cmd(protocol_role their_role,
                           globish const & their_exclude_pattern,
                           id const & client,
                           id const & nonce1,
-                          string const & signature)
+                          rsa_sha1_signature const & signature)
 {
   I(this->remote_peer_key_hash().size() == 0);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
@@ -1551,7 +1537,7 @@ session::process_auth_cmd(protocol_role their_role,
 
   // Get their public key.
   rsa_keypair_id their_id;
-  base64<rsa_pub_key> their_key;
+  rsa_pub_key their_key;
   project.db.get_pubkey(client, their_id, their_key);
 
   lua.hook_note_netsync_start(session_id, "server", their_role,
@@ -1643,9 +1629,7 @@ session::process_auth_cmd(protocol_role their_role,
   this->remote_peer_key_hash = client;
 
   // Check the signature.
-  base64<rsa_sha1_signature> sig;
-  encode_base64(rsa_sha1_signature(signature), sig);
-  if (project.db.check_signature(their_id, nonce1(), sig) == cert_ok)
+  if (project.db.check_signature(their_id, nonce1(), signature) == cert_ok)
     {
       // Get our private key and sign back.
       L(FL("client signature OK, accepting authentication"));
@@ -1871,10 +1855,10 @@ session::load_data(netcmd_item_type type,
     case key_item:
       {
         rsa_keypair_id keyid;
-        base64<rsa_pub_key> pub_encoded;
-        project.db.get_pubkey(item, keyid, pub_encoded);
+        rsa_pub_key pub;
+        project.db.get_pubkey(item, keyid, pub);
         L(FL("public key '%s' is also called '%s'") % hitem % keyid);
-        write_pubkey(keyid, pub_encoded, out);
+        write_pubkey(keyid, pub, out);
       }
       break;
 
@@ -1972,7 +1956,7 @@ session::process_data_cmd(netcmd_item_type type,
     case key_item:
       {
         rsa_keypair_id keyid;
-        base64<rsa_pub_key> pub;
+        rsa_pub_key pub;
         read_pubkey(dat, keyid, pub);
         id tmp;
         key_hash_code(keyid, pub, tmp);
@@ -2161,7 +2145,7 @@ session::dispatch_payload(netcmd const & cmd,
       require(voice == server_voice, "auth netcmd received in server voice");
       {
         protocol_role role;
-        string signature;
+        rsa_sha1_signature signature;
         globish their_include_pattern, their_exclude_pattern;
         id client, nonce1, nonce2;
         rsa_oaep_sha_data hmac_key_encrypted;
@@ -3272,10 +3256,10 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
     {
       if (project.db.public_key_exists(*key))
         {
-          base64<rsa_pub_key> pub_encoded;
-          project.db.get_key(*key, pub_encoded);
+          rsa_pub_key pub;
+          project.db.get_key(*key, pub);
           id keyhash;
-          key_hash_code(*key, pub_encoded, keyhash);
+          key_hash_code(*key, pub, keyhash);
           // FIXME: conditional encode_hexenc
           hexenc<id> hkeyhash(encode_hexenc(keyhash()));
           L(FL("noting key '%s' = '%s' to send") % *key % hkeyhash);

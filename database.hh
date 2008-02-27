@@ -231,14 +231,10 @@ public:
 
   void get_pubkey(id const & hash,
                   rsa_keypair_id & ident,
-                  base64<rsa_pub_key> & pub_encoded);
+                  rsa_pub_key & pub);
 
   void get_key(rsa_keypair_id const & ident, rsa_pub_key & pub);
-  void get_key(rsa_keypair_id const & ident,
-               base64<rsa_pub_key> & pub_encoded);
-
-  bool put_key(rsa_keypair_id const & ident,
-               base64<rsa_pub_key> const & pub_encoded);
+  bool put_key(rsa_keypair_id const & ident, rsa_pub_key const & pub);
 
   void delete_public_key(rsa_keypair_id const & pub_id);
 
@@ -250,7 +246,7 @@ public:
 
   cert_status check_signature(rsa_keypair_id const & id,
                               std::string const & alleged_text,
-                              base64<rsa_sha1_signature> const & signature);
+                              rsa_sha1_signature const & signature);
 
   //
   // --== Certs ==--
@@ -278,18 +274,18 @@ public:
 
   // Only used by get_branch_certs (project.cc)
   outdated_indicator get_revision_certs(cert_name const & name,
-                          base64<cert_value> const & val,
+                          cert_value const & val,
                           std::vector< revision<cert> > & certs);
 
   // Only used by revision_is_in_branch (project.cc)
   outdated_indicator get_revision_certs(revision_id const & ident,
                           cert_name const & name,
-                          base64<cert_value> const & value,
+                          cert_value const & value,
                           std::vector< revision<cert> > & certs);
 
   // Only used by get_branch_heads (project.cc)
   outdated_indicator get_revisions_with_cert(cert_name const & name,
-                               base64<cert_value> const & value,
+                               cert_value const & value,
                                std::set<revision_id> & revisions);
 
   // Used through project.cc, and by

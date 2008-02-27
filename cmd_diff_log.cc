@@ -577,9 +577,6 @@ log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
   for (vector< revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
     {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
-
       if (first)
         os << label;
       else
@@ -587,7 +584,7 @@ log_certs(project_t & project, ostream & os, revision_id id, cert_name name,
 
       if (multiline)
         os << "\n\n";
-      os << tv;
+      os << i->inner().value;
       if (newline)
         os << '\n';
 

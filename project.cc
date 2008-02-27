@@ -82,17 +82,17 @@ namespace
   struct not_in_branch : public is_failure
   {
     database & db;
-    base64<cert_value > const & branch_encoded;
+    branch_name const & branch;
     not_in_branch(database & db,
-                  base64<cert_value> const & branch_encoded)
-      : db(db), branch_encoded(branch_encoded)
+                  branch_name const & branch)
+      : db(db), branch(branch)
     {}
     virtual bool operator()(revision_id const & rid)
     {
       vector< revision<cert> > certs;
       db.get_revision_certs(rid,
                             cert_name(branch_cert_name),
-                            branch_encoded,
+                            cert_value(branch()),
                             certs);
       erase_bogus_certs(db, certs);
       return certs.empty();
@@ -102,17 +102,17 @@ namespace
   struct suspended_in_branch : public is_failure
   {
     database & db;
-    base64<cert_value > const & branch_encoded;
+    branch_name const & branch;
     suspended_in_branch(database & db,
-                  base64<cert_value> const & branch_encoded)
-      : db(db), branch_encoded(branch_encoded)
+                        branch_name const & branch)
+      : db(db), branch(branch)
     {}
     virtual bool operator()(revision_id const & rid)
     {
       vector< revision<cert> > certs;
       db.get_revision_certs(rid,
                             cert_name(suspend_cert_name),
-                            branch_encoded,
+                            cert_value(branch()),
                             certs);
       erase_bogus_certs(db, certs);
       return !certs.empty();
@@ -133,21 +133,18 @@ project_t::get_branch_heads(branch_name const & name,
   if (branch.first.outdated())
     {
       L(FL("getting heads of branch %s") % name);
-      base64<cert_value> branch_encoded;
-      encode_base64(cert_value(name()), branch_encoded);
 
-      outdated_indicator stamp;
       branch.first = db.get_revisions_with_cert(cert_name(branch_cert_name),
-                                                    branch_encoded,
-                                                    branch.second);
+                                                cert_value(name()),
+                                                branch.second);
 
-      not_in_branch p(db, branch_encoded);
+      not_in_branch p(db, name);
       erase_ancestors_and_failures(db, branch.second, p,
                                    inverse_graph_cache_ptr);
 
       if (!ignore_suspend_certs)
         {
-          suspended_in_branch s(db, branch_encoded);
+          suspended_in_branch s(db, name);
           std::set<revision_id>::iterator it = branch.second.begin();
           while (it != branch.second.end())
             if (s(*it))
@@ -166,11 +163,8 @@ bool
 project_t::revision_is_in_branch(revision_id const & id,
                                  branch_name const & branch)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
-
   vector<revision<cert> > certs;
-  db.get_revision_certs(id, branch_cert_name, branch_encoded, certs);
+  db.get_revision_certs(id, branch_cert_name, cert_value(branch()), certs);
 
   int num = certs.size();
 
@@ -197,11 +191,8 @@ bool
 project_t::revision_is_suspended_in_branch(revision_id const & id,
                                  branch_name const & branch)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
-
   vector<revision<cert> > certs;
-  db.get_revision_certs(id, suspend_cert_name, branch_encoded, certs);
+  db.get_revision_certs(id, suspend_cert_name, cert_value(branch()), certs);
 
   int num = certs.size();
 
@@ -258,11 +249,8 @@ project_t::get_revision_branches(revision_id const & id,
   branches.clear();
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
-    {
-      cert_value b;
-      decode_base64(i->inner().value, b);
-      branches.insert(branch_name(b()));
-    }
+    branches.insert(branch_name(i->inner().value()));
+
   return i;
 }
 
@@ -270,10 +258,7 @@ outdated_indicator
 project_t::get_branch_certs(branch_name const & branch,
                             std::vector<revision<cert> > & certs)
 {
-  base64<cert_value> branch_encoded;
-  encode_base64(cert_value(branch()), branch_encoded);
-
-  return db.get_revision_certs(branch_cert_name, branch_encoded, certs);
+  return db.get_revision_certs(branch_cert_name, cert_value(branch()), certs);
 }
 
 tag_t::tag_t(revision_id const & ident,
@@ -309,11 +294,9 @@ project_t::get_tags(set<tag_t> & tags)
   tags.clear();
   for (std::vector<revision<cert> >::const_iterator i = certs.begin();
        i != certs.end(); ++i)
-    {
-      cert_value value;
-      decode_base64(i->inner().value, value);
-      tags.insert(tag_t(revision_id(i->inner().ident), utf8(value()), i->inner().key));
-    }
+    tags.insert(tag_t(revision_id(i->inner().ident),
+                      utf8(i->inner().value()), i->inner().key));
+
   return i;
 }
 

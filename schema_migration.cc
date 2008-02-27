@@ -285,20 +285,20 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
       sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
       return;
     }
-  data decoded;
+  string decoded;
 
   // This operation may throw informative_failure.  We must intercept that
   // and turn it into a call to sqlite3_result_error, or rollback will fail.
   try
     {
-      decode_base64(base64<data>(string(sqlite3_value_cstr(args[0]))), decoded);
+      decoded = decode_base64_as<string>(sqlite3_value_cstr(args[0]));
     }
   catch (informative_failure & e)
     {
       sqlite3_result_error(f, e.what(), -1);
       return;
     }
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+  sqlite3_result_blob(f, decoded.c_str(), decoded.size(), SQLITE_TRANSIENT);
 }
 
 static void
@@ -527,7 +527,9 @@ migrate_to_external_privkeys(sqlite3 * db, key_store & keys)
 
         P(F("moving key '%s' from database to %s")
           % ident % keys.get_key_dir());
-        keys.migrate_old_key_pair(ident, old_priv, pub);
+        keys.migrate_old_key_pair(ident,
+                                  decode_base64(old_priv),
+                                  decode_base64(pub));
       }
   }
 

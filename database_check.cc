@@ -59,7 +59,7 @@ struct checked_key {
   bool found;       // found public keypair id in db
   size_t sigs;                // number of signatures by this key
 
-  base64<rsa_pub_key> pub_encoded;
+  rsa_pub_key pub;
 
   checked_key(): found(false), sigs(0) {}
 };
@@ -442,7 +442,7 @@ check_keys(database & db,
   for (vector<rsa_keypair_id>::const_iterator i = pubkeys.begin();
        i != pubkeys.end(); ++i)
     {
-      db.get_key(*i, checked_keys[*i].pub_encoded);
+      db.get_key(*i, checked_keys[*i].pub);
       checked_keys[*i].found = true;
       ++ticks;
     }

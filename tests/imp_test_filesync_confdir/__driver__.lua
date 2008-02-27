@@ -18,8 +18,12 @@ end
 check(mtn("sync", "file:test2.db", "testbranch"), 0, true, false)
 
 n = 0
+
+
+testroot_unix = string.gsub(test.root, '\\', '/')
+
 for line in io.lines("checkfile") do
-   check(line == test.root)
+   check(line == testroot_unix)
    n = n + 1
 end
 check(n == 2)

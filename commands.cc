@@ -873,19 +873,15 @@ describe_revision(project_t & project, revision_id const & id)
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
       description += " ";
-      description += tv();
+      description += i->inner().value();
     }
   project.get_revision_certs_by_name(id, date_name, tmp);
   for (vector< revision<cert> >::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
-      cert_value tv;
-      decode_base64(i->inner().value, tv);
       description += " ";
-      description += tv();
+      description += i->inner().value();
     }
 
   return description;

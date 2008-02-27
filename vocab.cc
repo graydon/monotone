@@ -210,7 +210,7 @@ fake_id()
 
 
 template
-void dump<rsa_pub_key>(base64<rsa_pub_key> const&, string &);
+void dump(rsa_pub_key const&, string &);
 
 template
 void dump(roster_data const & d, string &);

@@ -76,17 +76,17 @@ packet_writer::consume_revision_cert(revision<cert> const & t)
   ost << "[rcert " << encode_hexenc(t.inner().ident.inner()()) << '\n'
       << "       " << t.inner().name() << '\n'
       << "       " << t.inner().key() << '\n'
-      << "       " << trim_ws(t.inner().value()) << "]\n"
-      << trim_ws(t.inner().sig()) << '\n'
+      << "       " << trim_ws(encode_base64(t.inner().value)()) << "]\n"
+      << trim_ws(encode_base64(t.inner().sig)()) << '\n'
       << "[end]\n";
 }
 
 void
 packet_writer::consume_public_key(rsa_keypair_id const & ident,
-                                  base64< rsa_pub_key > const & k)
+                                  rsa_pub_key const & k)
 {
   ost << "[pubkey " << ident() << "]\n"
-      << trim_ws(k()) << '\n'
+      << trim_ws(encode_base64(k)()) << '\n'
       << "[end]\n";
 }
 
@@ -95,16 +95,17 @@ packet_writer::consume_key_pair(rsa_keypair_id const & ident,
                                 keypair const & kp)
 {
   ost << "[keypair " << ident() << "]\n"
-      << trim_ws(kp.pub()) <<"#\n" <<trim_ws(kp.priv()) << '\n'
+      << trim_ws(encode_base64(kp.pub)()) << "#\n"
+      << trim_ws(encode_base64(kp.priv)()) << '\n'
       << "[end]\n";
 }
 
 void
 packet_writer::consume_old_private_key(rsa_keypair_id const & ident,
-                                       base64<old_arc4_rsa_priv_key> const & k)
+                                       old_arc4_rsa_priv_key const & k)
 {
   ost << "[privkey " << ident() << "]\n"
-      << trim_ws(k()) << '\n'
+      << trim_ws(encode_base64(k)()) << '\n'
       << "[end]\n";
 }
 
@@ -215,12 +216,13 @@ namespace
 
       revision_id hash(decode_hexenc(certid));
       validate_base64(body);
+
       // canonicalize the base64 encodings to permit searches
       cert t = cert(hash,
                     cert_name(name),
-                    base64<cert_value>(canonical_base64(val)),
+                    decode_base64_as<cert_value>(val),
                     rsa_keypair_id(keyid),
-                    base64<rsa_sha1_signature>(canonical_base64(body)));
+                    decode_base64_as<rsa_sha1_signature>(body));
       cons.consume_revision_cert(revision<cert>(t));
     }
 
@@ -231,7 +233,7 @@ namespace
       validate_base64(body);
 
       cons.consume_public_key(rsa_keypair_id(args),
-                              base64<rsa_pub_key>(body));
+                              decode_base64_as<rsa_pub_key>(body));
     }
 
     void keypair_packet(string const & args, string const & body) const
@@ -245,8 +247,8 @@ namespace
       validate_base64(pub);
       validate_base64(priv);
       cons.consume_key_pair(rsa_keypair_id(args),
-                            keypair(base64<rsa_pub_key>(pub),
-                                    base64<rsa_priv_key>(priv)));
+                            keypair(decode_base64_as<rsa_pub_key>(pub),
+                                    decode_base64_as<rsa_priv_key>(priv)));
     }
 
     void privkey_packet(string const & args, string const & body) const
@@ -255,7 +257,7 @@ namespace
       validate_key(args);
       validate_base64(body);
       cons.consume_old_private_key(rsa_keypair_id(args),
-                                   base64<old_arc4_rsa_priv_key>(body));
+                                   decode_base64_as<old_arc4_rsa_priv_key>(body));
     }
   
     void operator()(string const & type,
@@ -500,10 +502,8 @@ UNIT_TEST(packet, roundabout)
     pw.consume_revision_data(rid, rdat);
 
     // a cert packet
-    base64<cert_value> val;
-    encode_base64(cert_value("peaches"), val);
-    base64<rsa_sha1_signature> sig;
-    encode_base64(rsa_sha1_signature("blah blah there is no way this is a valid signature"), sig);
+    cert_value val("peaches");
+    rsa_sha1_signature sig("blah blah there is no way this is a valid signature");
 
     // cert now accepts revision_id exclusively, so we need to cast the
     // file_id to create a cert to test the packet writer with.
@@ -513,16 +513,15 @@ UNIT_TEST(packet, roundabout)
 
     keypair kp;
     // a public key packet
-    encode_base64(rsa_pub_key("this is not a real rsa key"), kp.pub);
+    kp.pub = rsa_pub_key("this is not a real rsa key");
     pw.consume_public_key(rsa_keypair_id("test@lala.com"), kp.pub);
 
     // a keypair packet
-    encode_base64(rsa_priv_key("this is not a real rsa key either!"), kp.priv);
+    kp.priv = rsa_priv_key("this is not a real rsa key either!");
     pw.consume_key_pair(rsa_keypair_id("test@lala.com"), kp);
 
     // an old privkey packet
-    base64<old_arc4_rsa_priv_key> oldpriv;
-    encode_base64(old_arc4_rsa_priv_key("and neither is this!"), oldpriv);
+    old_arc4_rsa_priv_key oldpriv("and neither is this!");
     pw.consume_old_private_key(rsa_keypair_id("test@lala.com"), oldpriv);
 
     tmp = oss.str();
