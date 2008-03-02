@@ -55,7 +55,7 @@ MOST_SOURCES = 								\
 	roster.cc roster.hh 						\
 	mt_version.cc mt_version.hh					\
 	automate.cc							\
-	database_check.cc database_check.hh				\
+	database_check.cc						\
 	epoch.cc epoch.hh						\
 	gzip.cc gzip.hh							\
 	inodeprint.cc inodeprint.hh					\

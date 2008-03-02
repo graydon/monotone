@@ -28,7 +28,7 @@ This edition documents version @value{VERSION}.
 
 Copyright @copyright{} 2003, 2004 Graydon Hoare @*
 Copyright @copyright{} 2004, 2005, 2006 Nathaniel Smith @*
-Copyright @copyright{} 2005 Derek Scherger @*
+Copyright @copyright{} 2005, 2008 Derek Scherger @*
 Copyright @copyright{} 2005, 2006 Daniel Carosone @*
 Copyright @copyright{} 2006 Jeronimo Pellegrini @*
 Copyright @copyright{} 2006 Alex Queiroz @*
