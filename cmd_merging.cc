@@ -808,11 +808,11 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
     N_("Shows what conflicts need resolution between two revisions"),
     N_("The conflicts are calculated based on the two revisions given in "
        "the REV parameters."),
-    options::opts::branch | options::opts::date | options::opts::author)
+    options::opts::none)
 {
   database db(app);
   project_t project(db);
-  
+
   if (args.size() != 2)
     throw usage(execid);
   revision_id l_id, r_id;

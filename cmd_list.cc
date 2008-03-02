@@ -56,7 +56,7 @@ CMD_GROUP(list, "list", "ls", CMD_REF(informative),
 CMD(certs, "certs", "", CMD_REF(list), "ID",
     N_("Lists certificates attached to an identifier"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::none)
 {
   if (args.size() != 1)
     throw usage(execid);
@@ -158,7 +158,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     N_("Lists keys that match a pattern"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::none)
 {
   database db(app);
   key_store keys(app);
@@ -274,7 +274,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
 CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
     N_("Lists branches in the database that match a pattern"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::exclude)
 {
   globish inc("*");
   if (args.size() == 1)
@@ -297,7 +297,7 @@ CMD(branches, "branches", "", CMD_REF(list), "[PATTERN]",
 CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
     N_("Lists the current epoch of branches that match a pattern"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::none)
 {
   database db(app);
   map<branch_name, epoch_data> epochs;
@@ -328,7 +328,7 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
 CMD(tags, "tags", "", CMD_REF(list), "",
     N_("Lists all tags in the database"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::none)
 {
   database db(app);
   set<tag_t> tags;
@@ -346,7 +346,7 @@ CMD(tags, "tags", "", CMD_REF(list), "",
 CMD(vars, "vars", "", CMD_REF(list), "[DOMAIN]",
     N_("Lists variables in the whole database or a domain"),
     "",
-    options::opts::depth | options::opts::exclude)
+    options::opts::none)
 {
   bool filterp;
   var_domain filter;
@@ -412,7 +412,7 @@ CMD(known, "known", "", CMD_REF(list), "",
           print_paths.push_back(p);
         }
     }
-    
+
   sort(print_paths.begin(), print_paths.end());
   copy(print_paths.begin(), print_paths.end(),
        ostream_iterator<file_path>(cout, "\n"));
