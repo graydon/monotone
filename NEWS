@@ -4,6 +4,15 @@
 
         Changes
 
+	- Values used with the --depth option used to control recursion with
+          node and path restrictions have changed. Using --depth=0 now means
+          exactly the specified directories and *not* their children. Using
+          --depth=1 now means the specified directories and their immediate
+          children. Previously --depth=0 included children and --depth=1
+          included grandchildren and it was not possible to exclude children
+          using --depth.  The simple fix for anyone using --depth is to add 1 to
+          the values they are using.
+
         Bugs fixed
 
         New features

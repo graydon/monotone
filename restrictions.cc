@@ -95,6 +95,7 @@ namespace
     virtual bool operator()(file_path const &) const = 0;
   protected:
     unknown_p() {}
+    virtual ~unknown_p() {}
   };
 
   struct unknown_node : public unknown_p
@@ -106,7 +107,7 @@ namespace
     {
       return known_paths.find(p) == known_paths.end();
     }
-    
+
   private:
     set<file_path> const & known_paths;
   };
@@ -134,7 +135,7 @@ namespace
       return (known_paths.find(p) == known_paths.end()
               && !work.ignore_file(p));
     }
-    
+
   private:
     set<file_path> const & known_paths;
     workspace & work;
@@ -320,7 +321,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
       if (depth != -1)
         {
           int path_depth = fp.depth();
-          if (path_depth <= depth + 1)
+          if (path_depth <= depth)
             {
               L(FL("depth includes nid %d path '%s'") % nid % fp);
               return true;
@@ -342,13 +343,7 @@ node_restriction::includes(roster_t const & roster, node_id nid) const
   node_id current = nid;
   int path_depth = 0;
 
-  // FIXME: this uses depth+1 because the old semantics of depth=0 were
-  // something like "the current directory and its immediate children". it
-  // seems somewhat more reasonable here to use depth=0 to mean "exactly
-  // this directory" and depth=1 to mean "this directory and its immediate
-  // children"
-
-  while (!null_node(current) && (depth == -1 || path_depth <= depth + 1))
+  while (!null_node(current) && (depth == -1 || path_depth <= depth))
     {
       map<node_id, restricted_path::status>::const_iterator
         r = node_map.find(current);
@@ -400,7 +395,7 @@ path_restriction::includes(file_path const & pth) const
       if (depth != -1)
         {
           int path_depth = pth.depth();
-          if (path_depth <= depth + 1)
+          if (path_depth <= depth)
             {
               L(FL("depth includes path '%s'") % pth);
               return true;
@@ -418,15 +413,9 @@ path_restriction::includes(file_path const & pth) const
         }
     }
 
-  // FIXME: this uses depth+1 because the old semantics of depth=0 were
-  // something like "the current directory and its immediate children". it
-  // seems somewhat more reasonable here to use depth=0 to mean "exactly
-  // this directory" and depth=1 to mean "this directory and its immediate
-  // children"
-
   int path_depth = 0;
   file_path fp = pth;
-  while (depth == -1 || path_depth <= depth + 1)
+  while (depth == -1 || path_depth <= depth)
     {
       map<file_path, restricted_path::status>::const_iterator
         r = path_map.find(fp);
@@ -1007,10 +996,79 @@ UNIT_TEST(restrictions, include_depth_0)
   includes.push_back(file_path_internal("x"));
   includes.push_back(file_path_internal("y"));
 
-  // FIXME: depth == 0 currently means directory + immediate children
-  // this should be changed to mean just the named directory but for
-  // compatibility with old restrictions this behaviour has been preserved
   long depth = 0;
+
+  // check restricted nodes
+
+  node_restriction nmask(includes, excludes, depth, roster);
+
+  UNIT_TEST_CHECK(!nmask.empty());
+
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_root));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_f));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_g));
+
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_x));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_xyg));
+
+  UNIT_TEST_CHECK( nmask.includes(roster, nid_y));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yx));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yxg));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yy));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyf));
+  UNIT_TEST_CHECK(!nmask.includes(roster, nid_yyg));
+
+  // check restricted paths
+
+  path_restriction pmask(includes, excludes, depth);
+
+  UNIT_TEST_CHECK(!pmask.empty());
+
+  UNIT_TEST_CHECK(!pmask.includes(fp_root));
+  UNIT_TEST_CHECK(!pmask.includes(fp_f));
+  UNIT_TEST_CHECK(!pmask.includes(fp_g));
+
+  UNIT_TEST_CHECK( pmask.includes(fp_x));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_xyg));
+
+  UNIT_TEST_CHECK( pmask.includes(fp_y));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yx));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yxg));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yy));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyf));
+  UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
+}
+
+UNIT_TEST(restrictions, include_depth_1)
+{
+  roster_t roster;
+  setup(roster);
+
+  vector<file_path> includes, excludes;
+  includes.push_back(file_path_internal("x"));
+  includes.push_back(file_path_internal("y"));
+
+  long depth = 1;
 
   // check restricted nodes
 
@@ -1073,17 +1131,14 @@ UNIT_TEST(restrictions, include_depth_0)
   UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
-UNIT_TEST(restrictions, include_depth_0_empty_restriction)
+UNIT_TEST(restrictions, include_depth_1_empty_restriction)
 {
   roster_t roster;
   setup(roster);
 
   vector<file_path> includes, excludes;
 
-  // FIXME: depth == 0 currently means directory + immediate children
-  // this should be changed to mean just the named directory but for
-  // compatibility with old restrictions this behaviour has been preserved
-  long depth = 0;
+  long depth = 1;
 
   // check restricted nodes
 
@@ -1146,7 +1201,7 @@ UNIT_TEST(restrictions, include_depth_0_empty_restriction)
   UNIT_TEST_CHECK(!pmask.includes(fp_yyg));
 }
 
-UNIT_TEST(restrictions, include_depth_1)
+UNIT_TEST(restrictions, include_depth_2)
 {
   roster_t roster;
   setup(roster);
@@ -1155,10 +1210,7 @@ UNIT_TEST(restrictions, include_depth_1)
   includes.push_back(file_path_internal("x"));
   includes.push_back(file_path_internal("y"));
 
-  // FIXME: depth == 1 currently means directory + children + grand children
-  // this should be changed to mean directory + immediate children but for
-  // compatibility with old restrictions this behaviour has been preserved
-  long depth = 1;
+  long depth = 2;
 
   // check restricted nodes
 
