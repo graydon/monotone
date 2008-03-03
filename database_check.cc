@@ -511,7 +511,7 @@ check_heights(database & db,
   for (set<revision_id>::const_iterator i = heights.begin();
        i != heights.end(); ++i)
     {
-      L(FL("checking height for %s") % *i);
+      L(FL("checking height for %s") % encode_hexenc(i->inner()()));
       
       rev_height h;
       try
@@ -560,12 +560,17 @@ check_heights_relation(database & db,
 
       if (!checked_heights[p_id].found || !checked_heights[c_id].found)
         {
-          L(FL("missing height(s), skipping edge %s -> %s") % p_id % c_id);
+          if (global_sanity.debug_p())
+            L(FL("missing height(s), skipping edge %s -> %s")
+              % encode_hexenc(p_id.inner()())
+              % encode_hexenc(c_id.inner()()));
           continue;
         }
 
-      L(FL("checking heights for edges %s -> %s") %
-        p_id % c_id);
+      if (global_sanity.debug_p())
+        L(FL("checking heights for edges %s -> %s")
+          % encode_hexenc(p_id.inner()())
+          % encode_hexenc(c_id.inner()()));
       
       rev_height parent, child;
       db.get_rev_height(p_id, parent);
@@ -573,8 +578,12 @@ check_heights_relation(database & db,
 
       if (!(child > parent))
         {
-          L(FL("error: height %s of child %s not greater than height %s of parent %s")
-            % child % c_id % parent % p_id);
+          if (global_sanity.debug_p())
+            L(FL("error: height %s of child %s not greater than height %s of parent %s")
+              % child
+              % encode_hexenc(c_id.inner()())
+              % parent
+              % encode_hexenc(p_id.inner()()));
           checked_heights[c_id].sensible = false; // defaults to true
           continue;
         }
