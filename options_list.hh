@@ -291,7 +291,7 @@ OPTION(globals, key, true, "key,k", gettext_noop("set key for signatures"))
 }
 #endif
 
-GOPT(key_dir, "keydir", system_path, ,
+GOPT(key_dir, "keydir", system_path, get_default_keydir(),
      gettext_noop("set location of key store"))
 #ifdef option_bodies
 {
@@ -587,4 +587,3 @@ OPTION(automate_inventory_opts, no_corresponding_renames, false, "no-correspondi
 // indent-tabs-mode: nil
 // End:
 // vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
-

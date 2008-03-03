@@ -472,7 +472,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   if (app.opts.use_transport_auth)
     {
       N(app.lua.hook_persist_phrase_ok(),
-	F("need permission to store persistent passphrase "
+        F("need permission to store persistent passphrase "
           "(see hook persist_phrase_ok())"));
 
       if (!app.opts.bind_uris.empty())
