@@ -11,6 +11,9 @@
 // PURPOSE.
 
 #include "rev_types.hh"
+// XXX needed for gcc 3.3 which will otherwise complain that struct file_path
+// is just a forward in rev_types.hh and therefor leads to an incomplete type
+#include "paths.hh"
 
 class database;
 class lua_hooks;
