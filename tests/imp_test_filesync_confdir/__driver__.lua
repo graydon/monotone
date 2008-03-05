@@ -1,4 +1,7 @@
 -- Test that --confdir gets passed properly on file: sync
+
+skip_if(ostype == "Windows") -- file: not supported on native Win32
+
 mtn_setup()
 
 copy("test.db", "test2.db")

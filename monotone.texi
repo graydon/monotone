@@ -2656,6 +2656,9 @@ By default, monotone understands two URI schemes:
   @code{file:@var{/path/to/db.mtn}}, to synchronize between local databases.
 @end enumerate
 
+@code{ssh:} and @code{file:} are currently not supported on the native
+Win32 platform; they are supported on Cygwin and all other platforms.
+
 In the case of SSH URIs, the @command{ssh} program must be in your
 command execution path, either @var{$PATH} on Unix-like systems or
 @var{%PATH%} on Windows systems. Monotone will execute @command{ssh}
@@ -5429,6 +5432,16 @@ automatically use a certain passphrase for a given key using the
 @code{get_passphrase(@var{keypair_id})}, but this significantly
 increases the risk of a key compromise on your local computer. Be
 careful using this hook.
+
+The public key is stored in the database; the public and private keys
+are stored in the keystore. This allows copying the database without
+copying the private key.
+
+The location of the keystore is specified by the @option{--keydir}
+option; it defaults to the value stored in @file{_MTN/options} for
+commands executed in a workspace, or to
+the system default (@file{~/.monotone/keys} on Unix and Cygwin,
+@file{%APPDATA%/monotone/keys} on native Win32).
 
 @item mtn dropkey @var{keyid}
 

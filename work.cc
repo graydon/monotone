@@ -378,7 +378,7 @@ read_options_file(any_path const & optspath,
       string opt, val;
       parser.sym(opt);
       parser.str(val);
-      
+
       if (opt == "database")
         database_option = system_path(val);
       else if (opt == "branch")
@@ -451,7 +451,6 @@ workspace::get_ws_options(options & opts)
 
   if (!opts.key_dir_given && !opts.conf_dir_given)
     {
-      I(opts.key_dir.empty());
       opts.key_dir = keydir_option;
     }
 

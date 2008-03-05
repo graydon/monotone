@@ -13,7 +13,12 @@
           using --depth.  The simple fix for anyone using --depth is to add 1 to
           the values they are using.
 
+        - Document that ssh: and file: sync transports are not supported on
+          native Win32.
+
         Bugs fixed
+
+        - `commit' now uses keydir specified in _MTN/options
 
         New features
 
@@ -51,7 +56,7 @@ Mon Feb 25 15:55:36 UTC 2008
           If you use the '--with-system-pcre' configure switch, it
           will insist on at least this version.
 
-        - "emacs" has been removed from the list of dumb terminal types; 
+        - "emacs" has been removed from the list of dumb terminal types;
           tickers should now default to --ticker=count with emacs terminals
 
         - extensive section on merge conflicts and ways to resolve them
@@ -65,13 +70,13 @@ Mon Feb 25 15:55:36 UTC 2008
         - the path handling of 'mtn revert' was improved and fixed two bugs:
           now a restricted revert on a node "dir1/file1" reverts only the
           content changes in "file1", but leaves renames of any of its
-          ancestor nodes untouched; furthermore, if "dir0/" was renamed to 
+          ancestor nodes untouched; furthermore, if "dir0/" was renamed to
           "dir1" and "dir1/file1" was dropped, mtn now re-creates file1 at the
           proper place ("dir1/") and leaves no missing files around because
           of the non-existing "dir0/".
 
         - a few changes needed to build with gcc 4.3.
-     
+
         New features
 
         - 'automate drop_db_variables' which drops one database variable
@@ -85,9 +90,9 @@ Mon Feb 25 15:55:36 UTC 2008
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
 
-        - 'automate get_current_revision' which outputs the revision text of 
+        - 'automate get_current_revision' which outputs the revision text of
            changes in the current workspace
-        
+
 Wed Dec 12 21:21:15 UTC 2007
 
         0.38 release.
