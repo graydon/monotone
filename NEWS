@@ -3,6 +3,9 @@
         0.40 release.
 
         Changes
+        
+        - The vim merger has been improved and now uses diff3 to merge
+          non-conflict changes automatically before executing vimdiff.
 
         Bugs fixed
 
