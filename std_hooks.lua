@@ -423,20 +423,55 @@ mergers.tortoise = {
 
 mergers.vim = {
    cmd = function (tbl)
+      function execute_diff3(mine, yours, out)
+	 local diff3_args = {
+	    "diff3",
+	    "--merge",
+	    "--easy-only",
+	 }
+	 table.insert(diff3_args, string.gsub(mine, "\\", "/") .. "")
+	 table.insert(diff3_args, string.gsub(tbl.afile, "\\", "/") .. "")
+	 table.insert(diff3_args, string.gsub(yours, "\\", "/") .. "")
+      
+	 return execute_redirected("", string.gsub(out, "\\", "/"), "", unpack(diff3_args))
+      end
+
       io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
           "You should merge all changes to *LEFT* file due to limitation of program\n"..
-          "arguments.  The order of the files is ancestor, left, right.\n\n"))
+          "arguments.\n\n"))
+      
       local vim
-      local exec
       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
 	 vim = "gvim"
-	 exec = execute_confirm
       else
 	 vim = "vim"
-	 exec = execute
       end
-      local ret = exec(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
-                          tbl.afile, tbl.lfile, tbl.rfile)
+
+      local lfile_merged = tbl.lfile .. ".merged"
+      local rfile_merged = tbl.rfile .. ".merged"
+
+      -- first merge lfile using diff3
+      local ret = execute_diff3(tbl.lfile, tbl.rfile, lfile_merged)
+      if ret == 2 then
+         io.write(string.format(gettext("Error running diff3 for merger '%s'\n"), vim))
+         os.remove(lfile_merged)
+	 return false
+      end
+
+      -- now merge rfile using diff3
+      ret = execute_diff3(tbl.rfile, tbl.lfile, rfile_merged)
+      if ret == 2 then
+         io.write(string.format(gettext("Error running diff3 for merger '%s'\n"), vim))
+         os.remove(lfile_merged)
+         os.remove(rfile_merged)
+	 return false
+      end
+      
+      os.rename(lfile_merged, tbl.lfile)
+      os.rename(rfile_merged, tbl.rfile)
+      
+      local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
+                          tbl.lfile, tbl.rfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), vim))
          return false
@@ -445,8 +480,9 @@ mergers.vim = {
    end ,
    available =
       function ()
-	 return program_exists_in_path("vim") or
-	    program_exists_in_path("gvim")
+	 return program_exists_in_path("diff3") and
+            (program_exists_in_path("vim") or
+	    program_exists_in_path("gvim"))
       end ,
    wanted =
       function ()
