@@ -1053,7 +1053,8 @@ UNIT_TEST(crypto, calculate_ident)
   // iterations, the MCTs are run for 1,000,0000 so that they can
   // double up as a benchmark for SHA.
 
-  hexenc<id> output, output2;
+  id output, output2;
+  hexenc<id> houtput2;
 
   //SHA Short Message Test
   data input(decode_hexenc("5e"));
@@ -1062,9 +1063,9 @@ UNIT_TEST(crypto, calculate_ident)
   calculate_ident(input, output);
 
   //L(FL(" Input: %s") % input);
-  //L(FL("Output: %s") % output);
+  //L(FL("Output: %s") % encode_hexenc(output));
 
-  UNIT_TEST_CHECK(output() == ident);
+  UNIT_TEST_CHECK(output() == decode_hexenc(ident));
   L(FL("SHA Short Message Test:  Passed\n\n"));
 
 
@@ -1107,16 +1108,18 @@ UNIT_TEST(crypto, calculate_ident)
           // L(FL("message: %s") % messageString );
 
           calculate_ident(messageData, output2);
-          // L(FL("output: %s") % output2 );
+          encode_hexenc(output2, houtput2);
 
-          MD[i] = output2();
+          // L(FL("output: %s") % houtput2);
+
+          MD[i] = houtput2();
         }
 
-      L(FL("  %03d:  %s") % j % output2 );
+      L(FL("  %03d:  %s") % j % houtput2);
 
-      UNIT_TEST_CHECK(output2() == expected_SHA_MCT[j]);
+      UNIT_TEST_CHECK(houtput2() == expected_SHA_MCT[j]);
 
-      MD[j] = output2();
+      MD[j] = houtput2();
       Seed  = MD[j];
     }
 
