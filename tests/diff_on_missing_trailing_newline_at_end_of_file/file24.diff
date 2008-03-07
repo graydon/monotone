@@ -1,0 +1,18 @@
+#
+# old_revision [40ea110392539e19c2d251569a3610c0051e0c64]
+#
+# patch "file2"
+#  from [4f8091d2fa31b0598dd0ff6dc936f8d0b47b59d1]
+#    to [400b49625ecf4bb7d2d7096ba86801bddb05bb9f]
+#
+============================================================
+--- file2	4f8091d2fa31b0598dd0ff6dc936f8d0b47b59d1
++++ file2	400b49625ecf4bb7d2d7096ba86801bddb05bb9f
+@@ -1,3 +1,4 @@ bar
+ foo
+ bar
+-quux
+\ No newline at end of file
++quux
++baz
+\ No newline at end of file

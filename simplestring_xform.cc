@@ -50,8 +50,23 @@ uppercase(string const & in)
 }
 
 void split_into_lines(string const & in,
+                      vector<string> & out,
+                      bool diff_compat)
+{
+  return split_into_lines(in, constants::default_encoding, out, diff_compat);
+}
+
+void split_into_lines(string const & in,
                       string const & encoding,
                       vector<string> & out)
+{
+  return split_into_lines(in, encoding, out, false);
+}
+
+void split_into_lines(string const & in,
+                      string const & encoding,
+                      vector<string> & out,
+                      bool diff_compat)
 {
   string lc_encoding = lowercase(encoding);
   out.clear();
@@ -92,8 +107,16 @@ void split_into_lines(string const & in,
             break;
           end = in.find_first_of("\r\n", begin);
         }
-      if (begin < in.size())
-        out.push_back(in.substr(begin, in.size() - begin));
+      if (begin < in.size()) {
+        // special case: last line without trailing newline
+        string s = in.substr(begin, in.size() - begin);
+        if (diff_compat) {
+          // special handling: produce diff(1) compatible output
+          s += (in.find_first_of("\r") != string::npos ? "\r\n" : "\n");
+          s += "\\ No newline at end of file"; 
+        }
+        out.push_back(s);
+      }
     }
   else
     {
