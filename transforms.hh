@@ -63,7 +63,7 @@ T decode_base64_as(std::string const & in)
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = hexenc<T>(T(xform<Botan::Hex_Encoder>(in()))); }
+{ out = hexenc<T>(xform<Botan::Hex_Encoder>(in())); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)

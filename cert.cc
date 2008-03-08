@@ -292,7 +292,7 @@ read_cert(string const & in, cert & t)
   extract_variable_length_string(in, sig, pos, "cert sig");
   assert_end_of_buffer(in, pos, "cert");
 
-  cert tmp(hid, cert_name(name), cert_value(val), rsa_keypair_id(key),
+  cert tmp(ident, cert_name(name), cert_value(val), rsa_keypair_id(key),
            rsa_sha1_signature(sig));
 
   id check;
@@ -328,15 +328,16 @@ void
 cert_signable_text(cert const & t, string & out)
 {
   base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
 
   out.clear();
-  out.reserve(4 + t.name().size() + t.ident().size()
+  out.reserve(4 + t.name().size() + ident_encoded.size()
               + val_encoded().size());
 
   out += '[';
   out.append(t.name());
   out += '@';
-  out.append(encode_hexenc(t.ident()()));
+  out.append(ident_encoded);
   out += ':';
   append_without_ws(out, val_encoded());
   out += ']';
@@ -349,10 +350,12 @@ cert_hash_code(cert const & t, id & out)
 {
   base64<rsa_sha1_signature> sig_encoded(encode_base64(t.sig));
   base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
   string tmp;
-  tmp.reserve(4+t.ident().size() * 2 + t.name().size() + val_encoded().size() +
-              t.key().size() + sig_encoded().size());
-  tmp.append(encode_hexenc(t.ident.inner()()));
+  tmp.reserve(4 + ident_encoded.size()
+              + t.name().size() + val_encoded().size()
+              + t.key().size() + sig_encoded().size());
+  tmp.append(ident_encoded);
   tmp += ':';
   tmp.append(t.name());
   tmp += ':';
@@ -383,7 +386,7 @@ put_simple_revision_cert(database & db,
 {
   I(!keys.signing_key().empty());
 
-  cert t(id.inner(), nm, val, keys.signing_key);
+  cert t(id, nm, val, keys.signing_key);
   string signed_text;
   cert_signable_text(t, signed_text);
   load_key_pair(keys, t.key);
