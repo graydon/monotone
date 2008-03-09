@@ -64,7 +64,10 @@ function netsync.start(opts, n, min)
   else
     table.insert(args, "--rcfile=netsync.lua")
   end
-  if n ~= nil then
+  if n == nil then
+    table.insert(args, "--keydir=keys")
+    table.insert(args, "--db=test.db")
+  else
     table.insert(args, "--keydir=keys"..n)
     table.insert(args, "--db=test"..n..".db")
   end
