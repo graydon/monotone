@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-04 22:55+0100\n"
-"PO-Revision-Date: 2008-03-04 23:06+0100\n"
+"POT-Creation-Date: 2008-03-09 11:57+0100\n"
+"PO-Revision-Date: 2008-03-09 12:24+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -842,7 +842,7 @@ msgstr "solo un comando permesso tra ‘--last’ e ‘--next’"
 #: cmd_diff_log.cc:650
 #, c-format
 msgid "try passing a --from revision to start at"
-msgstr ""
+msgstr "prova a specificare una revisione da cui partire con ‘--from’"
 
 #: cmd_diff_log.cc:947
 #, c-format
@@ -1568,6 +1568,9 @@ msgid ""
 "If one revision is given, applies the changes made in that revision compared to its parent.\n"
 "If two revisions are given, applies the changes made to get from the first revision to the second."
 msgstr ""
+"Questo comando prende modifiche fatte in un qualsiasi punto della storia e modifica lo spazio di lavoro corrente per includerle.  Il risultato finale è identico a ‘mtn diff -r DA -r A | patch -p0’, tranne che questo comando usa il merge di monotone e quindi gestisce intelligentemente i file rinominati, i conflitti e altre cose.\n"
+"Se viene specificata una revisione, applica le modifica fatte in quella revisione rispetto al genitore.\n"
+"Se vengono specificate due revisioni, applica le modifiche necessarie per arrivare dalla prima revisione alla seconda."
 
 #: cmd_merging.cc:893
 #, c-format
@@ -1807,7 +1810,7 @@ msgstr "il percorso ‘%s’ non esiste"
 
 #: cmd_othervcs.cc:54
 #: lua.cc:574
-#: work.cc:1678
+#: work.cc:1677
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "‘%s’ non è una directory"
@@ -3178,7 +3181,7 @@ msgid "skipping directory '%s' with unsupported name"
 msgstr "salto la directory ‘%s’: ha un nome non supportato"
 
 #: file_io.cc:521
-#: work.cc:1396
+#: work.cc:1395
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "nessun file o directory con nome ‘%s’"
@@ -3203,36 +3206,38 @@ msgstr "pattern ‘%s’ non valido: '[' spaiata"
 msgid "invalid pattern '%s': control character 0x%02x is not allowed"
 msgstr "pattern ‘%s’ non valido: carattere di controllo 0x%02x non permesso"
 
+# TODO: range
 #: globish.cc:94
 #, c-format
 msgid "invalid pattern '%s': one-element character ranges are not allowed"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: i range di caratteri di un solo elemento non sono permessi"
 
+# TODO: range
 #: globish.cc:97
 #, c-format
 msgid "invalid pattern '%s': endpoints of a character range must be in ascending numeric order"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: gli estremi di un range di caratteri devono essere in ordine numerico ascendente"
 
 #: globish.cc:101
 #: globish.cc:119
 #, c-format
 msgid "invalid pattern '%s': cannot use non-ASCII characters in classes"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: impossibile usare caratteri non-ASCII nelle classi"
 
 #: globish.cc:111
 #, c-format
 msgid "syntax error in '%s': character classes may not be nested"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: le classi di caratteri non possono essere annidiate"
 
 #: globish.cc:130
 #, c-format
 msgid "invalid pattern '%s': empty character class"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: classe di caratteri vuota"
 
 #: globish.cc:189
 #, c-format
 msgid "invalid pattern '%s': un-escaped \\ at end"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: \\"
 
 #: globish.cc:203
 #, c-format
@@ -3242,7 +3247,7 @@ msgstr "pattern ‘%s’ non valido: ']' spaiata"
 #: globish.cc:212
 #, c-format
 msgid "invalid pattern '%s': braces nested too deeply"
-msgstr ""
+msgstr "pattern ‘%s’ non valido: parentesi graffe annidiate troppe volte"
 
 #: globish.cc:225
 #, c-format
@@ -3276,7 +3281,7 @@ msgstr "converto la chiave privata ‘%s’ dal vecchio formato"
 #: key_store.cc:329
 #, c-format
 msgid "Cannot store key '%s': a different key by that name exists."
-msgstr ""
+msgstr "Impossibile immagazzinare la chiave ‘%s’: esiste già una chiave differente con lo stesso nome."
 
 #: key_store.cc:373
 #: keys.cc:97
@@ -3288,12 +3293,12 @@ msgstr "la coppia di chiavi ‘%s’ non è nel portachiavi ‘%s’"
 #: key_store.cc:749
 #, c-format
 msgid "failed to decrypt old private RSA key, probably incorrect passphrase"
-msgstr ""
+msgstr "fallita la decifratura di una vecchia chiave RSA, probabilmente la passphrase è errata"
 
 #: key_store.cc:424
 #, c-format
 msgid "failed to extract RSA private key from PKCS#8 keypair"
-msgstr ""
+msgstr "fallita l'estrazione della chiave privata RSA da una coppia di chiavi PKCS#8"
 
 #: key_store.cc:456
 #, c-format
@@ -3441,7 +3446,7 @@ msgstr ""
 #: merge.cc:168
 #, c-format
 msgid "%d content conflicts require user intervention"
-msgstr ""
+msgstr "è richiesto l'intervento dell'utente per %d conflitti di contenuto"
 
 #: merge.cc:177
 #, c-format
@@ -3976,66 +3981,73 @@ msgstr ""
 msgid "network error: %s"
 msgstr "errore di rete: %s"
 
+#: netxx_pipe.cc:49
+#: netxx_pipe.cc:181
+#, c-format
+msgid "this transport not supported on native Win32; use Cygwin"
+msgstr "questo tipo di trasporto non è supportato in Win32 nativo; usa Cygwin"
+
 # TODO: handle?
-#: netxx_pipe.cc:58
+#: netxx_pipe.cc:62
 #, c-format
 msgid "pipe handle is invalid"
 msgstr "pipe handle non valido"
 
-#: netxx_pipe.cc:197
+#: netxx_pipe.cc:205
 #, c-format
 msgid "CreateNamedPipe(%s,...) call failed: %s"
 msgstr "CreateNamedPipe(%s,...) fallita: %s"
 
-#: netxx_pipe.cc:214
+#: netxx_pipe.cc:222
 #, c-format
 msgid "CreateFile(%s,...) call failed: %s"
 msgstr "CreateFile(%s,...) fallita: %s"
 
-#: netxx_pipe.cc:245
+#: netxx_pipe.cc:253
 #, c-format
 msgid "CreateProcess(%s,...) call failed: %s"
 msgstr "CreateProcess(%s,...) fallita: %s"
 
-#: netxx_pipe.cc:261
+#: netxx_pipe.cc:269
 #, c-format
 msgid "pipe/fork failed: %s"
 msgstr "pipe/fork fallita: %s"
 
-#: netxx_pipe.cc:307
+#: netxx_pipe.cc:315
 #, c-format
 msgid "WriteFile call failed: %s"
 msgstr "WriteFile fallita: %s"
 
-#: netxx_pipe.cc:399
+#: netxx_pipe.cc:407
 #, c-format
 msgid "ReadFile call failed: %s"
 msgstr "ReadFile fallita: %s"
 
-#: netxx_pipe.cc:434
+#: netxx_pipe.cc:442
 #, c-format
 msgid "WaitForMultipleObjects call failed: %s"
 msgstr "WaitForMultipleObjects fallita: %s"
 
-#: netxx_pipe.cc:444
+#: netxx_pipe.cc:452
 #, c-format
 msgid "WaitForSingleObject call failed: %s"
 msgstr "WaitForSingleObject fallita: %s"
 
-#: netxx_pipe.cc:464
+#: netxx_pipe.cc:472
 #, c-format
 msgid "GetOverlappedResult call failed: %s"
 msgstr "GetOverlappedResult fallita: %s"
 
-#: netxx_pipe.cc:587
-#, c-format
+#: netxx_pipe.cc:597
+#, fuzzy, c-format
 msgid "timeout reading data %d"
-msgstr ""
+msgstr "tipo di dato non corretto"
 
-#: netxx_pipe.cc:608
+# TODO: ci vorranno i due punti?
+#: netxx_pipe.cc:618
 #, c-format
 msgid "Failure %s"
-msgstr ""
+msgstr "Fallimento %s"
 
 #: option.cc:17
 #, c-format
@@ -4407,11 +4419,12 @@ msgstr "percorso vuoto ‘%s’ non valido"
 msgid "absolute path '%s' is invalid"
 msgstr "percorso assoluto ‘%s’ non valido"
 
+# TODO: bookkeeping
 #: paths.cc:437
 #: paths.cc:455
-#, c-format
+#, fuzzy, c-format
 msgid "path '%s' is in bookkeeping dir"
-msgstr ""
+msgstr "il path ‘%s’ è nella cartella di bookkeeping"
 
 #: paths.cc:774
 #, c-format
@@ -4421,7 +4434,7 @@ msgstr "il percorso ‘’ non è valido"
 #: paths.cc:807
 #, c-format
 msgid "current directory '%s' is not below root '%s'"
-msgstr ""
+msgstr "la directory corrente ‘%s’ non è sotto la root ‘%s’"
 
 #: paths.cc:915
 #, c-format
@@ -4662,7 +4675,7 @@ msgstr "conflitto: directory root mancante"
 #: roster_merge.cc:228
 #, c-format
 msgid "directory '%s' pivoted to root on the left"
-msgstr ""
+msgstr "directory ‘%s’ scambiata con la root sulla sinistra"
 
 #: roster_merge.cc:218
 #: roster_merge.cc:230
@@ -4680,7 +4693,7 @@ msgstr "directory ‘%s’ cancellata a sinistra"
 #: roster_merge.cc:234
 #, c-format
 msgid "directory '%s' pivoted to root on the right"
-msgstr ""
+msgstr "directory ‘%s’ scambiata con la root sulla destra"
 
 #: roster_merge.cc:269
 #, c-format
@@ -4690,7 +4703,7 @@ msgstr "conflitto: nome ‘_MTN’ non valido nella directory root"
 #: roster_merge.cc:273
 #, c-format
 msgid "'%s' pivoted to root on the left"
-msgstr ""
+msgstr "‘%s’ scambiato con la root sulla sinistra"
 
 #: roster_merge.cc:280
 #: roster_merge.cc:350
@@ -4702,12 +4715,12 @@ msgstr "‘%s’ rinominato in ‘%s’ a destra"
 #: roster_merge.cc:285
 #, c-format
 msgid "'%s' added in revision %s on the right"
-msgstr ""
+msgstr "‘%s’ aggiunto nella revisione %s sulla destra"
 
 #: roster_merge.cc:291
 #, c-format
 msgid "'%s' pivoted to root on the right"
-msgstr ""
+msgstr "‘%s’ scambiato con la root sulla destra"
 
 #: roster_merge.cc:298
 #: roster_merge.cc:346
@@ -4719,7 +4732,7 @@ msgstr "‘%s’ rinominato in ‘%s’ a sinistra"
 #: roster_merge.cc:303
 #, c-format
 msgid "'%s' added in revision %s on the left"
-msgstr ""
+msgstr "‘%s’ aggiunto nella revisione %s sulla sinistra"
 
 # TODO: ciclo?
 #: roster_merge.cc:343
@@ -4727,50 +4740,54 @@ msgstr ""
 msgid "conflict: directory loop created"
 msgstr "conflitto: creato loop di directory"
 
+# TODO: orfano della? orfano dalla?
 #: roster_merge.cc:391
 #, c-format
 msgid "conflict: orphaned file '%s' from revision %s"
-msgstr ""
+msgstr "conflitto: file ‘%s’ orfano della revisione %s"
 
+# TODO: orfana della/dalla?
 #: roster_merge.cc:394
 #, c-format
 msgid "conflict: orphaned directory '%s' from revision %s"
-msgstr ""
+msgstr "conflitto: directory ‘%s’ orfana della revisione %s"
 
+# TODO: directory-genitore?
 #: roster_merge.cc:404
 #, c-format
 msgid "parent directory '%s' was deleted on the right"
-msgstr ""
+msgstr "la directory genitore ‘%s’ è stata cancellata sulla destra"
 
 #: roster_merge.cc:410
 #, c-format
 msgid "file '%s' was renamed from '%s' on the left"
-msgstr ""
+msgstr "il file ‘%s’ è stato rinominato da ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:413
 #, c-format
 msgid "directory '%s' was renamed from '%s' on the left"
-msgstr ""
+msgstr "la directory ‘%s’ è stata rinominata da ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:419
 #, c-format
 msgid "file '%s' was added on the left"
-msgstr ""
+msgstr "il file ‘%s’ è stato aggiunto sulla sinistra"
 
 #: roster_merge.cc:422
 #, c-format
 msgid "directory '%s' was added on the left"
-msgstr ""
+msgstr "la directory ‘%s’ è stata aggiunta sulla sinistra"
 
+# TODO: directory-genitore?
 #: roster_merge.cc:434
 #, c-format
 msgid "parent directory '%s' was deleted on the left"
-msgstr ""
+msgstr "la directory genitore ‘%s’ è stata cancellata sulla sinistra"
 
 #: roster_merge.cc:440
 #, c-format
 msgid "file '%s' was renamed from '%s' on the right"
-msgstr ""
+msgstr "il file ‘%s’ è stato rinominato da ‘%s’ sulla destra"
 
 #: roster_merge.cc:443
 #, c-format
@@ -4785,7 +4802,7 @@ msgstr ""
 #: roster_merge.cc:452
 #, c-format
 msgid "directory '%s' was added on the right"
-msgstr ""
+msgstr "la directory ‘%s’ è stata aggiunta sulla destra"
 
 #: roster_merge.cc:491
 #, c-format
@@ -4842,35 +4859,35 @@ msgstr "aggiunto come nuova directory sulla destra"
 #: roster_merge.cc:594
 #, c-format
 msgid "renamed from file '%s' on the left"
-msgstr ""
+msgstr "rinominato dal file ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:563
 #: roster_merge.cc:596
 #, c-format
 msgid "renamed from directory '%s' on the left"
-msgstr ""
+msgstr "rinominato dalla directory ‘%s’ sulla sinistra"
 
 #: roster_merge.cc:582
 #: roster_merge.cc:599
 #, c-format
 msgid "renamed from file '%s' on the right"
-msgstr ""
+msgstr "rinominato dal file ‘%s’ sulla destra"
 
 #: roster_merge.cc:584
 #: roster_merge.cc:601
 #, c-format
 msgid "renamed from directory '%s' on the right"
-msgstr ""
+msgstr "rinominato dalla directory ‘%s’ sulla destra"
 
 #: roster_merge.cc:629
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on file '%s'"
-msgstr ""
+msgstr "conflitto: valori multipli per l'attributo ‘%s’ sul file ‘%s’"
 
 #: roster_merge.cc:632
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on directory '%s'"
-msgstr ""
+msgstr "conflitto: valori multipli per l'attributo ‘%s’ sulla directory ‘%s’"
 
 #: roster_merge.cc:636
 #, c-format
@@ -4895,52 +4912,52 @@ msgstr "cancellato sulla destra"
 #: roster_merge.cc:663
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on file '%s' from revision %s"
-msgstr ""
+msgstr "conflitto: valori multipli per l'attributo ‘%s’ sul file ‘%s’ della revisione %s"
 
 #: roster_merge.cc:666
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on directory '%s' from revision %s"
-msgstr ""
+msgstr "conflitto: valori multipli per l'attributo ‘%s’ sulla directory ‘%s’ della revisione %s"
 
 #: roster_merge.cc:672
 #, c-format
 msgid "set to '%s' on left file '%s'"
-msgstr ""
+msgstr "impostato a ‘%s’ sul file ‘%s’ a sinistra"
 
 #: roster_merge.cc:675
 #, c-format
 msgid "set to '%s' on left directory '%s'"
-msgstr ""
+msgstr "impostato a ‘%s’ sulla directory ‘%s’ a sinistra"
 
 #: roster_merge.cc:681
 #, c-format
 msgid "deleted from left file '%s'"
-msgstr ""
+msgstr "cancellato dal file ‘%s’ a sinistra"
 
 #: roster_merge.cc:684
 #, c-format
 msgid "deleted from left directory '%s'"
-msgstr ""
+msgstr "cancellato dalla directory ‘%s’ a sinistra"
 
 #: roster_merge.cc:691
 #, c-format
 msgid "set to '%s' on right file '%s'"
-msgstr ""
+msgstr "impostato a ‘%s’ sul file ‘%s’ a destra"
 
 #: roster_merge.cc:694
 #, c-format
 msgid "set to '%s' on right directory '%s'"
-msgstr ""
+msgstr "impostato a ‘%s’ sulla directory ‘%s’ a destra"
 
 #: roster_merge.cc:700
 #, c-format
 msgid "deleted from right file '%s'"
-msgstr ""
+msgstr "cancellato dal file ‘%s’ a destra"
 
 #: roster_merge.cc:703
 #, c-format
 msgid "deleted from right directory '%s'"
-msgstr ""
+msgstr "cancellato dalla directory ‘%s’ a destra"
 
 # TODO: "conflitto: conflitto"
 #: roster_merge.cc:728
@@ -4951,12 +4968,12 @@ msgstr "conflitto di contenuto sul file ‘%s’"
 #: roster_merge.cc:730
 #, c-format
 msgid "content hash is %s on the left"
-msgstr ""
+msgstr "l'hash del contenuto è %s sulla sinistra"
 
 #: roster_merge.cc:731
 #, c-format
 msgid "content hash is %s on the right"
-msgstr ""
+msgstr "l'hash del contenuto è %s sulla destra"
 
 #: roster_merge.cc:750
 #, c-format
@@ -4966,12 +4983,12 @@ msgstr ""
 #: roster_merge.cc:752
 #, c-format
 msgid "content hash is %s on the left in file '%s'"
-msgstr ""
+msgstr "l'hash del contenuto è %s sulla sinistra nel file ‘%s’"
 
 #: roster_merge.cc:754
 #, c-format
 msgid "content hash is %s on the right in file '%s'"
-msgstr ""
+msgstr "l'hash del contenuto è %s sulla destra nel file ‘%s’"
 
 #: roster_merge.cc:880
 #, c-format
@@ -5217,9 +5234,9 @@ msgid "expanded date '%s' -> '%s'\n"
 msgstr "espansa la data ‘%s’ in ‘%s’\n"
 
 #: selectors.cc:159
-#, fuzzy, c-format
+#, c-format
 msgid "the empty branch selector b: refers to the current branch"
-msgstr "Elenca i file dello spazio di lavoro presenti nel ramo attuale"
+msgstr "il selettore vuoto di ramo ‘b:’ si riferisce al ramo corrente"
 
 #: selectors.cc:161
 #, c-format
@@ -5229,7 +5246,7 @@ msgstr ""
 #: selectors.cc:170
 #, c-format
 msgid "the cert selector c: may not be empty"
-msgstr ""
+msgstr "il selettore di certificati ‘c:’ non può essere vuoto"
 
 #: selectors.cc:354
 #, c-format
@@ -5273,17 +5290,17 @@ msgstr "stringa non abbastanza lunga per ottenere un long"
 #: ssh_agent.cc:155
 #, c-format
 msgid "ssh_agent: length (%i) of buf less than loc (%u) + len (%u)"
-msgstr ""
+msgstr "ssh_agent: lunghezza di buf (%i) minore di loc (%u) + len (%u)"
 
 #: ssh_agent.cc:258
 #, c-format
 msgid "ssh_agent: fetch_packet: zero-length packet from ssh-agent"
-msgstr ""
+msgstr "ssh_agent: fetch_packet: pacchetto di lunghezza zero da ssh-agent"
 
 #: ssh_agent.cc:308
 #, c-format
 msgid "ssh_agent: packet type (%u) != 12"
-msgstr ""
+msgstr "ssh_agent: tipo di pacchetto (%u) diverso da 12"
 
 #: ssh_agent.cc:346
 #, c-format
@@ -5639,9 +5656,9 @@ msgid "Asked to read more than %u from pageant."
 msgstr "Richiesta lettura di più di %u a ‘pageant’."
 
 #: work.cc:108
-#: work.cc:488
-#: work.cc:521
-#: work.cc:550
+#: work.cc:487
+#: work.cc:520
+#: work.cc:549
 #: work_migration.cc:66
 #, c-format
 msgid "workspace required but not found"
@@ -5694,115 +5711,115 @@ msgstr "chiave ‘%s’ non riconosciuta nel file di opzioni ‘%s’, verrà ig
 msgid "Failed to write options file %s: %s"
 msgstr "Impossibile scrivere il file di opzioni ‘%s’: %s"
 
-#: work.cc:542
+#: work.cc:541
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "‘%s’ non è un'opzione riconosciuta per la copia di lavoro"
 
-#: work.cc:776
+#: work.cc:775
 #, c-format
 msgid "cannot add %s, because %s is recorded as a file in the workspace manifest"
 msgstr "impossibile aggiungere ‘%s’ perché ‘%s’ è memorizzato come un file nel manifesto dello spazio di lavoro"
 
-#: work.cc:782
+#: work.cc:781
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "aggiungo ‘%s’ al manifesto dello spazio di lavoro"
 
-#: work.cc:820
+#: work.cc:819
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "salto il file ignorabile ‘%s’"
 
-#: work.cc:827
+#: work.cc:826
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "salto ‘%s’, già considerato nello spazio di lavoro"
 
-#: work.cc:985
+#: work.cc:984
 #, c-format
 msgid "dropping %s"
 msgstr "cancello ‘%s’"
 
-#: work.cc:996
-#: work.cc:1007
+#: work.cc:995
+#: work.cc:1006
 #, c-format
 msgid "path %s already exists"
 msgstr "il percorso ‘%s’ esiste già"
 
-#: work.cc:1025
+#: work.cc:1024
 #, c-format
 msgid "renaming %s to %s"
 msgstr "rinomino ‘%s’ in ‘%s’"
 
-#: work.cc:1029
+#: work.cc:1028
 #, c-format
 msgid "adding %s"
 msgstr "aggiungo ‘%s’"
 
-#: work.cc:1062
+#: work.cc:1061
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "il file ‘%s’ non esiste"
 
-#: work.cc:1063
+#: work.cc:1062
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "il file ‘%s’ è una directory "
 
-#: work.cc:1068
+#: work.cc:1067
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr "i contenuti del file ‘%s’ sono cambiati, non lo sovrascrivo"
 
-#: work.cc:1069
+#: work.cc:1068
 #, c-format
 msgid "modifying %s"
 msgstr "modifico ‘%s’"
 
-#: work.cc:1122
+#: work.cc:1121
 #, c-format
 msgid "cannot drop non-empty directory '%s'"
 msgstr "impossibile eliminare la cartella non vuota ‘%s’"
 
 # TODO: attach NON È fusione
-#: work.cc:1152
+#: work.cc:1151
 #, c-format
 msgid "attach node %d blocked by unversioned path '%s'"
 msgstr "allega nodo %d bloccato da percorso non versionato ‘%s’"
 
 # TODO: attach NON È fusione
-#: work.cc:1170
+#: work.cc:1169
 #, c-format
 msgid "attach node %d blocked by blocked parent '%s'"
 msgstr "allega nodo %d bloccato da genitore bloccato ‘%s’"
 
-#: work.cc:1202
+#: work.cc:1201
 #, c-format
 msgid "%d workspace conflicts"
 msgstr "%d conflitti nello spazio di lavoro"
 
-#: work.cc:1272
+#: work.cc:1271
 #, c-format
 msgid "missing directory '%s'"
 msgstr "la directory ‘%s’ manca"
 
-#: work.cc:1277
+#: work.cc:1276
 #, c-format
 msgid "not a directory '%s'"
 msgstr "‘%s’ non è una directory"
 
-#: work.cc:1290
+#: work.cc:1289
 #, c-format
 msgid "missing file '%s'"
 msgstr "il file ‘%s’ manca"
 
-#: work.cc:1295
+#: work.cc:1294
 #, c-format
 msgid "not a file '%s'"
 msgstr "‘%s’ non è un file"
 
-#: work.cc:1306
+#: work.cc:1305
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -5821,111 +5838,111 @@ msgstr ""
 " ‘%s drop --missing’ oppure\n"
 " ‘%s revert --missing’"
 
-#: work.cc:1464
+#: work.cc:1463
 #, c-format
 msgid "unable to drop the root directory"
 msgstr "impossibile eliminare la directory root"
 
-#: work.cc:1467
+#: work.cc:1466
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "salto ‘%s’, non sotto controllo di versione"
 
-#: work.cc:1477
+#: work.cc:1476
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "non posso cancellare ‘%s/’: non è vuota"
 
 # TODO: drop/abbandonare???
-#: work.cc:1492
+#: work.cc:1491
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr "la directory ‘%s’ non è vuota: verrà abbandonata ma non cancellata"
 
 # TODO: drop/abbandonare???
-#: work.cc:1503
+#: work.cc:1502
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr "il file ‘%s’ è stato motificato: verrà abbandonato ma non cancellato"
 
-#: work.cc:1507
+#: work.cc:1506
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "elimino ‘%s’ dal manifesto dello spazio di lavoro"
 
-#: work.cc:1549
-#: work.cc:1583
+#: work.cc:1548
+#: work.cc:1582
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
 msgstr "non posso rinominare la root dello spazio di lavoro (usa invece ‘%s pivot_root’)"
 
-#: work.cc:1552
-#: work.cc:1586
+#: work.cc:1551
+#: work.cc:1585
 #, c-format
 msgid "source file %s is not versioned"
 msgstr "il file sorgente ‘%s’ non è sotto controllo di versione"
 
-#: work.cc:1567
+#: work.cc:1566
 #, c-format
 msgid "destination path's parent directory %s/ doesn't exist"
 msgstr "la directory genitore %s/ del percorso destinazione non esiste"
 
-#: work.cc:1577
+#: work.cc:1576
 #, c-format
 msgid "destination %s/ is not a directory"
 msgstr "la destinazione ‘%s’ non è una directory"
 
-#: work.cc:1590
+#: work.cc:1589
 #, c-format
 msgid "destination %s already exists in the workspace manifest"
 msgstr "la destinazione ‘%s’ esiste già nel manifesto dello spazio di lavoro"
 
-#: work.cc:1604
+#: work.cc:1603
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "rinomino ‘%s’ in ‘%s’ nel manifesto dello spazio di lavoro"
 
-#: work.cc:1629
+#: work.cc:1628
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "‘%s’ non esiste nello spazio di lavoro, lo salto"
 
-#: work.cc:1633
+#: work.cc:1632
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr "la destinazione ‘%s’ esiste già nello spazio di lavoro, evito di rinominarla sul filesystem"
 
-#: work.cc:1638
+#: work.cc:1637
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
 msgstr "‘%s’ non esiste nello spazio di lavoro e ‘%s’ esiste, evito il rename sul filesystem"
 
-#: work.cc:1659
+#: work.cc:1658
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr "la nuova directory root proposta ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1662
+#: work.cc:1661
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "la nuova directory root proposta ‘%s’ non è una directory"
 
-#: work.cc:1665
+#: work.cc:1664
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr "la nuova directory root proposta ‘%s’ ha un percorso illegale %s"
 
-#: work.cc:1675
+#: work.cc:1674
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr "la directory ‘%s’ non è versionata o non esiste"
 
-#: work.cc:1681
+#: work.cc:1680
 #, c-format
 msgid "'%s' is in the way"
 msgstr "‘%s’ è di ostacolo"
 
-#: work.cc:1722
+#: work.cc:1721
 #, c-format
 msgid ""
 "workspace is locked\n"
