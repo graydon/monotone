@@ -13,6 +13,15 @@ void split_into_lines(std::string const & in,
                       std::string const & encoding,
                       std::vector<std::string> & out);
 
+void split_into_lines(std::string const & in,
+                      std::vector<std::string> & out,
+                      bool diff_compat);
+
+void split_into_lines(std::string const & in,
+                      std::string const & encoding,
+                      std::vector<std::string> & out,
+                      bool diff_compat);
+
 void join_lines(std::vector<std::string> const & in,
                 std::string & out,
                 std::string const & linesep);

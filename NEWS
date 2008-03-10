@@ -3,6 +3,9 @@
         0.40 release.
 
         Changes
+        
+        - The vim merger has been improved and now uses diff3 to merge
+          non-conflict changes automatically before executing vimdiff.
 
 	- Values used with the --depth option used to control recursion with
           node and path restrictions have changed. Using --depth=0 now means

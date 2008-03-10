@@ -1010,17 +1010,17 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
           while (idx(lines2,b) != *i)
             cons.insert_at(b++);
         }
-      if (b < lines2.size())
-        {
-          cons.advance_to(a);
-          while(b < lines2.size())
-            cons.insert_at(b++);
-        }
       if (a < lines1.size())
         {
           cons.advance_to(a);
           while(a < lines1.size())
             cons.delete_at(a++);
+        }
+      if (b < lines2.size())
+        {
+          cons.advance_to(a);
+          while(b < lines2.size())
+            cons.insert_at(b++);
         }
       cons.flush_hunk(a);
     }
@@ -1349,8 +1349,8 @@ make_diff(string const & filename1,
     }
 
   vector<string> lines1, lines2;
-  split_into_lines(data1(), lines1);
-  split_into_lines(data2(), lines2);
+  split_into_lines(data1(), lines1, true);
+  split_into_lines(data2(), lines2, true);
 
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
