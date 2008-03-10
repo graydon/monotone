@@ -2,10 +2,6 @@
 
 monotone_path = nil
 
-testsuite_use_ws = false
--- If true, get as many options as possible from the workspace
--- _MTN/options; don't specify on command line
-
 function safe_mtn(...)
   if monotone_path == nil then
     monotone_path = os.getenv("mtn")
@@ -13,14 +9,8 @@ function safe_mtn(...)
       err("'mtn' environment variable not set")
     end
   end
-
-  if testsuite_use_ws then
-    --  FIXME: need to store confdir in _MTN/options
-    return {monotone_path, "--norc", unpack(arg)}
-  else
-    return {monotone_path, "--norc", "--root=" .. test.root,
-            "--confdir="..test.root, unpack(arg)}
-  end
+  return {monotone_path, "--norc", "--root=" .. test.root,
+          "--confdir="..test.root, unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -36,15 +26,10 @@ function raw_mtn(...)
 end
 
 function mtn(...)
-  if testsuite_use_ws then
-    return raw_mtn ("--rcfile", test.root .. "/test_hooks.lua", unpack(arg))
-  else
-    return raw_mtn("--rcfile",
-     test.root .. "/test_hooks.lua",
-     "--db=" .. test.root .. "/test.db",
-     "--keydir", test.root .. "/keys",
-     "--key=tester@test.net", unpack(arg))
-  end
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+         "--db=" .. test.root .. "/test.db",
+         "--keydir", test.root .. "/keys",
+         "--key=tester@test.net", unpack(arg))
 end
 
 function nodb_mtn(...)
@@ -92,12 +77,10 @@ function mtn_setup()
   check(getstd("test_keys"))
   check(getstd("test_hooks.lua"))
   check(getstd("min_hooks.lua"))
-
-  testsuite_use_ws = false
+  
   check(mtn("db", "init"), 0, false, false)
   check(mtn("read", "test_keys"), 0, false, false)
   check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
-  testsuite_use_ws = true
   remove("test_keys")
 end
 
@@ -161,7 +144,6 @@ function revert_to(rev, branch, mt)
 
   remove("_MTN.old")
   rename("_MTN", "_MTN.old")
-  testsuite_use_ws = false
 
   check(mt("automate", "get_manifest_of", rev), 0, true, false)
   rename("stdout", "paths-old")
@@ -171,7 +153,7 @@ function revert_to(rev, branch, mt)
 
   for path in io.lines("paths-new") do
     len = string.len(path) - 1
-
+      
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -184,10 +166,10 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-
+        
   for path in io.lines("paths-old") do
     len = string.len(path) - 1
-
+      
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -200,14 +182,13 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-
+        
   if branch == nil then
     check(mt("checkout", "--revision", rev, "."), 0, false, true)
   else
     check(mt("checkout", "--branch", branch, "--revision", rev, "."), 0, false, true)
   end
   check(base_revision() == rev)
-  testsuite_use_ws = true
 end
 
 function canonicalize(filename)
@@ -228,7 +209,7 @@ end
 function check_same_db_contents(db1, db2)
   check_same_stdout(mtn("--db", db1, "ls", "keys"),
                     mtn("--db", db2, "ls", "keys"))
-
+  
   check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
   rename("stdout", "revs")
   check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
@@ -242,7 +223,7 @@ function check_same_db_contents(db1, db2)
     check_same_stdout(mtn("--db", db1, "automate", "get_manifest_of", rev),
                       mtn("--db", db2, "automate", "get_manifest_of", rev))
   end
-
+  
   check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
   rename("stdout", "files")
   check(mtn("--db", db2, "complete", "file", ""), 0, true, false)
