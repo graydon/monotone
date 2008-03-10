@@ -445,7 +445,6 @@ workspace::get_ws_options(options & opts)
   // Workspace options are not to override the command line.
   if (!opts.dbname_given)
     {
-      I(opts.dbname.empty());
       opts.dbname = database_option;
     }
 
