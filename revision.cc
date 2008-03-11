@@ -303,7 +303,9 @@ is_ancestor(database & db,
             revision_id const & ancestor_id,
             revision_id const & descendent_id)
 {
-  L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
+  L(FL("checking whether %s is an ancestor of %s")
+    % encode_hexenc(ancestor_id.inner()())
+    % encode_hexenc(descendent_id.inner()()));
 
   multimap<revision_id, revision_id> graph;
   db.get_revision_ancestry(graph);

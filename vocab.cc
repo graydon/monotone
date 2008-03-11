@@ -81,10 +81,10 @@ verify(id & val)
   if (val().empty())
     return;
 
-  N(val().size() == constants::sha1_digest_length,
-    F("binary ID '%s' size != %d")
-      % encode_hexenc(val())
-      % constants::sha1_digest_length);
+  N((val().size() == constants::sha1_digest_length) ||
+    (val().size() == constants::idlen),
+    F("invalid ID '%s'")
+      % encode_hexenc(val()));
   val.ok = true;
 }
 

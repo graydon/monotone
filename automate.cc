@@ -491,7 +491,7 @@ CMD_AUTOMATE(graph, "",
          i = child_to_parents.begin();
        i != child_to_parents.end(); ++i)
     {
-      output << (i->first).inner()();
+      output << encode_hexenc((i->first).inner()());
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
         output << ' ' << encode_hexenc(j->inner()());
@@ -1207,14 +1207,13 @@ CMD_AUTOMATE(get_revision, N_("REVID"),
   database db(app);
 
   revision_data dat;
-  revision_id ident;
+  hexenc<id> hrid(idx(args, 0)());
+  revision_id rid(decode_hexenc(hrid()));
+  N(db.revision_exists(rid),
+    F("no revision %s found in database") % hrid);
+  db.get_revision(rid, dat);
 
-  ident = revision_id(idx(args, 0)());
-  N(db.revision_exists(ident),
-    F("no revision %s found in database") % ident);
-  db.get_revision(ident, dat);
-
-  L(FL("dumping revision %s") % ident);
+  L(FL("dumping revision %s") % hrid);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -2116,9 +2115,10 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   database db(app);
   key_store keys(app);
 
-  revision_id rid(decode_hexenc(idx(args, 0)()));
+  hexenc<id> hrid(idx(args, 0)());
+  revision_id rid(decode_hexenc(hrid()));
   N(db.revision_exists(rid),
-    F("no such revision '%s'") % idx(args, 0)());
+    F("no such revision '%s'") % hrid);
 
   cache_user_key(app.opts, app.lua, db, keys);
   put_simple_revision_cert(db, keys, rid, cert_name(idx(args, 1)()),

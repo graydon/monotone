@@ -19,6 +19,7 @@
 #include "vocab.hh"
 #include "database.hh"
 #include "project.hh"
+#include "transforms.hh"
 
 using std::make_pair;
 using std::map;
@@ -233,7 +234,8 @@ revision_enumerator::step()
           if (cb.process_this_rev(r))
             {
               L(FL("revision_enumerator::step expanding "
-                  "contents of rev '%d'\n") % r);
+                  "contents of rev '%d'\n")
+                % encode_hexenc(r.inner()()));
 
               // The rev's files and fdeltas
               {

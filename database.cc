@@ -1981,7 +1981,8 @@ database::put_file(file_id const & id,
                    file_data const & dat)
 {
   if (file_version_exists(id))
-    L(FL("file version '%s' already exists in db") % id);
+    L(FL("file version '%s' already exists in db")
+      % encode_hexenc(id.inner()()));
   else
     imp->schedule_delayed_file(id, dat);
 }
@@ -1997,8 +1998,11 @@ database::put_file_version(file_id const & old_id,
 
   if (!file_version_exists(old_id))
     {
-      W(F("file preimage '%s' missing in db") % old_id);
-      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
+      W(F("file preimage '%s' missing in db")
+        % encode_hexenc(old_id.inner()()));
+      W(F("dropping delta '%s' -> '%s'")
+        % encode_hexenc(old_id.inner()())
+        % encode_hexenc(new_id.inner()()));
       return;
     }
   
@@ -2052,7 +2056,7 @@ database::get_arbitrary_file_delta(file_id const & src_id,
   query q1("SELECT delta FROM file_deltas "
            "WHERE base = ? AND id = ?");
   imp->fetch(res, one_col, any_rows,
-             q1 % text(src_id.inner()()) % text(dst_id.inner()()));
+             q1 % blob(src_id.inner()()) % blob(dst_id.inner()()));
 
   if (!res.empty())
     {
@@ -2066,7 +2070,7 @@ database::get_arbitrary_file_delta(file_id const & src_id,
   query q2("SELECT delta FROM file_deltas "
            "WHERE base = ? AND id = ?");
   imp->fetch(res, one_col, any_rows,
-             q2 % text(dst_id.inner()()) % text(src_id.inner()()));
+             q2 % blob(dst_id.inner()()) % blob(src_id.inner()()));
 
   if (!res.empty())
     {

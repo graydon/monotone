@@ -77,8 +77,8 @@ three_way_merge(revision_id const & ancestor_rid, roster_t const & ancestor_rost
   safe_insert(left_uncommon_ancestors, left_rid);
   safe_insert(right_uncommon_ancestors, right_rid);
 
-  P(F("[left]  %s") % left_rid);
-  P(F("[right] %s") % right_rid);
+  P(F("[left]  %s") % encode_hexenc(left_rid.inner()()));
+  P(F("[right] %s") % encode_hexenc(right_rid.inner()()));
 
   // And do the merge
   roster_merge(left_roster, left_markings, left_uncommon_ancestors,
@@ -207,7 +207,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
 
   if (old_rid == chosen_rid)
     {
-      P(F("already up to date at %s") % old_rid);
+      P(F("already up to date at %s")
+        % encode_hexenc(old_rid.inner()()));
       // do still switch the workspace branch, in case they have used
       // update to switch branches.
       work.set_ws_options(app.opts, true);
@@ -567,14 +568,14 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   cache_user_key(app.opts, app.lua, db, keys);
 
   P(F("propagating %s -> %s") % idx(args,0) % idx(args,1));
-  P(F("[left]  %s") % *src_i);
-  P(F("[right] %s") % *dst_i);
+  P(F("[left]  %s") % encode_hexenc(src_i->inner()()));
+  P(F("[right] %s") % encode_hexenc(dst_i->inner()()));
 
   // check for special cases
   if (is_ancestor(db, *dst_i, *src_i))
     {
       P(F("no merge necessary; putting %s in branch '%s'")
-        % (*src_i) % idx(args, 1)());
+        % encode_hexenc(src_i->inner()()) % idx(args, 1)());
       transaction_guard guard(db);
       project.put_revision_in_branch(keys, *src_i,
                                      branch_name(idx(args, 1)()));
@@ -654,8 +655,10 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       if (!log_message_given)
         log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
                                "            to branch '%s' (head %s)\n")
-                            % idx(args, 0) % (*src_i)
-                            % idx(args, 1) % (*dst_i)).str());
+                            % idx(args, 0)
+                            % encode_hexenc(src_i->inner()())
+                            % idx(args, 1)
+                            % encode_hexenc(dst_i->inner()())).str());
 
       project.put_standard_certs_from_options(app.opts, app.lua,
                                               keys,
@@ -664,7 +667,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
                                               log_message);
 
       guard.commit();
-      P(F("[merged] %s") % merged);
+      P(F("[merged] %s")
+        % encode_hexenc(merged.inner()()));
     }
 }
 
@@ -719,10 +723,11 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   complete(app.opts, app.lua, project, idx(args, 0)(), right_id);
   db.get_roster(right_id, right);
-  N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
+  N(!(left_id == right_id), F("workspace is already at revision %s")
+    % encode_hexenc(left_id.inner()()));
 
-  P(F("[left]  %s") % left_id);
-  P(F("[right] %s") % right_id);
+  P(F("[left]  %s") % encode_hexenc(left_id.inner()()));
+  P(F("[right] %s") % encode_hexenc(right_id.inner()()));
 
   set<revision_id> left_uncommon_ancestors, right_uncommon_ancestors;
   db.get_uncommon_ancestors(left_id, right_id,
@@ -773,7 +778,9 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   P(F("updated to result of merge\n"
       " [left] %s\n"
-      "[right] %s\n") % left_id % right_id);
+      "[right] %s\n")
+    % encode_hexenc(left_id.inner()())
+    % encode_hexenc(right_id.inner()()));
 }
 
 CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
@@ -797,11 +804,17 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
-    F("%s and %s are the same revision, aborting") % left % right);
+    F("%s and %s are the same revision, aborting")
+      % encode_hexenc(left.inner()())
+      % encode_hexenc(right.inner()()));
   N(!is_ancestor(db, left, right),
-    F("%s is already an ancestor of %s") % left % right);
+    F("%s is already an ancestor of %s")
+      % encode_hexenc(left.inner()())
+      % encode_hexenc(right.inner()()));
   N(!is_ancestor(db, right, left),
-    F("%s is already an ancestor of %s") % right % left);
+    F("%s is already an ancestor of %s")
+      % encode_hexenc(right.inner()())
+      % encode_hexenc(left.inner()()));
 
   // avoid failure after lots of work
   cache_user_key(app.opts, app.lua, db, keys);
@@ -825,9 +838,13 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
   N(!is_ancestor(db, l_id, r_id),
-    F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
+    F("%s is an ancestor of %s; no merge is needed.")
+      % encode_hexenc(l_id.inner()())
+      % encode_hexenc(r_id.inner()()));
   N(!is_ancestor(db, r_id, l_id),
-    F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
+    F("%s is an ancestor of %s; no merge is needed.")
+      % encode_hexenc(r_id.inner()())
+      % encode_hexenc(l_id.inner()()));
   roster_t l_roster, r_roster;
   marking_map l_marking, r_marking;
   db.get_roster(l_id, l_roster, l_marking);
@@ -846,8 +863,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   // so they may appear swapped here. perhaps we should sort left and right
   // before using them?
 
-  P(F("[left]  %s") % l_id);
-  P(F("[right] %s") % r_id);
+  P(F("[left]  %s") % encode_hexenc(l_id.inner()()));
+  P(F("[right] %s") % encode_hexenc(r_id.inner()()));
 
   if (result.is_clean())
     {
@@ -899,8 +916,9 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
         F("revision %s is a merge\n"
           "to apply the changes relative to one of its parents, use:\n"
           "  %s pluck -r PARENT -r %s")
-        % to_rid
-        % ui.prog_name % to_rid);
+        % encode_hexenc(to_rid.inner()())
+        % ui.prog_name
+        % encode_hexenc(to_rid.inner()()));
       from_rid = *parents.begin();
     }
   else if (app.opts.revision_selectors.size() == 2)
@@ -1046,11 +1064,13 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     if (from_to_to_excluded.empty())
       log_str += (FL("applied changes from %s\n"
                      "             through %s\n")
-                  % from_rid % to_rid).str();
+                  % encode_hexenc(from_rid.inner()())
+                  % encode_hexenc(to_rid.inner()())).str();
     else
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
-                  % from_rid % to_rid).str();
+                  % encode_hexenc(from_rid.inner()())
+                  % encode_hexenc(to_rid.inner()())).str();
     work.write_user_log(utf8(log_str));
   }
 }

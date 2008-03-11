@@ -16,6 +16,7 @@
 #include "roster_merge.hh"
 #include "parallel_iter.hh"
 #include "safe_map.hh"
+#include "transforms.hh"
 
 using boost::shared_ptr;
 
@@ -94,8 +95,8 @@ dump(file_content_conflict const & conflict, string & out)
 {
   ostringstream oss;
   oss << "file_content_conflict on node: " << conflict.nid << " "
-      << "left: " << conflict.left << " "
-      << "right: " << conflict.right << "\n";
+      << "left: " << encode_hexenc(conflict.left.inner()()) << " "
+      << "right: " << encode_hexenc(conflict.right.inner()()) << "\n";
   out = oss.str();
 }
 
@@ -489,10 +490,10 @@ roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster
 
       if (type == file_type)
         P(F("conflict: multiple names for file '%s' from revision %s")
-          % lca_name % lca_rid);
+          % lca_name % encode_hexenc(lca_rid.inner()()));
       else
         P(F("conflict: multiple names for directory '%s' from revision %s")
-          % lca_name % lca_rid);
+          % lca_name % encode_hexenc(lca_rid.inner()()));
 
       P(F("renamed to '%s' on the left") % left_name);
       P(F("renamed to '%s' on the right") % right_name);
@@ -727,8 +728,10 @@ roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
 
           P(F("conflict: content conflict on file '%s'")
             % name);
-          P(F("content hash is %s on the left") % conflict.left);
-          P(F("content hash is %s on the right") % conflict.right);
+          P(F("content hash is %s on the left")
+            % encode_hexenc(conflict.left.inner()()));
+          P(F("content hash is %s on the right")
+            % encode_hexenc(conflict.right.inner()()));
         }
       else
         {
@@ -748,11 +751,11 @@ roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
           lca_roster->get_name(conflict.nid, lca_name);
 
           P(F("conflict: content conflict on file '%s' from revision %s")
-            % lca_name % lca_rid);
+            % lca_name % encode_hexenc(lca_rid.inner()()));
           P(F("content hash is %s on the left in file '%s'")
-            % conflict.left % left_name);
+            % encode_hexenc(conflict.left.inner()()) % left_name);
           P(F("content hash is %s on the right in file '%s'")
-            % conflict.right % right_name);
+            % encode_hexenc(conflict.right.inner()()) % right_name);
         }
     }
 }
@@ -882,7 +885,7 @@ namespace
                         "removed on one side of the merge.  Affected revisions include:") % fp);
                   }
                 found_one_ignored_content = true;
-                W(F("Revision: %s") % *it);
+                W(F("Revision: %s") % encode_hexenc(it->inner()()));
               }
           }
       }

@@ -685,10 +685,10 @@ CMD_AUTOMATE(certs, N_("REV"),
 
   transaction_guard guard(db, false);
 
-  hexenc<id> ident(idx(args, 0)());
-  revision_id rid(decode_hexenc(ident()));
+  hexenc<id> hrid(idx(args, 0)());
+  revision_id rid(decode_hexenc(hrid()));
 
-  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+  N(db.revision_exists(rid), F("no such revision '%s'") % hrid);
 
   vector< revision<cert> > ts;
   // FIXME_PROJECTS: after projects are implemented,
@@ -728,7 +728,7 @@ CMD_AUTOMATE(certs, N_("REV"),
       signers.insert(keyid);
 
       bool trusted =
-        app.lua.hook_get_revision_cert_trust(signers, ident,
+        app.lua.hook_get_revision_cert_trust(signers, rid,
                                              name, tv);
 
       st.push_str_pair(syms::key, keyid());

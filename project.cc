@@ -174,7 +174,7 @@ project_t::revision_is_in_branch(revision_id const & id,
     % num
     % certs.size()
     % branch
-    % id);
+    % encode_hexenc(id.inner()()));
 
   return !certs.empty();
 }
@@ -202,7 +202,7 @@ project_t::revision_is_suspended_in_branch(revision_id const & id,
     % num
     % certs.size()
     % branch
-    % id);
+    % encode_hexenc(id.inner()()));
 
   return !certs.empty();
 }

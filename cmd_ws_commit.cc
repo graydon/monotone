@@ -295,15 +295,17 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
             }
 
           P(F("reverting %s") % new_path);
-          L(FL("reverting %s to [%s]") % new_path % f->content);
+          L(FL("reverting %s to [%s]") % new_path
+            % encode_hexenc(f->content.inner()()));
 
           N(db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
-            % f->content % new_path);
+              % encode_hexenc(f->content.inner()())
+              % new_path);
 
           file_data dat;
           L(FL("writing file %s to %s")
-            % f->content % new_path);
+            % encode_hexenc(f->content.inner()()) % new_path);
           db.get_file_version(f->content, dat);
           write_data(new_path, dat.inner());
         }
@@ -359,13 +361,15 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
-    F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
+    F("revision %s has %d changesets, cannot invert")
+      % encode_hexenc(r.inner()()) % rev.edges.size());
 
   guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(app.opts, log_message_given, log_message,
-                              utf8((FL("disapproval of revision '%s'") % r).str()));
+                              utf8((FL("disapproval of revision '%s'")
+                                      % encode_hexenc(r.inner()())).str()));
 
   cache_user_key(app.opts, app.lua, db, keys);
 
@@ -643,7 +647,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
 
       N(project.revision_is_in_branch(revid, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % revid % app.opts.branchname);
+        % encode_hexenc(revid.inner()()) % app.opts.branchname);
     }
 
   // we do this part of the checking down here, because it is legitimate to
@@ -680,7 +684,8 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
 
   roster_t empty_roster, current_roster;
 
-  L(FL("checking out revision %s to directory %s") % revid % dir);
+  L(FL("checking out revision %s to directory %s")
+    % encode_hexenc(revid.inner()()) % dir);
   db.get_roster(revid, current_roster);
 
   revision_t workrev;
