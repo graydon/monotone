@@ -46,7 +46,7 @@ struct key_store_state
   bool have_read;
   lua_hooks & lua;
   map<rsa_keypair_id, keypair> keys;
-  map<hexenc<id>, rsa_keypair_id> hashes;
+  map<id, rsa_keypair_id> hashes;
 
   // These are used to cache keys and signers (if the hook allows).
   map<rsa_keypair_id, shared_ptr<RSA_PrivateKey> > privkey_cache;
@@ -243,12 +243,12 @@ key_store::get_key_pair(rsa_keypair_id const & ident,
 }
 
 bool
-key_store::maybe_get_key_pair(hexenc<id> const & hash,
+key_store::maybe_get_key_pair(id const & hash,
                               rsa_keypair_id & keyid,
                               keypair & kp)
 {
   s->maybe_read_key_dir();
-  map<hexenc<id>, rsa_keypair_id>::const_iterator hi = s->hashes.find(hash);
+  map<id, rsa_keypair_id>::const_iterator hi = s->hashes.find(hash);
   if (hi == s->hashes.end())
     return false;
 
@@ -318,7 +318,7 @@ key_store_state::put_key_pair_memory(rsa_keypair_id const & ident,
   res = keys.insert(make_pair(ident, kp));
   if (res.second)
     {
-      hexenc<id> hash;
+      id hash;
       key_hash_code(ident, kp.pub, hash);
       I(hashes.insert(make_pair(hash, ident)).second);
       return true;
@@ -340,9 +340,9 @@ key_store::delete_key(rsa_keypair_id const & ident)
   map<rsa_keypair_id, keypair>::iterator i = s->keys.find(ident);
   if (i != s->keys.end())
     {
-      hexenc<id> hash;
+      id hash;
       key_hash_code(ident, i->second.pub, hash);
-      map<hexenc<id>, rsa_keypair_id>::iterator j = s->hashes.find(hash);
+      map<id, rsa_keypair_id>::iterator j = s->hashes.find(hash);
       I(j != s->hashes.end());
       s->hashes.erase(j);
       s->keys.erase(i);
@@ -442,8 +442,8 @@ void
 key_store::create_key_pair(database & db,
                            rsa_keypair_id const & id,
                            utf8 const * maybe_passphrase,
-                           hexenc<id> * maybe_pubhash,
-                           hexenc<id> * maybe_privhash)
+                           id * maybe_pubhash,
+                           id * maybe_privhash)
 {
   conditional_transaction_guard guard(db);
 

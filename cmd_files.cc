@@ -210,9 +210,9 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
       read_data_stdin(dat);
     }
 
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  cout << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 // Name: identify
@@ -241,20 +241,20 @@ CMD_AUTOMATE(identify, N_("PATH"),
   data dat;
   read_data_for_command_line(path, dat);
   
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  
-  output << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 static void
 dump_file(database & db, std::ostream & output, file_id & ident)
 {
   N(db.file_version_exists(ident),
-    F("no file version %s found in database") % ident);
+    F("no file version %s found in database")
+      % encode_hexenc(ident.inner()()));
 
   file_data dat;
-  L(FL("dumping file %s") % ident);
+  L(FL("dumping file %s") % encode_hexenc(ident.inner()()));
   db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
@@ -263,7 +263,8 @@ static void
 dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
 {
   N(db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
+    F("no such revision '%s'")
+      % encode_hexenc(rid.inner()()));
 
   // Paths are interpreted as standard external ones when we're in a
   // workspace, but as project-rooted external ones otherwise.
@@ -273,11 +274,13 @@ dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
   marking_map marks;
   db.get_roster(rid, roster, marks);
   N(roster.has_node(fp), 
-    F("no file '%s' found in revision '%s'") % fp % rid);
+    F("no file '%s' found in revision '%s'")
+      % fp % encode_hexenc(rid.inner()()));
   
   node_t node = roster.get_node(fp);
   N((!null_node(node->self) && is_file_t(node)), 
-    F("no file '%s' found in revision '%s'") % fp % rid);
+    F("no file '%s' found in revision '%s'")
+      % fp % encode_hexenc(rid.inner()()));
 
   file_t file_node = downcast_to_file_t(node);
   dump_file(db, output, file_node->content);
@@ -332,7 +335,8 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
     F("wrong argument count"));
 
   database db(app);
-  file_id ident(idx(args, 0)());
+  hexenc<id> hident(idx(args, 0)());
+  file_id ident(decode_hexenc(hident()));
   dump_file(db, output, ident);
 }
 

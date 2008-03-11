@@ -177,40 +177,18 @@ template void pack<delta>(delta const &, base64< gzip<delta> > &);
 template void unpack<data>(base64< gzip<data> > const &, data &);
 template void unpack<delta>(base64< gzip<delta> > const &, delta &);
 
-// diffing and patching
-
-void
-diff(data const & olddata,
-     data const & newdata,
-     delta & del)
-{
-  string unpacked;
-  compute_delta(olddata(), newdata(), unpacked);
-  del = delta(unpacked);
-}
-
-void
-patch(data const & olddata,
-      delta const & del,
-      data & newdata)
-{
-  string result;
-  apply_delta(olddata(), del(), result);
-  newdata = data(result);
-}
 
 // identifier (a.k.a. sha1 signature) calculation
 
 void
 calculate_ident(data const & dat,
-                hexenc<id> & ident)
+                id & ident)
 {
   try
     {
-      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"),
-                    new Botan::Hex_Encoder(Botan::Hex_Encoder::Lowercase));
+      Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
       p.process_msg(dat());
-      ident = hexenc<id>(p.read_all_as_string());
+      ident = id(p.read_all_as_string());
     }
   catch (Botan::Exception & e)
     {
@@ -222,7 +200,7 @@ void
 calculate_ident(file_data const & dat,
                 file_id & ident)
 {
-  hexenc<id> tmp;
+  id tmp;
   calculate_ident(dat.inner(), tmp);
   ident = file_id(tmp);
 }
@@ -231,7 +209,7 @@ void
 calculate_ident(manifest_data const & dat,
                 manifest_id & ident)
 {
-  hexenc<id> tmp;
+  id tmp;
   calculate_ident(dat.inner(), tmp);
   ident = manifest_id(tmp);
 }
@@ -240,7 +218,7 @@ void
 calculate_ident(revision_data const & dat,
                 revision_id & ident)
 {
-  hexenc<id> tmp;
+  id tmp;
   calculate_ident(dat.inner(), tmp);
   ident = revision_id(tmp);
 }
@@ -277,10 +255,10 @@ UNIT_TEST(transform, rdiff)
 UNIT_TEST(transform, calculate_ident)
 {
   data input(string("the only blender which can be turned into the most powerful vaccum cleaner"));
-  hexenc<id> output;
+  id output;
   string ident("86e03bdb3870e2a207dfd0dcbfd4c4f2e3bc97bd");
   calculate_ident(input, output);
-  UNIT_TEST_CHECK(output() == ident);
+  UNIT_TEST_CHECK(output() == decode_hexenc(ident));
 }
 
 UNIT_TEST(transform, corruption_check)
