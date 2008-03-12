@@ -180,10 +180,12 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   // find the version of the file requested
   N(roster.has_node(file), 
-    F("no such file '%s' in revision '%s'") % file % rid);
+    F("no such file '%s' in revision '%s'")
+      % file % encode_hexenc(rid.inner()()));
   node_t node = roster.get_node(file);
   N(is_file_t(node), 
-    F("'%s' in revision '%s' is not a file") % file % rid);
+    F("'%s' in revision '%s' is not a file")
+      % file % encode_hexenc(rid.inner()()));
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
