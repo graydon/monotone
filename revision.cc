@@ -1012,7 +1012,7 @@ anc_graph::kluge_for_bogus_merge_edges()
           if (j->first == i->first)
             {
               L(FL("considering old merge edge %s") %
-                safe_get(node_to_old_rev, i->first));
+                encode_hexenc(safe_get(node_to_old_rev, i->first).inner()()));
               u64 parent1 = i->second;
               u64 parent2 = j->second;
               if (is_ancestor (parent1, parent2, parent_to_child_map))
@@ -1076,7 +1076,8 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
     {
       node = max_node++;
       ++n_nodes;
-      L(FL("node %d = manifest %s") % node % man);
+      L(FL("node %d = manifest %s")
+        % node % encode_hexenc(man.inner()()));
       old_man_to_node.insert(make_pair(man, node));
       node_to_old_man.insert(make_pair(node, man));
 
@@ -1114,7 +1115,10 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       legacy::renames_map renames;
       legacy::get_manifest_and_renames_for_rev(db, rev, man, renames);
 
-      L(FL("node %d = revision %s = manifest %s") % node % rev % man);
+      L(FL("node %d = revision %s = manifest %s")
+        % node
+        % encode_hexenc(rev.inner()())
+        % encode_hexenc(man.inner()()));
       old_rev_to_node.insert(make_pair(rev, node));
       node_to_old_rev.insert(make_pair(node, rev));
       node_to_old_man.insert(make_pair(node, man));

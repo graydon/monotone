@@ -350,12 +350,12 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   // Now it's time for the real work.
   if (automate)
     {
-      output << left_hid << " " << right_hid << " ";
+      output << left_hid() << " " << right_hid() << " ";
     }
   else
     {
-      P(F("[left]  %s") % left_hid);
-      P(F("[right] %s") % right_hid);
+      P(F("[left]  %s") % left_hid());
+      P(F("[right] %s") % right_hid());
     }
 
   revision_id merged;

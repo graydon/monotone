@@ -1197,7 +1197,8 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     transaction_guard guard(db);
 
     if (db.revision_exists(restricted_rev_id))
-      W(F("revision %s already in database") % restricted_rev_id);
+      W(F("revision %s already in database")
+        % encode_hexenc(restricted_rev_id.inner()()));
     else
       {
         if (global_sanity.debug_p())

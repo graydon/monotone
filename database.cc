@@ -2411,7 +2411,8 @@ database::put_revision(revision_id const & new_id,
     }
   else
     {
-      L(FL("roster for revision '%s' already exists in db") % new_id);
+      L(FL("roster for revision '%s' already exists in db")
+        % encode_hexenc(new_id.inner()()));
     }
 
   // Phase 4: rewrite any files that need deltas added
@@ -2535,7 +2536,8 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   I(children.empty());
 
 
-  L(FL("Killing revision %s locally") % rid);
+  L(FL("Killing revision %s locally")
+    % encode_hexenc(rid.inner()()));
 
   // Kill the certs, ancestry, and revision.
   imp->execute(query("DELETE from revision_certs WHERE id = ?")
@@ -2961,14 +2963,14 @@ database::put_revision_cert(revision<cert> const & cert)
   if (revision_cert_exists(cert))
     {
       L(FL("revision cert on '%s' already exists in db")
-        % cert.inner().ident);
+        % encode_hexenc(cert.inner().ident.inner()()));
       return false;
     }
 
   if (!revision_exists(revision_id(cert.inner().ident)))
     {
       W(F("cert revision '%s' does not exist in db")
-        % cert.inner().ident);
+        % encode_hexenc(cert.inner().ident.inner()()));
       W(F("dropping cert"));
       return false;
     }
