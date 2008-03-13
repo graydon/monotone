@@ -1,6 +1,6 @@
 /*************************************************
 * Lowest Level MPI Algorithms Source File        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 The Botan Project                *
 *************************************************/
 
 #include <botan/mp_asm.h>
@@ -148,7 +148,7 @@ void bigint_linmul2(word x[], u32bit x_size, word y)
       carry = word8_linmul2(x + j, y, carry);
 
    for(u32bit j = blocks; j != x_size; ++j)
-      x[j] = word_madd2(x[j], y, carry, &carry);
+      x[j] = word_madd2(x[j], y, &carry);
 
    x[x_size] = carry;
    }
@@ -166,7 +166,7 @@ void bigint_linmul3(word z[], const word x[], u32bit x_size, word y)
       carry = word8_linmul3(z + j, x + j, y, carry);
 
    for(u32bit j = blocks; j != x_size; ++j)
-      z[j] = word_madd2(x[j], y, carry, &carry);
+      z[j] = word_madd2(x[j], y, &carry);
 
    z[x_size] = carry;
    }
