@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-02-27 17:27+0100\n"
+"POT-Creation-Date: 2008-03-12 13:58+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -77,7 +77,9 @@ msgstr "Gibt die Köpfe des übergebenen Zweigs aus"
 #, c-format
 msgid ""
 "with no argument, this command prints the heads of the workspace's branch"
-msgstr "Wenn kein Argument übergeben wurde, gibt dieses Kommando die Köpfe des Zweiges des Arbeitsbereichs aus."
+msgstr ""
+"Wenn kein Argument übergeben wurde, gibt dieses Kommando die Köpfe des "
+"Zweiges des Arbeitsbereichs aus."
 
 #: automate.cc:111 automate.cc:163 automate.cc:1549
 msgid "REV1 [REV2 [REV3 [...]]]"
@@ -1883,7 +1885,7 @@ msgstr "benötige Basis '--branch'-Parameter für den Import"
 msgid "path %s does not exist"
 msgstr "Pfad %s existiert nicht"
 
-#: cmd_othervcs.cc:54 lua.cc:574 work.cc:1678
+#: cmd_othervcs.cc:54 lua.cc:574 work.cc:1676
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
@@ -2382,7 +2384,8 @@ msgstr "Es muss ein Verzeichnis für den Import angegeben werden."
 msgid ""
 "use --revision or --branch to specify the parent revision for the import"
 msgstr ""
-"Nutzen Sie --revision oder --branch, um die Elternrevision für den Import festzulegen."
+"Nutzen Sie --revision oder --branch, um die Elternrevision für den Import "
+"festzulegen."
 
 #: cmd_ws_commit.cc:1390
 #, c-format
@@ -2798,7 +2801,8 @@ msgstr "Datenbank %s existiert nicht"
 msgid ""
 "%s is a workspace, not a database\n"
 "(did you mean %s?)"
-msgstr "%s ist ein Verzeichnis, keine Datenbank\n"
+msgstr ""
+"%s ist ein Verzeichnis, keine Datenbank\n"
 "(meinten Sie %s?)"
 
 #: database.cc:3599
@@ -3291,7 +3295,7 @@ msgstr "übergehe Datei '%s' mit dem nicht unterstützten Namen"
 msgid "skipping directory '%s' with unsupported name"
 msgstr "übergehe das Verzeichnis '%s' mit dem nicht unterstützten Namen"
 
-#: file_io.cc:521 work.cc:1396
+#: file_io.cc:521 work.cc:1394
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
@@ -3397,12 +3401,15 @@ msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
 #: key_store.cc:410 key_store.cc:749
 #, c-format
 msgid "failed to decrypt old private RSA key, probably incorrect passphrase"
-msgstr "konnte alten, privaten RSA-Schlüssel nicht entschlüsseln; Passwort ist womöglich falsch"
+msgstr ""
+"konnte alten, privaten RSA-Schlüssel nicht entschlüsseln; Passwort ist "
+"womöglich falsch"
 
 #: key_store.cc:424
 #, c-format
 msgid "failed to extract RSA private key from PKCS#8 keypair"
-msgstr "konnte privaten RSA-Schlüssel nicht vom PKCS#8-Schlüsselpaar extrahieren"
+msgstr ""
+"konnte privaten RSA-Schlüssel nicht vom PKCS#8-Schlüsselpaar extrahieren"
 
 #: key_store.cc:456
 #, c-format
@@ -4104,62 +4111,67 @@ msgstr ""
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
 
-#: netxx_pipe.cc:58
+#: netxx_pipe.cc:49 netxx_pipe.cc:181
+#, c-format
+msgid "this transport not supported on native Win32; use Cygwin"
+msgstr "Diese Transportmöglichkeit wird bei der nativem Win32-Version nicht unterstützt; nutzen Sie stattdessen Cygwin."
+
+#: netxx_pipe.cc:62
 #, c-format
 msgid "pipe handle is invalid"
 msgstr "Pipe-Handle ist ungültig"
 
-#: netxx_pipe.cc:197
+#: netxx_pipe.cc:205
 #, c-format
 msgid "CreateNamedPipe(%s,...) call failed: %s"
 msgstr "CreateNamedPipe(%s,...)-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:214
+#: netxx_pipe.cc:222
 #, c-format
 msgid "CreateFile(%s,...) call failed: %s"
 msgstr "CreateFile(%s,...)-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:245
+#: netxx_pipe.cc:253
 #, c-format
 msgid "CreateProcess(%s,...) call failed: %s"
 msgstr "CreateProcess(%s,...)-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:261
+#: netxx_pipe.cc:269
 #, c-format
 msgid "pipe/fork failed: %s"
 msgstr "pipe/fork schlug fehl: %s"
 
-#: netxx_pipe.cc:307
+#: netxx_pipe.cc:315
 #, c-format
 msgid "WriteFile call failed: %s"
 msgstr "WriteFile-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:399
+#: netxx_pipe.cc:407
 #, c-format
 msgid "ReadFile call failed: %s"
 msgstr "ReadFile-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:434
+#: netxx_pipe.cc:442
 #, c-format
 msgid "WaitForMultipleObjects call failed: %s"
 msgstr "WaitForMultipleObjects-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:444
+#: netxx_pipe.cc:452
 #, c-format
 msgid "WaitForSingleObject call failed: %s"
 msgstr "WaitForSingleObject-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:464
+#: netxx_pipe.cc:472
 #, c-format
 msgid "GetOverlappedResult call failed: %s"
 msgstr "GetOverlappedResult-Aufruf schlug fehl: %s"
 
-#: netxx_pipe.cc:587
+#: netxx_pipe.cc:597
 #, c-format
 msgid "timeout reading data %d"
 msgstr "Zeitüberschreitung beim Lesen der Daten %d"
 
-#: netxx_pipe.cc:608
+#: netxx_pipe.cc:618
 #, c-format
 msgid "Failure %s"
 msgstr "Fehler %s"
@@ -4315,10 +4327,11 @@ msgid ""
 "make signatures if possible, 'no' to force use of monotone's internal code, "
 "'only' to force use of ssh-agent, 'check' to sign with both and compare"
 msgstr ""
-"Regelt die Benutzung von ssh-agent. Gültige Argumente sind: 'yes', um ssh-agent zu nutzen, "
-"Signaturen zu erstellen, sofern dies möglich ist; 'no', um das Signieren durch "
-"monotone zu erzwingen; 'only', um die Benutzung von ssh-agent zu erzwingen; "
-"'check', um mit beiden Methoden zu signieren und das Ergebnis zu vergleichen"
+"Regelt die Benutzung von ssh-agent. Gültige Argumente sind: 'yes', um ssh-"
+"agent zu nutzen, Signaturen zu erstellen, sofern dies möglich ist; 'no', um "
+"das Signieren durch monotone zu erzwingen; 'only', um die Benutzung von ssh-"
+"agent zu erzwingen; 'check', um mit beiden Methoden zu signieren und das "
+"Ergebnis zu vergleichen"
 
 #: options_list.hh:240
 #, c-format
@@ -4656,17 +4669,17 @@ msgstr "Unterlauf für query-in-flight-Zähler"
 msgid "conflicting include/exclude on path '%s'"
 msgstr "kollidierende Beschränkung für Pfad '%s'"
 
-#: restrictions.cc:170
+#: restrictions.cc:171
 #, c-format
 msgid "restriction includes unknown path '%s'"
 msgstr "Beschränkung schließt unbekannten Pfad '%s' ein"
 
-#: restrictions.cc:178
+#: restrictions.cc:179
 #, c-format
 msgid "restriction excludes unknown path '%s'"
 msgstr "Beschränkung schließt unbekannten Pfad '%s' aus"
 
-#: restrictions.cc:181
+#: restrictions.cc:182
 #, c-format
 msgid "%d unknown path"
 msgid_plural "%d unknown paths"
@@ -5356,7 +5369,8 @@ msgstr "der leere Zweig-Selektor b: bezieht sich auf den derzeitigen Zweig"
 #: selectors.cc:161
 #, c-format
 msgid "the empty head selector h: refers to the head of the current branch"
-msgstr "der leere Kopf-Selektor h: bezieht sich auf den Kopf des derzeitigen Zweigs"
+msgstr ""
+"der leere Kopf-Selektor h: bezieht sich auf den Kopf des derzeitigen Zweigs"
 
 #: selectors.cc:170
 #, c-format
@@ -5788,7 +5802,7 @@ msgstr "Fehler beim Senden der Nachricht an pageant (%d)"
 msgid "Asked to read more than %u from pageant."
 msgstr "Erhielt Anfrage, mehr als %u Bytes von pageant zu lesen"
 
-#: work.cc:108 work.cc:488 work.cc:521 work.cc:550 work_migration.cc:66
+#: work.cc:108 work.cc:486 work.cc:519 work.cc:548 work_migration.cc:66
 #, c-format
 msgid "workspace required but not found"
 msgstr "Arbeitsverzeichnis benötigt, jedoch nicht gefunden"
@@ -5798,7 +5812,8 @@ msgstr "Arbeitsverzeichnis benötigt, jedoch nicht gefunden"
 msgid ""
 "workspace required but not found\n"
 "%s"
-msgstr "Arbeitsverzeichnis benötigt, jedoch nicht gefunden\n"
+msgstr ""
+"Arbeitsverzeichnis benötigt, jedoch nicht gefunden\n"
 "%s"
 
 #: work.cc:123
@@ -5836,12 +5851,12 @@ msgstr "nicht erkannter Schlüssel '%s' in Optionen-Datei %s - wird ignoriert"
 msgid "Failed to write options file %s: %s"
 msgstr "Konnte Optionen-Datei %s nicht schreiben: %s"
 
-#: work.cc:542
+#: work.cc:540
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: work.cc:776
+#: work.cc:774
 #, c-format
 msgid ""
 "cannot add %s, because %s is recorded as a file in the workspace manifest"
@@ -5849,105 +5864,105 @@ msgstr ""
 "Kann %s nicht hinzufügen, da %s als Datei im  Arbeitsbereich-Manifest "
 "aufgenommen wurde."
 
-#: work.cc:782
+#: work.cc:780
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "füge %s dem Arbeitsbereich-Manifest hinzu"
 
-#: work.cc:820
+#: work.cc:818
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "übergehe ignorierbare Datei %s"
 
-#: work.cc:827
+#: work.cc:825
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "übergehe %s, bereits im Arbeitsbereich festgehalten"
 
-#: work.cc:985
+#: work.cc:983
 #, c-format
 msgid "dropping %s"
 msgstr "entferne %s"
 
-#: work.cc:996 work.cc:1007
+#: work.cc:994 work.cc:1005
 #, c-format
 msgid "path %s already exists"
 msgstr "Pfad %s existiert bereits"
 
-#: work.cc:1025
+#: work.cc:1023
 #, c-format
 msgid "renaming %s to %s"
 msgstr "benenne %s nach %s um"
 
-#: work.cc:1029
+#: work.cc:1027
 #, c-format
 msgid "adding %s"
 msgstr "füge %s hinzu"
 
-#: work.cc:1062
+#: work.cc:1060
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "Datei '%s' existiert nicht"
 
-#: work.cc:1063
+#: work.cc:1061
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "Datei '%s' ist ein Verzeichnis"
 
-#: work.cc:1068
+#: work.cc:1066
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr ""
 "Inhalt der Datei '%s' hat sich geändert, Datei wird nicht überschrieben"
 
-#: work.cc:1069
+#: work.cc:1067
 #, c-format
 msgid "modifying %s"
 msgstr "verändere %s"
 
-#: work.cc:1122
+#: work.cc:1120
 #, c-format
 msgid "cannot drop non-empty directory '%s'"
 msgstr "kann Verzeichnis '%s' nicht entfernen, da es nicht leer ist"
 
-#: work.cc:1152
+#: work.cc:1150
 #, c-format
 msgid "attach node %d blocked by unversioned path '%s'"
 msgstr ""
 "Anfügen des Knotens %d wird blockiert durch den unversionisierten Pfad '%s'"
 
-#: work.cc:1170
+#: work.cc:1168
 #, c-format
 msgid "attach node %d blocked by blocked parent '%s'"
 msgstr ""
 "Anfügen des Knotens %d wird blockiert durch den blockierten Elternpfad '%s'"
 
-#: work.cc:1202
+#: work.cc:1200
 #, c-format
 msgid "%d workspace conflicts"
 msgstr "%d Konflikte im Arbeitsbereich"
 
-#: work.cc:1272
+#: work.cc:1270
 #, c-format
 msgid "missing directory '%s'"
 msgstr "fehlendes Verzeichnis '%s'"
 
-#: work.cc:1277
+#: work.cc:1275
 #, c-format
 msgid "not a directory '%s'"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: work.cc:1290
+#: work.cc:1288
 #, c-format
 msgid "missing file '%s'"
 msgstr "fehlende Datei '%s'"
 
-#: work.cc:1295
+#: work.cc:1293
 #, c-format
 msgid "not a file '%s'"
 msgstr "'%s' ist keine Datei"
 
-#: work.cc:1306
+#: work.cc:1304
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -5967,122 +5982,122 @@ msgstr ""
 " '%s drop --missing' bzw.\n"
 " '%s revert --missing'."
 
-#: work.cc:1464
+#: work.cc:1462
 #, c-format
 msgid "unable to drop the root directory"
 msgstr "kann das Wurzelverzeichnis nicht entfernen"
 
-#: work.cc:1467
+#: work.cc:1465
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "übergehe %s, wird derzeit nicht verfolgt"
 
-#: work.cc:1477
+#: work.cc:1475
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 
-#: work.cc:1492
+#: work.cc:1490
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr ""
 "Das Verzeichnis %s ist nicht leer - es wird von monotone entfernt, aber "
 "nicht gelöscht"
 
-#: work.cc:1503
+#: work.cc:1501
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr ""
 "Die Datei %s wurde verändert - sie wird von monotone entfernt, aber nicht "
 "gelöscht"
 
-#: work.cc:1507
+#: work.cc:1505
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "entferne %s aus dem Arbeitsbereich-Manifest"
 
-#: work.cc:1549 work.cc:1583
+#: work.cc:1547 work.cc:1581
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
 msgstr ""
 "kann Wurzel des Arbeitsbereiches nicht umbenennen (versuchen Sie stattdessen "
 "'%s pivot_root')"
 
-#: work.cc:1552 work.cc:1586
+#: work.cc:1550 work.cc:1584
 #, c-format
 msgid "source file %s is not versioned"
 msgstr "Quell-Datei %s ist nicht versionisiert"
 
-#: work.cc:1567
+#: work.cc:1565
 #, c-format
 msgid "destination path's parent directory %s/ doesn't exist"
 msgstr "Elternverzeichnis %s/ des Zielpfades existiert nicht"
 
-#: work.cc:1577
+#: work.cc:1575
 #, c-format
 msgid "destination %s/ is not a directory"
 msgstr "Ziel %s ist kein Verzeichnis"
 
-#: work.cc:1590
+#: work.cc:1588
 #, c-format
 msgid "destination %s already exists in the workspace manifest"
 msgstr "Ziel %s existiert bereits im Manifest des Arbeitsbereichs"
 
-#: work.cc:1604
+#: work.cc:1602
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "benenne %s zu %s im Arbeitsbereich-Manifest um"
 
-#: work.cc:1629
+#: work.cc:1627
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s existiert nicht im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1633
+#: work.cc:1631
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr ""
 "Ziel %s existiert bereits im Arbeitsbereich, übergehe Umbenennung im "
 "Dateisystem"
 
-#: work.cc:1638
+#: work.cc:1636
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
 msgstr ""
 "%s existiert im Gegensatz zu %s nicht im Arbeitsbereich, übergehe "
 "Umbenennung im Dateisystem"
 
-#: work.cc:1659
+#: work.cc:1657
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' ist nicht unter "
 "Versionkontrolle oder existiert nicht"
 
-#: work.cc:1662
+#: work.cc:1660
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "das neu vorgeschlagene Wurzelverzeichnis '%s' ist kein Verzeichnis"
 
-#: work.cc:1665
+#: work.cc:1663
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' beinhaltet den ungültigen Pfad "
 "%s"
 
-#: work.cc:1675
+#: work.cc:1673
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 "das Verzeichnis '%s' ist nicht unter Versionskontrolle oder existiert nicht"
 
-#: work.cc:1681
+#: work.cc:1679
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' ist im Weg"
 
-#: work.cc:1722
+#: work.cc:1720
 #, c-format
 msgid ""
 "workspace is locked\n"
