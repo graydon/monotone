@@ -1,5 +1,15 @@
+// Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
+// This is made available under the GNU GPL v2 or later.
+
 #ifndef __OPTIONS_HH__
 #define __OPTIONS_HH__
+
+/*
+ * This defines 'struct options', which includes the variables and options
+ * defined in options_list.hh as members. Options and optsets are available
+ * statically as options::opts::<name>, and option variables are available
+ * as options::<name>.
+ */
 
 #include <list>
 
