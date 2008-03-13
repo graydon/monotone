@@ -1136,11 +1136,10 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   if (global_sanity.debug_p())
     {
-      hexenc<id> mid(encode_hexenc(restricted_rev.new_manifest.inner()()));
-      hexenc<id> rid(encode_hexenc(restricted_rev_id.inner()()));
-
       L(FL("new manifest '%s'\n"
-           "new revision '%s'\n") % mid % rid);
+           "new revision '%s'\n")
+        % encode_hexenc(restricted_rev.new_manifest.inner()())
+        % encode_hexenc(restricted_rev_id.inner()()));
     }
 
   process_commit_message_args(app.opts, log_message_given, log_message);

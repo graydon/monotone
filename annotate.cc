@@ -402,7 +402,8 @@ annotate_context::build_revisions_to_annotations
                                     true, false, "T"));
 
       string result;
-      result.append(encode_hexenc(i->inner()()).substr(0, 8));
+      string hex_rev_str(encode_hexenc(i->inner()()));
+      result.append(hex_rev_str.substr(0, 8));
       result.append(".. by ");
       result.append(author);
       result.append(" ");
@@ -563,7 +564,8 @@ annotate_lineage_mapping::build_parent_lineage
       //if (verbose)
       if (file_interned[i] == 14)
         L(FL("%s file_interned[%d]: %ld\tlcs[%d]: %ld\tmapping[%d]: %ld")
-          % parent_rev % i % file_interned[i] % j % lcs[j] % i % mapping[i]);
+          % encode_hexenc(parent_rev.inner()())
+          % i % file_interned[i] % j % lcs[j] % i % mapping[i]);
 
       if (file_interned[i] == lcs[j])
         {
@@ -593,7 +595,8 @@ annotate_lineage_mapping::build_parent_lineage
   // determine the mapping for parent lineage
   if (verbose)
     L(FL("build_parent_lineage: building mapping now "
-         "for parent_rev %s\n") % parent_rev);
+         "for parent_rev %s\n")
+      % encode_hexenc(parent_rev.inner()()));
 
   i = j = 0;
 

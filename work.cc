@@ -33,6 +33,7 @@
 #include "app_state.hh"
 #include "database.hh"
 #include "roster.hh"
+#include "transforms.hh"
 
 using std::deque;
 using std::exception;
@@ -239,7 +240,8 @@ get_roster_for_rid(database & db,
   else
     {
       N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
+        F("base revision %s does not exist in database")
+          % encode_hexenc(rid.inner()()));
       db.get_roster(rid, cr);
     }
   L(FL("base roster has %d entries") % cr.first->all_nodes().size());

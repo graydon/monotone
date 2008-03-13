@@ -873,7 +873,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           ostringstream out;
           if (app.opts.brief)
             {
-              out << rid;
+              out << encode_hexenc(rid.inner()());
               log_certs(project, out, rid, author_name);
               if (app.opts.no_graph)
                 log_certs(project, out, rid, date_name);

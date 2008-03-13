@@ -75,10 +75,7 @@ struct merkle_node
   void get_hex_prefix(hexenc<prefix> & hpref) const;
 
   void get_raw_slot(size_t slot, id & val) const;
-  void get_hex_slot(size_t slot, hexenc<id> & val) const;
-
   void set_raw_slot(size_t slot, id const & val);
-  void set_hex_slot(size_t slot, hexenc<id> const & val);
 
   void extended_prefix(size_t slot, boost::dynamic_bitset<unsigned char> & extended) const;
   void extended_raw_prefix(size_t slot, prefix & extended) const;

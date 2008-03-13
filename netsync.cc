@@ -1186,7 +1186,7 @@ session::queue_refine_cmd(refinement_type ty, merkle_node const & node)
   netcmd_item_type_to_string(node.type, typestr);
   L(FL("queueing refinement %s of %s node '%s', level %d")
     % (ty == refinement_query ? "query" : "response")
-    % typestr % hpref % static_cast<int>(node.level));
+    % typestr % hpref() % static_cast<int>(node.level));
   netcmd cmd;
   cmd.write_refine_cmd(ty, node);
   write_netcmd_and_try_flush(cmd);
@@ -1200,17 +1200,19 @@ session::queue_data_cmd(netcmd_item_type type,
   string typestr;
   netcmd_item_type_to_string(type, typestr);
   hexenc<id> hid;
-  encode_hexenc(item, hid);
+
+  if (global_sanity.debug_p())
+    encode_hexenc(item, hid);
 
   if (role == sink_role)
     {
       L(FL("not queueing %s data for '%s' as we are in pure sink role")
-        % typestr % hid);
+        % typestr % hid());
       return;
     }
 
   L(FL("queueing %d bytes of data for %s item '%s'")
-    % dat.size() % typestr % hid);
+    % dat.size() % typestr % hid());
 
   netcmd cmd;
   // TODO: This pair of functions will make two copies of a large
@@ -1235,20 +1237,24 @@ session::queue_delta_cmd(netcmd_item_type type,
   I(type == file_item);
   string typestr;
   netcmd_item_type_to_string(type, typestr);
-  hexenc<id> base_hid;
-  encode_hexenc(base, base_hid);
-  hexenc<id> ident_hid;
-  encode_hexenc(ident, ident_hid);
+  hexenc<id> base_hid,
+             ident_hid;
+
+  if (global_sanity.debug_p())
+    {
+      encode_hexenc(base, base_hid);
+      encode_hexenc(ident, ident_hid);
+    }
 
   if (role == sink_role)
     {
       L(FL("not queueing %s delta '%s' -> '%s' as we are in pure sink role")
-        % typestr % base_hid % ident_hid);
+        % typestr % base_hid() % ident_hid());
       return;
     }
 
   L(FL("queueing %s delta '%s' -> '%s'")
-    % typestr % base_hid % ident_hid);
+    % typestr % base_hid() % ident_hid());
   netcmd cmd;
   cmd.write_delta_cmd(type, base, ident, del);
   write_netcmd_and_try_flush(cmd);
@@ -1840,7 +1846,7 @@ session::load_data(netcmd_item_type type,
 
   if (!data_exists(type, item))
     throw bad_decode(F("%s with hash '%s' does not exist in our database")
-                     % typestr % hitem);
+                     % typestr % hitem());
 
   switch (type)
     {
@@ -1857,7 +1863,7 @@ session::load_data(netcmd_item_type type,
         rsa_keypair_id keyid;
         rsa_pub_key pub;
         project.db.get_pubkey(item, keyid, pub);
-        L(FL("public key '%s' is also called '%s'") % hitem % keyid);
+        L(FL("public key '%s' is also called '%s'") % hitem() % keyid);
         write_pubkey(keyid, pub, out);
       }
       break;
@@ -1905,7 +1911,7 @@ session::process_data_cmd(netcmd_item_type type,
   note_item_arrived(type, item);
   if (data_exists(type, item))
     {
-      L(FL("%s '%s' already exists in our database") % typestr % hitem);
+      L(FL("%s '%s' already exists in our database") % typestr % hitem());
       if (type == epoch_item)
         maybe_note_epochs_finished();
       return true;
@@ -1962,11 +1968,10 @@ session::process_data_cmd(netcmd_item_type type,
         key_hash_code(keyid, pub, tmp);
         if (! (tmp == item))
           {
-            string htmp(encode_hexenc(tmp())),
-                   hitem(encode_hexenc(item()));
             throw bad_decode(F("hash check failed for public key '%s' (%s);"
                                " wanted '%s' got '%s'")
-                             % hitem % keyid % hitem % htmp);
+                               % hitem() % keyid % hitem()
+                               % encode_hexenc(tmp()));
           }
         if (project.db.put_key(keyid, pub))
           written_keys.push_back(keyid);
@@ -1983,7 +1988,7 @@ session::process_data_cmd(netcmd_item_type type,
         id tmp;
         cert_hash_code(c, tmp);
         if (! (tmp == item))
-          throw bad_decode(F("hash check failed for revision cert '%s'") % hitem);
+          throw bad_decode(F("hash check failed for revision cert '%s'") % hitem());
         if (project.db.put_revision_cert(revision<cert>(c)))
           written_certs.push_back(c);
       }
@@ -1991,7 +1996,7 @@ session::process_data_cmd(netcmd_item_type type,
 
     case revision_item:
       {
-        L(FL("received revision '%s'") % hitem);
+        L(FL("received revision '%s'") % hitem());
         if (project.db.put_revision(revision_id(item), revision_data(dat)))
           written_revisions.push_back(revision_id(item));
       }
@@ -1999,7 +2004,7 @@ session::process_data_cmd(netcmd_item_type type,
 
     case file_item:
       {
-        L(FL("received file '%s'") % hitem);
+        L(FL("received file '%s'") % hitem());
         project.db.put_file(file_id(item), file_data(dat));
       }
       break;
@@ -2066,9 +2071,6 @@ session::send_all_data(netcmd_item_type ty, set<id> const & items)
   for (set<id>::const_iterator i = tmp.begin();
        i != tmp.end(); ++i)
     {
-      hexenc<id> hitem;
-      encode_hexenc(*i, hitem);
-
       if (data_exists(ty, *i))
         {
           string out;
@@ -3260,9 +3262,12 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
           project.db.get_key(*key, pub);
           id keyhash;
           key_hash_code(*key, pub, keyhash);
-          // FIXME: conditional encode_hexenc
-          hexenc<id> hkeyhash(encode_hexenc(keyhash()));
-          L(FL("noting key '%s' = '%s' to send") % *key % hkeyhash);
+
+          if (global_sanity.debug_p())
+            L(FL("noting key '%s' = '%s' to send")
+              % *key
+              % encode_hexenc(keyhash()));
+
           key_refiner.note_local_item(keyhash);
           ++keys_ticker;
         }
