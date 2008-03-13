@@ -14,9 +14,6 @@
 #include <sstream>
 #include "vector.hh"
 
-#include <boost/tokenizer.hpp>
-#include <boost/scoped_array.hpp>
-
 #include "botan/botan.h"
 #include "botan/sha160.h"
 #include "gzip.hh"
@@ -31,8 +28,6 @@
 #include "char_classifiers.hh"
 
 using std::string;
-
-using boost::scoped_array;
 
 // this file contans various sorts of string transformations. each
 // transformation should be self-explanatory from its type signature. see
