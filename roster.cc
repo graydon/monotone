@@ -266,7 +266,7 @@ dump(node_t const & n, string & out)
   oss << "type: ";
   if (is_file_t(n))
     {
-      string fcontent = decode_hexenc(
+      string fcontent = encode_hexenc(
         downcast_to_file_t(n)->content.inner()());
       oss << "file\n"
           << "content: " << fcontent << '\n';
@@ -3500,10 +3500,10 @@ namespace
     return s;
   }
 
-  revision_id old_rid(decode_hexenc("0000000000000000000000000000000000000000"));
-  revision_id left_rid(decode_hexenc("1111111111111111111111111111111111111111"));
-  revision_id right_rid(decode_hexenc("2222222222222222222222222222222222222222"));
-  revision_id new_rid(decode_hexenc("4444444444444444444444444444444444444444"));
+  revision_id old_rid(string(constants::idlen_bytes, '\x00'));
+  revision_id left_rid(string(constants::idlen_bytes, '\x11'));
+  revision_id right_rid(string(constants::idlen_bytes, '\x22'));
+  revision_id new_rid(string(constants::idlen_bytes, '\x44'));
 
 ////////////////
 // These classes encapsulate information about all the different scalars
@@ -3577,7 +3577,7 @@ namespace
                          roster_t & roster, marking_map & markings)
     {
       make_file(scalar_origin_rid, nid,
-                file_id(decode_hexenc("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                file_id(string(constants::idlen_bytes, '\xaa')),
                 roster, markings);
     }
     static void make_file(revision_id const & scalar_origin_rid, node_id nid,
@@ -3615,13 +3615,13 @@ namespace
     {
       safe_insert(values,
                   make_pair(scalar_a,
-                            file_id(decode_hexenc("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))));
+                            file_id(string(constants::idlen_bytes, '\xaa'))));
       safe_insert(values,
                   make_pair(scalar_b,
-                            file_id(decode_hexenc("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))));
+                            file_id(string(constants::idlen_bytes, '\xbb'))));
       safe_insert(values,
                   make_pair(scalar_c,
-                            file_id(decode_hexenc("cccccccccccccccccccccccccccccccccccccccc"))));
+                            file_id(string(constants::idlen_bytes, '\xcc'))));
     }
     virtual void
     set(revision_id const & scalar_origin_rid, scalar_val val,
@@ -4495,8 +4495,8 @@ UNIT_TEST(roster, write_roster)
   file_path fo = file_path_internal("fo");
   file_path xx = file_path_internal("xx");
 
-  file_id f1(decode_hexenc("1111111111111111111111111111111111111111"));
-  revision_id rid(decode_hexenc("1234123412341234123412341234123412341234"));
+  file_id f1(string(constants::idlen_bytes, '\x11'));
+  revision_id rid(string(constants::idlen_bytes, '\x44'));
   node_id nid;
 
   // if adding new nodes, add them at the end to keep the node_id order
@@ -4583,46 +4583,46 @@ UNIT_TEST(roster, write_roster)
                       "\n"
                       "      dir \"\"\n"
                       "    ident \"1\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"fo\"\n"
                       "    ident \"4\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"foo\"\n"
                       "    ident \"2\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"foo/ang\"\n"
                       "    ident \"6\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "        file \"foo/bar\"\n"
                       "     content [1111111111111111111111111111111111111111]\n"
                       "       ident \"5\"\n"
                       "        attr \"fascist\" \"tidiness\"\n"
-                      "       birth [1234123412341234123412341234123412341234]\n"
-                      "   path_mark [1234123412341234123412341234123412341234]\n"
-                      "content_mark [1234123412341234123412341234123412341234]\n"
-                      "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                      "       birth [4444444444444444444444444444444444444444]\n"
+                      "   path_mark [4444444444444444444444444444444444444444]\n"
+                      "content_mark [4444444444444444444444444444444444444444]\n"
+                      "   attr_mark \"fascist\" [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "         dir \"foo/zoo\"\n"
                       "       ident \"7\"\n"
                       "dormant_attr \"regime\"\n"
-                      "       birth [1234123412341234123412341234123412341234]\n"
-                      "   path_mark [1234123412341234123412341234123412341234]\n"
-                      "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                      "       birth [4444444444444444444444444444444444444444]\n"
+                      "   path_mark [4444444444444444444444444444444444444444]\n"
+                      "   attr_mark \"regime\" [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"xx\"\n"
                       "    ident \"3\"\n"
                       "     attr \"say\" \"hello\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
-                      "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
+                      "attr_mark \"say\" [4444444444444444444444444444444444444444]\n"
                       ));
     MM(expected);
 

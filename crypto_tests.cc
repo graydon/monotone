@@ -1057,7 +1057,7 @@ UNIT_TEST(crypto, calculate_ident)
   hexenc<id> houtput2;
 
   //SHA Short Message Test
-  data input(decode_hexenc("5e"));
+  data input("\x5e");
   string ident("5e6f80a34a9798cafc6a5db96cc57ba4c4db59c2");
 
   calculate_ident(input, output);

@@ -17,7 +17,7 @@
 
 #ifdef BUILD_UNIT_TESTS
 # include "unit_tests.hh"
-# include "transforms.hh"
+# include "constants.hh"
 #else
 # include "work.hh"
 #endif
@@ -489,46 +489,49 @@ using std::string;
 #define fp_yyf file_path_internal("y/y/f")
 #define fp_yyg file_path_internal("y/y/g")
 
-node_id nid_root;
-node_id nid_f;
-node_id nid_g;
+namespace
+{
+  node_id nid_root;
+  node_id nid_f;
+  node_id nid_g;
 
-node_id nid_x;
-node_id nid_xf;
-node_id nid_xg;
-node_id nid_xx;
-node_id nid_xxf;
-node_id nid_xxg;
-node_id nid_xy;
-node_id nid_xyf;
-node_id nid_xyg;
+  node_id nid_x;
+  node_id nid_xf;
+  node_id nid_xg;
+  node_id nid_xx;
+  node_id nid_xxf;
+  node_id nid_xxg;
+  node_id nid_xy;
+  node_id nid_xyf;
+  node_id nid_xyg;
 
-node_id nid_y;
-node_id nid_yf;
-node_id nid_yg;
-node_id nid_yx;
-node_id nid_yxf;
-node_id nid_yxg;
-node_id nid_yy;
-node_id nid_yyf;
-node_id nid_yyg;
+  node_id nid_y;
+  node_id nid_yf;
+  node_id nid_yg;
+  node_id nid_yx;
+  node_id nid_yxf;
+  node_id nid_yxg;
+  node_id nid_yy;
+  node_id nid_yyf;
+  node_id nid_yyg;
 
-file_id fid_f(decode_hexenc("1000000000000000000000000000000000000000"));
-file_id fid_g(decode_hexenc("2000000000000000000000000000000000000000"));
+  file_id fid_f  (string(constants::idlen_bytes, '\x11'));
+  file_id fid_g  (string(constants::idlen_bytes, '\x22'));
 
-file_id fid_xf(decode_hexenc("3000000000000000000000000000000000000000"));
-file_id fid_xg(decode_hexenc("4000000000000000000000000000000000000000"));
-file_id fid_xxf(decode_hexenc("5000000000000000000000000000000000000000"));
-file_id fid_xxg(decode_hexenc("6000000000000000000000000000000000000000"));
-file_id fid_xyf(decode_hexenc("7000000000000000000000000000000000000000"));
-file_id fid_xyg(decode_hexenc("8000000000000000000000000000000000000000"));
+  file_id fid_xf (string(constants::idlen_bytes, '\x33'));
+  file_id fid_xg (string(constants::idlen_bytes, '\x44'));
+  file_id fid_xxf(string(constants::idlen_bytes, '\x55'));
+  file_id fid_xxg(string(constants::idlen_bytes, '\x66'));
+  file_id fid_xyf(string(constants::idlen_bytes, '\x77'));
+  file_id fid_xyg(string(constants::idlen_bytes, '\x88'));
 
-file_id fid_yf(decode_hexenc("9000000000000000000000000000000000000000"));
-file_id fid_yg(decode_hexenc("a000000000000000000000000000000000000000"));
-file_id fid_yxf(decode_hexenc("b000000000000000000000000000000000000000"));
-file_id fid_yxg(decode_hexenc("c000000000000000000000000000000000000000"));
-file_id fid_yyf(decode_hexenc("d000000000000000000000000000000000000000"));
-file_id fid_yyg(decode_hexenc("e000000000000000000000000000000000000000"));
+  file_id fid_yf (string(constants::idlen_bytes, '\x99'));
+  file_id fid_yg (string(constants::idlen_bytes, '\xaa'));
+  file_id fid_yxf(string(constants::idlen_bytes, '\xbb'));
+  file_id fid_yxg(string(constants::idlen_bytes, '\xcc'));
+  file_id fid_yyf(string(constants::idlen_bytes, '\xdd'));
+  file_id fid_yyg(string(constants::idlen_bytes, '\xee'));
+}
 
 static void setup(roster_t & roster)
 {

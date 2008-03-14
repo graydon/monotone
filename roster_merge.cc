@@ -1281,8 +1281,7 @@ roster_merge(roster_t const & left_parent,
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-
-#include "transforms.hh"
+#include "constants.hh"
 #include "roster_delta.hh"
 
 // cases for testing:
@@ -1382,8 +1381,8 @@ void string_to_set(string const & from, set<revision_id> & to)
   to.clear();
   for (string::const_iterator i = from.begin(); i != from.end(); ++i)
     {
-      string rid_str(40, *i);
-      to.insert(revision_id(decode_hexenc(rid_str)));
+      char label = (*i - '0') << 4 + (*i - '0');
+      to.insert(revision_id(string(constants::idlen_bytes, label)));
     }
 }
 
@@ -1439,8 +1438,8 @@ test_a_scalar_merge_impl(scalar_val left_val, string const & left_marks_str,
   scalar.check_result(left_val, right_val, result, expected_outcome);
 }
 
-static const revision_id root_rid = revision_id(decode_hexenc("0000000000000000000000000000000000000000"));
-static const file_id arbitrary_file = file_id(decode_hexenc("0000000000000000000000000000000000000000"));
+static const revision_id root_rid(string(constants::idlen_bytes, '\0'));
+static const file_id arbitrary_file(string(constants::idlen_bytes, '\0'));
 
 struct base_scalar
 {
@@ -1668,9 +1667,8 @@ struct file_content_scalar : public virtual file_scalar
   file_id content_for(scalar_val val)
   {
     I(val != scalar_conflict);
-    return file_id(decode_hexenc((val == scalar_a)
-                    ? "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                    : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+    return file_id(string(constants::idlen_bytes,
+                          (val == scalar_a) ? '\xaa' : '\xbb'));
   }
 
   void
@@ -1702,7 +1700,7 @@ struct file_content_scalar : public virtual file_scalar
         I(null_id(content));
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
-        content = file_id(decode_hexenc("ffffffffffffffffffffffffffffffffffffffff"));
+        content = file_id(string(constants::idlen_bytes, '\xff'));
         result.file_content_conflicts.pop_back();
         break;
       }
@@ -1853,16 +1851,15 @@ UNIT_TEST(roster_merge, scalar_merges)
 
 namespace
 {
-  const revision_id a_uncommon1 = revision_id(decode_hexenc("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-  const revision_id a_uncommon2 = revision_id(decode_hexenc("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
-  const revision_id b_uncommon1 = revision_id(decode_hexenc("cccccccccccccccccccccccccccccccccccccccc"));
-  const revision_id b_uncommon2 = revision_id(decode_hexenc("dddddddddddddddddddddddddddddddddddddddd"));
-  const revision_id common1 = revision_id(decode_hexenc("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"));
-  const revision_id common2 = revision_id(decode_hexenc("ffffffffffffffffffffffffffffffffffffffff"));
+  const revision_id a_uncommon1(string(constants::idlen_bytes, '\xaa'));
+  const revision_id a_uncommon2(string(constants::idlen_bytes, '\xbb'));
+  const revision_id b_uncommon1(string(constants::idlen_bytes, '\xcc'));
+  const revision_id b_uncommon2(string(constants::idlen_bytes, '\xdd'));
+  const revision_id common1(string(constants::idlen_bytes, '\xee'));
+  const revision_id common2(string(constants::idlen_bytes, '\xff'));
 
-  const file_id fid1 = file_id(decode_hexenc("1111111111111111111111111111111111111111"));
-  const file_id fid2 = file_id(decode_hexenc("2222222222222222222222222222222222222222"));
-
+  const file_id fid1(string(constants::idlen_bytes, '\x11'));
+  const file_id fid2(string(constants::idlen_bytes, '\x22'));
 }
 
 static void
