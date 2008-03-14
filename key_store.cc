@@ -17,6 +17,7 @@
 #include "botan/rsa.h"
 #include "botan/keypair.h"
 #include "botan/pem.h"
+#include "botan_pipe_cache.hh"
 
 using std::make_pair;
 using std::istringstream;
@@ -377,9 +378,8 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
   shared_ptr<PKCS8_PrivateKey> pkcs8_key;
   try // with empty passphrase
     {
-      Pipe p;
-      p.process_msg(kp.priv());
-      pkcs8_key.reset(Botan::PKCS8::load_key(p, ""));
+      Botan::DataSource_Memory ds(kp.priv());
+      pkcs8_key.reset(Botan::PKCS8::load_key(ds, ""));
     }
   catch (Botan::Exception & e)
     {
@@ -397,9 +397,8 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
       for (;;)
         try
           {
-            Pipe p;
-            p.process_msg(kp.priv());
-            pkcs8_key.reset(Botan::PKCS8::load_key(p, phrase()));
+            Botan::DataSource_Memory ds(kp.priv());
+            pkcs8_key.reset(Botan::PKCS8::load_key(ds, phrase()));
             break;
           }
         catch (Botan::Exception & e)
@@ -469,22 +468,23 @@ key_store::create_key_pair(database & db,
   // serialize and maybe encrypt the private key
   keypair kp;
   SecureVector<Botan::byte> pubkey, privkey;
-  Pipe p;
-  p.start_msg();
+
+  unfiltered_pipe->start_msg();
   if ((*maybe_passphrase)().length())
-    Botan::PKCS8::encrypt_key(priv, p,
+    Botan::PKCS8::encrypt_key(priv, *unfiltered_pipe,
                               (*maybe_passphrase)(),
                               "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                               Botan::RAW_BER);
   else
-    Botan::PKCS8::encode(priv, p);
-  kp.priv = rsa_priv_key(p.read_all_as_string());
+    Botan::PKCS8::encode(priv, *unfiltered_pipe);
+  unfiltered_pipe->end_msg();
+  kp.priv = rsa_priv_key(unfiltered_pipe->read_all_as_string(Pipe::LAST_MESSAGE));
 
   // serialize the public key
-  Pipe p2;
-  p2.start_msg();
-  Botan::X509::encode(priv, p2, Botan::RAW_BER);
-  kp.pub = rsa_pub_key(p2.read_all_as_string());
+  unfiltered_pipe->start_msg();
+  Botan::X509::encode(priv, *unfiltered_pipe, Botan::RAW_BER);
+  unfiltered_pipe->end_msg();
+  kp.pub = rsa_pub_key(unfiltered_pipe->read_all_as_string(Pipe::LAST_MESSAGE));
 
   // convert to storage format
   L(FL("generated %d-byte public key\n"
@@ -519,12 +519,12 @@ key_store::change_key_passphrase(rsa_keypair_id const & id)
   utf8 new_phrase;
   get_passphrase(new_phrase, id, true, false);
 
-  Pipe p;
-  p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv, p, new_phrase(),
+  unfiltered_pipe->start_msg();
+  Botan::PKCS8::encrypt_key(*priv, *unfiltered_pipe, new_phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
-  kp.priv = rsa_priv_key(p.read_all_as_string());
+  unfiltered_pipe->end_msg();
+  kp.priv = rsa_priv_key(unfiltered_pipe->read_all_as_string(Pipe::LAST_MESSAGE));
 
   delete_key(id);
   put_key_pair(id, kp);
@@ -684,6 +684,7 @@ key_store::export_key_for_agent(rsa_keypair_id const & id,
   utf8 new_phrase;
   get_passphrase(new_phrase, id, true, false);
 
+  // This pipe cannot sensibly be recycled.
   Pipe p(new Botan::DataSink_Stream(os));
   p.start_msg();
   if (new_phrase().length())
@@ -734,10 +735,9 @@ key_store_state::migrate_old_key_pair
         // recognize an unencrypted, raw-BER blob as such, but gets it
         // right if it's PEM-coded.
         SecureVector<Botan::byte> arc4_decrypt(arc4_decryptor.read_all());
-        Pipe p;
-        p.process_msg(Botan::PEM_Code::encode(arc4_decrypt, "PRIVATE KEY"));
-
-        pkcs8_key.reset(Botan::PKCS8::load_key(p));
+        Botan::DataSource_Memory ds(Botan::PEM_Code::encode(arc4_decrypt,
+                                                            "PRIVATE KEY"));
+        pkcs8_key.reset(Botan::PKCS8::load_key(ds));
         break;
       }
     catch (Botan::Exception & e)
@@ -758,20 +758,20 @@ key_store_state::migrate_old_key_pair
   I(priv_key);
 
   // now we can write out the new key
-  Pipe p;
-  p.start_msg();
-  Botan::PKCS8::encrypt_key(*priv_key, p, phrase(),
+  unfiltered_pipe->start_msg();
+  Botan::PKCS8::encrypt_key(*priv_key, *unfiltered_pipe, phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
-  kp.priv = rsa_priv_key(p.read_all_as_string());
+  unfiltered_pipe->end_msg();
+  kp.priv = rsa_priv_key(unfiltered_pipe->read_all_as_string(Pipe::LAST_MESSAGE));
 
   // also the public key (which is derivable from the private key; asking
   // Botan for the X.509 encoding of the private key implies that we want
   // it to derive and produce the public key)
-  Pipe p2;
-  p2.start_msg();
-  Botan::X509::encode(*priv_key, p2, Botan::RAW_BER);
-  kp.pub = rsa_pub_key(p2.read_all_as_string());
+  unfiltered_pipe->start_msg();
+  Botan::X509::encode(*priv_key, *unfiltered_pipe, Botan::RAW_BER);
+  unfiltered_pipe->end_msg();
+  kp.pub = rsa_pub_key(unfiltered_pipe->read_all_as_string(Pipe::LAST_MESSAGE));
 
   // if the database had a public key entry for this key, make sure it
   // matches what we derived from the private key entry, but don't abort the
