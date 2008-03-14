@@ -558,14 +558,15 @@ calculate_ident(file_path const & file,
                 file_id & ident)
 {
   // no conversions necessary, use streaming form
-  static cached_botan_pipe p(new Botan::Pipe(new Botan::Hash_Filter("SHA-160"));
+  static cached_botan_pipe
+    p(new Botan::Pipe(new Botan::Hash_Filter("SHA-160")));
 
   // Best to be safe and check it isn't a dir.
   assert_path_is_file(file);
   Botan::DataSource_Stream infile(file.as_external(), true);
   p->process_msg(infile);
 
-      ident = file_id(p->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
+  ident = file_id(p->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
 }
 
 // Local Variables:
