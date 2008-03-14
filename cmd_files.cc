@@ -60,9 +60,9 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
     throw usage(execid);
 
   file_id 
-    anc_id(idx(args, 0)()), 
-    left_id(idx(args, 1)()), 
-    right_id(idx(args, 2)());
+    anc_id(decode_hexenc(idx(args, 0)())), 
+    left_id(decode_hexenc(idx(args, 1)())), 
+    right_id(decode_hexenc(idx(args, 2)()));
 
   file_data anc, left, right;
 
@@ -103,8 +103,8 @@ CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
     & dst_name = idx(args, 1)();
 
   file_id 
-    src_id(idx(args, 2)()), 
-    dst_id(idx(args, 3)());
+    src_id(decode_hexenc(idx(args, 2)())),
+    dst_id(decode_hexenc(idx(args, 3)()));
 
   file_data src, dst;
 
