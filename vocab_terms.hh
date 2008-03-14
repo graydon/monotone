@@ -112,17 +112,13 @@ EXTERN template class base64<data>;
 // instantiate those bits of the stream operator vocab (again) actually in
 // use. "again" since stream operators are friends, not members.
 
-#if 0
-EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<id>   const &);
-#endif
+EXTERN template std::ostream & operator<< <>(std::ostream &,   hexenc<id> const &);
 
-
-#if 0
-
-// EXTERN template std::ostream & operator<< <>(std::ostream &,           revision<id>   const &);
-
-#endif
-
+EXTERN template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
 

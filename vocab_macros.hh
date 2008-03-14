@@ -131,12 +131,17 @@ public:                                                \
     { return s.get() != other(); }                     \
   friend void verify(ty &);                            \
   friend void verify_full(ty &);                       \
+  friend std::ostream & operator<<(std::ostream &,     \
+                                   ty const &);        \
   struct symtab                                        \
   {                                                    \
     symtab();                                          \
     ~symtab();                                         \
   };                                                   \
 };                                                     \
+std::ostream & operator<<(std::ostream &, ty const &); \
+template <>                                            \
+void dump(ty const &, std::string &);                  \
 inline void verify_full(ty &) {}
 
 
@@ -205,6 +210,10 @@ ty::ty(ty const & other) :                   \
 ty const & ty::operator=(ty const & other)   \
 { s = other.s; ok = other.ok;                \
   verify(*this); return *this; }             \
+                                             \
+  std::ostream & operator<<(std::ostream & o,\
+                            ty const & a)    \
+  { return (o << encode_hexenc(a.s.get())); }\
                                              \
 ty::symtab::symtab()                         \
 { ty ## _tab_active++; }                     \
