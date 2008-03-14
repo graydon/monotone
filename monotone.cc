@@ -19,9 +19,9 @@
 #include "botan/botan.h"
 #include "i18n.h"
 #include "app_state.hh"
+#include "botan_pipe_cache.hh"
 #include "commands.hh"
 #include "sanity.hh"
-#include "cleanup.hh"
 #include "file_io.hh"
 #include "charset.hh"
 #include "ui.hh"
@@ -99,6 +99,11 @@ void localize_monotone()
     }
 }
 
+// define the global objects needed by botan_pipe_cache.hh
+pipe_cache_cleanup * global_pipe_cleanup_object;
+Botan::Pipe * unfiltered_pipe;
+static unsigned char unfiltered_pipe_cleanup_mem[sizeof(cached_botan_pipe)];
+
 option::concrete_option_set
 read_global_options(options & opts, args_vector & args)
 {
@@ -166,9 +171,14 @@ cpp_main(int argc, char ** argv)
       Botan::LibraryInitializer acquire_botan("thread_safe=0 selftest=0 "
                                               "seed_rng=1 use_engines=0 "
                                               "secure_memory=1 fips140=0");
+
+      // and caching for botan pipes
+      pipe_cache_cleanup acquire_botan_pipe_caching;
+      unfiltered_pipe = new Botan::Pipe;
+      new (unfiltered_pipe_cleanup_mem) cached_botan_pipe(unfiltered_pipe);
       
       // Record where we are.  This has to happen before any use of
-      // boost::filesystem.
+      // paths.hh objects.
       save_initial_path();
       
       // decode all argv values into a UTF-8 array
