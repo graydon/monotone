@@ -1,6 +1,6 @@
 /*************************************************
 * Device EntropySource Source File               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 The Botan Project                *
 *************************************************/
 
 #include <botan/es_dev.h>
@@ -8,7 +8,7 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 
 namespace Botan {
@@ -24,7 +24,7 @@ class Device_Reader
       typedef int fd_type;
 
       Device_Reader(fd_type device_fd) : fd(device_fd) {}
-      ~Device_Reader() { ::close(fd); }
+      ~Device_Reader() { if(fd > 0) { ::close(fd); } }
       u32bit get(byte out[], u32bit length);
 
       static fd_type open(const std::string& pathname);

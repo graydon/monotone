@@ -6,6 +6,8 @@
 #include "tester-plaf.hh"
 #include "vector.hh"
 #include "sanity.hh"
+#include "botan/botan.h"
+#include "botan_pipe_cache.hh"
 #include <boost/lexical_cast.hpp>
 #include <botan/hex.h>
 #include <botan/pipe.h>
@@ -39,6 +41,11 @@ struct tester_sanity : public sanity
 };
 tester_sanity real_sanity;
 sanity & global_sanity = real_sanity;
+
+// define the global objects needed by botan_pipe_cache.hh
+pipe_cache_cleanup * global_pipe_cleanup_object;
+Botan::Pipe * unfiltered_pipe;
+static unsigned char unfiltered_pipe_cleanup_mem[sizeof(cached_botan_pipe)];
 
 string basename(string const & s)
 {
@@ -906,7 +913,7 @@ parse_makeflags(char const * mflags,
             }
         }
       else if (int_int_option(i->c_str(), "--jobserver-fds=", jread, jwrite))
-        ;
+        0;
     }
 
   // do not permit -j in MAKEFLAGS to override -j on the command line.
@@ -1006,6 +1013,16 @@ int main(int argc, char **argv)
   try
     {
       global_sanity.initialize(argc, argv, "C");
+      // Set up secure memory allocation etc
+      Botan::LibraryInitializer acquire_botan("thread_safe=0 selftest=0 "
+                                              "seed_rng=1 use_engines=0 "
+                                              "secure_memory=1 fips140=0");
+
+      // and caching for botan pipes
+      pipe_cache_cleanup acquire_botan_pipe_caching;
+      unfiltered_pipe = new Botan::Pipe;
+      new (unfiltered_pipe_cleanup_mem) cached_botan_pipe(unfiltered_pipe);
+
       parse_command_line(argc, argv,
                          want_help, need_help, debugging, list_only,
                          run_one, jobs, tests_to_run);

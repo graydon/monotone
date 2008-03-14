@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "botan/botan.h"
+#include "botan_pipe_cache.hh"
 
 #include "file_io.hh"
 #include "sanity.hh"
@@ -334,11 +335,10 @@ read_data(any_path const & p, data & dat)
   ifstream file(p.as_external().c_str(),
                 ios_base::in | ios_base::binary);
   N(file, F("cannot open file %s for reading") % p);
-  Botan::Pipe pipe;
-  pipe.start_msg();
-  file >> pipe;
-  pipe.end_msg();
-  dat = data(pipe.read_all_as_string());
+  unfiltered_pipe->start_msg();
+  file >> *unfiltered_pipe;
+  unfiltered_pipe->end_msg();
+  dat = data(unfiltered_pipe->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
 }
 
 void read_directory(any_path const & path,
@@ -358,11 +358,10 @@ read_data_stdin(data & dat)
   static bool have_consumed_stdin = false;
   N(!have_consumed_stdin, F("Cannot read standard input multiple times"));
   have_consumed_stdin = true;
-  Botan::Pipe pipe;
-  pipe.start_msg();
-  cin >> pipe;
-  pipe.end_msg();
-  dat = data(pipe.read_all_as_string());
+  unfiltered_pipe->start_msg();
+  cin >> *unfiltered_pipe;
+  unfiltered_pipe->end_msg();
+  dat = data(unfiltered_pipe->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
 }
 
 void
@@ -559,13 +558,14 @@ calculate_ident(file_path const & file,
                 file_id & ident)
 {
   // no conversions necessary, use streaming form
+  static cached_botan_pipe p(new Botan::Pipe(new Botan::Hash_Filter("SHA-160"));
+
   // Best to be safe and check it isn't a dir.
   assert_path_is_file(file);
-  Botan::Pipe p(new Botan::Hash_Filter("SHA-160"));
   Botan::DataSource_Stream infile(file.as_external(), true);
-  p.process_msg(infile);
+  p->process_msg(infile);
 
-  ident = file_id(p.read_all_as_string());
+      ident = file_id(p->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
 }
 
 // Local Variables:

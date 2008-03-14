@@ -25,6 +25,7 @@
 #include "sanity.hh"
 #include "ui.hh"
 #include "current_exception.hh"
+#include "botan_pipe_cache.hh"
 
 using std::map;
 using std::pair;
@@ -149,9 +150,10 @@ void unit_test::do_checkpoint(char const * file, int line,
   log_state(file, line, "CHECKPOINT", message);
 }
 
-static int run_test(test_t test)
-{
-}
+// define the global objects needed by botan_pipe_cache.hh
+pipe_cache_cleanup * global_pipe_cleanup_object;
+Botan::Pipe * unfiltered_pipe;
+static unsigned char unfiltered_pipe_cleanup_mem[sizeof(cached_botan_pipe)];
 
 int main(int argc, char * argv[])
 {
@@ -198,7 +200,14 @@ int main(int argc, char * argv[])
 
 
   // set up some global state before running the tests
-  Botan::LibraryInitializer::initialize();
+  // keep this in sync with monotone.cc, except for selftest=1 here, =0 there
+  Botan::LibraryInitializer acquire_botan("thread_safe=0 selftest=1 "
+                                          "seed_rng=1 use_engines=0 "
+                                          "secure_memory=1 fips140=0");
+  // and caching for botan pipes
+  pipe_cache_cleanup acquire_botan_pipe_caching;
+  unfiltered_pipe = new Botan::Pipe;
+  new (unfiltered_pipe_cleanup_mem) cached_botan_pipe(unfiltered_pipe);
 
   // Make clog and cout use the same streambuf as cerr; this ensures
   // that all messages will appear in the order written, no matter what

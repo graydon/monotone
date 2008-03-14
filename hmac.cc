@@ -12,7 +12,10 @@ using std::string;
 chained_hmac::chained_hmac(netsync_session_key const & session_key, bool active) :
   hmac_length(constants::sha1_digest_length),
   active(active),
-  key(reinterpret_cast<Botan::byte const *>(session_key().data()), session_key().size())
+  key(reinterpret_cast<Botan::byte const *>(session_key().data()),
+      session_key().size()),
+  engine(new Botan::MAC_Filter("HMAC(SHA-160)", key,
+                               constants::sha1_digest_length))
 {
   chain_val.assign(hmac_length, 0x00);
 }
@@ -24,6 +27,9 @@ chained_hmac::set_key(netsync_session_key const & session_key)
     {
       key = Botan::SymmetricKey(reinterpret_cast<Botan::byte const *>(session_key().data()),
 				session_key().size());
+      engine.reset();
+      engine.append(new Botan::MAC_Filter("HMAC(SHA-160)", key,
+                                          constants::sha1_digest_length));
     }
 }
 
@@ -38,14 +44,12 @@ chained_hmac::process(string const & str, size_t pos, size_t n)
 
   I(pos + n <= str.size());
 
-  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-160)", key,
-                                      constants::sha1_digest_length));
-  p.start_msg();
-  p.write(chain_val);
-  p.write(reinterpret_cast<Botan::byte const *>(str.data() + pos), n);
-  p.end_msg();
+  engine.start_msg();
+  engine.write(chain_val);
+  engine.write(reinterpret_cast<Botan::byte const *>(str.data() + pos), n);
+  engine.end_msg();
 
-  chain_val = p.read_all_as_string();
+  chain_val = engine.read_all_as_string(Botan::Pipe::LAST_MESSAGE);
   I(chain_val.size() == constants::sha1_digest_length);
 
   return chain_val;
@@ -62,15 +66,13 @@ chained_hmac::process(string_queue const & str, size_t pos, size_t n)
 
   I(pos + n <= str.size());
 
-  Botan::Pipe p(new Botan::MAC_Filter("HMAC(SHA-160)", key,
-                                      constants::sha1_digest_length));
-  p.start_msg();
-  p.write(chain_val);
-  p.write(reinterpret_cast<Botan::byte const *>(str.front_pointer(n) + pos), n);
-	
-  p.end_msg();
+  engine.start_msg();
+  engine.write(chain_val);
+  engine.write(reinterpret_cast<Botan::byte const *>(str.front_pointer(n)
+                                                     + pos), n);
+  engine.end_msg();
 
-  chain_val = p.read_all_as_string();
+  chain_val = engine.read_all_as_string(Botan::Pipe::LAST_MESSAGE);
   I(chain_val.size() == constants::sha1_digest_length);
 
   return chain_val;
