@@ -60,9 +60,9 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
     throw usage(execid);
 
   file_id 
-    anc_id(idx(args, 0)()), 
-    left_id(idx(args, 1)()), 
-    right_id(idx(args, 2)());
+    anc_id(decode_hexenc(idx(args, 0)())), 
+    left_id(decode_hexenc(idx(args, 1)())), 
+    right_id(decode_hexenc(idx(args, 2)()));
 
   file_data anc, left, right;
 
@@ -103,8 +103,8 @@ CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
     & dst_name = idx(args, 1)();
 
   file_id 
-    src_id(idx(args, 2)()), 
-    dst_id(idx(args, 3)());
+    src_id(decode_hexenc(idx(args, 2)())),
+    dst_id(decode_hexenc(idx(args, 3)()));
 
   file_data src, dst;
 
@@ -180,10 +180,12 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   // find the version of the file requested
   N(roster.has_node(file), 
-    F("no such file '%s' in revision '%s'") % file % rid);
+    F("no such file '%s' in revision '%s'")
+      % file % encode_hexenc(rid.inner()()));
   node_t node = roster.get_node(file);
   N(is_file_t(node), 
-    F("'%s' in revision '%s' is not a file") % file % rid);
+    F("'%s' in revision '%s' is not a file")
+      % file % encode_hexenc(rid.inner()()));
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
@@ -210,9 +212,9 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
       read_data_stdin(dat);
     }
 
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  cout << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 // Name: identify
@@ -241,20 +243,20 @@ CMD_AUTOMATE(identify, N_("PATH"),
   data dat;
   read_data_for_command_line(path, dat);
   
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  
-  output << ident << '\n';
+  cout << encode_hexenc(ident()) << '\n';
 }
 
 static void
 dump_file(database & db, std::ostream & output, file_id & ident)
 {
   N(db.file_version_exists(ident),
-    F("no file version %s found in database") % ident);
+    F("no file version %s found in database")
+      % encode_hexenc(ident.inner()()));
 
   file_data dat;
-  L(FL("dumping file %s") % ident);
+  L(FL("dumping file %s") % encode_hexenc(ident.inner()()));
   db.get_file_version(ident, dat);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
@@ -263,7 +265,8 @@ static void
 dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
 {
   N(db.revision_exists(rid), 
-    F("no such revision '%s'") % rid);
+    F("no such revision '%s'")
+      % encode_hexenc(rid.inner()()));
 
   // Paths are interpreted as standard external ones when we're in a
   // workspace, but as project-rooted external ones otherwise.
@@ -273,11 +276,13 @@ dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
   marking_map marks;
   db.get_roster(rid, roster, marks);
   N(roster.has_node(fp), 
-    F("no file '%s' found in revision '%s'") % fp % rid);
+    F("no file '%s' found in revision '%s'")
+      % fp % encode_hexenc(rid.inner()()));
   
   node_t node = roster.get_node(fp);
   N((!null_node(node->self) && is_file_t(node)), 
-    F("no file '%s' found in revision '%s'") % fp % rid);
+    F("no file '%s' found in revision '%s'")
+      % fp % encode_hexenc(rid.inner()()));
 
   file_t file_node = downcast_to_file_t(node);
   dump_file(db, output, file_node->content);
@@ -332,7 +337,8 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
     F("wrong argument count"));
 
   database db(app);
-  file_id ident(idx(args, 0)());
+  hexenc<id> hident(idx(args, 0)());
+  file_id ident(decode_hexenc(hident()));
   dump_file(db, output, ident);
 }
 

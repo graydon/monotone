@@ -33,6 +33,7 @@
 #include "app_state.hh"
 #include "database.hh"
 #include "roster.hh"
+#include "transforms.hh"
 
 using std::deque;
 using std::exception;
@@ -239,7 +240,8 @@ get_roster_for_rid(database & db,
   else
     {
       N(db.revision_exists(rid),
-        F("base revision %s does not exist in database") % rid);
+        F("base revision %s does not exist in database")
+          % encode_hexenc(rid.inner()()));
       db.get_roster(rid, cr);
     }
   L(FL("base roster has %d entries") % cr.first->all_nodes().size());
@@ -1059,9 +1061,8 @@ editable_working_tree::apply_delta(file_path const & pth,
   require_path_is_file(pth,
                        F("file '%s' does not exist") % pth,
                        F("file '%s' is a directory") % pth);
-  hexenc<id> curr_id_raw;
-  calculate_ident(pth, curr_id_raw);
-  file_id curr_id(curr_id_raw);
+  file_id curr_id;
+  calculate_ident(pth, curr_id);
   E(curr_id == old_id,
     F("content of file '%s' has changed, not overwriting") % pth);
   P(F("modifying %s") % pth);

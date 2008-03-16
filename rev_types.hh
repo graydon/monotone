@@ -39,7 +39,7 @@ struct editable_tree;
 // full definitions in graph.hh
 struct rev_graph;
 struct reconstruction_graph;
-typedef std::vector<std::string> reconstruction_path;
+typedef std::vector<id> reconstruction_path;
 typedef std::multimap<revision_id, revision_id> rev_ancestry_map;
 
 // full definitions in paths.hh

@@ -109,6 +109,39 @@ public:                                                \
 #define hh_ATOMIC_NOVERIFY(ty) hh_ATOMIC(ty)
 
 
+#define hh_ATOMIC_BINARY(ty)                           \
+class ty {                                             \
+  immutable_string s;                                  \
+public:                                                \
+  bool ok;                                             \
+  ty() : ok(false) {}                                  \
+  explicit ty(std::string const & str);                \
+  ty(ty const & other);                                \
+  std::string const & operator()() const               \
+    { return s.get(); }                                \
+  bool operator<(ty const & other) const               \
+    { return s.get() < other(); }                      \
+  ty const & operator=(ty const & other);              \
+  bool operator==(ty const & other) const              \
+    { return s.get() == other(); }                     \
+  bool operator!=(ty const & other) const              \
+    { return s.get() != other(); }                     \
+  friend void verify(ty &);                            \
+  friend void verify_full(ty &);                       \
+  friend std::ostream & operator<<(std::ostream &,     \
+                                   ty const &);        \
+  struct symtab                                        \
+  {                                                    \
+    symtab();                                          \
+    ~symtab();                                         \
+  };                                                   \
+};                                                     \
+std::ostream & operator<<(std::ostream &, ty const &); \
+template <>                                            \
+void dump(ty const &, std::string &);                  \
+inline void verify_full(ty &) {}
+
+
 //CC
 
 
@@ -151,6 +184,41 @@ ty::symtab::~symtab()                        \
 #define cc_ATOMIC_NOVERIFY(ty)               \
 inline void verify(ty const &) {}            \
 cc_ATOMIC(ty)
+
+
+#define cc_ATOMIC_BINARY(ty)                 \
+                                             \
+static symtab_impl ty ## _tab;               \
+static size_t ty ## _tab_active = 0;         \
+                                             \
+ty::ty(string const & str) :                 \
+  s((ty ## _tab_active > 0)                  \
+    ? (ty ## _tab.unique(str))               \
+    : str)                                   \
+{ verify(*this); }                           \
+                                             \
+ty::ty(ty const & other) :                   \
+            s(other.s)                       \
+{ verify(*this); }                           \
+                                             \
+ty const & ty::operator=(ty const & other)   \
+{ s = other.s; ok = other.ok;                \
+  verify(*this); return *this; }             \
+                                             \
+  std::ostream & operator<<(std::ostream & o,\
+                            ty const & a)    \
+  { return (o << encode_hexenc(a.s.get())); }\
+                                             \
+ty::symtab::symtab()                         \
+{ ty ## _tab_active++; }                     \
+                                             \
+ty::symtab::~symtab()                        \
+{                                            \
+  I(ty ## _tab_active > 0);                  \
+  ty ## _tab_active--;                       \
+  if (ty ## _tab_active == 0)                \
+    ty ## _tab.clear();                      \
+}
 
 
 

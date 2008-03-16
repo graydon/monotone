@@ -396,12 +396,15 @@ CMD(clone, "clone", "", CMD_REF(network),
 
       N(project.revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % ident % app.opts.branchname);
+          % encode_hexenc(ident.inner()())
+          % app.opts.branchname);
     }
 
   roster_t empty_roster, current_roster;
 
-  L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
+  L(FL("checking out revision %s to directory %s")
+    % encode_hexenc(ident.inner()())
+    % workspace_dir);
   db.get_roster(ident, current_roster);
 
   workspace work(app);

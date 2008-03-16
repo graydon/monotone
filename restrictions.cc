@@ -17,6 +17,7 @@
 
 #ifdef BUILD_UNIT_TESTS
 # include "unit_tests.hh"
+# include "constants.hh"
 #else
 # include "work.hh"
 #endif
@@ -488,46 +489,49 @@ using std::string;
 #define fp_yyf file_path_internal("y/y/f")
 #define fp_yyg file_path_internal("y/y/g")
 
-node_id nid_root;
-node_id nid_f;
-node_id nid_g;
+namespace
+{
+  node_id nid_root;
+  node_id nid_f;
+  node_id nid_g;
 
-node_id nid_x;
-node_id nid_xf;
-node_id nid_xg;
-node_id nid_xx;
-node_id nid_xxf;
-node_id nid_xxg;
-node_id nid_xy;
-node_id nid_xyf;
-node_id nid_xyg;
+  node_id nid_x;
+  node_id nid_xf;
+  node_id nid_xg;
+  node_id nid_xx;
+  node_id nid_xxf;
+  node_id nid_xxg;
+  node_id nid_xy;
+  node_id nid_xyf;
+  node_id nid_xyg;
 
-node_id nid_y;
-node_id nid_yf;
-node_id nid_yg;
-node_id nid_yx;
-node_id nid_yxf;
-node_id nid_yxg;
-node_id nid_yy;
-node_id nid_yyf;
-node_id nid_yyg;
+  node_id nid_y;
+  node_id nid_yf;
+  node_id nid_yg;
+  node_id nid_yx;
+  node_id nid_yxf;
+  node_id nid_yxg;
+  node_id nid_yy;
+  node_id nid_yyf;
+  node_id nid_yyg;
 
-file_id fid_f(string("1000000000000000000000000000000000000000"));
-file_id fid_g(string("2000000000000000000000000000000000000000"));
+  file_id fid_f  (string(constants::idlen_bytes, '\x11'));
+  file_id fid_g  (string(constants::idlen_bytes, '\x22'));
 
-file_id fid_xf(string("3000000000000000000000000000000000000000"));
-file_id fid_xg(string("4000000000000000000000000000000000000000"));
-file_id fid_xxf(string("5000000000000000000000000000000000000000"));
-file_id fid_xxg(string("6000000000000000000000000000000000000000"));
-file_id fid_xyf(string("7000000000000000000000000000000000000000"));
-file_id fid_xyg(string("8000000000000000000000000000000000000000"));
+  file_id fid_xf (string(constants::idlen_bytes, '\x33'));
+  file_id fid_xg (string(constants::idlen_bytes, '\x44'));
+  file_id fid_xxf(string(constants::idlen_bytes, '\x55'));
+  file_id fid_xxg(string(constants::idlen_bytes, '\x66'));
+  file_id fid_xyf(string(constants::idlen_bytes, '\x77'));
+  file_id fid_xyg(string(constants::idlen_bytes, '\x88'));
 
-file_id fid_yf(string("9000000000000000000000000000000000000000"));
-file_id fid_yg(string("a000000000000000000000000000000000000000"));
-file_id fid_yxf(string("b000000000000000000000000000000000000000"));
-file_id fid_yxg(string("c000000000000000000000000000000000000000"));
-file_id fid_yyf(string("d000000000000000000000000000000000000000"));
-file_id fid_yyg(string("e000000000000000000000000000000000000000"));
+  file_id fid_yf (string(constants::idlen_bytes, '\x99'));
+  file_id fid_yg (string(constants::idlen_bytes, '\xaa'));
+  file_id fid_yxf(string(constants::idlen_bytes, '\xbb'));
+  file_id fid_yxg(string(constants::idlen_bytes, '\xcc'));
+  file_id fid_yyf(string(constants::idlen_bytes, '\xdd'));
+  file_id fid_yyg(string(constants::idlen_bytes, '\xee'));
+}
 
 static void setup(roster_t & roster)
 {
