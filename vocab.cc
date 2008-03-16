@@ -32,7 +32,7 @@ verify(hexenc<INNER> const & val)
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_xdigit(*i),
-        F("bad character '%c' in id name '%s'") % *i % val);
+        F("bad character '%c' in '%s'") % *i % val);
     }
 }
 
@@ -50,25 +50,19 @@ verify(hexenc<id> const & val)
       N(is_xdigit(*i),
         F("bad character '%c' in id name '%s'") % *i % val);
     }
-  val.ok = true;
-}
-
-inline void
-verify(id & val)
-{
-  if (val.ok)
-    return;
-
-  if (val().empty())
-    return;
-
-  N((val().size() == constants::sha1_digest_length) ||
-    (val().size() == constants::idlen),
-    F("invalid ID '%s'")
-      % encode_hexenc(val()));
 }
 
 // ATOMIC types ...
+inline void
+verify(id & val)
+{
+  if (val().empty())
+    return;
+
+  N(val().size() == constants::idlen_bytes,
+    F("invalid ID '%s'") % val);
+}
+
 inline void
 verify(symbol const & val)
 {

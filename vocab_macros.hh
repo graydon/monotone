@@ -107,40 +107,7 @@ public:                                                \
 
 #define hh_ATOMIC(ty) hh_ATOMIC_HOOKED(ty,)
 #define hh_ATOMIC_NOVERIFY(ty) hh_ATOMIC(ty)
-
-
-#define hh_ATOMIC_BINARY(ty)                           \
-class ty {                                             \
-  immutable_string s;                                  \
-public:                                                \
-  bool ok;                                             \
-  ty() : ok(false) {}                                  \
-  explicit ty(std::string const & str);                \
-  ty(ty const & other);                                \
-  std::string const & operator()() const               \
-    { return s.get(); }                                \
-  bool operator<(ty const & other) const               \
-    { return s.get() < other(); }                      \
-  ty const & operator=(ty const & other);              \
-  bool operator==(ty const & other) const              \
-    { return s.get() == other(); }                     \
-  bool operator!=(ty const & other) const              \
-    { return s.get() != other(); }                     \
-  friend void verify(ty &);                            \
-  friend void verify_full(ty &);                       \
-  friend std::ostream & operator<<(std::ostream &,     \
-                                   ty const &);        \
-  struct symtab                                        \
-  {                                                    \
-    symtab();                                          \
-    ~symtab();                                         \
-  };                                                   \
-};                                                     \
-std::ostream & operator<<(std::ostream &, ty const &); \
-template <>                                            \
-void dump(ty const &, std::string &);                  \
-inline void verify_full(ty &) {}
-
+#define hh_ATOMIC_BINARY(ty) hh_ATOMIC(ty)
 
 //CC
 
@@ -197,17 +164,14 @@ ty::ty(string const & str) :                 \
     : str)                                   \
 { verify(*this); }                           \
                                              \
-ty::ty(ty const & other) :                   \
-            s(other.s)                       \
-{ verify(*this); }                           \
+ty::ty(ty const & other) : s(other.s) {}     \
                                              \
 ty const & ty::operator=(ty const & other)   \
-{ s = other.s; ok = other.ok;                \
-  verify(*this); return *this; }             \
+{ s = other.s; return *this; }               \
                                              \
-  std::ostream & operator<<(std::ostream & o,\
-                            ty const & a)    \
-  { return (o << encode_hexenc(a.s.get())); }\
+std::ostream & operator<<(std::ostream & o,  \
+                          ty const & a)      \
+{ return (o << encode_hexenc(a.s.get())); }  \
                                              \
 ty::symtab::symtab()                         \
 { ty ## _tab_active++; }                     \

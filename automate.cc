@@ -1207,13 +1207,12 @@ CMD_AUTOMATE(get_revision, N_("REVID"),
   database db(app);
 
   revision_data dat;
-  hexenc<id> hrid(idx(args, 0)());
-  revision_id rid(decode_hexenc(hrid()));
+  revision_id rid(decode_hexenc(idx(args, 0)()));
   N(db.revision_exists(rid),
-    F("no revision %s found in database") % hrid);
+    F("no revision %s found in database") % rid);
   db.get_revision(rid, dat);
 
-  L(FL("dumping revision %s") % hrid);
+  L(FL("dumping revision %s") % rid);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1398,8 +1397,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
     {
       revision_id rid = revision_id(decode_hexenc(idx(args, 0)()));
       N(db.revision_exists(rid),
-        F("no revision %s found in database")
-          % encode_hexenc(rid.inner()()));
+        F("no revision %s found in database") % rid);
       db.get_roster(rid, new_roster);
     }
 
@@ -1881,15 +1879,13 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
 
   ident = revision_id(decode_hexenc(idx(args, 0)()));
   N(db.revision_exists(ident),
-    F("no revision %s found in database")
-      % encode_hexenc(ident.inner()()));
+    F("no revision %s found in database") % ident);
   db.get_roster(ident, new_roster, mm);
 
   file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
     F("file %s is unknown for revision %s")
-      % path
-      % encode_hexenc(ident.inner()()));
+    % path % ident);
 
   node_t node = new_roster.get_node(path);
   marking_map::const_iterator m = mm.find(node->self);
@@ -1947,14 +1943,12 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
 
   ident = revision_id(decode_hexenc(idx(args, 0)()));
   N(db.revision_exists(ident),
-    F("no revision %s found in database")
-      % encode_hexenc(ident.inner()()));
+    F("no revision %s found in database") % ident);
   db.get_roster(ident, new_roster);
 
   old_ident = revision_id(decode_hexenc(idx(args, 2)()));
   N(db.revision_exists(old_ident),
-    F("no revision %s found in database")
-      % encode_hexenc(old_ident.inner()()));
+    F("no revision %s found in database") % old_ident);
   db.get_roster(old_ident, old_roster);
 
   file_path path = file_path_external(idx(args,1));
