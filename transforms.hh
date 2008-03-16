@@ -48,7 +48,7 @@ template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 
 template <typename T>
 base64<T> encode_base64(T const & in)
-{ return base64<T>(T(xform<Botan::Base64_Encoder>(in()))); }
+{ return base64<T>(xform<Botan::Base64_Encoder>(in())); }
 
 template <typename T>
 T decode_base64(base64<T> const & in)
@@ -64,7 +64,7 @@ T decode_base64_as(std::string const & in)
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = hexenc<T>(T(xform<Botan::Hex_Encoder>(in()))); }
+{ out = hexenc<T>(xform<Botan::Hex_Encoder>(in())); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)

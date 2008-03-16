@@ -40,8 +40,15 @@ ATOMIC_NOVERIFY(old_arc4_rsa_priv_key); // ... in the old storage format
 ATOMIC_NOVERIFY(rsa_sha1_signature); // some other nice numbers
 ATOMIC_NOVERIFY(rsa_oaep_sha_data);
 
-ATOMIC(netsync_session_key);  // key for netsync session HMAC
-ATOMIC(netsync_hmac_value);   // 160-bit SHA-1 HMAC
+// Special case: these classes need to befriend their verify functions.
+// See vocab.cc for details.
+
+// key for netsync session HMAC
+ATOMIC_HOOKED(netsync_session_key,
+              friend void verify(netsync_session_key &););
+// 160-bit SHA-1 HMAC
+ATOMIC_HOOKED(netsync_hmac_value,
+              friend void verify(netsync_hmac_value &););
 
 ATOMIC_NOVERIFY(attr_key);
 ATOMIC_NOVERIFY(attr_value);
@@ -53,9 +60,9 @@ DECORATE(file);               // thing associated with a file
 DECORATE(key);                // thing associated with a key
 DECORATE(epoch);              // thing associated with an epoch
 
-ENCODING(gzip);               // thing which is gzipped
+ENCODING_NOVERIFY(gzip);      // thing which is gzipped
 ENCODING(hexenc);             // thing which is hex-encoded
-ENCODING(base64);             // thing which is base64-encoded
+ENCODING_NOVERIFY(base64);    // thing which is base64-encoded
 
 ATOMIC_NOVERIFY(prefix);      // raw encoding of a merkle tree prefix
 ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node

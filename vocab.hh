@@ -51,8 +51,10 @@ public:
 
 #include "vocab_macros.hh"
 #define ENCODING(enc) hh_ENCODING(enc)
+#define ENCODING_NOVERIFY(enc) hh_ENCODING_NOVERIFY(enc)
 #define DECORATE(dec) hh_DECORATE(dec)
 #define ATOMIC(ty) hh_ATOMIC(ty)
+#define ATOMIC_HOOKED(ty,hook) hh_ATOMIC_HOOKED(ty,hook)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
 
 #ifdef HAVE_EXTERN_TEMPLATE
@@ -64,9 +66,11 @@ public:
 #include "vocab_terms.hh"
 
 #undef ATOMIC
+#undef ATOMIC_HOOKED
 #undef ATOMIC_NOVERIFY
 #undef DECORATE
 #undef ENCODING
+#undef ENCODING_NOVERIFY
 
 // most of the time you want to use these typedefs and forget
 // about the stuff in vocab_terms.hh
