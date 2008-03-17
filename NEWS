@@ -3,11 +3,11 @@
         0.40 release.
 
         Changes
-        
+
         - The vim merger has been improved and now uses diff3 to merge
           non-conflict changes automatically before executing vimdiff.
 
-	- Values used with the --depth option used to control recursion with
+        - Values used with the --depth option used to control recursion with
           node and path restrictions have changed. Using --depth=0 now means
           exactly the specified directories and *not* their children. Using
           --depth=1 now means the specified directories and their immediate
@@ -24,6 +24,10 @@
         - `commit' now uses keydir specified in _MTN/options
 
         New features
+
+        - The bare parent selector 'p:' can now be used in a workspace to
+          query the parent(s) of the workspace' base revision. This is
+          equivalent to "mtn au select p:`mtn au get_base_workspace_revision`".
 
         Internal
 

@@ -110,6 +110,8 @@ public:
   explicit workspace(app_state & app, bool writeback_options = true);
   explicit workspace(app_state & app, i18n_format const & explanation,
                      bool writeback_options = true);
+  explicit workspace(options const & opts, lua_hooks & lua,
+                     i18n_format const & explanation, bool writeback_options = true);
 
   // Methods for manipulating the workspace's content.
   void find_missing(roster_t const & new_roster_shape,
