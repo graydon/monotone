@@ -49,6 +49,18 @@
 	}					       \
       };					       \
   }
+
+#define ATOMIC_BINARY(ty)			       \
+  namespace hashmap {				       \
+    template<>					       \
+      struct hash<ty>				       \
+      {						       \
+	size_t operator()(ty const & t) const	       \
+	{					       \
+	  return hash<std::string>()(t());	       \
+	}					       \
+      };					       \
+  }
 #define ATOMIC_HOOKED(ty,hook) ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
 

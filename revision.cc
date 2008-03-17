@@ -303,7 +303,9 @@ is_ancestor(database & db,
             revision_id const & ancestor_id,
             revision_id const & descendent_id)
 {
-  L(FL("checking whether %s is an ancestor of %s") % ancestor_id % descendent_id);
+  L(FL("checking whether %s is an ancestor of %s")
+    % encode_hexenc(ancestor_id.inner()())
+    % encode_hexenc(descendent_id.inner()()));
 
   multimap<revision_id, revision_id> graph;
   db.get_revision_ancestry(graph);
@@ -338,7 +340,7 @@ calculate_ancestors_from_graph(interner<ctx> & intern,
   while (! stk.empty())
     {
       ctx us = stk.top();
-      revision_id rev(hexenc<id>(intern.lookup(us)));
+      revision_id rev(intern.lookup(us));
 
       pair<gi,gi> parents = graph.equal_range(rev);
       bool pushed = false;
@@ -635,7 +637,10 @@ make_revision(revision_id const & old_rev_id,
   make_cset(old_roster, new_roster, *cs);
 
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    L(FL("new manifest_id is %s")
+      % encode_hexenc(rev.new_manifest.inner()()));
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -658,7 +663,10 @@ make_revision(revision_id const & old_rev_id,
   rev.edges.clear();
 
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    L(FL("new manifest_id is %s")
+      % encode_hexenc(rev.new_manifest.inner()()));
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -681,7 +689,10 @@ make_revision(parent_map const & old_rosters,
 
   rev.edges = edges;
   calculate_ident(new_roster, rev.new_manifest);
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    L(FL("new manifest_id is %s")
+      % encode_hexenc(rev.new_manifest.inner()()));
 }
 
 static void
@@ -693,16 +704,19 @@ recalculate_manifest_id_for_restricted_rev(parent_map const & old_rosters,
   // using one of the restricted csets.  It doesn't matter which of the
   // parent roster/cset pairs we use for this; by construction, they must
   // all produce the same result.
-  revision_id id = parent_id(old_rosters.begin());
-  roster_t restricted_roster = *(safe_get(old_rosters, id).first);
+  revision_id rid = parent_id(old_rosters.begin());
+  roster_t restricted_roster = *(safe_get(old_rosters, rid).first);
 
   temp_node_id_source nis;
   editable_roster_base er(restricted_roster, nis);
-  safe_get(edges, id)->apply_to(er);
+  safe_get(edges, rid)->apply_to(er);
 
   calculate_ident(restricted_roster, rev.new_manifest);
   rev.edges = edges;
-  L(FL("new manifest_id is %s") % rev.new_manifest);
+
+  if (global_sanity.debug_p())
+    L(FL("new manifest_id is %s")
+      % encode_hexenc(rev.new_manifest.inner()()));
 }
 
 void
@@ -990,7 +1004,7 @@ anc_graph::kluge_for_bogus_merge_edges()
           if (j->first == i->first)
             {
               L(FL("considering old merge edge %s") %
-                safe_get(node_to_old_rev, i->first));
+                encode_hexenc(safe_get(node_to_old_rev, i->first).inner()()));
               u64 parent1 = i->second;
               u64 parent2 = j->second;
               if (is_ancestor (parent1, parent2, parent_to_child_map))
@@ -1054,7 +1068,8 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
     {
       node = max_node++;
       ++n_nodes;
-      L(FL("node %d = manifest %s") % node % man);
+      L(FL("node %d = manifest %s")
+        % node % encode_hexenc(man.inner()()));
       old_man_to_node.insert(make_pair(man, node));
       node_to_old_man.insert(make_pair(node, man));
 
@@ -1092,7 +1107,10 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
       legacy::renames_map renames;
       legacy::get_manifest_and_renames_for_rev(db, rev, man, renames);
 
-      L(FL("node %d = revision %s = manifest %s") % node % rev % man);
+      L(FL("node %d = revision %s = manifest %s")
+        % node
+        % encode_hexenc(rev.inner()())
+        % encode_hexenc(man.inner()()));
       old_rev_to_node.insert(make_pair(rev, node));
       node_to_old_rev.insert(make_pair(node, rev));
       node_to_old_man.insert(make_pair(node, man));
@@ -1694,7 +1712,7 @@ build_changesets_from_manifest_ancestry(database & db, key_store & keys,
        i != tmp.end(); ++i)
     {
       manifest_id child, parent;
-      child = manifest_id(i->inner().ident);
+      child = manifest_id(i->inner().ident.inner());
       parent = manifest_id(i->inner().value());
 
       u64 parent_node = graph.add_node_for_old_manifest(parent);
@@ -1770,7 +1788,7 @@ print_edge(basic_io::printer & printer,
            edge_entry const & e)
 {
   basic_io::stanza st;
-  st.push_hex_pair(syms::old_revision, edge_old_revision(e).inner());
+  st.push_binary_pair(syms::old_revision, edge_old_revision(e).inner());
   printer.print_stanza(st);
   print_cset(printer, edge_changes(e));
 }
@@ -1785,7 +1803,7 @@ print_insane_revision(basic_io::printer & printer,
   printer.print_stanza(format_stanza);
 
   basic_io::stanza manifest_stanza;
-  manifest_stanza.push_hex_pair(syms::new_manifest, rev.new_manifest.inner());
+  manifest_stanza.push_binary_pair(syms::new_manifest, rev.new_manifest.inner());
   printer.print_stanza(manifest_stanza);
 
   for (edge_map::const_iterator edge = rev.edges.begin();
@@ -1814,7 +1832,7 @@ parse_edge(basic_io::parser & parser,
 
   parser.esym(syms::old_revision);
   parser.hex(tmp);
-  old_rev = revision_id(tmp);
+  old_rev = revision_id(decode_hexenc(tmp));
 
   parse_cset(parser, *cs);
 
@@ -1839,7 +1857,7 @@ parse_revision(basic_io::parser & parser,
     % tmp);
   parser.esym(syms::new_manifest);
   parser.hex(tmp);
-  rev.new_manifest = manifest_id(tmp);
+  rev.new_manifest = manifest_id(decode_hexenc(tmp));
   while (parser.symp(syms::old_revision))
     parse_edge(parser, rev.edges);
   rev.check_sane();
@@ -1903,7 +1921,7 @@ void calculate_ident(revision_t const & cs,
                      revision_id & ident)
 {
   data tmp;
-  hexenc<id> tid;
+  id tid;
   write_revision(cs, tmp);
   calculate_ident(tmp, tid);
   ident = revision_id(tid);
