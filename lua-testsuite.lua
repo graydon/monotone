@@ -9,8 +9,21 @@ function safe_mtn(...)
       err("'mtn' environment variable not set")
     end
   end
-  return {monotone_path, "--norc", "--root=" .. test.root,
+  return {monotone_path, "--ssh-sign=no", "--norc", "--root=" .. test.root,
           "--confdir="..test.root, unpack(arg)}
+end
+
+function mtn_ws_opts(...)
+  -- Return a mtn command string that uses options from _MTN/options,
+  -- root from current directory - as close to a normal user command
+  -- line as possible.
+  if monotone_path == nil then
+    monotone_path = os.getenv("mtn")
+    if monotone_path == nil then
+      err("'mtn' environment variable not set")
+    end
+  end
+  return {monotone_path, "--ssh-sign=no", "--norc", "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
 end
 
 -- function preexecute(x)
@@ -77,7 +90,7 @@ function mtn_setup()
   check(getstd("test_keys"))
   check(getstd("test_hooks.lua"))
   check(getstd("min_hooks.lua"))
-  
+
   check(mtn("db", "init"), 0, false, false)
   check(mtn("read", "test_keys"), 0, false, false)
   check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
@@ -153,7 +166,7 @@ function revert_to(rev, branch, mt)
 
   for path in io.lines("paths-new") do
     len = string.len(path) - 1
-      
+
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -166,10 +179,10 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-        
+
   for path in io.lines("paths-old") do
     len = string.len(path) - 1
-      
+
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -182,7 +195,7 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-        
+
   if branch == nil then
     check(mt("checkout", "--revision", rev, "."), 0, false, true)
   else
@@ -209,7 +222,7 @@ end
 function check_same_db_contents(db1, db2)
   check_same_stdout(mtn("--db", db1, "ls", "keys"),
                     mtn("--db", db2, "ls", "keys"))
-  
+
   check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
   rename("stdout", "revs")
   check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
@@ -223,7 +236,7 @@ function check_same_db_contents(db1, db2)
     check_same_stdout(mtn("--db", db1, "automate", "get_manifest_of", rev),
                       mtn("--db", db2, "automate", "get_manifest_of", rev))
   end
-  
+
   check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
   rename("stdout", "files")
   check(mtn("--db", db2, "complete", "file", ""), 0, true, false)

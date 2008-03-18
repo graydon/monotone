@@ -232,6 +232,13 @@ CMD(sync, "sync", "", CMD_REF(network),
   netsync_connection_info info;
   extract_client_connection_info(app.opts, app.lua, db, keys, args, info);
 
+  if (app.opts.set_default && workspace::found)
+    {
+      // Write workspace options, including key; this is the simplest way to
+      // fix a "found multiple keys" error reported by sync.
+      workspace work(app, true);
+    }
+
   run_netsync_protocol(app.opts, app.lua, project, keys,
                        client_voice, source_and_sink_role, info);
 }
