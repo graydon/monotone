@@ -90,7 +90,8 @@ find_key(options & opts,
 
 static void
 extract_patterns(options & opts, database & db, args_vector const & args,
-                 globish & include_pattern, globish & exclude_pattern)
+                 globish & include_pattern, globish & exclude_pattern,
+                 bool host_is_uri)
 {
   if (args.size() >= 2 || opts.exclude_given)
     {
@@ -112,7 +113,7 @@ extract_patterns(options & opts, database & db, args_vector const & args,
           db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
-  else
+  else if (!host_is_uri)
     {
       N(db.var_exists(default_include_pattern_key),
         F("no branch pattern given and no default pattern set"));
@@ -146,19 +147,10 @@ build_client_connection_info(options & opts,
   info.client.exclude_pattern = exclude;
   info.client.unparsed = addr;
   parse_uri(info.client.unparsed(), info.client.u);
-  if (lua.hook_get_netsync_connect_command(info.client.u,
-                                           info.client.include_pattern,
-                                           info.client.exclude_pattern,
-                                           global_sanity.debug_p(),
-                                           info.client.argv))
-    {
-      info.client.use_argv = true;
-      opts.use_transport_auth = lua.hook_use_transport_auth(info.client.u);
-    }
-  else
-    {
-      info.client.use_argv = false;
-    }
+  info.client.use_argv = false;
+  lua.hook_get_netsync_connect_command(info,
+                                       global_sanity.debug_p());
+  opts.use_transport_auth = lua.hook_use_transport_auth(info.client.u);
   if (opts.use_transport_auth)
     {
       find_key(opts, lua, db, keys, info, need_key);
@@ -178,7 +170,8 @@ extract_client_connection_info(options & opts,
   globish inc;
   globish exc;
   extract_address(opts, db, args, addr);
-  extract_patterns(opts, db, args, inc, exc);
+  parse_uri(addr(), info.client.u);
+  extract_patterns(opts, db, args, inc, exc, !info.client.u.host.empty());
   build_client_connection_info(opts, lua, db, keys,
                                addr, inc, exc, info, need_key);
 }

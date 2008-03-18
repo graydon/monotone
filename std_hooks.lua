@@ -1056,6 +1056,41 @@ function get_netsync_connect_command(uri, args)
 
         local argv = nil
 
+   local include = {}
+   local exclude = {}
+   if uri["query"] then
+      for ex, pat in string.gmatch(uri["query"], "(!?)([^!&]+)") do
+	 if pat and string.len(pat) > 0 then
+	    if ex == "!" then
+	       table.insert(exclude, pat)
+	    else
+	       table.insert(include, pat)
+	    end
+	 end
+      end
+   end
+
+   if uri["scheme"] == "mtn" then
+      local ret = {}
+
+      local inc = table.concat(include, ",")
+      local exc = table.concat(exclude, ",")
+
+      if inc == "" then
+	 ret.include = "*"
+      else
+	 ret.include = "{" .. inc .. "}"
+      end
+
+      if exc == "" then
+	 ret.exclude = ""
+      else
+	 ret.exclude = "{" .. exc .. "}"
+      end
+
+      return ret
+   end
+
         if uri["scheme"] == "ssh"
                 and uri["host"]
                 and uri["path"] then

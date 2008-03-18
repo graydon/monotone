@@ -87,7 +87,7 @@ do
    function get_netsync_connect_command(uri, args)
       local argv = std_get_netsync_connect_command(uri, args)
 
-      if argv then
+      if argv and argv[1] then
 	 table.insert(argv, "--confdir="..get_confdir())
 	 table.insert(argv, "--rcfile="..get_confdir().."/test_hooks.lua")
       end
