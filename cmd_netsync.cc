@@ -67,49 +67,31 @@ find_key(options & opts,
          lua_hooks & lua,
          database & db,
          key_store & keys,
-         utf8 const & addr,
-         globish const & include,
-         globish const & exclude,
-         bool needed = true)
+         netsync_connection_info const & info,
+         bool need_key = true)
 {
   if (!opts.signing_key().empty())
     return;
 
   rsa_keypair_id key;
-  uri u;
-  utf8 host(addr);
+  
+  utf8 host(info.client.unparsed);
+  if (!info.client.u.host.empty())
+    host = utf8(info.client.u.host);
 
-  parse_uri(addr(), u);
-  if (!u.host.empty())
-    host = utf8(u.host);
-  if (needed
-      && (key().empty()
-          || !lua.hook_get_netsync_key(host, include, exclude, key)))
+  if (!lua.hook_get_netsync_key(host,
+                                info.client.include_pattern,
+                                info.client.exclude_pattern, key)
+      && need_key)
     get_user_key(opts, lua, db, keys, key);
 
   opts.signing_key = key;
 }
 
 static void
-find_key_if_needed(options & opts,
-                   lua_hooks & lua,
-                   database & db,
-                   key_store & keys,
-                   utf8 const & addr,
-                   globish const & include,
-                   globish const & exclude,
-                   bool needed = true)
-{
-  uri u;
-  parse_uri(addr(), u);
-
-  if (lua.hook_use_transport_auth(u))
-    find_key(opts, lua, db, keys, addr, include, exclude, needed);
-}
-
-static void
 extract_patterns(options & opts, database & db, args_vector const & args,
-                 globish & include_pattern, globish & exclude_pattern)
+                 globish & include_pattern, globish & exclude_pattern,
+                 bool host_is_uri)
 {
   if (args.size() >= 2 || opts.exclude_given)
     {
@@ -131,7 +113,7 @@ extract_patterns(options & opts, database & db, args_vector const & args,
           db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
         }
     }
-  else
+  else if (!host_is_uri)
     {
       N(db.var_exists(default_include_pattern_key),
         F("no branch pattern given and no default pattern set"));
@@ -150,6 +132,50 @@ extract_patterns(options & opts, database & db, args_vector const & args,
     }
 }
 
+static void
+build_client_connection_info(options & opts,
+                             lua_hooks & lua,
+                             database & db,
+                             key_store & keys,
+                             utf8 const & addr,
+                             globish const & include,
+                             globish const & exclude,
+                             netsync_connection_info & info,
+                             bool need_key = true)
+{
+  info.client.include_pattern = include;
+  info.client.exclude_pattern = exclude;
+  info.client.unparsed = addr;
+  parse_uri(info.client.unparsed(), info.client.u);
+  info.client.use_argv = false;
+  lua.hook_get_netsync_connect_command(info,
+                                       global_sanity.debug_p());
+  opts.use_transport_auth = lua.hook_use_transport_auth(info.client.u);
+  if (opts.use_transport_auth)
+    {
+      find_key(opts, lua, db, keys, info, need_key);
+    }
+}
+
+static void
+extract_client_connection_info(options & opts,
+                               lua_hooks & lua,
+                               database & db,
+                               key_store & keys,
+                               args_vector const & args,
+                               netsync_connection_info & info,
+                               bool need_key = true)
+{
+  utf8 addr;
+  globish inc;
+  globish exc;
+  extract_address(opts, db, args, addr);
+  parse_uri(addr(), info.client.u);
+  extract_patterns(opts, db, args, inc, exc, !info.client.u.host.empty());
+  build_client_connection_info(opts, lua, db, keys,
+                               addr, inc, exc, info, need_key);
+}
+
 CMD(push, "push", "", CMD_REF(network),
     N_("[ADDRESS[:PORTNUMBER] [PATTERN ...]]"),
     N_("Pushes branches to a netsync server"),
@@ -162,19 +188,11 @@ CMD(push, "push", "", CMD_REF(network),
   key_store keys(app);
   project_t project(db);
 
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(app.opts, db, args, addr);
-  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, db, keys,
-                     addr, include_pattern, exclude_pattern);
-
-  std::list<utf8> uris;
-  uris.push_back(addr);
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys, args, info);
 
   run_netsync_protocol(app.opts, app.lua, project, keys,
-                       client_voice, source_role, uris,
-                       include_pattern, exclude_pattern);
+                       client_voice, source_role, info);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -188,22 +206,15 @@ CMD(pull, "pull", "", CMD_REF(network),
   key_store keys(app);
   project_t project(db);
 
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(app.opts, db, args, addr);
-  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, db, keys,
-                     addr, include_pattern, exclude_pattern, false);
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys,
+                                 args, info, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
-
   run_netsync_protocol(app.opts, app.lua, project, keys,
-                       client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern);
+                       client_voice, sink_role, info);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -218,19 +229,11 @@ CMD(sync, "sync", "", CMD_REF(network),
   key_store keys(app);
   project_t project(db);
 
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(app.opts, db, args, addr);
-  extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
-  find_key_if_needed(app.opts, app.lua, db, keys,
-                     addr, include_pattern, exclude_pattern, false);
-
-  std::list<utf8> uris;
-  uris.push_back(addr);
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys, args, info);
 
   run_netsync_protocol(app.opts, app.lua, project, keys,
-                       client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern);
+                       client_voice, source_and_sink_role, info);
 }
 
 class dir_cleanup_helper
@@ -327,8 +330,10 @@ CMD(clone, "clone", "", CMD_REF(network),
   globish include_pattern(app.opts.branchname());
   globish exclude_pattern(app.opts.exclude_patterns);
 
-  find_key_if_needed(app.opts, app.lua, db, keys,
-                     addr, include_pattern, exclude_pattern, false);
+  netsync_connection_info info;
+  build_client_connection_info(app.opts, app.lua, db, keys,
+                               addr, include_pattern, exclude_pattern,
+                               info);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -353,12 +358,8 @@ CMD(clone, "clone", "", CMD_REF(network),
   // make sure we're back in the original dir so that file: URIs work
   change_current_working_dir(start_dir);
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
-
   run_netsync_protocol(app.opts, app.lua, project, keys,
-                       client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern);
+                       client_voice, sink_role, info);
 
   change_current_working_dir(workspace_dir);
 
@@ -468,6 +469,9 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   pid_file pid(app.opts.pidfile);
 
   db.ensure_open();
+  
+  netsync_connection_info info;
+  info.server.addrs = app.opts.bind_uris;
 
   if (app.opts.use_transport_auth)
     {
@@ -475,20 +479,18 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
         F("need permission to store persistent passphrase "
           "(see hook persist_phrase_ok())"));
 
+      info.client.include_pattern = globish("*");
+      info.client.exclude_pattern = globish("");
       if (!app.opts.bind_uris.empty())
-        find_key(app.opts, app.lua, db, keys,
-                 *app.opts.bind_uris.begin(), globish("*"), globish(""));
-      else
-        find_key(app.opts, app.lua, db, keys,
-                 utf8(), globish("*"), globish(""));
+        info.client.unparsed = *app.opts.bind_uris.begin();
+      find_key(app.opts, app.lua, db, keys, info);
     }
   else if (!app.opts.bind_stdio)
     W(F("The --no-transport-auth option is usually only used "
         "in combination with --stdio"));
 
   run_netsync_protocol(app.opts, app.lua, project, keys,
-                       server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""));
+                       server_voice, source_and_sink_role, info);
 }
 
 // Local Variables:
