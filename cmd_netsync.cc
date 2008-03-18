@@ -223,10 +223,17 @@ CMD(sync, "sync", "", CMD_REF(network),
   extract_address(app.opts, db, args, addr);
   extract_patterns(app.opts, db, args, include_pattern, exclude_pattern);
   find_key_if_needed(app.opts, app.lua, db, keys,
-                     addr, include_pattern, exclude_pattern, false);
+                     addr, include_pattern, exclude_pattern, true);
 
   std::list<utf8> uris;
   uris.push_back(addr);
+
+  if (app.opts.set_default && workspace::found)
+    {
+      // Write workspace options, including key; this is the simplest way to
+      // fix a "found multiple keys" error reported by sync.
+      workspace work(app, true);
+    }
 
   run_netsync_protocol(app.opts, app.lua, project, keys,
                        client_voice, source_and_sink_role, uris,
