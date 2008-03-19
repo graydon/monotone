@@ -1,6 +1,6 @@
 mtn_setup()
 
--- adapted from lua-testsuite.lua
+-- adapted from lua-testsuite.lua mtn; no --confdir, --keydir, or --key
 function pure_mtn(...)
   if monotone_path == nil then
     monotone_path = os.getenv("mtn")
@@ -8,23 +8,36 @@ function pure_mtn(...)
       err("'mtn' environment variable not set")
     end
   end
-  return {monotone_path, "--norc", "--root=" .. test.root, "--db", "test.db", 
+  return {monotone_path, "--ssh-sign=no", "--norc", "--root=" .. test.root, "--db", "test.db",
   	  "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
 end
 
 -- this should find a private key in the specified keydir
--- presumably the -15 return code comes from the kill -15 in the finish function in testlib.lua
 
-srv = bg(pure_mtn("serve", "--confdir="..test.root, "--keydir="..test.root.."/keys"), -15, false, true)
+-- On Unix, the return code from the background process is the signal
+-- value; srv:finish sends signal -15 to stop the process. Not so on
+-- Windows.
+
+-- However, this means we need to check stderr from the background
+-- command to check for success or failure.
+
+if ostype == "Windows" then
+expected_ret = 1
+else
+expected_ret = 15
+end
+
+srv = bg(pure_mtn("serve", "--confdir="..test.root, "--keydir="..test.root.."/keys"), expected_ret, false, true)
 sleep(2)
 srv:finish()
+check(qgrep("beginning service", "stderr"))
 
 -- this should find a private key in the keys directory under the specified confdir
--- presumably the -15 return code comes from the kill -15 in the finish function in testlib.lua
 
-srv = bg(pure_mtn("serve" ,"--confdir="..test.root), -15, false, true)
+srv = bg(pure_mtn("serve" ,"--confdir="..test.root), expected_ret, false, true)
 sleep(2)
 srv:finish()
+check(qgrep("beginning service", "stderr"))
 
 -- this should fail to decrypt the private key found in ~/.monotone/keys
 
@@ -32,6 +45,11 @@ srv:finish()
 -- options_list.hh it would hit an invariant on an empty key_dir for any
 -- CMD_NO_WORKSPACE that attempted to call get_user_key(...)
 
+-- The expected return value is the same on Unix and Windows
+
 srv = bg(pure_mtn("serve"), 1, false, true)
 sleep(2)
 srv:finish()
+check(qgrep("misuse: you have no private key", "stderr"))
+
+-- end of file
