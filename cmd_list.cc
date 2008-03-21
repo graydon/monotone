@@ -309,7 +309,7 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
              i = epochs.begin();
            i != epochs.end(); ++i)
         {
-          cout << i->second << ' ' << i->first << '\n';
+          cout << encode_hexenc(i->second.inner()()) << ' ' << i->first << '\n';
         }
     }
   else
@@ -320,7 +320,7 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
         {
           map<branch_name, epoch_data>::const_iterator j = epochs.find(branch_name((*i)()));
           N(j != epochs.end(), F("no epoch for branch %s") % *i);
-          cout << j->second << ' ' << j->first << '\n';
+          cout << encode_hexenc(j->second.inner()()) << ' ' << j->first << '\n';
         }
     }
 }

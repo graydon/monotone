@@ -3368,7 +3368,7 @@ database::get_epochs(map<branch_name, epoch_data> & epochs)
       branch_name decoded(idx(*i, 0));
       I(epochs.find(decoded) == epochs.end());
       epochs.insert(make_pair(decoded,
-                              epoch_data(encode_hexenc(idx(*i, 1)))));
+                              epoch_data(idx(*i, 1))));
     }
 }
 
@@ -3384,7 +3384,7 @@ database::get_epoch(epoch_id const & eid,
              % blob(eid.inner()()));
   I(res.size() == 1);
   branch = branch_name(idx(idx(res, 0), 0));
-  epo = epoch_data(encode_hexenc(idx(idx(res, 0), 1)));
+  epo = epoch_data(idx(idx(res, 0), 1));
 }
 
 bool
@@ -3403,7 +3403,7 @@ database::set_epoch(branch_name const & branch, epoch_data const & epo)
 {
   epoch_id eid;
   epoch_hash_code(branch, epo, eid);
-  I(epo.inner()().size() == constants::epochlen);
+  I(epo.inner()().size() == constants::epochlen_bytes);
   imp->execute(query("INSERT OR REPLACE INTO branch_epochs VALUES(?, ?, ?)")
                % blob(eid.inner()())
                % blob(branch())

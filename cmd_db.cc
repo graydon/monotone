@@ -309,10 +309,10 @@ CMD(db_set_epoch, "set_epoch", "", CMD_REF(db), "BRANCH EPOCH",
   if (args.size() != 2)
     throw usage(execid);
 
-  epoch_data ed(idx(args, 1)());
-  N(ed.inner()().size() == constants::epochlen,
+  N(idx(args, 1)().size() == constants::epochlen,
     F("The epoch must be %s characters") % constants::epochlen);
 
+  epoch_data ed(decode_hexenc(idx(args, 1)()));
   database db(app);
   db.set_epoch(branch_name(idx(args, 0)()), ed);
 }

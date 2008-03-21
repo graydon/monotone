@@ -83,7 +83,7 @@ typedef     file<id>      file_id;
 typedef      key<id>       key_id;
 typedef    epoch<id>     epoch_id;
 
-typedef    epoch< hexenc<data> > epoch_data;
+typedef    epoch< data >      epoch_data;
 
 typedef revision< data >   revision_data;
 typedef   roster< data >     roster_data;

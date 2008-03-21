@@ -1924,14 +1924,16 @@ session::process_data_cmd(netcmd_item_type type,
         branch_name branch;
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
-        L(FL("received epoch %s for branch %s") % epoch % branch);
+        L(FL("received epoch %s for branch %s")
+          % encode_hexenc(epoch.inner()()) % branch);
         map<branch_name, epoch_data> epochs;
         project.db.get_epochs(epochs);
         map<branch_name, epoch_data>::const_iterator i;
         i = epochs.find(branch);
         if (i == epochs.end())
           {
-            L(FL("branch %s has no epoch; setting epoch to %s") % branch % epoch);
+            L(FL("branch %s has no epoch; setting epoch to %s")
+              % branch % encode_hexenc(epoch.inner()()));
             project.db.set_epoch(branch, epoch);
           }
         else
@@ -1952,8 +1954,10 @@ session::process_data_cmd(netcmd_item_type type,
                   (F("Mismatched epoch on branch %s."
                      " Server has '%s', client has '%s'.")
                    % branch
-                   % (voice == server_voice ? i->second : epoch)
-                   % (voice == server_voice ? epoch : i->second)).str());
+                   % encode_hexenc((voice == server_voice
+                                    ? i->second: epoch).inner()())
+                   % encode_hexenc((voice == server_voice
+                                    ? epoch : i->second).inner()())).str());
           }
       }
       maybe_note_epochs_finished();
@@ -3180,7 +3184,7 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
     map<branch_name, epoch_data> epochs;
     project.db.get_epochs(epochs);
 
-    epoch_data epoch_zero(string(constants::epochlen, '0'));
+    epoch_data epoch_zero(string(constants::epochlen_bytes, '\x00'));
     for (set<branch_name>::const_iterator i = branchnames.begin();
          i != branchnames.end(); ++i)
       {

@@ -84,10 +84,11 @@ EXTERN template class            epoch<id>;
 EXTERN template class     hexenc<inodeprint>;
 
 EXTERN template class           hexenc<data>;
-EXTERN template class    epoch< hexenc<data> >;
 
 EXTERN template class                   gzip<data>;
 EXTERN template class           base64< gzip<data> >;
+
+EXTERN template class    epoch< data >;
 
 EXTERN template class revision< data >;
 EXTERN template class   roster< data >;
@@ -132,8 +133,8 @@ EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodepri
 EXTERN template std::ostream & operator<< <>(std::ostream &,           roster<data> const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,           manifest<data> const &);
 
-EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data>   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch< hexenc<data> > const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data> const &);
+EXTERN template std::ostream & operator<< <>(std::ostream &,            epoch<data> const &);
 
 EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<data>     const &);
 EXTERN template std::ostream & operator<< <>(std::ostream &,           base64< gzip<data> >   const &);

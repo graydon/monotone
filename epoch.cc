@@ -27,9 +27,7 @@ read_epoch(string const & in,
   raw_epoch = data(extract_substring(in, pos, constants::epochlen_bytes,
                                      "epoch, epoch data"));
   branch = branch_name(raw_branch);
-  hexenc<data> tmp;
-  encode_hexenc(raw_epoch, tmp);
-  epoch = epoch_data(tmp);
+  epoch = epoch_data(raw_epoch);
 }
 
 void
@@ -37,16 +35,14 @@ write_epoch(branch_name const & branch, epoch_data const & epoch,
             string & out)
 {
   insert_variable_length_string(branch(), out);
-  data raw_epoch;
-  decode_hexenc(epoch.inner(), raw_epoch);
-  out += raw_epoch();
+  out += epoch.inner()();
 }
 
 void
 epoch_hash_code(branch_name const & branch, epoch_data const & epoch,
                 epoch_id & eid)
 {
-  string tmp(branch() + ":" + epoch.inner()());
+  string tmp(branch() + ":" + encode_hexenc(epoch.inner()()));
   data tdat(tmp);
   id out;
   calculate_ident(tdat, out);

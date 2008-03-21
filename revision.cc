@@ -933,10 +933,9 @@ void anc_graph::write_certs()
       {
         char buf[constants::epochlen_bytes];
         Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf), constants::epochlen_bytes);
-        hexenc<data> hexdata;
-        encode_hexenc(data(string(buf, buf + constants::epochlen_bytes)), hexdata);
-        epoch_data new_epoch(hexdata);
-        L(FL("setting epoch for %s to %s") % *i % new_epoch);
+        epoch_data new_epoch(string(buf, buf + constants::epochlen_bytes));
+        L(FL("setting epoch for %s to %s")
+          % *i % encode_hexenc(new_epoch.inner()()));
         db.set_epoch(branch_name(*i), new_epoch);
       }
   }
