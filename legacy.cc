@@ -82,7 +82,7 @@ namespace legacy
     string tmp;
     parser.esym(syms::old_revision);
     parser.hex(tmp);
-    old_rev = revision_id(tmp);
+    old_rev = revision_id(decode_hexenc(tmp));
     parser.esym(syms::old_manifest);
     parser.hex();
 
@@ -137,7 +137,7 @@ namespace legacy
     pars.esym(syms::new_manifest);
     string tmp;
     pars.hex(tmp);
-    mid = manifest_id(tmp);
+    mid = manifest_id(decode_hexenc(tmp));
     while (pars.symp(syms::old_revision))
       extract_renames(pars, renames);
   }

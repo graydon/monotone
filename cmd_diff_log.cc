@@ -222,8 +222,8 @@ do_external_diff(options & opts, lua_hooks & lua, database & db,
                              is_binary,
                              opts.external_diff_args_given,
                              opts.external_diff_args,
-                             delta_entry_src(i).inner()(),
-                             delta_entry_dst(i).inner()());
+                             encode_hexenc(delta_entry_src(i).inner()()),
+                             encode_hexenc(delta_entry_dst(i).inner()()));
     }
 }
 
