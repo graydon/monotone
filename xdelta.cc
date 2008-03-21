@@ -451,6 +451,30 @@ apply_delta(string const & a,
   da->finish(b);
 }
 
+
+// diffing and patching
+
+void
+diff(data const & olddata,
+     data const & newdata,
+     delta & del)
+{
+  string unpacked;
+  compute_delta(olddata(), newdata(), unpacked);
+  del = delta(unpacked);
+}
+
+void
+patch(data const & olddata,
+      delta const & del,
+      data & newdata)
+{
+  string result;
+  apply_delta(olddata(), del(), result);
+  newdata = data(result);
+}
+
+
 // piecewise-applicator stuff follows (warning: ugly)
 
 typedef string::size_type version_pos;

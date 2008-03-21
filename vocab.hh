@@ -56,6 +56,7 @@ public:
 #define ATOMIC(ty) hh_ATOMIC(ty)
 #define ATOMIC_HOOKED(ty,hook) hh_ATOMIC_HOOKED(ty,hook)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
+#define ATOMIC_BINARY(ty) hh_ATOMIC_BINARY(ty)
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -68,6 +69,7 @@ public:
 #undef ATOMIC
 #undef ATOMIC_HOOKED
 #undef ATOMIC_NOVERIFY
+#undef ATOMIC_BINARY
 #undef DECORATE
 #undef ENCODING
 #undef ENCODING_NOVERIFY
@@ -75,11 +77,12 @@ public:
 // most of the time you want to use these typedefs and forget
 // about the stuff in vocab_terms.hh
 
-typedef revision< hexenc<id> >  revision_id;
-typedef manifest< hexenc<id> >  manifest_id;
-typedef     file< hexenc<id> >      file_id;
-typedef      key< hexenc<id> >       key_id;
-typedef    epoch< hexenc<id> >     epoch_id;
+typedef revision<id>  revision_id;
+typedef manifest<id>  manifest_id;
+typedef     file<id>      file_id;
+typedef      key<id>       key_id;
+typedef    epoch<id>     epoch_id;
+
 typedef    epoch< hexenc<data> > epoch_data;
 
 typedef revision< data >   revision_data;
@@ -101,6 +104,12 @@ enum diff_type
 };
 
 // do these belong here?
+inline bool
+null_id(id const & i)
+{
+  return i().empty();
+}
+
 inline bool
 null_id(hexenc<id> const & i)
 {
@@ -126,7 +135,7 @@ null_id(revision_id const & i)
 }
 
 
-hexenc<id>
+id
 fake_id();
 
 // Local Variables:

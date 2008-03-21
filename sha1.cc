@@ -105,7 +105,7 @@ CMD_HIDDEN(benchmark_sha1, "benchmark_sha1", "", CMD_REF(debug), "",
        i != registry().end(); ++i)
     {
       maker_to_be_benchmarked = i->second.second;
-      hexenc<id> foo;
+      id foo;
       double start = cpu_now();
       calculate_ident(test_data, foo);
       double end = cpu_now();
