@@ -8524,6 +8524,63 @@ exits with status 1.
 
 @end table
 
+@item mtn automate show_conflicts
+
+@table @strong
+@item Arguments:
+
+Optional left and right revision ids. They default to the two heads of
+the current workspace.
+
+@item Added in:
+
+7.1
+
+@item Purpose:
+
+Show all conflicts between two revisions.
+
+@item Sample output:
+@smallexample
+@group
+    left  "1337cb1059c4bc3e376b14381b43e9383c654da1"
+   right  "d5f1dd136c86b5bbd5e71b0c3365667e328af492"
+
+  conflict  "duplicate name"
+      name  "checkout.sh"
+   left_id  "FIXME:left id"
+ left_type  file
+  right_id  "FIXME:right id"
+right_type  file
+
+FIXME: show all conflicts
+
+@end group
+@end smallexample
+
+@item Output format:
+
+First the revision ids of the left and right revisions are printed in
+one basic_io stanza.
+
+Then each conflict is listed in a basic_io stanza. Stanzas are
+separated by blank lines.
+
+Each conflict stanza starts with a @code{conflict} line, and contains
+up to FIXME: lines. The order of the lines is not important, and may
+change in future revisions, except that the first line will always be
+@code{conflict}.
+
+@item Error conditions:
+
+If the revision IDs are gvien, but either is unknown or
+invalid, prints an error message to stderr and exits with status 1.
+
+If revision ids are not given, and the current workspace does not have
+two heads, prints an error message to stderr and exits with status 1.
+
+@end table
+
 @end ftable
 
 @page

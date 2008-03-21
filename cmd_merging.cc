@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -12,7 +13,9 @@
 #include <iostream>
 #include <iomanip>
 
+#include "basic_io.hh"
 #include "cmd.hh"
+#include "cmd_merging.hh"
 #include "diff_patch.hh"
 #include "merge.hh"
 #include "restrictions.hh"
@@ -818,6 +821,22 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   revision_id l_id, r_id;
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
+
+  show_conflicts_core(db, l_id, r_id, false, std::cout);
+}
+
+namespace
+{
+  namespace syms
+  {
+    symbol const left("left");
+    symbol const right("right");
+  }
+}
+
+void
+show_conflicts_core (database & db, revision_id const & l_id, revision_id const & r_id, bool const basic_io, std::ostream & output)
+{
   N(!is_ancestor(db, l_id, r_id),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(db, r_id, l_id),
@@ -827,41 +846,52 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   db.get_roster(l_id, l_roster, l_marking);
   db.get_roster(r_id, r_roster, r_marking);
   set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
-  db.get_uncommon_ancestors(l_id, r_id,
-                                l_uncommon_ancestors,
-                                r_uncommon_ancestors);
+  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
   roster_merge_result result;
   roster_merge(l_roster, l_marking, l_uncommon_ancestors,
                r_roster, r_marking, r_uncommon_ancestors,
                result);
 
   // note that left and right are in the order specified on the command line
-  // they are not in lexical order as they are with other merge commands
-  // so they may appear swapped here. perhaps we should sort left and right
-  // before using them?
+  // they are not in lexical order as they are with other merge commands so
+  // they may appear swapped here. The user may have done that deliberately,
+  // especially via automate, so we don't sort them here.
 
-  P(F("[left]  %s") % l_id);
-  P(F("[right] %s") % r_id);
+  if (basic_io)
+    {
+      basic_io::stanza st;
+      basic_io::printer pr;
+      st.push_hex_pair(syms::left, l_id.inner());
+      st.push_hex_pair(syms::right, r_id.inner());
+      pr.print_stanza(st);
+      output.write(pr.buf.data(), pr.buf.size());
+    }
+  else
+    {
+      P(F("[left]  %s") % l_id);
+      P(F("[right] %s") % r_id);
+    }
 
   if (result.is_clean())
     {
-      P(F("no conflicts detected"));
+      if (not basic_io)
+        P(F("no conflicts detected"));
     }
   else
     {
       content_merge_database_adaptor adaptor(db, l_id, r_id,
                                              l_marking, r_marking);
 
-      result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
-      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor);
+      result.report_missing_root_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor, basic_io, output);
 
-      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor);
-      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor);
+      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
 
-      result.report_attribute_conflicts(l_roster, r_roster, adaptor);
-      result.report_file_content_conflicts(l_roster, r_roster, adaptor);
+      result.report_attribute_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(l_roster, r_roster, adaptor, basic_io, output);
     }
 }
 

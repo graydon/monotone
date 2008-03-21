@@ -1,5 +1,5 @@
-// Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
 // Copyright (C) 2007 - 2008 Stephen Leake <stephen_leake@stephe-leake.org>
+// Copyright (C) 2004, 2007 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -25,6 +25,7 @@
 #include "basic_io.hh"
 #include "cert.hh"
 #include "cmd.hh"
+#include "cmd_merging.hh"
 #include "commands.hh"
 #include "constants.hh"
 #include "inodeprint.hh"
@@ -1249,7 +1250,7 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
                            excluded, join_words(execid));
   rev.check_sane();
   N(rev.is_nontrivial(), F("no changes to commit"));
-  
+
   calculate_ident(rev, ident);
   write_revision(rev, dat);
 
@@ -2249,6 +2250,54 @@ CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
       N(found_something,
         F("no variables found in domain %s") % domain);
     }
+}
+
+// Name: show_conflicts
+// Arguments:
+//   Two revision ids (optional, determined from the workspace if not given; there must be exactly two heads)
+// Added in: 7.1
+// Purpose: Prints the conflicts between two revisions, to aid in merging them.
+//
+// Output format: see monotone.texi
+//
+// Error conditions:
+//
+//   If the revision IDs are unknown or invalid prints an error message to
+//   stderr and exits with status 1.
+//
+//   If revision ids are not given, and the current workspace does not have
+//   two heads, prints an error message to stderr and exits with status 1.
+//
+CMD_AUTOMATE(show_conflicts, N_("[REVID, REVID]"),
+             N_("Shows the conflicts between two revisions (default two heads of current workspace)"),
+             "",
+             options::opts::none)
+{
+  database    db(app);
+  project_t   project(db);
+  revision_id l_id, r_id;
+
+  if (args.size() == 0)
+    {
+      // get ids from heads
+      set<revision_id> heads;
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
+
+      N(heads.size() == 2, F("branch '%s' has %d heads; must be exactly 2 for show_conflicts") % app.opts.branchname % heads.size());
+      l_id = *heads.begin();
+      r_id = *heads.end();
+    }
+  else if (args.size() == 2)
+    {
+      // get ids from args
+      complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+      complete(app.opts, app.lua, project, idx(args,1)(), r_id);
+    }
+  else
+    throw usage(execid);
+
+  show_conflicts_core(db, l_id, r_id, true, output);
 }
 
 // Local Variables:

@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -12,6 +13,7 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "basic_io.hh"
 #include "vocab.hh"
 #include "roster_merge.hh"
 #include "parallel_iter.hh"
@@ -177,10 +179,27 @@ namespace
   }
 }
 
+namespace
+{
+  namespace syms
+  {
+    symbol const conflict("conflict");
+    symbol const name("name");
+    symbol const left_id("left_id");
+    symbol const right_id("right_id");
+    symbol const left_type("left_type");
+    symbol const right_type("right_type");
+    symbol const left_name("left_name");
+    symbol const right_name("right_name");
+  }
+}
+
 void
 roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
                                                    roster_t const & right_roster,
-                                                   content_merge_adaptor & adaptor) const
+                                                   content_merge_adaptor & adaptor,
+                                                   bool basic_io,
+                                                   std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -243,7 +262,9 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
 void
 roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
                                                    roster_t const & right_roster,
-                                                   content_merge_adaptor & adaptor) const
+                                                   content_merge_adaptor & adaptor,
+                                                   bool basic_io,
+                                                   std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -312,7 +333,9 @@ roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
 void
 roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roster,
                                                      roster_t const & right_roster,
-                                                     content_merge_adaptor & adaptor) const
+                                                     content_merge_adaptor & adaptor,
+                                                     bool basic_io,
+                                                     std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -363,7 +386,9 @@ roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roste
 void
 roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster,
                                                     roster_t const & right_roster,
-                                                    content_merge_adaptor & adaptor) const
+                                                    content_merge_adaptor & adaptor,
+                                                    bool basic_io,
+                                                    std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -461,7 +486,9 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
 void
 roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster,
                                                     roster_t const & right_roster,
-                                                    content_merge_adaptor & adaptor) const
+                                                    content_merge_adaptor & adaptor,
+                                                    bool basic_io,
+                                                    std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -502,7 +529,9 @@ roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster
 void
 roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roster,
                                                      roster_t const & right_roster,
-                                                     content_merge_adaptor & adaptor) const
+                                                     content_merge_adaptor & adaptor,
+                                                     bool basic_io,
+                                                     std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -513,6 +542,9 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       MM(conflict);
 
       node_id left_nid, right_nid;
+
+      basic_io::stanza st;
+      basic_io::printer pr;
 
       left_nid = conflict.left_nid;
       right_nid = conflict.right_nid;
@@ -533,8 +565,17 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       adaptor.get_ancestral_roster(left_nid, left_lca_rid, left_lca_roster);
       adaptor.get_ancestral_roster(right_nid, right_lca_rid, right_lca_roster);
 
-      P(F("conflict: duplicate name '%s'") % left_name);
-
+      if (basic_io)
+        {
+          st.push_str_pair(syms::conflict, "duplicate_name");
+          st.push_str_pair(syms::name, left_name.as_external());
+          st.push_hex_pair(syms::left_id, left_lca_rid.inner()); // FIXME: get file revision, not ancestor revision?
+          st.push_hex_pair(syms::right_id, right_lca_rid.inner());
+        }
+      else
+        {
+          P(F("conflict: duplicate name '%s'") % left_name);
+        }
       node_type left_type  = get_type(left_roster, left_nid);
       node_type right_type = get_type(right_roster, right_nid);
 
@@ -542,14 +583,26 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           !right_lca_roster->has_node(left_nid))
         {
           if (left_type == file_type)
-            P(F("added as a new file on the left"));
+            if (basic_io)
+              st.push_str_pair(syms::left_type, "added file");
+            else
+              P(F("added as a new file on the left"));
           else
-            P(F("added as a new directory on the left"));
+            if (basic_io)
+              st.push_str_pair(syms::left_type, "added directory");
+            else
+              P(F("added as a new directory on the left"));
 
           if (right_type == file_type)
-            P(F("added as a new file on the right"));
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "added file");
+            else
+              P(F("added as a new file on the right"));
           else
-            P(F("added as a new directory on the right"));
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "added directory");
+            else
+              P(F("added as a new directory on the right"));
          }
       else if (!left_lca_roster->has_node(right_nid) &&
                right_lca_roster->has_node(left_nid))
@@ -558,14 +611,32 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           left_lca_roster->get_name(left_nid, left_lca_name);
 
           if (left_type == file_type)
-            P(F("renamed from file '%s' on the left") % left_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "renamed file");
+                st.push_str_pair(syms::left_name, left_lca_name.as_external());
+              }
+            else
+              P(F("renamed from file '%s' on the left") % left_lca_name);
           else
-            P(F("renamed from directory '%s' on the left") % left_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "renamed directory");
+                st.push_str_pair(syms::left_name, left_lca_name.as_external());
+              }
+            else
+              P(F("renamed from directory '%s' on the left") % left_lca_name);
 
           if (right_type == file_type)
-            P(F("added as a new file on the right"));
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "added file");
+            else
+              P(F("added as a new file on the right"));
           else
-            P(F("added as a new directory on the right"));
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "added directory");
+            else
+              P(F("added as a new directory on the right"));
         }
       else if (left_lca_roster->has_node(right_nid) &&
                !right_lca_roster->has_node(left_nid))
@@ -574,14 +645,32 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           right_lca_roster->get_name(right_nid, right_lca_name);
 
           if (left_type == file_type)
-            P(F("added as a new file on the left"));
+            if (basic_io)
+              st.push_str_pair(syms::left_type, "added file");
+            else
+              P(F("added as a new file on the left"));
           else
-            P(F("added as a new directory on the left"));
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "added directory");
+            else
+              P(F("added as a new directory on the left"));
 
           if (right_type == file_type)
-            P(F("renamed from file '%s' on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::right_type, "renamed file");
+                st.push_str_pair(syms::right_name, right_lca_name.as_external());
+              }
+            else
+              P(F("renamed from file '%s' on the right") % right_lca_name);
           else
-            P(F("renamed from directory '%s' on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::right_type, "renamed directory");
+                st.push_str_pair(syms::right_name, right_lca_name.as_external());
+              }
+            else
+              P(F("renamed from directory '%s' on the right") % right_lca_name);
         }
       else if (left_lca_roster->has_node(right_nid) &&
                right_lca_roster->has_node(left_nid))
@@ -591,24 +680,53 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
           right_lca_roster->get_name(right_nid, right_lca_name);
 
           if (left_type == file_type)
-            P(F("renamed from file '%s' on the left") % left_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "renamed file");
+                st.push_str_pair(syms::left_name, left_lca_name.as_external());
+              }
+            else
+              P(F("renamed from file '%s' on the left") % left_lca_name);
           else
-            P(F("renamed from directory '%s' on the left") % left_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "renamed directory");
+                st.push_str_pair(syms::left_name, left_lca_name.as_external());
+              }
+            else
+              P(F("renamed from directory '%s' on the left") % left_lca_name);
 
           if (right_type == file_type)
-            P(F("renamed from file '%s' on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::right_type, "renamed file");
+                st.push_str_pair(syms::right_name, right_lca_name.as_external());
+              }
+            else
+              P(F("renamed from file '%s' on the right") % right_lca_name);
           else
-            P(F("renamed from directory '%s' on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::right_type, "renamed directory");
+                st.push_str_pair(syms::right_name, right_lca_name.as_external());
+              }
+            else
+              P(F("renamed from directory '%s' on the right") % right_lca_name);
         }
       else
         I(false);
+
+      if (basic_io)
+        output.write(pr.buf.data(), pr.buf.size());
     }
 }
 
 void
 roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
                                                 roster_t const & right_roster,
-                                                content_merge_adaptor & adaptor) const
+                                                content_merge_adaptor & adaptor,
+                                                bool basic_io,
+                                                std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
@@ -710,7 +828,9 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
 void
 roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
                                                    roster_t const & right_roster,
-                                                   content_merge_adaptor & adaptor) const
+                                                   content_merge_adaptor & adaptor,
+                                                   bool basic_io,
+                                                   std::ostream & output) const
 {
   MM(left_roster);
   MM(right_roster);
