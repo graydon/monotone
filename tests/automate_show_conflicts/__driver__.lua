@@ -31,7 +31,7 @@ check(readfile("expected-1.stdout") == readfile("stdout"))
 -- Now specify revisions, in an order that reverses left/right from
 -- the previous, to show the arguments are used.
 
-check(mtn("automate", "show_conflicts", abe_1, beth_1), 0, true, false)
+check(mtn("automate", "show_conflicts", beth_1, abe_1), 0, true, false)
 canonicalize("stdout")
 check(readfile("expected-2.stdout") == readfile("stdout"))
 

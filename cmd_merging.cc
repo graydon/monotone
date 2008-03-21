@@ -282,7 +282,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   content_merge_workspace_adaptor wca(db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, *working_roster, chosen_roster,
+  resolve_merge_conflicts(app.lua, db, *working_roster, chosen_roster,
                           result, wca);
 
   // Make sure it worked...
@@ -631,7 +631,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor
           dba(db, left_rid, right_rid, left_marking_map, right_marking_map);
 
-        resolve_merge_conflicts(app.lua, left_roster, right_roster,
+        resolve_merge_conflicts(app.lua, db, left_roster, right_roster,
                                 result, dba);
 
         {
@@ -743,7 +743,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   content_merge_workspace_adaptor wca(db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca);
+  resolve_merge_conflicts(app.lua, db, *left.first, *right.first, merge_result, wca);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -888,7 +888,7 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
 
       result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor, basic_io, output);
       result.report_multiple_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
-      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_duplicate_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
 
       result.report_attribute_conflicts(l_roster, r_roster, adaptor, basic_io, output);
       result.report_file_content_conflicts(l_roster, r_roster, adaptor, basic_io, output);
@@ -1035,7 +1035,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // to_roster is not fetched from the db which does not have temporary nids
   wca.cache_roster(to_rid, to_roster);
 
-  resolve_merge_conflicts(app.lua, *working_roster, *to_roster,
+  resolve_merge_conflicts(app.lua, db, *working_roster, *to_roster,
                           result, wca);
 
   I(result.is_clean());

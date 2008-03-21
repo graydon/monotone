@@ -25,7 +25,7 @@ struct roster_merge_result;
 struct content_merge_adaptor;
 
 void
-resolve_merge_conflicts(lua_hooks & lua,
+resolve_merge_conflicts(lua_hooks & lua, database & db,
                         roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,

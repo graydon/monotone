@@ -527,10 +527,11 @@ roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster
 }
 
 void
-roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roster,
+roster_merge_result::report_duplicate_name_conflicts(database & db,
+                                                     roster_t const & left_roster,
                                                      roster_t const & right_roster,
                                                      content_merge_adaptor & adaptor,
-                                                     bool basic_io,
+                                                     bool const basic_io,
                                                      std::ostream & output) const
 {
   MM(left_roster);
@@ -542,9 +543,6 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       MM(conflict);
 
       node_id left_nid, right_nid;
-
-      basic_io::stanza st;
-      basic_io::printer pr;
 
       left_nid = conflict.left_nid;
       right_nid = conflict.right_nid;
@@ -565,12 +563,12 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       adaptor.get_ancestral_roster(left_nid, left_lca_rid, left_lca_roster);
       adaptor.get_ancestral_roster(right_nid, right_lca_rid, right_lca_roster);
 
+      basic_io::stanza st;
+
       if (basic_io)
         {
-          st.push_str_pair(syms::conflict, "duplicate_name");
+          st.push_str_pair(syms::conflict, "duplicate name");
           st.push_str_pair(syms::name, left_name.as_external());
-          st.push_hex_pair(syms::left_id, left_lca_rid.inner()); // FIXME: get file revision, not ancestor revision?
-          st.push_hex_pair(syms::right_id, right_lca_rid.inner());
         }
       else
         {
@@ -584,7 +582,12 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
         {
           if (left_type == file_type)
             if (basic_io)
-              st.push_str_pair(syms::left_type, "added file");
+              {
+                file_id fid;
+                db.get_file_content (left_lca_rid, left_nid, fid);
+                st.push_str_pair(syms::left_type, "added file");
+                st.push_hex_pair(syms::left_id, fid.inner());
+              }
             else
               P(F("added as a new file on the left"));
           else
@@ -595,7 +598,12 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
 
           if (right_type == file_type)
             if (basic_io)
-              st.push_str_pair(syms::right_type, "added file");
+              {
+                file_id fid;
+                db.get_file_content (right_lca_rid, right_nid, fid);
+                st.push_str_pair(syms::right_type, "added file");
+                st.push_hex_pair(syms::right_id, fid.inner());
+              }
             else
               P(F("added as a new file on the right"));
           else
@@ -717,7 +725,15 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
         I(false);
 
       if (basic_io)
-        output.write(pr.buf.data(), pr.buf.size());
+        {
+          // We have to declare the printer here, rather than more globally,
+          // because adaptor.get_ancestral_roster uses a basic_io::printer
+          // internally, and there can only be one active at a time.
+          basic_io::printer pr;
+          output << "\n";
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
     }
 }
 

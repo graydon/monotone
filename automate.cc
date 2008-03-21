@@ -2286,7 +2286,7 @@ CMD_AUTOMATE(show_conflicts, N_("[REVID, REVID]"),
 
       N(heads.size() == 2, F("branch '%s' has %d heads; must be exactly 2 for show_conflicts") % app.opts.branchname % heads.size());
       l_id = *heads.begin();
-      r_id = *heads.end();
+      r_id = *heads.rbegin();
     }
   else if (args.size() == 2)
     {

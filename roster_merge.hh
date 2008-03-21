@@ -11,6 +11,7 @@
 // PURPOSE.
 
 #include "rev_types.hh"
+#include "database.hh"
 #include "diff_patch.hh"
 #include "roster.hh" // needs full definition of roster_t available
 
@@ -179,10 +180,11 @@ struct roster_merge_result
                                       content_merge_adaptor & adaptor,
                                       bool basic_io,
                                       std::ostream & output) const;
-  void report_duplicate_name_conflicts(roster_t const & left,
+  void report_duplicate_name_conflicts(database & db,
+                                       roster_t const & left,
                                        roster_t const & right,
                                        content_merge_adaptor & adaptor,
-                                       bool basic_io,
+                                       bool const basic_io,
                                        std::ostream & output) const;
 
   void report_attribute_conflicts(roster_t const & left,

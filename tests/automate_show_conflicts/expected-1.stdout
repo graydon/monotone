@@ -1,1 +1,16 @@
-foo
+ left [1337cb1059c4bc3e376b14381b43e9383c654da1]
+right [d5f1dd136c86b5bbd5e71b0c3365667e328af492]
+
+  conflict "duplicate name"
+      name "checkout.sh"
+ left_type "added file"
+   left_id [61b8d4fb0e5d78be111f691b955d523c782fa92e]
+right_type "added file"
+  right_id [dd6805ae36432d6edcbdff6ea578ea981ffa2144]
+
+  conflict "duplicate name"
+      name "thermostat.c"
+ left_type "added file"
+   left_id [4cdcec6fa2f9d5c075d5b80d03c708c8e4801196]
+right_type "added file"
+  right_id [7e9f2712c5d3570815f1546772d9119474d32afc]

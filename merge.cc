@@ -126,7 +126,7 @@ namespace
 }
 
 void
-resolve_merge_conflicts(lua_hooks & lua,
+resolve_merge_conflicts(lua_hooks & lua, database & db,
                         roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
@@ -149,7 +149,7 @@ resolve_merge_conflicts(lua_hooks & lua,
 
       result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor, false, std::cout);
       result.report_multiple_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
-      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_duplicate_name_conflicts(db, left_roster, right_roster, adaptor, false, std::cout);
 
       result.report_attribute_conflicts(left_roster, right_roster, adaptor, false, std::cout);
       result.report_file_content_conflicts(left_roster, right_roster, adaptor, false, std::cout);
@@ -202,7 +202,7 @@ interactive_merge_and_store(lua_hooks & lua, database & db,
 
   content_merge_database_adaptor dba(db, left_rid, right_rid,
                                      left_marking_map, right_marking_map);
-  resolve_merge_conflicts(lua, left_roster, right_roster,
+  resolve_merge_conflicts(lua, db, left_roster, right_roster,
                           result, dba);
 
   // write new files into the db
