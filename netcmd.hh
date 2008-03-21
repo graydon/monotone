@@ -14,8 +14,10 @@
 #include <list>
 #include <utility>
 
+#include "globish.hh"
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
+#include "uri.hh"
 #include "vocab.hh"
 #include "hmac.hh"
 #include "string_queue.hh"
@@ -176,13 +178,28 @@ public:
 
 };
 
+struct netsync_connection_info
+{
+  struct
+  {
+    std::list<utf8> addrs;
+  } server;
+  struct
+  {
+    globish include_pattern;
+    globish exclude_pattern;
+    uri u;
+    utf8 unparsed;
+    std::vector<std::string> argv;
+    bool use_argv;
+  } client;
+};
+
 void run_netsync_protocol(options & opts, lua_hooks & lua,
                           project_t & project, key_store & keys,
                           protocol_voice voice,
                           protocol_role role,
-                          std::list<utf8> const & addrs,
-                          globish const & include_pattern,
-                          globish const & exclude_pattern);
+                          netsync_connection_info const & info);
 
 // Local Variables:
 // mode: C++

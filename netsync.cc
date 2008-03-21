@@ -2351,30 +2351,19 @@ bool session::process(transaction_guard & guard)
 
 static shared_ptr<Netxx::StreamBase>
 build_stream_to_server(options & opts, lua_hooks & lua,
-                       globish const & include_pattern,
-                       globish const & exclude_pattern,
-                       utf8 const & address,
+                       netsync_connection_info info,
                        Netxx::port_type default_port,
                        Netxx::Timeout timeout)
 {
   shared_ptr<Netxx::StreamBase> server;
-  uri u;
-  vector<string> argv;
-
-  parse_uri(address(), u);
-  if (lua.hook_get_netsync_connect_command(u,
-                                           include_pattern,
-                                           exclude_pattern,
-                                           global_sanity.debug_p(),
-                                           argv))
+  
+  if (info.client.use_argv)
     {
-      I(argv.size() > 0);
-      string cmd = argv[0];
-      argv.erase(argv.begin());
-      opts.use_transport_auth = lua.hook_use_transport_auth(u);
+      I(info.client.argv.size() > 0);
+      string cmd = info.client.argv[0];
+      info.client.argv.erase(info.client.argv.begin());
       return shared_ptr<Netxx::StreamBase>
-        (new Netxx::PipeStream(cmd, argv));
-
+        (new Netxx::PipeStream(cmd, info.client.argv));
     }
   else
     {
@@ -2383,7 +2372,12 @@ build_stream_to_server(options & opts, lua_hooks & lua,
 #else
       bool use_ipv6=false;
 #endif
-      Netxx::Address addr(address().c_str(),
+      string host(info.client.u.host);
+      if (host.empty())
+        host = info.client.unparsed();
+      if (!info.client.u.port.empty())
+        default_port = lexical_cast<Netxx::port_type>(info.client.u.port);
+      Netxx::Address addr(info.client.unparsed().c_str(),
                           default_port, use_ipv6);
       return shared_ptr<Netxx::StreamBase>
         (new Netxx::Stream(addr, timeout));
@@ -2396,26 +2390,20 @@ call_server(options & opts,
             project_t & project,
             key_store & keys,
             protocol_role role,
-            globish const & include_pattern,
-            globish const & exclude_pattern,
-            std::list<utf8> const & addresses,
+            netsync_connection_info const & info,
             Netxx::port_type default_port,
             unsigned long timeout_seconds)
 {
   Netxx::PipeCompatibleProbe probe;
   transaction_guard guard(project.db);
-  I(addresses.size() == 1);
-  utf8 address(*addresses.begin());
 
   Netxx::Timeout timeout(static_cast<long>(timeout_seconds)), instant(0,1);
 
-  P(F("connecting to %s") % address);
+  P(F("connecting to %s") % info.client.unparsed);
 
   shared_ptr<Netxx::StreamBase> server
     = build_stream_to_server(opts, lua,
-                             include_pattern,
-                             exclude_pattern,
-                             address, default_port,
+                             info, default_port,
                              timeout);
 
 
@@ -2426,9 +2414,9 @@ call_server(options & opts,
 
   session sess(opts, lua, project, keys,
                role, client_voice,
-               include_pattern,
-               exclude_pattern,
-               address(), server);
+               info.client.include_pattern,
+               info.client.exclude_pattern,
+               info.client.unparsed(), server);
 
   while (true)
     {
@@ -2594,8 +2582,6 @@ handle_new_connection(options & opts,
                       Netxx::StreamServer & server,
                       Netxx::Timeout & timeout,
                       protocol_role role,
-                      globish const & include_pattern,
-                      globish const & exclude_pattern,
                       map<Netxx::socket_type, shared_ptr<session> > & sessions)
 {
   L(FL("accepting new connection on %s : %s")
@@ -2622,7 +2608,7 @@ handle_new_connection(options & opts,
 
       shared_ptr<session> sess(new session(opts, lua, project, keys,
                                            role, server_voice,
-                                           include_pattern, exclude_pattern,
+                                           globish("*"), globish(""),
                                            lexical_cast<string>(client), str));
       sess->begin_service();
       sessions.insert(make_pair(client.get_socketfd(), sess));
@@ -2766,8 +2752,6 @@ serve_connections(options & opts,
                   project_t & project,
                   key_store & keys,
                   protocol_role role,
-                  globish const & include_pattern,
-                  globish const & exclude_pattern,
                   std::list<utf8> const & addresses,
                   Netxx::port_type default_port,
                   unsigned long timeout_seconds,
@@ -2869,17 +2853,19 @@ serve_connections(options & opts,
                     = server_initiated_sync_requests.front();
                   server_initiated_sync_requests.pop_front();
 
-                  utf8 addr(request.address);
-                  globish inc(request.include);
-                  globish exc(request.exclude);
-
+                  netsync_connection_info info;
+                  info.client.unparsed = utf8(request.address);
+                  info.client.include_pattern = globish(request.include);
+                  info.client.exclude_pattern = globish(request.exclude);
+                  info.client.use_argv = false;
+                  parse_uri(info.client.unparsed(), info.client.u);
+                  
                   try
                     {
-                      P(F("connecting to %s") % addr());
+                      P(F("connecting to %s") % info.client.unparsed);
                       shared_ptr<Netxx::StreamBase> server
                         = build_stream_to_server(opts, lua,
-                                                 inc, exc,
-                                                 addr, default_port,
+                                                 info, default_port,
                                                  timeout);
 
                       // 'false' here means not to revert changes when
@@ -2898,8 +2884,10 @@ serve_connections(options & opts,
                       shared_ptr<session> sess(new session(opts, lua,
                                                            project, keys,
                                                            role, client_voice,
-                                                           inc, exc,
-                                                           addr(), server, true));
+                                                           info.client.include_pattern,
+                                                           info.client.exclude_pattern,
+                                                           info.client.unparsed(),
+                                                           server, true));
 
                       sessions.insert(make_pair(server->get_socketfd(), sess));
                     }
@@ -2938,7 +2926,6 @@ serve_connections(options & opts,
                   else if (fd == server)
                     handle_new_connection(opts, lua, project, keys,
                                           addr, server, timeout, role,
-                                          include_pattern, exclude_pattern,
                                           sessions);
 
                   // or an existing session woke up
@@ -3288,20 +3275,18 @@ run_netsync_protocol(options & opts, lua_hooks & lua,
                      project_t & project, key_store & keys,
                      protocol_voice voice,
                      protocol_role role,
-                     std::list<utf8> const & addrs,
-                     globish const & include_pattern,
-                     globish const & exclude_pattern)
+                     netsync_connection_info const & info)
 {
-  if (include_pattern().find_first_of("'\"") != string::npos)
+  if (info.client.include_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("include branch pattern contains a quote character:\n"
-          "%s") % include_pattern());
+          "%s") % info.client.include_pattern());
     }
 
-  if (exclude_pattern().find_first_of("'\"") != string::npos)
+  if (info.client.exclude_pattern().find_first_of("'\"") != string::npos)
     {
       W(F("exclude branch pattern contains a quote character:\n"
-          "%s") % exclude_pattern());
+          "%s") % info.client.exclude_pattern());
     }
 
   // We do not want to be killed by SIGPIPE from a network disconnect.
@@ -3316,14 +3301,15 @@ run_netsync_protocol(options & opts, lua_hooks & lua,
               shared_ptr<Netxx::PipeStream> str(new Netxx::PipeStream(0,1));
               shared_ptr<session> sess(new session(opts, lua, project, keys,
                                                    role, server_voice,
-                                                   include_pattern, exclude_pattern,
+                                                   globish("*"), globish(""),
                                                    "stdio", str));
               serve_single_connection(sess,constants::netsync_timeout_seconds);
             }
           else
             serve_connections(opts, lua, project, keys,
-                              role, include_pattern, exclude_pattern,
-                              addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                              role,
+                              info.server.addrs,
+                              static_cast<Netxx::port_type>(constants::netsync_default_port),
                               static_cast<unsigned long>(constants::netsync_timeout_seconds),
                               static_cast<unsigned long>(constants::netsync_connection_limit));
         }
@@ -3331,8 +3317,8 @@ run_netsync_protocol(options & opts, lua_hooks & lua,
         {
           I(voice == client_voice);
           call_server(opts, lua, project, keys,
-                      role, include_pattern, exclude_pattern,
-                      addrs, static_cast<Netxx::port_type>(constants::netsync_default_port),
+                      role, info,
+                      static_cast<Netxx::port_type>(constants::netsync_default_port),
                       static_cast<unsigned long>(constants::netsync_timeout_seconds));
         }
     }
