@@ -233,7 +233,7 @@ revision_enumerator::step()
           if (cb.process_this_rev(r))
             {
               L(FL("revision_enumerator::step expanding "
-                  "contents of rev '%d'\n") % r);
+                   "contents of rev '%s'") % r);
 
               // The rev's files and fdeltas
               {
