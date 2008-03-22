@@ -23,7 +23,6 @@
 #include "app_state.hh"
 #include "file_io.hh"
 #include "lua_hooks.hh"
-#include "netcmd.hh"
 #include "sanity.hh"
 #include "vocab.hh"
 #include "transforms.hh"
@@ -609,28 +608,31 @@ push_uri(uri const & u, Lua & ll)
 }
 
 bool
-lua_hooks::hook_get_netsync_connect_command(netsync_connection_info & info,
-                                            bool debug)
+lua_hooks::hook_get_netsync_connect_command(uri const & u,
+                                            globish const & include_pattern,
+                                            globish const & exclude_pattern,
+                                            bool debug,
+                                            std::vector<std::string> & argv)
 {
   bool cmd = false, exec_ok = false;
   Lua ll(st);
   ll.func("get_netsync_connect_command");
 
-  push_uri(info.client.u, ll);
+  push_uri(u, ll);
 
   ll.push_table();
 
-  if (!info.client.include_pattern().empty())
+  if (!include_pattern().empty())
     {
       ll.push_str("include");
-      ll.push_str(info.client.include_pattern());
+      ll.push_str(include_pattern());
       ll.set_table();
     }
 
-  if (!info.client.exclude_pattern().empty())
+  if (!exclude_pattern().empty())
     {
       ll.push_str("exclude");
-      ll.push_str(info.client.exclude_pattern());
+      ll.push_str(exclude_pattern());
       ll.set_table();
     }
 
@@ -644,63 +646,15 @@ lua_hooks::hook_get_netsync_connect_command(netsync_connection_info & info,
   ll.call(2,1);
 
   ll.begin();
-  
-  netsync_connection_info info2(info);
 
-  info2.client.argv.clear();
-  info2.client.use_argv = false;
-  bool not_use_argv = false;
+  argv.clear();
   while(ll.next())
     {
       std::string s;
       ll.extract_str(s).pop();
-      if (!lua_isnumber(st, -1))
-        {
-          std::string k;
-          ll.extract_str(k); // do not pop
-          // can be URI parts, or include/exclude
-          if (k == "scheme")
-            info2.client.u.scheme = s;
-          else if (k == "user")
-            info2.client.u.user = s;
-          else if (k == "host")
-            info2.client.u.host = s;
-          else if (k == "port")
-            info2.client.u.port = s;
-          else if (k == "path")
-            info2.client.u.path = s;
-          else if (k == "query")
-            info2.client.u.query = s;
-          else if (k == "fragment")
-            info2.client.u.fragment = s;
-          else if (k == "include")
-            info2.client.include_pattern = s;
-          else if (k == "exclude")
-            info2.client.exclude_pattern = s;
-          else
-            W(F("get_netsync_connect_command hook returned unknown item '%s'")
-              % k);
-          
-          not_use_argv = true;
-        }
-      else
-        {
-          info2.client.argv.push_back(s);
-          info2.client.use_argv = true;
-        }
+      argv.push_back(s);
     }
-  E(!(info2.client.use_argv && not_use_argv),
-    F("get_netsync_command returned inconsistent data"));
-  
-  if (ll.ok())
-    {
-      info = info2;
-      return true;
-    }
-  else
-    {
-      return false;
-    }
+  return ll.ok() && !argv.empty();
 }
 
 

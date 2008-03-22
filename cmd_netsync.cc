@@ -39,30 +39,6 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
 static char const ws_internal_db_file_name[] = "mtn.db";
 
 static void
-extract_address(options & opts, database & db,
-                args_vector const & args, utf8 & addr)
-{
-  if (args.size() >= 1)
-    {
-      addr = idx(args, 0);
-      if (!db.var_exists(default_server_key) || opts.set_default)
-        {
-          P(F("setting default server to %s") % addr());
-          db.set_var(default_server_key, var_value(addr()));
-        }
-    }
-  else
-    {
-      N(db.var_exists(default_server_key),
-        F("no server given and no default server set"));
-      var_value addr_value;
-      db.get_var(default_server_key, addr_value);
-      addr = utf8(addr_value());
-      L(FL("using default server address: %s") % addr());
-    }
-}
-
-static void
 find_key(options & opts,
          lua_hooks & lua,
          database & db,
@@ -89,67 +65,123 @@ find_key(options & opts,
 }
 
 static void
-extract_patterns(options & opts, database & db, args_vector const & args,
-                 globish & include_pattern, globish & exclude_pattern,
-                 bool host_is_uri)
-{
-  if (args.size() >= 2 || opts.exclude_given)
-    {
-      E(args.size() >= 2, F("no branch pattern given"));
-
-      include_pattern = globish(args.begin() + 1, args.end());
-      exclude_pattern = globish(opts.exclude_patterns);
-
-      if (!db.var_exists(default_include_pattern_key)
-          || opts.set_default)
-        {
-          P(F("setting default branch include pattern to '%s'") % include_pattern);
-          db.set_var(default_include_pattern_key, var_value(include_pattern()));
-        }
-      if (!db.var_exists(default_exclude_pattern_key)
-          || opts.set_default)
-        {
-          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
-        }
-    }
-  else if (!host_is_uri)
-    {
-      N(db.var_exists(default_include_pattern_key),
-        F("no branch pattern given and no default pattern set"));
-      var_value pattern_value;
-      db.get_var(default_include_pattern_key, pattern_value);
-      include_pattern = globish(pattern_value());
-      L(FL("using default branch include pattern: '%s'") % include_pattern);
-      if (db.var_exists(default_exclude_pattern_key))
-        {
-          db.get_var(default_exclude_pattern_key, pattern_value);
-          exclude_pattern = globish(pattern_value());
-        }
-      else
-        exclude_pattern = globish();
-      L(FL("excluding: %s") % exclude_pattern);
-    }
-}
-
-static void
 build_client_connection_info(options & opts,
                              lua_hooks & lua,
                              database & db,
                              key_store & keys,
-                             utf8 const & addr,
-                             globish const & include,
-                             globish const & exclude,
                              netsync_connection_info & info,
+                             bool address_given,
+                             bool include_or_exclude_given,
                              bool need_key = true)
 {
-  info.client.include_pattern = include;
-  info.client.exclude_pattern = exclude;
-  info.client.unparsed = addr;
+  // Use the default values if needed and available.
+  if (!address_given)
+    {
+      N(db.var_exists(default_server_key),
+        F("no server given and no default server set"));
+      var_value addr_value;
+      db.get_var(default_server_key, addr_value);
+      info.client.unparsed = utf8(addr_value());
+      L(FL("using default server address: %s") % info.client.unparsed);
+    }
   parse_uri(info.client.unparsed(), info.client.u);
-  info.client.use_argv = false;
-  lua.hook_get_netsync_connect_command(info,
-                                       global_sanity.debug_p());
+  if (info.client.u.query.empty() && !include_or_exclude_given)
+    {
+      // No include/exclude given anywhere, use the defaults.
+      N(db.var_exists(default_include_pattern_key),
+        F("no branch pattern given and no default pattern set"));
+      var_value pattern_value;
+      db.get_var(default_include_pattern_key, pattern_value);
+      info.client.include_pattern = globish(pattern_value());
+      L(FL("using default branch include pattern: '%s'")
+        % info.client.include_pattern);
+      if (db.var_exists(default_exclude_pattern_key))
+        {
+          db.get_var(default_exclude_pattern_key, pattern_value);
+          info.client.exclude_pattern = globish(pattern_value());
+        }
+      else
+        info.client.exclude_pattern = globish();
+      L(FL("excluding: %s") % info.client.exclude_pattern);
+    }
+  else if(!info.client.u.query.empty())
+    {
+      N(!include_or_exclude_given,
+        F("Include/exclude pattern was given both as part of the URL and as a separate argument."));
+      
+      // Pull include/exclude from the query string
+      char const separator = '/';
+      char const negate = '-';
+      string const & query(info.client.u.query);
+      std::vector<arg_type> includes, excludes;
+      string::size_type begin = 0;
+      string::size_type end = query.find(separator);
+      while (begin < query.size())
+        {
+          std::string item = query.substr(begin, end);
+          if (end == string::npos)
+            begin = end;
+          else
+            {
+              begin = end+1;
+              if (begin < query.size())
+                end = query.find(separator, begin);
+            }
+          
+          bool is_exclude = false;
+          if (item.size() >= 1 && item.at(0) == negate)
+            {
+              is_exclude = true;
+              item.erase(0, 1);
+            }
+          else if (item.find("include=") == 0)
+            {
+              item.erase(0, string("include=").size());
+            }
+          else if (item.find("exclude=") == 0)
+            {
+              is_exclude = true;
+              item.erase(0, string("exclude=").size());
+            }
+          
+          if (is_exclude)
+            excludes.push_back(arg_type(item));
+          else
+            includes.push_back(arg_type(item));
+        }
+      info.client.include_pattern = globish(includes);
+      info.client.exclude_pattern = globish(excludes);
+    }
+  
+  // Maybe set the default values.
+  if (!db.var_exists(default_server_key) || opts.set_default)
+    {
+      P(F("setting default server to %s") % info.client.unparsed());
+      db.set_var(default_server_key, var_value(info.client.unparsed()));
+    }
+    if (!db.var_exists(default_include_pattern_key)
+        || opts.set_default)
+      {
+        P(F("setting default branch include pattern to '%s'")
+          % info.client.include_pattern);
+        db.set_var(default_include_pattern_key,
+                   var_value(info.client.include_pattern()));
+      }
+    if (!db.var_exists(default_exclude_pattern_key)
+        || opts.set_default)
+      {
+        P(F("setting default branch exclude pattern to '%s'")
+          % info.client.exclude_pattern);
+        db.set_var(default_exclude_pattern_key,
+                   var_value(info.client.exclude_pattern()));
+      }
+  
+  info.client.use_argv =
+    lua.hook_get_netsync_connect_command(info.client.u,
+                                         info.client.include_pattern,
+                                         info.client.exclude_pattern,
+                                         global_sanity.debug_p(),
+                                         info.client.argv);
   opts.use_transport_auth = lua.hook_use_transport_auth(info.client.u);
   if (opts.use_transport_auth)
     {
@@ -166,14 +198,24 @@ extract_client_connection_info(options & opts,
                                netsync_connection_info & info,
                                bool need_key = true)
 {
-  utf8 addr;
-  globish inc;
-  globish exc;
-  extract_address(opts, db, args, addr);
-  parse_uri(addr(), info.client.u);
-  extract_patterns(opts, db, args, inc, exc, !info.client.u.host.empty());
+  bool have_address = false;
+  bool have_include_exclude = false;
+  if (args.size() >= 1)
+    {
+      have_address = true;
+      info.client.unparsed = idx(args, 0);
+    }
+  if (args.size() >= 2 || opts.exclude_given)
+    {
+      E(args.size() >= 2, F("no branch pattern given"));
+
+      have_include_exclude = true;
+      info.client.include_pattern = globish(args.begin() + 1, args.end());
+      info.client.exclude_pattern = globish(opts.exclude_patterns);
+    }
   build_client_connection_info(opts, lua, db, keys,
-                               addr, inc, exc, info, need_key);
+                               info, have_address, have_include_exclude,
+                               need_key);
 }
 
 CMD(push, "push", "", CMD_REF(network),
@@ -276,14 +318,15 @@ CMD(clone, "clone", "", CMD_REF(network),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
-    options::opts::exclude | options::opts::branch | options::opts::revision)
+    options::opts::branch | options::opts::revision)
 {
   if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
     throw usage(execid);
 
   revision_id ident;
   system_path workspace_dir;
-  utf8 addr = idx(args, 0);
+  netsync_connection_info info;
+  info.client.unparsed = idx(args, 0);
 
   N(app.opts.branch_given && !app.opts.branchname().empty(),
     F("you must specify a branch to clone"));
@@ -326,41 +369,16 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   db.ensure_open();
 
-  if (!db.var_exists(default_server_key) || app.opts.set_default)
-    {
-      P(F("setting default server to %s") % addr);
-      db.set_var(default_server_key, var_value(addr()));
-    }
-
   key_store keys(app);
   project_t project(db);
-  globish include_pattern(app.opts.branchname());
-  globish exclude_pattern(app.opts.exclude_patterns);
 
-  netsync_connection_info info;
+  info.client.include_pattern = globish(app.opts.branchname());
+  info.client.exclude_pattern = globish(app.opts.exclude_patterns);
   build_client_connection_info(app.opts, app.lua, db, keys,
-                               addr, include_pattern, exclude_pattern,
-                               info);
+                               info, true, true);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
-
-  if (!db.var_exists(default_include_pattern_key)
-      || app.opts.set_default)
-    {
-      P(F("setting default branch include pattern to '%s'") % include_pattern);
-      db.set_var(default_include_pattern_key, var_value(include_pattern()));
-    }
-
-  if (app.opts.exclude_given)
-    {
-      if (!db.var_exists(default_exclude_pattern_key)
-          || app.opts.set_default)
-        {
-          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
-        }
-    }
 
   // make sure we're back in the original dir so that file: URIs work
   change_current_working_dir(start_dir);
