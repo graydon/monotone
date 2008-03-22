@@ -31,13 +31,13 @@ enumerator_callbacks
   // to be notified about the contents of. The rev's children will be
   // traversed no matter what you return here.
   virtual bool process_this_rev(revision_id const & rev) = 0;
-  virtual bool queue_this_cert(hexenc<id> const & c) = 0;
-  virtual bool queue_this_file(hexenc<id> const & c) = 0;
+  virtual bool queue_this_cert(id const & c) = 0;
+  virtual bool queue_this_file(id const & c) = 0;
 
   virtual void note_file_data(file_id const & f) = 0;
   virtual void note_file_delta(file_id const & src, file_id const & dst) = 0;
   virtual void note_rev(revision_id const & rev) = 0;
-  virtual void note_cert(hexenc<id> const & c) = 0;
+  virtual void note_cert(id const & c) = 0;
   virtual ~enumerator_callbacks() {}
 };
 
@@ -45,8 +45,8 @@ struct
 enumerator_item
 {
   enum { fdata, fdelta, rev, cert } tag;
-  hexenc<id> ident_a;
-  hexenc<id> ident_b;
+  id ident_a;
+  id ident_b;
 };
 
 class
@@ -60,14 +60,14 @@ revision_enumerator
   std::deque<enumerator_item> items;
   std::multimap<revision_id, revision_id> graph;
   std::multimap<revision_id, revision_id> inverse_graph;
-  std::multimap<revision_id, hexenc<id> >  revision_certs;
+  std::multimap<revision_id, id>          revision_certs;
 
   bool all_parents_enumerated(revision_id const & child);
   void files_for_revision(revision_id const & r,
                           std::set<file_id> & full_files,
                           std::set<std::pair<file_id,file_id> > & del_files);
   void get_revision_certs(revision_id const & rid,
-			  std::vector<hexenc<id> > & certs);
+			  std::vector<id> & certs);
 
 public:
   revision_enumerator(project_t & project,
@@ -75,7 +75,7 @@ public:
   void get_revision_parents(revision_id const & rid,
 			    std::vector<revision_id> & parents);
   void note_cert(revision_id const & rid,
-		 hexenc<id> const & cert_hash);
+                 id const & cert_hash);
   void step();
   bool done();
 };
