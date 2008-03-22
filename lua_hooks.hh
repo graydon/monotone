@@ -26,8 +26,6 @@ struct lua_State;
 struct globish;
 struct options;
 
-struct netsync_connection_info;
-
 extern app_state* get_app_state(lua_State *L);
 
 class lua_hooks
@@ -81,8 +79,11 @@ public:
                             globish const & include,
                             globish const & exclude,
                             rsa_keypair_id & k);
-  bool hook_get_netsync_connect_command(netsync_connection_info & info,
-                                        bool debug);
+  bool hook_get_netsync_connect_command(uri const & u,
+                                        globish const & include_pattern,
+                                        globish const & exclude_pattern,
+                                        bool debug,
+                                        std::vector<std::string> & argv);
   bool hook_use_transport_auth(uri const & u);
                         
   bool hook_get_netsync_read_permitted(std::string const & branch,
