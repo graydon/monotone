@@ -951,7 +951,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
   Lua ll(st);
   ll
     .func("note_netsync_revision_received")
-    .push_str(new_id.inner()())
+    .push_str(encode_hexenc(new_id.inner()()))
     .push_str(rdat.inner()());
 
   ll.push_table();
@@ -1001,7 +1001,7 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
   Lua ll(st);
   ll
     .func("note_netsync_cert_received")
-    .push_str(rid.inner()())
+    .push_str(encode_hexenc(rid.inner()()))
     .push_str(kid())
     .push_str(name())
     .push_str(value())

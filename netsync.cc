@@ -3113,7 +3113,7 @@ insert_with_parents(revision_id rev,
         {
           revs.insert(rid);
           ++revisions_ticker;
-          ref.note_local_item(rev.inner());
+          ref.note_local_item(rid.inner());
           vector<revision_id> parents;
           rev_enumerator.get_revision_parents(rid, parents);
           for (vector<revision_id>::const_iterator i = parents.begin();
