@@ -388,9 +388,9 @@ private:
 
   outdated_indicator_factory cert_stamper;
 
-  void prefix_matching_constraint(string const & colname,
-                                  string const & prefix,
-                                  query & constraint);
+  void add_prefix_matching_constraint(string const & colname,
+                                      string const & prefix,
+                                      query & q);
 };
 
 database_impl::database_impl(system_path const & f) :
@@ -3157,14 +3157,15 @@ database::get_manifest_certs(cert_name const & name,
 
 // completions
 void
-database_impl::prefix_matching_constraint(string const & colname,
-                                          string const & prefix,
-                                          query & constraint)
+database_impl::add_prefix_matching_constraint(string const & colname,
+                                              string const & prefix,
+                                              query & q)
 {
-  L(FL("prefix_matching_constraint for '%s'") % prefix);
+  L(FL("add_prefix_matching_constraint for '%s'")
+    % encode_hexenc(prefix));
 
   if (prefix.empty())
-    constraint = query("1");
+    q.sql_cmd += "1";  // always true
   else
     {
       string lower_bound(prefix);
@@ -3186,8 +3187,8 @@ database_impl::prefix_matching_constraint(string const & colname,
             L(FL("prefix_matcher: only lower bound ('%s')")
               % encode_hexenc(lower_bound));
 
-          constraint = query(colname + " > ?")
-                       % blob(lower_bound);
+          q.sql_cmd += colname + " > ?";
+          q.args.push_back(blob(lower_bound));
         }
       else
         {
@@ -3196,9 +3197,9 @@ database_impl::prefix_matching_constraint(string const & colname,
               % encode_hexenc(lower_bound)
               % encode_hexenc(upper_bound));
 
-          constraint = query(colname + " BETWEEN ? AND ?")
-                       % blob(lower_bound)
-                       % blob(upper_bound);
+          q.sql_cmd += colname + " BETWEEN ? AND ?";
+          q.args.push_back(blob(lower_bound));
+          q.args.push_back(blob(upper_bound));
         }
     }
 }
@@ -3209,12 +3210,10 @@ database::complete(string const & partial,
 {
   results res;
   completions.clear();
-  query constraint;
+  query q("SELECT id FROM revisions WHERE ");
 
-  imp->prefix_matching_constraint("id", partial, constraint);
-  imp->fetch(res, 1, any_rows,
-             query("SELECT id FROM revisions WHERE " +
-                   constraint.sql_cmd));
+  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(revision_id(res[i][0]));
@@ -3227,21 +3226,19 @@ database::complete(string const & partial,
 {
   results res;
   completions.clear();
-  query constraint;
 
-  imp->prefix_matching_constraint("id", partial, constraint);
-  imp->fetch(res, 1, any_rows,
-             query("SELECT id FROM files WHERE " +
-                   constraint.sql_cmd));
+  query q("SELECT id FROM files WHERE ");
+  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));
 
   res.clear();
 
-  imp->fetch(res, 1, any_rows,
-             query("SELECT id FROM file_deltas WHERE " +
-                   constraint.sql_cmd));
+  q = query("SELECT id FROM file_deltas WHERE ");
+  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(file_id(res[i][0]));
@@ -3253,12 +3250,10 @@ database::complete(string const & partial,
 {
   results res;
   completions.clear();
-  query constraint;
+  query q("SELECT hash, id FROM public_keys WHERE ");
 
-  imp->prefix_matching_constraint("hash", partial, constraint);
-  imp->fetch(res, 2, any_rows,
-             query("SELECT hash, id FROM public_keys WHERE " +
-                   constraint.sql_cmd));
+  imp->add_prefix_matching_constraint("hash", partial, q);
+  imp->fetch(res, 2, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(make_pair(key_id(res[i][0]),
@@ -3272,14 +3267,11 @@ database::select_parent(string const & partial,
                         set<revision_id> & completions)
 {
   results res;
-  query constraint;
-
   completions.clear();
 
-  imp->prefix_matching_constraint("child", partial, constraint);
-  imp->fetch(res, 1, any_rows,
-             query("SELECT DISTINCT parent FROM revision_ancestry WHERE " +
-                   constraint.sql_cmd));
+  query q("SELECT DISTINCT parent FROM revision_ancestry WHERE ");
+  imp->add_prefix_matching_constraint("child", partial, q);
+  imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
     completions.insert(revision_id(res[i][0]));

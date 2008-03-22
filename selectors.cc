@@ -192,6 +192,8 @@ decode_selector(project_t & project,
               diagnose_ambiguous_expansion(project, "p:", parent_ids);
               sel = (* parent_ids.begin()).inner()();
             }
+          else
+            sel = decode_hexenc(sel);
           break;
         default: break;
         }
@@ -246,6 +248,7 @@ complete_one_selector(project_t & project,
       break;
 
     case sel_parent:
+      I(!value.empty());
       project.db.select_parent(value, completions);
       break;
         
