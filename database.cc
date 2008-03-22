@@ -1056,9 +1056,7 @@ database_impl::fetch(results & res,
   // Ensure that exactly the right number of parameters were given
   I(params == int(query.args.size()));
 
-  // profiling finds this logging to be quite expensive
-  if (global_sanity.debug_p())
-    L(FL("binding %d parameters for %s") % params % query.sql_cmd);
+  L(FL("binding %d parameters for %s") % params % query.sql_cmd);
 
   for (int param = 1; param <= params; param++)
     {
