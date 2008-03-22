@@ -184,18 +184,20 @@ namespace
   namespace syms
   {
     symbol const conflict("conflict");
-    symbol const name("name");
     symbol const left_id("left_id");
-    symbol const right_id("right_id");
-    symbol const left_type("left_type");
-    symbol const right_type("right_type");
     symbol const left_name("left_name");
+    symbol const left_type("left_type");
+    symbol const name("name");
+    symbol const right_id("right_id");
     symbol const right_name("right_name");
+    symbol const right_rev_id("right_rev_id");
+    symbol const right_type("right_type");
   }
 }
 
 void
-roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
+roster_merge_result::report_missing_root_conflicts(database & db,
+                                                   roster_t const & left_roster,
                                                    roster_t const & right_roster,
                                                    content_merge_adaptor & adaptor,
                                                    bool basic_io,
@@ -228,13 +230,30 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
       node_id left_lca_root = left_lca_roster->root()->self;
       node_id right_lca_root = right_lca_roster->root()->self;
 
-      P(F("conflict: missing root directory"));
+      basic_io::stanza st;
+
+      if (basic_io)
+        {
+          st.push_str_pair(syms::conflict, "missing root");
+          st.push_str_pair(syms::name, left_lca_name.as_external());
+        }
+      else
+        {
+          P(F("conflict: missing root directory"));
+        }
 
       if (left_root != left_lca_root && right_root == right_lca_root)
         {
-          P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+          if (basic_io)
+            st.push_str_pair(syms::left_type, "pivoted root");
+          else
+            P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+
           if (!right_roster.has_node(left_root))
-            P(F("directory '%s' deleted on the right") % left_lca_name);
+            if (basic_io)
+              st.push_str_pair(syms::right_type, "deleted directory");
+            else
+              P(F("directory '%s' deleted on the right") % left_lca_name);
         }
       else if (left_root == left_lca_root && right_root != right_lca_root)
         {
@@ -256,11 +275,20 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
       // other conflicts can cause the root dir to be left detached
       // for example, merging two independently created projects
       // in these cases don't report anything about pivot_root
+
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          output << "\n";
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
     }
 }
 
 void
-roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
+roster_merge_result::report_invalid_name_conflicts(database & db,
+                                                   roster_t const & left_roster,
                                                    roster_t const & right_roster,
                                                    content_merge_adaptor & adaptor,
                                                    bool basic_io,
@@ -331,7 +359,8 @@ roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
 }
 
 void
-roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roster,
+roster_merge_result::report_directory_loop_conflicts(database & db,
+                                                     roster_t const & left_roster,
                                                      roster_t const & right_roster,
                                                      content_merge_adaptor & adaptor,
                                                      bool basic_io,
@@ -384,7 +413,8 @@ roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roste
 }
 
 void
-roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster,
+roster_merge_result::report_orphaned_node_conflicts(database & db,
+                                                    roster_t const & left_roster,
                                                     roster_t const & right_roster,
                                                     content_merge_adaptor & adaptor,
                                                     bool basic_io,
@@ -412,12 +442,25 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
 
       node_type type = get_type(*lca_roster, conflict.nid);
 
+      basic_io::stanza st;
+
       if (type == file_type)
         P(F("conflict: orphaned file '%s' from revision %s")
           % lca_name % lca_rid);
       else
-        P(F("conflict: orphaned directory '%s' from revision %s")
-          % lca_name % lca_rid);
+        {
+          if (basic_io)
+            {
+              st.push_str_pair(syms::conflict, "orphaned directory");
+              st.push_str_pair(syms::name, lca_name.as_external());
+              st.push_hex_pair(syms::right_rev_id, lca_rid.inner());
+            }
+          else
+            {
+              P(F("conflict: orphaned directory '%s' from revision %s")
+                % lca_name % lca_rid);
+            }
+        }
 
       if (left_roster.has_node(conflict.parent_name.first) &&
           !right_roster.has_node(conflict.parent_name.first))
@@ -426,8 +469,11 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
           left_roster.get_name(conflict.nid, orphan_name);
           left_roster.get_name(conflict.parent_name.first, parent_name);
 
-          P(F("parent directory '%s' was deleted on the right")
-            % parent_name);
+          if (basic_io)
+            st.push_str_pair(syms::right_type, "deleted directory");
+          else
+            P(F("parent directory '%s' was deleted on the right")
+              % parent_name);
 
           if (parent_lca_roster->has_node(conflict.nid))
             {
@@ -435,8 +481,14 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
                 P(F("file '%s' was renamed from '%s' on the left")
                   % orphan_name % lca_name);
               else
-                P(F("directory '%s' was renamed from '%s' on the left")
-                  % orphan_name % lca_name);
+                if (basic_io)
+                  {
+                    st.push_str_pair(syms::left_type, "renamed directory");
+                    st.push_str_pair(syms::left_name, orphan_name.as_external());
+                  }
+                else
+                  P(F("directory '%s' was renamed from '%s' on the left")
+                    % orphan_name % lca_name);
             }
           else
             {
@@ -480,11 +532,20 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
         }
       else
         I(false);
+
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          output << "\n";
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
     }
 }
 
 void
-roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster,
+roster_merge_result::report_multiple_name_conflicts(database & db,
+                                                    roster_t const & left_roster,
                                                     roster_t const & right_roster,
                                                     content_merge_adaptor & adaptor,
                                                     bool basic_io,
@@ -738,7 +799,8 @@ roster_merge_result::report_duplicate_name_conflicts(database & db,
 }
 
 void
-roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
+roster_merge_result::report_attribute_conflicts(database & db,
+                                                roster_t const & left_roster,
                                                 roster_t const & right_roster,
                                                 content_merge_adaptor & adaptor,
                                                 bool basic_io,
@@ -842,7 +904,8 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
 }
 
 void
-roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
+roster_merge_result::report_file_content_conflicts(database & db,
+                                                   roster_t const & left_roster,
                                                    roster_t const & right_roster,
                                                    content_merge_adaptor & adaptor,
                                                    bool basic_io,

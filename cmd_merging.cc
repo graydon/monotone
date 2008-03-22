@@ -863,16 +863,16 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       content_merge_database_adaptor adaptor(db, l_id, r_id,
                                              l_marking, r_marking);
 
-      result.report_missing_root_conflicts(l_roster, r_roster, adaptor, basic_io, output);
-      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
-      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_missing_root_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      result.report_invalid_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      result.report_directory_loop_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
 
-      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor, basic_io, output);
-      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_orphaned_node_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      result.report_multiple_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
       result.report_duplicate_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
 
-      result.report_attribute_conflicts(l_roster, r_roster, adaptor, basic_io, output);
-      result.report_file_content_conflicts(l_roster, r_roster, adaptor, basic_io, output);
+      result.report_attribute_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
     }
 }
 
@@ -910,9 +910,10 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
 //   If revision ids are not given, and the current workspace does not have
 //   two heads, prints an error message to stderr and exits with status 1.
 //
-CMD_AUTOMATE(show_conflicts, N_("[REVID, REVID]"),
-             N_("Shows the conflicts between two revisions (default two heads of current workspace)"),
-             "",
+CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
+             N_("Shows the conflicts between two revisions."),
+             N_("If no arguments are given, left_revid and right_revid default to the"
+                "first two heads that would be chosen by the merge command."),
              options::opts::none)
 {
   database    db(app);
@@ -926,9 +927,14 @@ CMD_AUTOMATE(show_conflicts, N_("[REVID, REVID]"),
       project.get_branch_heads(app.opts.branchname, heads,
                                app.opts.ignore_suspend_certs);
 
-      N(heads.size() == 2, F("branch '%s' has %d heads; must be exactly 2 for show_conflicts") % app.opts.branchname % heads.size());
-      l_id = *heads.begin();
-      r_id = *heads.rbegin();
+      N(heads.size() >= 2,
+        F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
+
+      // FIXME: factor out head choosing algorithm from merge above
+      set<revision_id>::const_iterator i = heads.begin();
+      l_id = *i;
+      ++i;
+      r_id = *i;
     }
   else if (args.size() == 2)
     {
