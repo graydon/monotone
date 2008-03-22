@@ -364,8 +364,7 @@ do_match(string::const_iterator sb, string::const_iterator se,
   unsigned int sc, pc;
   string::const_iterator s(sb);
 
-  if (global_sanity.debug_p()) // decode() is expensive
-    L(FL("subpattern: '%s' against '%s'") % string(s,se) % decode(p,pe));
+  L(FL("subpattern: '%s' against '%s'") % string(s,se) % decode(p,pe));
 
   while (p < pe)
     {
@@ -430,9 +429,8 @@ do_match(string::const_iterator sb, string::const_iterator se,
           // starting from places in s where that character appears.
           if (pc >= ' ')
             {
-              if (global_sanity.debug_p())
-                L(FL("after *: looking for '%c' in '%c%s'")
-                  % (char)pc % (char)sc % string(s, se));
+              L(FL("after *: looking for '%c' in '%c%s'")
+                % (char)pc % (char)sc % string(s, se));
               p++;
               for (;;)
                 {
@@ -445,8 +443,7 @@ do_match(string::const_iterator sb, string::const_iterator se,
             }
           else
             {
-              if (global_sanity.debug_p())
-                L(FL("metacharacter after *: doing it the slow way"));
+              L(FL("metacharacter after *: doing it the slow way"));
               s--;
               do
                 {
