@@ -15,7 +15,6 @@
 
 #include "basic_io.hh"
 #include "cmd.hh"
-#include "cmd_merging.hh"
 #include "diff_patch.hh"
 #include "merge.hh"
 #include "restrictions.hh"
@@ -807,24 +806,6 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
             std::cout, false);
 }
 
-CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
-    N_("Shows what conflicts need resolution between two revisions"),
-    N_("The conflicts are calculated based on the two revisions given in "
-       "the REV parameters."),
-    options::opts::none)
-{
-  database db(app);
-  project_t project(db);
-
-  if (args.size() != 2)
-    throw usage(execid);
-  revision_id l_id, r_id;
-  complete(app.opts, app.lua, project, idx(args,0)(), l_id);
-  complete(app.opts, app.lua, project, idx(args,1)(), r_id);
-
-  show_conflicts_core(db, l_id, r_id, false, std::cout);
-}
-
 namespace
 {
   namespace syms
@@ -893,6 +874,72 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       result.report_attribute_conflicts(l_roster, r_roster, adaptor, basic_io, output);
       result.report_file_content_conflicts(l_roster, r_roster, adaptor, basic_io, output);
     }
+}
+
+CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
+    N_("Shows what conflicts need resolution between two revisions"),
+    N_("The conflicts are calculated based on the two revisions given in "
+       "the REV parameters."),
+    options::opts::none)
+{
+  database db(app);
+  project_t project(db);
+
+  if (args.size() != 2)
+    throw usage(execid);
+  revision_id l_id, r_id;
+  complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+  complete(app.opts, app.lua, project, idx(args,1)(), r_id);
+
+  show_conflicts_core(db, l_id, r_id, false, std::cout);
+}
+
+// Name: show_conflicts
+// Arguments:
+//   Two revision ids (optional, determined from the workspace if not given; there must be exactly two heads)
+// Added in: 7.1
+// Purpose: Prints the conflicts between two revisions, to aid in merging them.
+//
+// Output format: see monotone.texi
+//
+// Error conditions:
+//
+//   If the revision IDs are unknown or invalid prints an error message to
+//   stderr and exits with status 1.
+//
+//   If revision ids are not given, and the current workspace does not have
+//   two heads, prints an error message to stderr and exits with status 1.
+//
+CMD_AUTOMATE(show_conflicts, N_("[REVID, REVID]"),
+             N_("Shows the conflicts between two revisions (default two heads of current workspace)"),
+             "",
+             options::opts::none)
+{
+  database    db(app);
+  project_t   project(db);
+  revision_id l_id, r_id;
+
+  if (args.size() == 0)
+    {
+      // get ids from heads
+      set<revision_id> heads;
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
+
+      N(heads.size() == 2, F("branch '%s' has %d heads; must be exactly 2 for show_conflicts") % app.opts.branchname % heads.size());
+      l_id = *heads.begin();
+      r_id = *heads.rbegin();
+    }
+  else if (args.size() == 2)
+    {
+      // get ids from args
+      complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+      complete(app.opts, app.lua, project, idx(args,1)(), r_id);
+    }
+  else
+    throw usage(execid);
+
+  show_conflicts_core(db, l_id, r_id, true, output);
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),

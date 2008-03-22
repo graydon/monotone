@@ -1,4 +1,8 @@
--- Test 'automate show_conflicts'
+-- Test 'automate show_conflicts' options and arguments
+--
+-- options and arguments determine between which revisions conflicts are shown
+--
+-- See automate_show_conflicts for all conflict cases
 
 mtn_setup()
 
@@ -24,6 +28,7 @@ addfile("thermostat.c", "thermostat honeywell")
 commit()
 beth_1 = base_revision()
 
+--  No options or args; must be two heads (same as typical merge case)
 check(mtn("automate", "show_conflicts"), 0, true, false)
 canonicalize("stdout")
 check(readfile("expected-1.stdout") == readfile("stdout"))

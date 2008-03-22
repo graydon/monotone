@@ -8571,6 +8571,10 @@ up to FIXME: lines. The order of the lines is not important, and may
 change in future revisions, except that the first line will always be
 @code{conflict}.
 
+When the conflicts involve files, the file ids are output, so the file
+contents can be retrieved efficiently via @code{automate get_file},
+to aid in conflict resolution.
+
 @item Error conditions:
 
 If the revision IDs are gvien, but either is unknown or
