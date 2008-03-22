@@ -15,13 +15,13 @@ commit("branch-test-exclude")
 
 srv = netsync.start()
 
-check(mtn2("pull", "mtn://" .. srv.address .. "?branch-te*&!branch-test-*"), 0, false, false)
+check(mtn2("pull", "mtn://" .. srv.address .. "?branch-te*/-branch-test-*"), 0, false, false)
 check(mtn2("ls", "branches"), 0, true)
 check(not qgrep("^branch$", "stdout"))
 check(    qgrep("^branch-test$", "stdout"))
 check(not qgrep("^branch-test-exclude$", "stdout"))
 
-check(mtn2("pull", "mtn://" .. srv.address), 0, false, false)
+check(mtn2("pull", "mtn://" .. srv.address .. "?include=*"), 0, false, false)
 check(mtn2("ls", "branches"), 0, true)
 check(qgrep("^branch$", "stdout"))
 check(qgrep("^branch-test$", "stdout"))
