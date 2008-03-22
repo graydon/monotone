@@ -50,7 +50,7 @@ namespace constants
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
-  std::size_t const db_log_line_sz = 70;
+  std::size_t const db_log_line_sz = 50;
 
   // maximum size in bytes of the database xdelta version reconstruction
   // cache.  the value of 7 MB was determined as the optimal point after

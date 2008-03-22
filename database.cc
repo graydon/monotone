@@ -1063,24 +1063,19 @@ database_impl::fetch(results & res,
       // profiling finds this logging to be quite expensive
       if (global_sanity.debug_p())
         {
-          string log;
-          switch (query.args[param-1].type)
-            { // FIXME: this is somewhat ugly...
-            case query_param::text:
-              log = query.args[param-1].data;
-              if (log.size() > constants::log_line_sz)
-                log = log.substr(0, constants::log_line_sz);
-              L(FL("binding %d with value '%s'") % param % log);
-              break;
-            case query_param::blob:
-              log = encode_hexenc(query.args[param-1].data);
-              if (log.size() > constants::log_line_sz)
-                log = log.substr(0, constants::log_line_sz);
-              L(FL("binding %d with value x'%s'") % param % log);
-              break;
-            default:
-              L(FL("binding %d with unknown type") % param);
+          string prefix;
+          string log(query.args[param-1].data);
+
+          if (query.args[param-1].type == query_param::blob)
+            {
+              prefix = "x";
+              log = encode_hexenc(log);
             }
+
+          if (log.size() > constants::db_log_line_sz)
+            log = log.substr(0, constants::db_log_line_sz - 2) + "..";
+
+          L(FL("binding %d with value '%s'") % param % log);
         }
 
       switch (idx(query.args, param - 1).type)
