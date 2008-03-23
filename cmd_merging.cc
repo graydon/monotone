@@ -281,7 +281,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   content_merge_workspace_adaptor wca(db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, db, *working_roster, chosen_roster,
+  resolve_merge_conflicts(app.lua, *working_roster, chosen_roster,
                           result, wca);
 
   // Make sure it worked...
@@ -630,7 +630,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor
           dba(db, left_rid, right_rid, left_marking_map, right_marking_map);
 
-        resolve_merge_conflicts(app.lua, db, left_roster, right_roster,
+        resolve_merge_conflicts(app.lua, left_roster, right_roster,
                                 result, dba);
 
         {
@@ -742,7 +742,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   content_merge_workspace_adaptor wca(db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, db, *left.first, *right.first, merge_result, wca);
+  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -810,27 +810,29 @@ namespace
 {
   namespace syms
   {
+    symbol const ancestor("ancestor");
     symbol const left("left");
     symbol const right("right");
   }
 }
 
-void
+static void
 show_conflicts_core (database & db, revision_id const & l_id, revision_id const & r_id, bool const basic_io, std::ostream & output)
 {
   N(!is_ancestor(db, l_id, r_id),
     F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
   N(!is_ancestor(db, r_id, l_id),
     F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
-  roster_t l_roster, r_roster;
+  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
   marking_map l_marking, r_marking;
-  db.get_roster(l_id, l_roster, l_marking);
-  db.get_roster(r_id, r_roster, r_marking);
+  db.get_roster(l_id, *l_roster, l_marking);
+  db.get_roster(r_id, *r_roster, r_marking);
   set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
   db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
   roster_merge_result result;
-  roster_merge(l_roster, l_marking, l_uncommon_ancestors,
-               r_roster, r_marking, r_uncommon_ancestors,
+  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
+               *r_roster, r_marking, r_uncommon_ancestors,
                result);
 
   // note that left and right are in the order specified on the command line
@@ -838,14 +840,12 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
   // they may appear swapped here. The user may have done that deliberately,
   // especially via automate, so we don't sort them here.
 
+  basic_io::stanza st;
+
   if (basic_io)
     {
-      basic_io::stanza st;
-      basic_io::printer pr;
       st.push_hex_pair(syms::left, l_id.inner());
       st.push_hex_pair(syms::right, r_id.inner());
-      pr.print_stanza(st);
-      output.write(pr.buf.data(), pr.buf.size());
     }
   else
     {
@@ -855,7 +855,13 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
 
   if (result.is_clean())
     {
-      if (not basic_io)
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
         P(F("no conflicts detected"));
     }
   else
@@ -863,16 +869,28 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       content_merge_database_adaptor adaptor(db, l_id, r_id,
                                              l_marking, r_marking);
 
-      result.report_missing_root_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
-      result.report_invalid_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
-      result.report_directory_loop_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      {
+        basic_io::printer pr;
+        st.push_hex_pair(syms::ancestor, adaptor.lca.inner());
+        pr.print_stanza(st);
+        output.write(pr.buf.data(), pr.buf.size());
+      }
 
-      result.report_orphaned_node_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
-      result.report_multiple_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
-      result.report_duplicate_name_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      // The basic_io routines in roster_merge.cc access these rosters via
+      // the adaptor.
+      adaptor.cache_roster (l_id, l_roster);
+      adaptor.cache_roster (r_id, r_roster);
 
-      result.report_attribute_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
-      result.report_file_content_conflicts(db, l_roster, r_roster, adaptor, basic_io, output);
+      result.report_missing_root_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_invalid_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_directory_loop_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+
+      result.report_orphaned_node_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_multiple_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_duplicate_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+
+      result.report_attribute_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
     }
 }
 
@@ -1088,7 +1106,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // to_roster is not fetched from the db which does not have temporary nids
   wca.cache_roster(to_rid, to_roster);
 
-  resolve_merge_conflicts(app.lua, db, *working_roster, *to_roster,
+  resolve_merge_conflicts(app.lua, *working_roster, *to_roster,
                           result, wca);
 
   I(result.is_clean());

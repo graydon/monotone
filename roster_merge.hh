@@ -154,55 +154,47 @@ struct roster_merge_result
   bool has_non_content_conflicts() const;
   void log_conflicts() const;
 
-  void report_missing_root_conflicts(database & db,
-                                     roster_t const & left,
+  void report_missing_root_conflicts(roster_t const & left,
                                      roster_t const & right,
                                      content_merge_adaptor & adaptor,
-                                     bool basic_io,
+                                     bool const basic_io,
                                      std::ostream & output) const;
-  void report_invalid_name_conflicts(database & db,
-                                     roster_t const & left,
+  void report_invalid_name_conflicts(roster_t const & left,
                                      roster_t const & right,
                                      content_merge_adaptor & adaptor,
-                                     bool basic_io,
+                                     bool const basic_io,
                                      std::ostream & output) const;
-  void report_directory_loop_conflicts(database & db,
-                                       roster_t const & left,
-                                       roster_t const & right,
-                                       content_merge_adaptor & adaptor,
-                                       bool basic_io,
-                                       std::ostream & output) const;
-
-  void report_orphaned_node_conflicts(database & db,
-                                      roster_t const & left,
-                                      roster_t const & right,
-                                      content_merge_adaptor & adaptor,
-                                      bool basic_io,
-                                      std::ostream & output) const;
-  void report_multiple_name_conflicts(database & db,
-                                      roster_t const & left,
-                                      roster_t const & right,
-                                      content_merge_adaptor & adaptor,
-                                      bool basic_io,
-                                      std::ostream & output) const;
-  void report_duplicate_name_conflicts(database & db,
-                                       roster_t const & left,
+  void report_directory_loop_conflicts(roster_t const & left,
                                        roster_t const & right,
                                        content_merge_adaptor & adaptor,
                                        bool const basic_io,
                                        std::ostream & output) const;
 
-  void report_attribute_conflicts(database & db,
-                                  roster_t const & left,
+  void report_orphaned_node_conflicts(roster_t const & left,
+                                      roster_t const & right,
+                                      content_merge_adaptor & adaptor,
+                                      bool const basic_io,
+                                      std::ostream & output) const;
+  void report_multiple_name_conflicts(roster_t const & left,
+                                      roster_t const & right,
+                                      content_merge_adaptor & adaptor,
+                                      bool const basic_io,
+                                      std::ostream & output) const;
+  void report_duplicate_name_conflicts(roster_t const & left,
+                                       roster_t const & right,
+                                       content_merge_adaptor & adaptor,
+                                       bool const basic_io,
+                                       std::ostream & output) const;
+
+  void report_attribute_conflicts(roster_t const & left,
                                   roster_t const & right,
                                   content_merge_adaptor & adaptor,
-                                  bool basic_io,
+                                  bool const basic_io,
                                   std::ostream & output) const;
-  void report_file_content_conflicts(database & db,
-                                     roster_t const & left,
+  void report_file_content_conflicts(roster_t const & left,
                                      roster_t const & right,
                                      content_merge_adaptor & adaptor,
-                                     bool basic_io,
+                                     bool const basic_io,
                                      std::ostream & output) const;
 
   void clear();

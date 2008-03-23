@@ -494,7 +494,7 @@ content_merge_database_adaptor::content_merge_database_adaptor(database & db,
                                                                revision_id const & right,
                                                                marking_map const & left_mm,
                                                                marking_map const & right_mm)
-  : db(db), left_mm(left_mm), right_mm(right_mm)
+  : db(db), left_rid (left), right_rid (right), left_mm(left_mm), right_mm(right_mm)
 {
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
@@ -529,6 +529,13 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
     }
   guard.commit();
 }
+
+void
+content_merge_database_adaptor::cache_roster(revision_id const & rid,
+                                             boost::shared_ptr<roster_t const> roster)
+{
+  safe_insert(rosters, make_pair(rid, roster));
+};
 
 static void
 load_and_cache_roster(database & db, revision_id const & rid,
