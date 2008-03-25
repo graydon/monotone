@@ -634,8 +634,9 @@ char const migrate_to_binary_hashes[] =
   "UPDATE revisions         SET id=unhex(id);"
   "UPDATE revision_ancestry SET parent=unhex(parent), child=unhex(child);"
   "UPDATE heights           SET revision=unhex(revision);"
-  "UPDATE rosters           SET id=unhex(id);"
-  "UPDATE roster_deltas     SET id=unhex(id), base=unhex(base);"
+  "UPDATE rosters           SET id=unhex(id), checksum=unhex(checksum);"
+  "UPDATE roster_deltas     SET id=unhex(id), base=unhex(base), "
+  "                             checksum=unhex(checksum);"
   "UPDATE public_keys       SET hash=unhex(hash);"
 
   // revision_certs also gets a new index, so we recreate the
