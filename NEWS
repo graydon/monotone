@@ -33,6 +33,10 @@
 
         - Update Botan to 1.7.4.
 
+        - Usage of the internal app_state object has been reduced, objects
+          are better encapsulated now. The database interface has been
+          enhanced to ease reduction of locking contention in the future.
+
 
 Mon Feb 25 15:55:36 UTC 2008
 
