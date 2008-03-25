@@ -175,7 +175,7 @@ decode_selector(project_t & project,
         case sel_parent:
           if (sel.empty())
             {
-              workspace work(opts, lua, F("the empty parent selector p: refers to"
+              workspace work(opts, lua, F("the empty parent selector p: refers to "
                                           "the base revision of the workspace"));
 
               parent_map parents;
