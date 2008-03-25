@@ -37,6 +37,16 @@
           are better encapsulated now. The database interface has been
           enhanced to ease reduction of locking contention in the future.
 
+        - The database scheme has been changed to store binary encoded hashes,
+          instead of a longer hex encoded representation. That reduces the
+          database size and speeds up operations a little.
+          Users who like to fiddle with the database directly are adviced to
+          use the sqlite function hex() as well as the hexadecimal notation
+          x'DEADBEEF', which emits a binary blob.
+
+        - Monotone uses that same binary hash representation internally as
+          well, saving some conversion steps from and to hex encoded notation.
+
 
 Mon Feb 25 15:55:36 UTC 2008
 
