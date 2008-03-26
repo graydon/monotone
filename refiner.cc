@@ -175,8 +175,8 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
   // Write a debug message
   /*
   {
-    hexenc<id> hslotval;
-    their_node.get_hex_slot(slot, hslotval);
+    id slotval;
+    their_node.get_raw_slot(slot, slotval);
 
     hexenc<prefix> hpref;
     their_node.get_hex_prefix(hpref);
@@ -185,7 +185,8 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
     netcmd_item_type_to_string(their_node.type, typestr);
 
     L(FL("%s's peer has %s '%s' at slot %d (in node '%s', level %d)")
-      % voicestr() % typestr % hslotval % slot % hpref % their_node.level);
+      % voicestr() % typestr % encode_hexenc(slotval())
+      % slot % hpref % their_node.level);
   }
   */
 }

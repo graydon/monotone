@@ -15,6 +15,7 @@
 #include "revision.hh"
 #include "file_io.hh"
 #include "work.hh"
+#include "transforms.hh"
 
 #include "lexical_cast.hh"
 #include <exception>
@@ -195,7 +196,7 @@ migrate_1_to_2()
       E(false, F("workspace is corrupt: reading %s: %s")
         % rev_path % e.what());
     }
-  revision_id base_rid(remove_ws(base_rev_data())); 
+  revision_id base_rid(decode_hexenc(remove_ws(base_rev_data())));
   MM(base_rid);
 
   cset workcs; 
