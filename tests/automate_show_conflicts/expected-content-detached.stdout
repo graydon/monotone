@@ -1,0 +1,24 @@
+    left [7a4c8dae08866a0c65a5a136eeca82f85e028837]
+   right [40a6208fa7406a393823d33aecae509c80db37b4]
+ancestor [936159c798b9bb3f5d0f871a0dda158a844e9348]
+
+        conflict "multiple names"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
+       left_name "bar"
+    left_file_id [f1bb6fff2ad16d67143d89fc374ede7abec5d437]
+      right_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
+      right_name "baz"
+   right_file_id [b966b2d35b99e456cb0c55e4573ef0b1b155b4a9]
+
+        conflict "content"
+       node_type "file"
+   ancestor_name "foo"
+ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
+       left_name "bar"
+    left_file_id [f1bb6fff2ad16d67143d89fc374ede7abec5d437]
+      right_name "baz"
+   right_file_id [b966b2d35b99e456cb0c55e4573ef0b1b155b4a9]

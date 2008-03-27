@@ -414,6 +414,58 @@ put_attr_conflict (basic_io::stanza & st,
 }
 
 static void
+put_content_conflict (basic_io::stanza & st,
+                      content_merge_adaptor & adaptor,
+                      file_content_conflict const & conflict)
+{
+  // Always report ancestor, left, and right information, for completeness
+
+  content_merge_database_adaptor & db_adaptor (dynamic_cast<content_merge_database_adaptor &>(adaptor));
+
+  // This ensures that the ancestor roster is computed
+  boost::shared_ptr<roster_t const> ancestor_roster;
+  revision_id ancestor_rid;
+  db_adaptor.get_ancestral_roster (conflict.nid, ancestor_rid, ancestor_roster);
+
+  boost::shared_ptr<roster_t const> left_roster(db_adaptor.rosters[db_adaptor.left_rid]);
+  I(0 != left_roster);
+  boost::shared_ptr<roster_t const> right_roster(db_adaptor.rosters[db_adaptor.right_rid]);
+  I(0 != right_roster);
+
+  file_path ancestor_name;
+  file_path left_name;
+  file_path right_name;
+
+  ancestor_roster->get_name (conflict.nid, ancestor_name);
+  left_roster->get_name (conflict.nid, left_name);
+  right_roster->get_name (conflict.nid, right_name);
+
+  if (file_type == get_type (*ancestor_roster, conflict.nid))
+    {
+      st.push_str_pair(syms::node_type, "file");
+      file_id ancestor_fid;
+      db_adaptor.db.get_file_content (db_adaptor.lca, conflict.nid, ancestor_fid);
+      st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
+      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      file_id left_fid;
+      db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
+      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_hex_pair(syms::left_file_id, left_fid.inner());
+      file_id right_fid;
+      db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
+      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_hex_pair(syms::right_file_id, right_fid.inner());
+    }
+  else
+    {
+      st.push_str_pair(syms::node_type, "directory");
+      st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
+      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_str_pair(syms::right_name, right_name.as_external());
+    }
+}
+
+static void
 put_stanza (basic_io::stanza & st,
             std::ostream & output)
 {
@@ -1030,7 +1082,7 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
         {
           basic_io::stanza st;
 
-          st.push_str_pair(syms::conflict, "multiple attribute values");
+          st.push_str_pair(syms::conflict, "attribute");
           put_attr_conflict (st, adaptor, conflict);
           put_stanza (st, output);
         }
@@ -1141,39 +1193,51 @@ roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
       file_content_conflict const & conflict = file_content_conflicts[i];
       MM(conflict);
 
-      if (roster.is_attached(conflict.nid))
-        {
-          file_path name;
-          roster.get_name(conflict.nid, name);
 
-          P(F("conflict: content conflict on file '%s'")
-            % name);
-          P(F("content hash is %s on the left") % conflict.left);
-          P(F("content hash is %s on the right") % conflict.right);
+      if (basic_io)
+        {
+          basic_io::stanza st;
+
+          st.push_str_pair(syms::conflict, "content");
+          put_content_conflict (st, adaptor, conflict);
+          put_stanza (st, output);
         }
       else
         {
-          // this node isn't attached in the merged roster and there
-          // isn't really a good name for it so report both the left
-          // and right names using a slightly different format
+          if (roster.is_attached(conflict.nid))
+            {
+              file_path name;
+              roster.get_name(conflict.nid, name);
 
-          file_path left_name, right_name;
-          left_roster.get_name(conflict.nid, left_name);
-          right_roster.get_name(conflict.nid, right_name);
+              P(F("conflict: content conflict on file '%s'")
+                % name);
+              P(F("content hash is %s on the left") % conflict.left);
+              P(F("content hash is %s on the right") % conflict.right);
+            }
+          else
+            {
+              // this node isn't attached in the merged roster and there
+              // isn't really a good name for it so report both the left
+              // and right names using a slightly different format
 
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
+              file_path left_name, right_name;
+              left_roster.get_name(conflict.nid, left_name);
+              right_roster.get_name(conflict.nid, right_name);
 
-          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-          lca_roster->get_name(conflict.nid, lca_name);
+              shared_ptr<roster_t const> lca_roster;
+              revision_id lca_rid;
+              file_path lca_name;
 
-          P(F("conflict: content conflict on file '%s' from revision %s")
-            % lca_name % lca_rid);
-          P(F("content hash is %s on the left in file '%s'")
-            % conflict.left % left_name);
-          P(F("content hash is %s on the right in file '%s'")
-            % conflict.right % right_name);
+              adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+              lca_roster->get_name(conflict.nid, lca_name);
+
+              P(F("conflict: content conflict on file '%s' from revision %s")
+                % lca_name % lca_rid);
+              P(F("content hash is %s on the left in file '%s'")
+                % conflict.left % left_name);
+              P(F("content hash is %s on the right in file '%s'")
+                % conflict.right % right_name);
+            }
         }
     }
 }
