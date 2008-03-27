@@ -23,6 +23,11 @@
 
         - `commit' now uses keydir specified in _MTN/options
 
+        - duplicate name conflicts now show a proper error message, even if
+          a parent directory got renamed as well. In that case, the error
+          message now shows both names for the directory and the offending
+          file name.
+
         New features
 
         - The bare parent selector 'p:' can now be used in a workspace to
