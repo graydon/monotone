@@ -185,10 +185,16 @@ namespace
   {
     symbol const ancestor_file_id("ancestor_file_id");
     symbol const ancestor_name("ancestor_name");
+    symbol const attr_name("attr_name");
     symbol const conflict("conflict");
+    symbol const left_attr_state("left_attr_state");
+    symbol const left_attr_value("left_attr_value");
     symbol const left_file_id("left_file_id");
     symbol const left_name("left_name");
     symbol const left_type("left_type");
+    symbol const node_type("node_type");
+    symbol const right_attr_state("right_attr_state");
+    symbol const right_attr_value("right_attr_value");
     symbol const right_file_id("right_file_id");
     symbol const right_name("right_name");
     symbol const right_type("right_type");
@@ -326,6 +332,84 @@ put_rename_conflict_right (basic_io::stanza & st,
       st.push_str_pair(syms::right_type, "renamed directory");
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
       st.push_str_pair(syms::right_name, right_name.as_external());
+    }
+}
+
+static void
+put_attr_state_left (basic_io::stanza & st, attribute_conflict const & conflict)
+{
+  if (conflict.left.first)
+    st.push_str_pair(syms::left_attr_value, conflict.left.second());
+  else
+    st.push_str_pair(syms::left_attr_state, "dropped");
+}
+
+static void
+put_attr_state_right (basic_io::stanza & st, attribute_conflict const & conflict)
+{
+  if (conflict.right.first)
+    st.push_str_pair(syms::right_attr_value, conflict.right.second());
+  else
+    st.push_str_pair(syms::right_attr_state, "dropped");
+}
+
+static void
+put_attr_conflict (basic_io::stanza & st,
+                   content_merge_adaptor & adaptor,
+                   attribute_conflict const & conflict)
+{
+  // Always report ancestor, left, and right information, for completeness
+
+  content_merge_database_adaptor & db_adaptor (dynamic_cast<content_merge_database_adaptor &>(adaptor));
+
+  // This ensures that the ancestor roster is computed
+  boost::shared_ptr<roster_t const> ancestor_roster;
+  revision_id ancestor_rid;
+  db_adaptor.get_ancestral_roster (conflict.nid, ancestor_rid, ancestor_roster);
+
+  boost::shared_ptr<roster_t const> left_roster(db_adaptor.rosters[db_adaptor.left_rid]);
+  I(0 != left_roster);
+  boost::shared_ptr<roster_t const> right_roster(db_adaptor.rosters[db_adaptor.right_rid]);
+  I(0 != right_roster);
+
+  file_path ancestor_name;
+  file_path left_name;
+  file_path right_name;
+
+  ancestor_roster->get_name (conflict.nid, ancestor_name);
+  left_roster->get_name (conflict.nid, left_name);
+  right_roster->get_name (conflict.nid, right_name);
+
+  if (file_type == get_type (*ancestor_roster, conflict.nid))
+    {
+      st.push_str_pair(syms::node_type, "file");
+      st.push_str_pair(syms::attr_name, conflict.key());
+      file_id ancestor_fid;
+      db_adaptor.db.get_file_content (db_adaptor.lca, conflict.nid, ancestor_fid);
+      st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
+      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      // FIXME: don't have this. st.push_str_pair(syms::ancestor_attr_value, ???);
+      file_id left_fid;
+      db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
+      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_hex_pair(syms::left_file_id, left_fid.inner());
+      put_attr_state_left (st, conflict);
+      file_id right_fid;
+      db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
+      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_hex_pair(syms::right_file_id, right_fid.inner());
+      put_attr_state_right (st, conflict);
+    }
+  else
+    {
+      st.push_str_pair(syms::node_type, "directory");
+      st.push_str_pair(syms::attr_name, conflict.key());
+      st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
+      // FIXME: don't have this. st.push_str_pair(syms::ancestor_attr_value, ???);
+      st.push_str_pair(syms::left_name, left_name.as_external());
+      put_attr_state_left (st, conflict);
+      st.push_str_pair(syms::right_name, right_name.as_external());
+      put_attr_state_right (st, conflict);
     }
 }
 
@@ -942,90 +1026,101 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
       attribute_conflict const & conflict = attribute_conflicts[i];
       MM(conflict);
 
-      node_type type = get_type(roster, conflict.nid);
-
-      if (roster.is_attached(conflict.nid))
+      if (basic_io)
         {
-          file_path name;
-          roster.get_name(conflict.nid, name);
+          basic_io::stanza st;
 
-          if (type == file_type)
-            P(F("conflict: multiple values for attribute '%s' on file '%s'")
-              % conflict.key % name);
-          else
-            P(F("conflict: multiple values for attribute '%s' on directory '%s'")
-              % conflict.key % name);
-
-          if (conflict.left.first)
-            P(F("set to '%s' on the left") % conflict.left.second);
-          else
-            P(F("deleted on the left"));
-
-          if (conflict.right.first)
-            P(F("set to '%s' on the right") % conflict.right.second);
-          else
-            P(F("deleted on the right"));
+          st.push_str_pair(syms::conflict, "multiple attribute values");
+          put_attr_conflict (st, adaptor, conflict);
+          put_stanza (st, output);
         }
       else
         {
-          // this node isn't attached in the merged roster and there
-          // isn't really a good name for it so report both the left
-          // and right names using a slightly different format
+          node_type type = get_type(roster, conflict.nid);
 
-          file_path left_name, right_name;
-          left_roster.get_name(conflict.nid, left_name);
-          right_roster.get_name(conflict.nid, right_name);
-
-          shared_ptr<roster_t const> lca_roster;
-          revision_id lca_rid;
-          file_path lca_name;
-
-          adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
-          lca_roster->get_name(conflict.nid, lca_name);
-
-          if (type == file_type)
-            P(F("conflict: multiple values for attribute '%s' on file '%s' from revision %s")
-              % conflict.key % lca_name % lca_rid);
-          else
-            P(F("conflict: multiple values for attribute '%s' on directory '%s' from revision %s")
-              % conflict.key % lca_name % lca_rid);
-
-          if (conflict.left.first)
+          if (roster.is_attached(conflict.nid))
             {
+              file_path name;
+              roster.get_name(conflict.nid, name);
+
               if (type == file_type)
-                P(F("set to '%s' on left file '%s'")
-                  % conflict.left.second % left_name);
+                P(F("conflict: multiple values for attribute '%s' on file '%s'")
+                  % conflict.key % name);
               else
-                P(F("set to '%s' on left directory '%s'")
-                  % conflict.left.second % left_name);
+                P(F("conflict: multiple values for attribute '%s' on directory '%s'")
+                  % conflict.key % name);
+
+              if (conflict.left.first)
+                P(F("set to '%s' on the left") % conflict.left.second);
+              else
+                P(F("deleted on the left"));
+
+              if (conflict.right.first)
+                P(F("set to '%s' on the right") % conflict.right.second);
+              else
+                P(F("deleted on the right"));
             }
           else
             {
-              if (type == file_type)
-                P(F("deleted from left file '%s'")
-                  % left_name);
-              else
-                P(F("deleted from left directory '%s'")
-                  % left_name);
-            }
+              // This node isn't attached in the merged roster, due to another
+              // conflict (ie renamed to different names). So report the
+              // ancestor name and the left and right names.
 
-          if (conflict.right.first)
-            {
+              file_path left_name, right_name;
+              left_roster.get_name(conflict.nid, left_name);
+              right_roster.get_name(conflict.nid, right_name);
+
+              shared_ptr<roster_t const> lca_roster;
+              revision_id lca_rid;
+              file_path lca_name;
+
+              adaptor.get_ancestral_roster(conflict.nid, lca_rid, lca_roster);
+              lca_roster->get_name(conflict.nid, lca_name);
+
               if (type == file_type)
-                P(F("set to '%s' on right file '%s'")
-                  % conflict.right.second % right_name);
+                P(F("conflict: multiple values for attribute '%s' on file '%s' from revision %s")
+                  % conflict.key % lca_name % lca_rid);
               else
-                P(F("set to '%s' on right directory '%s'")
-                  % conflict.right.second % right_name);
-            }
-          else
-            {
-              if (type == file_type)
-                P(F("deleted from right file '%s'")
-                  % right_name);
+                P(F("conflict: multiple values for attribute '%s' on directory '%s' from revision %s")
+                  % conflict.key % lca_name % lca_rid);
+
+              if (conflict.left.first)
+                {
+                  if (type == file_type)
+                    P(F("set to '%s' on left file '%s'")
+                      % conflict.left.second % left_name);
+                  else
+                    P(F("set to '%s' on left directory '%s'")
+                      % conflict.left.second % left_name);
+                }
               else
-                P(F("deleted from right directory '%s'")
-                  % right_name);
+                {
+                  if (type == file_type)
+                    P(F("deleted from left file '%s'")
+                      % left_name);
+                  else
+                    P(F("deleted from left directory '%s'")
+                      % left_name);
+                }
+
+              if (conflict.right.first)
+                {
+                  if (type == file_type)
+                    P(F("set to '%s' on right file '%s'")
+                      % conflict.right.second % right_name);
+                  else
+                    P(F("set to '%s' on right directory '%s'")
+                      % conflict.right.second % right_name);
+                }
+              else
+                {
+                  if (type == file_type)
+                    P(F("deleted from right file '%s'")
+                      % right_name);
+                  else
+                    P(F("deleted from right directory '%s'")
+                      % right_name);
+                }
             }
         }
     }

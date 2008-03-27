@@ -1,0 +1,39 @@
+    left [67ba83fd417fede6cb6de14d90783e93261e5210]
+   right [2654ad872bf18d40260aaf59e8ce0058bf54bddd]
+ancestor [d81bb87785fa1bbe11aed1ca6d3340d288b61b78]
+
+        conflict "multiple names"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+       left_name "bar"
+    left_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+      right_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+      right_name "baz"
+   right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+
+        conflict "multiple attribute values"
+       node_type "file"
+       attr_name "attr1"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+       left_name "bar"
+    left_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+ left_attr_value "valueX"
+      right_name "baz"
+   right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+right_attr_value "valueZ"
+
+        conflict "multiple attribute values"
+       node_type "file"
+       attr_name "attr2"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+       left_name "bar"
+    left_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+ left_attr_value "valueY"
+      right_name "baz"
+   right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+right_attr_state "dropped"
