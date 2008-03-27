@@ -525,15 +525,35 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       left_roster.get_name(left_nid, left_name);
       right_roster.get_name(right_nid, right_name);
 
-      I(left_name == right_name);
-
       shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
       revision_id left_lca_rid, right_lca_rid;
 
       adaptor.get_ancestral_roster(left_nid, left_lca_rid, left_lca_roster);
       adaptor.get_ancestral_roster(right_nid, right_lca_rid, right_lca_roster);
 
-      P(F("conflict: duplicate name '%s'") % left_name);
+      // In most cases, the left_name equals the right_name. However, maybe
+      // a parent directory got renamed on one side. In that case, the names
+      // don't match, but it's still the same directory (by node id), to
+      // which we want to add the same file (by name).
+      if (left_name == right_name)
+        {
+          file_path dir;
+          path_component basename;
+          left_name.dirname_basename(dir, basename);
+          P(F("conflict: duplicate name '%s' for the directory '%s'") % basename % dir);
+        }
+      else
+        {
+          file_path left_dir, right_dir;
+          path_component left_basename, right_basename;
+          left_name.dirname_basename(left_dir, left_basename);
+          right_name.dirname_basename(right_dir, right_basename);
+          I(left_basename == right_basename);
+          P(F("conflict: duplicate name '%s' for the directory\n"
+              "          named '%s' on the left and\n"
+              "          named '%s' on the right.")
+            % left_basename % left_dir % right_dir);
+        }
 
       node_type left_type  = get_type(left_roster, left_nid);
       node_type right_type = get_type(right_roster, right_nid);

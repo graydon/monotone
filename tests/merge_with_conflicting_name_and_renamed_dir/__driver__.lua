@@ -44,6 +44,6 @@ addfile("foo/x", "conflicting contents")
 commit()
 
 -- try merging
-xfail(mtn("merge"), 1, false, true)
+check(mtn("merge"), 1, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
