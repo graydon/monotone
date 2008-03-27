@@ -42,6 +42,7 @@
 #include "charset.hh"
 #include "safe_map.hh"
 #include "work.hh"
+#include "xdelta.hh"
 #include "database.hh"
 
 using std::allocator;
@@ -96,7 +97,7 @@ CMD_AUTOMATE(heads, N_("[BRANCH]"),
   project.get_branch_heads(branch, heads, app.opts.ignore_suspend_certs);
   for (set<revision_id>::const_iterator i = heads.begin();
        i != heads.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: ancestors
@@ -122,8 +123,9 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      revision_id rid((*i)());
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+      revision_id rid(decode_hexenc((*i)()));
+      N(db.revision_exists(rid), F("no such revision '%s'")
+        % encode_hexenc(rid.inner()()));
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -147,7 +149,7 @@ CMD_AUTOMATE(ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   for (set<revision_id>::const_iterator i = ancestors.begin();
        i != ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << '\n';
+      output << encode_hexenc(i->inner()()) << '\n';
 }
 
 
@@ -174,8 +176,9 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      revision_id rid((*i)());
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+      revision_id rid(decode_hexenc((*i)()));
+      N(db.revision_exists(rid), F("no such revision '%s'")
+        % encode_hexenc(rid.inner()()));
       frontier.push_back(rid);
     }
   while (!frontier.empty())
@@ -196,7 +199,7 @@ CMD_AUTOMATE(descendents, N_("REV1 [REV2 [REV3 [...]]]"),
     }
   for (set<revision_id>::const_iterator i = descendents.begin();
        i != descendents.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 
@@ -223,13 +226,14 @@ CMD_AUTOMATE(erase_ancestors, N_("[REV1 [REV2 [REV3 [...]]]]"),
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      revision_id rid((*i)());
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+      revision_id rid(decode_hexenc((*i)()));
+      N(db.revision_exists(rid), F("no such revision '%s'")
+        % encode_hexenc(rid.inner()()));
       revs.insert(rid);
     }
   erase_ancestors(db, revs);
   for (set<revision_id>::const_iterator i = revs.begin(); i != revs.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: toposort
@@ -252,15 +256,16 @@ CMD_AUTOMATE(toposort, N_("[REV1 [REV2 [REV3 [...]]]]"),
   set<revision_id> revs;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      revision_id rid((*i)());
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+      revision_id rid(decode_hexenc((*i)()));
+      N(db.revision_exists(rid), F("no such revision '%s'")
+        % encode_hexenc(rid.inner()()));
       revs.insert(rid);
     }
   vector<revision_id> sorted;
   toposort(db, revs, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: ancestry_difference
@@ -293,12 +298,14 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
   revision_id a;
   set<revision_id> bs;
   args_vector::const_iterator i = args.begin();
-  a = revision_id((*i)());
-  N(db.revision_exists(a), F("no such revision '%s'") % a);
+  a = revision_id(decode_hexenc((*i)()));
+  N(db.revision_exists(a), F("no such revision '%s'")
+    % encode_hexenc(a.inner()()));
   for (++i; i != args.end(); ++i)
     {
-      revision_id b((*i)());
-      N(db.revision_exists(b), F("no such revision '%s'") % b);
+      revision_id b(decode_hexenc((*i)()));
+      N(db.revision_exists(b), F("no such revision '%s'")
+        % encode_hexenc(b.inner()()));
       bs.insert(b);
     }
   set<revision_id> ancestors;
@@ -308,7 +315,7 @@ CMD_AUTOMATE(ancestry_difference, N_("NEW_REV [OLD_REV1 [OLD_REV2 [...]]]"),
   toposort(db, ancestors, sorted);
   for (vector<revision_id>::const_iterator i = sorted.begin();
        i != sorted.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: leaves
@@ -338,7 +345,7 @@ CMD_AUTOMATE(leaves, "",
   db.get_leaves(leaves);
   for (set<revision_id>::const_iterator i = leaves.begin();
        i != leaves.end(); ++i)
-    output << (*i).inner()() << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: roots
@@ -367,7 +374,7 @@ CMD_AUTOMATE(roots, "",
   db.get_revision_children(nullid, roots);
   for (set<revision_id>::const_iterator i = roots.begin();
        i != roots.end(); ++i)
-      output << i->inner()() << '\n';
+      output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: parents
@@ -390,14 +397,15 @@ CMD_AUTOMATE(parents, N_("REV"),
 
   database db(app);
 
-  revision_id rid(idx(args, 0)());
-  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+  revision_id rid(decode_hexenc(idx(args, 0)()));
+  N(db.revision_exists(rid), F("no such revision '%s'")
+    % encode_hexenc(rid.inner()()));
   set<revision_id> parents;
   db.get_revision_parents(rid, parents);
   for (set<revision_id>::const_iterator i = parents.begin();
        i != parents.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << '\n';
+          output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: children
@@ -420,14 +428,15 @@ CMD_AUTOMATE(children, N_("REV"),
 
   database db(app);
 
-  revision_id rid(idx(args, 0)());
-  N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+  revision_id rid(decode_hexenc(idx(args, 0)()));
+  N(db.revision_exists(rid), F("no such revision '%s'")
+    % encode_hexenc(rid.inner()()));
   set<revision_id> children;
   db.get_revision_children(rid, children);
   for (set<revision_id>::const_iterator i = children.begin();
        i != children.end(); ++i)
       if (!null_id(*i))
-          output << (*i).inner()() << '\n';
+          output << encode_hexenc(i->inner()()) << '\n';
 }
 
 // Name: graph
@@ -482,10 +491,10 @@ CMD_AUTOMATE(graph, "",
          i = child_to_parents.begin();
        i != child_to_parents.end(); ++i)
     {
-      output << (i->first).inner()();
+      output << encode_hexenc((i->first).inner()());
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        output << ' ' << (*j).inner()();
+        output << ' ' << encode_hexenc(j->inner()());
       output << '\n';
     }
 }
@@ -513,7 +522,7 @@ CMD_AUTOMATE(select, N_("SELECTOR"),
 
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
-    output << *i << '\n';
+    output << encode_hexenc(i->inner()()) << '\n';
 }
 
 struct node_info
@@ -1198,14 +1207,12 @@ CMD_AUTOMATE(get_revision, N_("REVID"),
   database db(app);
 
   revision_data dat;
-  revision_id ident;
+  revision_id rid(decode_hexenc(idx(args, 0)()));
+  N(db.revision_exists(rid),
+    F("no revision %s found in database") % rid);
+  db.get_revision(rid, dat);
 
-  ident = revision_id(idx(args, 0)());
-  N(db.revision_exists(ident),
-    F("no revision %s found in database") % ident);
-  db.get_revision(ident, dat);
-
-  L(FL("dumping revision %s") % ident);
+  L(FL("dumping revision %s") % rid);
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1253,7 +1260,8 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
   calculate_ident(rev, ident);
   write_revision(rev, dat);
 
-  L(FL("dumping revision %s") % ident);
+  L(FL("dumping revision %s")
+    % encode_hexenc(ident.inner()()));
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1281,7 +1289,7 @@ CMD_AUTOMATE(get_base_revision_id, "",
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
-  output << parent_id(parents.begin()) << '\n';
+  output << encode_hexenc(parent_id(parents.begin()).inner()()) << '\n';
 }
 
 // Name: get_current_revision_id
@@ -1318,7 +1326,7 @@ CMD_AUTOMATE(get_current_revision_id, "",
 
   calculate_ident(rev, new_revision_id);
 
-  output << new_revision_id << '\n';
+  output << encode_hexenc(new_revision_id.inner()()) << '\n';
 }
 
 // Name: get_manifest_of
@@ -1387,7 +1395,7 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
     }
   else
     {
-      revision_id rid = revision_id(idx(args, 0)());
+      revision_id rid = revision_id(decode_hexenc(idx(args, 0)()));
       N(db.revision_exists(rid),
         F("no revision %s found in database") % rid);
       db.get_roster(rid, new_roster);
@@ -1395,7 +1403,8 @@ CMD_AUTOMATE(get_manifest_of, N_("[REVID]"),
 
   calculate_ident(new_roster, mid);
   write_manifest_of_roster(new_roster, dat);
-  L(FL("dumping manifest %s") % mid);
+  L(FL("dumping manifest %s")
+    % encode_hexenc(mid.inner()()));
   output.write(dat.inner()().data(), dat.inner()().size());
 }
 
@@ -1423,11 +1432,12 @@ CMD_AUTOMATE(packet_for_rdata, N_("REVID"),
 
   packet_writer pw(output);
 
-  revision_id r_id(idx(args, 0)());
+  revision_id r_id(decode_hexenc(idx(args, 0)()));
   revision_data r_data;
 
   N(db.revision_exists(r_id),
-    F("no such revision '%s'") % r_id);
+    F("no such revision '%s'")
+      % encode_hexenc(r_id.inner()()));
   db.get_revision(r_id, r_data);
   pw.consume_revision_data(r_id,r_data);
 }
@@ -1455,11 +1465,12 @@ CMD_AUTOMATE(packets_for_certs, N_("REVID"),
   project_t project(db);
   packet_writer pw(output);
 
-  revision_id r_id(idx(args, 0)());
+  revision_id r_id(decode_hexenc(idx(args, 0)()));
   vector< revision<cert> > certs;
 
   N(db.revision_exists(r_id),
-    F("no such revision '%s'") % r_id);
+    F("no such revision '%s'")
+      % encode_hexenc(r_id.inner()()));
   project.get_revision_certs(r_id, certs);
   for (size_t i = 0; i < certs.size(); ++i)
     pw.consume_revision_cert(idx(certs,i));
@@ -1487,11 +1498,12 @@ CMD_AUTOMATE(packet_for_fdata, N_("FILEID"),
 
   packet_writer pw(output);
 
-  file_id f_id(idx(args, 0)());
+  file_id f_id(decode_hexenc(idx(args, 0)()));
   file_data f_data;
 
   N(db.file_version_exists(f_id),
-    F("no such file '%s'") % f_id);
+    F("no such file '%s'")
+      % encode_hexenc(f_id.inner()()));
   db.get_file_version(f_id, f_data);
   pw.consume_file_data(f_id,f_data);
 }
@@ -1519,14 +1531,16 @@ CMD_AUTOMATE(packet_for_fdelta, N_("OLD_FILE NEW_FILE"),
 
   packet_writer pw(output);
 
-  file_id f_old_id(idx(args, 0)());
-  file_id f_new_id(idx(args, 1)());
+  file_id f_old_id(decode_hexenc(idx(args, 0)()));
+  file_id f_new_id(decode_hexenc(idx(args, 1)()));
   file_data f_old_data, f_new_data;
 
   N(db.file_version_exists(f_old_id),
-    F("no such revision '%s'") % f_old_id);
+    F("no such revision '%s'")
+      % encode_hexenc(f_old_id.inner()()));
   N(db.file_version_exists(f_new_id),
-    F("no such revision '%s'") % f_new_id);
+    F("no such revision '%s'")
+      % encode_hexenc(f_new_id.inner()()));
   db.get_file_version(f_old_id, f_old_data);
   db.get_file_version(f_new_id, f_new_data);
   delta del;
@@ -1561,8 +1575,9 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   vector<revision_id> frontier;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
-      revision_id rid((*i)());
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
+      revision_id rid(decode_hexenc((*i)()));
+      N(db.revision_exists(rid), F("no such revision '%s'")
+        % encode_hexenc(rid.inner()()));
       ancestors.clear();
       ancestors.insert(rid);
       frontier.push_back(rid);
@@ -1600,7 +1615,7 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
     if (!null_id(*i))
-      output << (*i).inner()() << '\n';
+      output << encode_hexenc((*i).inner()()) << '\n';
 }
 
 // Name: branches
@@ -1719,7 +1734,7 @@ CMD_AUTOMATE(tags, N_("[BRANCH_PATTERN]"),
         {
           basic_io::stanza stz;
           stz.push_str_pair(symbol("tag"), tag->name());
-          stz.push_hex_pair(symbol("revision"), tag->ident.inner());
+          stz.push_binary_pair(symbol("revision"), tag->ident.inner());
           stz.push_str_pair(symbol("signer"), tag->key());
           stz.push_str_multi(symbol("branches"), branch_names);
           prt.print_stanza(stz);
@@ -1782,7 +1797,7 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
 
   utf8 passphrase = idx(args, 1);
 
-  hexenc<id> pubhash, privhash;
+  id pubhash, privhash;
   keys.create_key_pair(db, ident, &passphrase, &pubhash, &privhash);
 
   basic_io::printer prt;
@@ -1794,8 +1809,8 @@ CMD_AUTOMATE(genkey, N_("KEYID PASSPHRASE"),
   privlocs.push_back("keystore");
 
   stz.push_str_pair(syms::name, ident());
-  stz.push_hex_pair(syms::public_hash, pubhash);
-  stz.push_hex_pair(syms::private_hash, privhash);
+  stz.push_binary_pair(syms::public_hash, pubhash);
+  stz.push_binary_pair(syms::private_hash, privhash);
   stz.push_str_multi(syms::public_location, publocs);
   stz.push_str_multi(syms::private_location, privlocs);
   prt.print_stanza(stz);
@@ -1862,14 +1877,15 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
   revision_id ident;
   marking_map mm;
 
-  ident = revision_id(idx(args, 0)());
+  ident = revision_id(decode_hexenc(idx(args, 0)()));
   N(db.revision_exists(ident),
     F("no revision %s found in database") % ident);
   db.get_roster(ident, new_roster, mm);
 
   file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
-    F("file %s is unknown for revision %s") % path % ident);
+    F("file %s is unknown for revision %s")
+    % path % ident);
 
   node_t node = new_roster.get_node(path);
   marking_map::const_iterator m = mm.find(node->self);
@@ -1881,7 +1897,7 @@ CMD_AUTOMATE(get_content_changed, N_("REV FILE"),
        i != mark.file_content.end(); ++i)
     {
       basic_io::stanza st;
-      st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+      st.push_binary_pair(basic_io::syms::content_mark, i->inner());
       prt.print_stanza(st);
     }
     output.write(prt.buf.data(), prt.buf.size());
@@ -1925,19 +1941,21 @@ CMD_AUTOMATE(get_corresponding_path, N_("REV1 FILE REV2"),
   roster_t new_roster, old_roster;
   revision_id ident, old_ident;
 
-  ident = revision_id(idx(args, 0)());
+  ident = revision_id(decode_hexenc(idx(args, 0)()));
   N(db.revision_exists(ident),
     F("no revision %s found in database") % ident);
   db.get_roster(ident, new_roster);
 
-  old_ident = revision_id(idx(args, 2)());
+  old_ident = revision_id(decode_hexenc(idx(args, 2)()));
   N(db.revision_exists(old_ident),
     F("no revision %s found in database") % old_ident);
   db.get_roster(old_ident, old_roster);
 
   file_path path = file_path_external(idx(args,1));
   N(new_roster.has_node(path),
-    F("file %s is unknown for revision %s") % path % ident);
+    F("file %s is unknown for revision %s")
+      % path
+      % encode_hexenc(ident.inner()()));
 
   node_t node = new_roster.get_node(path);
   basic_io::printer prt;
@@ -1987,9 +2005,10 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
     {
       file_data dat(idx(args, 1)());
       calculate_ident(dat, sha1sum);
-      file_id base_id(idx(args, 0)());
+      file_id base_id(decode_hexenc(idx(args, 0)()));
       N(db.file_version_exists(base_id),
-        F("no file version %s found in database") % base_id);
+        F("no file version %s found in database")
+          % encode_hexenc(base_id.inner()()));
 
       // put_file_version won't do anything if the target ID already exists,
       // but we can save the delta calculation by checking here too
@@ -2006,7 +2025,7 @@ CMD_AUTOMATE(put_file, N_("[FILEID] CONTENTS"),
   else I(false);
 
   tr.commit();
-  output << sha1sum << '\n';
+  output << encode_hexenc(sha1sum.inner()()) << '\n';
 }
 
 // Name: put_revision
@@ -2061,9 +2080,10 @@ CMD_AUTOMATE(put_revision, N_("REVISION-DATA"),
   // If the database refuses the revision, make sure this is because it's
   // already there.
   E(db.put_revision(id, rev) || db.revision_exists(id),
-    F("missing prerequisite for revision %s") % id);
+    F("missing prerequisite for revision %s")
+      % encode_hexenc(id.inner()()));
 
-  output << id << '\n';
+  output << encode_hexenc(id.inner()()) << '\n';
 }
 
 // Name: cert
@@ -2089,9 +2109,10 @@ CMD_AUTOMATE(cert, N_("REVISION-ID NAME VALUE"),
   database db(app);
   key_store keys(app);
 
-  revision_id rid(idx(args, 0)());
+  hexenc<id> hrid(idx(args, 0)());
+  revision_id rid(decode_hexenc(hrid()));
   N(db.revision_exists(rid),
-    F("no such revision '%s'") % rid);
+    F("no such revision '%s'") % hrid);
 
   cache_user_key(app.opts, app.lua, db, keys);
   put_simple_revision_cert(db, keys, rid, cert_name(idx(args, 1)()),

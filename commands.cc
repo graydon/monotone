@@ -865,7 +865,7 @@ describe_revision(project_t & project, revision_id const & id)
 
   string description;
 
-  description += id.inner()();
+  description += encode_hexenc(id.inner()());
 
   // append authors and date of this revision
   vector< revision<cert> > tmp;

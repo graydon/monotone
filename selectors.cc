@@ -17,6 +17,7 @@
 #include "globish.hh"
 #include "cmd.hh"
 #include "work.hh"
+#include "transforms.hh"
 
 #include <algorithm>
 #include <boost/tokenizer.hpp>
@@ -191,6 +192,8 @@ decode_selector(project_t & project,
               diagnose_ambiguous_expansion(project, "p:", parent_ids);
               sel = (* parent_ids.begin()).inner()();
             }
+          else
+            sel = decode_hexenc(sel);
           break;
         default: break;
         }
@@ -245,6 +248,7 @@ complete_one_selector(project_t & project,
       break;
 
     case sel_parent:
+      I(!value.empty());
       project.db.select_parent(value, completions);
       break;
         
@@ -368,9 +372,10 @@ complete(options const & opts, lua_hooks & lua,
       && sels[0].first == sel_ident
       && sels[0].second.size() == constants::idlen)
     {
-      completions.insert(revision_id(sels[0].second));
+      completions.insert(revision_id(decode_hexenc(sels[0].second)));
       N(project.db.revision_exists(*completions.begin()),
-        F("no such revision '%s'") % *completions.begin());
+        F("no such revision '%s'")
+          % encode_hexenc(completions.begin()->inner()()));
       return;
     }
 
@@ -383,12 +388,12 @@ complete(options const & opts, lua_hooks & lua,
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      P(F("expanded to '%s'") % *i);
+      P(F("expanded to '%s'") % encode_hexenc(i->inner()()));
 
       // This may be impossible, but let's make sure.
       // All the callers used to do it.
       N(project.db.revision_exists(*i),
-        F("no such revision '%s'") % *i);
+        F("no such revision '%s'") % encode_hexenc(i->inner()()));
     }
 }
 
@@ -423,7 +428,7 @@ expand_selector(options const & opts, lua_hooks & lua,
       && sels[0].first == sel_ident
       && sels[0].second.size() == constants::idlen)
     {
-      completions.insert(revision_id(sels[0].second));
+      completions.insert(revision_id(decode_hexenc(sels[0].second)));
       return;
     }
 

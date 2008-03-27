@@ -121,7 +121,7 @@ bool ident_existing_file(file_path const & p, file_id & ident);
 bool ident_existing_file(file_path const & p, file_id & ident, path::status status);
 
 void calculate_ident(file_path const & file,
-                     hexenc<id> & ident);
+                     file_id & ident);
 
 // Local Variables:
 // mode: C++

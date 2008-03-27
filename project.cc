@@ -174,7 +174,7 @@ project_t::revision_is_in_branch(revision_id const & id,
     % num
     % certs.size()
     % branch
-    % id);
+    % encode_hexenc(id.inner()()));
 
   return !certs.empty();
 }
@@ -202,7 +202,7 @@ project_t::revision_is_suspended_in_branch(revision_id const & id,
     % num
     % certs.size()
     % branch
-    % id);
+    % encode_hexenc(id.inner()()));
 
   return !certs.empty();
 }
@@ -218,7 +218,7 @@ project_t::suspend_revision_in_branch(key_store & keys,
 
 outdated_indicator
 project_t::get_revision_cert_hashes(revision_id const & rid,
-                                    std::vector<hexenc<id> > & hashes)
+                                    std::vector<id> & hashes)
 {
   return db.get_revision_certs(rid, hashes);
 }

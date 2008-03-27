@@ -11,6 +11,7 @@
 #include "hash_map.hh"
 #include "vocab_hash.hh"
 #include "rev_height.hh"
+#include "transforms.hh"
 
 using boost::shared_ptr;
 using std::string;
@@ -25,7 +26,7 @@ using std::list;
 using hashmap::hash_set;
 
 void
-get_reconstruction_path(std::string const & start,
+get_reconstruction_path(id const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path)
 {
@@ -62,7 +63,7 @@ get_reconstruction_path(std::string const & start,
   }
 
   shared_ptr<reconstruction_path> selected_path;
-  set<string> seen_nodes;
+  set<id> seen_nodes;
 
   while (!selected_path)
     {
@@ -73,7 +74,7 @@ get_reconstruction_path(std::string const & start,
            i != live_paths.end(); ++i)
         {
           shared_ptr<reconstruction_path> pth = *i;
-          string tip = pth->back();
+          id tip = pth->back();
 
           if (graph.is_base(tip))
             {
@@ -83,15 +84,19 @@ get_reconstruction_path(std::string const & start,
           else
             {
               // This tip is not a root, so extend the path.
-              set<string> next;
+              set<id> next;
               graph.get_next(tip, next);
               I(!next.empty());
 
               // Replicate the path if there's a fork.
               bool first = true;
-              for (set<string>::const_iterator j = next.begin(); j != next.end(); ++j)
+              for (set<id>::const_iterator j = next.begin();
+                    j != next.end(); ++j)
                 {
-                  L(FL("considering %s -> %s") % tip % *j);
+                  if (global_sanity.debug_p())
+                    L(FL("considering %s -> %s")
+                      % encode_hexenc(tip())
+                      % encode_hexenc((*j)()));
                   if (seen_nodes.find(*j) == seen_nodes.end())
                     {
                       shared_ptr<reconstruction_path> pthN;
@@ -138,24 +143,25 @@ get_reconstruction_path(std::string const & start,
 #include "unit_tests.hh"
 #include "randomizer.hh"
 
+#include "transforms.hh"
 #include "lexical_cast.hh"
 
 using boost::lexical_cast;
 using std::pair;
 
-typedef std::multimap<string, string> rg_map;
+typedef std::multimap<id, id> rg_map;
 struct mock_reconstruction_graph : public reconstruction_graph
 {
   rg_map ancestry;
-  set<string> bases;
-  mock_reconstruction_graph(rg_map const & ancestry, set<string> const & bases)
+  set<id> bases;
+  mock_reconstruction_graph(rg_map const & ancestry, set<id> const & bases)
     : ancestry(ancestry), bases(bases)
   {}
-  virtual bool is_base(string const & node) const
+  virtual bool is_base(id const & node) const
   {
     return bases.find(node) != bases.end();
   }
-  virtual void get_next(string const & from, set<string> & next) const
+  virtual void get_next(id const & from, set<id> & next) const
   {
     typedef rg_map::const_iterator ci;
     pair<ci, ci> range = ancestry.equal_range(from);
@@ -167,12 +173,17 @@ struct mock_reconstruction_graph : public reconstruction_graph
 static void
 make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
                                  size_t num_random_bases,
-                                 vector<string> & all_nodes, rg_map & ancestry,
-                                 set<string> & bases,
+                                 vector<id> & all_nodes, rg_map & ancestry,
+                                 set<id> & bases,
                                  randomizer & rng)
 {
   for (size_t i = 0; i != num_nodes; ++i)
-    all_nodes.push_back(lexical_cast<string>(i));
+    {
+      id hash;
+      string s(lexical_cast<string>(i));
+      calculate_ident(data(s), hash);
+      all_nodes.push_back(hash);
+    }
   // We put a single long chain of edges in, to make sure that everything is
   // reconstructable somehow.
   for (size_t i = 1; i != num_nodes; ++i)
@@ -194,7 +205,7 @@ make_random_reconstruction_graph(size_t num_nodes, size_t num_random_edges,
 }
 
 static void
-check_reconstruction_path(string const & start, reconstruction_graph const & graph,
+check_reconstruction_path(id const & start, reconstruction_graph const & graph,
                           reconstruction_path const & path)
 {
   I(!path.empty());
@@ -204,7 +215,7 @@ check_reconstruction_path(string const & start, reconstruction_graph const & gra
   I(graph.is_base(*last));
   for (reconstruction_path::const_iterator i = path.begin(); i != last; ++i)
     {
-      set<string> children;
+      set<id> children;
       graph.get_next(*i, children);
       reconstruction_path::const_iterator next = i;
       ++next;
@@ -218,14 +229,14 @@ run_get_reconstruction_path_tests_on_random_graph(size_t num_nodes,
                                                   size_t num_random_bases,
                                                   randomizer & rng)
 {
-  vector<string> all_nodes;
+  vector<id> all_nodes;
   rg_map ancestry;
-  set<string> bases;
+  set<id> bases;
   make_random_reconstruction_graph(num_nodes, num_random_edges, num_random_bases,
                                    all_nodes, ancestry, bases,
                                    rng);
   mock_reconstruction_graph graph(ancestry, bases);
-  for (vector<string>::const_iterator i = all_nodes.begin();
+  for (vector<id>::const_iterator i = all_nodes.begin();
        i != all_nodes.end(); ++i)
     {
       reconstruction_path path;

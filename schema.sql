@@ -96,17 +96,16 @@ CREATE TABLE revision_certs
 	value not null,         -- opaque blob
 	keypair not null,       -- joins with public_keys.id
 	signature not null,     -- RSA/SHA1 signature of "[name@id:val]"
-	unique(name, id, value, keypair, signature)
+	unique(name, value, id, keypair, signature)
 	);
 
 CREATE INDEX revision_certs__id ON revision_certs (id);
-CREATE INDEX revision_certs__name_value ON revision_certs (name, value);
 
 CREATE TABLE branch_epochs
 	(
 	hash not null unique,         -- hash of remaining fields separated by ":"
 	branch not null unique,       -- joins with revision_certs.value
-	epoch not null                -- random hex-encoded id
+	epoch not null                -- random binary id
 	);
 
 -- database-local variables used to manage various things

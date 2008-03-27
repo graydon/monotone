@@ -103,7 +103,6 @@ bogus_cert_p
   }
 };
 
-
 void
 erase_bogus_certs(database & db,
                   vector< manifest<cert> > & certs)
@@ -115,15 +114,15 @@ erase_bogus_certs(database & db,
   vector< manifest<cert> > tmp_certs;
 
   // Sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, cert_value > trust_key;
+  typedef tuple< manifest_id, cert_name, cert_value > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
   for (it i = certs.begin(); i != certs.end(); ++i)
     {
-      trust_key key = trust_key(i->inner().ident, 
-                                i->inner().name, 
+      trust_key key = trust_key(manifest_id(i->inner().ident.inner()),
+                                i->inner().name,
                                 i->inner().value);
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
@@ -145,14 +144,21 @@ erase_bogus_certs(database & db,
                                           get<1>(i->first),
                                           get<2>(i->first)))
         {
-          L(FL("trust function liked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            {
+            L(FL("trust function liked %d signers of %s cert on manifest %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % encode_hexenc(get<0>(i->first).inner()()));
+            }
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % encode_hexenc(get<0>(i->first).inner()()));
         }
     }
   certs = tmp_certs;
@@ -169,7 +175,7 @@ erase_bogus_certs(database & db,
   vector< revision<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, cert_value > trust_key;
+  typedef tuple< revision_id, cert_name, cert_value > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
@@ -199,14 +205,19 @@ erase_bogus_certs(database & db,
                                           get<1>(i->first),
                                           get<2>(i->first)))
         {
-          L(FL("trust function liked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            L(FL("trust function liked %d signers of %s cert on revision %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % encode_hexenc(get<0>(i->first).inner()()));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % encode_hexenc(get<0>(i->first).inner()()));
         }
     }
   certs = tmp_certs;
@@ -223,18 +234,18 @@ cert::cert(std::string const & s)
   read_cert(s, *this);
 }
 
-cert::cert(hexenc<id> const & ident,
+cert::cert(revision_id const & ident,
            cert_name const & name,
            cert_value const & value,
            rsa_keypair_id const & key)
   : ident(ident), name(name), value(value), key(key)
 {}
 
-cert::cert(hexenc<id> const & ident,
-         cert_name const & name,
-         cert_value const & value,
-         rsa_keypair_id const & key,
-         rsa_sha1_signature const & sig)
+cert::cert(revision_id const & ident,
+           cert_name const & name,
+           cert_value const & value,
+           rsa_keypair_id const & key,
+           rsa_sha1_signature const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -271,7 +282,7 @@ read_cert(string const & in, cert & t)
   id hash = id(extract_substring(in, pos,
                                  constants::merkle_hash_length_in_bytes,
                                  "cert hash"));
-  id ident = id(extract_substring(in, pos,
+  revision_id ident = revision_id(extract_substring(in, pos,
                                   constants::merkle_hash_length_in_bytes,
                                   "cert ident"));
   string name, val, key, sig;
@@ -281,18 +292,15 @@ read_cert(string const & in, cert & t)
   extract_variable_length_string(in, sig, pos, "cert sig");
   assert_end_of_buffer(in, pos, "cert");
 
-  hexenc<id> hid;
-  encode_hexenc(ident, hid);
-  cert tmp(hid, cert_name(name), cert_value(val), rsa_keypair_id(key),
+  cert tmp(ident, cert_name(name), cert_value(val), rsa_keypair_id(key),
            rsa_sha1_signature(sig));
 
-  hexenc<id> hcheck;
   id check;
-  cert_hash_code(tmp, hcheck);
-  decode_hexenc(hcheck, check);
+  cert_hash_code(tmp, check);
   if (!(check == hash))
     {
-      hexenc<id> hhash;
+      hexenc<id> hcheck, hhash;
+      encode_hexenc(check, hcheck);
       encode_hexenc(hash, hhash);
       throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
                        % hcheck % hhash);
@@ -304,15 +312,12 @@ void
 write_cert(cert const & t, string & out)
 {
   string name, key;
-  hexenc<id> hash;
-  id ident_decoded, hash_decoded;
+  id hash;
 
   cert_hash_code(t, hash);
-  decode_hexenc(t.ident, ident_decoded);
-  decode_hexenc(hash, hash_decoded);
 
-  out.append(hash_decoded());
-  out.append(ident_decoded());
+  out.append(hash());
+  out.append(t.ident.inner()());
   insert_variable_length_string(t.name(), out);
   insert_variable_length_string(t.value(), out);
   insert_variable_length_string(t.key(), out);
@@ -323,15 +328,16 @@ void
 cert_signable_text(cert const & t, string & out)
 {
   base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
 
   out.clear();
-  out.reserve(4 + t.name().size() + t.ident().size()
+  out.reserve(4 + t.name().size() + ident_encoded.size()
               + val_encoded().size());
 
   out += '[';
   out.append(t.name());
   out += '@';
-  out.append(t.ident());
+  out.append(ident_encoded);
   out += ':';
   append_without_ws(out, val_encoded());
   out += ']';
@@ -340,14 +346,16 @@ cert_signable_text(cert const & t, string & out)
 }
 
 void
-cert_hash_code(cert const & t, hexenc<id> & out)
+cert_hash_code(cert const & t, id & out)
 {
   base64<rsa_sha1_signature> sig_encoded(encode_base64(t.sig));
   base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
   string tmp;
-  tmp.reserve(4+t.ident().size() + t.name().size() + val_encoded().size() +
-              t.key().size() + sig_encoded().size());
-  tmp.append(t.ident());
+  tmp.reserve(4 + ident_encoded.size()
+              + t.name().size() + val_encoded().size()
+              + t.key().size() + sig_encoded().size());
+  tmp.append(ident_encoded);
   tmp += ':';
   tmp.append(t.name());
   tmp += ':';
@@ -378,7 +386,7 @@ put_simple_revision_cert(database & db,
 {
   I(!keys.signing_key().empty());
 
-  cert t(id.inner(), nm, val, keys.signing_key);
+  cert t(id, nm, val, keys.signing_key);
   string signed_text;
   cert_signable_text(t, signed_text);
   load_key_pair(keys, t.key);
@@ -410,11 +418,13 @@ guess_branch(options & opts, project_t & project,
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
-          "please provide a branch name") % ident);
+          "please provide a branch name")
+          % encode_hexenc(ident.inner()()));
 
       N(branches.size() == 1,
         F("multiple branch certs found for revision %s, "
-          "please provide a branch name") % ident);
+          "please provide a branch name")
+          % encode_hexenc(ident.inner()()));
 
       set<branch_name>::iterator i = branches.begin();
       I(i != branches.end());
