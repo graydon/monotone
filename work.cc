@@ -248,8 +248,7 @@ get_roster_for_rid(database & db,
   else
     {
       N(db.revision_exists(rid),
-        F("base revision %s does not exist in database")
-          % encode_hexenc(rid.inner()()));
+        F("base revision %s does not exist in database") % rid);
       db.get_roster(rid, cr);
     }
   L(FL("base roster has %d entries") % cr.first->all_nodes().size());

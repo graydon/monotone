@@ -146,7 +146,7 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
   db.get_revision_children(revid, children);
   N(!children.size(),
     F("revision %s already has children. We cannot kill it.")
-      % encode_hexenc(revid.inner()()));
+    % revid);
 
   // If we're executing this in a workspace, check if the workspace parent
   // revision is the one to kill. If so, write out the changes made in this
@@ -179,10 +179,10 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
               "the workspace contains uncommitted changes.\n"
               "Consider updating your workspace to another revision first,\n"
               "before you try to kill this revision again.")
-              % encode_hexenc(revid.inner()()));
+              % revid);
 
           P(F("applying changes from %s on the current workspace")
-            % encode_hexenc(revid.inner()()));
+            % revid);
 
           revision_t new_work_rev;
           db.get_revision(revid, new_work_rev);
@@ -383,7 +383,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
       for (set<revision_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
-          if (!verbose) cout << encode_hexenc(i->inner()()) << '\n';
+          if (!verbose) cout << *i << '\n';
           else cout << describe_revision(project, *i) << '\n';
         }
     }
@@ -393,7 +393,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
       db.complete(idx(args, 1)(), completions);
       for (set<file_id>::const_iterator i = completions.begin();
            i != completions.end(); ++i)
-        cout << encode_hexenc(i->inner()()) << '\n';
+        cout << *i << '\n';
     }
   else if (idx(args, 0)() == "key")
     {
@@ -403,7 +403,7 @@ CMD(complete, "complete", "", CMD_REF(informative),
       for (completions_t::const_iterator i = completions.begin();
            i != completions.end(); ++i)
         {
-          cout << encode_hexenc(i->first.inner()());
+          cout << i->first;
           if (verbose) cout << ' ' << i->second();
           cout << '\n';
         }

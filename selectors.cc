@@ -374,8 +374,7 @@ complete(options const & opts, lua_hooks & lua,
     {
       completions.insert(revision_id(decode_hexenc(sels[0].second)));
       N(project.db.revision_exists(*completions.begin()),
-        F("no such revision '%s'")
-          % encode_hexenc(completions.begin()->inner()()));
+        F("no such revision '%s'") % *completions.begin());
       return;
     }
 
@@ -388,12 +387,12 @@ complete(options const & opts, lua_hooks & lua,
   for (set<revision_id>::const_iterator i = completions.begin();
        i != completions.end(); ++i)
     {
-      P(F("expanded to '%s'") % encode_hexenc(i->inner()()));
+      P(F("expanded to '%s'") % *i);
 
       // This may be impossible, but let's make sure.
       // All the callers used to do it.
       N(project.db.revision_exists(*i),
-        F("no such revision '%s'") % encode_hexenc(i->inner()()));
+        F("no such revision '%s'") % *i);
     }
 }
 

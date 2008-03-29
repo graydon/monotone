@@ -41,7 +41,7 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << encode_hexenc(ident.inner()()) << "]\n"
+  ost << "[fdata " << ident << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -53,8 +53,8 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << encode_hexenc(old_id.inner()()) << '\n'
-      << "        " << encode_hexenc(new_id.inner()()) << "]\n"
+  ost << "[fdelta " << old_id << '\n'
+      << "        " << new_id << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -65,7 +65,7 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << encode_hexenc(ident.inner()()) << "]\n"
+  ost << "[rdata " << ident << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }

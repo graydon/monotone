@@ -455,7 +455,7 @@ annotate_context::dump(bool just_revs) const
           lastid = annotations[i];
         }
       else
-        cout << encode_hexenc(annotations[i].inner()()) << ": "
+        cout << annotations[i] << ": "
              << file_lines[i] << '\n';
     }
 }
@@ -564,8 +564,7 @@ annotate_lineage_mapping::build_parent_lineage
       //if (verbose)
       if (file_interned[i] == 14)
         L(FL("%s file_interned[%d]: %ld\tlcs[%d]: %ld\tmapping[%d]: %ld")
-          % encode_hexenc(parent_rev.inner()())
-          % i % file_interned[i] % j % lcs[j] % i % mapping[i]);
+          % parent_rev % i % file_interned[i] % j % lcs[j] % i % mapping[i]);
 
       if (file_interned[i] == lcs[j])
         {
@@ -595,8 +594,7 @@ annotate_lineage_mapping::build_parent_lineage
   // determine the mapping for parent lineage
   if (verbose)
     L(FL("build_parent_lineage: building mapping now "
-         "for parent_rev %s\n")
-      % encode_hexenc(parent_rev.inner()()));
+         "for parent_rev %s\n") % parent_rev);
 
   i = j = 0;
 
@@ -702,8 +700,7 @@ do_annotate_node(database & db,
                  annotate_node_work const & work_unit,
                  work_units & work_units)
 {
-  L(FL("do_annotate_node for node %s")
-    % encode_hexenc(work_unit.revision.inner()()));
+  L(FL("do_annotate_node for node %s") % work_unit.revision);
 
   size_t added_in_parent_count = 0;
 
@@ -715,8 +712,7 @@ do_annotate_node(database & db,
       revision_id parent_revision = *i;
 
       L(FL("do_annotate_node processing edge from parent %s to child %s")
-        % encode_hexenc(parent_revision.inner()())
-        % encode_hexenc(work_unit.revision.inner()()));
+        % parent_revision % work_unit.revision);
 
       I(!(work_unit.revision == parent_revision));
 
@@ -741,8 +737,7 @@ do_annotate_node(database & db,
       // stop if file is not present in the parent.
       if (null_id(file_in_parent))
         {
-          L(FL("file added in %s, continuing")
-            % encode_hexenc(work_unit.revision.inner()()));
+          L(FL("file added in %s, continuing") % work_unit.revision);
           added_in_parent_count++;
           continue;
         }
@@ -762,7 +757,7 @@ do_annotate_node(database & db,
           file_data data;
           db.get_file_version(file_in_parent, data);
           L(FL("building parent lineage for parent file %s")
-            % encode_hexenc(file_in_parent.inner()()));
+            % file_in_parent);
           parent_lineage
             = work_unit.lineage->build_parent_lineage(work_unit.annotations,
                                                       parent_revision,
@@ -807,8 +802,7 @@ do_annotate_node(database & db,
         {
           // already a pending node, so we just have to merge the lineage.
           L(FL("merging lineage from node %s to parent %s")
-            % encode_hexenc(work_unit.revision.inner()())
-            % encode_hexenc(parent_revision.inner()()));
+            % work_unit.revision % parent_revision);
           
           lmn->lineage->merge(*parent_lineage, work_unit.annotations);
         }
@@ -827,9 +821,7 @@ do_annotate (project_t & project, file_t file_node,
              revision_id rid, bool just_revs)
 {
   L(FL("annotating file %s with content %s in revision %s")
-    % file_node->self
-    % encode_hexenc(file_node->content.inner()())
-    % encode_hexenc(rid.inner()()));
+    % file_node->self % file_node->content % rid);
 
   shared_ptr<annotate_context>
     acp(new annotate_context(project, file_node->content));

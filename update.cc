@@ -84,14 +84,12 @@ acceptable_descendent(lua_hooks & lua,
                       map<rsa_keypair_id, bool> & base_results,
                       revision_id const & target)
 {
-  L(FL("Considering update target %s")
-    % encode_hexenc(target.inner()()));
+  L(FL("Considering update target %s") % target);
 
   // step 1: check the branch
   if (!project.revision_is_in_branch(target, branch))
     {
-      L(FL("%s not in branch %s")
-        % encode_hexenc(target.inner()()) % branch);
+      L(FL("%s not in branch %s") % target % branch);
       return false;
     }
 
@@ -100,14 +98,12 @@ acceptable_descendent(lua_hooks & lua,
   get_test_results_for_revision(project, target, target_results);
   if (lua.hook_accept_testresult_change(base_results, target_results))
     {
-      L(FL("%s is acceptable update candidate")
-        % encode_hexenc(target.inner()()));
+      L(FL("%s is acceptable update candidate") % target);
       return true;
     }
   else
     {
-      L(FL("%s has unacceptable test results")
-        % encode_hexenc(target.inner()()));
+      L(FL("%s has unacceptable test results") % target);
       return false;
     }
 }

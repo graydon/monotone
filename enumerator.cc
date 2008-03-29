@@ -235,7 +235,7 @@ revision_enumerator::step()
             {
               L(FL("revision_enumerator::step expanding "
                    "contents of rev '%s'")
-                % encode_hexenc(r.inner()()));
+                % r);
 
               // The rev's files and fdeltas
               {

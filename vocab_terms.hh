@@ -69,94 +69,46 @@ ATOMIC_NOVERIFY(merkle);      // raw encoding of a merkle tree node
 
 // instantiate those bits of the template vocabulary actually in use.
 
-EXTERN template class       revision<id>;
-EXTERN template class         roster<id>;
-EXTERN template class       manifest<id>;
-EXTERN template class           file<id>;
+// decorations
+EXTERN template class       epoch<id>;
+EXTERN template class        file<id>;
+EXTERN template class         key<id>;
+EXTERN template class    manifest<id>;
+EXTERN template class    revision<id>;
+EXTERN template class      roster<id>;
 
-// hex encoded ids are no longer typed
-EXTERN template class           hexenc<id>;
+EXTERN template class     epoch<data>;
+EXTERN template class      file<data>;
+EXTERN template class  manifest<data>;
+EXTERN template class  revision<data>;
+EXTERN template class    roster<data>;
 
+EXTERN template class     file<delta>;
+EXTERN template class manifest<delta>;
+EXTERN template class   roster<delta>;
 
-EXTERN template class              key<id>;
-EXTERN template class            epoch<id>;
-
-EXTERN template class     hexenc<inodeprint>;
-
-EXTERN template class           hexenc<data>;
-
-EXTERN template class                   gzip<data>;
-EXTERN template class           base64< gzip<data> >;
-
-EXTERN template class    epoch< data >;
-
-EXTERN template class revision< data >;
-EXTERN template class   roster< data >;
-EXTERN template class manifest< data >;
-EXTERN template class     file< data >;
-
-EXTERN template class                   gzip<delta>;
-EXTERN template class           base64< gzip<delta> >;
-
-EXTERN template class roster< delta >;
-EXTERN template class manifest< delta >;
-EXTERN template class     file< delta >;
-
-EXTERN template class base64< rsa_pub_key >;
-EXTERN template class base64< rsa_priv_key >;
-EXTERN template class base64< old_arc4_rsa_priv_key >;
-EXTERN template class base64< rsa_sha1_signature >;
-EXTERN template class hexenc< rsa_sha1_signature >;
-EXTERN template class base64< cert_value >;
-
-EXTERN template class base64< var_name >;
-EXTERN template class base64< var_value >;
-
+// encodings
+EXTERN template class hexenc<data>;
+EXTERN template class hexenc<id>;
+EXTERN template class hexenc<inodeprint>;
 EXTERN template class hexenc<prefix>;
-EXTERN template class base64<merkle>;
+EXTERN template class hexenc<rsa_sha1_signature>;
+
+EXTERN template class base64<cert_value>;
 EXTERN template class base64<data>;
+EXTERN template class base64<merkle>;
+EXTERN template class base64<old_arc4_rsa_priv_key>;
+EXTERN template class base64<rsa_priv_key>;
+EXTERN template class base64<rsa_pub_key>;
+EXTERN template class base64<rsa_sha1_signature>;
+EXTERN template class base64<var_name>;
+EXTERN template class base64<var_value>;
 
+EXTERN template class         gzip<data>   ;
+EXTERN template class base64< gzip<data>  >;
 
-// instantiate those bits of the stream operator vocab (again) actually in
-// use. "again" since stream operators are friends, not members.
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,   hexenc<id> const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,     hexenc<inodeprint> const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,           roster<data> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,           manifest<data> const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,           hexenc<data> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,            epoch<data> const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<data>     const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,           base64< gzip<data> >   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, revision< base64< gzip<data> > > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< base64< gzip<data> > > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,     file< base64< gzip<data> > > const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &,                   gzip<delta>     const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,           base64< gzip<delta> >   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, manifest< base64< gzip<delta> > > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &,     file< base64< gzip<delta> > > const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< old_arc4_rsa_priv_key >   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_priv_key >   const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_pub_key > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< rsa_sha1_signature > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc< rsa_sha1_signature > const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64< cert_value > const &);
-
-EXTERN template std::ostream & operator<< <>(std::ostream &, hexenc<prefix> const &);
-EXTERN template std::ostream & operator<< <>(std::ostream &, base64<merkle> const &);
-
+EXTERN template class         gzip<delta>  ;
+EXTERN template class base64< gzip<delta> >;
 
 // Local Variables:
 // mode: C++

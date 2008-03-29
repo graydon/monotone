@@ -512,9 +512,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
                                              file_data const & merged_data)
 {
   L(FL("recording successful merge of %s <-> %s into %s")
-    % encode_hexenc(left_ident.inner()())
-    % encode_hexenc(right_ident.inner()())
-    % encode_hexenc(merged_ident.inner()()));
+    % left_ident
+    % right_ident
+    % merged_ident);
 
   transaction_guard guard(db);
 
@@ -623,9 +623,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_data const & merged_data)
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
-    % encode_hexenc(left_id.inner()())
-    % encode_hexenc(right_id.inner()())
-    % encode_hexenc(merged_id.inner()()));
+    % left_id
+    % right_id
+    % merged_id);
   // this is an insert instead of a safe_insert because it is perfectly
   // legal (though rare) to have multiple merges resolve to the same file
   // contents.
@@ -696,8 +696,8 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
         % i->second
-        % encode_hexenc(fid.inner()())
-        % encode_hexenc(ident.inner()()));
+        % fid
+        % ident);
       dat = file_data(tmp);
     }
 }
@@ -777,9 +777,9 @@ content_merger::try_auto_merge(file_path const & anc_path,
 
   L(FL("trying auto merge '%s' %s <-> %s (ancestor: %s)")
     % merged_path
-    % encode_hexenc(left_id.inner()())
-    % encode_hexenc(right_id.inner()())
-    % encode_hexenc(ancestor_id.inner()()));
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -855,9 +855,9 @@ content_merger::try_user_merge(file_path const & anc_path,
 
   L(FL("trying user merge '%s' %s <-> %s (ancestor: %s)")
     % merged_path
-    % encode_hexenc(left_id.inner()())
-    % encode_hexenc(right_id.inner()())
-    % encode_hexenc(ancestor_id.inner()()));
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -1443,9 +1443,9 @@ make_diff(string const & filename1,
       case unified_diff:
       {
         ost << "--- " << filename1 << '\t'
-            << encode_hexenc(id1.inner()()) << '\n';
+            << id1 << '\n';
         ost << "+++ " << filename2 << '\t'
-            << encode_hexenc(id2.inner()()) << '\n';
+            << id2 << '\n';
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1454,9 +1454,9 @@ make_diff(string const & filename1,
       case context_diff:
       {
         ost << "*** " << filename1 << '\t'
-            << encode_hexenc(id1.inner()()) << '\n';
+            << id1 << '\n';
         ost << "--- " << filename2 << '\t'
-            << encode_hexenc(id2.inner()()) << '\n';
+            << id2 << '\n';
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);

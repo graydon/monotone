@@ -145,12 +145,10 @@ erase_bogus_certs(database & db,
                                           get<2>(i->first)))
         {
           if (global_sanity.debug_p())
-            {
             L(FL("trust function liked %d signers of %s cert on manifest %s")
               % i->second.first->size()
               % get<1>(i->first)
-              % encode_hexenc(get<0>(i->first).inner()()));
-            }
+              % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
@@ -158,7 +156,7 @@ erase_bogus_certs(database & db,
           W(F("trust function disliked %d signers of %s cert on manifest %s")
             % i->second.first->size()
             % get<1>(i->first)
-            % encode_hexenc(get<0>(i->first).inner()()));
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
@@ -209,7 +207,7 @@ erase_bogus_certs(database & db,
             L(FL("trust function liked %d signers of %s cert on revision %s")
               % i->second.first->size()
               % get<1>(i->first)
-              % encode_hexenc(get<0>(i->first).inner()()));
+              % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
@@ -217,7 +215,7 @@ erase_bogus_certs(database & db,
           W(F("trust function disliked %d signers of %s cert on revision %s")
             % i->second.first->size()
             % get<1>(i->first)
-            % encode_hexenc(get<0>(i->first).inner()()));
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
@@ -298,13 +296,8 @@ read_cert(string const & in, cert & t)
   id check;
   cert_hash_code(tmp, check);
   if (!(check == hash))
-    {
-      hexenc<id> hcheck, hhash;
-      encode_hexenc(check, hcheck);
-      encode_hexenc(hash, hhash);
-      throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
-                       % hcheck % hhash);
-    }
+    throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
+                     % check % hash);
   t = tmp;
 }
 
@@ -418,13 +411,11 @@ guess_branch(options & opts, project_t & project,
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
-          "please provide a branch name")
-          % encode_hexenc(ident.inner()()));
+          "please provide a branch name") % ident);
 
       N(branches.size() == 1,
         F("multiple branch certs found for revision %s, "
-          "please provide a branch name")
-          % encode_hexenc(ident.inner()()));
+          "please provide a branch name") % ident);
 
       set<branch_name>::iterator i = branches.begin();
       I(i != branches.end());

@@ -875,8 +875,8 @@ database::info(ostream & out)
         else
           {
             I(res.size() == 1);
-            counts.push_back((F("%u")
-                              % (lexical_cast<u64>(res[0][0]) - 1)).str());
+            u64 n = lexical_cast<u64>(res[0][0]) - 1;
+            counts.push_back((F("%u") % n).str());
           }
       }
     catch (informative_failure const & e)
@@ -1638,9 +1638,7 @@ database_impl::get_version(id const & ident,
         }
 
       if (global_sanity.debug_p())
-        L(FL("following delta %s -> %s")
-          % encode_hexenc(curr())
-          % encode_hexenc(nxt()));
+        L(FL("following delta %s -> %s") % curr % nxt);
       delta del;
       get_file_or_manifest_delta_unchecked(nxt, curr, del, delta_table);
       apply_delta(appl, del());
@@ -1851,9 +1849,7 @@ database::get_roster_version(revision_id const & ros_id,
     {
       id const nxt(*i);
       if (global_sanity.debug_p())
-        L(FL("following delta %s -> %s")
-          % encode_hexenc(curr())
-          % encode_hexenc(nxt()));
+        L(FL("following delta %s -> %s") % curr % nxt);
       roster_delta del;
       imp->get_roster_delta(nxt, curr, del);
       apply_roster_delta(del, *roster, *marking);
@@ -1974,8 +1970,7 @@ database::put_file(file_id const & id,
                    file_data const & dat)
 {
   if (file_version_exists(id))
-    L(FL("file version '%s' already exists in db")
-      % encode_hexenc(id.inner()()));
+    L(FL("file version '%s' already exists in db") % id);
   else
     imp->schedule_delayed_file(id, dat);
 }
@@ -1991,11 +1986,8 @@ database::put_file_version(file_id const & old_id,
 
   if (!file_version_exists(old_id))
     {
-      W(F("file preimage '%s' missing in db")
-        % encode_hexenc(old_id.inner()()));
-      W(F("dropping delta '%s' -> '%s'")
-        % encode_hexenc(old_id.inner()())
-        % encode_hexenc(new_id.inner()()));
+      W(F("file preimage '%s' missing in db") % old_id);
+      W(F("dropping delta '%s' -> '%s'") % old_id % new_id);
       return;
     }
   
@@ -2305,8 +2297,7 @@ database::put_revision(revision_id const & new_id,
   if (revision_exists(new_id))
     {
       if (global_sanity.debug_p())
-        L(FL("revision '%s' already exists in db")
-          % encode_hexenc(new_id.inner()()));
+        L(FL("revision '%s' already exists in db") % new_id);
       return false;
     }
 
@@ -2322,9 +2313,8 @@ database::put_revision(revision_id const & new_id,
           && !revision_exists(edge_old_revision(i)))
         {
           W(F("missing prerequisite revision '%s'")
-            % encode_hexenc(edge_old_revision(i).inner()()));
-          W(F("dropping revision '%s'")
-            % encode_hexenc(new_id.inner()()));
+            % edge_old_revision(i));
+          W(F("dropping revision '%s'") % new_id);
           return false;
         }
 
@@ -2334,10 +2324,8 @@ database::put_revision(revision_id const & new_id,
         {
           if (! file_version_exists(a->second))
             {
-              W(F("missing prerequisite file '%s'")
-                % encode_hexenc(a->second.inner()()));
-              W(F("dropping revision '%s'")
-                % encode_hexenc(new_id.inner()()));
+              W(F("missing prerequisite file '%s'") % a->second);
+              W(F("dropping revision '%s'") % new_id);
               return false;
             }
         }
@@ -2352,18 +2340,16 @@ database::put_revision(revision_id const & new_id,
           if (! file_version_exists(delta_entry_src(d)))
             {
               W(F("missing prerequisite file pre-delta '%s'")
-                % encode_hexenc(delta_entry_src(d).inner()()));
-              W(F("dropping revision '%s'")
-                % encode_hexenc(new_id.inner()()));
+                % delta_entry_src(d));
+              W(F("dropping revision '%s'") % new_id);
               return false;
             }
 
           if (! file_version_exists(delta_entry_dst(d)))
             {
               W(F("missing prerequisite file post-delta '%s'")
-                % encode_hexenc(delta_entry_dst(d).inner()()));
-              W(F("dropping revision '%s'")
-                % encode_hexenc(new_id.inner()()));
+                % delta_entry_dst(d));
+              W(F("dropping revision '%s'") % new_id);
               return false;
             }
         }
@@ -2404,8 +2390,7 @@ database::put_revision(revision_id const & new_id,
     }
   else
     {
-      L(FL("roster for revision '%s' already exists in db")
-        % encode_hexenc(new_id.inner()()));
+      L(FL("roster for revision '%s' already exists in db") % new_id);
     }
 
   // Phase 4: rewrite any files that need deltas added
@@ -2529,8 +2514,7 @@ database::delete_existing_rev_and_certs(revision_id const & rid)
   I(children.empty());
 
 
-  L(FL("Killing revision %s locally")
-    % encode_hexenc(rid.inner()()));
+  L(FL("Killing revision %s locally") % rid);
 
   // Kill the certs, ancestry, and revision.
   imp->execute(query("DELETE from revision_certs WHERE id = ?")
@@ -2770,8 +2754,7 @@ database::check_signature(rsa_keypair_id const & id,
     }
 
   // check the text+sig against the key
-  L(FL("checking %d-byte signature") %
-    signature().size());
+  L(FL("checking %d-byte signature") % signature().size());
 
   if (verifier->verify_message(
         reinterpret_cast<Botan::byte const*>(alleged_text.data()),
@@ -2956,14 +2939,14 @@ database::put_revision_cert(revision<cert> const & cert)
   if (revision_cert_exists(cert))
     {
       L(FL("revision cert on '%s' already exists in db")
-        % encode_hexenc(cert.inner().ident.inner()()));
+        % cert.inner().ident);
       return false;
     }
 
   if (!revision_exists(revision_id(cert.inner().ident)))
     {
       W(F("cert revision '%s' does not exist in db")
-        % encode_hexenc(cert.inner().ident.inner()()));
+        % cert.inner().ident);
       W(F("dropping cert"));
       return false;
     }

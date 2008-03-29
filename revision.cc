@@ -304,8 +304,8 @@ is_ancestor(database & db,
             revision_id const & descendent_id)
 {
   L(FL("checking whether %s is an ancestor of %s")
-    % encode_hexenc(ancestor_id.inner()())
-    % encode_hexenc(descendent_id.inner()()));
+    % ancestor_id
+    % descendent_id);
 
   multimap<revision_id, revision_id> graph;
   db.get_revision_ancestry(graph);
@@ -935,7 +935,7 @@ void anc_graph::write_certs()
         Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf), constants::epochlen_bytes);
         epoch_data new_epoch(string(buf, buf + constants::epochlen_bytes));
         L(FL("setting epoch for %s to %s")
-          % *i % encode_hexenc(new_epoch.inner()()));
+          % *i % new_epoch);
         db.set_epoch(branch_name(*i), new_epoch);
       }
   }
@@ -1068,7 +1068,7 @@ anc_graph::add_node_for_old_manifest(manifest_id const & man)
       node = max_node++;
       ++n_nodes;
       L(FL("node %d = manifest %s")
-        % node % encode_hexenc(man.inner()()));
+        % node % man);
       old_man_to_node.insert(make_pair(man, node));
       node_to_old_man.insert(make_pair(node, man));
 
@@ -1108,8 +1108,8 @@ u64 anc_graph::add_node_for_oldstyle_revision(revision_id const & rev)
 
       L(FL("node %d = revision %s = manifest %s")
         % node
-        % encode_hexenc(rev.inner()())
-        % encode_hexenc(man.inner()()));
+        % rev
+        % man);
       old_rev_to_node.insert(make_pair(rev, node));
       node_to_old_rev.insert(make_pair(node, rev));
       node_to_old_man.insert(make_pair(node, man));

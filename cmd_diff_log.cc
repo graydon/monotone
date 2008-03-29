@@ -397,7 +397,7 @@ prepare_diff(app_state & app,
       make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
-      header << "# old_revision [" << encode_hexenc(old_rid.inner()()) << "]\n";
+      header << "# old_revision [" << old_rid << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 1)
     {
@@ -424,7 +424,7 @@ prepare_diff(app_state & app,
       make_cset(restricted_roster, new_roster, excluded);
 
       new_is_archived = false;
-      header << "# old_revision [" << encode_hexenc(r_old_id.inner()()) << "]\n";
+      header << "# old_revision [" << r_old_id << "]\n";
     }
   else if (app.opts.revision_selectors.size() == 2)
     {
@@ -873,7 +873,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           ostringstream out;
           if (app.opts.brief)
             {
-              out << encode_hexenc(rid.inner()());
+              out << rid;
               log_certs(project, out, rid, author_name);
               if (app.opts.no_graph)
                 log_certs(project, out, rid, date_name);
@@ -889,7 +889,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
           else
             {
               out << string(65, '-') << '\n';
-              out << "Revision: " << encode_hexenc(rid.inner()()) << '\n';
+              out << "Revision: " << rid << '\n';
 
               changes_summary csum;
 
@@ -904,8 +904,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
               for (set<revision_id>::const_iterator anc = ancestors.begin();
                    anc != ancestors.end(); ++anc)
-                out << "Ancestor: "
-                    << encode_hexenc(anc->inner()()) << '\n';
+                out << "Ancestor: " << *anc << '\n';
 
               log_certs(project, out, rid, author_name, "Author: ", false);
               log_certs(project, out, rid, date_name,   "Date: ",   false);
@@ -945,8 +944,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
             graph.print(rid, interesting, out_system);
         }
       else if (use_markings && !app.opts.no_graph)
-        graph.print(rid, interesting, (
-          F("(Revision: %s)") % encode_hexenc(rid.inner()())).str());
+        graph.print(rid, interesting,
+                    (F("(Revision: %s)") % rid).str());
 
       frontier.pop(); // beware: rid is invalid from now on
 

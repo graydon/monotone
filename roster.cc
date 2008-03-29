@@ -83,7 +83,7 @@ dump(marking_t const & marking, string & out)
 {
   ostringstream oss;
   string tmp;
-  oss << "birth_revision: " << encode_hexenc(marking.birth_revision.inner()()) << '\n';
+  oss << "birth_revision: " << marking.birth_revision << '\n';
   dump(marking.parent_name, tmp);
   oss << "parent_name: " << tmp << '\n';
   dump(marking.file_content, tmp);
@@ -266,10 +266,9 @@ dump(node_t const & n, string & out)
   oss << "type: ";
   if (is_file_t(n))
     {
-      string fcontent = encode_hexenc(
-        downcast_to_file_t(n)->content.inner()());
-      oss << "file\n"
-          << "content: " << fcontent << '\n';
+      oss << "file\ncontent: "
+          << downcast_to_file_t(n)->content
+          << '\n';
     }
   else
     {

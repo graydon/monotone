@@ -232,7 +232,7 @@ CMD(trusted, "trusted", "", CMD_REF(key_and_cert),
             "and value: %s\n"
             "was signed by: %s\n"
             "it would be: %s")
-    % encode_hexenc(ident.inner()())
+    % ident
     % cname
     % value
     % all_signers.str()

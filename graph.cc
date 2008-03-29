@@ -94,9 +94,7 @@ get_reconstruction_path(id const & start,
                     j != next.end(); ++j)
                 {
                   if (global_sanity.debug_p())
-                    L(FL("considering %s -> %s")
-                      % encode_hexenc(tip())
-                      % encode_hexenc((*j)()));
+                    L(FL("considering %s -> %s") % tip % *j);
                   if (seen_nodes.find(*j) == seen_nodes.end())
                     {
                       shared_ptr<reconstruction_path> pthN;

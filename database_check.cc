@@ -156,7 +156,7 @@ check_files(database & db, map<file_id, checked_file> & checked_files)
   for (set<file_id>::const_iterator i = files.begin();
        i != files.end(); ++i)
     {
-      L(FL("checking file %s") % encode_hexenc(i->inner()()));
+      L(FL("checking file %s") % *i);
       file_data data;
       db.get_file_version(*i, data);
       checked_files[*i].found = true;
@@ -185,7 +185,7 @@ check_rosters_manifest(database & db,
   for (set<revision_id>::const_iterator i = rosters.begin();
        i != rosters.end(); ++i)
     {
-      L(FL("checking roster %s") % encode_hexenc(i->inner()()));
+      L(FL("checking roster %s") % *i);
 
       roster_t ros;
       marking_map mm;
@@ -200,7 +200,7 @@ check_rosters_manifest(database & db,
       catch (std::exception & e)
         {
           L(FL("error loading roster %s: %s")
-            % encode_hexenc(i->inner()()) % e.what());
+            % *i % e.what());
           checked_rosters[*i].found = false;
           continue;
         }
@@ -245,7 +245,7 @@ check_rosters_marking(database & db,
        = checked_rosters.begin(); i != checked_rosters.end(); i++)
     {
       revision_id ros_id = i->first;
-      L(FL("checking roster %s") % encode_hexenc(i->first.inner()()));
+      L(FL("checking roster %s") % i->first);
       if (!i->second.found)
           continue;
 
@@ -315,7 +315,7 @@ check_revisions(database & db,
   for (set<revision_id>::const_iterator i = revisions.begin();
        i != revisions.end(); ++i)
     {
-      L(FL("checking revision %s") % encode_hexenc(i->inner()()));
+      L(FL("checking revision %s") % *i);
       revision_data data;
       db.get_revision(*i, data);
       checked_revisions[*i].found = true;
@@ -328,7 +328,7 @@ check_revisions(database & db,
       catch (logic_error & e)
         {
           L(FL("error parsing revision %s: %s")
-            % encode_hexenc(i->inner()()) % e.what());
+            % *i % e.what());
           checked_revisions[*i].parseable = false;
           continue;
         }
@@ -513,7 +513,7 @@ check_heights(database & db,
   for (set<revision_id>::const_iterator i = heights.begin();
        i != heights.end(); ++i)
     {
-      L(FL("checking height for %s") % encode_hexenc(i->inner()()));
+      L(FL("checking height for %s") % *i);
       
       rev_height h;
       try
@@ -564,15 +564,15 @@ check_heights_relation(database & db,
         {
           if (global_sanity.debug_p())
             L(FL("missing height(s), skipping edge %s -> %s")
-              % encode_hexenc(p_id.inner()())
-              % encode_hexenc(c_id.inner()()));
+              % p_id
+              % c_id);
           continue;
         }
 
       if (global_sanity.debug_p())
         L(FL("checking heights for edges %s -> %s")
-          % encode_hexenc(p_id.inner()())
-          % encode_hexenc(c_id.inner()()));
+          % p_id
+          % c_id);
       
       rev_height parent, child;
       db.get_rev_height(p_id, parent);
@@ -583,9 +583,9 @@ check_heights_relation(database & db,
           if (global_sanity.debug_p())
             L(FL("error: height %s of child %s not greater than height %s of parent %s")
               % child
-              % encode_hexenc(c_id.inner()())
+              % c_id
               % parent
-              % encode_hexenc(p_id.inner()()));
+              % p_id);
           checked_heights[c_id].sensible = false; // defaults to true
           continue;
         }
@@ -608,13 +608,13 @@ report_files(map<file_id, checked_file> const & checked_files,
         {
           missing_files++;
           P(F("file %s missing (%d manifest references)")
-            % encode_hexenc(i->first.inner()()) % file.roster_refs);
+            % i->first % file.roster_refs);
         }
 
       if (file.roster_refs == 0)
         {
           unreferenced_files++;
-          P(F("file %s unreferenced") % encode_hexenc(i->first.inner()()));
+          P(F("file %s unreferenced") % i->first);
         }
 
     }
@@ -634,21 +634,21 @@ report_rosters(map<revision_id, checked_roster> const & checked_rosters,
         {
           unreferenced_rosters++;
           P(F("roster %s unreferenced")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (roster.missing_files > 0)
         {
           incomplete_rosters++;
           P(F("roster %s incomplete (%d missing files)")
-            % encode_hexenc(i->first.inner()()) % roster.missing_files);
+            % i->first % roster.missing_files);
         }
 
       if (roster.missing_mark_revs > 0)
         {
           incomplete_rosters++;
           P(F("roster %s incomplete (%d missing revisions)")
-            % encode_hexenc(i->first.inner()()) % roster.missing_mark_revs);
+            % i->first % roster.missing_mark_revs);
         }
     }
 }
@@ -673,7 +673,7 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           missing_revisions++;
           P(F("revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % revision.revision_refs
             % revision.cert_refs
             % revision.ancestry_parent_refs
@@ -685,7 +685,7 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (%d missing manifests)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % revision.missing_manifests);
         }
 
@@ -693,7 +693,7 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (%d missing revisions)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % revision.missing_revisions);
         }
 
@@ -701,28 +701,28 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (missing roster)")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (revision.manifest_mismatch)
         {
           manifest_mismatch++;
           P(F("revision %s mismatched roster and manifest")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (revision.incomplete_roster)
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (incomplete roster)")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (revision.ancestry_parent_refs != revision.revision_refs)
         {
           mismatched_parents++;
           P(F("revision %s mismatched parents (%d ancestry parents; %d revision refs)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % revision.ancestry_parent_refs
             % revision.revision_refs );
         }
@@ -731,7 +731,7 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           mismatched_children++;
           P(F("revision %s mismatched children (%d ancestry children; %d parents)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % revision.ancestry_child_refs
             % revision.parents.size() );
         }
@@ -743,21 +743,21 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
           if (tmp[tmp.length() - 1] == '\n')
             tmp.erase(tmp.length() - 1);
           P(F("revision %s has bad history (%s)")
-            % encode_hexenc(i->first.inner()()) % tmp);
+            % i->first % tmp);
         }
 
       if (!revision.parseable)
         {
           non_parseable_revisions++;
           P(F("revision %s is not parseable (perhaps with unnormalized paths?)")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (revision.parseable && !revision.normalized)
         {
           non_normalized_revisions++;
           P(F("revision %s is not in normalized form")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
     }
 }
@@ -814,7 +814,7 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
             {
               unchecked_sigs++;
               P(F("revision %s unchecked signature in %s cert from missing key %s")
-                % encode_hexenc(i->first.inner()())
+                % i->first
                 % checked->rcert.inner().name
                 % checked->rcert.inner().key);
             }
@@ -822,7 +822,7 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
             {
               bad_sigs++;
               P(F("revision %s bad signature in %s cert from key %s")
-                % encode_hexenc(i->first.inner()())
+                % i->first
                 % checked->rcert.inner().name
                 % checked->rcert.inner().key);
             }
@@ -837,7 +837,7 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
             {
               missing_certs++;
               P(F("revision %s missing %s cert")
-                % encode_hexenc(i->first.inner()()) % *n);
+                % i->first % *n);
             }
         }
 
@@ -847,7 +847,7 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
         {
           mismatched_certs++;
           P(F("revision %s mismatched certs (%d authors %d dates %d changelogs)")
-            % encode_hexenc(i->first.inner()())
+            % i->first
             % cert_counts[cert_name(author_cert_name)]
             % cert_counts[cert_name(date_cert_name)]
             % cert_counts[cert_name(changelog_cert_name)]);
@@ -871,7 +871,7 @@ report_heights(map<revision_id, checked_height> const & checked_heights,
         {
           missing_heights++;
           P(F("height missing for revision %s")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
           continue;
         }
 
@@ -879,14 +879,14 @@ report_heights(map<revision_id, checked_height> const & checked_heights,
         {
           duplicate_heights++;
           P(F("duplicate height for revision %s")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
 
       if (!height.sensible)
         {
           incorrect_heights++;
           P(F("height of revision %s not greater than that of parent")
-            % encode_hexenc(i->first.inner()()));
+            % i->first);
         }
     }
 }

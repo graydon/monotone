@@ -226,9 +226,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
             }
           key_hash_code(keyid, pub_encoded, hash_code);
           if (indb)
-            cout << encode_hexenc(hash_code()) << ' ' << keyid << '\n';
+            cout << hash_code << ' ' << keyid << '\n';
           else
-            cout << encode_hexenc(hash_code()) << ' ' << keyid << "   (*)\n";
+            cout << hash_code << ' ' << keyid << "   (*)\n";
         }
       if (!all_in_db)
         cout << (F("(*) - only in %s/")
@@ -246,7 +246,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
           id hash_code;
           keys.get_key_pair(*i, kp);
           key_hash_code(*i, kp.priv, hash_code);
-          cout << encode_hexenc(hash_code()) << ' ' << *i << '\n';
+          cout << hash_code << ' ' << *i << '\n';
         }
       cout << '\n';
     }
@@ -338,7 +338,7 @@ CMD(tags, "tags", "", CMD_REF(list), "",
   for (set<tag_t>::const_iterator i = tags.begin(); i != tags.end(); ++i)
     {
       cout << i->name << ' '
-           << encode_hexenc(i->ident.inner()()) << ' '
+           << i->ident << ' '
            << i->key  << '\n';
     }
 }

@@ -1402,7 +1402,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
             {
               add_missing_parents(pth.dirname(), cs);
               L(FL("adding entry state '%s' on '%s'")
-                % encode_hexenc(fid.inner()()) % pth);
+                % fid % pth);
               safe_insert(cs.files_added, make_pair(pth, fid));
               live_files[i->first] = i->second.version;
             }
@@ -1411,8 +1411,8 @@ cluster_consumer::build_cset(cvs_cluster const & c,
               file_id old_fid(cvs.file_version_interner.lookup(e->second));
               L(FL("applying state delta on '%s' : '%s' -> '%s'")
                 % pth
-                % encode_hexenc(old_fid.inner()())
-                % encode_hexenc(fid.inner()()));
+                % old_fid
+                % fid);
               safe_insert(cs.deltas_applied,
                           make_pair(pth, make_pair(old_fid, fid)));
               live_files[i->first] = i->second.version;
@@ -1424,7 +1424,7 @@ cluster_consumer::build_cset(cvs_cluster const & c,
           if (e != live_files.end())
             {
               L(FL("deleting entry state '%s' on '%s'")
-                % encode_hexenc(fid.inner()()) % pth);
+                % fid % pth);
               safe_insert(cs.nodes_deleted, pth);
               live_files.erase(i->first);
             }

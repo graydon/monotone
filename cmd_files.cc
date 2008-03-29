@@ -181,11 +181,11 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
   // find the version of the file requested
   N(roster.has_node(file), 
     F("no such file '%s' in revision '%s'")
-      % file % encode_hexenc(rid.inner()()));
+      % file % rid);
   node_t node = roster.get_node(file);
   N(is_file_t(node), 
     F("'%s' in revision '%s' is not a file")
-      % file % encode_hexenc(rid.inner()()));
+      % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
@@ -214,7 +214,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
 
   id ident;
   calculate_ident(dat, ident);
-  cout << encode_hexenc(ident()) << '\n';
+  cout << ident << '\n';
 }
 
 // Name: identify
@@ -245,28 +245,26 @@ CMD_AUTOMATE(identify, N_("PATH"),
   
   id ident;
   calculate_ident(dat, ident);
-  cout << encode_hexenc(ident()) << '\n';
+  cout << ident << '\n';
 }
 
 static void
 dump_file(database & db, std::ostream & output, file_id & ident)
 {
   N(db.file_version_exists(ident),
-    F("no file version %s found in database")
-      % encode_hexenc(ident.inner()()));
+    F("no file version %s found in database") % ident);
 
   file_data dat;
-  L(FL("dumping file %s") % encode_hexenc(ident.inner()()));
+  L(FL("dumping file %s") % ident);
   db.get_file_version(ident, dat);
-  output.write(dat.inner()().data(), dat.inner()().size());
+  output << dat;
 }
 
 static void
 dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
 {
   N(db.revision_exists(rid), 
-    F("no such revision '%s'")
-      % encode_hexenc(rid.inner()()));
+    F("no such revision '%s'") % rid);
 
   // Paths are interpreted as standard external ones when we're in a
   // workspace, but as project-rooted external ones otherwise.
@@ -276,13 +274,11 @@ dump_file(database & db, std::ostream & output, revision_id rid, utf8 filename)
   marking_map marks;
   db.get_roster(rid, roster, marks);
   N(roster.has_node(fp), 
-    F("no file '%s' found in revision '%s'")
-      % fp % encode_hexenc(rid.inner()()));
+    F("no file '%s' found in revision '%s'") % fp % rid);
   
   node_t node = roster.get_node(fp);
   N((!null_node(node->self) && is_file_t(node)), 
-    F("no file '%s' found in revision '%s'")
-      % fp % encode_hexenc(rid.inner()()));
+    F("no file '%s' found in revision '%s'") % fp % rid);
 
   file_t file_node = downcast_to_file_t(node);
   dump_file(db, output, file_node->content);

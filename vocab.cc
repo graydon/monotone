@@ -180,29 +180,29 @@ fake_id()
 #undef DECORATE
 #undef ENCODING
 #undef ENCODING_NOVERIFY
-template
-void dump(revision_id const & r, string &);
 
-template
-void dump(manifest_id const & r, string &);
+template void dump(revision_id const & r, string &);
+template void dump(manifest_id const & r, string &);
+template void dump(file_id const & r, string &);
+template void dump(hexenc<id> const & r, string &);
+template void dump(rsa_pub_key const&, string &);
+template void dump(roster_data const & d, string &);
+template void dump(roster_delta const & d, string &);
+template void dump(manifest_data const & d, string &);
+template void dump(revision_data const & d, string &);
 
-template
-void dump(file_id const & r, string &);
+template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
+template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
+template std::ostream & operator<< <>(std::ostream &,      key<id> const &);
+template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
+template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
+template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
 
-template
-void dump(hexenc<id> const & r, string &);
-
-template
-void dump(rsa_pub_key const&, string &);
-
-template
-void dump(roster_data const & d, string &);
-
-template
-void dump(roster_delta const & d, string &);
-
-template
-void dump(manifest_data const & d, string &);
+template std::ostream & operator<< <>(std::ostream &,    epoch<data> const &);
+template std::ostream & operator<< <>(std::ostream &,     file<data> const &);
+template std::ostream & operator<< <>(std::ostream &, manifest<data> const &);
+template std::ostream & operator<< <>(std::ostream &, revision<data> const &);
+template std::ostream & operator<< <>(std::ostream &,   roster<data> const &);
 
 /*
  * specializations for id, which allows the encoded id

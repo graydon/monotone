@@ -1063,7 +1063,7 @@ UNIT_TEST(crypto, calculate_ident)
   calculate_ident(input, output);
 
   //L(FL(" Input: %s") % input);
-  //L(FL("Output: %s") % encode_hexenc(output));
+  //L(FL("Output: %s") % output);
 
   UNIT_TEST_CHECK(output() == decode_hexenc(ident));
   L(FL("SHA Short Message Test:  Passed\n\n"));
