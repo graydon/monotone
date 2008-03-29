@@ -42,16 +42,17 @@
           are better encapsulated now. The database interface has been
           enhanced to ease reduction of locking contention in the future.
 
+        - Merged the two indexes on revision_certs into a single one.
+
         - The database scheme has been changed to store binary encoded hashes,
           instead of a longer hex encoded representation. That reduces the
           database size and speeds up operations a little.
           Users who like to fiddle with the database directly are adviced to
-          use the sqlite function hex() as well as the hexadecimal notation
-          x'DEADBEEF', which emits a binary blob.
+          use the sqlite function hex(), the built-in quote() function as well
+          as the hexadecimal notation x'DEADBEEF'.
 
-        - Monotone uses that same binary hash representation internally as
+        - Monotone now uses that same binary hash representation internally as
           well, saving some conversion steps from and to hex encoded notation.
-
 
 Mon Feb 25 15:55:36 UTC 2008
 
@@ -115,16 +116,6 @@ Mon Feb 25 15:55:36 UTC 2008
           In addition, 'automate inventory' no longer recurses into ignored
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
-
-        Internal
-
-        - switched to storing binary sha1 hashes, instead of an ASCII
-          compliant hexadecimal encoding of the hash.
-          The newly added sqlite function unhex(), the built-in quote()
-          function as well as the built-in hex notation (i.e. x'deadbeef')
-          help with handling these binary hashes.
-
-        - merged the two indexes on revision_certs into a single one.
 
         - 'automate get_current_revision' which outputs the revision text of
            changes in the current workspace
