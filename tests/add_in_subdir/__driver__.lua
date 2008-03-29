@@ -8,7 +8,7 @@ writefile("subdir/anotherdir/bar", "more data")
 
 -- Add a file
 chdir("subdir")
-check(mtn("--debug", "add", "foo"), 0, false, false)
+check(mtn("add", "foo"), 0, false, false)
 -- Add a directory
 check(mtn("add", "-R", "anotherdir"), 0, false, false)
 chdir("..")
