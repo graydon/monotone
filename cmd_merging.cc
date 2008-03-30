@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -12,6 +13,7 @@
 #include <iostream>
 #include <iomanip>
 
+#include "basic_io.hh"
 #include "cmd.hh"
 #include "diff_patch.hh"
 #include "merge.hh"
@@ -804,6 +806,94 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
             std::cout, false);
 }
 
+namespace
+{
+  namespace syms
+  {
+    symbol const ancestor("ancestor");
+    symbol const left("left");
+    symbol const right("right");
+  }
+}
+
+static void
+show_conflicts_core (database & db, revision_id const & l_id, revision_id const & r_id, bool const basic_io, std::ostream & output)
+{
+  N(!is_ancestor(db, l_id, r_id),
+    F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
+  N(!is_ancestor(db, r_id, l_id),
+    F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
+  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
+  marking_map l_marking, r_marking;
+  db.get_roster(l_id, *l_roster, l_marking);
+  db.get_roster(r_id, *r_roster, r_marking);
+  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
+  roster_merge_result result;
+  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
+               *r_roster, r_marking, r_uncommon_ancestors,
+               result);
+
+  // note that left and right are in the order specified on the command line
+  // they are not in lexical order as they are with other merge commands so
+  // they may appear swapped here. The user may have done that deliberately,
+  // especially via automate, so we don't sort them here.
+
+  basic_io::stanza st;
+
+  if (basic_io)
+    {
+      st.push_hex_pair(syms::left, l_id.inner());
+      st.push_hex_pair(syms::right, r_id.inner());
+    }
+  else
+    {
+      P(F("[left]  %s") % l_id);
+      P(F("[right] %s") % r_id);
+    }
+
+  if (result.is_clean())
+    {
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
+        P(F("no conflicts detected"));
+    }
+  else
+    {
+      content_merge_database_adaptor adaptor(db, l_id, r_id,
+                                             l_marking, r_marking);
+
+      {
+        basic_io::printer pr;
+        st.push_hex_pair(syms::ancestor, adaptor.lca.inner());
+        pr.print_stanza(st);
+        output.write(pr.buf.data(), pr.buf.size());
+      }
+
+      // The basic_io routines in roster_merge.cc access these rosters via
+      // the adaptor.
+      adaptor.cache_roster (l_id, l_roster);
+      adaptor.cache_roster (r_id, r_roster);
+
+      result.report_missing_root_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_invalid_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_directory_loop_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+
+      result.report_orphaned_node_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_multiple_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_duplicate_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+
+      result.report_attribute_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+    }
+}
+
 CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
     N_("Shows what conflicts need resolution between two revisions"),
     N_("The conflicts are calculated based on the two revisions given in "
@@ -818,51 +908,62 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   revision_id l_id, r_id;
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
-  N(!is_ancestor(db, l_id, r_id),
-    F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
-  N(!is_ancestor(db, r_id, l_id),
-    F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
-  roster_t l_roster, r_roster;
-  marking_map l_marking, r_marking;
-  db.get_roster(l_id, l_roster, l_marking);
-  db.get_roster(r_id, r_roster, r_marking);
-  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
-  db.get_uncommon_ancestors(l_id, r_id,
-                                l_uncommon_ancestors,
-                                r_uncommon_ancestors);
-  roster_merge_result result;
-  roster_merge(l_roster, l_marking, l_uncommon_ancestors,
-               r_roster, r_marking, r_uncommon_ancestors,
-               result);
 
-  // note that left and right are in the order specified on the command line
-  // they are not in lexical order as they are with other merge commands
-  // so they may appear swapped here. perhaps we should sort left and right
-  // before using them?
+  show_conflicts_core(db, l_id, r_id, false, std::cout);
+}
 
-  P(F("[left]  %s") % l_id);
-  P(F("[right] %s") % r_id);
+// Name: show_conflicts
+// Arguments:
+//   Two revision ids (optional, determined from the workspace if not given; there must be exactly two heads)
+// Added in: 7.1
+// Purpose: Prints the conflicts between two revisions, to aid in merging them.
+//
+// Output format: see monotone.texi
+//
+// Error conditions:
+//
+//   If the revision IDs are unknown or invalid prints an error message to
+//   stderr and exits with status 1.
+//
+//   If revision ids are not given, and the current workspace does not have
+//   two heads, prints an error message to stderr and exits with status 1.
+//
+CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
+             N_("Shows the conflicts between two revisions."),
+             N_("If no arguments are given, left_revid and right_revid default to the"
+                "first two heads that would be chosen by the merge command."),
+             options::opts::none)
+{
+  database    db(app);
+  project_t   project(db);
+  revision_id l_id, r_id;
 
-  if (result.is_clean())
+  if (args.size() == 0)
     {
-      P(F("no conflicts detected"));
+      // get ids from heads
+      set<revision_id> heads;
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
+
+      N(heads.size() >= 2,
+        F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
+
+      // FIXME: factor out head choosing algorithm from merge above
+      set<revision_id>::const_iterator i = heads.begin();
+      l_id = *i;
+      ++i;
+      r_id = *i;
+    }
+  else if (args.size() == 2)
+    {
+      // get ids from args
+      complete(app.opts, app.lua, project, idx(args,0)(), l_id);
+      complete(app.opts, app.lua, project, idx(args,1)(), r_id);
     }
   else
-    {
-      content_merge_database_adaptor adaptor(db, l_id, r_id,
-                                             l_marking, r_marking);
+    throw usage(execid);
 
-      result.report_missing_root_conflicts(l_roster, r_roster, adaptor);
-      result.report_invalid_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_directory_loop_conflicts(l_roster, r_roster, adaptor);
-
-      result.report_orphaned_node_conflicts(l_roster, r_roster, adaptor);
-      result.report_multiple_name_conflicts(l_roster, r_roster, adaptor);
-      result.report_duplicate_name_conflicts(l_roster, r_roster, adaptor);
-
-      result.report_attribute_conflicts(l_roster, r_roster, adaptor);
-      result.report_file_content_conflicts(l_roster, r_roster, adaptor);
-    }
+  show_conflicts_core(db, l_id, r_id, true, output);
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),

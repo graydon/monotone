@@ -1,0 +1,21 @@
+    left [254fd127afd769a33979a843f5e3d8f2457097e6]
+   right [6e0b7ffd0171d72db85dfc54234a78a35dd76cf3]
+ancestor [5bc669f00cf90b76dd38077827565b624d823756]
+
+conflict "missing root"
+
+     conflict "multiple names"
+    left_type "renamed directory"
+ancestor_name ""
+    left_name "aaa"
+   right_type "renamed directory"
+ancestor_name ""
+   right_name "bbb"
+
+     conflict "duplicate name"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name ""
+   right_type "renamed directory"
+ancestor_name "bar"
+   right_name ""

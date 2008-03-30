@@ -3011,11 +3011,12 @@ two revisions using the database merge commands @command{merge},
 @command{explicit_merge}, @command{propagate} and
 @command{merge_into_dir} or when using the workspace merge commands
 @command{update}, @command{pluck} and @command{merge_into_workspace}.
-The @command{show_conflicts} command can be used to list conflicts
-between database revisions which would be encountered by the database
-merge commands. Unfortunately, this command can't yet list conflicts
-between a database revision and the current workspace revision which
-would be encountered by the workspace merge commands.
+
+The @command{show_conflicts} and @command{automate show_conflicts}
+commands can be used to list conflicts between database revisions
+which would be encountered by the database merge commands.
+Unfortunately, these commands can't yet list conflicts between a
+database revision and the current workspace.
 
 @subsection Conflict Types
 
@@ -5409,6 +5410,9 @@ files to the current subdirectory of the workspace.
 
 This command shows what conflicts would need to be resolved in order to merge
 the given revisions.
+
+Note that this does not show conflicts due to update commands, since
+in that case one revision is the workspace.
 @end ftable
 
 
@@ -8521,6 +8525,75 @@ No output.
 
 If the revision is invalid prints an error message to stderr and
 exits with status 1.
+
+@end table
+
+@item mtn automate show_conflicts @var{[left_rev right_rev]}
+
+@table @strong
+@item Arguments:
+
+Optional left and right revision ids.
+
+If no revs are given, @var{left_rev} and @var{right_rev} default to
+the first two heads that would be chosen by the @command{merge}
+command.
+
+@item Added in:
+
+7.1
+
+@item Purpose:
+
+Show all conflicts between two revisions.
+
+This is intented to be used when an attempted merge has failed due to
+conflicts; an external tool can guide the user thru resolving each
+conflict in turn, then redo the original command.
+
+For more information on conflicts, @ref{Merge Conflicts}.
+
+Note that this does not show conflicts due to update commands, since
+in that case one revision is the workspace.
+
+@item Sample output:
+@smallexample
+@group
+    left  "1337cb1059c4bc3e376b14381b43e9383c654da1"
+   right  "d5f1dd136c86b5bbd5e71b0c3365667e328af492"
+
+  conflict  "duplicate name"
+      name  "checkout.sh"
+
+FIXME: show all conflicts
+
+@end group
+@end smallexample
+
+@item Output format:
+
+First the revision ids of the left and right revisions are printed in
+one basic_io stanza.
+
+Then each conflict is listed in a basic_io stanza. Stanzas are
+separated by blank lines.
+
+Each conflict stanza starts with a @code{conflict} line, and contains
+up to FIXME: lines. The order of the lines is not important, and may
+change in future revisions, except that the first line will always be
+@code{conflict}.
+
+When the conflicts involve files, the file ids are output, so the file
+contents can be retrieved efficiently via @code{automate get_file},
+to aid in conflict resolution.
+
+@item Error conditions:
+
+If the revision IDs are gvien, but either is unknown or
+invalid, prints an error message to stderr and exits with status 1.
+
+If revision ids are not given, and the current workspace does not have
+two heads, prints an error message to stderr and exits with status 1.
 
 @end table
 

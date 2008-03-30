@@ -1,0 +1,11 @@
+    left [161e426c3b0c3f98d0be225f69d6f893ce8e0442]
+   right [0e3260f51acd1e98c40666557eb6c0eefeae5f02]
+ancestor []
+
+conflict "missing root"
+
+  conflict "duplicate name"
+ left_type "added directory"
+ left_name ""
+right_type "added directory"
+right_name ""

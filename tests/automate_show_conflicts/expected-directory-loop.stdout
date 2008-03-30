@@ -1,0 +1,11 @@
+    left [be04cb44902df12f3b36bf0efabba784547ccd34]
+   right [7cd48d9599eee2a67e8c510112659c0d313fb1df]
+ancestor [08ccbb14523a09d342568ce27a1b9f631d42aa9c]
+
+     conflict "directory loop created"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name "bar/foo"
+   right_type "renamed directory"
+ancestor_name "bar"
+   right_name "foo/bar"
