@@ -1,0 +1,11 @@
+    left [4e25e44deef167f640248e542916736b649e3044]
+   right [0b37ed4689ee191cdd4bd26e5233511329b17032]
+ancestor [27169065f28ccfb64678ac168b3805796bd9e5ae]
+
+     conflict "multiple names"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name "a/foo"
+   right_type "renamed directory"
+ancestor_name "foo"
+   right_name "b/foo"

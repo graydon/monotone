@@ -429,7 +429,7 @@ revert_to(base)
 check(mtn("mv", "foo", "b"), 0, false, false)
 check(mtn("rm", "a"), 0, false, false)
 
--- this doesn't result in a directory loop conflict because the multiple name
+-- this doesn't result in an orphan conflict because the multiple name
 -- conflict prevents foo from being attached in the result roster
 
 create_second()
@@ -504,6 +504,7 @@ remove(dir2)
 
 check(mtn("co", "--revision", base, "--branch", branch, dir2), 0, false, false)
 check(indir(dir2, mtn("pivot_root", "bar", "bbb")), 0, true, true)
+check(indir(dir2, mtn("commit", "--message", "commit")), 0, false, false)
 
 second = indir(dir2, {base_revision})[1]()
 
