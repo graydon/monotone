@@ -541,18 +541,57 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
       else if (left_root == left_lca_root && right_root != right_lca_root)
         {
           if (!left_roster.has_node(right_root))
-            P(F("directory '%s' deleted on the left") % right_lca_name);
-          P(F("directory '%s' pivoted to root on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "deleted directory");
+                st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+              }
+            else
+              P(F("directory '%s' deleted on the left") % right_lca_name);
+
+          if (basic_io)
+            {
+              st.push_str_pair(syms::right_type, "pivoted root");
+              st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+            }
+          else
+            P(F("directory '%s' pivoted to root on the right") % right_lca_name);
         }
       else if (left_root != left_lca_root && right_root != right_lca_root)
         {
-          P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+          if (basic_io)
+            {
+              st.push_str_pair(syms::left_type, "pivoted root");
+              st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
+            }
+          else
+            P(F("directory '%s' pivoted to root on the left") % left_lca_name);
+
           if (!right_roster.has_node(left_root))
-            P(F("directory '%s' deleted on the right") % left_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::right_type, "deleted directory");
+                st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
+              }
+            else
+              P(F("directory '%s' deleted on the right") % left_lca_name);
 
           if (!left_roster.has_node(right_root))
-            P(F("directory '%s' deleted on the left") % right_lca_name);
-          P(F("directory '%s' pivoted to root on the right") % right_lca_name);
+            if (basic_io)
+              {
+                st.push_str_pair(syms::left_type, "deleted directory");
+                st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+              }
+            else
+              P(F("directory '%s' deleted on the left") % right_lca_name);
+
+          if (basic_io)
+            {
+              st.push_str_pair(syms::right_type, "pivoted root");
+              st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+            }
+          else
+            P(F("directory '%s' pivoted to root on the right") % right_lca_name);
         }
       // else
       // other conflicts can cause the root dir to be left detached
@@ -630,20 +669,32 @@ roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
         }
       else if (right_roster.root()->self == conflict.parent_name.first)
         {
-          P(F("'%s' pivoted to root on the right")
-            % lca_parent_name);
+          if (basic_io)
+            {
+              st.push_str_pair(syms::right_type, "pivoted root");
+              st.push_str_pair(syms::ancestor_name, lca_parent_name.as_external());
+            }
+          else
+            P(F("'%s' pivoted to root on the right")
+              % lca_parent_name);
 
           file_path left_name;
           left_roster.get_name(conflict.nid, left_name);
           if (parent_lca_roster->has_node(conflict.nid))
             {
-              P(F("'%s' renamed to '%s' on the left")
-                % lca_name % left_name);
+              if (basic_io)
+                put_rename_conflict_left (st, adaptor, conflict.nid);
+              else
+                P(F("'%s' renamed to '%s' on the left")
+                  % lca_name % left_name);
             }
           else
             {
-              P(F("'%s' added in revision %s on the left")
-                % left_name % lca_rid);
+              if (basic_io)
+                put_added_conflict_left (st, adaptor, conflict.nid);
+              else
+                P(F("'%s' added in revision %s on the left")
+                  % left_name % lca_rid);
             }
         }
       else
@@ -822,26 +873,38 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
           right_roster.get_name(conflict.nid, orphan_name);
           right_roster.get_name(conflict.parent_name.first, parent_name);
 
-          P(F("parent directory '%s' was deleted on the left")
-            % parent_name);
+          if (basic_io)
+            {
+              st.push_str_pair(syms::left_type, "deleted directory");
+              st.push_str_pair(syms::ancestor_name, parent_name.as_external());
+            }
+          else
+            P(F("parent directory '%s' was deleted on the left")
+              % parent_name);
 
           if (parent_lca_roster->has_node(conflict.nid))
             {
-              if (type == file_type)
-                P(F("file '%s' was renamed from '%s' on the right")
-                  % orphan_name % lca_name);
+              if (basic_io)
+                put_rename_conflict_right (st, adaptor, conflict.nid);
               else
-                P(F("directory '%s' was renamed from '%s' on the right")
-                  % orphan_name % lca_name);
+                if (type == file_type)
+                  P(F("file '%s' was renamed from '%s' on the right")
+                    % orphan_name % lca_name);
+                else
+                  P(F("directory '%s' was renamed from '%s' on the right")
+                    % orphan_name % lca_name);
             }
           else
             {
-              if (type == file_type)
-                P(F("file '%s' was added on the right")
-                  % orphan_name);
+              if (basic_io)
+                put_added_conflict_right (st, adaptor, conflict.nid);
               else
-                P(F("directory '%s' was added on the right")
-                  % orphan_name);
+                if (type == file_type)
+                  P(F("file '%s' was added on the right")
+                    % orphan_name);
+                else
+                  P(F("directory '%s' was added on the right")
+                    % orphan_name);
             }
         }
       else
