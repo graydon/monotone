@@ -367,6 +367,49 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
     P(F("[merged] %s") % merged);
 }
 
+typedef std::pair<revision_id, revision_id> revpair;
+typedef set<revision_id>::const_iterator rid_set_iter;
+
+// Subroutine of 'merge' and 'automate show_conflicts'; find first pair of
+// heads to merge.
+static revpair
+find_heads_to_merge(database & db, set<revision_id> const heads)
+{
+  I(heads.size() > 2);
+  map<revision_id, revpair> heads_for_ancestor;
+  set<revision_id> ancestors;
+
+  // For every pair of heads, determine their merge ancestor, and
+  // remember the ancestor->head mapping.
+  for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
+    for (rid_set_iter j = i; j != heads.end(); ++j)
+      {
+        // It is not possible to initialize j to i+1 (set iterators
+        // expose neither operator+ nor a nondestructive next() method)
+        if (j == i)
+          continue;
+
+        revision_id ancestor;
+        find_common_ancestor_for_merge(db, *i, *j, ancestor);
+
+        // More than one pair might have the same ancestor (e.g. if we
+        // have three heads all with the same parent); as this table
+        // will be recalculated on every pass, we just take the first
+        // one we find.
+        if (ancestors.insert(ancestor).second)
+          safe_insert(heads_for_ancestor, std::make_pair(ancestor, revpair(*i, *j)));
+      }
+
+  // Erasing ancestors from ANCESTORS will now produce a set of merge
+  // ancestors each of which is not itself an ancestor of any other
+  // merge ancestor.
+  erase_ancestors(db, ancestors);
+  I(ancestors.size() > 0);
+
+  // Take the first ancestor from the above set.
+  return heads_for_ancestor[*ancestors.begin()];
+}
+
 // should merge support --message, --message-file?  It seems somewhat weird,
 // since a single 'merge' command may perform arbitrarily many actual merges.
 // (Possibility: append the --message/--message-file text to the synthetic
@@ -379,9 +422,6 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   database db(app);
   key_store keys(app);
   project_t project(db);
-
-  typedef std::pair<revision_id, revision_id> revpair;
-  typedef set<revision_id>::const_iterator rid_set_iter;
 
   if (args.size() != 0)
     throw usage(execid);
@@ -406,8 +446,6 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   // avoid failure after lots of work
   cache_user_key(app.opts, app.lua, db, keys);
 
-  map<revision_id, revpair> heads_for_ancestor;
-  set<revision_id> ancestors;
   size_t pass = 1, todo = heads.size() - 1;
 
   // If there are more than two heads to be merged, on each iteration we
@@ -427,43 +465,12 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       P(F("merge %d / %d:") % pass % todo);
       P(F("calculating best pair of heads to merge next"));
 
-      // For every pair of heads, determine their merge ancestor, and
-      // remember the ancestor->head mapping.
-      for (rid_set_iter i = heads.begin(); i != heads.end(); ++i)
-        for (rid_set_iter j = i; j != heads.end(); ++j)
-          {
-            // It is not possible to initialize j to i+1 (set iterators
-            // expose neither operator+ nor a nondestructive next() method)
-            if (j == i)
-              continue;
-
-            revision_id ancestor;
-            find_common_ancestor_for_merge(db, *i, *j, ancestor);
-
-            // More than one pair might have the same ancestor (e.g. if we
-            // have three heads all with the same parent); as this table
-            // will be recalculated on every pass, we just take the first
-            // one we find.
-            if (ancestors.insert(ancestor).second)
-              safe_insert(heads_for_ancestor, std::make_pair(ancestor, revpair(*i, *j)));
-          }
-
-      // Erasing ancestors from ANCESTORS will now produce a set of merge
-      // ancestors each of which is not itself an ancestor of any other
-      // merge ancestor.
-      erase_ancestors(db, ancestors);
-      I(ancestors.size() > 0);
-
-      // Take the first ancestor from the above set and merge its
-      // corresponding pair of heads.
-      revpair p = heads_for_ancestor[*ancestors.begin()];
+      revpair p = find_heads_to_merge(db, heads);
 
       merge_two(app.opts, app.lua, project, keys,
                 p.first, p.second, app.opts.branchname, string("merge"),
                 std::cout, false);
 
-      ancestors.clear();
-      heads_for_ancestor.clear();
       project.get_branch_heads(app.opts.branchname, heads,
                                app.opts.ignore_suspend_certs);
       pass++;
@@ -948,11 +955,19 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
       N(heads.size() >= 2,
         F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
 
-      // FIXME: factor out head choosing algorithm from merge above
-      set<revision_id>::const_iterator i = heads.begin();
-      l_id = *i;
-      ++i;
-      r_id = *i;
+      if (heads.size() == 2)
+        {
+          set<revision_id>::const_iterator i = heads.begin();
+          l_id = *i;
+          ++i;
+          r_id = *i;
+        }
+      else
+        {
+          revpair p = find_heads_to_merge (db, heads);
+          l_id = p.first;
+          r_id = p.second;
+        }
     }
   else if (args.size() == 2)
     {

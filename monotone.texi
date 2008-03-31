@@ -8528,16 +8528,15 @@ exits with status 1.
 
 @end table
 
-@item mtn automate show_conflicts @var{[left_rev right_rev]}
+@item mtn automate show_conflicts [@var{left_rev right_rev}]
 
 @table @strong
 @item Arguments:
 
 Optional left and right revision ids.
 
-If no revs are given, @var{left_rev} and @var{right_rev} default to
-the first two heads that would be chosen by the @command{merge}
-command.
+If no revs are given, they default to the first two heads that would
+be chosen by the @command{merge} command.
 
 @item Added in:
 
@@ -8547,14 +8546,14 @@ command.
 
 Show all conflicts between two revisions.
 
-This is intented to be used when an attempted merge has failed due to
-conflicts; an external tool can guide the user thru resolving each
-conflict in turn, then redo the original command.
+This is intended to be used before a @command{merge}; an external tool
+can guide the user thru resolving each conflict in turn, then do the
+merge.
 
 For more information on conflicts, @ref{Merge Conflicts}.
 
-Note that this does not show conflicts due to update commands, since
-in that case one revision is the workspace.
+Note that this cannot be used to show conflicts that would occur in an
+@command{update}, since in that case one revision is the workspace.
 
 @item Sample output:
 
@@ -8765,19 +8764,16 @@ right_type "added directory"
 right_name ""
 @end verbatim
 
-@end group
-@end smallexample
-
 @item Output format:
 
-First the revision ids of the left and right revisions are printed in
-one basic_io stanza.
+First the revision ids of the left and right revisions, and their
+common ancestor, are printed in one basic_io stanza.
 
 Then each conflict is listed in a basic_io stanza. Stanzas are
 separated by blank lines.
 
 Each conflict stanza starts with a @code{conflict} line, and contains
-up to FIXME: lines. The order of the lines is not important, and may
+up to eleven lines. The order of the lines is not important, and may
 change in future revisions, except that the first line will always be
 @code{conflict}.
 
@@ -8787,11 +8783,8 @@ to aid in conflict resolution.
 
 @item Error conditions:
 
-If the revision IDs are gvien, but either is unknown or
+If the revision IDs are given, but either is unknown or
 invalid, prints an error message to stderr and exits with status 1.
-
-If revision ids are not given, and the current workspace does not have
-two heads, prints an error message to stderr and exits with status 1.
 
 @end table
 
