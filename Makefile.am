@@ -506,7 +506,7 @@ TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
-	std_hooks.lua testlib.lua lua-testsuite.lua$(srcdir)/tests	\
+	std_hooks.lua testlib.lua lua-testsuite.lua $(srcdir)/tests	\
 	tester-testsuite.lua $(srcdir)/tester-tests			\
 	unit-testsuite.lua package.m4 package_revision.txt		\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
