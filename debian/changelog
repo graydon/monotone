@@ -1,3 +1,10 @@
+monotone (0.39-90) unstable; urgency=low
+
+  * monotone-server.postinst: update the trigger version for a db migrate,
+    since the schema has changed.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 31 Mar 2008 14:05:43 +0200
+
 monotone (0.39-1) unstable; urgency=low
 
   [ Zack Weinberg ]
