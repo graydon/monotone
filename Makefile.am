@@ -19,7 +19,8 @@ LUAEXT_SOURCES = 							\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
 	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
-	globish.cc globish.hh basic_io.cc basic_io.hh
+	globish.cc globish.hh basic_io.cc basic_io.hh			\
+	char_classifiers.hh
 
 MOST_SOURCES = 								\
 	$(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) platform-wrapped.hh	\
