@@ -568,7 +568,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
   if (is_ancestor(db, *dst_i, *src_i))
     {
       P(F("no merge necessary; putting %s in branch '%s'")
-        % (*src_i) % idx(args, 1)());
+        % *src_i % idx(args, 1)());
       transaction_guard guard(db);
       project.put_revision_in_branch(keys, *src_i,
                                      branch_name(idx(args, 1)()));
@@ -648,8 +648,10 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
       if (!log_message_given)
         log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
                                "            to branch '%s' (head %s)\n")
-                            % idx(args, 0) % (*src_i)
-                            % idx(args, 1) % (*dst_i)).str());
+                            % idx(args, 0)
+                            % *src_i
+                            % idx(args, 1)
+                            % *dst_i).str());
 
       project.put_standard_certs_from_options(app.opts, app.lua,
                                               keys,
@@ -713,7 +715,8 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   complete(app.opts, app.lua, project, idx(args, 0)(), right_id);
   db.get_roster(right_id, right);
-  N(!(left_id == right_id), F("workspace is already at revision %s") % left_id);
+  N(!(left_id == right_id),
+    F("workspace is already at revision %s") % left_id);
 
   P(F("[left]  %s") % left_id);
   P(F("[right] %s") % right_id);
@@ -767,7 +770,9 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
 
   P(F("updated to result of merge\n"
       " [left] %s\n"
-      "[right] %s\n") % left_id % right_id);
+      "[right] %s\n")
+    % left_id
+    % right_id);
 }
 
 CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
@@ -791,11 +796,14 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
   branch = branch_name(idx(args, 2)());
 
   N(!(left == right),
-    F("%s and %s are the same revision, aborting") % left % right);
+    F("%s and %s are the same revision, aborting")
+    % left % right);
   N(!is_ancestor(db, left, right),
-    F("%s is already an ancestor of %s") % left % right);
+    F("%s is already an ancestor of %s")
+    % left % right);
   N(!is_ancestor(db, right, left),
-    F("%s is already an ancestor of %s") % right % left);
+    F("%s is already an ancestor of %s")
+    % right % left);
 
   // avoid failure after lots of work
   cache_user_key(app.opts, app.lua, db, keys);
@@ -819,9 +827,11 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
   N(!is_ancestor(db, l_id, r_id),
-    F("%s is an ancestor of %s; no merge is needed.") % l_id % r_id);
+    F("%s is an ancestor of %s; no merge is needed.")
+    % l_id % r_id);
   N(!is_ancestor(db, r_id, l_id),
-    F("%s is an ancestor of %s; no merge is needed.") % r_id % l_id);
+    F("%s is an ancestor of %s; no merge is needed.")
+    % r_id % l_id);
   roster_t l_roster, r_roster;
   marking_map l_marking, r_marking;
   db.get_roster(l_id, l_roster, l_marking);
@@ -894,7 +904,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
           "to apply the changes relative to one of its parents, use:\n"
           "  %s pluck -r PARENT -r %s")
         % to_rid
-        % ui.prog_name % to_rid);
+        % ui.prog_name
+        % to_rid);
       from_rid = *parents.begin();
     }
   else if (app.opts.revision_selectors.size() == 2)
@@ -1040,11 +1051,13 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     if (from_to_to_excluded.empty())
       log_str += (FL("applied changes from %s\n"
                      "             through %s\n")
-                  % from_rid % to_rid).str();
+                  % from_rid
+                  % to_rid).str();
     else
       log_str += (FL("applied partial changes from %s\n"
                      "                     through %s\n")
-                  % from_rid % to_rid).str();
+                  % from_rid
+                  % to_rid).str();
     work.write_user_log(utf8(log_str));
   }
 }

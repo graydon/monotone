@@ -23,6 +23,7 @@
 #include "app_state.hh"
 #include "project.hh"
 #include "basic_io.hh"
+#include "xdelta.hh"
 #include "keys.hh"
 #include "key_store.hh"
 #include "simplestring_xform.hh"
@@ -283,21 +284,22 @@ CMD(revert, "revert", "", CMD_REF(workspace), N_("[PATH]..."),
           file_t f = downcast_to_file_t(node);
           if (file_exists(new_path))
             {
-              hexenc<id> ident;
+              file_id ident;
               calculate_ident(new_path, ident);
               // don't touch unchanged files
-              if (ident == f->content.inner())
+              if (ident == f->content)
                 continue;
               else
                 L(FL("skipping unchanged %s") % new_path);
             }
 
           P(F("reverting %s") % new_path);
-          L(FL("reverting %s to [%s]") % new_path % f->content);
+          L(FL("reverting %s to [%s]") % new_path
+            % f->content);
 
           N(db.file_version_exists(f->content),
             F("no file version %s found in database for %s")
-            % f->content % new_path);
+              % f->content % new_path);
 
           file_data dat;
           L(FL("writing file %s to %s")
@@ -357,13 +359,15 @@ CMD(disapprove, "disapprove", "", CMD_REF(review), N_("REVISION"),
   db.get_revision(r, rev);
 
   N(rev.edges.size() == 1,
-    F("revision %s has %d changesets, cannot invert") % r % rev.edges.size());
+    F("revision %s has %d changesets, cannot invert")
+      % r % rev.edges.size());
 
   guess_branch(app.opts, project, r);
   N(app.opts.branchname() != "", F("need --branch argument for disapproval"));
 
   process_commit_message_args(app.opts, log_message_given, log_message,
-                              utf8((FL("disapproval of revision '%s'") % r).str()));
+                              utf8((FL("disapproval of revision '%s'")
+                                    % r).str()));
 
   cache_user_key(app.opts, app.lua, db, keys);
 
@@ -678,7 +682,8 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
 
   roster_t empty_roster, current_roster;
 
-  L(FL("checking out revision %s to directory %s") % revid % dir);
+  L(FL("checking out revision %s to directory %s")
+    % revid % dir);
   db.get_roster(revid, current_roster);
 
   revision_t workrev;
@@ -1127,10 +1132,13 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
   P(F("beginning commit on branch '%s'") % app.opts.branchname);
 
-  L(FL("new manifest '%s'\n"
-       "new revision '%s'\n")
-    % restricted_rev.new_manifest
-    % restricted_rev_id);
+  if (global_sanity.debug_p())
+    {
+      L(FL("new manifest '%s'\n"
+           "new revision '%s'\n")
+        % restricted_rev.new_manifest
+        % restricted_rev_id);
+    }
 
   process_commit_message_args(app.opts, log_message_given, log_message);
 
@@ -1186,10 +1194,13 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
     transaction_guard guard(db);
 
     if (db.revision_exists(restricted_rev_id))
-      W(F("revision %s already in database") % restricted_rev_id);
+      W(F("revision %s already in database")
+        % restricted_rev_id);
     else
       {
-        L(FL("inserting new revision %s") % restricted_rev_id);
+        if (global_sanity.debug_p())
+          L(FL("inserting new revision %s")
+            % restricted_rev_id);
 
         for (edge_map::const_iterator edge = restricted_rev.edges.begin();
              edge != restricted_rev.edges.end();
@@ -1209,21 +1220,24 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
 
                 if (db.file_version_exists(new_content))
                   {
-                    L(FL("skipping file delta %s, already in database")
-                      % delta_entry_dst(i));
+                    if (global_sanity.debug_p())
+                      L(FL("skipping file delta %s, already in database")
+                        % delta_entry_dst(i));
                   }
                 else if (db.file_version_exists(old_content))
                   {
-                    L(FL("inserting delta %s -> %s")
-                      % old_content % new_content);
+                    if (global_sanity.debug_p())
+                      L(FL("inserting delta %s -> %s")
+                        % old_content % new_content);
+
                     file_data old_data;
                     data new_data;
                     db.get_file_version(old_content, old_data);
                     read_data(path, new_data);
                     // sanity check
-                    hexenc<id> tid;
-                    calculate_ident(new_data, tid);
-                    N(tid == new_content.inner(),
+                    file_id tid;
+                    calculate_ident(file_data(new_data), tid);
+                    N(tid == new_content,
                       F("file '%s' modified during commit, aborting")
                       % path);
                     delta del;
@@ -1246,13 +1260,14 @@ CMD(commit, "commit", "ci", CMD_REF(workspace), N_("[PATH]..."),
                 file_path path = i->first;
                 file_id new_content = i->second;
 
-                L(FL("inserting full version %s") % new_content);
+                if (global_sanity.debug_p())
+                  L(FL("inserting full version %s") % new_content);
                 data new_data;
                 read_data(path, new_data);
                 // sanity check
-                hexenc<id> tid;
-                calculate_ident(new_data, tid);
-                N(tid == new_content.inner(),
+                file_id tid;
+                calculate_ident(file_data(new_data), tid);
+                N(tid == new_content,
                   F("file '%s' modified during commit, aborting")
                   % path);
                 db.put_file(new_content, file_data(new_data));

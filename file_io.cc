@@ -549,28 +549,24 @@ ident_existing_file(file_path const & p, file_id & ident, path::status status)
       return false;
     }
 
-  hexenc<id> id;
-  calculate_ident(p, id);
-  ident = file_id(id);
-
+  calculate_ident(p, ident);
   return true;
 }
 
 void
 calculate_ident(file_path const & file,
-                hexenc<id> & ident)
+                file_id & ident)
 {
   // no conversions necessary, use streaming form
   static cached_botan_pipe
-    p(new Botan::Pipe(new Botan::Hash_Filter("SHA-160"),
-                      new Botan::Hex_Encoder(Botan::Hex_Encoder::Lowercase)));
+    p(new Botan::Pipe(new Botan::Hash_Filter("SHA-160")));
 
   // Best to be safe and check it isn't a dir.
   assert_path_is_file(file);
   Botan::DataSource_Stream infile(file.as_external(), true);
   p->process_msg(infile);
 
-  ident = hexenc<id>(p->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
+  ident = file_id(p->read_all_as_string(Botan::Pipe::LAST_MESSAGE));
 }
 
 // Local Variables:

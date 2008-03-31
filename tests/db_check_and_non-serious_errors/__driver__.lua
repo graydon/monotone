@@ -20,7 +20,7 @@ check(mtn("drop", "--bookkeep-only", "testfile"), 0, false, false)
 check(mtn("commit", "-m", "goingaway"), 0, false, false)
 del_rev = base_revision()
 for a,b in pairs({revisions = "id", revision_certs = "id", revision_ancestry = "child"}) do
-  local str = string.format("delete from %s where %s = '%s'", a, b, del_rev)
+  local str = string.format("delete from %s where %s = x'%s'", a, b, del_rev)
   check(mtn("db", "execute", str), 0, false, false)
 end
 

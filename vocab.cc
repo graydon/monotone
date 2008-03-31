@@ -14,6 +14,7 @@
 #include "sanity.hh"
 #include "vocab.hh"
 #include "char_classifiers.hh"
+#include "transforms.hh"
 
 using std::string;
 
@@ -31,7 +32,7 @@ verify(hexenc<INNER> const & val)
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_xdigit(*i),
-        F("bad character '%c' in id name '%s'") % *i % val);
+        F("bad character '%c' in '%s'") % *i % val);
     }
 }
 
@@ -52,6 +53,16 @@ verify(hexenc<id> const & val)
 }
 
 // ATOMIC types ...
+inline void
+verify(id & val)
+{
+  if (val().empty())
+    return;
+
+  N(val().size() == constants::idlen_bytes,
+    F("invalid ID '%s'") % val);
+}
+
 inline void
 verify(symbol const & val)
 {
@@ -134,13 +145,14 @@ symtab_impl
 
 // Sometimes it's handy to have a non-colliding, meaningless id.
 
-hexenc<id>
+id
 fake_id()
 {
   static u32 counter = 0;
   ++counter;
   I(counter >= 1); // detect overflow
-  return hexenc<id>((FL("00000000000000000000000000000000%08x") % counter).str());
+  string s((FL("00000000000000000000000000000000%08x") % counter).str());
+  return id(decode_hexenc(s));
 }
 
 // instantiation of various vocab functions
@@ -154,6 +166,7 @@ fake_id()
 #define ATOMIC(ty) cc_ATOMIC(ty)
 #define ATOMIC_HOOKED(ty,hook) cc_ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) cc_ATOMIC_NOVERIFY(ty)
+#define ATOMIC_BINARY(ty) cc_ATOMIC_BINARY(ty)
 
 #undef EXTERN
 #define EXTERN
@@ -168,29 +181,39 @@ fake_id()
 #undef ENCODING
 #undef ENCODING_NOVERIFY
 
-template
-void dump(rsa_pub_key const&, string &);
+template void dump(revision_id const & r, string &);
+template void dump(manifest_id const & r, string &);
+template void dump(file_id const & r, string &);
+template void dump(hexenc<id> const & r, string &);
+template void dump(rsa_pub_key const&, string &);
+template void dump(roster_data const & d, string &);
+template void dump(roster_delta const & d, string &);
+template void dump(manifest_data const & d, string &);
+template void dump(revision_data const & d, string &);
 
-template
-void dump(revision_id const & r, string &);
+template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
+template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
+template std::ostream & operator<< <>(std::ostream &,      key<id> const &);
+template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
+template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
+template std::ostream & operator<< <>(std::ostream &,   roster<id> const &);
 
-template
-void dump(manifest_id const & r, string &);
+template std::ostream & operator<< <>(std::ostream &,    epoch<data> const &);
+template std::ostream & operator<< <>(std::ostream &,     file<data> const &);
+template std::ostream & operator<< <>(std::ostream &, manifest<data> const &);
+template std::ostream & operator<< <>(std::ostream &, revision<data> const &);
+template std::ostream & operator<< <>(std::ostream &,   roster<data> const &);
 
-template
-void dump(file_id const & r, string &);
-
-template
-void dump(hexenc<id> const & r, string &);
-
-template
-void dump(roster_data const & d, string &);
-
-template
-void dump(roster_delta const & d, string &);
-
-template
-void dump(manifest_data const & d, string &);
+/*
+ * specializations for id, which allows the encoded id
+ * to be dumped out as a human readable, hex encoded
+ * string.
+ */
+template <>
+void dump <class id>(id const & obj, std::string & out)
+{
+  out = encode_hexenc(obj());
+}
 
 #ifdef BUILD_UNIT_TESTS
 

@@ -41,7 +41,7 @@ packet_writer::consume_file_data(file_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[fdata " << ident.inner()() << "]\n"
+  ost << "[fdata " << ident << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -53,8 +53,8 @@ packet_writer::consume_file_delta(file_id const & old_id,
 {
   base64<gzip<delta> > packed;
   pack(del.inner(), packed);
-  ost << "[fdelta " << old_id.inner()() << '\n'
-      << "        " << new_id.inner()() << "]\n"
+  ost << "[fdelta " << old_id << '\n'
+      << "        " << new_id << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -65,7 +65,7 @@ packet_writer::consume_revision_data(revision_id const & ident,
 {
   base64<gzip<data> > packed;
   pack(dat.inner(), packed);
-  ost << "[rdata " << ident.inner()() << "]\n"
+  ost << "[rdata " << ident << "]\n"
       << trim_ws(packed()) << '\n'
       << "[end]\n";
 }
@@ -73,7 +73,7 @@ packet_writer::consume_revision_data(revision_id const & ident,
 void
 packet_writer::consume_revision_cert(revision<cert> const & t)
 {
-  ost << "[rcert " << t.inner().ident() << '\n'
+  ost << "[rcert " << encode_hexenc(t.inner().ident.inner()()) << '\n'
       << "       " << t.inner().name() << '\n'
       << "       " << t.inner().key() << '\n'
       << "       " << trim_ws(encode_base64(t.inner().value)()) << "]\n"
@@ -165,13 +165,14 @@ namespace
       validate_id(args);
       validate_base64(body);
 
+      id hash(decode_hexenc(args));
       data contents;
       unpack(base64<gzip<data> >(body), contents);
       if (is_revision)
-        cons.consume_revision_data(revision_id(hexenc<id>(args)),
+        cons.consume_revision_data(revision_id(hash),
                                    revision_data(contents));
       else
-        cons.consume_file_data(file_id(hexenc<id>(args)),
+        cons.consume_file_data(file_id(hash),
                                file_data(contents));
     }
 
@@ -184,10 +185,12 @@ namespace
       validate_no_more_args(iss);
       validate_base64(body);
 
+      id src_hash(decode_hexenc(src_id)),
+         dst_hash(decode_hexenc(dst_id));
       delta contents;
       unpack(base64<gzip<delta> >(body), contents);
-      cons.consume_file_delta(file_id(hexenc<id>(src_id)),
-                              file_id(hexenc<id>(dst_id)),
+      cons.consume_file_delta(file_id(src_hash),
+                              file_id(dst_hash),
                               file_delta(contents));
     }
     static void read_rest(istream& in, string& dest)
@@ -210,10 +213,12 @@ namespace
       string keyid;  iss >> keyid;  validate_key(keyid);
       string val;    
       read_rest(iss,val);           validate_arg_base64(val);    
+
+      revision_id hash(decode_hexenc(certid));
       validate_base64(body);
 
       // canonicalize the base64 encodings to permit searches
-      cert t = cert(hexenc<id>(certid),
+      cert t = cert(hash,
                     cert_name(name),
                     decode_base64_as<cert_value>(val),
                     rsa_keypair_id(keyid),
@@ -388,7 +393,7 @@ read_packets(istream & in, packet_consumer & cons)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
+#include "xdelta.hh"
 
 using std::ostringstream;
 
@@ -484,11 +489,12 @@ UNIT_TEST(packet, roundabout)
 
     // a rdata packet
     revision_t rev;
-    rev.new_manifest = manifest_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+    rev.new_manifest = manifest_id(decode_hexenc(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
     shared_ptr<cset> cs(new cset);
     cs->dirs_added.insert(file_path_internal(""));
-    rev.edges.insert(make_pair(revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")),
-                                    cs));
+    rev.edges.insert(make_pair(revision_id(decode_hexenc(
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")), cs));
     revision_data rdat;
     write_revision(rev, rdat);
     revision_id rid;
@@ -498,9 +504,10 @@ UNIT_TEST(packet, roundabout)
     // a cert packet
     cert_value val("peaches");
     rsa_sha1_signature sig("blah blah there is no way this is a valid signature");
-    // should be a type violation to use a file id here instead of a revision
-    // id, but no-one checks...
-    cert c(fid.inner(), cert_name("smell"), val,
+
+    // cert now accepts revision_id exclusively, so we need to cast the
+    // file_id to create a cert to test the packet writer with.
+    cert c(revision_id(fid.inner()()), cert_name("smell"), val,
            rsa_keypair_id("fun@moonman.com"), sig);
     pw.consume_revision_cert(revision<cert>(c));
 
