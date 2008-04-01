@@ -608,16 +608,17 @@ check-local: tester_tests.status unit_tests.status lua_tests.status
 	if test "$$failed" = 0 && test "$$error" = 0; then		       \
 	  exit=0;							       \
 	  report="";							       \
-	  banner="All $$all tests passed";				       \
+	  banner="All $$all test suites passed";			       \
 	else								       \
 	  exit=1;							       \
 	  report="Please report to $(PACKAGE_BUGREPORT)";		       \
 	  if test "$$error" = 0; then					       \
-	    banner="$$failed of $$all tests failed";			       \
+	    banner="$$failed of $$all test suites failed";		       \
 	  elif test "$$failed" = 0; then				       \
-	    banner="$$error of $$all tests malfunctioned";		       \
+	    banner="$$error of $$all test suites malfunctioned";	       \
 	  else								       \
-	    banner="$$failed of $$all tests failed and $$error malfunctioned"; \
+	    banner="$$failed of $$all test suites failed"		       \
+	    banner="$$banner and $$error malfunctioned";		       \
 	  fi;								       \
 	fi;								       \
 	rl=`echo $$report | wc -c`;					       \
@@ -657,11 +658,10 @@ FORCE:
 .PRECIOUS: run_tester_tests run_unit_tests run_lua_tests
 
 mostlyclean-local:
-	rm -rf tester_dir unit-tests package_full_revision.txt
+	rm -rf tester_dir unit-tests html
 
 DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
 	run_tester_tests run_unit_tests run_lua_tests		\
-	report_tester_tests report_unit_tests report_lua_tests	\
 	tester_tests.status unit_tests.status lua_tests.status
 
 # distcheck stuff
@@ -689,9 +689,12 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
 
+# package_revision.txt and package_full_revision_dist.txt are shipped
+# in the distribution, so don't delete them here
 CLEAN_SOURCES = std_hooks.c testlib.c schema.c \
-	package_revision.c package_full_revision.txt \
-	package_full_revision_raw.txt package_full_revision.c
+	package_revision.c package_full_revision.c \
+	package_revision_raw.txt \
+	package_full_revision.txt package_full_revision_raw.txt 
 
 BUILT_SOURCES = $(PCH_FILE) $(PCH_BUILD)
 
