@@ -145,9 +145,9 @@ build_client_connection_info(options & opts,
             }
           
           if (is_exclude)
-            excludes.push_back(arg_type(item));
+            excludes.push_back(arg_type(urldecode(item)));
           else
-            includes.push_back(arg_type(item));
+            includes.push_back(arg_type(urldecode(item)));
         }
       info.client.include_pattern = globish(includes);
       info.client.exclude_pattern = globish(excludes);
