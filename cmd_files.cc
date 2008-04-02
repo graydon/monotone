@@ -60,9 +60,9 @@ CMD(fmerge, "fmerge", "", CMD_REF(debug), N_("<parent> <left> <right>"),
     throw usage(execid);
 
   file_id 
-    anc_id(idx(args, 0)()), 
-    left_id(idx(args, 1)()), 
-    right_id(idx(args, 2)());
+    anc_id(decode_hexenc(idx(args, 0)())), 
+    left_id(decode_hexenc(idx(args, 1)())), 
+    right_id(decode_hexenc(idx(args, 2)()));
 
   file_data anc, left, right;
 
@@ -103,8 +103,8 @@ CMD(fdiff, "fdiff", "", CMD_REF(debug), N_("SRCNAME DESTNAME SRCID DESTID"),
     & dst_name = idx(args, 1)();
 
   file_id 
-    src_id(idx(args, 2)()), 
-    dst_id(idx(args, 3)());
+    src_id(decode_hexenc(idx(args, 2)())),
+    dst_id(decode_hexenc(idx(args, 3)()));
 
   file_data src, dst;
 
@@ -180,10 +180,12 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
 
   // find the version of the file requested
   N(roster.has_node(file), 
-    F("no such file '%s' in revision '%s'") % file % rid);
+    F("no such file '%s' in revision '%s'")
+      % file % rid);
   node_t node = roster.get_node(file);
   N(is_file_t(node), 
-    F("'%s' in revision '%s' is not a file") % file % rid);
+    F("'%s' in revision '%s' is not a file")
+      % file % rid);
 
   file_t file_node = downcast_to_file_t(node);
   L(FL("annotate for file_id %s") % file_node->self);
@@ -210,7 +212,7 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
       read_data_stdin(dat);
     }
 
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
   cout << ident << '\n';
 }
@@ -241,10 +243,9 @@ CMD_AUTOMATE(identify, N_("PATH"),
   data dat;
   read_data_for_command_line(path, dat);
   
-  hexenc<id> ident;
+  id ident;
   calculate_ident(dat, ident);
-  
-  output << ident << '\n';
+  cout << ident << '\n';
 }
 
 static void
@@ -256,7 +257,7 @@ dump_file(database & db, std::ostream & output, file_id & ident)
   file_data dat;
   L(FL("dumping file %s") % ident);
   db.get_file_version(ident, dat);
-  output.write(dat.inner()().data(), dat.inner()().size());
+  output << dat;
 }
 
 static void
@@ -332,7 +333,8 @@ CMD_AUTOMATE(get_file, N_("FILEID"),
     F("wrong argument count"));
 
   database db(app);
-  file_id ident(idx(args, 0)());
+  hexenc<id> hident(idx(args, 0)());
+  file_id ident(decode_hexenc(hident()));
   dump_file(db, output, ident);
 }
 

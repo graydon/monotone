@@ -1,9 +1,36 @@
+monotone (0.40-1) UNRELEASED; urgency=low
+
+  * New upstream release.
+    - Upstream "make distclean" now cleans up after "make html".
+      (Closes: #473402)
+
+ -- Zack Weinberg <zackw@panix.com>  Mon, 31 Mar 2008 20:47:30 -0400
+
+monotone (0.39-90) unstable; urgency=low
+
+  * monotone-server.postinst: update the trigger version for a db migrate,
+    since the schema has changed.
+
+ -- Richard Levitte <richard@levitte.org>  Mon, 31 Mar 2008 14:05:43 +0200
+
+monotone (0.39-2) unstable; urgency=low
+
+  * Build-dependency on patch (not dpatch) restored; it was accidentally
+    removed in 0.39-1 along with dpatch.  The test suite uses it.
+  * Various vestiges of dpatch use removed from debian/rules.
+
+ -- Zack Weinberg <zackw@panix.com>  Mon, 31 Mar 2008 20:47:30 -0400
+
 monotone (0.39-1) unstable; urgency=low
 
   [ Zack Weinberg ]
-  * New upstream release.
+  * New upstream release.  Closes: #473252.
     - Can now be built with gcc 4.3 snapshots.  (Closes: #455646)
   * Enable use of system libpcre, set appropriate Build-Depends.
+
+  [ Richard Levitte ]
+  * The patch to disable the SIGPIPE test isn't needed any more.
+  * Build-dependency on dpatch dropped again, as it is unused.
 
  -- Richard Levitte <richard@levitte.org>  Mon, 25 Feb 2008 10:55:36 -0500
 
@@ -11,12 +38,18 @@ monotone (0.38-1) unstable; urgency=low
 
   [ Richard Levitte ]
   * New upstream release.
+  * The log_quits_on_SIGPIPE test malfunctions on Linux.  Add a temporary
+    patch disabling it on Debian, giving upstream a chance to fix the
+    problem while being able to build the Debian package without trouble.
 
   [ Zack Weinberg ]
   * monotone-server.postrm: Delete default.mtn~ on purge.
     (Closes: #455058)
   * Add Homepage: and Vcs-Browser: fields to debian/control.
   * Standards-Version: 3.7.3 (no changes required).
+
+  [Ludovic Brenta]
+  * Build-depend on dpatch.
 
  -- Richard Levitte <richard@levitte.org>  Wed, 12 Dec 2007 20:52:32 +0100
 

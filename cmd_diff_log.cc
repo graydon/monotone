@@ -222,8 +222,8 @@ do_external_diff(options & opts, lua_hooks & lua, database & db,
                              is_binary,
                              opts.external_diff_args_given,
                              opts.external_diff_args,
-                             delta_entry_src(i).inner()(),
-                             delta_entry_dst(i).inner()());
+                             encode_hexenc(delta_entry_src(i).inner()()),
+                             encode_hexenc(delta_entry_dst(i).inner()()));
     }
 }
 
@@ -944,7 +944,8 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
             graph.print(rid, interesting, out_system);
         }
       else if (use_markings && !app.opts.no_graph)
-        graph.print(rid, interesting, (F("(Revision: %s)") % rid).str());
+        graph.print(rid, interesting,
+                    (F("(Revision: %s)") % rid).str());
 
       frontier.pop(); // beware: rid is invalid from now on
 

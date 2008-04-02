@@ -22,7 +22,7 @@
 #include "roster.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
-#include "transforms.hh"
+#include "xdelta.hh"
 #include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "revision.hh"
@@ -31,6 +31,7 @@
 #include "pcrewrap.hh"
 #include "lua_hooks.hh"
 #include "database.hh"
+#include "transforms.hh"
 
 using std::make_pair;
 using std::map;
@@ -511,7 +512,9 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
                                              file_data const & merged_data)
 {
   L(FL("recording successful merge of %s <-> %s into %s")
-    % left_ident % right_ident % merged_ident);
+    % left_ident
+    % right_ident
+    % merged_ident);
 
   transaction_guard guard(db);
 
@@ -620,7 +623,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_data const & merged_data)
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
-    % left_id % right_id % merged_id);
+    % left_id
+    % right_id
+    % merged_id);
   // this is an insert instead of a safe_insert because it is perfectly
   // legal (though rare) to have multiple merges resolve to the same file
   // contents.
@@ -690,7 +695,9 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
       calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
-        % i->second % fid % ident);
+        % i->second
+        % fid
+        % ident);
       dat = file_data(tmp);
     }
 }
@@ -769,7 +776,10 @@ content_merger::try_auto_merge(file_path const & anc_path,
   I(!null_id(right_id));
 
   L(FL("trying auto merge '%s' %s <-> %s (ancestor: %s)")
-    % merged_path % left_id % right_id % ancestor_id);
+    % merged_path
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -808,18 +818,16 @@ content_merger::try_auto_merge(file_path const & anc_path,
 
       if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
         {
-          hexenc<id> tmp_id;
+          file_id tmp_id;
           file_data merge_data;
           string tmp;
 
           L(FL("internal 3-way merged ok"));
           join_lines(merged_lines, tmp);
-          calculate_ident(data(tmp), tmp_id);
-          file_id merged_fid(tmp_id);
           merge_data = file_data(tmp);
+          calculate_ident(merge_data, merged_id);
 
-          merged_id = merged_fid;
-          adaptor.record_merge(left_id, right_id, merged_fid,
+          adaptor.record_merge(left_id, right_id, merged_id,
                                left_data, right_data, merge_data);
 
           return true;
@@ -846,7 +854,10 @@ content_merger::try_user_merge(file_path const & anc_path,
   I(!null_id(right_id));
 
   L(FL("trying user merge '%s' %s <-> %s (ancestor: %s)")
-    % merged_path % left_id % right_id % ancestor_id);
+    % merged_path
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -880,16 +891,12 @@ content_merger::try_user_merge(file_path const & anc_path,
                       ancestor_unpacked, left_unpacked,
                       right_unpacked, merged_unpacked))
     {
-      hexenc<id> tmp_id;
-      file_data merge_data;
+      file_data merge_data(merged_unpacked);
 
       L(FL("lua merge3 hook merged ok"));
-      calculate_ident(merged_unpacked, tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(merged_unpacked);
+      calculate_ident(merge_data, merged_id);
 
-      merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid,
+      adaptor.record_merge(left_id, right_id, merged_id,
                            left_data, right_data, merge_data);
       return true;
     }
@@ -1435,8 +1442,10 @@ make_diff(string const & filename1,
     {
       case unified_diff:
       {
-        ost << "--- " << filename1 << '\t' << id1 << '\n';
-        ost << "+++ " << filename2 << '\t' << id2 << '\n';
+        ost << "--- " << filename1 << '\t'
+            << id1 << '\n';
+        ost << "+++ " << filename2 << '\t'
+            << id2 << '\n';
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1444,8 +1453,10 @@ make_diff(string const & filename1,
       }
       case context_diff:
       {
-        ost << "*** " << filename1 << '\t' << id1 << '\n';
-        ost << "--- " << filename2 << '\t' << id2 << '\n';
+        ost << "*** " << filename1 << '\t'
+            << id1 << '\n';
+        ost << "--- " << filename2 << '\t'
+            << id2 << '\n';
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1462,7 +1473,6 @@ make_diff(string const & filename1,
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
 #include "lexical_cast.hh"
 #include "randomfile.hh"
 

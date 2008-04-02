@@ -29,6 +29,12 @@ test_one("no_revision_roster", "9d2b5d7b86df00c30ac34fe87a3c20f1195bb2df",
 test_one("heights_already", "ae196843d368d042f475e3dadfed11e9d7f9f01e",
 	 "heights already exists")
 
+-- migrate_to_binary_hashes
+test_one("bad_hexenc", "7ca81b45279403419581d7fde31ed888a80bd34e",
+	 "invalid hex character")
+test_one("short_hexenc", "7ca81b45279403419581d7fde31ed888a80bd34e",
+	 "result is the wrong length")
+
 -- I would like to exercise migrate_to_external_privkeys' own peculiar
 -- failure mode but I don't see how to trip the "key mismatch" error
 -- without having it demand passphrases that don't exist (because the

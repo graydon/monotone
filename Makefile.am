@@ -19,7 +19,8 @@ LUAEXT_SOURCES = 							\
 	luaext_mkstemp.cc luaext_parse_basic_io.cc			\
 	luaext_guess_binary.cc luaext_platform.cc luaext_globish.cc	\
 	lua.cc lua.hh mkstemp.cc mkstemp.hh file_io.cc file_io.hh	\
-	globish.cc globish.hh basic_io.cc basic_io.hh
+	globish.cc globish.hh basic_io.cc basic_io.hh			\
+	char_classifiers.hh
 
 MOST_SOURCES = 								\
 	$(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) platform-wrapped.hh	\
@@ -349,7 +350,7 @@ nodist_mtn_SOURCES = std_hooks.c schema.c
 unit_tester_SOURCES = $(UNIT_TEST_SOURCES) $(UNIT_TEST_SRC_SUPPORT)
 unit_tester_LDADD = $(UNIT_TEST_OBJ_SUPPORT)
 
-tester_SOURCES = tester.cc
+tester_SOURCES = tester.cc transforms.cc gzip.cc
 nodist_tester_SOURCES = testlib.c
 tester_LDADD = $(addprefix mtn-, $(patsubst %.cc, %.$(OBJEXT), \
 		 $(filter %.cc, $(SANITY_CORE_SOURCES) $(LUAEXT_SOURCES) \
@@ -506,7 +507,7 @@ TEXI_FRAGMENTS = pcre/pcrepattern.texi pcre/pcresyntax.texi
 info_TEXINFOS = monotone.texi
 EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	UPGRADE monotone.spec monotone.html texinfo.css schema.sql	\
-	std_hooks.lua testlib.lua lua-testsuite.lua$(srcdir)/tests	\
+	std_hooks.lua testlib.lua lua-testsuite.lua $(srcdir)/tests	\
 	tester-testsuite.lua $(srcdir)/tester-tests			\
 	unit-testsuite.lua package.m4 package_revision.txt		\
 	package_full_revision_dist.txt $(wildcard $(srcdir)/m4/*.m4)	\
@@ -607,16 +608,17 @@ check-local: tester_tests.status unit_tests.status lua_tests.status
 	if test "$$failed" = 0 && test "$$error" = 0; then		       \
 	  exit=0;							       \
 	  report="";							       \
-	  banner="All $$all tests passed";				       \
+	  banner="All $$all test suites passed";			       \
 	else								       \
 	  exit=1;							       \
 	  report="Please report to $(PACKAGE_BUGREPORT)";		       \
 	  if test "$$error" = 0; then					       \
-	    banner="$$failed of $$all tests failed";			       \
+	    banner="$$failed of $$all test suites failed";		       \
 	  elif test "$$failed" = 0; then				       \
-	    banner="$$error of $$all tests malfunctioned";		       \
+	    banner="$$error of $$all test suites malfunctioned";	       \
 	  else								       \
-	    banner="$$failed of $$all tests failed and $$error malfunctioned"; \
+	    banner="$$failed of $$all test suites failed"		       \
+	    banner="$$banner and $$error malfunctioned";		       \
 	  fi;								       \
 	fi;								       \
 	rl=`echo $$report | wc -c`;					       \
@@ -656,11 +658,10 @@ FORCE:
 .PRECIOUS: run_tester_tests run_unit_tests run_lua_tests
 
 mostlyclean-local:
-	rm -rf tester_dir unit-tests package_full_revision.txt
+	rm -rf tester_dir unit-tests html
 
 DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
 	run_tester_tests run_unit_tests run_lua_tests		\
-	report_tester_tests report_unit_tests report_lua_tests	\
 	tester_tests.status unit_tests.status lua_tests.status
 
 # distcheck stuff
@@ -688,9 +689,12 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 # that need to be generated early on 'make all'; this is _not_ true of
 # generated source files, but it is true for the PCH if used.
 
+# package_revision.txt and package_full_revision_dist.txt are shipped
+# in the distribution, so don't delete them here
 CLEAN_SOURCES = std_hooks.c testlib.c schema.c \
-	package_revision.c package_full_revision.txt \
-	package_full_revision_raw.txt package_full_revision.c
+	package_revision.c package_full_revision.c \
+	package_revision_raw.txt \
+	package_full_revision.txt package_full_revision_raw.txt 
 
 BUILT_SOURCES = $(PCH_FILE) $(PCH_BUILD)
 

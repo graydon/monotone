@@ -6609,7 +6609,7 @@ A file path.
 
 @item Added in:
 
-4.2
+4.3
 
 @item Purpose:
 
@@ -8201,7 +8201,7 @@ and @var{file} specifies the file for which to calculate revisions in which it w
 
 @item Added in:
 
-3.2
+4.0
 
 @item Purpose:
 
@@ -8241,7 +8241,7 @@ and @var{file} specifies the file whose name in @var{target_id} is to be determi
 
 @item Added in:
 
-3.2
+4.0
 
 @item Purpose:
 

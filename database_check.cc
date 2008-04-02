@@ -199,7 +199,8 @@ check_rosters_manifest(database & db,
       // logic_error's.
       catch (std::exception & e)
         {
-          L(FL("error loading roster %s: %s") % *i % e.what());
+          L(FL("error loading roster %s: %s")
+            % *i % e.what());
           checked_rosters[*i].found = false;
           continue;
         }
@@ -326,7 +327,8 @@ check_revisions(database & db,
         }
       catch (logic_error & e)
         {
-          L(FL("error parsing revision %s: %s") % *i % e.what());
+          L(FL("error parsing revision %s: %s")
+            % *i % e.what());
           checked_revisions[*i].parseable = false;
           continue;
         }
@@ -560,12 +562,17 @@ check_heights_relation(database & db,
 
       if (!checked_heights[p_id].found || !checked_heights[c_id].found)
         {
-          L(FL("missing height(s), skipping edge %s -> %s") % p_id % c_id);
+          if (global_sanity.debug_p())
+            L(FL("missing height(s), skipping edge %s -> %s")
+              % p_id
+              % c_id);
           continue;
         }
 
-      L(FL("checking heights for edges %s -> %s") %
-        p_id % c_id);
+      if (global_sanity.debug_p())
+        L(FL("checking heights for edges %s -> %s")
+          % p_id
+          % c_id);
       
       rev_height parent, child;
       db.get_rev_height(p_id, parent);
@@ -573,8 +580,12 @@ check_heights_relation(database & db,
 
       if (!(child > parent))
         {
-          L(FL("error: height %s of child %s not greater than height %s of parent %s")
-            % child % c_id % parent % p_id);
+          if (global_sanity.debug_p())
+            L(FL("error: height %s of child %s not greater than height %s of parent %s")
+              % child
+              % c_id
+              % parent
+              % p_id);
           checked_heights[c_id].sensible = false; // defaults to true
           continue;
         }
@@ -622,7 +633,8 @@ report_rosters(map<revision_id, checked_roster> const & checked_rosters,
       if (roster.revision_refs == 0)
         {
           unreferenced_rosters++;
-          P(F("roster %s unreferenced") % i->first);
+          P(F("roster %s unreferenced")
+            % i->first);
         }
 
       if (roster.missing_files > 0)
@@ -661,40 +673,49 @@ report_revisions(map<revision_id, checked_revision> const & checked_revisions,
         {
           missing_revisions++;
           P(F("revision %s missing (%d revision references; %d cert references; %d parent references; %d child references; %d roster references)")
-            % i->first % revision.revision_refs % revision.cert_refs % revision.ancestry_parent_refs
-            % revision.ancestry_child_refs % revision.marking_refs);
+            % i->first
+            % revision.revision_refs
+            % revision.cert_refs
+            % revision.ancestry_parent_refs
+            % revision.ancestry_child_refs
+            % revision.marking_refs);
         }
 
       if (revision.missing_manifests > 0)
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (%d missing manifests)")
-            % i->first % revision.missing_manifests);
+            % i->first
+            % revision.missing_manifests);
         }
 
       if (revision.missing_revisions > 0)
         {
           incomplete_revisions++;
           P(F("revision %s incomplete (%d missing revisions)")
-            % i->first % revision.missing_revisions);
+            % i->first
+            % revision.missing_revisions);
         }
 
       if (!revision.found_roster)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (missing roster)") % i->first);
+          P(F("revision %s incomplete (missing roster)")
+            % i->first);
         }
 
       if (revision.manifest_mismatch)
         {
           manifest_mismatch++;
-          P(F("revision %s mismatched roster and manifest") % i->first);
+          P(F("revision %s mismatched roster and manifest")
+            % i->first);
         }
 
       if (revision.incomplete_roster)
         {
           incomplete_revisions++;
-          P(F("revision %s incomplete (incomplete roster)") % i->first);
+          P(F("revision %s incomplete (incomplete roster)")
+            % i->first);
         }
 
       if (revision.ancestry_parent_refs != revision.revision_refs)
@@ -815,7 +836,8 @@ report_certs(map<revision_id, checked_revision> const & checked_revisions,
           if (revision.found && cert_counts[*n] == 0)
             {
               missing_certs++;
-              P(F("revision %s missing %s cert") % i->first % *n);
+              P(F("revision %s missing %s cert")
+                % i->first % *n);
             }
         }
 
@@ -848,20 +870,23 @@ report_heights(map<revision_id, checked_height> const & checked_heights,
       if (!height.found)
         {
           missing_heights++;
-          P(F("height missing for revision %s") % i->first);
+          P(F("height missing for revision %s")
+            % i->first);
           continue;
         }
 
       if (!height.unique)
         {
           duplicate_heights++;
-          P(F("duplicate height for revision %s") % i->first);
+          P(F("duplicate height for revision %s")
+            % i->first);
         }
 
       if (!height.sensible)
         {
           incorrect_heights++;
-          P(F("height of revision %s not greater than that of parent") % i->first);
+          P(F("height of revision %s not greater than that of parent")
+            % i->first);
         }
     }
 }

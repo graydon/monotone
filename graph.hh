@@ -24,13 +24,13 @@
 
 struct reconstruction_graph
 {
-  virtual bool is_base(std::string const & node) const = 0;
-  virtual void get_next(std::string const & from, std::set<std::string> & next) const = 0;
+  virtual bool is_base(id const & node) const = 0;
+  virtual void get_next(id const & from, std::set<id> & next) const = 0;
   virtual ~reconstruction_graph() {};
 };
 
 void
-get_reconstruction_path(std::string const & start,
+get_reconstruction_path(id const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path);
 

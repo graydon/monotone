@@ -29,11 +29,14 @@ namespace constants
   // number of characters in a SHA1 id
   std::size_t const idlen = 40;
 
+  // number of binary bytes, ditto
+  std::size_t const idlen_bytes = idlen / 2;
+
   // number of characters in an encoded epoch
   std::size_t const epochlen = idlen;
 
   // number of characters in a raw epoch
-  std::size_t const epochlen_bytes = epochlen / 2;
+  std::size_t const epochlen_bytes = idlen_bytes;
 
   // number of seconds in window, in which to consider CVS commits equivalent
   // if they have otherwise compatible contents (author, changelog)
@@ -47,7 +50,7 @@ namespace constants
 
   // size of a line of database traffic logging, beyond which lines will be
   // truncated.
-  std::size_t const db_log_line_sz = 70;
+  std::size_t const db_log_line_sz = 50;
 
   // maximum size in bytes of the database xdelta version reconstruction
   // cache.  the value of 7 MB was determined as the optimal point after
