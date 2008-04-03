@@ -9,8 +9,6 @@
 #include "botan/botan.h"
 #include "botan_pipe_cache.hh"
 #include <boost/lexical_cast.hpp>
-#include <botan/hex.h>
-#include <botan/pipe.h>
 #include <cstring>
 
 #ifdef WIN32

@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-25 17:19+0100\n"
+"POT-Creation-Date: 2008-03-28 01:53+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -1701,7 +1701,9 @@ msgstr "kein Zweigmuster gegeben und kein Standardmuster gesetzt"
 msgid ""
 "Include/exclude pattern was given both as part of the URL and as a separate "
 "argument."
-msgstr "Ein Einschluss-/Ausschluss-Muster wurde sowohl als Teil der URL als auch als separates Argument übergeben."
+msgstr ""
+"Ein Einschluss-/Ausschluss-Muster wurde sowohl als Teil der URL als auch als "
+"separates Argument übergeben."
 
 #: cmd_netsync.cc:159
 #, c-format
@@ -4966,89 +4968,100 @@ msgstr "umbenannt zu '%s' auf linker Seite"
 msgid "renamed to '%s' on the right"
 msgstr "umbenannt zu '%s' auf rechter Seite"
 
-#: roster_merge.cc:536
+#: roster_merge.cc:543
 #, c-format
-msgid "conflict: duplicate name '%s'"
-msgstr "Konflikt: doppelter Name '%s'"
+msgid "conflict: duplicate name '%s' for the directory '%s'"
+msgstr "Konflikt: doppelter Name '%s' für das Verzeichnis '%s'"
 
-#: roster_merge.cc:545 roster_merge.cc:577
+#: roster_merge.cc:552
+#, c-format
+msgid ""
+"conflict: duplicate name '%s' for the directory\n"
+"          named '%s' on the left and\n"
+"          named '%s' on the right."
+msgstr ""
+"Konflikt: doppelter Eintrag '%s' für das Verzeichnis\n"
+"          names '%s' auf linker Seite und\n"
+"          names '%s' auf rechter Seite."
+
+#: roster_merge.cc:565 roster_merge.cc:597
 #, c-format
 msgid "added as a new file on the left"
 msgstr "als neue Datei auf linker Seite hinzugefügt"
 
-#: roster_merge.cc:547 roster_merge.cc:579
+#: roster_merge.cc:567 roster_merge.cc:599
 #, c-format
 msgid "added as a new directory on the left"
 msgstr "als neues Verzeichnis auf linker Seite hinzugefügt"
 
-#: roster_merge.cc:550 roster_merge.cc:566
+#: roster_merge.cc:570 roster_merge.cc:586
 #, c-format
 msgid "added as a new file on the right"
 msgstr "als neue Datei auf rechter Seite hinzugefügt"
 
-#: roster_merge.cc:552 roster_merge.cc:568
+#: roster_merge.cc:572 roster_merge.cc:588
 #, c-format
 msgid "added as a new directory on the right"
 msgstr "als neues Verzeichnis auf rechter Seite hinzugefügt"
 
-#: roster_merge.cc:561 roster_merge.cc:594
+#: roster_merge.cc:581 roster_merge.cc:614
 #, c-format
 msgid "renamed from file '%s' on the left"
 msgstr "von Datei '%s' auf linker Seite umbenannt"
 
-#: roster_merge.cc:563 roster_merge.cc:596
+#: roster_merge.cc:583 roster_merge.cc:616
 #, c-format
 msgid "renamed from directory '%s' on the left"
 msgstr "von Verzeichnis '%s' auf linker Seite umbenannt"
 
-#: roster_merge.cc:582 roster_merge.cc:599
+#: roster_merge.cc:602 roster_merge.cc:619
 #, c-format
 msgid "renamed from file '%s' on the right"
 msgstr "von Datei '%s' auf rechter Seite umbenannt"
 
-#: roster_merge.cc:584 roster_merge.cc:601
+#: roster_merge.cc:604 roster_merge.cc:621
 #, c-format
 msgid "renamed from directory '%s' on the right"
 msgstr "von Verzeichnis '%s' auf rechter Seite umbenannt"
 
-#: roster_merge.cc:629
+#: roster_merge.cc:649
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on file '%s'"
 msgstr "Konflikt: mehrere Werte für Attribut '%s' auf Datei '%s'"
 
-#: roster_merge.cc:632
+#: roster_merge.cc:652
 #, c-format
 msgid "conflict: multiple values for attribute '%s' on directory '%s'"
 msgstr "Konflikt: mehrere Werte für das Attribut '%s' auf Verzeichnis '%s'"
 
-#: roster_merge.cc:636
+#: roster_merge.cc:656
 #, c-format
 msgid "set to '%s' on the left"
 msgstr "auf '%s' auf linker Seite gesetzt"
 
-#: roster_merge.cc:638
+#: roster_merge.cc:658
 #, c-format
 msgid "deleted on the left"
 msgstr "auf linker Seite gelöscht"
 
-#: roster_merge.cc:641
+#: roster_merge.cc:661
 #, c-format
 msgid "set to '%s' on the right"
 msgstr "auf '%s' auf rechter Seite gelöscht"
 
-#: roster_merge.cc:643
+#: roster_merge.cc:663
 #, c-format
 msgid "deleted on the right"
 msgstr "auf rechter Seite gelöscht"
 
-#: roster_merge.cc:663
+#: roster_merge.cc:683
 #, c-format
 msgid ""
 "conflict: multiple values for attribute '%s' on file '%s' from revision %s"
 msgstr ""
 "Konflikt: mehrere Werte für Attribut '%s' auf Datei '%s' von Revision %s"
 
-#: roster_merge.cc:666
+#: roster_merge.cc:686
 #, c-format
 msgid ""
 "conflict: multiple values for attribute '%s' on directory '%s' from revision "
@@ -5057,77 +5070,77 @@ msgstr ""
 "Konflikt: mehrere Werte für Attribut '%s' auf Verzeichnis '%s' von Revision "
 "'%s'"
 
-#: roster_merge.cc:672
+#: roster_merge.cc:692
 #, c-format
 msgid "set to '%s' on left file '%s'"
 msgstr "auf '%s' auf linker Datei '%s' gesetzt"
 
-#: roster_merge.cc:675
+#: roster_merge.cc:695
 #, c-format
 msgid "set to '%s' on left directory '%s'"
 msgstr "auf '%s' auf linkem Verzeichnis '%s' gesetzt"
 
-#: roster_merge.cc:681
+#: roster_merge.cc:701
 #, c-format
 msgid "deleted from left file '%s'"
 msgstr "von linker Datei '%s' gelöscht"
 
-#: roster_merge.cc:684
+#: roster_merge.cc:704
 #, c-format
 msgid "deleted from left directory '%s'"
 msgstr "von linkem Verzeichnis '%s' gelöscht"
 
-#: roster_merge.cc:691
+#: roster_merge.cc:711
 #, c-format
 msgid "set to '%s' on right file '%s'"
 msgstr "auf '%s' auf rechter Datei '%s' gesetzt"
 
-#: roster_merge.cc:694
+#: roster_merge.cc:714
 #, c-format
 msgid "set to '%s' on right directory '%s'"
 msgstr "auf '%s' auf rechtem Verzeichnis '%s' gesetzt"
 
-#: roster_merge.cc:700
+#: roster_merge.cc:720
 #, c-format
 msgid "deleted from right file '%s'"
 msgstr "von rechter Datei '%s' gelöscht"
 
-#: roster_merge.cc:703
+#: roster_merge.cc:723
 #, c-format
 msgid "deleted from right directory '%s'"
 msgstr "von linkem Verzeichnis '%s' gelöscht"
 
-#: roster_merge.cc:728
+#: roster_merge.cc:748
 #, c-format
 msgid "conflict: content conflict on file '%s'"
 msgstr "Konflikt: Inhaltskonflikt in Datei '%s'"
 
-#: roster_merge.cc:730
+#: roster_merge.cc:750
 #, c-format
 msgid "content hash is %s on the left"
 msgstr "Inhalts-Prüfsumme ist %s auf linker Seite"
 
-#: roster_merge.cc:731
+#: roster_merge.cc:751
 #, c-format
 msgid "content hash is %s on the right"
 msgstr "Inhalts-Prüfsumme ist %s auf rechter Seite"
 
-#: roster_merge.cc:750
+#: roster_merge.cc:770
 #, c-format
 msgid "conflict: content conflict on file '%s' from revision %s"
 msgstr "Konflik: Inhaltskonflikt in '%s' von Revision %s"
 
-#: roster_merge.cc:752
+#: roster_merge.cc:772
 #, c-format
 msgid "content hash is %s on the left in file '%s'"
 msgstr "Inhalts-Prüfsumme ist %s auf linker Seite in Datei '%s'"
 
-#: roster_merge.cc:754
+#: roster_merge.cc:774
 #, c-format
 msgid "content hash is %s on the right in file '%s'"
 msgstr "Inhalts-Prüfsumme ist %s auf rechter Seite in Datei '%s'"
 
-#: roster_merge.cc:880
+#: roster_merge.cc:900
 #, c-format
 msgid ""
 "Content changes to the file '%s'\n"
@@ -5138,7 +5151,7 @@ msgstr ""
 "werden bei dieser Vereinigung ignoriert, da die Datei\n"
 "auf einer Seite der Vereinigung gelöscht wurde. Betroffene Revisionen:"
 
-#: roster_merge.cc:885
+#: roster_merge.cc:905
 #, c-format
 msgid "Revision: %s"
 msgstr "Revision: %s"
@@ -5390,7 +5403,9 @@ msgstr "der Zertifikats-Selektor c: darf nicht leer sein"
 #, c-format
 msgid ""
 "the empty parent selector p: refers to the base revision of the workspace"
-msgstr "der leere Eltern-Selektor p: bezieht sich auf die Basis-Revision des derzeitigen Arbeitsbereichs"
+msgstr ""
+"der leere Eltern-Selektor p: bezieht sich auf die Basis-Revision des "
+"derzeitigen Arbeitsbereichs"
 
 #: selectors.cc:377
 #, c-format

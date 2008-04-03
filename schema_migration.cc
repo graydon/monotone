@@ -18,6 +18,7 @@
 #include "key_store.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "constants.hh"
 
 using std::string;
 
@@ -309,24 +310,37 @@ sqlite3_unhex_fn(sqlite3_context *f, int nargs, sqlite3_value **args)
       sqlite3_result_error(f, "need exactly 1 arg to unhex()", -1);
       return;
     }
-  data decoded;
+  string decoded;
 
+  // This operation may throw informative_failure.  We must intercept that
+  // and turn it into a call to sqlite3_result_error, or rollback will fail.
   try
     {
-      decode_hexenc(hexenc<data>(string(sqlite3_value_cstr(args[0]))), decoded);
+      decoded = decode_hexenc(sqlite3_value_cstr(args[0]));
     }
   catch (informative_failure & e)
     {
       sqlite3_result_error(f, e.what(), -1);
       return;
     }
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+  // This is only ever used with 20-byte SHA1 hashes or empty strings, so
+  // make sure that's what we've got.
+  if (decoded.size() != constants::idlen_bytes && decoded.size() != 0)
+    {
+      sqlite3_result_error(f, "unhex() result is the wrong length", -1);
+      return;
+    }
+
+  sqlite3_result_blob(f, decoded.data(), decoded.size(), SQLITE_TRANSIENT);
 }
 
 // Here are all of the migration steps.  Almost all of them can be expressed
 // entirely as a series of SQL statements; those statements are packaged
 // into a long, continued string constant for the step.  A few require a
 // function instead.
+//
+// Please keep this list in the same order as the migration_events table
+// below.
 
 char const migrate_merge_url_and_group[] =
   // migrate the posting_queue table
@@ -624,6 +638,16 @@ char const migrate_add_heights[] =
   "  );"
   ;
 
+// this is a function because it has to refer to the numeric constant
+// defined in schema_migration.hh.
+static void
+migrate_add_ccode(sqlite3 * db, key_store &)
+{
+  string cmd = "PRAGMA user_version = ";
+  cmd += boost::lexical_cast<string>(mtn_creator_code);
+  sql::exec(db, cmd.c_str());
+}
+
 char const migrate_add_heights_index[] =
   "CREATE INDEX heights__height ON heights (height);"
   ;
@@ -673,16 +697,6 @@ char const migrate_to_binary_hashes[] =
   "UPDATE manifest_deltas   SET id=unhex(id), base=unhex(base);"
   "UPDATE manifest_certs    SET id=unhex(id), hash=unhex(hash);"
   ;
-
-// this is a function because it has to refer to the numeric constant
-// defined in schema_migration.hh.
-static void
-migrate_add_ccode(sqlite3 * db, key_store &)
-{
-  string cmd = "PRAGMA user_version = ";
-  cmd += boost::lexical_cast<string>(mtn_creator_code);
-  sql::exec(db, cmd.c_str());
-}
 
 
 // these must be listed in order so that ones listed earlier override ones
@@ -1095,6 +1109,7 @@ test_migration_step(sqlite3 * db, key_store & keys,
   I(db != NULL);
   sql::create_function(db, "sha1", sqlite_sha1_fn);
   sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+  sql::create_function(db, "unhex", sqlite3_unhex_fn);
 
   transaction guard(db);
 
