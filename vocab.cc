@@ -193,6 +193,7 @@ template void dump(revision_data const & d, string &);
 
 template std::ostream & operator<< <>(std::ostream &,    epoch<id> const &);
 template std::ostream & operator<< <>(std::ostream &,     file<id> const &);
+template std::ostream & operator<< <>(std::ostream &,   hexenc<id> const &);
 template std::ostream & operator<< <>(std::ostream &,      key<id> const &);
 template std::ostream & operator<< <>(std::ostream &, manifest<id> const &);
 template std::ostream & operator<< <>(std::ostream &, revision<id> const &);
