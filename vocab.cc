@@ -211,7 +211,7 @@ template std::ostream & operator<< <>(std::ostream &,   roster<data> const &);
  * string.
  */
 template <>
-void dump <class id>(id const & obj, std::string & out)
+void dump (id const & obj, std::string & out)
 {
   out = encode_hexenc(obj());
 }
