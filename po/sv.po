@@ -148,8 +148,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-31 13:39+0200\n"
-"PO-Revision-Date: 2008-03-31 13:56+0200\n"
+"POT-Creation-Date: 2008-04-03 15:13+0200\n"
+"PO-Revision-Date: 2008-04-03 15:16+0200\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -1766,7 +1766,9 @@ msgstr "inget grenmönster angivet och inget standardmönster satt"
 msgid ""
 "Include/exclude pattern was given both as part of the URL and as a separate "
 "argument."
-msgstr "mönster för inkludering eller exkludering gavs både som del av URLen och som separata argument."
+msgstr ""
+"mönster för inkludering eller exkludering gavs både som del av URLen och som "
+"separata argument."
 
 #: cmd_netsync.cc:159
 #, c-format
@@ -3467,7 +3469,9 @@ msgstr ""
 #: key_store.cc:423
 #, c-format
 msgid "failed to extract RSA private key from PKCS#8 keypair"
-msgstr "misslyckades med att plocka ut den privata RSA-nyckeln från nyckelparet i PKCS#8-format"
+msgstr ""
+"misslyckades med att plocka ut den privata RSA-nyckeln från nyckelparet i "
+"PKCS#8-format"
 
 #: key_store.cc:455
 #, c-format
@@ -5744,6 +5748,11 @@ msgstr "explicit portnummer utan siffror i URIn"
 msgid "explicit port-number specification in URI contains nondigits"
 msgstr "explcit portnummer i URIn har andra tecken än siffror"
 
+#: uri.cc:160 uri.cc:163 uri.cc:185 uri.cc:206
+#, c-format
+msgid "Bad URLencoded string '%s'"
+msgstr "Strängen '%s' är inte korrekt URL-kodad"
+
 #: vocab.cc:35
 #, c-format
 msgid "bad character '%c' in '%s'"
@@ -6282,9 +6291,6 @@ msgstr "denna arbetskopia är i aktuellt format, ingen migrering behövs."
 
 #~ msgid "resolve non-content conflicts and then try again."
 #~ msgstr "lös filnamnskonflikterna och försök igen."
-
-#~ msgid "bad character '%c' in ace string '%s'"
-#~ msgstr "otillåtet tecken '%c' i ace-strängen '%s'"
 
 #~ msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 #~ msgstr "URI-syntaxen är ogiltig. Kanske använde du en URI i bästa scp-stil?"
