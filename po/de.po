@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-03-31 16:04+0200\n"
+"POT-Creation-Date: 2008-04-04 10:05+0200\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -5742,6 +5742,11 @@ msgid "explicit port-number specification in URI contains nondigits"
 msgstr ""
 "die in der URI explizit angegebene Portnummer beinhaltet Nicht-Zahlen-Zeichen"
 
+#: uri.cc:160 uri.cc:163 uri.cc:185 uri.cc:206
+#, c-format
+msgid "Bad URLencoded string '%s'"
+msgstr "Falsch URL-kodierte Zeichenfolge '%s'"
+
 #: vocab.cc:35
 #, c-format
 msgid "bad character '%c' in '%s'"
@@ -6296,9 +6301,6 @@ msgstr ""
 
 #~ msgid "Some keys in the database have the same ID as, "
 #~ msgstr "Einige Schlüssel in der Datenbank haben dieselbe ID wie, "
-
-#~ msgid "bad character '%c' in ace string '%s'"
-#~ msgstr "ungültiges Zeichen '%c' in Zeichenfolge '%s'"
 
 #~ msgid "The URI syntax is invalid. Maybe you used an URI in scp-style?"
 #~ msgstr ""
