@@ -344,7 +344,7 @@ session:
   bool armed;
   bool arm();
 
-  id remote_peer_key_hash;
+  bool received_remote_key;
   rsa_keypair_id remote_peer_key_name;
   netsync_session_key session_key;
   chained_hmac read_hmac;
@@ -565,7 +565,7 @@ session::session(options & opts,
   inbuf(),
   outbuf_size(0),
   armed(false),
-  remote_peer_key_hash(""),
+  received_remote_key(false),
   remote_peer_key_name(""),
   session_key(constants::netsync_key_initializer),
   read_hmac(netsync_session_key(constants::netsync_key_initializer),
@@ -1034,7 +1034,8 @@ session::read_some()
   Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
   if (count > 0)
     {
-      L(FL("read %d bytes from fd %d (peer %s)") % count % str->get_socketfd() % peer_id);
+      L(FL("read %d bytes from fd %d (peer %s)")
+        % count % str->get_socketfd() % peer_id);
       if (encountered_error)
         {
           L(FL("in error unwind mode, so throwing them into the bit bucket"));
@@ -1294,22 +1295,22 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                            rsa_pub_key const & their_key,
                            id const & nonce)
 {
-  I(this->remote_peer_key_hash().size() == 0);
+  I(!this->received_remote_key);
   I(this->saved_nonce().size() == 0);
 
   if (use_transport_auth)
     {
       id their_key_hash;
       key_hash_code(their_keyname, their_key, their_key_hash);
+      var_value printable_key_hash(encode_hexenc(their_key_hash()));
       L(FL("server key has name %s, hash %s")
-        % their_keyname
-        % encode_hexenc(their_key_hash()));
+        % their_keyname % printable_key_hash);
       var_key their_key_key(known_servers_domain, var_name(peer_id));
       if (project.db.var_exists(their_key_key))
         {
           var_value expected_key_hash;
           project.db.get_var(their_key_key, expected_key_hash);
-          if (expected_key_hash() != their_key_hash())
+          if (expected_key_hash != printable_key_hash)
             {
               P(F("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
                   "@ WARNING: SERVER IDENTIFICATION HAS CHANGED              @\n"
@@ -1319,8 +1320,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                   "remote host sent key %s\n"
                   "I expected %s\n"
                   "'%s unset %s %s' overrides this check")
-                % encode_hexenc(their_key_hash())
-                % encode_hexenc(expected_key_hash())
+                % printable_key_hash
+                % expected_key_hash
                 % ui.prog_name % their_key_key.first % their_key_key.second);
               E(false, F("server key changed"));
             }
@@ -1331,8 +1332,8 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "I'll assume it's really them, but you might want to double-check\n"
               "their key's fingerprint: %s")
             % peer_id
-            % encode_hexenc(their_key_hash()));
-          project.db.set_var(their_key_key, var_value(their_key_hash()));
+            % printable_key_hash);
+          project.db.set_var(their_key_key, printable_key_hash);
         }
       if (project.db.put_key(their_keyname, their_key))
         W(F("saving public key for %s to database") % their_keyname);
@@ -1341,14 +1342,13 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
         hexenc<id> hnonce;
         encode_hexenc(nonce, hnonce);
         L(FL("received 'hello' netcmd from server '%s' with nonce '%s'")
-          % encode_hexenc(their_key_hash())
-          % hnonce);
+          % printable_key_hash % hnonce);
       }
 
       I(project.db.public_key_exists(their_key_hash));
 
       // save their identity
-      this->remote_peer_key_hash = their_key_hash;
+      this->received_remote_key = true;
       this->remote_peer_key_name = their_keyname;
     }
 
@@ -1396,7 +1396,6 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
   lua.hook_note_netsync_start(session_id, "client", this->role,
                               peer_id, their_keyname,
                               our_include_pattern, our_exclude_pattern);
-
   return true;
 }
 
@@ -1514,7 +1513,7 @@ session::process_auth_cmd(protocol_role their_role,
                           id const & nonce1,
                           rsa_sha1_signature const & signature)
 {
-  I(this->remote_peer_key_hash().size() == 0);
+  I(!this->received_remote_key);
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
 
   globish_matcher their_matcher(their_include_pattern, their_exclude_pattern);
@@ -1631,8 +1630,7 @@ session::process_auth_cmd(protocol_role their_role,
 
   rebuild_merkle_trees(ok_branches);
 
-  // Save their identity.
-  this->remote_peer_key_hash = client;
+  this->received_remote_key = true;
 
   // Check the signature.
   if (project.db.check_signature(their_id, nonce1(), signature) == cert_ok)

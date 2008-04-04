@@ -44,15 +44,18 @@
 
         - Merged the two indexes on revision_certs into a single one.
 
-        - The database scheme has been changed to store binary encoded hashes,
-          instead of a longer hex encoded representation. That reduces the
-          database size and speeds up operations a little.
-          Users who like to fiddle with the database directly are adviced to
-          use the sqlite function hex(), the built-in quote() function as well
-          as the hexadecimal notation x'DEADBEEF'.
+        - The database schema has been changed so that it now stores
+	  binary SHA1 hashes rather than their hexadecimal encoding,
+	  in most places where these are used.  This reduces the
+	  database size and speeds up operations a little.
 
-        - Monotone now uses that same binary hash representation internally as
-          well, saving some conversion steps from and to hex encoded notation.
+          Users who like to fiddle with the database directly are
+          advised to use the sqlite functions hex() and quote() to
+          print columns that store hashes (including IDs), and the
+          hexadecimal literal notation x'DEADBEEF' to input them.
+
+        - Binary SHA1 hashes are also used for most in-memory
+	  processing, avoiding conversions and saving memory.
 
 Mon Feb 25 15:55:36 UTC 2008
 
