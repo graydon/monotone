@@ -20,6 +20,11 @@ If you are upgrading from:
     (after remembering to take a backup copy):
        $ mtn -d mydb.mtn db migrate
     on each of your databases.
+    Also, for each database, you will have to remove each known server:
+       $ mtn -d mydb.mtn unset known-servers $SERVER
+    To find out exactly what servers your database knows, do the following
+    and look fot the entries in the domain "known-servers":
+       $ mtn -d mydb.mtn automate get_db_variables
   - 0.33 or earlier: The database format has changed.  You must run
     (after remembering to take a backup copy):
        $ mtn -d mydb.mtn db migrate
