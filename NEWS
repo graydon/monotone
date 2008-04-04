@@ -45,9 +45,9 @@
         - Merged the two indexes on revision_certs into a single one.
 
         - The database schema has been changed so that it now stores
-	  binary SHA1 hashes rather than their hexadecimal encoding,
-	  in most places where these are used.  This reduces the
-	  database size and speeds up operations a little.
+          binary SHA1 hashes rather than their hexadecimal encoding,
+          in most places where these are used.  This reduces the
+          database size and speeds up operations a little.
 
           Users who like to fiddle with the database directly are
           advised to use the sqlite functions hex() and quote() to
@@ -55,7 +55,7 @@
           hexadecimal literal notation x'DEADBEEF' to input them.
 
         - Binary SHA1 hashes are also used for most in-memory
-	  processing, avoiding conversions and saving memory.
+          processing, avoiding conversions and saving memory.
 
 Mon Feb 25 15:55:36 UTC 2008
 
