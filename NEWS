@@ -34,6 +34,12 @@
           query the parent(s) of the workspace' base revision. This is
           equivalent to "mtn au select p:`mtn au get_base_workspace_revision`".
 
+        - push, pull, and sync can be run with a single argument, which looks
+          like
+             mtn://hostname?include_pattenr/-exclude_pattern
+          or
+             mtn://hostname?include=include_pattern/exclude=exclude_pattern
+
         Internal
 
         - Update Botan to 1.7.4.
