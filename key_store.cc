@@ -59,7 +59,12 @@ struct key_store_state
   key_store_state(app_state & app)
     : key_dir(app.opts.key_dir), ssh_sign_mode(app.opts.ssh_sign),
       have_read(false), lua(app.lua)
-  {}
+  {
+    N(app.opts.key_dir_given
+      || app.opts.conf_dir_given
+      || !app.opts.no_default_confdir,
+      F("No available keystore found"));
+  }
 
   // internal methods
   void get_key_file(rsa_keypair_id const & ident, system_path & file);

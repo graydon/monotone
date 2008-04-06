@@ -460,6 +460,7 @@ workspace::get_ws_options(options & opts)
   if (!opts.key_dir_given && !opts.conf_dir_given)
     {
       opts.key_dir = keydir_option;
+      opts.key_dir_given = true;
     }
 
   if (opts.branchname().empty() && !branch_option().empty())

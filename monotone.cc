@@ -242,7 +242,7 @@ cpp_main(int argc, char ** argv)
               global_sanity.set_dump_path(system_path(dump_path, false)
                                           .as_external());
             }
-          else
+          else if (app.opts.conf_dir_given || !app.opts.no_default_confdir)
             global_sanity.set_dump_path((app.opts.conf_dir / "dump")
                                         .as_external());
 

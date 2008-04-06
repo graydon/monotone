@@ -64,9 +64,15 @@ extern "C"
     map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
     if (i != map_of_lua_to_app.end())
       {
-        system_path dir = i->second->opts.conf_dir;
-        string confdir = dir.as_external();
-        lua_pushstring(L, confdir.c_str());
+        if (i->second->opts.conf_dir_given
+            || !i->second->opts.no_default_confdir)
+          {
+            system_path dir = i->second->opts.conf_dir;
+            string confdir = dir.as_external();
+            lua_pushstring(L, confdir.c_str());
+          }
+        else
+          lua_pushnil(L);
       }
     else
       lua_pushnil(L);
@@ -198,7 +204,10 @@ lua_hooks::load_rcfiles(options & opts)
 
   if (!opts.norc)
     {
-      load_rcfile(opts.conf_dir / "monotonerc", false);
+      if (opts.conf_dir_given || !opts.no_default_confdir)
+        {
+          load_rcfile(opts.conf_dir / "monotonerc", false);
+        }
       load_rcfile(bookkeeping_root / "monotonerc", false);
     }
 
