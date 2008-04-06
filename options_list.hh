@@ -143,6 +143,14 @@ GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
 }
 #endif
 
+GOPT(no_default_confdir, "no-default-confdir", bool, false,
+     gettext_noop("forbid use of the default confdir"))
+#ifdef option_bodies
+{
+  no_default_confdir = true;
+}
+#endif
+
 OPT(date, "date", date_t, ,
      gettext_noop("override date/time for commit"))
 #ifdef option_bodies
