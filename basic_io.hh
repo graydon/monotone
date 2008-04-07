@@ -18,6 +18,7 @@
 #include "sanity.hh"
 #include "vocab.hh"
 #include "numeric_vocab.hh"
+#include "char_classifiers.hh"
 
 // This file provides parsing and printing primitives used by the
 // higher level parser and printer routines for the datatypes cset,
@@ -253,8 +254,9 @@ namespace basic_io
     size_t indent;
     std::vector<std::pair<symbol, std::string> > entries;
     void push_hex_pair(symbol const & k, hexenc<id> const & v);
-    void push_hex_triple(symbol const & k, std::string const & n,
-			 hexenc<id> const & v);
+    void push_binary_pair(symbol const & k, id const & v);
+    void push_binary_triple(symbol const & k, std::string const & n,
+			 id const & v);
     void push_str_pair(symbol const & k, std::string const & v);
     void push_str_triple(symbol const & k, std::string const & n,
 			 std::string const & v);

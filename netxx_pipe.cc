@@ -46,6 +46,10 @@ Netxx::PipeStream::PipeStream(int _readfd, int _writefd)
 #endif
 {
 #ifdef WIN32
+  E(0, F("this transport not supported on native Win32; use Cygwin"));
+
+  // keeping code in case someone wants to try fixing it
+
   if (_setmode(_readfd, _O_BINARY) == -1)
     L(FL("failed to set input file descriptor to binary"));
 
@@ -173,6 +177,10 @@ Netxx::PipeStream::PipeStream (const string & cmd,
   newargv[newargc] = 0;
 
 #ifdef WIN32
+
+  E(0, F("this transport not supported on native Win32; use Cygwin"));
+
+  // keeping code in case someone wants to try fixing it
 
   // In order to use nonblocking i/o on windows, you must use named
   // pipes and overlapped i/o. There is no other way, alas.
@@ -488,12 +496,12 @@ Netxx::PipeCompatibleProbe::add(PipeStream &ps, ready_type rt)
 void
 Netxx::PipeCompatibleProbe::add(StreamBase const &sb, ready_type rt)
 {
-  // FIXME: This is *still* an unfortunate way of performing a 
-  // downcast, though slightly less awful than the old way, which 
-  // involved throwing an exception. 
+  // FIXME: This is *still* an unfortunate way of performing a
+  // downcast, though slightly less awful than the old way, which
+  // involved throwing an exception.
   //
   // Perhaps we should twiddle the caller-visible API.
-  
+
   StreamBase const *sbp = &sb;
   PipeStream const *psp = dynamic_cast<PipeStream const *>(sbp);
   if (psp)
@@ -543,6 +551,8 @@ Netxx::PipeCompatibleProbe::add(const StreamServer &ss, ready_type rt)
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
+
+#ifndef WIN32
 
 UNIT_TEST(pipe, simple_pipe)
 { try
@@ -609,6 +619,7 @@ catch (informative_failure &e)
     throw;
   }
 }
+#endif
 #endif
 
 // Local Variables:

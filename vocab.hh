@@ -10,7 +10,6 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <utility>
 #include <boost/shared_ptr.hpp>
 
 // the purpose of this file is to wrap things which are otherwise strings
@@ -30,7 +29,7 @@ namespace
 class immutable_string
 {
   boost::shared_ptr<std::string> _rep;
-  
+
 public:
   immutable_string()
   {}
@@ -52,39 +51,12 @@ public:
 
 #include "vocab_macros.hh"
 #define ENCODING(enc) hh_ENCODING(enc)
+#define ENCODING_NOVERIFY(enc) hh_ENCODING_NOVERIFY(enc)
 #define DECORATE(dec) hh_DECORATE(dec)
 #define ATOMIC(ty) hh_ATOMIC(ty)
+#define ATOMIC_HOOKED(ty,hook) hh_ATOMIC_HOOKED(ty,hook)
 #define ATOMIC_NOVERIFY(ty) hh_ATOMIC_NOVERIFY(ty)
-
-inline bool is_xdigit(char x)
-{
-  return ((x >= '0' && x <= '9')
-          || (x >= 'a' && x <= 'f'));
-}
-
-inline bool is_alpha(char x)
-{
-  return ((x >= 'a' && x <= 'z')
-          || (x >= 'A' && x <= 'Z'));
-}
-
-inline bool is_alnum(char x)
-{
-  return ((x >= '0' && x <= '9')
-          || (x >= 'a' && x <= 'z')
-          || (x >= 'A' && x <= 'Z'));
-}
-
-inline bool is_space(char x)
-{
-  return (x == ' ')
-    || (x == '\n')
-    || (x == '\t')
-    || (x == '\r')
-    || (x == '\v')
-    || (x == '\f');
-}
-
+#define ATOMIC_BINARY(ty) hh_ATOMIC_BINARY(ty)
 
 #ifdef HAVE_EXTERN_TEMPLATE
 #define EXTERN extern
@@ -95,19 +67,23 @@ inline bool is_space(char x)
 #include "vocab_terms.hh"
 
 #undef ATOMIC
+#undef ATOMIC_HOOKED
 #undef ATOMIC_NOVERIFY
+#undef ATOMIC_BINARY
 #undef DECORATE
 #undef ENCODING
+#undef ENCODING_NOVERIFY
 
 // most of the time you want to use these typedefs and forget
 // about the stuff in vocab_terms.hh
 
-typedef revision< hexenc<id> >  revision_id;
-typedef manifest< hexenc<id> >  manifest_id;
-typedef     file< hexenc<id> >      file_id;
-typedef      key< hexenc<id> >       key_id;
-typedef    epoch< hexenc<id> >     epoch_id;
-typedef    epoch< hexenc<data> > epoch_data;
+typedef revision<id>  revision_id;
+typedef manifest<id>  manifest_id;
+typedef     file<id>      file_id;
+typedef      key<id>       key_id;
+typedef    epoch<id>     epoch_id;
+
+typedef    epoch< data >      epoch_data;
 
 typedef revision< data >   revision_data;
 typedef   roster< data >     roster_data;
@@ -118,29 +94,8 @@ typedef   roster< delta >    roster_delta;
 typedef manifest< delta >  manifest_delta;
 typedef     file< delta >      file_delta;
 
-typedef std::pair<var_domain, var_name> var_key;
-
-
-struct keypair
-{
-  base64<rsa_pub_key> pub;
-  base64<rsa_priv_key> priv;
-  keypair()
-  {}
-  keypair(base64<rsa_pub_key> const & a,
-          base64<rsa_priv_key> const & b)
-   : pub(a), priv(b)
-  {}
-};
-
-// fs::path is our "generic" safe path type, pointing potentially anywhere
-// in the filesystem. if you want to *define* or work with any of these you
-// need to include boost/filesystem/path.hpp.
-
-//namespace boost { namespace filesystem { class path; } }
-//namespace fs = boost::filesystem;
-
-// diff type
+// diff type; this is here and not diff_patch.hh, because options_list.hh
+// needs to refer to it
 enum diff_type
 {
   unified_diff,
@@ -149,6 +104,12 @@ enum diff_type
 };
 
 // do these belong here?
+inline bool
+null_id(id const & i)
+{
+  return i().empty();
+}
+
 inline bool
 null_id(hexenc<id> const & i)
 {
@@ -174,7 +135,7 @@ null_id(revision_id const & i)
 }
 
 
-hexenc<id>
+id
 fake_id();
 
 // Local Variables:

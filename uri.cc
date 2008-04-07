@@ -144,6 +144,75 @@ parse_uri(string const & in, uri & u)
     }
 }
 
+string
+urldecode(string const & in)
+{
+  string out;
+  
+  for (string::const_iterator i = in.begin(); i != in.end(); ++i)
+    {
+      if (*i != '%')
+        out += *i;
+      else
+        {
+          char d1, d2;
+          ++i;
+          E(i != in.end(), F("Bad URLencoded string '%s'") % in);
+          d1 = *i;
+          ++i;
+          E(i != in.end(), F("Bad URLencoded string '%s'") % in);
+          d2 = *i;
+          
+          char c = 0;
+          switch(d1)
+            {
+            case '0': c += 0; break;
+            case '1': c += 1; break;
+            case '2': c += 2; break;
+            case '3': c += 3; break;
+            case '4': c += 4; break;
+            case '5': c += 5; break;
+            case '6': c += 6; break;
+            case '7': c += 7; break;
+            case '8': c += 8; break;
+            case '9': c += 9; break;
+            case 'a': case 'A': c += 10; break;
+            case 'b': case 'B': c += 11; break;
+            case 'c': case 'C': c += 12; break;
+            case 'd': case 'D': c += 13; break;
+            case 'e': case 'E': c += 14; break;
+            case 'f': case 'F': c += 15; break;
+            default: E(false, F("Bad URLencoded string '%s'") % in);
+            }
+          c *= 16;
+          switch(d2)
+            {
+            case '0': c += 0; break;
+            case '1': c += 1; break;
+            case '2': c += 2; break;
+            case '3': c += 3; break;
+            case '4': c += 4; break;
+            case '5': c += 5; break;
+            case '6': c += 6; break;
+            case '7': c += 7; break;
+            case '8': c += 8; break;
+            case '9': c += 9; break;
+            case 'a': case 'A': c += 10; break;
+            case 'b': case 'B': c += 11; break;
+            case 'c': case 'C': c += 12; break;
+            case 'd': case 'D': c += 13; break;
+            case 'e': case 'E': c += 14; break;
+            case 'f': case 'F': c += 15; break;
+            default: E(false, F("Bad URLencoded string '%s'") % in);
+            }
+          out += c;
+        }
+    }
+  
+  return out;
+}
+
+
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
 
@@ -254,6 +323,15 @@ UNIT_TEST(uri, invalid)
   UNIT_TEST_CHECK_THROW(parse_uri("http://[f3:03:21/foo/bar", u), informative_failure);
   UNIT_TEST_CHECK_THROW(parse_uri("http://example.com:/foo/bar", u), informative_failure);
   UNIT_TEST_CHECK_THROW(parse_uri("http://example.com:1a4/foo/bar", u), informative_failure);
+}
+
+UNIT_TEST(uri, urldecode)
+{
+  UNIT_TEST_CHECK(urldecode("foo%20bar") == "foo bar");
+  UNIT_TEST_CHECK(urldecode("%61") == "a");
+  UNIT_TEST_CHECK_THROW(urldecode("%xx"), informative_failure);
+  UNIT_TEST_CHECK_THROW(urldecode("%"), informative_failure);
+  UNIT_TEST_CHECK_THROW(urldecode("%5"), informative_failure);
 }
 
 #endif // BUILD_UNIT_TESTS

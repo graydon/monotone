@@ -14,13 +14,20 @@
 #include <list>
 #include <utility>
 
+#include "globish.hh"
 #include "merkle_tree.hh"
 #include "numeric_vocab.hh"
+#include "uri.hh"
 #include "vocab.hh"
 #include "hmac.hh"
 #include "string_queue.hh"
 
 struct globish;
+class database;
+class project_t;
+class key_store;
+class lua_hooks;
+class options;
 
 typedef enum
   {
@@ -134,14 +141,14 @@ public:
                      id & client,
                      id & nonce1,
                      rsa_oaep_sha_data & hmac_key_encrypted,
-                     std::string & signature) const;
+                     rsa_sha1_signature & signature) const;
   void write_auth_cmd(protocol_role role,
                       globish const & include_pattern,
                       globish const & exclude_pattern,
                       id const & client,
                       id const & nonce1,
                       rsa_oaep_sha_data const & hmac_key_encrypted,
-                      std::string const & signature);
+                      rsa_sha1_signature const & signature);
 
   void read_confirm_cmd() const;
   void write_confirm_cmd();
@@ -171,13 +178,28 @@ public:
 
 };
 
-class app_state;
-void run_netsync_protocol(protocol_voice voice,
+struct netsync_connection_info
+{
+  struct
+  {
+    std::list<utf8> addrs;
+  } server;
+  struct
+  {
+    globish include_pattern;
+    globish exclude_pattern;
+    uri u;
+    utf8 unparsed;
+    std::vector<std::string> argv;
+    bool use_argv;
+  } client;
+};
+
+void run_netsync_protocol(options & opts, lua_hooks & lua,
+                          project_t & project, key_store & keys,
+                          protocol_voice voice,
                           protocol_role role,
-                          std::list<utf8> const & addrs,
-                          globish const & include_pattern,
-                          globish const & exclude_pattern,
-                          app_state & app);
+                          netsync_connection_info const & info);
 
 // Local Variables:
 // mode: C++

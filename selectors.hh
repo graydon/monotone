@@ -10,42 +10,39 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include "vector.hh"
-#include <algorithm>
+#include "vocab.hh"
 #include <set>
 
-class app_state;
+class options;
+class lua_hooks;
+class project_t;
 
-namespace selectors
-{
+// In the normal case, to expand a selector on the command line, use one of
+// these functions: the former if the selector can legitimately expand to
+// more than one revision, the latter if it shouldn't.  Both treat a
+// selector that expands to zero revisions, or a nonexistent revision, as an
+// usage error, and generate progress messages when expanding selectors.
 
-  typedef enum
-    {
-      sel_author,
-      sel_branch,
-      sel_head,
-      sel_date,
-      sel_tag,
-      sel_ident,
-      sel_cert,
-      sel_earlier,
-      sel_later,
-      sel_parent,
-      sel_unknown
-    }
-  selector_type;
+void complete(options const & opts, lua_hooks & lua,
+              project_t & project, std::string const & str,
+              std::set<revision_id> & completions);
 
-  void
-  complete_selector(std::string const & orig_sel,
-                    std::vector<std::pair<selector_type, std::string> > const & limit,
-                    selector_type & type,
-                    std::set<std::string> & completions,
-                    app_state & app);
-  std::vector<std::pair<selector_type, std::string> >
-  parse_selector(std::string const & str,
-                 app_state & app);
+void complete(options const & opts, lua_hooks & lua,
+              project_t & project, std::string const & str,
+              revision_id & completion);
 
-}; // namespace selectors
+// For extra control, use these functions.  expand_selector is just like the
+// first overload of complete() except that it produces no progress messages
+// or usage errors.  diagnose_ambiguous_expansion generates the canonical
+// usage error if the set it is handed has more than one element.
+
+void expand_selector(options const & opts, lua_hooks & lua,
+                     project_t & project, std::string const & str,
+                     std::set<revision_id> & completions);
+
+void diagnose_ambiguous_expansion(project_t & project, std::string const & str,
+                                  std::set<revision_id> const & completions);
+
 
 // Local Variables:
 // mode: C++

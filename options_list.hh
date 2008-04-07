@@ -1,7 +1,54 @@
-#define OPT(name, string, type, default_, description)			\
+// Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
+// This is made available under the GNU GPL v2 or later.
+
+/*
+ * This is a list of all options that monotone can take, what variables
+ * they get put into, and how they get there. There are 4 important macros
+ * available here (and only here):
+ *
+ *   OPTSET(name)
+ *     Defines a set of related options, which can easily be allowed for
+ *     a particular command or reset together. It is named
+ *     'options::opts::name'.
+ *
+ *   OPTSET_REL(parent, child)
+ *     Declare a relationship between to optsets, so that if the parent
+ *     is reset or allowed for a command the child will also be.
+ *
+ *   OPTVAR(optset, type, name, default)
+ *     Defines a variable 'type options::name' which is initialized to
+ *     'type (default)' and belongs to the named optset. When the optset
+ *     is reset, this variable will be reset to 'type (default)'.
+ *
+ *   OPTION(optset, name, hasarg, optstring, description)
+ *     Declare an option named 'options::opts::name', which belongs to the
+ *     given optset. 'optstring' can look like "foo", in which case it is
+ *     specified as "--foo", or it can look like "foo,f", in which case it
+ *     is specified as either "--foo" or "-f". The description is a
+ *     translatable help text. 'hasarg' is a bool indicating whether this
+ *     option takes an argument.
+ *
+ *     Some expansions of this macro expect a function body, which looks
+ *     like 'void (std::string const & arg)'. This is the 'setter' function
+ *     for this option, and is called when the option is parsed. If the
+ *     option was declared to not take an argument, 'arg' is empty.
+ *     Otherwise, it is the given argument. In any case this function
+ *     should set the option variables for this option and throw a
+ *     'bad_arg_internal' if this fails. The variables that are set must be
+ *     part of the same optset as the option, or they won't get reset
+ *     properly. When the function body is needed, 'option_bodies' will
+ *     be defined.
+ */
+
+// This is a shortcut for an option which has its own variable and optset.
+// It will take an argument unless 'type' is 'bool'.
+#define OPT(name, string, type, default_, description)               \
   OPTVAR(name, type, name, default_)					\
   OPTION(name, name, has_arg<type >(), string, description)
 
+// This is the same, except that the option and variable belong to the
+// 'globals' optset. These are global options, not specific to a particular
+// command.
 #define GOPT(name, string, type, default_, description)			\
   OPTVAR(globals, type, name, default_)					\
   OPTION(globals, name, has_arg<type >(), string, description)
@@ -93,6 +140,14 @@ GOPT(conf_dir, "confdir", system_path, get_default_confdir(),
   conf_dir = system_path(arg);
   if (!key_dir_given)
     key_dir = (conf_dir / "keys");
+}
+#endif
+
+GOPT(no_default_confdir, "no-default-confdir", bool, false,
+     gettext_noop("forbid use of the default confdir"))
+#ifdef option_bodies
+{
+  no_default_confdir = true;
 }
 #endif
 
@@ -229,9 +284,23 @@ OPT(bookkeep_only, "bookkeep-only", bool, false,
 #endif
 
 GOPT(ssh_sign, "ssh-sign", std::string, "yes",
-     gettext_noop("sign with ssh-agent, 'yes' to sign with ssh if key found, 'no' to force monotone to sign, 'check' to sign with both and compare"))
+     gettext_noop("controls use of ssh-agent.  valid arguments are: "
+                  "'yes' to use ssh-agent to make signatures if possible, "
+                  "'no' to force use of monotone's internal code, "
+                  "'only' to force use of ssh-agent, "
+                  "'check' to sign with both and compare"))
 #ifdef option_bodies
 {
+  if (arg.empty())
+    throw bad_arg_internal(F("--ssh-sign requires a value "
+                             "['yes', 'no', 'only', or 'check']").str());
+  if (arg != "yes"
+      && arg != "no"
+      && arg != "check"
+      && arg != "only") // XXX what does "only" do? not documented
+    throw bad_arg_internal(F("--ssh-sign must be set to 'yes', 'no', "
+                             "'only', or 'check'").str());
+
   ssh_sign = arg;
 }
 #endif
@@ -277,7 +346,7 @@ OPTION(globals, key, true, "key,k", gettext_noop("set key for signatures"))
 }
 #endif
 
-GOPT(key_dir, "keydir", system_path, ,
+GOPT(key_dir, "keydir", system_path, get_default_keydir(),
      gettext_noop("set location of key store"))
 #ifdef option_bodies
 {
@@ -573,4 +642,3 @@ OPTION(automate_inventory_opts, no_corresponding_renames, false, "no-correspondi
 // indent-tabs-mode: nil
 // End:
 // vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
-

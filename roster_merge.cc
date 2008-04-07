@@ -16,6 +16,7 @@
 #include "roster_merge.hh"
 #include "parallel_iter.hh"
 #include "safe_map.hh"
+#include "transforms.hh"
 
 using boost::shared_ptr;
 
@@ -525,15 +526,35 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       left_roster.get_name(left_nid, left_name);
       right_roster.get_name(right_nid, right_name);
 
-      I(left_name == right_name);
-
       shared_ptr<roster_t const> left_lca_roster, right_lca_roster;
       revision_id left_lca_rid, right_lca_rid;
 
       adaptor.get_ancestral_roster(left_nid, left_lca_rid, left_lca_roster);
       adaptor.get_ancestral_roster(right_nid, right_lca_rid, right_lca_roster);
 
-      P(F("conflict: duplicate name '%s'") % left_name);
+      // In most cases, the left_name equals the right_name. However, maybe
+      // a parent directory got renamed on one side. In that case, the names
+      // don't match, but it's still the same directory (by node id), to
+      // which we want to add the same file (by name).
+      if (left_name == right_name)
+        {
+          file_path dir;
+          path_component basename;
+          left_name.dirname_basename(dir, basename);
+          P(F("conflict: duplicate name '%s' for the directory '%s'") % basename % dir);
+        }
+      else
+        {
+          file_path left_dir, right_dir;
+          path_component left_basename, right_basename;
+          left_name.dirname_basename(left_dir, left_basename);
+          right_name.dirname_basename(right_dir, right_basename);
+          I(left_basename == right_basename);
+          P(F("conflict: duplicate name '%s' for the directory\n"
+              "          named '%s' on the left and\n"
+              "          named '%s' on the right.")
+            % left_basename % left_dir % right_dir);
+        }
 
       node_type left_type  = get_type(left_roster, left_nid);
       node_type right_type = get_type(right_roster, right_nid);
@@ -727,8 +748,10 @@ roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
 
           P(F("conflict: content conflict on file '%s'")
             % name);
-          P(F("content hash is %s on the left") % conflict.left);
-          P(F("content hash is %s on the right") % conflict.right);
+          P(F("content hash is %s on the left")
+            % conflict.left);
+          P(F("content hash is %s on the right")
+            % conflict.right);
         }
       else
         {
@@ -882,7 +905,7 @@ namespace
                         "removed on one side of the merge.  Affected revisions include:") % fp);
                   }
                 found_one_ignored_content = true;
-                W(F("Revision: %s") % *it);
+                W(F("Revision: %s") % encode_hexenc(it->inner()()));
               }
           }
       }
@@ -1278,7 +1301,7 @@ roster_merge(roster_t const & left_parent,
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-
+#include "constants.hh"
 #include "roster_delta.hh"
 
 // cases for testing:
@@ -1378,8 +1401,8 @@ void string_to_set(string const & from, set<revision_id> & to)
   to.clear();
   for (string::const_iterator i = from.begin(); i != from.end(); ++i)
     {
-      string rid_str(40, *i);
-      to.insert(revision_id(rid_str));
+      char label = (*i - '0') << 4 + (*i - '0');
+      to.insert(revision_id(string(constants::idlen_bytes, label)));
     }
 }
 
@@ -1435,8 +1458,8 @@ test_a_scalar_merge_impl(scalar_val left_val, string const & left_marks_str,
   scalar.check_result(left_val, right_val, result, expected_outcome);
 }
 
-static const revision_id root_rid = revision_id(string("0000000000000000000000000000000000000000"));
-static const file_id arbitrary_file = file_id(string("0000000000000000000000000000000000000000"));
+static const revision_id root_rid(string(constants::idlen_bytes, '\0'));
+static const file_id arbitrary_file(string(constants::idlen_bytes, '\0'));
 
 struct base_scalar
 {
@@ -1664,9 +1687,8 @@ struct file_content_scalar : public virtual file_scalar
   file_id content_for(scalar_val val)
   {
     I(val != scalar_conflict);
-    return file_id(string((val == scalar_a)
-                               ? "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                               : "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+    return file_id(string(constants::idlen_bytes,
+                          (val == scalar_a) ? '\xaa' : '\xbb'));
   }
 
   void
@@ -1698,7 +1720,7 @@ struct file_content_scalar : public virtual file_scalar
         I(null_id(content));
         // resolve the conflict, thus making sure that resolution works and
         // that this was the only conflict signaled
-        content = file_id(string("ffffffffffffffffffffffffffffffffffffffff"));
+        content = file_id(string(constants::idlen_bytes, '\xff'));
         result.file_content_conflicts.pop_back();
         break;
       }
@@ -1849,16 +1871,15 @@ UNIT_TEST(roster_merge, scalar_merges)
 
 namespace
 {
-  const revision_id a_uncommon1 = revision_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-  const revision_id a_uncommon2 = revision_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
-  const revision_id b_uncommon1 = revision_id(string("cccccccccccccccccccccccccccccccccccccccc"));
-  const revision_id b_uncommon2 = revision_id(string("dddddddddddddddddddddddddddddddddddddddd"));
-  const revision_id common1 = revision_id(string("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"));
-  const revision_id common2 = revision_id(string("ffffffffffffffffffffffffffffffffffffffff"));
+  const revision_id a_uncommon1(string(constants::idlen_bytes, '\xaa'));
+  const revision_id a_uncommon2(string(constants::idlen_bytes, '\xbb'));
+  const revision_id b_uncommon1(string(constants::idlen_bytes, '\xcc'));
+  const revision_id b_uncommon2(string(constants::idlen_bytes, '\xdd'));
+  const revision_id common1(string(constants::idlen_bytes, '\xee'));
+  const revision_id common2(string(constants::idlen_bytes, '\xff'));
 
-  const file_id fid1 = file_id(string("1111111111111111111111111111111111111111"));
-  const file_id fid2 = file_id(string("2222222222222222222222222222222222222222"));
-
+  const file_id fid1(string(constants::idlen_bytes, '\x11'));
+  const file_id fid2(string(constants::idlen_bytes, '\x22'));
 }
 
 static void

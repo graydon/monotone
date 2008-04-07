@@ -13,6 +13,19 @@ function safe_mtn(...)
           "--confdir="..test.root, unpack(arg)}
 end
 
+function mtn_ws_opts(...)
+  -- Return a mtn command string that uses options from _MTN/options,
+  -- root from current directory - as close to a normal user command
+  -- line as possible.
+  if monotone_path == nil then
+    monotone_path = os.getenv("mtn")
+    if monotone_path == nil then
+      err("'mtn' environment variable not set")
+    end
+  end
+  return {monotone_path, "--ssh-sign=no", "--norc", "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
+end
+
 -- function preexecute(x)
 --   return {"valgrind", "--tool=memcheck", unpack(x)}
 -- end
@@ -36,6 +49,12 @@ function nodb_mtn(...)
   return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
          "--keydir", test.root .. "/keys",
          "--key=tester@test.net", unpack(arg))
+end
+
+function nokey_mtn(...)
+  return raw_mtn("--rcfile", test.root .. "/test_hooks.lua", -- "--nostd",
+         "--db=" .. test.root .. "/test.db",
+         "--keydir", test.root .. "/keys", unpack(arg))
 end
 
 function minhooks_mtn(...)
@@ -71,7 +90,7 @@ function mtn_setup()
   check(getstd("test_keys"))
   check(getstd("test_hooks.lua"))
   check(getstd("min_hooks.lua"))
-  
+
   check(mtn("db", "init"), 0, false, false)
   check(mtn("read", "test_keys"), 0, false, false)
   check(mtn("setup", "--branch=testbranch", "."), 0, false, false)
@@ -97,9 +116,13 @@ function certvalue(rev, name)
   check(safe_mtn("automate", "certs", rev), 0, false)
   local parsed = parse_basic_io(readfile("ts-stdout"))
   local cname
+  local goodsig
+  -- note: this relies on the name and signature elements appearing
+  -- before the value element, in each stanza.
   for _,l in pairs(parsed) do
     if l.name == "name" then cname = l.values[1] end
-    if cname == name and l.name == "value" then return l.values[1] end
+    if l.name == "signature" then goodsig = l.values[1] end
+    if cname == name and l.name == "value" then return l.values[1], goodsig end
   end
   return nil
 end
@@ -143,7 +166,7 @@ function revert_to(rev, branch, mt)
 
   for path in io.lines("paths-new") do
     len = string.len(path) - 1
-      
+
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -156,10 +179,10 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-        
+
   for path in io.lines("paths-old") do
     len = string.len(path) - 1
-      
+
     if (string.match(path, "^   file \"")) then
       path = string.sub(path, 10, len)
     elseif (string.match(path, "^dir \"")) then
@@ -172,7 +195,7 @@ function revert_to(rev, branch, mt)
       remove(path)
     end
   end
-        
+
   if branch == nil then
     check(mt("checkout", "--revision", rev, "."), 0, false, true)
   else
@@ -199,7 +222,7 @@ end
 function check_same_db_contents(db1, db2)
   check_same_stdout(mtn("--db", db1, "ls", "keys"),
                     mtn("--db", db2, "ls", "keys"))
-  
+
   check(mtn("--db", db1, "complete", "revision", ""), 0, true, false)
   rename("stdout", "revs")
   check(mtn("--db", db2, "complete", "revision", ""), 0, true, false)
@@ -213,7 +236,7 @@ function check_same_db_contents(db1, db2)
     check_same_stdout(mtn("--db", db1, "automate", "get_manifest_of", rev),
                       mtn("--db", db2, "automate", "get_manifest_of", rev))
   end
-  
+
   check(mtn("--db", db1, "complete", "file", ""), 0, true, false)
   rename("stdout", "files")
   check(mtn("--db", db2, "complete", "file", ""), 0, true, false)

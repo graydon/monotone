@@ -14,6 +14,7 @@
 
 #include <base.hh>
 #include <gzip.hh>
+#include <botan/loadstor.h>
 #include <botan/filters.h>
 #include <botan/bit_ops.h>
 #include <cstring>
@@ -199,7 +200,7 @@ void Gzip_Compression::put_footer()
    SecureVector<byte> buf(4);
    SecureVector<byte> tmpbuf(4);
 
-   pipe.read(tmpbuf.begin(), tmpbuf.size());
+   pipe.read(tmpbuf.begin(), tmpbuf.size(), Pipe::LAST_MESSAGE);
 
    // CRC32 is the reverse order to what gzip expects.
    for (int i = 0; i < 4; i++)
@@ -364,7 +365,7 @@ void Gzip_Decompression::check_footer()
    // 4 byte CRC32, and 4 byte length field
    SecureVector<byte> buf(4);
    SecureVector<byte> tmpbuf(4);
-   pipe.read(tmpbuf.begin(), tmpbuf.size());
+   pipe.read(tmpbuf.begin(), tmpbuf.size(), Pipe::LAST_MESSAGE);
 
   // CRC32 is the reverse order to what gzip expects.
   for (int i = 0; i < 4; i++)
@@ -405,7 +406,7 @@ void Gzip_Decompression::clear()
    no_writes = true;
    inflateReset(&(zlib->stream));
 
-   footer.clear();
+   footer.destroy();
    pos = 0;
    datacount = 0;
    }

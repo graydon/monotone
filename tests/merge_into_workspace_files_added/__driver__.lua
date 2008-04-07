@@ -43,7 +43,7 @@ check(mtn("automate", "graph"), 0, {"ancestry"}, nil)
 -- "automate get_revision" should report each of "left" and "right" as
 -- added versus their respective parents, and no other changes
 check(get("expected-revision"))
-check(mtn("automate", "get_revision"), 0, {"expected-revision"}, nil)
+check(mtn("automate", "get_current_revision"), 0, {"expected-revision"}, nil)
 
 -- a commit at this point should succeed
 commit()

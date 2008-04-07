@@ -39,14 +39,7 @@ ifneq (,$(findstring hppa,$(DEB_HOST_GNU_TYPE)))
 DEFAULT_CFLAGS += -mlong-calls
 endif
 else # optimization enabled
-# Back Alpha down to -O1 to avoid apparent compiler bugs
-# (0.37-1 did not build on alpha with random crashes, 0.37-2 did,
-# only plausible difference was the accidental -O0 in all 0.37-2 builds).
-ifneq (,$(findstring alpha,$(DEB_HOST_GNU_TYPE)))
-DEFAULT_CFLAGS += -O1
-else
 DEFAULT_CFLAGS += -O2
-endif
 endif
 
 CFLAGS ?= $(DEFAULT_CFLAGS)
@@ -80,6 +73,7 @@ ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
 	./configure $(BUILD_AND_HOST) \
+		    --with-system-pcre \
 		    --prefix=/usr --mandir='$${prefix}/share/man' \
 		    --infodir='$${prefix}/share/info' CFLAGS="$(CFLAGS)" \
 		    CXXFLAGS="$(CFLAGS)" LDFLAGS="-Wl,-z,defs"
@@ -123,7 +117,7 @@ binary-indep: build-indep
 # monotone.html installed.)  Annoyingly, at present we cannot simply
 # dh_installdocs the entire html directory, because it contains a
 # bunch of unwanted junk; instead we dh_installdirs the directory
-# hierarchy that is required and use cp -a to put all the files in place.
+# hierarchy that is required and use cp -p to put all the files in place.
 	cp -p html/*.html html/*.css debian/monotone-doc/usr/share/doc/html
 	cp -p html/figures/*.png debian/monotone-doc/usr/share/doc/html/figures
 

@@ -4,9 +4,38 @@ new_type "directory"
  fs_type "directory"
   status "known"
 
+    path "source/added"
+new_type "file"
+ fs_type "file"
+  status "added" "known"
+ changes "content"
+
+    path "source/dropped"
+old_type "file"
+ fs_type "none"
+  status "dropped"
+
    path "source/ignored_1"
 fs_type "file"
  status "ignored"
+
+    path "source/missing"
+old_type "file"
+new_type "file"
+ fs_type "none"
+  status "missing"
+
+    path "source/rename_source"
+old_type "file"
+new_path "source/rename_target"
+ fs_type "none"
+  status "rename_source"
+
+    path "source/rename_target"
+new_type "file"
+old_path "source/rename_source"
+ fs_type "file"
+  status "rename_target" "known"
 
     path "source/source_1"
 old_type "file"

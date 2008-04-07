@@ -19,18 +19,20 @@
 // of the migration.
 
 struct sqlite3;
-class app_state;
+class key_store;
 class system_path;
 
-void migrate_sql_schema(sqlite3 * db, app_state & app);
-void check_sql_schema(sqlite3 * db, system_path const & filename);
 std::string describe_sql_schema(sqlite3 * db);
+void check_sql_schema(sqlite3 * db, system_path const & filename);
+void migrate_sql_schema(sqlite3 * db, key_store & keys,
+                        system_path const & filename);
 
 // utility routine shared with database.cc
 void assert_sqlite3_ok(sqlite3 * db);
 
 // debugging
-void test_migration_step(sqlite3 * db, app_state & app,
+void test_migration_step(sqlite3 * db, key_store & keys,
+                         system_path const & filename,
                          std::string const & schema);
 
 // this constant is part of the database schema, but it is not in schema.sql

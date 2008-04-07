@@ -230,7 +230,7 @@ _monotone() {
 		pubkey | privkey )
 		    _monotone_keys "$prev"
 		    ;;
-		chkeypass | dropkey )
+		passphrase | dropkey )
 		    _monotone_keys privkey
 		    ;;
 		propagate | reindex )
@@ -286,7 +286,7 @@ _monotone() {
                           fdiff fload fmerge get_roster identify rcs_import
                           annotate cat complete diff help list log ls show_conflicts
                           status
-                          cert chkeypass dropkey genkey trusted
+                          cert passphrase dropkey genkey trusted
                           pull push serve sync
                           privkey pubkey read
                           cvs_import

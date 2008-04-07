@@ -5,6 +5,7 @@
 #include "netcmd.hh"
 #include "globish.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "cert.hh"
 #include "revision.hh"
 #include "ui.hh"
@@ -12,6 +13,10 @@
 #include "vocab_cast.hh"
 #include "platform-wrapped.hh"
 #include "app_state.hh"
+#include "project.hh"
+#include "work.hh"
+#include "database.hh"
+#include "roster.hh"
 
 #include <fstream>
 
@@ -21,6 +26,8 @@ using std::map;
 using std::set;
 using std::string;
 using std::vector;
+
+using boost::shared_ptr;
 
 static const var_key default_server_key(var_domain("database"),
                                         var_name("default-server"));
@@ -32,116 +39,183 @@ static const var_key default_exclude_pattern_key(var_domain("database"),
 static char const ws_internal_db_file_name[] = "mtn.db";
 
 static void
-extract_address(args_vector const & args,
-                utf8 & addr,
-                app_state & app)
+find_key(options & opts,
+         lua_hooks & lua,
+         database & db,
+         key_store & keys,
+         netsync_connection_info const & info,
+         bool need_key = true)
 {
-  if (args.size() >= 1)
-    {
-      addr = idx(args, 0);
-      if (!app.db.var_exists(default_server_key) || app.opts.set_default)
-        {
-          P(F("setting default server to %s") % addr());
-          app.db.set_var(default_server_key, var_value(addr()));
-        }
-    }
-  else
-    {
-      N(app.db.var_exists(default_server_key),
-        F("no server given and no default server set"));
-      var_value addr_value;
-      app.db.get_var(default_server_key, addr_value);
-      addr = utf8(addr_value());
-      L(FL("using default server address: %s") % addr());
-    }
-}
-
-static void
-find_key(utf8 const & addr,
-         globish const & include,
-         globish const & exclude,
-         app_state & app,
-         bool needed = true)
-{
-  if (app.opts.signing_key() != "")
+  if (!opts.signing_key().empty())
     return;
 
   rsa_keypair_id key;
-  uri u;
-  utf8 host(addr);
+  
+  utf8 host(info.client.unparsed);
+  if (!info.client.u.host.empty())
+    host = utf8(info.client.u.host);
 
-  parse_uri(addr(), u);
-  if (!u.host.empty())
-    host = utf8(u.host);
-  if (!app.lua.hook_get_netsync_key(host, include, exclude, key)
-      || key() == "")
+  if (!lua.hook_get_netsync_key(host,
+                                info.client.include_pattern,
+                                info.client.exclude_pattern, key)
+      && need_key)
+    get_user_key(opts, lua, db, keys, key);
+
+  opts.signing_key = key;
+}
+
+static void
+build_client_connection_info(options & opts,
+                             lua_hooks & lua,
+                             database & db,
+                             key_store & keys,
+                             netsync_connection_info & info,
+                             bool address_given,
+                             bool include_or_exclude_given,
+                             bool need_key = true)
+{
+  // Use the default values if needed and available.
+  if (!address_given)
     {
-      if (needed)
-        {
-          get_user_key(key, app);
-        }
+      N(db.var_exists(default_server_key),
+        F("no server given and no default server set"));
+      var_value addr_value;
+      db.get_var(default_server_key, addr_value);
+      info.client.unparsed = utf8(addr_value());
+      L(FL("using default server address: %s") % info.client.unparsed);
     }
-  app.opts.signing_key = key;
-}
-
-static void
-find_key_if_needed(utf8 const & addr,
-                   globish const & include,
-                   globish const & exclude,
-                   app_state & app,
-                   bool needed = true)
-{
-      uri u;
-      parse_uri(addr(), u);
-
-      if (app.lua.hook_use_transport_auth(u))
+  parse_uri(info.client.unparsed(), info.client.u);
+  if (info.client.u.query.empty() && !include_or_exclude_given)
+    {
+      // No include/exclude given anywhere, use the defaults.
+      N(db.var_exists(default_include_pattern_key),
+        F("no branch pattern given and no default pattern set"));
+      var_value pattern_value;
+      db.get_var(default_include_pattern_key, pattern_value);
+      info.client.include_pattern = globish(pattern_value());
+      L(FL("using default branch include pattern: '%s'")
+        % info.client.include_pattern);
+      if (db.var_exists(default_exclude_pattern_key))
         {
-          find_key(addr, include, exclude, app, needed);
+          db.get_var(default_exclude_pattern_key, pattern_value);
+          info.client.exclude_pattern = globish(pattern_value());
         }
+      else
+        info.client.exclude_pattern = globish();
+      L(FL("excluding: %s") % info.client.exclude_pattern);
+    }
+  else if(!info.client.u.query.empty())
+    {
+      N(!include_or_exclude_given,
+        F("Include/exclude pattern was given both as part of the URL and as a separate argument."));
+      
+      // Pull include/exclude from the query string
+      char const separator = '/';
+      char const negate = '-';
+      string const & query(info.client.u.query);
+      std::vector<arg_type> includes, excludes;
+      string::size_type begin = 0;
+      string::size_type end = query.find(separator);
+      while (begin < query.size())
+        {
+          std::string item = query.substr(begin, end);
+          if (end == string::npos)
+            begin = end;
+          else
+            {
+              begin = end+1;
+              if (begin < query.size())
+                end = query.find(separator, begin);
+            }
+          
+          bool is_exclude = false;
+          if (item.size() >= 1 && item.at(0) == negate)
+            {
+              is_exclude = true;
+              item.erase(0, 1);
+            }
+          else if (item.find("include=") == 0)
+            {
+              item.erase(0, string("include=").size());
+            }
+          else if (item.find("exclude=") == 0)
+            {
+              is_exclude = true;
+              item.erase(0, string("exclude=").size());
+            }
+          
+          if (is_exclude)
+            excludes.push_back(arg_type(urldecode(item)));
+          else
+            includes.push_back(arg_type(urldecode(item)));
+        }
+      info.client.include_pattern = globish(includes);
+      info.client.exclude_pattern = globish(excludes);
+    }
+  
+  // Maybe set the default values.
+  if (!db.var_exists(default_server_key) || opts.set_default)
+    {
+      P(F("setting default server to %s") % info.client.unparsed());
+      db.set_var(default_server_key, var_value(info.client.unparsed()));
+    }
+    if (!db.var_exists(default_include_pattern_key)
+        || opts.set_default)
+      {
+        P(F("setting default branch include pattern to '%s'")
+          % info.client.include_pattern);
+        db.set_var(default_include_pattern_key,
+                   var_value(info.client.include_pattern()));
+      }
+    if (!db.var_exists(default_exclude_pattern_key)
+        || opts.set_default)
+      {
+        P(F("setting default branch exclude pattern to '%s'")
+          % info.client.exclude_pattern);
+        db.set_var(default_exclude_pattern_key,
+                   var_value(info.client.exclude_pattern()));
+      }
+  
+  info.client.use_argv =
+    lua.hook_get_netsync_connect_command(info.client.u,
+                                         info.client.include_pattern,
+                                         info.client.exclude_pattern,
+                                         global_sanity.debug_p(),
+                                         info.client.argv);
+  opts.use_transport_auth = lua.hook_use_transport_auth(info.client.u);
+  if (opts.use_transport_auth)
+    {
+      find_key(opts, lua, db, keys, info, need_key);
+    }
 }
 
 static void
-extract_patterns(args_vector const & args,
-                 globish & include_pattern, globish & exclude_pattern,
-                 app_state & app)
+extract_client_connection_info(options & opts,
+                               lua_hooks & lua,
+                               database & db,
+                               key_store & keys,
+                               args_vector const & args,
+                               netsync_connection_info & info,
+                               bool need_key = true)
 {
-  if (args.size() >= 2 || app.opts.exclude_given)
+  bool have_address = false;
+  bool have_include_exclude = false;
+  if (args.size() >= 1)
+    {
+      have_address = true;
+      info.client.unparsed = idx(args, 0);
+    }
+  if (args.size() >= 2 || opts.exclude_given)
     {
       E(args.size() >= 2, F("no branch pattern given"));
 
-      include_pattern = globish(args.begin() + 1, args.end());
-      exclude_pattern = globish(app.opts.exclude_patterns);
-
-      if (!app.db.var_exists(default_include_pattern_key)
-          || app.opts.set_default)
-        {
-          P(F("setting default branch include pattern to '%s'") % include_pattern);
-          app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
-        }
-      if (!app.db.var_exists(default_exclude_pattern_key)
-          || app.opts.set_default)
-        {
-          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
-        }
+      have_include_exclude = true;
+      info.client.include_pattern = globish(args.begin() + 1, args.end());
+      info.client.exclude_pattern = globish(opts.exclude_patterns);
     }
-  else
-    {
-      N(app.db.var_exists(default_include_pattern_key),
-        F("no branch pattern given and no default pattern set"));
-      var_value pattern_value;
-      app.db.get_var(default_include_pattern_key, pattern_value);
-      include_pattern = globish(pattern_value());
-      L(FL("using default branch include pattern: '%s'") % include_pattern);
-      if (app.db.var_exists(default_exclude_pattern_key))
-        {
-          app.db.get_var(default_exclude_pattern_key, pattern_value);
-          exclude_pattern = globish(pattern_value());
-        }
-      else
-        exclude_pattern = globish();
-      L(FL("excluding: %s") % exclude_pattern);
-    }
+  build_client_connection_info(opts, lua, db, keys,
+                               info, have_address, have_include_exclude,
+                               need_key);
 }
 
 CMD(push, "push", "", CMD_REF(network),
@@ -152,17 +226,15 @@ CMD(push, "push", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
+  database db(app);
+  key_store keys(app);
+  project_t project(db);
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys, args, info);
 
-  run_netsync_protocol(client_voice, source_role, uris,
-                       include_pattern, exclude_pattern, app);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, source_role, info);
 }
 
 CMD(pull, "pull", "", CMD_REF(network),
@@ -172,20 +244,19 @@ CMD(pull, "pull", "", CMD_REF(network),
        "from the netsync server at the address ADDRESS."),
     options::opts::set_default | options::opts::exclude)
 {
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app, false);
+  database db(app);
+  key_store keys(app);
+  project_t project(db);
+
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys,
+                                 args, info, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
-
-  run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, sink_role, info);
 }
 
 CMD(sync, "sync", "", CMD_REF(network),
@@ -196,17 +267,22 @@ CMD(sync, "sync", "", CMD_REF(network),
     options::opts::set_default | options::opts::exclude |
     options::opts::key_to_push)
 {
-  utf8 addr;
-  globish include_pattern, exclude_pattern;
-  extract_address(args, addr, app);
-  extract_patterns(args, include_pattern, exclude_pattern, app);
-  find_key_if_needed(addr, include_pattern, exclude_pattern, app);
+  database db(app);
+  key_store keys(app);
+  project_t project(db);
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
+  netsync_connection_info info;
+  extract_client_connection_info(app.opts, app.lua, db, keys, args, info);
 
-  run_netsync_protocol(client_voice, source_and_sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+  if (app.opts.set_default && workspace::found)
+    {
+      // Write workspace options, including key; this is the simplest way to
+      // fix a "found multiple keys" error reported by sync.
+      workspace work(app, true);
+    }
+
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, source_and_sink_role, info);
 }
 
 class dir_cleanup_helper
@@ -242,14 +318,15 @@ CMD(clone, "clone", "", CMD_REF(network),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
-    options::opts::exclude | options::opts::branch | options::opts::revision)
+    options::opts::branch | options::opts::revision)
 {
   if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
     throw usage(execid);
 
   revision_id ident;
   system_path workspace_dir;
-  utf8 addr = idx(args, 0);
+  netsync_connection_info info;
+  info.client.unparsed = idx(args, 0);
 
   N(app.opts.branch_given && !app.opts.branchname().empty(),
     F("you must specify a branch to clone"));
@@ -268,68 +345,50 @@ CMD(clone, "clone", "", CMD_REF(network),
   require_path_is_nonexistent
     (workspace_dir, F("clone destination directory '%s' already exists") % workspace_dir);
 
-   // remember the initial working dir so that relative file:// db URIs will work
+  // remember the initial working dir so that relative file://
+  // db URIs will work
   system_path start_dir(get_current_working_dir());
 
   bool internal_db = !app.opts.dbname_given || app.opts.dbname.empty();
 
   dir_cleanup_helper remove_on_fail(workspace_dir, internal_db);
-  app.create_workspace(workspace_dir);
 
+  // paths.cc's idea of the current workspace root is wrong at this point
   if (internal_db)
-    app.set_database(system_path(bookkeeping_root / ws_internal_db_file_name));
-  else
-    app.set_database(app.opts.dbname);
+    app.opts.dbname = system_path(workspace_dir
+                                  / bookkeeping_root_component
+                                  / ws_internal_db_file_name);
 
-  if (get_path_status(app.db.get_filename()) == path::nonexistent)
-    app.db.initialize();
+  // must do this after setting dbname so that _MTN/options is written
+  // correctly
+  workspace::create_workspace(app.opts, app.lua, workspace_dir);
 
-  app.db.ensure_open();
+  database db(app);
+  if (get_path_status(db.get_filename()) == path::nonexistent)
+    db.initialize();
 
-  if (!app.db.var_exists(default_server_key) || app.opts.set_default)
-    {
-      P(F("setting default server to %s") % addr);
-      app.db.set_var(default_server_key, var_value(addr()));
-    }
+  db.ensure_open();
 
-  globish include_pattern(app.opts.branchname());
-  globish exclude_pattern(app.opts.exclude_patterns);
+  key_store keys(app);
+  project_t project(db);
 
-  find_key_if_needed(addr, include_pattern, exclude_pattern,
-                     app, false);
+  info.client.include_pattern = globish(app.opts.branchname());
+  info.client.exclude_pattern = globish(app.opts.exclude_patterns);
+  build_client_connection_info(app.opts, app.lua, db, keys,
+                               info, true, true);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
 
-  if (!app.db.var_exists(default_include_pattern_key)
-      || app.opts.set_default)
-    {
-      P(F("setting default branch include pattern to '%s'") % include_pattern);
-      app.db.set_var(default_include_pattern_key, var_value(include_pattern()));
-    }
-
-  if (app.opts.exclude_given)
-    {
-      if (!app.db.var_exists(default_exclude_pattern_key)
-          || app.opts.set_default)
-        {
-          P(F("setting default branch exclude pattern to '%s'") % exclude_pattern);
-          app.db.set_var(default_exclude_pattern_key, var_value(exclude_pattern()));
-        }
-    }
-
   // make sure we're back in the original dir so that file: URIs work
   change_current_working_dir(start_dir);
 
-  std::list<utf8> uris;
-  uris.push_back(addr);
-
-  run_netsync_protocol(client_voice, sink_role, uris,
-                       include_pattern, exclude_pattern, app);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       client_voice, sink_role, info);
 
   change_current_working_dir(workspace_dir);
 
-  transaction_guard guard(app.db, false);
+  transaction_guard guard(db, false);
 
   if (app.opts.revision_selectors.size() == 0)
     {
@@ -338,14 +397,16 @@ CMD(clone, "clone", "", CMD_REF(network),
         F("use --revision or --branch to specify what to checkout"));
 
       set<revision_id> heads;
-      app.get_project().get_branch_heads(app.opts.branchname, heads);
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
         {
           P(F("branch %s has multiple heads:") % app.opts.branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
-            P(i18n_format("  %s") % describe_revision(app, *i));
+            P(i18n_format("  %s")
+              % describe_revision(project, *i));
           P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
@@ -354,38 +415,36 @@ CMD(clone, "clone", "", CMD_REF(network),
   else if (app.opts.revision_selectors.size() == 1)
     {
       // use specified revision
-      complete(app, idx(app.opts.revision_selectors, 0)(), ident);
-      N(app.db.revision_exists(ident),
-        F("no such revision '%s'") % ident);
+      complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(ident, app);
-
+      guess_branch(app.opts, project, ident);
       I(!app.opts.branchname().empty());
 
-      N(app.get_project().revision_is_in_branch(ident, app.opts.branchname),
+      N(project.revision_is_in_branch(ident, app.opts.branchname),
         F("revision %s is not a member of branch %s")
-        % ident % app.opts.branchname);
+          % ident % app.opts.branchname);
     }
 
-  shared_ptr<roster_t> empty_roster = shared_ptr<roster_t>(new roster_t());
-  roster_t current_roster;
+  roster_t empty_roster, current_roster;
 
-  L(FL("checking out revision %s to directory %s") % ident % workspace_dir);
-  app.db.get_roster(ident, current_roster);
+  L(FL("checking out revision %s to directory %s")
+    % ident % workspace_dir);
+  db.get_roster(ident, current_roster);
 
+  workspace work(app);
   revision_t workrev;
   make_revision_for_workspace(ident, cset(), workrev);
-  app.work.put_work_rev(workrev);
+  work.put_work_rev(workrev);
 
   cset checkout;
-  make_cset(*empty_roster, current_roster, checkout);
+  make_cset(empty_roster, current_roster, checkout);
 
-  content_merge_checkout_adaptor wca(app);
+  content_merge_checkout_adaptor wca(db);
 
-  app.work.perform_content_update(checkout, wca, false);
+  work.perform_content_update(db, checkout, wca, false);
 
-  app.work.update_any_attrs();
-  app.work.maybe_update_inodeprints();
+  work.update_any_attrs(db);
+  work.maybe_update_inodeprints(db);
   guard.commit();
   remove_on_fail.commit();
 }
@@ -430,26 +489,34 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   if (!args.empty())
     throw usage(execid);
 
+  database db(app);
+  key_store keys(app);
+  project_t project(db);
   pid_file pid(app.opts.pidfile);
+
+  db.ensure_open();
+  
+  netsync_connection_info info;
+  info.server.addrs = app.opts.bind_uris;
 
   if (app.opts.use_transport_auth)
     {
-      if (!app.opts.bind_uris.empty())
-        find_key(*app.opts.bind_uris.begin(), globish("*"), globish(""), app);
-      else
-        find_key(utf8(), globish("*"), globish(""), app);
-
       N(app.lua.hook_persist_phrase_ok(),
-	F("need permission to store persistent passphrase (see hook persist_phrase_ok())"));
-      require_password(app.opts.signing_key, app);
+        F("need permission to store persistent passphrase "
+          "(see hook persist_phrase_ok())"));
+
+      info.client.include_pattern = globish("*");
+      info.client.exclude_pattern = globish("");
+      if (!app.opts.bind_uris.empty())
+        info.client.unparsed = *app.opts.bind_uris.begin();
+      find_key(app.opts, app.lua, db, keys, info);
     }
   else if (!app.opts.bind_stdio)
-    W(F("The --no-transport-auth option is usually only used in combination with --stdio"));
+    W(F("The --no-transport-auth option is usually only used "
+        "in combination with --stdio"));
 
-  app.db.ensure_open();
-
-  run_netsync_protocol(server_voice, source_and_sink_role, app.opts.bind_uris,
-                       globish("*"), globish(""), app);
+  run_netsync_protocol(app.opts, app.lua, project, keys,
+                       server_voice, source_and_sink_role, info);
 }
 
 // Local Variables:

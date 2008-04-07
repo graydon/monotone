@@ -175,8 +175,8 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
   // Write a debug message
   /*
   {
-    hexenc<id> hslotval;
-    their_node.get_hex_slot(slot, hslotval);
+    id slotval;
+    their_node.get_raw_slot(slot, slotval);
 
     hexenc<prefix> hpref;
     their_node.get_hex_prefix(hpref);
@@ -185,7 +185,8 @@ refiner::note_item_in_peer(merkle_node const & their_node, size_t slot)
     netcmd_item_type_to_string(their_node.type, typestr);
 
     L(FL("%s's peer has %s '%s' at slot %d (in node '%s', level %d)")
-      % voicestr() % typestr % hslotval % slot % hpref % their_node.level);
+      % voicestr() % typestr % slotval
+      % slot % hpref % their_node.level);
   }
   */
 }
@@ -225,9 +226,7 @@ refiner::process_done_command(size_t n_items)
       for (set<id>::const_iterator i = local_items.begin(); 
            i != local_items.end(); ++i)
         {
-          hexenc<id> hid;
-          encode_hexenc(*i, hid);
-          L(FL("%s item %s") % voicestr() % hid);
+          L(FL("%s item %s") % voicestr() % *i);
         }
       L(FL("--- items in %s") % voicestr());
     }
@@ -543,16 +542,12 @@ refiner_pair
         L(FL("WARNING: Unequal sets in %s!") % context);
         for (set<id>::const_iterator i = set1.begin(); i != set1.end(); ++i)
           {
-            hexenc<id> hid;
-            encode_hexenc(*i, hid);
-            L(FL("%s: %s") % name1 % hid);
+            L(FL("%s: %s") % name1 % *i);
           }
 
         for (set<id>::const_iterator i = set2.begin(); i != set2.end(); ++i)
           {
-            hexenc<id> hid;
-            encode_hexenc(*i, hid);
-            L(FL("%s: %s") % name2 % hid);
+            L(FL("%s: %s") % name2 % *i);
           }
         L(FL("end of unequal sets"));
       }
@@ -567,10 +562,8 @@ refiner_pair
         set<id>::const_iterator j = dst.find(*i);
         if (j != dst.end()) 
           {
-            hexenc<id> hid;
-            encode_hexenc(*i, hid);            
             L(FL("WARNING: %s transmission will send redundant item %s")
-              % context % hid);
+              % context % *i);
           }
         UNIT_TEST_CHECK(j == dst.end());
       }

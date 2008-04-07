@@ -13,6 +13,8 @@
 
 #include "cmd.hh"
 #include "app_state.hh"
+#include "database.hh"
+#include "key_store.hh"
 #include "packet.hh"
 
 using std::cin;
@@ -25,21 +27,24 @@ CMD(pubkey, "pubkey", "", CMD_REF(packet_io), N_("ID"),
     "",
     options::opts::none)
 {
+  database db(app);
+  key_store keys(app);
+
   if (args.size() != 1)
     throw usage(execid);
 
   rsa_keypair_id ident(idx(args, 0)());
   bool exists(false);
-  base64< rsa_pub_key > key;
-  if (app.db.database_specified() && app.db.public_key_exists(ident))
+  rsa_pub_key key;
+  if (db.database_specified() && db.public_key_exists(ident))
     {
-      app.db.get_key(ident, key);
+      db.get_key(ident, key);
       exists = true;
     }
-  if (app.keys.key_pair_exists(ident))
+  if (keys.key_pair_exists(ident))
     {
       keypair kp;
-      app.keys.get_key_pair(ident, kp);
+      keys.get_key_pair(ident, kp);
       key = kp.pub;
       exists = true;
     }
@@ -55,17 +60,19 @@ CMD(privkey, "privkey", "", CMD_REF(packet_io), N_("ID"),
     "",
     options::opts::none)
 {
+  key_store keys(app);
+
   if (args.size() != 1)
     throw usage(execid);
 
   rsa_keypair_id ident(idx(args, 0)());
-  N(app.keys.key_pair_exists(ident),
+  N(keys.key_pair_exists(ident),
     F("public and private key '%s' do not exist in keystore")
     % idx(args, 0)());
 
   packet_writer pw(cout);
   keypair kp;
-  app.keys.get_key_pair(ident, kp);
+  keys.get_key_pair(ident, kp);
   pw.consume_key_pair(ident, kp);
 }
 
@@ -76,15 +83,19 @@ namespace
 
   struct packet_db_writer : public packet_consumer
   {
-    app_state & app;
+    database & db;
+    key_store & keys;
+
   public:
-    packet_db_writer(app_state & app) : app(app) {}
+    packet_db_writer(database & db, key_store & keys)
+      : db(db), keys(keys)
+    {}
     virtual ~packet_db_writer() {}
     virtual void consume_file_data(file_id const & ident,
                                    file_data const & dat)
     {
-      transaction_guard guard(app.db);
-      app.db.put_file(ident, dat);
+      transaction_guard guard(db);
+      db.put_file(ident, dat);
       guard.commit();
     }
 
@@ -92,40 +103,45 @@ namespace
                                     file_id const & new_id,
                                     file_delta const & del)
     {
-      transaction_guard guard(app.db);
-      app.db.put_file_version(old_id, new_id, del);
+      transaction_guard guard(db);
+      db.put_file_version(old_id, new_id, del);
       guard.commit();
     }
 
     virtual void consume_revision_data(revision_id const & ident,
                                        revision_data const & dat)
     {
-      transaction_guard guard(app.db);
-      app.db.put_revision(ident, dat);
+      transaction_guard guard(db);
+      db.put_revision(ident, dat);
       guard.commit();
     }
     
     virtual void consume_revision_cert(revision<cert> const & t)
     {
-      transaction_guard guard(app.db);
-      app.db.put_revision_cert(t);
+      transaction_guard guard(db);
+      db.put_revision_cert(t);
       guard.commit();
     }
 
     virtual void consume_public_key(rsa_keypair_id const & ident,
-                                    base64< rsa_pub_key > const & k)
+                                    rsa_pub_key const & k)
     {
-      transaction_guard guard(app.db);
-      app.db.put_key(ident, k);
+      transaction_guard guard(db);
+      db.put_key(ident, k);
       guard.commit();
     }
     
     virtual void consume_key_pair(rsa_keypair_id const & ident,
                                   keypair const & kp)
     {
-      transaction_guard guard(app.db);
-      app.keys.put_key_pair(ident, kp);
-      guard.commit();
+      keys.put_key_pair(ident, kp);
+    }
+
+    virtual void consume_old_private_key(rsa_keypair_id const & ident,
+                                         old_arc4_rsa_priv_key const & k)
+    {
+      rsa_pub_key dummy;
+      keys.migrate_old_key_pair(ident, k, dummy);
     }
   };
 }
@@ -136,11 +152,13 @@ CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
     N_("If no files are provided, the standard input is used."),
     options::opts::none)
 {
-  packet_db_writer dbw(app);
+  database db(app);
+  key_store keys(app);
+  packet_db_writer dbw(db, keys);
   size_t count = 0;
   if (args.empty())
     {
-      count += read_packets(cin, dbw, app);
+      count += read_packets(cin, dbw);
       N(count != 0, F("no packets found on stdin"));
     }
   else
@@ -151,7 +169,7 @@ CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
           data dat;
           read_data(system_path(*i), dat);
           istringstream ss(dat());
-          count += read_packets(ss, dbw, app);
+          count += read_packets(ss, dbw);
         }
       N(count != 0, FP("no packets found in given file",
                        "no packets found in given files",

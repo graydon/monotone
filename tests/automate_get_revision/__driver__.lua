@@ -2,7 +2,6 @@
 mtn_setup()
 
 check(get("expected"))
-check(get("expected2"))
 
 addfile("foo", "blah\n")
 check(mtn("commit", "--date=2005-05-21T12:30:51",
@@ -14,10 +13,8 @@ check(mtn("automate", "get_revision", base), 0, true, false)
 canonicalize("stdout")
 check(samefile("expected", "stdout"))
 
--- should work even if we don't specify the revision
-check(mtn("automate", "get_revision"), 0, true, false)
-canonicalize("stdout")
-check(samefile("expected2", "stdout"))
+-- should error out if we don't specify the revision
+check(mtn("automate", "get_revision"), 1, false, false)
 
 -- ensure that missing revisions fail
 check(mtn("automate", "get_file", string.rep("0", 40)), 1, true, false)

@@ -1,3 +1,5 @@
+// Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
+// This is made available under the GNU GPL v2 or later.
 
 #include "base.hh"
 #include <algorithm>

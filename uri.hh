@@ -25,6 +25,9 @@ struct uri
 void
 parse_uri(std::string const & in, uri & out);
 
+std::string
+urldecode(std::string const & in);
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

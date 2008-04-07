@@ -32,11 +32,8 @@
 #include "commands.hh"
 #include "globish.hh"
 
-// defined in {std,test}_hooks.lua, converted to {std,test}_hooks.c respectively
+// defined in std_hooks.c, generated from std_hooks.lua
 extern char const std_hooks_constant[];
-#ifdef BUILD_UNIT_TESTS
-extern char const test_hooks_constant[];
-#endif
 
 using std::make_pair;
 using std::map;
@@ -67,9 +64,15 @@ extern "C"
     map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(L);
     if (i != map_of_lua_to_app.end())
       {
-        system_path dir = i->second->opts.conf_dir;
-        string confdir = dir.as_external();
-        lua_pushstring(L, confdir.c_str());
+        if (i->second->opts.conf_dir_given
+            || !i->second->opts.no_default_confdir)
+          {
+            system_path dir = i->second->opts.conf_dir;
+            string confdir = dir.as_external();
+            lua_pushstring(L, confdir.c_str());
+          }
+        else
+          lua_pushnil(L);
       }
     else
       lua_pushnil(L);
@@ -87,7 +90,7 @@ get_app_state(lua_State *L)
     return NULL;
 }
 
-lua_hooks::lua_hooks()
+lua_hooks::lua_hooks(app_state * app)
 {
   st = luaL_newstate();
   I(st);
@@ -112,6 +115,8 @@ lua_hooks::lua_hooks()
     if (!run_string(st, disable_dangerous,
                     "<disabled dangerous functions>"))
     throw oops("lua error while disabling existing functions");
+
+  map_of_lua_to_app.insert(make_pair(st, app));
 }
 
 lua_hooks::~lua_hooks()
@@ -123,26 +128,11 @@ lua_hooks::~lua_hooks()
     map_of_lua_to_app.erase(i);
 }
 
-void
-lua_hooks::set_app(app_state *_app)
-{
-  map_of_lua_to_app.insert(make_pair(st, _app));
-}
-
 bool
 lua_hooks::check_lua_state(lua_State * p_st) const
 {
   return (p_st == st);
 }
-
-#ifdef BUILD_UNIT_TESTS
-void
-lua_hooks::add_test_hooks()
-{
-  if (!run_string(st, test_hooks_constant, "<test hooks>"))
-    throw oops("lua error while setting up testing hooks");
-}
-#endif
 
 void
 lua_hooks::add_std_hooks()
@@ -150,21 +140,6 @@ lua_hooks::add_std_hooks()
   if (!run_string(st, std_hooks_constant, "<std hooks>"))
     throw oops("lua error while setting up standard hooks");
 }
-
-void
-lua_hooks::default_rcfilename(system_path & file)
-{
-  map<lua_State*, app_state*>::iterator i = map_of_lua_to_app.find(st);
-  I(i != map_of_lua_to_app.end());
-  file = i->second->opts.conf_dir / "monotonerc";
-}
-
-void
-lua_hooks::workspace_rcfilename(bookkeeping_path & file)
-{
-  file = bookkeeping_root / "monotonerc";
-}
-
 
 void
 lua_hooks::load_rcfile(utf8 const & rc)
@@ -215,6 +190,32 @@ lua_hooks::load_rcfile(any_path const & rc, bool required)
       N(!required, F("rcfile '%s' does not exist") % rc);
       L(FL("skipping nonexistent rcfile '%s'") % rc);
     }
+}
+
+void
+lua_hooks::load_rcfiles(options & opts)
+{
+  // Built-in rc settings are defaults.
+  if (!opts.nostd)
+    add_std_hooks();
+
+  // ~/.monotone/monotonerc overrides that, and
+  // _MTN/monotonerc overrides *that*.
+
+  if (!opts.norc)
+    {
+      if (opts.conf_dir_given || !opts.no_default_confdir)
+        {
+          load_rcfile(opts.conf_dir / "monotonerc", false);
+        }
+      load_rcfile(bookkeeping_root / "monotonerc", false);
+    }
+
+  // Command-line rcfiles override even that.
+
+  for (args_vector::const_iterator i = opts.extra_rcfiles.begin();
+       i != opts.extra_rcfiles.end(); ++i)
+    load_rcfile(*i);
 }
 
 bool
@@ -354,7 +355,7 @@ lua_hooks::hook_ignore_branch(branch_name const & branch)
 static inline bool
 shared_trust_function_body(Lua & ll,
                            set<rsa_keypair_id> const & signers,
-                           hexenc<id> const & id,
+                           hexenc<id> const & hash,
                            cert_name const & name,
                            cert_value const & val)
 {
@@ -372,7 +373,7 @@ shared_trust_function_body(Lua & ll,
 
   bool ok;
   bool exec_ok = ll
-    .push_str(id())
+    .push_str(hash())
     .push_str(name())
     .push_str(val())
     .call(4, 1)
@@ -381,6 +382,17 @@ shared_trust_function_body(Lua & ll,
 
   return exec_ok && ok;
 }
+
+static inline bool
+shared_trust_function_body(Lua & ll,
+                           set<rsa_keypair_id> const & signers,
+                           id const & hash,
+                           cert_name const & name,
+                           cert_value const & val)
+{
+  hexenc<id> hid(encode_hexenc(hash()));
+  return shared_trust_function_body(ll, signers, hid, name, val);
+};
 
 bool
 lua_hooks::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
@@ -394,6 +406,17 @@ lua_hooks::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
 }
 
 bool
+lua_hooks::hook_get_revision_cert_trust(set<rsa_keypair_id> const & signers,
+                                       revision_id const & id,
+                                       cert_name const & name,
+                                       cert_value const & val)
+{
+  Lua ll(st);
+  ll.func("get_revision_cert_trust");
+  return shared_trust_function_body(ll, signers, id.inner(), name, val);
+}
+
+bool
 lua_hooks::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
                                         hexenc<id> const & id,
                                         cert_name const & name,
@@ -402,6 +425,17 @@ lua_hooks::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
   Lua ll(st);
   ll.func("get_manifest_cert_trust");
   return shared_trust_function_body(ll, signers, id, name, val);
+}
+
+bool
+lua_hooks::hook_get_manifest_cert_trust(set<rsa_keypair_id> const & signers,
+                                        manifest_id const & id,
+                                        cert_name const & name,
+                                        cert_value const & val)
+{
+  Lua ll(st);
+  ll.func("get_manifest_cert_trust");
+  return shared_trust_function_body(ll, signers, id.inner(), name, val);
 }
 
 bool
@@ -880,7 +914,7 @@ lua_hooks::hook_note_netsync_revision_received(revision_id const & new_id,
   Lua ll(st);
   ll
     .func("note_netsync_revision_received")
-    .push_str(new_id.inner()())
+    .push_str(encode_hexenc(new_id.inner()()))
     .push_str(rdat.inner()());
 
   ll.push_table();
@@ -930,7 +964,7 @@ lua_hooks::hook_note_netsync_cert_received(revision_id const & rid,
   Lua ll(st);
   ll
     .func("note_netsync_cert_received")
-    .push_str(rid.inner()())
+    .push_str(encode_hexenc(rid.inner()()))
     .push_str(kid())
     .push_str(name())
     .push_str(value())

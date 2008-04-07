@@ -24,6 +24,7 @@
 	}					       \
       };					       \
   }
+#define ENCODING_NOVERIFY(enc) ENCODING(enc)
 
 #define DECORATE(dec)				       \
   namespace hashmap {				       \
@@ -49,8 +50,27 @@
       };					       \
   }
 
+#define ATOMIC_BINARY(ty)			       \
+  namespace hashmap {				       \
+    template<>					       \
+      struct hash<ty>				       \
+      {						       \
+	size_t operator()(ty const & t) const	       \
+	{					       \
+	  return hash<std::string>()(t());	       \
+	}					       \
+      };					       \
+  }
+#define ATOMIC_HOOKED(ty,hook) ATOMIC(ty)
 #define ATOMIC_NOVERIFY(ty) ATOMIC(ty)
 
 #include "vocab_terms.hh"
+
+#undef ENCODING
+#undef ENCODING_NOVERIFY
+#undef DECORATE
+#undef ATOMIC
+#undef ATOMIC_HOOKED
+#undef ATOMIC_NOVERIFY
 
 #endif

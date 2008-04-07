@@ -18,9 +18,11 @@
 
 #include "safe_map.hh"
 #include "parallel_iter.hh"
+#include "roster.hh"
 #include "roster_delta.hh"
 #include "basic_io.hh"
 #include "paths.hh"
+#include "transforms.hh"
 
 using boost::lexical_cast;
 using std::pair;
@@ -317,7 +319,7 @@ namespace
         basic_io::stanza st;
         push_nid(syms::add_file, i->second.first, st);
         push_loc(i->first, st);
-        st.push_hex_pair(syms::content, i->second.second.inner());
+        st.push_binary_pair(syms::content, i->second.second.inner());
         printer.print_stanza(st);
       }
     for (roster_delta_t::deltas_applied_t::const_iterator
@@ -325,7 +327,7 @@ namespace
       {
         basic_io::stanza st;
         push_nid(syms::delta, i->first, st);
-        st.push_hex_pair(syms::content, i->second.inner());
+        st.push_binary_pair(syms::content, i->second.inner());
         printer.print_stanza(st);
       }
     for (roster_delta_t::attrs_cleared_t::const_iterator
@@ -411,7 +413,7 @@ namespace
         std::string s;
         parser.hex(s);
         safe_insert(d.files_added,
-                    make_pair(loc, make_pair(nid, file_id(s))));
+                    make_pair(loc, make_pair(nid, file_id(decode_hexenc(s)))));
       }
     while (parser.symp(syms::delta))
       {
@@ -420,7 +422,7 @@ namespace
         parser.esym(syms::content);
         std::string s;
         parser.hex(s);
-        safe_insert(d.deltas_applied, make_pair(nid, file_id(s)));
+        safe_insert(d.deltas_applied, make_pair(nid, file_id(decode_hexenc(s))));
       }
     while (parser.symp(syms::attr_cleared))
       {

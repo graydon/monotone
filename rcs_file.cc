@@ -33,6 +33,7 @@
 
 #include "rcs_file.hh"
 #include "sanity.hh"
+#include "char_classifiers.hh"
 
 using std::ifstream;
 using std::ios_base;
@@ -235,7 +236,7 @@ get_token(file_source & ist,
       if (i == EOF)
         return TOK_NONE;
       adv(i, line, col);
-      if (!isspace(i))
+      if (!is_space(i))
         break;
       ist.get(c);
       i = ist.peek();
@@ -280,11 +281,11 @@ get_token(file_source & ist,
       while (ist.good()
              && i != ';'
              && i != ':'
-             && !isspace(i))
+             && !is_space(i))
         {
           ist.get(c);
 	  ++col;
-          if (! isdigit(c) && c != '.')
+          if (! is_digit(c) && c != '.')
             saw_idchar = true;
           str += c;
           i = ist.peek();

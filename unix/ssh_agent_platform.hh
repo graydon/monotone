@@ -7,18 +7,21 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
-#include <boost/shared_ptr.hpp>
 #include "../numeric_vocab.hh"
 #include "../netxx/stream.h"
 
 class ssh_agent_platform {
 private:
-  boost::shared_ptr<Netxx::Stream> stream;
+  Netxx::Stream stream;
+  Netxx::socket_type connect();
 
 public:
-  bool connect();
-  bool disconnect();
-  bool connected();
+  // We rely on Netxx::Stream not blowing up if constructed from an
+  // invalid file descriptor, as long as no one actually tries to write()
+  // or read() on it.
+  ssh_agent_platform() : stream(connect()) {}
+  bool connected() { return stream.get_socketfd() != -1; }
+
   void write_data(std::string const & data);
   void read_data(u32 const len, std::string & out);
 };

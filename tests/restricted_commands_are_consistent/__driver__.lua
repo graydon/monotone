@@ -68,7 +68,7 @@ data.both.included = {"foo/foo2", "foo/bar/bar2"}
 data.both.excluded = {"file1", "file2", "foo/foo1", "foo/bar/bar1"}
 
 data.depth = {}
-data.depth.args = {".", "--depth", "1"}
+data.depth.args = {".", "--depth", "2"}
 data.depth.included = {"file1", "file2", "foo/foo1", "foo/foo2"}
 data.depth.excluded = {"foo/bar/bar1", "foo/bar/bar2"}
 

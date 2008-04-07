@@ -14,9 +14,9 @@
 #include "vector.hh"
 #include <sstream>
 
-#include "app_state.hh"
 #include "basic_io.hh"
 #include "cset.hh"
+#include "database.hh"
 #include "platform-wrapped.hh"
 #include "roster.hh"
 #include "revision.hh"
@@ -74,7 +74,7 @@ dump(set<revision_id> const & revids, string & out)
       if (!first)
         out += ", ";
       first = false;
-      out += i->inner()();
+      out += encode_hexenc(i->inner()());
     }
 }
 
@@ -265,8 +265,11 @@ dump(node_t const & n, string & out)
   oss << "attrs:\n" << attr_map_s;
   oss << "type: ";
   if (is_file_t(n))
-    oss << "file\n"
-        << "content: " << downcast_to_file_t(n)->content << '\n';
+    {
+      oss << "file\ncontent: "
+          << downcast_to_file_t(n)->content
+          << '\n';
+    }
   else
     {
       oss << "dir\n";
@@ -1198,14 +1201,14 @@ namespace
   struct true_node_id_source
     : public node_id_source
   {
-    true_node_id_source(app_state & app) : app(app) {}
+    true_node_id_source(database & db) : db(db) {}
     virtual node_id next()
     {
-      node_id n = app.db.next_node_id();
+      node_id n = db.next_node_id();
       I(!temp_node(n));
       return n;
     }
-    app_state & app;
+    database & db;
   };
 
 
@@ -1897,7 +1900,7 @@ namespace {
     cset const & right_cs = edge_changes(i);
 
     I(!null_id(left_rid) && !null_id(right_rid));
-    database::cached_roster left_cached, right_cached;
+    cached_roster left_cached, right_cached;
     db.get_roster(left_rid, left_cached);
     db.get_roster(right_rid, right_cached);
 
@@ -1992,9 +1995,9 @@ mark_roster_with_one_parent(roster_t const & parent,
 // WARNING: this function is not tested directly (no unit tests).  Do not put
 // real logic in it.
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         database & db, node_id_source & nis)
+make_roster_for_revision(database & db, node_id_source & nis,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
   MM(rev);
   MM(new_rid);
@@ -2015,12 +2018,12 @@ make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
 }
 
 void
-make_roster_for_revision(revision_t const & rev, revision_id const & new_rid,
-                         roster_t & new_roster, marking_map & new_markings,
-                         app_state & app)
+make_roster_for_revision(database & db,
+                         revision_t const & rev, revision_id const & new_rid,
+                         roster_t & new_roster, marking_map & new_markings)
 {
-  true_node_id_source nis(app);
-  make_roster_for_revision(rev, new_rid, new_roster, new_markings, app.db, nis);
+  true_node_id_source nis(db);
+  make_roster_for_revision(db, nis, rev, new_rid, new_roster, new_markings);
 }
 
 
@@ -2470,17 +2473,17 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_hex_pair(basic_io::syms::birth, mark.birth_revision.inner());
+  st.push_binary_pair(basic_io::syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_hex_pair(basic_io::syms::path_mark, i->inner());
+    st.push_binary_pair(basic_io::syms::path_mark, i->inner());
 
   if (is_file)
     {
       for (set<revision_id>::const_iterator i = mark.file_content.begin();
            i != mark.file_content.end(); ++i)
-        st.push_hex_pair(basic_io::syms::content_mark, i->inner());
+        st.push_binary_pair(basic_io::syms::content_mark, i->inner());
     }
   else
     I(mark.file_content.empty());
@@ -2490,7 +2493,7 @@ push_marking(basic_io::stanza & st,
     {
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        st.push_hex_triple(basic_io::syms::attr_mark, i->first(), j->inner());
+        st.push_binary_triple(basic_io::syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2506,19 +2509,19 @@ parse_marking(basic_io::parser & pa,
         {
           pa.sym();
           pa.hex(rev);
-          marking.birth_revision = revision_id(rev);
+          marking.birth_revision = revision_id(decode_hexenc(rev));
         }
       else if (pa.symp(basic_io::syms::path_mark))
         {
           pa.sym();
           pa.hex(rev);
-          safe_insert(marking.parent_name, revision_id(rev));
+          safe_insert(marking.parent_name, revision_id(decode_hexenc(rev)));
         }
       else if (pa.symp(basic_io::syms::content_mark))
         {
           pa.sym();
           pa.hex(rev);
-          safe_insert(marking.file_content, revision_id(rev));
+          safe_insert(marking.file_content, revision_id(decode_hexenc(rev)));
         }
       else if (pa.symp(basic_io::syms::attr_mark))
         {
@@ -2527,7 +2530,7 @@ parse_marking(basic_io::parser & pa,
           pa.str(k);
           pa.hex(rev);
           attr_key key = attr_key(k);
-          safe_insert(marking.attrs[key], revision_id(rev));
+          safe_insert(marking.attrs[key], revision_id(decode_hexenc(rev)));
         }
       else break;
     }
@@ -2563,7 +2566,7 @@ roster_t::print_to(basic_io::printer & pr,
           {
             file_t ftmp = downcast_to_file_t(curr);
             st.push_str_pair(basic_io::syms::file, i.path());
-            st.push_hex_pair(basic_io::syms::content, ftmp->content.inner());
+            st.push_binary_pair(basic_io::syms::content, ftmp->content.inner());
           }
       }
 
@@ -2662,7 +2665,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.esym(basic_io::syms::ident);
           pa.str(ident);
           n = file_t(new file_node(read_num(ident),
-                                   file_id(content)));
+                                   file_id(decode_hexenc(content))));
         }
       else if (pa.symp(basic_io::syms::dir))
         {
@@ -2804,7 +2807,7 @@ static void
 make_fake_marking_for(roster_t const & r, marking_map & mm)
 {
   mm.clear();
-  revision_id rid(string("0123456789abcdef0123456789abcdef01234567"));
+  revision_id rid(decode_hexenc("0123456789abcdef0123456789abcdef01234567"));
   for (node_map::const_iterator i = r.all_nodes().begin(); i != r.all_nodes().end();
        ++i)
     {
@@ -3021,7 +3024,7 @@ file_id new_ident(randomizer & rng)
   tmp.reserve(constants::idlen);
   for (unsigned i = 0; i < constants::idlen; ++i)
     tmp += tab[rng.uniform(tab.size())];
-  return file_id(tmp);
+  return file_id(decode_hexenc(tmp));
 }
 
 path_component new_component(randomizer & rng)
@@ -3288,7 +3291,7 @@ check_sane_roster_do_tests(int to_run, int& total)
   file_path fp_foo_bar = file_path_internal("foo/bar");
   file_path fp_foo_baz = file_path_internal("foo/baz");
 
-  node_id nid_f = r.create_file_node(file_id(string("0000000000000000000000000000000000000000")),
+  node_id nid_f = r.create_file_node(file_id(decode_hexenc("0000000000000000000000000000000000000000")),
                                      nis);
   // root must be a directory, not a file
   MAYBE(UNIT_TEST_CHECK_THROW(r.attach_node(nid_f, fp_), logic_error));
@@ -3496,10 +3499,10 @@ namespace
     return s;
   }
 
-  revision_id old_rid(string("0000000000000000000000000000000000000000"));
-  revision_id left_rid(string("1111111111111111111111111111111111111111"));
-  revision_id right_rid(string("2222222222222222222222222222222222222222"));
-  revision_id new_rid(string("4444444444444444444444444444444444444444"));
+  revision_id old_rid(string(constants::idlen_bytes, '\x00'));
+  revision_id left_rid(string(constants::idlen_bytes, '\x11'));
+  revision_id right_rid(string(constants::idlen_bytes, '\x22'));
+  revision_id new_rid(string(constants::idlen_bytes, '\x44'));
 
 ////////////////
 // These classes encapsulate information about all the different scalars
@@ -3524,8 +3527,10 @@ namespace
 
   struct a_scalar
   {
+    // Must use std::set in arguments to avoid "changes meaning" errors.
     virtual void set(revision_id const & scalar_origin_rid,
-                     scalar_val val, set<revision_id> const & this_scalar_mark,
+                     scalar_val val,
+                     std::set<revision_id> const & this_scalar_mark,
                      roster_t & roster, marking_map & markings)
       = 0;
     virtual ~a_scalar() {};
@@ -3571,7 +3576,7 @@ namespace
                          roster_t & roster, marking_map & markings)
     {
       make_file(scalar_origin_rid, nid,
-                file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")),
+                file_id(string(constants::idlen_bytes, '\xaa')),
                 roster, markings);
     }
     static void make_file(revision_id const & scalar_origin_rid, node_id nid,
@@ -3609,13 +3614,13 @@ namespace
     {
       safe_insert(values,
                   make_pair(scalar_a,
-                            file_id(string("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))));
+                            file_id(string(constants::idlen_bytes, '\xaa'))));
       safe_insert(values,
                   make_pair(scalar_b,
-                            file_id(string("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"))));
+                            file_id(string(constants::idlen_bytes, '\xbb'))));
       safe_insert(values,
                   make_pair(scalar_c,
-                            file_id(string("cccccccccccccccccccccccccccccccccccccccc"))));
+                            file_id(string(constants::idlen_bytes, '\xcc'))));
     }
     virtual void
     set(revision_id const & scalar_origin_rid, scalar_val val,
@@ -4489,8 +4494,8 @@ UNIT_TEST(roster, write_roster)
   file_path fo = file_path_internal("fo");
   file_path xx = file_path_internal("xx");
 
-  file_id f1(string("1111111111111111111111111111111111111111"));
-  revision_id rid(string("1234123412341234123412341234123412341234"));
+  file_id f1(string(constants::idlen_bytes, '\x11'));
+  revision_id rid(string(constants::idlen_bytes, '\x44'));
   node_id nid;
 
   // if adding new nodes, add them at the end to keep the node_id order
@@ -4577,46 +4582,46 @@ UNIT_TEST(roster, write_roster)
                       "\n"
                       "      dir \"\"\n"
                       "    ident \"1\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"fo\"\n"
                       "    ident \"4\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"foo\"\n"
                       "    ident \"2\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"foo/ang\"\n"
                       "    ident \"6\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "        file \"foo/bar\"\n"
                       "     content [1111111111111111111111111111111111111111]\n"
                       "       ident \"5\"\n"
                       "        attr \"fascist\" \"tidiness\"\n"
-                      "       birth [1234123412341234123412341234123412341234]\n"
-                      "   path_mark [1234123412341234123412341234123412341234]\n"
-                      "content_mark [1234123412341234123412341234123412341234]\n"
-                      "   attr_mark \"fascist\" [1234123412341234123412341234123412341234]\n"
+                      "       birth [4444444444444444444444444444444444444444]\n"
+                      "   path_mark [4444444444444444444444444444444444444444]\n"
+                      "content_mark [4444444444444444444444444444444444444444]\n"
+                      "   attr_mark \"fascist\" [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "         dir \"foo/zoo\"\n"
                       "       ident \"7\"\n"
                       "dormant_attr \"regime\"\n"
-                      "       birth [1234123412341234123412341234123412341234]\n"
-                      "   path_mark [1234123412341234123412341234123412341234]\n"
-                      "   attr_mark \"regime\" [1234123412341234123412341234123412341234]\n"
+                      "       birth [4444444444444444444444444444444444444444]\n"
+                      "   path_mark [4444444444444444444444444444444444444444]\n"
+                      "   attr_mark \"regime\" [4444444444444444444444444444444444444444]\n"
                       "\n"
                       "      dir \"xx\"\n"
                       "    ident \"3\"\n"
                       "     attr \"say\" \"hello\"\n"
-                      "    birth [1234123412341234123412341234123412341234]\n"
-                      "path_mark [1234123412341234123412341234123412341234]\n"
-                      "attr_mark \"say\" [1234123412341234123412341234123412341234]\n"
+                      "    birth [4444444444444444444444444444444444444444]\n"
+                      "path_mark [4444444444444444444444444444444444444444]\n"
+                      "attr_mark \"say\" [4444444444444444444444444444444444444444]\n"
                       ));
     MM(expected);
 
@@ -4631,8 +4636,8 @@ UNIT_TEST(roster, check_sane_against)
   file_path foo = file_path_internal("foo");
   file_path bar = file_path_internal("bar");
 
-  file_id f1(string("1111111111111111111111111111111111111111"));
-  revision_id rid(string("1234123412341234123412341234123412341234"));
+  file_id f1(decode_hexenc("1111111111111111111111111111111111111111"));
+  revision_id rid(decode_hexenc("1234123412341234123412341234123412341234"));
   node_id nid;
 
   {
@@ -4931,7 +4936,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_ids)
   L(FL("TEST: begin checking unification of rosters (end to end, ids)"));
   revision_id has_rid = left_rid;
   revision_id has_not_rid = right_rid;
-  file_id my_fid(string("9012901290129012901290129012901290129012"));
+  file_id my_fid(decode_hexenc("9012901290129012901290129012901290129012"));
 
   testing_node_id_source nis;
 
@@ -5010,7 +5015,7 @@ UNIT_TEST(roster, unify_rosters_end_to_end_attr_corpses)
   L(FL("TEST: begin checking unification of rosters (end to end, attr corpses)"));
   revision_id first_rid = left_rid;
   revision_id second_rid = right_rid;
-  file_id my_fid(string("9012901290129012901290129012901290129012"));
+  file_id my_fid(decode_hexenc("9012901290129012901290129012901290129012"));
 
   testing_node_id_source nis;
 

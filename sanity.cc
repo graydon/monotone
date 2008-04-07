@@ -189,28 +189,34 @@ sanity::do_format(format_base const & fmt, char const * file, int line)
 bool
 sanity::debug_p()
 {
-  I(imp);
+  if (!imp)
+    throw std::logic_error("sanity::debug_p called "
+                            "before sanity::initialize");
   return imp->debug;
 }
 
 bool
 sanity::quiet_p()
 {
-  I(imp);
+  if (!imp)
+    throw std::logic_error("sanity::quiet_p called "
+                            "before sanity::initialize");
   return imp->quiet;
 }
 
-// These functions can be called before sanity::initialize() if there
-// is a bug, and therefore must not use I() if imp is unavailable, as
-// that will cause infinite recursion (invariant_failure calls log).
+bool
+sanity::reallyquiet_p()
+{
+  if (!imp)
+    throw std::logic_error("sanity::reallyquiet_p called "
+                            "before sanity::initialize");
+  return imp->reallyquiet;
+}
 
 void
 sanity::log(plain_format const & fmt,
             char const * file, int line)
 {
-  if (!imp)
-    throw std::logic_error("sanity::log called before sanity::initialize");
-
   string str = do_format(fmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -222,17 +228,14 @@ sanity::log(plain_format const & fmt,
   copy(str.begin(), str.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
     imp->logbuf.push_back('\n');
-  if (imp->debug)
-    inform_log(str);
+
+  inform_log(str);
 }
 
 void
 sanity::progress(i18n_format const & i18nfmt,
                  char const * file, int line)
 {
-  if (!imp)
-    throw std::logic_error("sanity::progress called before sanity::initialize");
-
   string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -244,17 +247,14 @@ sanity::progress(i18n_format const & i18nfmt,
   copy(str.begin(), str.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
     imp->logbuf.push_back('\n');
-  if (! imp->quiet)
-    inform_message(str);
+
+  inform_message(str);
 }
 
 void
 sanity::warning(i18n_format const & i18nfmt,
                 char const * file, int line)
 {
-  if (!imp)
-    throw std::logic_error("sanity::warning called before sanity::initialize");
-
   string str = do_format(i18nfmt, file, line);
 
   if (str.size() > constants::log_line_sz)
@@ -267,8 +267,8 @@ sanity::warning(i18n_format const & i18nfmt,
   copy(str2.begin(), str2.end(), back_inserter(imp->logbuf));
   if (str[str.size() - 1] != '\n')
     imp->logbuf.push_back('\n');
-  if (! imp->reallyquiet)
-    inform_warning(str);
+
+  inform_warning(str);
 }
 
 void
@@ -276,8 +276,12 @@ sanity::naughty_failure(char const * expr, i18n_format const & explain,
                         char const * file, int line)
 {
   string message;
-  log(FL("%s:%d: usage constraint '%s' violated") % file % line % expr,
-      file, line);
+  if (!imp)
+    throw std::logic_error("sanity::naughty_failure occured "
+                            "before sanity::initialize");
+  if (imp->debug)
+    log(FL("%s:%d: usage constraint '%s' violated") % file % line % expr,
+        file, line);
   prefix_lines_with(_("misuse: "), do_format(explain, file, line), message);
   gasp();
   throw informative_failure(message);
@@ -288,8 +292,12 @@ sanity::error_failure(char const * expr, i18n_format const & explain,
                       char const * file, int line)
 {
   string message;
-  log(FL("%s:%d: detected error '%s' violated") % file % line % expr,
-      file, line);
+  if (!imp)
+    throw std::logic_error("sanity::error_failure occured "
+                            "before sanity::initialize");
+  if (imp->debug)
+    log(FL("%s:%d: detected error '%s' violated") % file % line % expr,
+        file, line);
   gasp();
   prefix_lines_with(_("error: "), do_format(explain, file, line), message);
   throw informative_failure(message);
@@ -299,7 +307,11 @@ void
 sanity::invariant_failure(char const * expr, char const * file, int line)
 {
   char const * pattern = N_("%s:%d: invariant '%s' violated");
-  log(FL(pattern) % file % line % expr, file, line);
+  if (!imp)
+    throw std::logic_error("sanity::invariant_failure occured "
+                            "before sanity::initialize");
+  if (imp->debug)
+    log(FL(pattern) % file % line % expr, file, line);
   gasp();
   throw logic_error((F(pattern) % file % line % expr).str());
 }
@@ -313,8 +325,12 @@ sanity::index_failure(char const * vec_expr,
 {
   char const * pattern
     = N_("%s:%d: index '%s' = %d overflowed vector '%s' with size %d");
-  log(FL(pattern) % file % line % idx_expr % idx % vec_expr % sz,
-      file, line);
+  if (!imp)
+    throw std::logic_error("sanity::index_failure occured "
+                            "before sanity::initialize");
+  if (imp->debug)
+    log(FL(pattern) % file % line % idx_expr % idx % vec_expr % sz,
+        file, line);
   gasp();
   throw logic_error((F(pattern)
                      % file % line % idx_expr % idx % vec_expr % sz).str());

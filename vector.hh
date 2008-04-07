@@ -79,6 +79,18 @@ inline T const & checked_index(std::vector<T, QA(T)> const & v,
 
 #define idx(v, i) checked_index((v), (i), #v, #i, __FILE__, __LINE__)
 
+template <typename T> void
+dump(std::vector<T> const & vec, std::string & out)
+{
+  for (size_t i = 0; i < vec.size(); ++i)
+    {
+      T const & val = vec[i];
+      std::string msg;
+      dump(val, msg);
+      out += msg;
+    }
+};
+
 // Local Variables:
 // mode: C++
 // c-file-style: "gnu"

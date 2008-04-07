@@ -111,6 +111,9 @@ end
 function netsync.internal.run(oper, pat, opts)
   local srv = netsync.start(opts)
   if type(opts) == "table" then
+    if type(pat) ~= "table" then
+       err("first argument to netsync."..oper.." should be a table when second argument is present")
+    end
     for k, v in pairs(opts) do
       table.insert(pat, v)
     end

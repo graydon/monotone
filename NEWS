@@ -1,4 +1,69 @@
-??? ??? ?? ??:??:?? UTC 2008
+??? ??? ?? ??:??:?? UTC ????
+
+        0.40 release.
+
+        Changes
+
+        - The vim merger has been improved and now uses diff3 to merge
+          non-conflict changes automatically before executing vimdiff.
+
+        - Values used with the --depth option used to control recursion with
+          node and path restrictions have changed. Using --depth=0 now means
+          exactly the specified directories and *not* their children. Using
+          --depth=1 now means the specified directories and their immediate
+          children. Previously --depth=0 included children and --depth=1
+          included grandchildren and it was not possible to exclude children
+          using --depth.  The simple fix for anyone using --depth is to add 1 to
+          the values they are using.
+
+        - Document that ssh: and file: sync transports are not supported on
+          native Win32.
+
+        Bugs fixed
+
+        - `commit' now uses keydir specified in _MTN/options
+
+        - duplicate name conflicts now show a proper error message, even if
+          a parent directory got renamed as well. In that case, the error
+          message now shows both names for the directory and the offending
+          file name.
+
+        New features
+
+        - The bare parent selector 'p:' can now be used in a workspace to
+          query the parent(s) of the workspace' base revision. This is
+          equivalent to "mtn au select p:`mtn au get_base_workspace_revision`".
+
+        - push, pull, and sync can be run with a single argument, which looks
+          like
+             mtn://hostname?include_pattenr/-exclude_pattern
+          or
+             mtn://hostname?include=include_pattern/exclude=exclude_pattern
+
+        Internal
+
+        - Update Botan to 1.7.4.
+
+        - Usage of the internal app_state object has been reduced, objects
+          are better encapsulated now. The database interface has been
+          enhanced to ease reduction of locking contention in the future.
+
+        - Merged the two indexes on revision_certs into a single one.
+
+        - The database schema has been changed so that it now stores
+          binary SHA1 hashes rather than their hexadecimal encoding,
+          in most places where these are used.  This reduces the
+          database size and speeds up operations a little.
+
+          Users who like to fiddle with the database directly are
+          advised to use the sqlite functions hex() and quote() to
+          print columns that store hashes (including IDs), and the
+          hexadecimal literal notation x'DEADBEEF' to input them.
+
+        - Binary SHA1 hashes are also used for most in-memory
+          processing, avoiding conversions and saving memory.
+
+Mon Feb 25 15:55:36 UTC 2008
 
         0.39 release.
 
@@ -12,12 +77,26 @@
           which returns all database variables similar to 'list vars' in
           basic_io format, optionally restricted by domain.
 
+        - The REVID argument of 'automate get_revision' is now mandatory;
+          to retrieve the current workspace revision, use the new command
+          'automate get_current_revision'
+
         - messages describing conflicts from all of the various merge commands
           have been reworked and should be much more informative.
 
         - mtn show_conflicts now outputs much more detailed and descriptive
           messages, however it may report content conflicts that will be
           resolved automatically by the line merger.
+
+        - The internal copy of PCRE has been updated to version 7.6.
+          If you use the '--with-system-pcre' configure switch, it
+          will insist on at least this version.
+
+        - "emacs" has been removed from the list of dumb terminal types;
+          tickers should now default to --ticker=count with emacs terminals
+
+        - extensive section on merge conflicts and ways to resolve them
+          added to the manual.
 
         Bugs fixed
 
@@ -27,11 +106,13 @@
         - the path handling of 'mtn revert' was improved and fixed two bugs:
           now a restricted revert on a node "dir1/file1" reverts only the
           content changes in "file1", but leaves renames of any of its
-          ancestor nodes untouched; furthermore, if "dir0/" was renamed to 
+          ancestor nodes untouched; furthermore, if "dir0/" was renamed to
           "dir1" and "dir1/file1" was dropped, mtn now re-creates file1 at the
           proper place ("dir1/") and leaves no missing files around because
           of the non-existing "dir0/".
-     
+
+        - a few changes needed to build with gcc 4.3.
+
         New features
 
         - 'automate drop_db_variables' which drops one database variable
@@ -44,6 +125,9 @@
           In addition, 'automate inventory' no longer recurses into ignored
           directories. The typical case of listing files that need attention
           now runs at least four times faster.
+
+        - 'automate get_current_revision' which outputs the revision text of
+           changes in the current workspace
 
 Wed Dec 12 21:21:15 UTC 2007
 

@@ -134,26 +134,10 @@ merkle_node::get_raw_slot(size_t slot, id & i) const
 }
 
 void
-merkle_node::get_hex_slot(size_t slot, hexenc<id> & val) const
-{
-  id i;
-  get_raw_slot(slot, i);
-  encode_hexenc(i, val);
-}
-
-void
 merkle_node::set_raw_slot(size_t slot, id const & val)
 {
   check_invariants();
   idx(this->slots, slot) = val;
-}
-
-void
-merkle_node::set_hex_slot(size_t slot, hexenc<id> const & val)
-{
-  id i;
-  decode_hexenc(val, i);
-  set_raw_slot(slot, i);
 }
 
 void

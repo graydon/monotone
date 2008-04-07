@@ -1,5 +1,17 @@
+// Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
+// This is made available under the GNU GPL v2 or later.
+
 #ifndef __OPTION_HH__
 #define __OPTION_HH__
+
+/*
+ * Infrastructure for parsing options.
+ *
+ * This can be used on its own with concrete_option_set::operator()(), or
+ * used with something like options.{cc,hh} and option_set. The former is
+ * very simple to do, while the latter should allow slightly better code
+ * structure for more involved uses.
+ */
 
 #include <stdexcept>
 #include <map>

@@ -17,7 +17,9 @@
 #include "enumerator.hh"
 #include "revision.hh"
 #include "vocab.hh"
-#include "app_state.hh"
+#include "database.hh"
+#include "project.hh"
+#include "transforms.hh"
 
 using std::make_pair;
 using std::map;
@@ -26,31 +28,14 @@ using std::pair;
 using std::set;
 using std::vector;
 
-revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
-                                         app_state & app,
-                                         set<revision_id> const & initial,
-                                         set<revision_id> const & terminal)
-  : cb(cb), app(app), terminal_nodes(terminal)
-{
-  for (set<revision_id>::const_iterator i = initial.begin();
-       i != initial.end(); ++i)
-    revs.push_back(*i);
-  load_graphs();
-}
-
-revision_enumerator::revision_enumerator(enumerator_callbacks & cb,
-                                         app_state & app)
-  : cb(cb), app(app)
+revision_enumerator::revision_enumerator(project_t & project,
+                                         enumerator_callbacks & cb)
+  : project(project), cb(cb)
 {
   revision_id root;
   revs.push_back(root);
-  load_graphs();
-}
 
-void
-revision_enumerator::load_graphs()
-{
-  app.db.get_revision_ancestry(graph);
+  project.db.get_revision_ancestry(graph);
   for (multimap<revision_id, revision_id>::const_iterator i = graph.begin();
        i != graph.end(); ++i)
     {
@@ -73,7 +58,6 @@ revision_enumerator::get_revision_parents(revision_id const & child,
 	}
     }
 }
-
 
 bool
 revision_enumerator::all_parents_enumerated(revision_id const & child)
@@ -118,7 +102,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
 
   revision_t rs;
   MM(rs);
-  app.db.get_revision(r, rs);
+  project.db.get_revision(r, rs);
 
   for (edge_map::const_iterator i = rs.edges.begin();
        i != rs.edges.end(); ++i)
@@ -182,7 +166,7 @@ revision_enumerator::files_for_revision(revision_id const & r,
 
 void
 revision_enumerator::note_cert(revision_id const & rid,
-			       hexenc<id> const & cert_hash)
+			       id const & cert_hash)
 {
   revision_certs.insert(make_pair(rid, cert_hash));
 }
@@ -190,11 +174,11 @@ revision_enumerator::note_cert(revision_id const & rid,
 
 void
 revision_enumerator::get_revision_certs(revision_id const & rid,
-					vector<hexenc<id> > & hashes)
+					vector<id> & hashes)
 {
   hashes.clear();
   bool found_one = false;
-  typedef multimap<revision_id, hexenc<id> >::const_iterator ci;
+  typedef multimap<revision_id, id>::const_iterator ci;
   pair<ci,ci> range = revision_certs.equal_range(rid);
   for (ci i = range.first; i != range.second; ++i)
     {
@@ -203,9 +187,7 @@ revision_enumerator::get_revision_certs(revision_id const & rid,
 	hashes.push_back(i->second);
     }
   if (!found_one)
-    {
-      app.get_project().get_revision_cert_hashes(rid, hashes);
-    }
+    project.get_revision_cert_hashes(rid, hashes);
 }
 
 void
@@ -252,7 +234,8 @@ revision_enumerator::step()
           if (cb.process_this_rev(r))
             {
               L(FL("revision_enumerator::step expanding "
-                  "contents of rev '%d'\n") % r);
+                   "contents of rev '%s'")
+                % r);
 
               // The rev's files and fdeltas
               {
@@ -296,9 +279,9 @@ revision_enumerator::step()
             }
 
           // Queue up some or all of the rev's certs
-          vector<hexenc<id> > hashes;
+          vector<id> hashes;
           get_revision_certs(r, hashes);
-          for (vector<hexenc<id> >::const_iterator i = hashes.begin();
+          for (vector<id>::const_iterator i = hashes.begin();
                i != hashes.end(); ++i)
             {
               if (cb.queue_this_cert(*i))

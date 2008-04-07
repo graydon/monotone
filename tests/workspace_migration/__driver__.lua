@@ -48,9 +48,9 @@ local workspace_sets = {
 
 function check_workspace_matches_current(dir, refdir)
    check(samefile("nonsense-options", dir.."/_MTN/options"))
-   check(indir(refdir, mtn("automate", "get_revision")), 0, true, false)
+   check(indir(refdir, mtn("automate", "get_current_revision")), 0, true, false)
    rename("stdout", "current-rev")
-   check(indir(dir, mtn("automate", "get_revision")), 0, true, false)
+   check(indir(dir, mtn("automate", "get_current_revision")), 0, true, false)
    check(samefile("stdout", "current-rev"))
    -- and the log file
    check(samefile(dir .. "/_MTN/log", refdir .. "/_MTN/log"))

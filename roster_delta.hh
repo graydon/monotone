@@ -12,8 +12,7 @@
 // This file contains "diff"/"patch" code that operates directly on rosters
 // (with their associated markings).
 
-#include "vocab.hh"
-#include "roster.hh"
+#include "rev_types.hh"
 
 void
 delta_rosters(roster_t const & from, marking_map const & from_markings,
