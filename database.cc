@@ -3188,7 +3188,7 @@ database::complete(string const & partial,
   completions.clear();
   query q("SELECT id FROM revisions WHERE ");
 
-  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3204,7 +3204,7 @@ database::complete(string const & partial,
   completions.clear();
 
   query q("SELECT id FROM files WHERE ");
-  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3213,7 +3213,7 @@ database::complete(string const & partial,
   res.clear();
 
   q = query("SELECT id FROM file_deltas WHERE ");
-  imp->add_prefix_matching_constraint("id", partial, q);
+  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3228,7 +3228,7 @@ database::complete(string const & partial,
   completions.clear();
   query q("SELECT hash, id FROM public_keys WHERE ");
 
-  imp->add_prefix_matching_constraint("hash", partial, q);
+  imp->add_prefix_matching_constraint("hash", decode_hexenc(partial), q);
   imp->fetch(res, 2, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
