@@ -36,7 +36,7 @@ Fri Apr 11 22:50:44 UTC 2008
 
         - push, pull, and sync can be run with a single argument, which looks
           like
-             mtn://hostname?include_pattenr/-exclude_pattern
+             mtn://hostname?include_pattern/-exclude_pattern
           or
              mtn://hostname?include=include_pattern/exclude=exclude_pattern
 
