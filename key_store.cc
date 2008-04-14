@@ -438,6 +438,32 @@ void
 key_store::cache_decrypted_key(const rsa_keypair_id & id)
 {
   signing_key = id;
+
+  //grab the monotone public key as an RSA_PublicKey
+  keypair key;
+  get_key_pair(id, key);
+  SecureVector<Botan::byte> pub_block;
+  pub_block.set(reinterpret_cast<Botan::byte const *>((key.pub)().data()),
+                (key.pub)().size());
+  L(FL("make_signature: building %d-byte pub key") % pub_block.size());
+  shared_ptr<X509_PublicKey> x509_key =
+    shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
+  shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+
+  if (!pub_key)
+    throw informative_failure("Failed to get monotone RSA public key");
+  
+  ssh_agent & agent = s->get_agent();
+  vector<RSA_PublicKey> ssh_keys = agent.get_keys();
+  for (vector<RSA_PublicKey>::const_iterator
+         si = ssh_keys.begin(); si != ssh_keys.end(); ++si) {
+    if ((*pub_key).get_e() == (*si).get_e()
+        && (*pub_key).get_n() == (*si).get_n()) {
+      L(FL("ssh-agent has key loaded, skipping internal cache"));
+      return;
+    }
+  }
+
   if (s->lua.hook_persist_phrase_ok())
     s->decrypt_private_key(id);
 }
