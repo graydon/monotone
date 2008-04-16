@@ -5159,8 +5159,8 @@ $ mt complete revision 01f
 @end group
 @end smallexample
 
-@item mtn diff [--unified] [--show-encloser]
-@itemx mtn diff --context [--show-encloser]
+@item mtn diff [--unified] [--no-show-encloser]
+@itemx mtn diff --context [--no-show-encloser]
 @itemx mtn diff --external [--diff-args=@var{argstring}]
 @itemx mtn diff @var{pathname...}
 @itemx mtn diff --revision=@var{id}
@@ -5196,7 +5196,7 @@ Specifying only the pathname "." will restrict @command{diff} to files
 changed within the current subdirectory of the workspace.
 
 The output format of @command{diff} is controlled by the options
-@option{--unified}, @option{--context}, @option{--show-encloser}, and
+@option{--unified}, @option{--context}, @option{--no-show-encloser}, and
 @option{--external}.  By default, monotone uses its built-in diff
 algorithm to produce a listing in ``unified diff'' format (analogous
 to running the program @command{diff @option{-u}}); you can also explicitly
@@ -5206,9 +5206,9 @@ which you request by specifying @option{--context}.  The short options
 that @command{diff} accepts for these modes, @option{-u} and
 @option{-c}, also work.
 
-In either of these modes, you can request that monotone print the name
-of the top-level code construct that encloses each ``hunk'' of
-changes, with @option{--show-encloser}.  The options that
+In either of these modes, monotone prints the name of the top-level code
+construct that encloses each ``hunk'' of changes, unless suppressed with
+the @option{--no-show-encloser}.  The options that
 @command{diff} accepts for this mode, @option{-p} and
 @option{--show-c-function}, also work.  Monotone finds the enclosing
 construct by scanning backward from the first changed line in each
@@ -9289,8 +9289,8 @@ customisation of the way file differences are shown.
 @ftable @code
 @item get_encloser_pattern (@var{file_path})
 
-Called for each file when @command{diff} is given the
-@option{--show-encloser} option (and @emph{not} the
+Called for each file unless @command{diff} is given the
+@option{--no-show-encloser} option (or the
 @option{--external} option).  @var{file_path} is the pathname of the
 file that is being diffed.  The hook should return a string constant
 containing a regular expression; this regular expression will be used
@@ -11068,8 +11068,8 @@ Replies and further discussion concerning this email can be found in the  @uref{
 
 Monotone expects user-provided regular expressions in
 @file{.mtn-ignore} files and as the result of the
-@code{get_encloser_pattern} Lua hook (for the @option{--show-encloser}
-option to @command{diff}).  User-written Lua hooks may also use the
+@code{get_encloser_pattern} Lua hook (for the @command{diff} command).
+User-written Lua hooks may also use the
 function @code{regex.search} as they see fit.  All these regular
 expressions should be written with the same syntax, which is that
 expected by the Perl-Compatible Regular Expression library (PCRE).
