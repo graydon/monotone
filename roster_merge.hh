@@ -11,6 +11,7 @@
 // PURPOSE.
 
 #include "rev_types.hh"
+#include "database.hh"
 #include "diff_patch.hh"
 #include "roster.hh" // needs full definition of roster_t available
 
@@ -155,30 +156,46 @@ struct roster_merge_result
 
   void report_missing_root_conflicts(roster_t const & left,
                                      roster_t const & right,
-                                     content_merge_adaptor & adaptor) const;
+                                     content_merge_adaptor & adaptor,
+                                     bool const basic_io,
+                                     std::ostream & output) const;
   void report_invalid_name_conflicts(roster_t const & left,
                                      roster_t const & right,
-                                     content_merge_adaptor & adaptor) const;
+                                     content_merge_adaptor & adaptor,
+                                     bool const basic_io,
+                                     std::ostream & output) const;
   void report_directory_loop_conflicts(roster_t const & left,
                                        roster_t const & right,
-                                       content_merge_adaptor & adaptor) const;
+                                       content_merge_adaptor & adaptor,
+                                       bool const basic_io,
+                                       std::ostream & output) const;
 
   void report_orphaned_node_conflicts(roster_t const & left,
                                       roster_t const & right,
-                                      content_merge_adaptor & adaptor) const;
+                                      content_merge_adaptor & adaptor,
+                                      bool const basic_io,
+                                      std::ostream & output) const;
   void report_multiple_name_conflicts(roster_t const & left,
                                       roster_t const & right,
-                                      content_merge_adaptor & adaptor) const;
+                                      content_merge_adaptor & adaptor,
+                                      bool const basic_io,
+                                      std::ostream & output) const;
   void report_duplicate_name_conflicts(roster_t const & left,
                                        roster_t const & right,
-                                       content_merge_adaptor & adaptor) const;
+                                       content_merge_adaptor & adaptor,
+                                       bool const basic_io,
+                                       std::ostream & output) const;
 
   void report_attribute_conflicts(roster_t const & left,
                                   roster_t const & right,
-                                  content_merge_adaptor & adaptor) const;
+                                  content_merge_adaptor & adaptor,
+                                  bool const basic_io,
+                                  std::ostream & output) const;
   void report_file_content_conflicts(roster_t const & left,
                                      roster_t const & right,
-                                     content_merge_adaptor & adaptor) const;
+                                     content_merge_adaptor & adaptor,
+                                     bool const basic_io,
+                                     std::ostream & output) const;
 
   void clear();
 };

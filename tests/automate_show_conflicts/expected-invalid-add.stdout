@@ -1,0 +1,9 @@
+    left [507f1209e78415722129e65633a8d6a9dd6003f1]
+   right [cdf9a4171d1d386f9ecb83218a11df6c5fa75c6c]
+ancestor [36e6935d3fddf349ef829125e8b6d41ea85d1db8]
+
+     conflict "invalid name"
+    left_type "pivoted root"
+ancestor_name "foo"
+   right_type "added directory"
+   right_name "foo/_MTN"

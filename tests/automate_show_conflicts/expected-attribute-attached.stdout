@@ -1,0 +1,27 @@
+    left [febd58929375e5820fb73dd258d3f53d77014aa9]
+   right [feec4de91f4698bc77f1b50c82ee4513cc47ae8f]
+ancestor [c79cbcfb99f7a5e547815669b150dd3d9a28a598]
+
+        conflict "attribute"
+       node_type "file"
+       attr_name "attr1"
+   ancestor_name "foo"
+ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+       left_name "foo"
+    left_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+ left_attr_value "valueX"
+      right_name "foo"
+   right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+right_attr_value "valueZ"
+
+        conflict "attribute"
+       node_type "file"
+       attr_name "attr2"
+   ancestor_name "foo"
+ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+       left_name "foo"
+    left_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+ left_attr_value "valueY"
+      right_name "foo"
+   right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+right_attr_state "dropped"

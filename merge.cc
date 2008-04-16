@@ -1,4 +1,5 @@
-// Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
+// Copyright (C) 2008 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
 // greater. See the accompanying file COPYING for details.
@@ -8,6 +9,7 @@
 // PURPOSE.
 
 #include "base.hh"
+#include <iostream>
 #include <set>
 
 #include <boost/shared_ptr.hpp>
@@ -141,16 +143,16 @@ resolve_merge_conflicts(lua_hooks & lua,
 
   if (result.has_non_content_conflicts())
     {
-      result.report_missing_root_conflicts(left_roster, right_roster, adaptor);
-      result.report_invalid_name_conflicts(left_roster, right_roster, adaptor);
-      result.report_directory_loop_conflicts(left_roster, right_roster, adaptor);
+      result.report_missing_root_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_invalid_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_directory_loop_conflicts(left_roster, right_roster, adaptor, false, std::cout);
 
-      result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor);
-      result.report_multiple_name_conflicts(left_roster, right_roster, adaptor);
-      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor);
+      result.report_orphaned_node_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_multiple_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
 
-      result.report_attribute_conflicts(left_roster, right_roster, adaptor);
-      result.report_file_content_conflicts(left_roster, right_roster, adaptor);
+      result.report_attribute_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_file_content_conflicts(left_roster, right_roster, adaptor, false, std::cout);
     }
   else if (result.has_content_conflicts())
     {
@@ -166,7 +168,7 @@ resolve_merge_conflicts(lua_hooks & lua,
       if (remaining > 0)
         {
           P(F("%d content conflicts require user intervention") % remaining);
-          result.report_file_content_conflicts(left_roster, right_roster, adaptor);
+          result.report_file_content_conflicts(left_roster, right_roster, adaptor, false, std::cout);
 
           try_to_merge_files(lua, left_roster, right_roster,
                              result, adaptor, user_merge);

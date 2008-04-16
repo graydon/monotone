@@ -1,0 +1,15 @@
+    left [1fc2275efef8645a25e267ae47686e57e50ca1e1]
+   right [497d6e99c8b79ef5848aa862154f496432f07709]
+ancestor [680280e4dcc9fcf60721e6ac9157d98ac5f94c37]
+
+        conflict "duplicate name"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [918f3642b57a5e2dd13ee874e3dc2518a53ab4b4]
+       left_name "abc"
+    left_file_id [918f3642b57a5e2dd13ee874e3dc2518a53ab4b4]
+      right_type "renamed file"
+   ancestor_name "bar"
+ancestor_file_id [bdf46a521d5f1dd54c31dda15e99ff6b0c80394a]
+      right_name "abc"
+   right_file_id [bdf46a521d5f1dd54c31dda15e99ff6b0c80394a]

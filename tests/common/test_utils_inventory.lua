@@ -49,12 +49,13 @@ end
 
 function xfail_inventory (parsed, parsed_index, stanza)
    return check_inventory(parsed, parsed_index, stanza, true)
-end -- check_inventory
+end
 
 function check_inventory (parsed, parsed_index, stanza, xfail)
 -- 'stanza' is a table for one stanza
 -- 'parsed_index' gives the first index for this stanza in 'parsed'
 -- (which should be the output of parse_basic_io).
+-- Compare 'stanza' to 'parsed'; fail if different.
 -- Returns parsed_index incremented to the next index to check.
 
    -- we assume that any test failure is not an expected failure if not
