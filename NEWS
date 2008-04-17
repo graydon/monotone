@@ -1,6 +1,8 @@
-??? ??? ?? ???????? UTC 2008
+??? ??? ?? ??:??:?? UTC ????
 
-        0.41 release
+        0.41 release.
+
+        Changes
 
         Bugs fixed
 
@@ -13,6 +15,12 @@
           checks are applied on both options, so its no longer possible
           to set non-existing paths accidently or use a path to a directory
           as option argument for --db.
+
+        New features
+
+        - Add 'automate show_conflicts' command
+
+        Internal
 
 Fri Apr 11 22:50:44 UTC 2008
 

@@ -64,6 +64,8 @@ content_merge_database_adaptor
 {
   database & db;
   revision_id lca;
+  revision_id left_rid;
+  revision_id right_rid;
   marking_map const & left_mm;
   marking_map const & right_mm;
   std::map<revision_id, boost::shared_ptr<roster_t const> > rosters;
@@ -78,6 +80,9 @@ content_merge_database_adaptor
                     file_data const & left_data,
                     file_data const & right_data,
                     file_data const & merged_data);
+
+  void cache_roster(revision_id const & rid,
+                    boost::shared_ptr<roster_t const> roster);
 
   void get_ancestral_roster(node_id nid,
                             revision_id & rid,

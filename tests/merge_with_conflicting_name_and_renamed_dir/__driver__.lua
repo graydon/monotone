@@ -20,7 +20,7 @@ mtn_setup()
 --          ' !BOOM! '             o  merge should fail due to
 --                                    duplicate names
 --
--- The merge currently failes with:
+-- The merge previously failed with:
 -- ../nvm/roster_merge.cc:528: invariant 'I(left_name == right_name)' violated
 
 revs = {}
@@ -47,3 +47,15 @@ commit()
 check(mtn("merge"), 1, false, true)
 check(qgrep("conflict: duplicate name", "stderr"))
 
+-- Check automate show_conflicts output
+--
+-- This does not mention the directory rename; we assume the tool
+-- reading this output will figure it out.
+expected = "expected.stdout"
+check(get(expected))
+
+check(mtn("automate", "show_conflicts"), 0, true, false)
+canonicalize("stdout")
+check(readfile(expected) == readfile("stdout"))
+
+-- end of file
