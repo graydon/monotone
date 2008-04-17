@@ -1,3 +1,19 @@
+??? ??? ?? ???????? UTC 2008
+
+        0.41 release
+
+        Bugs fixed
+
+        - If the options --db or --keydir were previously specified for a 
+          command which was executed inside a workspace and one or both
+          option arguments were invalid (f.e. invalid paths), they were 
+          still written to _MTN/options of the particular workspace.
+          This lead to errors on any subsequent command which used these 
+          options. This bug is fixed in so far that basic file type
+          checks are applied on both options, so its no longer possible
+          to set non-existing paths accidently or use a path to a directory
+          as option argument for --db.
+
 Fri Apr 11 22:50:44 UTC 2008
 
         0.40 release.
