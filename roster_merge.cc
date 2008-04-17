@@ -225,7 +225,7 @@ put_added_conflict_left (basic_io::stanza & st,
       db_adaptor.db.get_file_content (db_adaptor.left_rid, nid, fid);
       st.push_str_pair(syms::left_type, "added file");
       st.push_str_pair(syms::left_name, name.as_external());
-      st.push_hex_pair(syms::left_file_id, fid.inner());
+      st.push_binary_pair(syms::left_file_id, fid.inner());
     }
   else
     {
@@ -254,7 +254,7 @@ put_added_conflict_right (basic_io::stanza & st,
 
       st.push_str_pair(syms::right_type, "added file");
       st.push_str_pair(syms::right_name, name.as_external());
-      st.push_hex_pair(syms::right_file_id, fid.inner());
+      st.push_binary_pair(syms::right_file_id, fid.inner());
     }
   else
     {
@@ -285,11 +285,11 @@ put_rename_conflict_left (basic_io::stanza & st,
       file_id ancestor_fid;
       db_adaptor.db.get_file_content (db_adaptor.lca, nid, ancestor_fid);
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, nid, left_fid);
       st.push_str_pair(syms::left_name, left_name.as_external());
-      st.push_hex_pair(syms::left_file_id, left_fid.inner());
+      st.push_binary_pair(syms::left_file_id, left_fid.inner());
     }
   else
     {
@@ -322,11 +322,11 @@ put_rename_conflict_right (basic_io::stanza & st,
       file_id ancestor_fid;
       db_adaptor.db.get_file_content (db_adaptor.lca, nid, ancestor_fid);
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, nid, right_fid);
       st.push_str_pair(syms::right_name, right_name.as_external());
-      st.push_hex_pair(syms::right_file_id, right_fid.inner());
+      st.push_binary_pair(syms::right_file_id, right_fid.inner());
     }
   else
     {
@@ -388,17 +388,17 @@ put_attr_conflict (basic_io::stanza & st,
       file_id ancestor_fid;
       db_adaptor.db.get_file_content (db_adaptor.lca, conflict.nid, ancestor_fid);
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       // FIXME: don't have this. st.push_str_pair(syms::ancestor_attr_value, ???);
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
       st.push_str_pair(syms::left_name, left_name.as_external());
-      st.push_hex_pair(syms::left_file_id, left_fid.inner());
+      st.push_binary_pair(syms::left_file_id, left_fid.inner());
       put_attr_state_left (st, conflict);
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
       st.push_str_pair(syms::right_name, right_name.as_external());
-      st.push_hex_pair(syms::right_file_id, right_fid.inner());
+      st.push_binary_pair(syms::right_file_id, right_fid.inner());
       put_attr_state_right (st, conflict);
     }
   else
@@ -447,15 +447,15 @@ put_content_conflict (basic_io::stanza & st,
       file_id ancestor_fid;
       db_adaptor.db.get_file_content (db_adaptor.lca, conflict.nid, ancestor_fid);
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_hex_pair(syms::ancestor_file_id, ancestor_fid.inner());
+      st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
       st.push_str_pair(syms::left_name, left_name.as_external());
-      st.push_hex_pair(syms::left_file_id, left_fid.inner());
+      st.push_binary_pair(syms::left_file_id, left_fid.inner());
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
       st.push_str_pair(syms::right_name, right_name.as_external());
-      st.push_hex_pair(syms::right_file_id, right_fid.inner());
+      st.push_binary_pair(syms::right_file_id, right_fid.inner());
     }
   else
     {

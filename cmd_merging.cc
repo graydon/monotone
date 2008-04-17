@@ -861,8 +861,8 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
 
   if (basic_io)
     {
-      st.push_hex_pair(syms::left, l_id.inner());
-      st.push_hex_pair(syms::right, r_id.inner());
+      st.push_binary_pair(syms::left, l_id.inner());
+      st.push_binary_pair(syms::right, r_id.inner());
     }
   else
     {
@@ -888,7 +888,7 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
 
       {
         basic_io::printer pr;
-        st.push_hex_pair(syms::ancestor, adaptor.lca.inner());
+        st.push_binary_pair(syms::ancestor, adaptor.lca.inner());
         pr.print_stanza(st);
         output.write(pr.buf.data(), pr.buf.size());
       }

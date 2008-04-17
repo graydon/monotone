@@ -50,7 +50,11 @@ end
 mkdir(test.root.."/empty")
 -- FIXME: this should probably be set globally in lua-testsuite.lua for
 --        all tests.
+if ostype == "Windows" then
+set_env("APPDATA", test.root.."/empty")
+else
 set_env("HOME", test.root.."/empty")
+end
 srv = bg(pure_mtn("serve"), 1, false, true)
 sleep(2)
 srv:finish()

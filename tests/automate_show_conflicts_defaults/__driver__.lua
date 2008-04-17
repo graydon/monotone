@@ -5,9 +5,6 @@
 mtn_setup()
 include ("common/test_utils_inventory.lua")
 
-check(get("expected-1.stdout"))
-check(get("expected-2.stdout"))
-
 --  Get a non-empty base revision, then create three heads
 addfile("randomfile", "blah blah blah")
 commit("testbranch", "base_1")
