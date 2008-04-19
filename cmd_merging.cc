@@ -949,7 +949,7 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
              N_("Shows the conflicts between two revisions."),
              N_("If no arguments are given, left_revid and right_revid default to the"
                 "first two heads that would be chosen by the merge command."),
-             options::opts::none)
+             options::opts::branch)
 {
   database    db(app);
   project_t   project(db);
@@ -958,6 +958,9 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
   if (args.size() == 0)
     {
       // get ids from heads
+      N(app.opts.branchname() != "",
+        F("please specify a branch, with --branch=BRANCH"));
+
       set<revision_id> heads;
       project.get_branch_heads(app.opts.branchname, heads,
                                app.opts.ignore_suspend_certs);
@@ -986,7 +989,7 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
       complete(app.opts, app.lua, project, idx(args,1)(), r_id);
     }
   else
-    throw usage(execid);
+    N(false, F("wrong argument count"));
 
   show_conflicts_core(db, l_id, r_id, true, output);
 }

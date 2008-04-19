@@ -26,6 +26,25 @@ function mtn_ws_opts(...)
   return {monotone_path, "--ssh-sign=no", "--norc", "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
 end
 
+function mtn_outside_ws(...)
+  -- Return a mtn command string that is executed outside a workspace,
+  -- but specifies all appropriate options.
+  if monotone_path == nil then
+    monotone_path = os.getenv("mtn")
+    if monotone_path == nil then
+      err("'mtn' environment variable not set")
+    end
+  end
+  return {monotone_path,
+         "--ssh-sign=no",
+         "--norc", "--rcfile", test.root .. "/test_hooks.lua",
+         "--confdir="..test.root,
+         "--db=" .. test.root .. "/test.db",
+         "--keydir", test.root .. "/keys",
+         "--key=tester@test.net",
+          unpack(arg)}
+end
+
 -- function preexecute(x)
 --   return {"valgrind", "--tool=memcheck", unpack(x)}
 -- end
