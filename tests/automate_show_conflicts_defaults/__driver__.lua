@@ -44,7 +44,6 @@ check(mtn("merge"), 1, false, false)
 -- mtn: [right] d8a8bc9623c1ff9c0a5c082e40f0ff8ec6b43e72 = chuck_1
 
 check(mtn_ws_opts("automate", "show_conflicts"), 0, true, false)
-
 parsed = parse_basic_io(readfile("stdout"))
 
 check_basic_io_line (1, parsed[1], "left", beth_1)
@@ -52,7 +51,7 @@ check_basic_io_line (2, parsed[2], "right", chuck_1)
 check_basic_io_line (3, parsed[3], "ancestor", base_2)
 
 --  Check that 'automate show_conflicts' works outside workspace when options are specified
-non_ws_dir = test.root .. "/.."
+non_ws_dir = make_temp_dir() 
 check(indir(non_ws_dir, mtn_outside_ws("automate", "show_conflicts", "--branch=testbranch")), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))
