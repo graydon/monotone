@@ -50,8 +50,17 @@ check_basic_io_line (1, parsed[1], "left", beth_1)
 check_basic_io_line (2, parsed[2], "right", chuck_1)
 check_basic_io_line (3, parsed[3], "ancestor", base_2)
 
+-- In mtn 0.40 and earlier, this was broken, because automate stdio
+-- did not re-read the workspace options for each command, so the
+-- branch was null.
+check(mtn("automate", "stdio"), 0, true, false, "l14:show_conflictse")
+parsed = parse_basic_io(string.sub (readfile("stdout"), 11))
+check_basic_io_line (1, parsed[1], "left", beth_1)
+check_basic_io_line (2, parsed[2], "right", chuck_1)
+check_basic_io_line (3, parsed[3], "ancestor", base_2)
+
 --  Check that 'automate show_conflicts' works outside workspace when options are specified
-non_ws_dir = make_temp_dir() 
+non_ws_dir = make_temp_dir()
 check(indir(non_ws_dir, mtn_outside_ws("automate", "show_conflicts", "--branch=testbranch")), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))

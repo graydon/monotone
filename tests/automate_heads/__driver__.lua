@@ -25,3 +25,11 @@ check(mtn("automate", "heads", "nosuchbranch"), 0, true, false)
 writefile("empty")
 check(samefile("empty", "stdout"))
 
+-- In mtn 0.40 and earlier, this was broken, because automate stdio
+-- did not re-read the workspace options for each command, so the
+-- branch was null.
+check(mtn("automate", "stdio"), 0, true, false, "l5:headse")
+canonicalize("stdout")
+check(("0:0:l:164:" .. readfile("wanted_heads")) == readfile("stdout"))
+
+-- end of file

@@ -8528,7 +8528,7 @@ exits with status 1.
 
 @end table
 
-@item mtn automate show_conflicts [@var{left_rev right_rev}]
+@item mtn automate show_conflicts [@var{--branch BRANCH}] [@var{left_rev right_rev}]
 
 @table @strong
 @item Arguments:
@@ -8536,7 +8536,9 @@ exits with status 1.
 Optional left and right revision ids.
 
 If no revs are given, they default to the first two heads that would
-be chosen by the @command{merge} command.
+be chosen by the @command{merge} command for the current branch. If no
+workspace is present, the branch may be given by the @var{--branch}
+option.
 
 @item Added in:
 
