@@ -14,6 +14,10 @@
           to set non-existing paths accidently or use a path to a directory
           as option argument for --db.
 
+        - If a key clash occurs on a netsync operation, i.e. two different 
+          keys with the same key id are encountered, mtn now fails cleanly 
+          and provides further guidance how to proceed.
+ 
 Fri Apr 11 22:50:44 UTC 2008
 
         0.40 release.
