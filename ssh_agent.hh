@@ -13,6 +13,8 @@
 #include "vector.hh"
 #include <boost/scoped_ptr.hpp>
 
+struct keypair;
+
 namespace Botan
 {
   class RSA_PublicKey;
@@ -26,6 +28,7 @@ struct ssh_agent
   ssh_agent();
   ~ssh_agent();
   std::vector<Botan::RSA_PublicKey> const get_keys();
+  bool has_key(const keypair & key);
   void sign_data(Botan::RSA_PublicKey const & key,
                  std::string const & data,
                  std::string & out);

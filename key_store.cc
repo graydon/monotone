@@ -438,6 +438,14 @@ void
 key_store::cache_decrypted_key(const rsa_keypair_id & id)
 {
   signing_key = id;
+  keypair key;
+  get_key_pair(id, key);
+  if (s->get_agent().has_key(key))
+    {
+      L(FL("ssh-agent has key '%s' loaded, skipping internal cache") % id);
+      return;
+    }
+
   if (s->lua.hook_persist_phrase_ok())
     s->decrypt_private_key(id);
 }

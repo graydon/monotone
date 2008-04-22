@@ -1335,8 +1335,27 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
             % printable_key_hash);
           project.db.set_var(their_key_key, printable_key_hash);
         }
-      if (project.db.put_key(their_keyname, their_key))
-        W(F("saving public key for %s to database") % their_keyname);
+
+      if (project.db.public_key_exists(their_keyname))
+        {
+          rsa_pub_key tmp;
+          project.db.get_key(their_keyname, tmp);
+
+          E(keys_match(their_keyname, tmp, their_keyname, their_key),
+            F("the server sent a key with the key id '%s'\n"
+              "which is already in use in your database. you may want to execute\n"
+              "  %s dropkey %s\n"
+              "on your local database before you run this command again,\n"
+              "assumed that your local key has NOT a private counterpart.")
+            % their_keyname % ui.prog_name % their_keyname);
+        }
+      else
+        {
+          // this should now always return true since we just checked
+          // for the existance of this particular key
+          I(project.db.put_key(their_keyname, their_key));
+          W(F("saving public key for %s to database") % their_keyname);
+        }
 
       {
         hexenc<id> hnonce;
@@ -2354,7 +2373,7 @@ build_stream_to_server(options & opts, lua_hooks & lua,
                        Netxx::Timeout timeout)
 {
   shared_ptr<Netxx::StreamBase> server;
-  
+
   if (info.client.use_argv)
     {
       I(info.client.argv.size() > 0);
@@ -2790,7 +2809,7 @@ serve_connections(options & opts,
                     {
                       size_t l_colon = address().find(':');
                       size_t r_colon = address().rfind(':');
-              
+
                       if (l_colon == r_colon && l_colon == 0)
                         {
                           // can't be an IPv6 address as there is only one colon
@@ -2857,7 +2876,7 @@ serve_connections(options & opts,
                   info.client.exclude_pattern = globish(request.exclude);
                   info.client.use_argv = false;
                   parse_uri(info.client.unparsed(), info.client.u);
-                  
+
                   try
                     {
                       P(F("connecting to %s") % info.client.unparsed);

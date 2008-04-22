@@ -1,10 +1,11 @@
-monotone (0.40-1) UNRELEASED; urgency=low
+monotone (0.40-1) unstable; urgency=low
 
+  [ Zack Weinberg ]
   * New upstream release.
     - Upstream "make distclean" now cleans up after "make html".
       (Closes: #473402)
 
- -- Zack Weinberg <zackw@panix.com>  Mon, 31 Mar 2008 20:47:30 -0400
+ -- Richard Levitte <richard@levitte.org>  Fri, 11 Apr 2008 00:50:44 +0200
 
 monotone (0.39-90) unstable; urgency=low
 

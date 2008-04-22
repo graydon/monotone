@@ -290,3 +290,12 @@ end
 if not ok then
    err("identity was not added to ssh-agent")
 end
+
+-- * (ok) commit with passworded key (provide password explicitly, although will be not necessary as SSH-agent is used)
+addfile("some_file21", "test")
+check(mtn("ci", "--key", "test_pass@tester.net", "--message", "commit msg"), 0, false, false, "pass\n")
+
+-- * (ok) commit with passworded key (provide no password at all, because SSH-agent is used)
+addfile("some_file22", "test")
+check(mtn("ci", "--key", "test_pass@tester.net", "--message", "commit msg"), 0, false, false)
+

@@ -20,6 +20,7 @@
 #include "botan/bigint.h"
 #include <boost/shared_ptr.hpp>
 #include "platform.hh"
+#include "key_store.hh"
 
 #ifdef WIN32
 #include "win32/ssh_agent_platform.hh"
@@ -27,14 +28,18 @@
 #include "unix/ssh_agent_platform.hh"
 #endif
 
+using std::string;
+using std::vector;
+
+using boost::shared_ptr;
+using boost::shared_dynamic_cast;
+
 using Botan::RSA_PublicKey;
 using Botan::RSA_PrivateKey;
 using Botan::BigInt;
 using Botan::SecureVector;
+using Botan::X509_PublicKey;
 using Netxx::Stream;
-using boost::shared_ptr;
-using std::string;
-using std::vector;
 
 struct ssh_agent_state : ssh_agent_platform
 {
@@ -373,6 +378,35 @@ ssh_agent::get_keys()
     % packet.length());
 
   return s->keys;
+}
+
+bool
+ssh_agent::has_key(const keypair & key)
+{
+  //grab the monotone public key as an RSA_PublicKey
+  SecureVector<Botan::byte> pub_block;
+  pub_block.set(reinterpret_cast<Botan::byte const *>((key.pub)().data()),
+                (key.pub)().size());
+  L(FL("has_key: building %d-byte pub key") % pub_block.size());
+  shared_ptr<X509_PublicKey> x509_key =
+    shared_ptr<X509_PublicKey>(Botan::X509::load_key(pub_block));
+  shared_ptr<RSA_PublicKey> pub_key = shared_dynamic_cast<RSA_PublicKey>(x509_key);
+
+  if (!pub_key)
+    throw informative_failure("has_key: Failed to get monotone RSA public key");
+  
+  vector<RSA_PublicKey> ssh_keys = get_keys();
+  for (vector<RSA_PublicKey>::const_iterator
+         si = ssh_keys.begin(); si != ssh_keys.end(); ++si)
+    {
+      if ((*pub_key).get_e() == (*si).get_e()
+          && (*pub_key).get_n() == (*si).get_n())
+        {
+          L(FL("has_key: key found"));
+          return true;
+        }
+    }
+  return false;
 }
 
 void
