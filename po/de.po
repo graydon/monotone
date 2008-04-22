@@ -33,7 +33,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-04 10:05+0200\n"
+"POT-Creation-Date: 2008-04-22 02:52+0200\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -1894,7 +1894,7 @@ msgstr "benötige Basis '--branch'-Parameter für den Import"
 msgid "path %s does not exist"
 msgstr "Pfad %s existiert nicht"
 
-#: cmd_othervcs.cc:54 lua.cc:574 work.cc:1684
+#: cmd_othervcs.cc:54 lua.cc:574 work.cc:1691
 #, c-format
 msgid "'%s' is not a directory"
 msgstr "'%s' ist kein Verzeichnis"
@@ -2852,7 +2852,7 @@ msgstr "Kataloge"
 msgid "markings"
 msgstr "Markierungen"
 
-#: database_check.cc:313 netsync.cc:3137 rcs_import.cc:1232
+#: database_check.cc:313 netsync.cc:3154 rcs_import.cc:1232
 msgid "revisions"
 msgstr "Revisionen"
 
@@ -2860,7 +2860,7 @@ msgstr "Revisionen"
 msgid "ancestry"
 msgstr "Vorfahren"
 
-#: database_check.cc:442 netsync.cc:3141
+#: database_check.cc:442 netsync.cc:3158
 msgid "keys"
 msgstr "Schlüssel"
 
@@ -3304,7 +3304,7 @@ msgstr "übergehe Datei '%s' mit dem nicht unterstützten Namen"
 msgid "skipping directory '%s' with unsupported name"
 msgstr "übergehe das Verzeichnis '%s' mit dem nicht unterstützten Namen"
 
-#: file_io.cc:520 work.cc:1402
+#: file_io.cc:520 work.cc:1409
 #, c-format
 msgid "no such file or directory: '%s'"
 msgstr "Datei oder Verzeichnis unbekannt: '%s'"
@@ -3379,68 +3379,73 @@ msgstr "ungültiges Muster '%s': unpassende Klammer '}'"
 msgid "invalid pattern '%s': unmatched '{'"
 msgstr "ungültiges Muster '%s': unpassende Klammer '{'"
 
-#: key_store.cc:104 key_store.cc:108 key_store.cc:112 key_store.cc:114
-#: key_store.cc:119
+#: key_store.cc:66
+#, c-format
+msgid "No available keystore found"
+msgstr "Kein verfügbarer Schlüsselbund gefunden"
+
+#: key_store.cc:109 key_store.cc:113 key_store.cc:117 key_store.cc:119
+#: key_store.cc:124
 #, c-format
 msgid "Extraneous data in key store."
 msgstr "Belanglose Daten im Schlüsselbund"
 
-#: key_store.cc:127
+#: key_store.cc:132
 #, c-format
 msgid "Key store has multiple keys with id '%s'."
 msgstr "Schlüsselbund hat mehrere Schlüssel mit der ID '%s'"
 
-#: key_store.cc:136
+#: key_store.cc:141
 #, c-format
 msgid "converting old-format private key '%s'"
 msgstr "konvertiere Schlüssel mit altem Format '%s'"
 
-#: key_store.cc:330
+#: key_store.cc:335
 #, c-format
 msgid "Cannot store key '%s': a different key by that name exists."
 msgstr ""
 "Kann den Schlüssel '%s' nicht speichern; ein anderer Schlüssel mit diesem "
 "Namen existiert bereits"
 
-#: key_store.cc:374 keys.cc:97
+#: key_store.cc:379 keys.cc:97
 #, c-format
 msgid "no key pair '%s' found in key store '%s'"
 msgstr "kein Schlüsselpaar '%s' in Schlüsselbund '%s' gefunden"
 
-#: key_store.cc:409 key_store.cc:749
+#: key_store.cc:414 key_store.cc:762
 #, c-format
 msgid "failed to decrypt old private RSA key, probably incorrect passphrase"
 msgstr ""
 "konnte alten, privaten RSA-Schlüssel nicht entschlüsseln; Passwort ist "
 "womöglich falsch"
 
-#: key_store.cc:423
+#: key_store.cc:428
 #, c-format
 msgid "failed to extract RSA private key from PKCS#8 keypair"
 msgstr ""
 "konnte privaten RSA-Schlüssel nicht vom PKCS#8-Schlüsselpaar extrahieren"
 
-#: key_store.cc:455
+#: key_store.cc:468
 #, c-format
 msgid "key '%s' already exists"
 msgstr "Schlüssel '%s' existiert bereits"
 
-#: key_store.cc:465
+#: key_store.cc:478
 #, c-format
 msgid "generating key-pair '%s'"
 msgstr "erzeuge Schlüsselpaar '%s'"
 
-#: key_store.cc:496
+#: key_store.cc:509
 #, c-format
 msgid "storing key-pair '%s' in %s/"
 msgstr "speichere Schlüsselpaar '%s' in %s/"
 
-#: key_store.cc:501
+#: key_store.cc:514
 #, c-format
 msgid "storing public key '%s' in %s"
-msgstr "speichere öffentlichen Schlssel '%s' in %s"
+msgstr "speichere öffentlichen Schlüssel '%s' in %s"
 
-#: key_store.cc:570
+#: key_store.cc:583
 #, c-format
 msgid ""
 "You have chosen to sign only with ssh-agent but ssh-agent does not seem to "
@@ -3449,12 +3454,12 @@ msgstr ""
 "Sie haben ausgewählt, nur mit ssh-agent zu signieren, aber derzeit scheint "
 "ssh-agent nicht zu laufen."
 
-#: key_store.cc:599
+#: key_store.cc:612
 #, c-format
 msgid "You don't seem to have your monotone key imported "
 msgstr "Anscheinend haben Sie Ihren monotone-Schlüssel nicht importiert "
 
-#: key_store.cc:645
+#: key_store.cc:658
 #, c-format
 msgid ""
 "make_signature: ssh signature (%i) != monotone signature (%i)\n"
@@ -3465,17 +3470,17 @@ msgstr ""
 "ssh-Signatur     : %s\n"
 "monotone-Signatur: %s"
 
-#: key_store.cc:661
+#: key_store.cc:674
 #, c-format
 msgid "make_signature: signature is not valid"
 msgstr "make_signature: Signatur ist ungültig"
 
-#: key_store.cc:673
+#: key_store.cc:686
 #, c-format
 msgid "no ssh-agent is available, cannot add key '%s'"
 msgstr "es ist kein ssh-agent verfügbar; kann Schlüssel '%s' nicht hinzufügen"
 
-#: key_store.cc:780
+#: key_store.cc:793
 #, c-format
 msgid "public and private keys for %s don't match"
 msgstr "öffentlicher und privater Schlüssel von %s stimmen nicht überein"
@@ -3533,7 +3538,7 @@ msgstr ""
 "Der in der Datenbank gespeicherte Schlüssel '%s'\n"
 "passt nicht auf die Version im lokalen Schlüsselbund!"
 
-#: lua.cc:466 lua.cc:477 lua.cc:489 lua_hooks.cc:1060 lua_hooks.cc:1083
+#: lua.cc:466 lua.cc:477 lua.cc:489 lua_hooks.cc:1069 lua_hooks.cc:1092
 #, c-format
 msgid "%s called with an invalid parameter"
 msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
@@ -3543,22 +3548,22 @@ msgstr "%s wurde mit einem ungültigen Parameter aufgerufen"
 msgid "Directory '%s' does not exist"
 msgstr "Das Verzeichnis '%s' existiert nicht"
 
-#: lua.cc:596 lua_hooks.cc:150
+#: lua.cc:596 lua_hooks.cc:156
 #, c-format
 msgid "lua error while loading rcfile '%s'"
 msgstr "lua-Fehler beim Laden der rc-Datei '%s'"
 
-#: lua_hooks.cc:179
+#: lua_hooks.cc:185
 #, c-format
 msgid "lua error while loading '%s'"
 msgstr "lua-Fehler beim Laden von '%s'"
 
-#: lua_hooks.cc:184
+#: lua_hooks.cc:190
 #, c-format
 msgid "rcfile '%s' does not exist"
 msgstr "rc-Datei '%s' existiert nicht"
 
-#: lua_hooks.cc:1052
+#: lua_hooks.cc:1061
 #, c-format
 msgid "Call to user command %s (lua command: %s) failed."
 msgstr "Aufruf des Benutzerkommandos %s (Lua-Kommando: %s) schlug fehl"
@@ -3741,12 +3746,12 @@ msgstr "Revisionen geschrieben"
 msgid "underflow on count of %s items to receive"
 msgstr "Unterlauf bei Zählung von %s Elementen zum Empfangen"
 
-#: netsync.cc:1279 netsync.cc:1287
+#: netsync.cc:1280 netsync.cc:1288
 #, c-format
 msgid "received network error: %s"
 msgstr "Netzwerk-Fehler: %s"
 
-#: netsync.cc:1314
+#: netsync.cc:1315
 #, c-format
 msgid ""
 "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -3768,12 +3773,12 @@ msgstr ""
 "es wurde %s erwartet\n"
 "'%s unset %s %s' übergeht diese Prüfung."
 
-#: netsync.cc:1325
+#: netsync.cc:1326
 #, c-format
 msgid "server key changed"
 msgstr "Server-Schlüssel hat sich geändert"
 
-#: netsync.cc:1330
+#: netsync.cc:1331
 #, c-format
 msgid ""
 "first time connecting to server %s\n"
@@ -3784,47 +3789,65 @@ msgstr ""
 "Es wird angenommen, dass Sie die Serveridentität verifiziert haben.\n"
 "Sie können jedoch nochmal den Fingerprint des Schlüssels prüfen: %s"
 
-#: netsync.cc:1338
+#: netsync.cc:1345
+#, c-format
+msgid ""
+"the server sent a key with the key id '%s'\n"
+"which is already in use in your database. you may want to execute\n"
+"  %s dropkey %s\n"
+"on your local database before you run this command again,\n"
+"assumed that your local key has NOT a private counterpart."
+msgstr ""
+"Der Server hat einen Schlüssel mit der Schlüssel-ID '%s'\n"
+"gesendet, die in Ihrer Datenbank bereits in Benutzung ist.\n"
+"Eventuell möchten Sie\n"
+"  %s dropkey %s\n"
+"auf Ihrer lokalen Datenbank ausführen und das Kommando noch\n"
+"einmal starten, sofern Ihr lokaler öffentlicher Schlüssel\n"
+"KEINEN privates Gegenstück besitzt."
+
+
+#: netsync.cc:1357
 #, c-format
 msgid "saving public key for %s to database"
 msgstr "speichere öffentlichen Schlüssel von %s in die Datenbank"
 
-#: netsync.cc:1436
+#: netsync.cc:1454
 #, c-format
 msgid "rejected attempt at anonymous connection for write"
 msgstr "verweigerte Schreibversuch von anonymer Verbindung"
 
-#: netsync.cc:1443
+#: netsync.cc:1461
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
 msgstr "verweigerte anonyme Verbindung im Datensenke-Modus"
 
-#: netsync.cc:1459
+#: netsync.cc:1477
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "anonymer Zugriff auf Zweig '%s' vom Server verweigert"
 
-#: netsync.cc:1469
+#: netsync.cc:1487
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr "erlaube anonyme Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1475
+#: netsync.cc:1493
 #, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr "erlaube anonyme Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1539
+#: netsync.cc:1557
 #, c-format
 msgid "remote public key hash '%s' is unknown"
 msgstr "Prüfsumme '%s' des entfernten öffentlichen Schlüssels ist unbekannt"
 
-#: netsync.cc:1558
+#: netsync.cc:1576
 #, c-format
 msgid "detected replay attack in auth netcmd"
 msgstr "entdeckte 'replay'-Attacke in 'auth netcmd'"
 
-#: netsync.cc:1580
+#: netsync.cc:1598
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' while running as pure "
@@ -3833,18 +3856,18 @@ msgstr ""
 "verweigere '%s' Leseberechtigung für '%s' außer '%s' im reinen Datensenke-"
 "Modus"
 
-#: netsync.cc:1595
+#: netsync.cc:1613
 #, c-format
 msgid ""
 "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr "verweigerte '%s' Leseberechtigung für '%s' außer '%s' wegen Zweig '%s'"
 
-#: netsync.cc:1605
+#: netsync.cc:1623
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr "erlaube '%s' Leseberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1616
+#: netsync.cc:1634
 #, c-format
 msgid ""
 "denied '%s' write permission for '%s' excluding '%s' while running as pure "
@@ -3853,155 +3876,155 @@ msgstr ""
 "verweigere '%s' Schreibberechtigung für '%s' außer '%s' im reinen Datensenke-"
 "Modus"
 
-#: netsync.cc:1624
+#: netsync.cc:1642
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
 msgstr "verweigere '%s' Schreibberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1628
+#: netsync.cc:1646
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
 msgstr "erlaube '%s' Schreibberechtigung für '%s' außer '%s'"
 
-#: netsync.cc:1650
+#: netsync.cc:1667
 #, c-format
 msgid "bad client signature"
 msgstr "ungültige Client-Signatur"
 
-#: netsync.cc:1666
+#: netsync.cc:1683
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
 msgstr "Unerwartetes 'refine'-Kommando auf nicht verfeinerbarem Elementtyp"
 
-#: netsync.cc:1763
+#: netsync.cc:1780
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "unbekannte 'bye phase' %d erhalten"
 
-#: netsync.cc:1778
+#: netsync.cc:1795
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
 msgstr "Unerwartetes 'done'-Kommando auf nicht verfeinerbarem Elementtyp"
 
-#: netsync.cc:1848
+#: netsync.cc:1865
 #, c-format
 msgid "%s with hash '%s' does not exist in our database"
 msgstr "%s mit der Prüfsumme '%s' existiert nicht in unserer Datenbank"
 
-#: netsync.cc:1954
+#: netsync.cc:1971
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr ""
 "Falsch zugeordneter Zeitraum in Zweig %s.  Server hat '%s', Client hat '%s'."
 
-#: netsync.cc:1975
+#: netsync.cc:1992
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr ""
 "Prüfsummen-Check für öffentlichen Schlüssel '%s' (%s) fehlgeschlagen; "
 "benötigte '%s', bekam '%s'"
 
-#: netsync.cc:1984
+#: netsync.cc:2001
 #, c-format
 msgid "Received duplicate key %s"
 msgstr "Erhielt doppelten Schlüssel %s"
 
-#: netsync.cc:1995
+#: netsync.cc:2012
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "Prüfsummen-Check für Revisionszertifikat '%s' fehlgeschlagen"
 
-#: netsync.cc:2054
+#: netsync.cc:2071
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Erhielt Warnung von 'usher': %s"
 
-#: netsync.cc:2138 netsync.cc:2169
+#: netsync.cc:2155 netsync.cc:2186
 msgid "source and sink"
 msgstr "Datenquelle und -senke"
 
-#: netsync.cc:2139 netsync.cc:2170
+#: netsync.cc:2156 netsync.cc:2187
 msgid "source"
 msgstr "Datenquelle"
 
-#: netsync.cc:2139 netsync.cc:2170
+#: netsync.cc:2156 netsync.cc:2187
 msgid "sink"
 msgstr "Datensenke"
 
-#: netsync.cc:2326
+#: netsync.cc:2343
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "Eingabepuffer für Peer %s ist nach netcmd-Absendung übervoll."
 
-#: netsync.cc:2338 netsync.cc:2430
+#: netsync.cc:2355 netsync.cc:2447
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "Protokoll-Fehler während der Bearbeitung von Peer %s: '%s'"
 
-#: netsync.cc:2344
+#: netsync.cc:2361
 #, c-format
 msgid "error: %s"
 msgstr "Fehler: %s"
 
-#: netsync.cc:2402 netsync.cc:2865
+#: netsync.cc:2419 netsync.cc:2882
 #, c-format
 msgid "connecting to %s"
 msgstr "verbinde zu %s"
 
-#: netsync.cc:2445
+#: netsync.cc:2462
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr ""
 "Zeitüberschreitung während Warten auf E/A mit Peer %s, trenne Verbindung."
 
-#: netsync.cc:2468
+#: netsync.cc:2485
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr ""
 "Bearbeitungsfehler während Kommunikation mit Peer %s, trenne Verbindung"
 
-#: netsync.cc:2485
+#: netsync.cc:2502
 #, c-format
 msgid "successful exchange with %s"
 msgstr "erfolgreicher Austausch mit %s"
 
-#: netsync.cc:2491
+#: netsync.cc:2508
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr ""
 "Peer %s hat Verbindung getrennt, nachdem wir ihn vom Fehler unterrichtet "
 "haben"
 
-#: netsync.cc:2496
+#: netsync.cc:2513
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "E/A-Fehler während der Kommunikation mit Peer %s, trenne Verbindung"
 
-#: netsync.cc:2564
+#: netsync.cc:2581
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr ""
 "Protokoll-Fehler während Bearbeitung des Peers %s: '%s', als ungültig "
 "markiert"
 
-#: netsync.cc:2597
+#: netsync.cc:2614
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "akzeptiere neue Client-Verbindung von %s: %s"
 
-#: netsync.cc:2634
+#: netsync.cc:2651
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr ""
 "Protokoll-Fehler während der Bearbeitung des Peers %s: '%s', trenne "
 "Verbindung"
 
-#: netsync.cc:2645
+#: netsync.cc:2662
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "Peer %s konnte nicht im 'working state' gelesen werden (Fehler)"
 
-#: netsync.cc:2650
+#: netsync.cc:2667
 #, c-format
 msgid ""
 "peer %s read failed in shutdown state (possibly client misreported error)"
@@ -4009,17 +4032,17 @@ msgstr ""
 "Peer %s konnte nicht im 'shutdown state' gelesen werden (evtl. vom Client "
 "falsch berichteter Fehler)"
 
-#: netsync.cc:2656
+#: netsync.cc:2673
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "Peer %s konnte nicht im 'confirmed state' gelesen werden (Erfolg)"
 
-#: netsync.cc:2677
+#: netsync.cc:2694
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "Peer %s konnte nicht im 'working state' geschrieben werden (Fehler)"
 
-#: netsync.cc:2682
+#: netsync.cc:2699
 #, c-format
 msgid ""
 "peer %s write failed in shutdown state (possibly client misreported error)"
@@ -4027,77 +4050,77 @@ msgstr ""
 "Peer %s konnte nicht im 'shutdown state' geschrieben werden (evtl. vom "
 "Client falsch berichteter Fehler)"
 
-#: netsync.cc:2688
+#: netsync.cc:2705
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "Peer %s konnte nicht im 'confirmed state' geschrieben werden (Erfolg)"
 
-#: netsync.cc:2715
+#: netsync.cc:2732
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "Bearbeitung des Peers %s abgeschlossen, trenne Verbindung"
 
-#: netsync.cc:2737
+#: netsync.cc:2754
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (Peer %s) war zu lange untätig, trenne Verbindung"
 
-#: netsync.cc:2824
+#: netsync.cc:2841
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "beginne Service auf %s : %s"
 
-#: netsync.cc:2825
+#: netsync.cc:2842
 msgid "<all interfaces>"
 msgstr "<alle Schnittstellen>"
 
-#: netsync.cc:2839
+#: netsync.cc:2856
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr ""
 "Maximale Anzahl an Sitzungen %d erreicht; einige Verbindungen werden "
 "abgelehnt werden."
 
-#: netsync.cc:2896
+#: netsync.cc:2913
 #, c-format
 msgid "Network error: %s"
 msgstr "Netzwerk-Fehler: %s"
 
-#: netsync.cc:2957
+#: netsync.cc:2974
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Netzwerk-Fehler an Peer %s, trenne Verbindung"
 
-#: netsync.cc:2963
+#: netsync.cc:2980
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "erhielt OOB vom Peer %s, trenne Verbindung"
 
-#: netsync.cc:3023
+#: netsync.cc:3040
 #, c-format
 msgid "beginning service on %s"
 msgstr "beginne Service auf %s"
 
-#: netsync.cc:3086
+#: netsync.cc:3103
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "erhielt einige OOB Daten auf 'fd' %d (Peer %s), trenne Verbindung"
 
-#: netsync.cc:3131
+#: netsync.cc:3148
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "finde Elemente zum Synchronisieren:"
 
-#: netsync.cc:3139
+#: netsync.cc:3156
 msgid "certificates"
 msgstr "Zertifikate"
 
-#: netsync.cc:3240
+#: netsync.cc:3257
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Kann Schlüssel '%s' nicht finden"
 
-#: netsync.cc:3282
+#: netsync.cc:3299
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -4106,7 +4129,7 @@ msgstr ""
 "Das 'include branch'-Muster beinhaltet ein Quotierungszeichen:\n"
 "%s"
 
-#: netsync.cc:3288
+#: netsync.cc:3305
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -4115,7 +4138,7 @@ msgstr ""
 "Das 'exclude branch'-Muster beinhaltet ein Quotierungszeichen:\n"
 "%s"
 
-#: netsync.cc:3327 netsync.cc:3331
+#: netsync.cc:3344 netsync.cc:3348
 #, c-format
 msgid "network error: %s"
 msgstr "Netzwerk-Fehler: %s"
@@ -4230,7 +4253,7 @@ msgstr "übergehe Autorenangabe für Einpflegen"
 msgid "block size in bytes for \"automate stdio\" output"
 msgstr "Blockgröße in Bytes der Ausgabe von \"automate stdio\""
 
-#: options_list.hh:79 options_list.hh:366 options_list.hh:409
+#: options_list.hh:79 options_list.hh:374 options_list.hh:417
 #, c-format
 msgid "cannot be zero or negative"
 msgstr "kann nicht Null oder negativ sein"
@@ -4264,75 +4287,79 @@ msgid "set location of configuration directory"
 msgstr "setze Konfigurationsverzeichnis"
 
 #: options_list.hh:147
+msgid "forbid use of the default confdir"
+msgstr "verbietet die Nutzung des Standard-Konfigurationsverzeichnisses"
+
+#: options_list.hh:155
 msgid "override date/time for commit"
 msgstr "übergehe Datums-/Zeitangabe für Einpflegen "
 
-#: options_list.hh:161
+#: options_list.hh:169
 msgid "set name of database"
 msgstr "setze Namen der Datenbank"
 
-#: options_list.hh:169
+#: options_list.hh:177
 msgid "print debug log to stderr while running"
 msgstr "schreibe während der Ausführung ein Protokoll zur Fehlerausgabe"
 
-#: options_list.hh:177
+#: options_list.hh:185
 msgid "limit the number of levels of directories to descend"
 msgstr "beschränke die Anzahl der einbezogenen Verzeichnisebenen"
 
-#: options_list.hh:182
+#: options_list.hh:190
 #, c-format
 msgid "cannot be negative"
 msgstr "kann nicht negativ sein"
 
-#: options_list.hh:191
+#: options_list.hh:199
 msgid "argument to pass external diff hook"
 msgstr "Parameter für externe 'diff'-Anwendung"
 
-#: options_list.hh:200
+#: options_list.hh:208
 msgid "use context diff format"
 msgstr "benutze das 'context diff'-Format"
 
-#: options_list.hh:207
+#: options_list.hh:215
 msgid "use external diff hook for generating diffs"
 msgstr "benutze externe 'diff'-Anwendung für die Erstellung von Differenzen"
 
-#: options_list.hh:214
+#: options_list.hh:222
 msgid "use unified diff format"
 msgstr "benutze das 'unified diff'-Format"
 
-#: options_list.hh:222
+#: options_list.hh:230
 msgid "do not show the function containing each block of changes"
 msgstr "zeige nicht die Funktion, die den jeweiligen Änderungsblock beinhaltet"
 
-#: options_list.hh:229
+#: options_list.hh:237
 msgid "print diffs along with logs"
 msgstr "gebe Differenzen mit den entsprechenden Logeinträgen aus"
 
-#: options_list.hh:238
+#: options_list.hh:246
 msgid "when rosterifying, drop attrs entries with the given key"
 msgstr ""
 "entferne 'attrs'-Einträge mit dem gegebenen Schlüssel während der "
 "Katalogisierung"
 
-#: options_list.hh:246
+#: options_list.hh:254
 msgid "don't perform the operation, just show what would have happened"
 msgstr "Führe die Operation nicht aus, zeige lediglich die Auswirkungen auf."
 
-#: options_list.hh:254
+#: options_list.hh:262
 msgid "file to dump debugging log to, on failure"
 msgstr "Datei, in die das Protokoll im Fehlerfall geschrieben werden soll"
 
-#: options_list.hh:263
+#: options_list.hh:271
 msgid "leave out anything described by its argument"
 msgstr "lasse etwas durch den Parameter beschriebene heraus"
 
-#: options_list.hh:271
+#: options_list.hh:279
 msgid "only update monotone's internal bookkeeping, not the filesystem"
 msgstr ""
 "aktualisiere lediglich monotones internes Systemverzeichnis, nicht das "
 "Dateisystem"
 
-#: options_list.hh:279
+#: options_list.hh:287
 msgid ""
 "controls use of ssh-agent.  valid arguments are: 'yes' to use ssh-agent to "
 "make signatures if possible, 'no' to force use of monotone's internal code, "
@@ -4344,174 +4371,174 @@ msgstr ""
 "agent zu erzwingen; 'check', um mit beiden Methoden zu signieren und das "
 "Ergebnis zu vergleichen"
 
-#: options_list.hh:287
+#: options_list.hh:295
 #, c-format
 msgid "--ssh-sign requires a value ['yes', 'no', 'only', or 'check']"
 msgstr "--ssh-sign benötigt einen Wert ['yes', 'no', 'only' oder 'check']"
 
-#: options_list.hh:293
+#: options_list.hh:301
 #, c-format
 msgid "--ssh-sign must be set to 'yes', 'no', 'only', or 'check'"
 msgstr "--ssh-sign muss auf 'yes', 'no', 'only' oder 'check' gesetzt sein"
 
-#: options_list.hh:301
+#: options_list.hh:309
 msgid "print detailed version number"
 msgstr "zeigt detaillierte Versionsinformationen an"
 
-#: options_list.hh:308
+#: options_list.hh:316
 msgid "display help message"
 msgstr "zeige Hilfemeldung an"
 
-#: options_list.hh:317
+#: options_list.hh:325
 msgid "include anything described by its argument"
 msgstr "beziehe etwas durch den Parameter beschriebene mit ein"
 
-#: options_list.hh:325
+#: options_list.hh:333
 msgid "do not ignore revisions marked as suspended"
 msgstr "ignoriere keine als gesperrt markierte Revisionen"
 
-#: options_list.hh:334
+#: options_list.hh:342
 msgid "set key for signatures"
 msgstr "setze Schlüssel für Signaturen"
 
-#: options_list.hh:342
+#: options_list.hh:350
 msgid "set location of key store"
 msgstr "setze Ort des Schlüsselbundes"
 
-#: options_list.hh:351
+#: options_list.hh:359
 msgid "push the specified key even if it hasn't signed anything"
 msgstr "exportiere diesen Schlüssel, selbst wenn damit nichts signiert wurde"
 
-#: options_list.hh:361
+#: options_list.hh:369
 msgid "limit log output to the last number of entries"
 msgstr "beschränke Logausgabe auf die letzte Anzahl von Einträgen"
 
-#: options_list.hh:370
+#: options_list.hh:378
 msgid "file to write the log to"
 msgstr "Datei, in die das Log geschrieben wird"
 
-#: options_list.hh:381
+#: options_list.hh:389
 msgid "set commit changelog message"
 msgstr "setze Nachricht für Änderungshistorie"
 
-#: options_list.hh:388
+#: options_list.hh:396
 msgid "set filename containing commit changelog message"
 msgstr ""
 "setze Dateinamen der Datei, die die Nachricht für die Änderungshistorie "
 "beinhaltet"
 
-#: options_list.hh:396
+#: options_list.hh:404
 msgid "perform the operations for files missing from workspace"
 msgstr "führe diese Operationen für fehlende Dateien im Arbeitsbereich aus"
 
-#: options_list.hh:404
+#: options_list.hh:412
 msgid "limit log output to the next number of entries"
 msgstr "beschränke die Logausgabe auf die nächstfolgende Anzahl von Einträgen"
 
-#: options_list.hh:414
+#: options_list.hh:422
 msgid "exclude files when printing logs"
 msgstr "schließe Dateien bei der Ausgabe der Logeinträge aus"
 
-#: options_list.hh:422
+#: options_list.hh:430
 msgid "do not use ASCII graph to display ancestry"
 msgstr "benutze nicht den ASCII-Graphen, um die Vorfahren anzuzeigen"
 
-#: options_list.hh:430
+#: options_list.hh:438
 msgid "do not ignore any files"
 msgstr "ignoriere keinerlei Dateien"
 
-#: options_list.hh:438
+#: options_list.hh:446
 msgid "exclude merges when printing logs"
 msgstr "schließe Vereinigungen bei der Ausgabe der Logeinträge aus"
 
-#: options_list.hh:446
+#: options_list.hh:454
 msgid "do not load ~/.monotone/monotonerc or _MTN/monotonerc lua files"
 msgstr "lade nicht ~/.monotone/monotonerc oder _MTN/monotonerc lua-Dateien"
 
-#: options_list.hh:454
+#: options_list.hh:462
 msgid "do not load standard lua hooks"
 msgstr "lade nicht die Standard-lua-Hooks"
 
-#: options_list.hh:462
+#: options_list.hh:470
 msgid "record process id of server"
 msgstr "merke Prozess-ID des Serverprozesses"
 
-#: options_list.hh:470
+#: options_list.hh:478
 msgid "suppress verbose, informational and progress messages"
 msgstr "unterdrücke wortreiche, informelle und Fortschrittsmeldungen"
 
-#: options_list.hh:480
+#: options_list.hh:488
 msgid "load extra rc file"
 msgstr "lade zusätzliche rc-Datei"
 
-#: options_list.hh:488
+#: options_list.hh:496
 msgid "suppress warning, verbose, informational and progress messages"
 msgstr ""
 "unterdrücke Warnungen, wortreiche, informelle und Fortschrittsmeldungen"
 
-#: options_list.hh:498
+#: options_list.hh:506
 msgid "also operate on the contents of any listed directories"
 msgstr "arbeite auch auf den Inhalten beliebiger aufgeführter Verzeichnisse"
 
-#: options_list.hh:507
+#: options_list.hh:515
 msgid "select revision id for operation"
 msgstr "wähle die Revisions-ID für die Operation aus"
 
-#: options_list.hh:515
+#: options_list.hh:523
 msgid "limit search for workspace to specified root"
 msgstr ""
 "beschränke Suche nach der Arbeitsumgebung auf angegebene Verzeichniswurzel"
 
-#: options_list.hh:523
+#: options_list.hh:531
 msgid "use the current arguments as the future default"
 msgstr "benutze die derzeitigen Parameter in Zukunft als Standard"
 
-#: options_list.hh:531
+#: options_list.hh:539
 msgid "set ticker style (count|dot|none)"
 msgstr "setzte 'Ticker'-Stil (count|dot|none)"
 
-#: options_list.hh:542
+#: options_list.hh:550
 #, c-format
 msgid "argument must be 'none', 'dot', or 'count'"
 msgstr "Parameter muss 'none', 'dot' oder 'count' sein"
 
-#: options_list.hh:546
+#: options_list.hh:554
 msgid "revision(s) to start logging at"
 msgstr "Revision(en), bei denen die Logausgabe gestartet wird"
 
-#: options_list.hh:553
+#: options_list.hh:561
 msgid "revision(s) to stop logging at"
 msgstr "Revision(en), bei denen die Logausgabe gestoppt wird"
 
-#: options_list.hh:561
+#: options_list.hh:569
 msgid "perform the operations for unknown files from workspace"
 msgstr "führe diese Operation für unbekannte Dateien im Arbeitsbereich aus"
 
-#: options_list.hh:570
+#: options_list.hh:578
 msgid "verbose completion output"
 msgstr "ausführliche Komplettierungsausgabe"
 
-#: options_list.hh:578
+#: options_list.hh:586
 msgid "print version number, then exit"
 msgstr "zeige Versionsinformationen an und beende dann das Programm"
 
-#: options_list.hh:586
+#: options_list.hh:594
 msgid "insert command line arguments taken from the given file"
 msgstr "füge Kommandozeilenargumente aus der gegebenen Datei an"
 
-#: options_list.hh:599
+#: options_list.hh:607
 msgid "don't output ignored files"
 msgstr "gib keine ignorierten Dateien aus"
 
-#: options_list.hh:607
+#: options_list.hh:615
 msgid "don't output unknown files"
 msgstr "gib keine unbekannten Dateien aus"
 
-#: options_list.hh:615
+#: options_list.hh:623
 msgid "don't output unchanged files"
 msgstr "gib keine unveränderten Dateien aus"
 
-#: options_list.hh:623
+#: options_list.hh:631
 msgid "don't output corresponding renames if restricted on such nodes"
 msgstr ""
 "gib bei der Beschränkung auf umbenannte Einträge nicht die "
@@ -5441,28 +5468,28 @@ msgstr "Bewerte %s SHA-1-Kerne"
 msgid "%s: %s MiB/s"
 msgstr "%s: %s MiB/s"
 
-#: ssh_agent.cc:137
+#: ssh_agent.cc:142
 #, c-format
 msgid "string not long enough to get a long"
 msgstr "Zeichenkette ist nicht lang genug, um einen 'long'-Wert zu erhalten"
 
-#: ssh_agent.cc:155
+#: ssh_agent.cc:160
 #, c-format
 msgid "ssh_agent: length (%i) of buf less than loc (%u) + len (%u)"
 msgstr ""
 "ssh_agent: Länge (%i) von buf ist kürzer als location (%u) + length (%u)"
 
-#: ssh_agent.cc:258
+#: ssh_agent.cc:263
 #, c-format
 msgid "ssh_agent: fetch_packet: zero-length packet from ssh-agent"
 msgstr "ssh_agent: fetch_packet: Paket der Länge 0 von ssh-agent"
 
-#: ssh_agent.cc:308
+#: ssh_agent.cc:313
 #, c-format
 msgid "ssh_agent: packet type (%u) != 12"
 msgstr "ssh_agent: Paket-Typ (%u) != 12"
 
-#: ssh_agent.cc:346
+#: ssh_agent.cc:351
 #, c-format
 msgid ""
 "ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), "
@@ -5471,7 +5498,7 @@ msgstr ""
 "ssh_agent: get_keys: nicht alle oder zu viele Schlüssel-Bytes verarbeitet, "
 "location (%u), length (%i)"
 
-#: ssh_agent.cc:370
+#: ssh_agent.cc:375
 #, c-format
 msgid ""
 "ssh_agent: get_keys: not all or too many packet bytes consumed, location (%"
@@ -5480,14 +5507,14 @@ msgstr ""
 "ssh_agent: get_keys: nicht alle oder zu viele Paket-Bytes verarbeitet, "
 "location (%u), length (%i)"
 
-#: ssh_agent.cc:384
+#: ssh_agent.cc:418
 #, c-format
 msgid "ssh_agent: get_keys: attempted to sign data when not connected"
 msgstr ""
 "ssh_agent: get_keys: Versuch, Daten ohne bestehende Verbindung zu "
 "unterschreiben"
 
-#: ssh_agent.cc:430
+#: ssh_agent.cc:464
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many signature bytes consumed, location "
@@ -5496,7 +5523,7 @@ msgstr ""
 "ssh_agent: sign_data: nicht alle oder zu viele Signatur-Bytes verarbeitet, "
 "location (%u), length (%i)"
 
-#: ssh_agent.cc:436
+#: ssh_agent.cc:470
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many packet bytes consumed, location (%"
@@ -5505,19 +5532,19 @@ msgstr ""
 "ssh_agent: sign_data: nicht alle oder zu viele Paket-Bytes verarbeitet, "
 "location (%u), length (%i)"
 
-#: ssh_agent.cc:446
+#: ssh_agent.cc:480
 #, c-format
 msgid "ssh_agent: add_identity: attempted to add a key when not connected"
 msgstr ""
 "ssh_agent: add_identity: Versuch, einen Schlüssel ohne bestehende Verbindung "
 "hinzuzufügen"
 
-#: ssh_agent.cc:462
+#: ssh_agent.cc:496
 #, c-format
 msgid "ssh_agent: add_identity: response packet of unexpected size (%u)"
 msgstr "ssh_agent: add_identity: Antwort-Paket mit nicht erwarteter Größe (%u)"
 
-#: ssh_agent.cc:464
+#: ssh_agent.cc:498
 #, c-format
 msgid "ssh_agent: packet type (%u) != 6"
 msgstr "ssh_agent: Paket-Type (%u) != 6"
@@ -5847,7 +5874,7 @@ msgstr "Fehler beim Senden der Nachricht an pageant (%d)"
 msgid "Asked to read more than %u from pageant."
 msgstr "Erhielt Anfrage, mehr als %u Bytes von pageant zu lesen"
 
-#: work.cc:109 work.cc:495 work.cc:528 work.cc:557 work_migration.cc:67
+#: work.cc:109 work.cc:496 work.cc:535 work.cc:564 work_migration.cc:67
 #, c-format
 msgid "workspace required but not found"
 msgstr "Arbeitsverzeichnis benötigt, jedoch nicht gefunden"
@@ -5896,12 +5923,12 @@ msgstr "nicht erkannter Schlüssel '%s' in Optionen-Datei %s - wird ignoriert"
 msgid "Failed to write options file %s: %s"
 msgstr "Konnte Optionen-Datei %s nicht schreiben: %s"
 
-#: work.cc:549
+#: work.cc:556
 #, c-format
 msgid "'%s' is not a recognized workspace option"
 msgstr "'%s' ist keine bekannte Option eines Arbeitsbereichs"
 
-#: work.cc:783
+#: work.cc:790
 #, c-format
 msgid ""
 "cannot add %s, because %s is recorded as a file in the workspace manifest"
@@ -5909,105 +5936,105 @@ msgstr ""
 "Kann %s nicht hinzufügen, da %s als Datei im  Arbeitsbereich-Manifest "
 "aufgenommen wurde."
 
-#: work.cc:789
+#: work.cc:796
 #, c-format
 msgid "adding %s to workspace manifest"
 msgstr "füge %s dem Arbeitsbereich-Manifest hinzu"
 
-#: work.cc:827
+#: work.cc:834
 #, c-format
 msgid "skipping ignorable file %s"
 msgstr "übergehe ignorierbare Datei %s"
 
-#: work.cc:834
+#: work.cc:841
 #, c-format
 msgid "skipping %s, already accounted for in workspace"
 msgstr "übergehe %s, bereits im Arbeitsbereich festgehalten"
 
-#: work.cc:992
+#: work.cc:999
 #, c-format
 msgid "dropping %s"
 msgstr "entferne %s"
 
-#: work.cc:1003 work.cc:1014
+#: work.cc:1010 work.cc:1021
 #, c-format
 msgid "path %s already exists"
 msgstr "Pfad %s existiert bereits"
 
-#: work.cc:1032
+#: work.cc:1039
 #, c-format
 msgid "renaming %s to %s"
 msgstr "benenne %s nach %s um"
 
-#: work.cc:1036
+#: work.cc:1043
 #, c-format
 msgid "adding %s"
 msgstr "füge %s hinzu"
 
-#: work.cc:1069
+#: work.cc:1076
 #, c-format
 msgid "file '%s' does not exist"
 msgstr "Datei '%s' existiert nicht"
 
-#: work.cc:1070
+#: work.cc:1077
 #, c-format
 msgid "file '%s' is a directory"
 msgstr "Datei '%s' ist ein Verzeichnis"
 
-#: work.cc:1074
+#: work.cc:1081
 #, c-format
 msgid "content of file '%s' has changed, not overwriting"
 msgstr ""
 "Inhalt der Datei '%s' hat sich geändert, Datei wird nicht überschrieben"
 
-#: work.cc:1075
+#: work.cc:1082
 #, c-format
 msgid "modifying %s"
 msgstr "verändere %s"
 
-#: work.cc:1128
+#: work.cc:1135
 #, c-format
 msgid "cannot drop non-empty directory '%s'"
 msgstr "kann Verzeichnis '%s' nicht entfernen, da es nicht leer ist"
 
-#: work.cc:1158
+#: work.cc:1165
 #, c-format
 msgid "attach node %d blocked by unversioned path '%s'"
 msgstr ""
 "Anfügen des Knotens %d wird blockiert durch den unversionisierten Pfad '%s'"
 
-#: work.cc:1176
+#: work.cc:1183
 #, c-format
 msgid "attach node %d blocked by blocked parent '%s'"
 msgstr ""
 "Anfügen des Knotens %d wird blockiert durch den blockierten Elternpfad '%s'"
 
-#: work.cc:1208
+#: work.cc:1215
 #, c-format
 msgid "%d workspace conflicts"
 msgstr "%d Konflikte im Arbeitsbereich"
 
-#: work.cc:1278
+#: work.cc:1285
 #, c-format
 msgid "missing directory '%s'"
 msgstr "fehlendes Verzeichnis '%s'"
 
-#: work.cc:1283
+#: work.cc:1290
 #, c-format
 msgid "not a directory '%s'"
 msgstr "'%s' ist kein Verzeichnis"
 
-#: work.cc:1296
+#: work.cc:1303
 #, c-format
 msgid "missing file '%s'"
 msgstr "fehlende Datei '%s'"
 
-#: work.cc:1301
+#: work.cc:1308
 #, c-format
 msgid "not a file '%s'"
 msgstr "'%s' ist keine Datei"
 
-#: work.cc:1312
+#: work.cc:1319
 #, c-format
 msgid ""
 "%d missing items; use '%s ls missing' to view\n"
@@ -6027,122 +6054,122 @@ msgstr ""
 " '%s drop --missing' bzw.\n"
 " '%s revert --missing'."
 
-#: work.cc:1470
+#: work.cc:1477
 #, c-format
 msgid "unable to drop the root directory"
 msgstr "kann das Wurzelverzeichnis nicht entfernen"
 
-#: work.cc:1473
+#: work.cc:1480
 #, c-format
 msgid "skipping %s, not currently tracked"
 msgstr "übergehe %s, wird derzeit nicht verfolgt"
 
-#: work.cc:1483
+#: work.cc:1490
 #, c-format
 msgid "cannot remove %s/, it is not empty"
 msgstr "kann %s/ nicht entfernen, Verzeichnis ist nicht leer"
 
-#: work.cc:1498
+#: work.cc:1505
 #, c-format
 msgid "directory %s not empty - it will be dropped but not deleted"
 msgstr ""
 "Das Verzeichnis %s ist nicht leer - es wird von monotone entfernt, aber "
 "nicht gelöscht"
 
-#: work.cc:1509
+#: work.cc:1516
 #, c-format
 msgid "file %s changed - it will be dropped but not deleted"
 msgstr ""
 "Die Datei %s wurde verändert - sie wird von monotone entfernt, aber nicht "
 "gelöscht"
 
-#: work.cc:1513
+#: work.cc:1520
 #, c-format
 msgid "dropping %s from workspace manifest"
 msgstr "entferne %s aus dem Arbeitsbereich-Manifest"
 
-#: work.cc:1555 work.cc:1589
+#: work.cc:1562 work.cc:1596
 #, c-format
 msgid "cannot rename the workspace root (try '%s pivot_root' instead)"
 msgstr ""
 "kann Wurzel des Arbeitsbereiches nicht umbenennen (versuchen Sie stattdessen "
 "'%s pivot_root')"
 
-#: work.cc:1558 work.cc:1592
+#: work.cc:1565 work.cc:1599
 #, c-format
 msgid "source file %s is not versioned"
 msgstr "Quell-Datei %s ist nicht versionisiert"
 
-#: work.cc:1573
+#: work.cc:1580
 #, c-format
 msgid "destination path's parent directory %s/ doesn't exist"
 msgstr "Elternverzeichnis %s/ des Zielpfades existiert nicht"
 
-#: work.cc:1583
+#: work.cc:1590
 #, c-format
 msgid "destination %s/ is not a directory"
 msgstr "Ziel %s ist kein Verzeichnis"
 
-#: work.cc:1596
+#: work.cc:1603
 #, c-format
 msgid "destination %s already exists in the workspace manifest"
 msgstr "Ziel %s existiert bereits im Manifest des Arbeitsbereichs"
 
-#: work.cc:1610
+#: work.cc:1617
 #, c-format
 msgid "renaming %s to %s in workspace manifest"
 msgstr "benenne %s zu %s im Arbeitsbereich-Manifest um"
 
-#: work.cc:1635
+#: work.cc:1642
 #, c-format
 msgid "%s doesn't exist in workspace, skipping"
 msgstr "%s existiert nicht im Arbeitsbereich, übergehe Aktion"
 
-#: work.cc:1639
+#: work.cc:1646
 #, c-format
 msgid "destination %s already exists in workspace, skipping filesystem rename"
 msgstr ""
 "Ziel %s existiert bereits im Arbeitsbereich, übergehe Umbenennung im "
 "Dateisystem"
 
-#: work.cc:1644
+#: work.cc:1651
 #, c-format
 msgid "%s doesn't exist in workspace and %s does, skipping filesystem rename"
 msgstr ""
 "%s existiert im Gegensatz zu %s nicht im Arbeitsbereich, übergehe "
 "Umbenennung im Dateisystem"
 
-#: work.cc:1665
+#: work.cc:1672
 #, c-format
 msgid "proposed new root directory '%s' is not versioned or does not exist"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' ist nicht unter "
 "Versionkontrolle oder existiert nicht"
 
-#: work.cc:1668
+#: work.cc:1675
 #, c-format
 msgid "proposed new root directory '%s' is not a directory"
 msgstr "das neu vorgeschlagene Wurzelverzeichnis '%s' ist kein Verzeichnis"
 
-#: work.cc:1671
+#: work.cc:1678
 #, c-format
 msgid "proposed new root directory '%s' contains illegal path %s"
 msgstr ""
 "das neu vorgeschlagene Wurzelverzeichnis '%s' beinhaltet den ungültigen Pfad "
 "%s"
 
-#: work.cc:1681
+#: work.cc:1688
 #, c-format
 msgid "directory '%s' is not versioned or does not exist"
 msgstr ""
 "das Verzeichnis '%s' ist nicht unter Versionskontrolle oder existiert nicht"
 
-#: work.cc:1687
+#: work.cc:1694
 #, c-format
 msgid "'%s' is in the way"
 msgstr "'%s' ist im Weg"
 
-#: work.cc:1728
+#: work.cc:1735
 #, c-format
 msgid ""
 "workspace is locked\n"
@@ -6266,9 +6293,6 @@ msgstr ""
 
 #~ msgid "Gets a database variable"
 #~ msgstr "Gibt eine Datenbankvariable zurück"
-
-#~ msgid "variable not found"
-#~ msgstr "Variable nicht gefunden"
 
 #~ msgid "[source] %s"
 #~ msgstr "[Quelle] %s"
