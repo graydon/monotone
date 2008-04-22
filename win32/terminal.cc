@@ -22,7 +22,7 @@ bool have_smart_terminal()
   // Win32 consoles are weird; cmd.exe does not set TERM, but isatty returns
   // true, Cygwin and MinGW MSYS shells set a TERM but isatty returns false.
   // Let's just check for some obvious dumb terminals, and default to smart.
-  if (term == "emacs" || term == "dumb")
+  if (term == "" || term == "dumb")
     return false;
   else
     return true;
@@ -39,7 +39,7 @@ unsigned int terminal_width()
           return static_cast<unsigned int>(ci.dwSize.X);
         }
     }
-  
+
   // default to 80 columns if the width query failed.
   return 80;
 }

@@ -306,7 +306,7 @@ netcmd::read_auth_cmd(protocol_role & role,
                       id & client,
                       id & nonce1,
                       rsa_oaep_sha_data & hmac_key_encrypted,
-                      string & signature) const
+                      rsa_sha1_signature & signature) const
 {
   size_t pos = 0;
   // syntax is: <role:1 byte> <include_pattern: vstr> <exclude_pattern: vstr>
@@ -335,8 +335,10 @@ netcmd::read_auth_cmd(protocol_role & role,
   extract_variable_length_string(payload, hmac_key, pos,
                                  "auth(hmac) netcmd, hmac_key_encrypted");
   hmac_key_encrypted = rsa_oaep_sha_data(hmac_key);
-  extract_variable_length_string(payload, signature, pos,
+  string sig_string;
+  extract_variable_length_string(payload, sig_string, pos,
                                  "auth(hmac) netcmd, signature");
+  signature = rsa_sha1_signature(sig_string);
   assert_end_of_buffer(payload, pos, "auth(hmac) netcmd payload");
 }
 
@@ -347,7 +349,7 @@ netcmd::write_auth_cmd(protocol_role role,
                        id const & client,
                        id const & nonce1,
                        rsa_oaep_sha_data const & hmac_key_encrypted,
-                       string const & signature)
+                       rsa_sha1_signature const & signature)
 {
   cmd_code = auth_cmd;
   I(client().size() == constants::merkle_hash_length_in_bytes);
@@ -358,7 +360,7 @@ netcmd::write_auth_cmd(protocol_role role,
   payload += client();
   payload += nonce1();
   insert_variable_length_string(hmac_key_encrypted(), payload);
-  insert_variable_length_string(signature, payload);
+  insert_variable_length_string(signature(), payload);
 }
 
 void
@@ -698,7 +700,7 @@ UNIT_TEST(netcmd, functions)
         // total cheat, since we don't actually verify that rsa_oaep_sha_data
         // is sensible anywhere here...
         rsa_oaep_sha_data out_key("nonce start my heart"), in_key;
-        string out_signature(raw_sha1("burble") + raw_sha1("gorby")), in_signature;
+        rsa_sha1_signature out_signature(raw_sha1("burble") + raw_sha1("gorby")), in_signature;
         globish out_include_pattern("radishes galore!"), in_include_pattern;
         globish out_exclude_pattern("turnips galore!"), in_exclude_pattern;
 

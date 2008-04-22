@@ -80,7 +80,7 @@ public:
   //      this time in the future?" bit in the hashed information.  This bit
   //      will change when we pass the future point, and trigger a re-check of
   //      the file's contents.
-  // 
+  //
   // This is, of course, still not perfect.  There is no way to make our stat
   // atomic with the actual read of the file, so there's always a race condition
   // there.  Additionally, this handling means that checkout will never actually
@@ -111,6 +111,10 @@ std::string get_current_working_dir();
 void change_current_working_dir(std::string const & to);
 std::string tilde_expand(std::string const & path);
 std::string get_default_confdir();
+
+inline std::string get_default_keydir()
+{ return get_default_confdir() + "/keys"; }
+
 std::string get_homedir();
 namespace path
 {
@@ -147,12 +151,6 @@ double cpu_now();
 
 // determine directory to load locale data from
 std::string get_locale_dir();
-
-#ifdef WIN32
-#include "win32/ssh_agent_platform.hh"
-#else
-#include "unix/ssh_agent_platform.hh"
-#endif
 
 // Local Variables:
 // mode: C++

@@ -23,6 +23,7 @@ public:
 private:
   bool active;
   Botan::SymmetricKey key;
+  Botan::Pipe engine;
   std::string chain_val;
 };
 

@@ -1,8 +1,10 @@
-This botan/ subdirectory is maintained in a separate staging branch
-(currently au.asn.ucc.matt.botan.monotone-2). This avoids pulling the entire
-net.randombit.botan history into net.venge.monotone. It also evades the issue
-of being unable to resurrect files (a problem of die-die-die merge), as
-unwanted files are just moved into a.a.u.m.b.monotone-2's Attic/ directory.
+This botan/ subdirectory is maintained in a separate staging branch,
+currentnly named au.asn.ucc.matt.botan.monotone-2, and available for
+download from nabagan.bluegap.ch. This avoids pulling the entire
+net.randombit.botan history into net.venge.monotone. It also evades the
+issue of being unable to resurrect files (a problem of die-die-die merge),
+as unwanted files are just moved into a.a.u.m.b.monotone-2's Attic/
+directory.
 
 Steps to update net.venge.monotone.botan with net.randombit.net:
 

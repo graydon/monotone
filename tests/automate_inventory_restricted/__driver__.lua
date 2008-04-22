@@ -77,9 +77,9 @@ index = check_inventory (parsed, index,
 -- skip the test files in root
 
 ----------
--- Test that 'automate inventory --depth=0' shows only the files in root
+-- Test that 'automate inventory --depth=1' shows only the files in root
 
-check(mtn("automate", "inventory", "--depth=0"), 0, true, false)
+check(mtn("automate", "inventory", "--depth=1"), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))
 index = 1
@@ -247,11 +247,11 @@ index = check_inventory (parsed, index,
 checkexp ("checked all", #parsed, index-1)
 
 ----------
--- rename a file from root to dir_a, test --depth=0
+-- rename a file from root to dir_a, test --depth=1
 
 check(mtn("rename", "--bookkeep-only", "file_0", "dir_a/file_0"), 0, true, false)
 
-check(mtn("automate", "inventory", "--depth=0"), 0, true, false)
+check(mtn("automate", "inventory", "--depth=1"), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))
 index = 1
@@ -295,7 +295,7 @@ checkexp ("checked all", #parsed, index-1)
 
 rename("file_0", "dir_a/file_0")
 
-check(mtn("automate", "inventory", "--depth=0"), 0, true, false)
+check(mtn("automate", "inventory", "--depth=1"), 0, true, false)
 
 parsed = parse_basic_io(readfile("stdout"))
 index = 1

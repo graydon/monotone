@@ -28,16 +28,16 @@ commit()
 --check(mtn("ls", "known", "--depth=0"), 0, true, false)
 --check(not qgrep("fileX", "stdout"))
 
-check(mtn("ls", "known", "--depth=0", ".") , 0, true, false)
+check(mtn("ls", "known", "--depth=1", ".") , 0, true, false)
 check(not qgrep("fileX", "stdout"))
 
-check(mtn("ls", "known", "--depth=1", ".") , 0, true, false)
+check(mtn("ls", "known", "--depth=2", ".") , 0, true, false)
 check(qgrep("fileX", "stdout"))
 
-check(mtn("ls", "known", "--depth=0", "work/A") , 0, true, false)
+check(mtn("ls", "known", "--depth=1", "work/A") , 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(mtn("ls", "known", "--depth=1", "work/A") , 0, true, false)
+check(mtn("ls", "known", "--depth=2", "work/A") , 0, true, false)
 check(qgrep("fileAB", "stdout"))
 
 -- test restriction of unknown, missing, ignored files
@@ -148,16 +148,16 @@ check(excluded("X", 1, 2, 3))
 check(mtn("diff"), 0, true, false)
 check(included("X", 1, 2, 3, 4))
 
-check(mtn("diff", "--depth=0", "."), 0, true, false)
+check(mtn("diff", "--depth=1", "."), 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(mtn("diff", "--depth=2", "."), 0, true, false)
+check(mtn("diff", "--depth=3", "."), 0, true, false)
 check(qgrep("fileA", "stdout"))
 
-check(mtn("diff", "--context", "--depth=0", "."), 0, true, false)
+check(mtn("diff", "--context", "--depth=1", "."), 0, true, false)
 check(not qgrep("fileAB", "stdout"))
 
-check(mtn("diff", "--context", "--depth=2", "."), 0, true, false)
+check(mtn("diff", "--context", "--depth=3", "."), 0, true, false)
 check(qgrep("fileA", "stdout"))
 
 -- include both source and target of rename

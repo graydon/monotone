@@ -1,0 +1,3 @@
+# libpcre's own shlibs file requires only >=7.4, but we want to be sure
+# to get the security fixes in 7.5 and 7.6.
+libpcre 3 libpcre3 (>= 7.6)

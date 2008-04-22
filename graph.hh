@@ -20,25 +20,19 @@
 #include <set>
 #include "vector.hh"
 #include <utility>
-
-#include "vocab.hh"
-#include "rev_height.hh"
+#include "rev_types.hh"
 
 struct reconstruction_graph
 {
-  virtual bool is_base(std::string const & node) const = 0;
-  virtual void get_next(std::string const & from, std::set<std::string> & next) const = 0;
+  virtual bool is_base(id const & node) const = 0;
+  virtual void get_next(id const & from, std::set<id> & next) const = 0;
   virtual ~reconstruction_graph() {};
 };
 
-typedef std::vector<std::string> reconstruction_path;
-
 void
-get_reconstruction_path(std::string const & start,
+get_reconstruction_path(id const & start,
                         reconstruction_graph const & graph,
                         reconstruction_path & path);
-
-typedef std::multimap<revision_id, revision_id> rev_ancestry_map;
 
 void toposort_rev_ancestry(rev_ancestry_map const & graph,
                           std::vector<revision_id> & revisions);

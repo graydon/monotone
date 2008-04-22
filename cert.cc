@@ -17,13 +17,15 @@
 #include <boost/tuple/tuple_comparison.hpp>
 
 #include "lexical_cast.hh"
-#include "app_state.hh"
 #include "cert.hh"
 #include "constants.hh"
+#include "database.hh"
 #include "interner.hh"
 #include "keys.hh"
+#include "key_store.hh"
 #include "netio.hh"
-#include "option.hh"
+#include "options.hh"
+#include "project.hh"
 #include "revision.hh"
 #include "sanity.hh"
 #include "simplestring_xform.hh"
@@ -62,12 +64,12 @@ template class manifest<cert>;
 struct
 bogus_cert_p
 {
-  app_state & app;
-  bogus_cert_p(app_state & a) : app(a) {};
+  database & db;
+  bogus_cert_p(database & db) : db(db) {};
 
   bool cert_is_bogus(cert const & c) const
   {
-    cert_status status = check_cert(app, c);
+    cert_status status = check_cert(db, c);
     if (status == cert_ok)
       {
         L(FL("cert ok"));
@@ -101,27 +103,26 @@ bogus_cert_p
   }
 };
 
-
 void
-erase_bogus_certs(vector< manifest<cert> > & certs,
-                  app_state & app)
+erase_bogus_certs(database & db,
+                  vector< manifest<cert> > & certs)
 {
   typedef vector< manifest<cert> >::iterator it;
-  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(db));
   certs.erase(e, certs.end());
 
   vector< manifest<cert> > tmp_certs;
 
   // Sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, cert_name, base64<cert_value> > trust_key;
+  typedef tuple< manifest_id, cert_name, cert_value > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
 
   for (it i = certs.begin(); i != certs.end(); ++i)
     {
-      trust_key key = trust_key(i->inner().ident, 
-                                i->inner().name, 
+      trust_key key = trust_key(manifest_id(i->inner().ident.inner()),
+                                i->inner().name,
                                 i->inner().value);
       trust_map::iterator j = trust.find(key);
       shared_ptr< set<rsa_keypair_id> > s;
@@ -138,39 +139,41 @@ erase_bogus_certs(vector< manifest<cert> > & certs,
   for (trust_map::const_iterator i = trust.begin();
        i != trust.end(); ++i)
     {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
-      if (app.lua.hook_get_manifest_cert_trust(*(i->second.first),
-                                               get<0>(i->first),
-                                               get<1>(i->first),
-                                               decoded_value))
+      if (db.hook_get_manifest_cert_trust(*(i->second.first),
+                                          get<0>(i->first),
+                                          get<1>(i->first),
+                                          get<2>(i->first)))
         {
-          L(FL("trust function liked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            L(FL("trust function liked %d signers of %s cert on manifest %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on manifest %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
 }
 
 void
-erase_bogus_certs(vector< revision<cert> > & certs,
-                  app_state & app)
+erase_bogus_certs(database & db,
+                  vector< revision<cert> > & certs)
 {
   typedef vector< revision<cert> >::iterator it;
-  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(app));
+  it e = remove_if(certs.begin(), certs.end(), bogus_cert_p(db));
   certs.erase(e, certs.end());
 
   vector< revision<cert> > tmp_certs;
 
   // sorry, this is a crazy data structure
-  typedef tuple< hexenc<id>, 
-    cert_name, base64<cert_value> > trust_key;
+  typedef tuple< revision_id, cert_name, cert_value > trust_key;
   typedef map< trust_key, 
     pair< shared_ptr< set<rsa_keypair_id> >, it > > trust_map;
   trust_map trust;
@@ -195,21 +198,24 @@ erase_bogus_certs(vector< revision<cert> > & certs,
   for (trust_map::const_iterator i = trust.begin();
        i != trust.end(); ++i)
     {
-      cert_value decoded_value;
-      decode_base64(get<2>(i->first), decoded_value);
-      if (app.lua.hook_get_revision_cert_trust(*(i->second.first),
-                                               get<0>(i->first),
-                                               get<1>(i->first),
-                                               decoded_value))
+      if (db.hook_get_revision_cert_trust(*(i->second.first),
+                                          get<0>(i->first),
+                                          get<1>(i->first),
+                                          get<2>(i->first)))
         {
-          L(FL("trust function liked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+          if (global_sanity.debug_p())
+            L(FL("trust function liked %d signers of %s cert on revision %s")
+              % i->second.first->size()
+              % get<1>(i->first)
+              % get<0>(i->first));
           tmp_certs.push_back(*(i->second.second));
         }
       else
         {
           W(F("trust function disliked %d signers of %s cert on revision %s")
-            % i->second.first->size() % get<1>(i->first) % get<0>(i->first));
+            % i->second.first->size()
+            % get<1>(i->first)
+            % get<0>(i->first));
         }
     }
   certs = tmp_certs;
@@ -226,18 +232,18 @@ cert::cert(std::string const & s)
   read_cert(s, *this);
 }
 
-cert::cert(hexenc<id> const & ident,
+cert::cert(revision_id const & ident,
            cert_name const & name,
-           base64<cert_value> const & value,
+           cert_value const & value,
            rsa_keypair_id const & key)
   : ident(ident), name(name), value(value), key(key)
 {}
 
-cert::cert(hexenc<id> const & ident,
-         cert_name const & name,
-         base64<cert_value> const & value,
-         rsa_keypair_id const & key,
-         base64<rsa_sha1_signature> const & sig)
+cert::cert(revision_id const & ident,
+           cert_name const & name,
+           cert_value const & value,
+           rsa_keypair_id const & key,
+           rsa_sha1_signature const & sig)
   : ident(ident), name(name), value(value), key(key), sig(sig)
 {}
 
@@ -274,7 +280,7 @@ read_cert(string const & in, cert & t)
   id hash = id(extract_substring(in, pos,
                                  constants::merkle_hash_length_in_bytes,
                                  "cert hash"));
-  id ident = id(extract_substring(in, pos,
+  revision_id ident = revision_id(extract_substring(in, pos,
                                   constants::merkle_hash_length_in_bytes,
                                   "cert ident"));
   string name, val, key, sig;
@@ -284,27 +290,14 @@ read_cert(string const & in, cert & t)
   extract_variable_length_string(in, sig, pos, "cert sig");
   assert_end_of_buffer(in, pos, "cert");
 
-  hexenc<id> hid;
-  base64<cert_value> bval;
-  base64<rsa_sha1_signature> bsig;
+  cert tmp(ident, cert_name(name), cert_value(val), rsa_keypair_id(key),
+           rsa_sha1_signature(sig));
 
-  encode_hexenc(ident, hid);
-  encode_base64(cert_value(val), bval);
-  encode_base64(rsa_sha1_signature(sig), bsig);
-
-  cert tmp(hid, cert_name(name), bval, rsa_keypair_id(key), bsig);
-
-  hexenc<id> hcheck;
   id check;
-  cert_hash_code(tmp, hcheck);
-  decode_hexenc(hcheck, check);
+  cert_hash_code(tmp, check);
   if (!(check == hash))
-    {
-      hexenc<id> hhash;
-      encode_hexenc(hash, hhash);
-      throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
-                       % hcheck % hhash);
-    }
+    throw bad_decode(F("calculated cert hash '%s' does not match '%s'")
+                     % check % hash);
   t = tmp;
 }
 
@@ -312,178 +305,101 @@ void
 write_cert(cert const & t, string & out)
 {
   string name, key;
-  hexenc<id> hash;
-  id ident_decoded, hash_decoded;
-  rsa_sha1_signature sig_decoded;
-  cert_value value_decoded;
+  id hash;
 
   cert_hash_code(t, hash);
-  decode_base64(t.value, value_decoded);
-  decode_base64(t.sig, sig_decoded);
-  decode_hexenc(t.ident, ident_decoded);
-  decode_hexenc(hash, hash_decoded);
 
-  out.append(hash_decoded());
-  out.append(ident_decoded());
+  out.append(hash());
+  out.append(t.ident.inner()());
   insert_variable_length_string(t.name(), out);
-  insert_variable_length_string(value_decoded(), out);
+  insert_variable_length_string(t.value(), out);
   insert_variable_length_string(t.key(), out);
-  insert_variable_length_string(sig_decoded(), out);
+  insert_variable_length_string(t.sig(), out);
 }
 
 void
-cert_signable_text(cert const & t,
-                   string & out)
+cert_signable_text(cert const & t, string & out)
 {
-  out = (FL("[%s@%s:%s]") % t.name % t.ident % remove_ws(t.value())).str();
+  base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
+
+  out.clear();
+  out.reserve(4 + t.name().size() + ident_encoded.size()
+              + val_encoded().size());
+
+  out += '[';
+  out.append(t.name());
+  out += '@';
+  out.append(ident_encoded);
+  out += ':';
+  append_without_ws(out, val_encoded());
+  out += ']';
+
   L(FL("cert: signable text %s") % out);
 }
 
 void
-cert_hash_code(cert const & t, hexenc<id> & out)
+cert_hash_code(cert const & t, id & out)
 {
+  base64<rsa_sha1_signature> sig_encoded(encode_base64(t.sig));
+  base64<cert_value> val_encoded(encode_base64(t.value));
+  string ident_encoded(encode_hexenc(t.ident.inner()()));
   string tmp;
-  tmp.reserve(4+t.ident().size() + t.name().size() + t.value().size() +
-              t.key().size() + t.sig().size());
-  tmp.append(t.ident());
+  tmp.reserve(4 + ident_encoded.size()
+              + t.name().size() + val_encoded().size()
+              + t.key().size() + sig_encoded().size());
+  tmp.append(ident_encoded);
   tmp += ':';
   tmp.append(t.name());
   tmp += ':';
-  append_without_ws(tmp,t.value());
+  append_without_ws(tmp, val_encoded());
   tmp += ':';
   tmp.append(t.key());
   tmp += ':';
-  append_without_ws(tmp,t.sig());
+  append_without_ws(tmp, sig_encoded());
 
   data tdat(tmp);
   calculate_ident(tdat, out);
 }
 
-bool
-priv_key_exists(app_state & app, rsa_keypair_id const & id)
-{
-
-  return app.keys.key_pair_exists(id);
-}
-
-// Loads a key pair for a given key id, from either a lua hook
-// or the key store. This will bomb out if the same keyid exists
-// in both with differing contents.
-
-void
-load_key_pair(app_state & app,
-              rsa_keypair_id const & id,
-              keypair & kp)
-{
-
-  static map<rsa_keypair_id, keypair> keys;
-  bool persist_ok = (!keys.empty()) || app.lua.hook_persist_phrase_ok();
-
-  if (persist_ok && keys.find(id) != keys.end())
-    {
-      kp = keys[id];
-    }
-  else
-    {
-      N(app.keys.key_pair_exists(id),
-        F("no key pair '%s' found in key store '%s'")
-        % id % app.keys.get_key_dir());
-      app.keys.get_key_pair(id, kp);
-      if (persist_ok)
-        keys.insert(make_pair(id, kp));
-    }
-}
-
-void
-calculate_cert(app_state & app, cert & t)
-{
-  string signed_text;
-  keypair kp;
-  cert_signable_text(t, signed_text);
-
-  load_key_pair(app, t.key, kp);
-  app.db.put_key(t.key, kp.pub);
-
-  make_signature(app, t.key, kp.priv, signed_text, t.sig);
-}
-
 cert_status
-check_cert(app_state & app, cert const & t)
+check_cert(database & db, cert const & t)
 {
-
-  base64< rsa_pub_key > pub;
-
-  static map<rsa_keypair_id, base64< rsa_pub_key > > pubkeys;
-  bool persist_ok = (!pubkeys.empty()) || app.lua.hook_persist_phrase_ok();
-
-  if (persist_ok
-      && pubkeys.find(t.key) != pubkeys.end())
-    {
-      pub = pubkeys[t.key];
-    }
-  else
-    {
-      if (!app.db.public_key_exists(t.key))
-        return cert_unknown;
-      app.db.get_key(t.key, pub);
-      if (persist_ok)
-        pubkeys.insert(make_pair(t.key, pub));
-    }
-
   string signed_text;
   cert_signable_text(t, signed_text);
-  if (check_signature(app, t.key, pub, signed_text, t.sig))
-    return cert_ok;
-  else
-    return cert_bad;
+  return db.check_signature(t.key, signed_text, t.sig);
 }
 
+bool
+put_simple_revision_cert(database & db,
+                         key_store & keys,
+                         revision_id const & id,
+                         cert_name const & nm,
+                         cert_value const & val)
+{
+  I(!keys.signing_key().empty());
+
+  cert t(id, nm, val, keys.signing_key);
+  string signed_text;
+  cert_signable_text(t, signed_text);
+  load_key_pair(keys, t.key);
+  keys.make_signature(db, t.key, signed_text, t.sig);
+
+  revision<cert> cc(t);
+  return db.put_revision_cert(cc);
+}
 
 // "special certs"
 
-void
-get_user_key(rsa_keypair_id & key, app_state & app)
-{
-
-  if (app.opts.signing_key() != "")
-    {
-      key = app.opts.signing_key;
-    }
-  else if (app.lua.hook_get_branch_key(app.opts.branchname, key))
-    ; // the check also sets the key.
-  else
-    {
-      vector<rsa_keypair_id> all_privkeys;
-      app.keys.get_key_ids(all_privkeys);
-      N(!all_privkeys.empty(), 
-        F("you have no private key to make signatures with\n"
-          "perhaps you need to 'genkey <your email>'"));
-      N(all_privkeys.size() == 1,
-        F("you have multiple private keys\n"
-          "pick one to use for signatures by adding '-k<keyname>' to your command"));
-      key = all_privkeys[0];
-    }
-
-  if (app.db.database_specified() && app.db.public_key_exists(key))
-    {
-      base64<rsa_pub_key> pub_key;
-      keypair priv_key;
-      app.db.get_key(key, pub_key);
-      app.keys.get_key_pair(key, priv_key);
-      E(keys_match(key, pub_key, key, priv_key.pub),
-        F("The key '%s' stored in your database does\n"
-          "not match the version in your local key store!") % key);
-    }
-}
-
 // Guess which branch is appropriate for a commit below IDENT.
-// APP may override.  Branch name is returned in BRANCHNAME.
-// Does not modify branch state in APP.
+// OPTS may override.  Branch name is returned in BRANCHNAME.
+// Does not modify branch state in OPTS.
 void
-guess_branch(revision_id const & ident, app_state & app, branch_name & branchname)
+guess_branch(options & opts, project_t & project,
+             revision_id const & ident, branch_name & branchname)
 {
-  if (app.opts.branch_given && !app.opts.branchname().empty())
-    branchname = app.opts.branchname;
+  if (opts.branch_given && !opts.branchname().empty())
+    branchname = opts.branchname;
   else
     {
       N(!ident.inner()().empty(),
@@ -491,7 +407,7 @@ guess_branch(revision_id const & ident, app_state & app, branch_name & branchnam
           "please provide a branch name"));
 
       set<branch_name> branches;
-      app.get_project().get_revision_branches(ident, branches);
+      project.get_revision_branches(ident, branches);
 
       N(branches.size() != 0,
         F("no branch certs found for revision %s, "
@@ -507,125 +423,94 @@ guess_branch(revision_id const & ident, app_state & app, branch_name & branchnam
     }
 }
 
-// As above, but set the branch name in the app state.
+// As above, but set the branch name in the options
+// if it wasn't already set.
 void
-guess_branch(revision_id const & ident, app_state & app)
+guess_branch(options & opts, project_t & project, revision_id const & ident)
 {
   branch_name branchname;
-  guess_branch(ident, app, branchname);
-  app.opts.branchname = branchname;
+  guess_branch(opts, project, ident, branchname);
+  opts.branchname = branchname;
 }
 
 void
-make_simple_cert(hexenc<id> const & id,
-                 cert_name const & nm,
-                 cert_value const & cv,
-                 app_state & app,
-                 cert & c)
+cert_revision_in_branch(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        branch_name const & branch)
 {
-  rsa_keypair_id key;
-  get_user_key(key, app);
-  base64<cert_value> encoded_val;
-  encode_base64(cv, encoded_val);
-  cert t(id, nm, encoded_val, key);
-  calculate_cert(app, t);
-  c = t;
+  put_simple_revision_cert(db, keys, rev, branch_cert_name,
+                           cert_value(branch()));
 }
 
 void
-put_simple_revision_cert(revision_id const & id,
-                         cert_name const & nm,
-                         cert_value const & val,
-                         app_state & app)
+cert_revision_suspended_in_branch(database & db,
+                                  key_store & keys,
+                                  revision_id const & rev,
+                                  branch_name const & branch)
 {
-  cert t;
-  make_simple_cert(id.inner(), nm, val, app, t);
-  revision<cert> cc(t);
-  app.db.put_revision_cert(cc);
-}
-
-void
-cert_revision_in_branch(revision_id const & rev,
-                        branch_name const & branch,
-                        app_state & app)
-{
-  put_simple_revision_cert (rev, branch_cert_name, cert_value(branch()),
-                            app);
-}
-
-void
-cert_revision_suspended_in_branch(revision_id const & rev,
-                        branch_name const & branch,
-                        app_state & app)
-{
-  put_simple_revision_cert (rev, suspend_cert_name, cert_value(branch()),
-                            app);
+  put_simple_revision_cert(db, keys, rev, suspend_cert_name,
+                           cert_value(branch()));
 }
 
 
 // "standard certs"
 
 void
-cert_revision_date_time(revision_id const & m,
-                        date_t const & t,
-                        app_state & app)
+cert_revision_date_time(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        date_t const & t)
 {
   cert_value val = cert_value(t.as_iso_8601_extended());
-  put_simple_revision_cert(m, date_cert_name, val, app);
+  put_simple_revision_cert(db, keys, rev, date_cert_name, val);
 }
 
 void
-cert_revision_author(revision_id const & m,
-                     string const & author,
-                     app_state & app)
+cert_revision_author(database & db,
+                     key_store & keys,
+                     revision_id const & rev,
+                     string const & author)
 {
-  put_simple_revision_cert(m, author_cert_name, cert_value(author), app);
+  put_simple_revision_cert(db, keys, rev, author_cert_name,
+                           cert_value(author));
 }
 
 void
-cert_revision_author_default(revision_id const & m,
-                             app_state & app)
+cert_revision_tag(database & db,
+                  key_store & keys,
+                  revision_id const & rev,
+                  string const & tagname)
 {
-  string author;
-  rsa_keypair_id key;
-  get_user_key(key, app);
-
-  if (!app.lua.hook_get_author(app.opts.branchname, key, author))
-    {
-      author = key();
-    }
-  cert_revision_author(m, author, app);
+  put_simple_revision_cert(db, keys, rev, tag_cert_name,
+                           cert_value(tagname));
 }
 
 void
-cert_revision_tag(revision_id const & m,
-                  string const & tagname,
-                  app_state & app)
+cert_revision_changelog(database & db,
+                        key_store & keys,
+                        revision_id const & rev,
+                        utf8 const & log)
 {
-  put_simple_revision_cert(m, tag_cert_name, cert_value(tagname), app);
+  put_simple_revision_cert(db, keys, rev, changelog_cert_name,
+                           cert_value(log()));
 }
 
-
 void
-cert_revision_changelog(revision_id const & m,
-                        utf8 const & log,
-                        app_state & app)
+cert_revision_comment(database & db,
+                      key_store & keys,
+                      revision_id const & rev,
+                      utf8 const & comment)
 {
-  put_simple_revision_cert(m, changelog_cert_name, cert_value(log()), app);
+  put_simple_revision_cert(db, keys, rev, comment_cert_name,
+                           cert_value(comment()));
 }
 
 void
-cert_revision_comment(revision_id const & m,
-                      utf8 const & comment,
-                      app_state & app)
-{
-  put_simple_revision_cert(m, comment_cert_name, cert_value(comment()), app);
-}
-
-void
-cert_revision_testresult(revision_id const & r,
-                         string const & results,
-                         app_state & app)
+cert_revision_testresult(database & db,
+                         key_store & keys,
+                         revision_id const & rev,
+                         string const & results)
 {
   bool passed = false;
   if (lowercase(results) == "true" ||
@@ -643,8 +528,8 @@ cert_revision_testresult(revision_id const & r,
                               "tried '0/1' 'yes/no', 'true/false', "
                               "'pass/fail'");
 
-  put_simple_revision_cert(r, testresult_cert_name,
-                           cert_value(lexical_cast<string>(passed)), app);
+  put_simple_revision_cert(db, keys, rev, testresult_cert_name,
+                           cert_value(lexical_cast<string>(passed)));
 }
 
 // Local Variables:

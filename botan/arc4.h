@@ -1,6 +1,6 @@
 /*************************************************
 * ARC4 Header File                               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 The Botan Project                *
 *************************************************/
 
 #ifndef BOTAN_ARC4_H__
@@ -25,8 +25,10 @@ class ARC4 : public StreamCipher
       void cipher(const byte[], byte[], u32bit);
       void key(const byte[], u32bit);
       void generate();
+
       const u32bit SKIP;
-      SecureBuffer<byte, 1024> buffer;
+
+      SecureBuffer<byte, DEFAULT_BUFFERSIZE> buffer;
       SecureBuffer<u32bit, 256> state;
       u32bit X, Y, position;
    };

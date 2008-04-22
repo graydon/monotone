@@ -51,7 +51,7 @@ check(mtn("pluck", "-r", pluck_rev), 0, false, false)
 check(readfile("b") == "updated\n", 0, false, false)
 
 -- check the pending rev; we don't expect to see changes from two_rev
-check(mtn("automate", "get_revision"), 0, true, false)
+check(mtn("automate", "get_current_revision"), 0, true, false)
 check(not qgrep("delete", "stdout"))
 check(not qgrep("add_file", "stdout"))
 

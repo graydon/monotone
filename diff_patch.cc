@@ -22,14 +22,16 @@
 #include "roster.hh"
 #include "safe_map.hh"
 #include "sanity.hh"
-#include "transforms.hh"
+#include "xdelta.hh"
 #include "simplestring_xform.hh"
 #include "vocab.hh"
 #include "revision.hh"
 #include "constants.hh"
 #include "file_io.hh"
-#include "app_state.hh"
 #include "pcrewrap.hh"
+#include "lua_hooks.hh"
+#include "database.hh"
+#include "transforms.hh"
 
 using std::make_pair;
 using std::map;
@@ -488,17 +490,17 @@ bool merge3(vector<string> const & ancestor,
 ///////////////////////////////////////////////////////////////////////////
 
 
-content_merge_database_adaptor::content_merge_database_adaptor(app_state & app,
+content_merge_database_adaptor::content_merge_database_adaptor(database & db,
                                                                revision_id const & left,
                                                                revision_id const & right,
                                                                marking_map const & left_mm,
                                                                marking_map const & right_mm)
-  : app(app), left_mm(left_mm), right_mm(right_mm)
+  : db(db), left_mm(left_mm), right_mm(right_mm)
 {
   // FIXME: possibly refactor to run this lazily, as we don't
   // need to find common ancestors if we're never actually
   // called on to do content merging.
-  find_common_ancestor_for_merge(left, right, lca, app);
+  find_common_ancestor_for_merge(db, left, right, lca);
 }
 
 void
@@ -510,38 +512,39 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
                                              file_data const & merged_data)
 {
   L(FL("recording successful merge of %s <-> %s into %s")
-    % left_ident % right_ident % merged_ident);
+    % left_ident
+    % right_ident
+    % merged_ident);
 
-  transaction_guard guard(app.db);
+  transaction_guard guard(db);
 
   if (!(left_ident == merged_ident))
     {
       delta left_delta;
       diff(left_data.inner(), merged_data.inner(), left_delta);
-      app.db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
+      db.put_file_version(left_ident, merged_ident, file_delta(left_delta));
     }
   if (!(right_ident == merged_ident))
     {
       delta right_delta;
       diff(right_data.inner(), merged_data.inner(), right_delta);
-      app.db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
+      db.put_file_version(right_ident, merged_ident, file_delta(right_delta));
     }
   guard.commit();
 }
 
 static void
-load_and_cache_roster(revision_id const & rid,
+load_and_cache_roster(database & db, revision_id const & rid,
                       map<revision_id, shared_ptr<roster_t const> > & rmap,
-                      shared_ptr<roster_t const> & rout,
-                      app_state & app)
+                      shared_ptr<roster_t const> & rout)
 {
   map<revision_id, shared_ptr<roster_t const> >::const_iterator i = rmap.find(rid);
   if (i != rmap.end())
     rout = i->second;
   else
     {
-      database::cached_roster cr;
-      app.db.get_roster(rid, cr);
+      cached_roster cr;
+      db.get_roster(rid, cr);
       safe_insert(rmap, make_pair(rid, cr.first));
       rout = cr.first;
     }
@@ -559,7 +562,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
   // Begin by loading any non-empty file lca roster
   rid = lca;
   if (!lca.inner()().empty())
-    load_and_cache_roster(lca, rosters, anc, app);
+    load_and_cache_roster(db, lca, rosters, anc);
 
   // If there is no LCA, or the LCA's roster doesn't contain the file,
   // then use the file's birth roster.
@@ -587,7 +590,7 @@ content_merge_database_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, app);
+      load_and_cache_roster(db, rid, rosters, anc);
     }
   I(anc);
 }
@@ -596,14 +599,13 @@ void
 content_merge_database_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 // content_merge_workspace_adaptor
 ///////////////////////////////////////////////////////////////////////////
-
 
 void
 content_merge_workspace_adaptor::cache_roster(revision_id const & rid,
@@ -621,7 +623,9 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
                                               file_data const & merged_data)
 {
   L(FL("temporarily recording merge of %s <-> %s into %s")
-    % left_id % right_id % merged_id);
+    % left_id
+    % right_id
+    % merged_id);
   // this is an insert instead of a safe_insert because it is perfectly
   // legal (though rare) to have multiple merges resolve to the same file
   // contents.
@@ -663,7 +667,7 @@ content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
           rid = lmm->second.birth_revision;
         }
 
-      load_and_cache_roster(rid, rosters, anc, app);
+      load_and_cache_roster(db, rid, rosters, anc);
     }
   I(anc);
 }
@@ -675,8 +679,8 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
   map<file_id,file_data>::const_iterator i = temporary_store.find(ident);
   if (i != temporary_store.end())
     dat = i->second;
-  else if (app.db.file_version_exists(ident))
-    app.db.get_file_version(ident, dat);
+  else if (db.file_version_exists(ident))
+    db.get_file_version(ident, dat);
   else
     {
       data tmp;
@@ -691,7 +695,9 @@ content_merge_workspace_adaptor::get_version(file_id const & ident,
       calculate_ident(file_data(tmp), fid);
       E(fid == ident,
         F("file %s in workspace has id %s, wanted %s")
-        % i->second % fid % ident);
+        % i->second
+        % fid
+        % ident);
       dat = file_data(tmp);
     }
 }
@@ -724,25 +730,13 @@ void
 content_merge_checkout_adaptor::get_version(file_id const & ident,
                                             file_data & dat) const
 {
-  app.db.get_file_version(ident, dat);
+  db.get_file_version(ident, dat);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////
 // content_merger
 ///////////////////////////////////////////////////////////////////////////
-
-content_merger::content_merger(app_state & app,
-                               roster_t const & anc_ros,
-                               roster_t const & left_ros,
-                               roster_t const & right_ros,
-                               content_merge_adaptor & adaptor)
-  : app(app),
-    anc_ros(anc_ros),
-    left_ros(left_ros),
-    right_ros(right_ros),
-    adaptor(adaptor)
-{}
 
 string
 content_merger::get_file_encoding(file_path const & path,
@@ -782,7 +776,10 @@ content_merger::try_auto_merge(file_path const & anc_path,
   I(!null_id(right_id));
 
   L(FL("trying auto merge '%s' %s <-> %s (ancestor: %s)")
-    % merged_path % left_id % right_id % ancestor_id);
+    % merged_path
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -821,18 +818,16 @@ content_merger::try_auto_merge(file_path const & anc_path,
 
       if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
         {
-          hexenc<id> tmp_id;
+          file_id tmp_id;
           file_data merge_data;
           string tmp;
 
           L(FL("internal 3-way merged ok"));
           join_lines(merged_lines, tmp);
-          calculate_ident(data(tmp), tmp_id);
-          file_id merged_fid(tmp_id);
           merge_data = file_data(tmp);
+          calculate_ident(merge_data, merged_id);
 
-          merged_id = merged_fid;
-          adaptor.record_merge(left_id, right_id, merged_fid,
+          adaptor.record_merge(left_id, right_id, merged_id,
                                left_data, right_data, merge_data);
 
           return true;
@@ -859,7 +854,10 @@ content_merger::try_user_merge(file_path const & anc_path,
   I(!null_id(right_id));
 
   L(FL("trying user merge '%s' %s <-> %s (ancestor: %s)")
-    % merged_path % left_id % right_id % ancestor_id);
+    % merged_path
+    % left_id
+    % right_id
+    % ancestor_id);
 
   if (left_id == right_id)
     {
@@ -889,20 +887,16 @@ content_merger::try_user_merge(file_path const & anc_path,
     % right_path
     % merged_path);
 
-  if (app.lua.hook_merge3(anc_path, left_path, right_path, merged_path,
-                          ancestor_unpacked, left_unpacked,
-                          right_unpacked, merged_unpacked))
+  if (lua.hook_merge3(anc_path, left_path, right_path, merged_path,
+                      ancestor_unpacked, left_unpacked,
+                      right_unpacked, merged_unpacked))
     {
-      hexenc<id> tmp_id;
-      file_data merge_data;
+      file_data merge_data(merged_unpacked);
 
       L(FL("lua merge3 hook merged ok"));
-      calculate_ident(merged_unpacked, tmp_id);
-      file_id merged_fid(tmp_id);
-      merge_data = file_data(merged_unpacked);
+      calculate_ident(merge_data, merged_id);
 
-      merged_id = merged_fid;
-      adaptor.record_merge(left_id, right_id, merged_fid,
+      adaptor.record_merge(left_id, right_id, merged_id,
                            left_data, right_data, merge_data);
       return true;
     }
@@ -1023,17 +1017,17 @@ void walk_hunk_consumer(vector<long, QA(long)> const & lcs,
           while (idx(lines2,b) != *i)
             cons.insert_at(b++);
         }
-      if (b < lines2.size())
-        {
-          cons.advance_to(a);
-          while(b < lines2.size())
-            cons.insert_at(b++);
-        }
       if (a < lines1.size())
         {
           cons.advance_to(a);
           while(a < lines1.size())
             cons.delete_at(a++);
+        }
+      if (b < lines2.size())
+        {
+          cons.advance_to(a);
+          while(b < lines2.size())
+            cons.insert_at(b++);
         }
       cons.flush_hunk(a);
     }
@@ -1362,8 +1356,8 @@ make_diff(string const & filename1,
     }
 
   vector<string> lines1, lines2;
-  split_into_lines(data1(), lines1);
-  split_into_lines(data2(), lines2);
+  split_into_lines(data1(), lines1, true);
+  split_into_lines(data2(), lines2, true);
 
   vector<long, QA(long)> left_interned;
   vector<long, QA(long)> right_interned;
@@ -1448,8 +1442,10 @@ make_diff(string const & filename1,
     {
       case unified_diff:
       {
-        ost << "--- " << filename1 << '\t' << id1 << '\n';
-        ost << "+++ " << filename2 << '\t' << id2 << '\n';
+        ost << "--- " << filename1 << '\t'
+            << id1 << '\n';
+        ost << "+++ " << filename2 << '\t'
+            << id2 << '\n';
 
         unidiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1457,8 +1453,10 @@ make_diff(string const & filename1,
       }
       case context_diff:
       {
-        ost << "*** " << filename1 << '\t' << id1 << '\n';
-        ost << "--- " << filename2 << '\t' << id2 << '\n';
+        ost << "*** " << filename1 << '\t'
+            << id1 << '\n';
+        ost << "--- " << filename2 << '\t'
+            << id2 << '\n';
 
         cxtdiff_hunk_writer hunks(lines1, lines2, 3, ost, pattern);
         walk_hunk_consumer(lcs, left_interned, right_interned, hunks);
@@ -1475,7 +1473,6 @@ make_diff(string const & filename1,
 
 #ifdef BUILD_UNIT_TESTS
 #include "unit_tests.hh"
-#include "transforms.hh"
 #include "lexical_cast.hh"
 #include "randomfile.hh"
 

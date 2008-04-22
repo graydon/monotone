@@ -11,7 +11,7 @@ How to release a new version of monotone
 
    A useful command:
 
-     $ mtn log -r h:net.venge.monotone --to t:monotone-*
+     $ mtn log --from h:net.venge.monotone --to t:monotone-*
 
    Commit your release notes, so other people can see them.
 

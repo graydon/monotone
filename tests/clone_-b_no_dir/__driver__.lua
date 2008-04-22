@@ -1,3 +1,5 @@
+skip_if(ostype == "Windows") -- file: not supported on native Win32
+
 mtn_setup()
 
 addfile("foo", "blah blah")

@@ -47,19 +47,23 @@ template<> std::string xform<Botan::Gzip_Decompression>(std::string const &);
 // base64 encoding
 
 template <typename T>
-void encode_base64(T const & in, base64<T> & out)
-{ out = base64<T>(T(xform<Botan::Base64_Encoder>(in()))); }
+base64<T> encode_base64(T const & in)
+{ return base64<T>(xform<Botan::Base64_Encoder>(in())); }
 
 template <typename T>
-void decode_base64(base64<T> const & in, T & out)
-{ out = T(xform<Botan::Base64_Decoder>(in())); }
+T decode_base64(base64<T> const & in)
+{ return T(xform<Botan::Base64_Decoder>(in())); }
 
-
+template <typename T>
+T decode_base64_as(std::string const & in)
+{
+  return T(xform<Botan::Base64_Decoder>(in));
+}
 // hex encoding
 
 template <typename T>
 void encode_hexenc(T const & in, hexenc<T> & out)
-{ out = hexenc<T>(T(xform<Botan::Hex_Encoder>(in()))); }
+{ out = hexenc<T>(xform<Botan::Hex_Encoder>(in())); }
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
@@ -96,21 +100,10 @@ template <typename T>
 void unpack(base64< gzip<T> > const & in, T & out);
 
 
-// diffing and patching
-
-void diff(data const & olddata,
-          data const & newdata,
-          delta & del);
-
-void patch(data const & olddata,
-           delta const & del,
-           data & newdata);
-
-
 // version (a.k.a. sha1 fingerprint) calculation
 
 void calculate_ident(data const & dat,
-                     hexenc<id> & ident);
+                     id & ident);
 
 void calculate_ident(file_data const & dat,
                      file_id & ident);
@@ -120,10 +113,6 @@ void calculate_ident(manifest_data const & dat,
 
 void calculate_ident(revision_data const & dat,
                      revision_id & ident);
-
-// canonicalize base64 encoding
-std::string canonical_base64(std::string const & s);
-
 
 // Local Variables:
 // mode: C++

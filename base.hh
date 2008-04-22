@@ -38,6 +38,8 @@ void dump(T const &, std::string &)
                     == sizeof(T)) };
 }
 
+template <> void dump(std::string const & obj, std::string & out);
+
 // NORETURN(void function()); declares a function that will never return
 // in the normal fashion. a function that invariably throws an exception
 // counts as NORETURN.

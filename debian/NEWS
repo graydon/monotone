@@ -1,3 +1,14 @@
+monotone (0.40-1) unstable; urgency=low
+
+  * The database format has changed for efficiency.  You need to do the
+    following on each of your databases after taking a backup of them
+    (except for the server database handled by the monotone-server
+    package, for which it is done automatically):
+
+    	mtn db migrate
+
+ -- Richard Levitte <richard@levitte.org>  Thu, 03 Apr 2008 16:55:36 +0200
+
 monotone (0.31-90.2) unstable; urgency=low
 
   * "mtn serve" doesn't take any mandatory arguments any more.  Instead
@@ -67,3 +78,18 @@ monotone (0.30-0.1) unstable; urgency=low
 
  -- Richard Levitte <richard@levitte.org>  Tue,  5 Sep 2006 08:18:34 +0200
 
+monotone (0.40-1) unstable; urgency=low
+
+  * "mtn serve" doesn't take any mandatory arguments any more.  Instead
+    of specifying branches to serve (or to exclude) on the command line,
+    mtn now entirely trusts the netsync permission hooks called
+    get_netsync_read_permitted and get_netsync_write_permitted.
+
+    If you have any "mtn serve" still running with branches given on the
+    command line, you will need to remove those and work on the hooks.
+    If you just have the argument "*", it can safely be removed.  Not
+    doing so will cause your server to stop working.
+
+  
+
+ -- Richard Levitte <richard@levitte.org>  Thu, 03 Apr 2008 16:55:36 +0200

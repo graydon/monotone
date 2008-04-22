@@ -11,14 +11,14 @@
 #include <boost/tokenizer.hpp>
 #include "lexical_cast.hh"
 #include "sqlite/sqlite3.h"
-#include <string.h>
+#include <cstring>
 
 #include "sanity.hh"
 #include "schema_migration.hh"
-#include "app_state.hh"
-#include "keys.hh"
+#include "key_store.hh"
 #include "transforms.hh"
 #include "ui.hh"
+#include "constants.hh"
 
 using std::string;
 
@@ -273,9 +273,9 @@ sqlite_sha1_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
         }
     }
 
-  hexenc<id> sha;
-  calculate_ident(data(tmp), sha);
-  sqlite3_result_text(f, sha().c_str(), sha().size(), SQLITE_TRANSIENT);
+  id hash;
+  calculate_ident(data(tmp), hash);
+  sqlite3_result_blob(f, hash().c_str(), hash().size(), SQLITE_TRANSIENT);
 }
 
 static void
@@ -286,26 +286,61 @@ sqlite3_unbase64_fn(sqlite3_context *f, int nargs, sqlite3_value ** args)
       sqlite3_result_error(f, "need exactly 1 arg to unbase64()", -1);
       return;
     }
-  data decoded;
+  string decoded;
 
   // This operation may throw informative_failure.  We must intercept that
   // and turn it into a call to sqlite3_result_error, or rollback will fail.
   try
     {
-      decode_base64(base64<data>(string(sqlite3_value_cstr(args[0]))), decoded);
+      decoded = decode_base64_as<string>(sqlite3_value_cstr(args[0]));
     }
   catch (informative_failure & e)
     {
       sqlite3_result_error(f, e.what(), -1);
       return;
     }
-  sqlite3_result_blob(f, decoded().c_str(), decoded().size(), SQLITE_TRANSIENT);
+  sqlite3_result_blob(f, decoded.c_str(), decoded.size(), SQLITE_TRANSIENT);
+}
+
+static void
+sqlite3_unhex_fn(sqlite3_context *f, int nargs, sqlite3_value **args)
+{
+  if (nargs != 1)
+    {
+      sqlite3_result_error(f, "need exactly 1 arg to unhex()", -1);
+      return;
+    }
+  string decoded;
+
+  // This operation may throw informative_failure.  We must intercept that
+  // and turn it into a call to sqlite3_result_error, or rollback will fail.
+  try
+    {
+      decoded = decode_hexenc(sqlite3_value_cstr(args[0]));
+    }
+  catch (informative_failure & e)
+    {
+      sqlite3_result_error(f, e.what(), -1);
+      return;
+    }
+  // This is only ever used with 20-byte SHA1 hashes or empty strings, so
+  // make sure that's what we've got.
+  if (decoded.size() != constants::idlen_bytes && decoded.size() != 0)
+    {
+      sqlite3_result_error(f, "unhex() result is the wrong length", -1);
+      return;
+    }
+
+  sqlite3_result_blob(f, decoded.data(), decoded.size(), SQLITE_TRANSIENT);
 }
 
 // Here are all of the migration steps.  Almost all of them can be expressed
 // entirely as a series of SQL statements; those statements are packaged
-// into a long, continued string constant for the step.  One step requires a
+// into a long, continued string constant for the step.  A few require a
 // function instead.
+//
+// Please keep this list in the same order as the migration_events table
+// below.
 
 char const migrate_merge_url_and_group[] =
   // migrate the posting_queue table
@@ -338,7 +373,6 @@ char const migrate_merge_url_and_group[] =
   "INSERT INTO sequence_numbers"
   "  SELECT (url || '/' || groupname), major, minor FROM tmp;"
   "DROP TABLE tmp;"
-
 
   // migrate the netserver_manifests table
   "ALTER TABLE netserver_manifests RENAME TO tmp;"
@@ -484,13 +518,11 @@ char const migrate_add_indexes[] =
   ;
 
 // There is, perhaps, an argument for turning the logic inside the
-// while-loop into a callback function like unbase64().  We would then not
-// need a special case for this step in the master migration loop.  However,
-// we'd have to get the app_state in there somehow, we might in the future
-// need to do other things that can't be easily expressed in pure SQL, and
-// besides I think it's clearer this way.
+// while-loop into a callback function like unbase64().  However, we'd have
+// to get the key_store in there somehow, and besides I think it's clearer
+// this way.
 static void
-migrate_to_external_privkeys(sqlite3 * db, app_state &app)
+migrate_to_external_privkeys(sqlite3 * db, key_store & keys)
 {
   {
     sql stmt(db, 3,
@@ -501,22 +533,17 @@ migrate_to_external_privkeys(sqlite3 * db, app_state &app)
     while (stmt.step())
       {
         rsa_keypair_id ident(stmt.column_string(0));
-        base64< arc4<rsa_priv_key> > old_priv(stmt.column_string(1));
-
-        keypair kp;
-        migrate_private_key(app, ident, old_priv, kp);
-        MM(kp.pub);
+        base64<old_arc4_rsa_priv_key> old_priv(stmt.column_string(1));
+        base64<rsa_pub_key> pub;
 
         if (stmt.column_nonnull(2))
-          {
-            base64< rsa_pub_key > pub(stmt.column_string(2));
-            MM(pub);
-            N(keys_match(ident, pub, ident, kp.pub),
-              F("public and private keys for %s don't match") % ident);
-          }
+          pub = base64<rsa_pub_key>(stmt.column_string(2));
+
         P(F("moving key '%s' from database to %s")
-          % ident % app.keys.get_key_dir());
-        app.keys.put_key_pair(ident, kp);
+          % ident % keys.get_key_dir());
+        keys.migrate_old_key_pair(ident,
+                                  decode_base64(old_priv),
+                                  decode_base64(pub));
       }
   }
 
@@ -611,19 +638,65 @@ char const migrate_add_heights[] =
   "  );"
   ;
 
-char const migrate_add_heights_index[] =
-  "CREATE INDEX heights__height ON heights (height);"
-  ;
-
 // this is a function because it has to refer to the numeric constant
 // defined in schema_migration.hh.
 static void
-migrate_add_ccode(sqlite3 * db, app_state &)
+migrate_add_ccode(sqlite3 * db, key_store &)
 {
   string cmd = "PRAGMA user_version = ";
   cmd += boost::lexical_cast<string>(mtn_creator_code);
   sql::exec(db, cmd.c_str());
 }
+
+char const migrate_add_heights_index[] =
+  "CREATE INDEX heights__height ON heights (height);"
+  ;
+
+char const migrate_to_binary_hashes[] =
+  "UPDATE files             SET id=unhex(id);"
+  "UPDATE file_deltas       SET id=unhex(id), base=unhex(base);"
+  "UPDATE revisions         SET id=unhex(id);"
+  "UPDATE revision_ancestry SET parent=unhex(parent), child=unhex(child);"
+  "UPDATE heights           SET revision=unhex(revision);"
+  "UPDATE rosters           SET id=unhex(id), checksum=unhex(checksum);"
+  "UPDATE roster_deltas     SET id=unhex(id), base=unhex(base), "
+  "                             checksum=unhex(checksum);"
+  "UPDATE public_keys       SET hash=unhex(hash);"
+
+  // revision_certs also gets a new index, so we recreate the
+  // table completely.
+  "ALTER TABLE revision_certs RENAME TO tmp;\n"
+  "CREATE TABLE revision_certs"
+	"  ( hash not null unique,   -- hash of remaining fields separated by \":\"\n"
+	"    id not null,            -- joins with revisions.id\n"
+	"    name not null,          -- opaque string chosen by user\n"
+	"    value not null,         -- opaque blob\n"
+	"    keypair not null,       -- joins with public_keys.id\n"
+	"    signature not null,     -- RSA/SHA1 signature of \"[name@id:val]\"\n"
+	"    unique(name, value, id, keypair, signature)\n"
+	"  );"
+  "INSERT INTO revision_certs SELECT unhex(hash), unhex(id), name, value, keypair, signature FROM tmp;"
+  "DROP TABLE tmp;"
+  "CREATE INDEX revision_certs__id ON revision_certs (id);"
+
+  // We altered a comment on this table, thus we need to recreated it.
+  // Additionally, this is the only schema change, so that we get another
+  // schema hash to upgrade to.
+  "ALTER TABLE branch_epochs RENAME TO tmp;"
+  "CREATE TABLE branch_epochs"
+	"  ( hash not null unique,         -- hash of remaining fields separated by \":\"\n"
+	"    branch not null unique,       -- joins with revision_certs.value\n"
+	"    epoch not null                -- random binary id\n"
+	"  );"
+  "INSERT INTO branch_epochs SELECT unhex(hash), branch, unhex(epoch) FROM tmp;"
+  "DROP TABLE tmp;"
+
+  // To be able to migrate from pre-roster era, we also need to convert
+  // these deprecated tables
+  "UPDATE manifests         SET id=unhex(id);"
+  "UPDATE manifest_deltas   SET id=unhex(id), base=unhex(base);"
+  "UPDATE manifest_certs    SET id=unhex(id), hash=unhex(hash);"
+  ;
 
 
 // these must be listed in order so that ones listed earlier override ones
@@ -648,7 +721,7 @@ dump(enum upgrade_regime const & regime, string & out)
     }
 }
 
-typedef void (*migrator_cb)(sqlite3 *, app_state &);
+typedef void (*migrator_cb)(sqlite3 *, key_store &);
 
 // Exactly one of migrator_sql and migrator_func should be non-null in
 // all entries in migration_events, except the very last.
@@ -700,13 +773,16 @@ const migration_event migration_events[] = {
 
   { "48fd5d84f1e5a949ca093e87e5ac558da6e5956d",
     0, migrate_add_ccode, upgrade_none },
-    
+
   { "fe48b0804e0048b87b4cea51b3ab338ba187bdc2",
     migrate_add_heights_index, 0, upgrade_none },
 
+  { "7ca81b45279403419581d7fde31ed888a80bd34e",
+    migrate_to_binary_hashes, 0, upgrade_none },
+
   // The last entry in this table should always be the current
   // schema ID, with 0 for the migrators.
-  { "7ca81b45279403419581d7fde31ed888a80bd34e", 0, 0, upgrade_none }
+  { "212dd25a23bfd7bfe030ab910e9d62aa66aa2955", 0, 0, upgrade_none }
 };
 const size_t n_migration_events = (sizeof migration_events
                                    / sizeof migration_events[0]);
@@ -779,9 +855,10 @@ calculate_schema_id(sqlite3 * db, string & ident)
       schema += " PRAGMA user_version = ";
       schema += boost::lexical_cast<string>(code);
     }
-  hexenc<id> tid;
+
+  id tid;
   calculate_ident(data(schema), tid);
-  ident = tid();
+  ident = encode_hexenc(tid());
 }
 
 // Look through the migration_events table and return a pointer to the entry
@@ -924,7 +1001,8 @@ check_sql_schema(sqlite3 * db, system_path const & filename)
 }
 
 void
-migrate_sql_schema(sqlite3 * db, app_state & app)
+migrate_sql_schema(sqlite3 * db, key_store & keys,
+                   system_path const & filename)
 {
   I(db != NULL);
 
@@ -946,7 +1024,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
     m = find_migration(db);
     cat = classify_schema(db, m);
 
-    diagnose_unrecognized_schema(cat, app.db.get_filename());
+    diagnose_unrecognized_schema(cat, filename);
 
     // We really want 'db migrate' on an up-to-date schema to be a no-op
     // (no vacuum or anything, even), so that automated scripts can fire
@@ -960,6 +1038,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 
     sql::create_function(db, "sha1", sqlite_sha1_fn);
     sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+    sql::create_function(db, "unhex", sqlite3_unhex_fn);
 
     P(F("migrating data..."));
 
@@ -975,7 +1054,7 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
         if (m->migrator_sql)
           sql::exec(db, m->migrator_sql);
         else if (m->migrator_func)
-          m->migrator_func(db, app);
+          m->migrator_func(db, keys);
         else
           break;
 
@@ -1023,11 +1102,14 @@ migrate_sql_schema(sqlite3 * db, app_state & app)
 // conformance check will reject them).
 
 void
-test_migration_step(sqlite3 * db, app_state & app, string const & schema)
+test_migration_step(sqlite3 * db, key_store & keys,
+                    system_path const & filename,
+                    string const & schema)
 {
   I(db != NULL);
   sql::create_function(db, "sha1", sqlite_sha1_fn);
   sql::create_function(db, "unbase64", sqlite3_unbase64_fn);
+  sql::create_function(db, "unhex", sqlite3_unhex_fn);
 
   transaction guard(db);
 
@@ -1044,12 +1126,12 @@ test_migration_step(sqlite3 * db, app_state & app, string const & schema)
     F("schema %s is up to date") % schema);
 
   L(FL("testing migration from %s to %s\n in database %s")
-    % schema % m[1].id % app.db.get_filename());
+    % schema % m[1].id % filename);
 
   if (m->migrator_sql)
     sql::exec(db, m->migrator_sql);
   else
-    m->migrator_func(db, app);
+    m->migrator_func(db, keys);
 
   // in the unlikely event that we get here ...
   P(F("successful migration to schema %s") % m[1].id);
