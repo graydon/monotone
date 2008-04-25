@@ -7,7 +7,7 @@ if echo $SHELL | grep '/t?csh' > /dev/null; then shell_type=csh; fi
 values_only=/bin/false
 
 usage () {
-    echo "mtnopt: Usage: mtnopt [-c] [-s] [-d dir] [-k keys] [-v]"
+    echo "mtnopt: Usage: mtnopt [-c] [-s] [-d dir] [-k keys] [-v] [-h]"
 }
 while [ ! $# = 0 ]; do
     case $1 in
@@ -38,15 +38,19 @@ while [ ! $# = 0 ]; do
 	-v)
 	    values_only=/bin/true
 	    ;;
+	-h)
+	    usage
+	    exit 2
+	    ;;
     esac
     shift
 done
 
 if [ ! -d "$mtn_dir" ]; then
-    echo "mtnopt: $mtnopt isn't a directory or is missing"
+    echo "mtnopt: $mtn_dir isn't a directory or is missing"
     exit 1
 elif [ ! -f "$mtn_dir/options" ]; then
-    echo "mtnopt: $mtnopt isn't a file or is missing"
+    echo "mtnopt: $mtn_dir/options isn't a file or is missing"
     exit 1
 fi
 
