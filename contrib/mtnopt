@@ -1,0 +1,66 @@
+#! /bin/sh
+
+mtn_dir=./_MTN
+mtn_keys=
+shell_type=sh
+if echo $SHELL | grep '/t?csh' > /dev/null; then shell_type=csh; fi
+values_only=/bin/false
+
+usage () {
+    echo "mtnopt: Usage: mtnopt [-c] [-s] [-d dir] [-k keys] [-v]"
+}
+while [ ! $# = 0 ]; do
+    case $1 in
+	-c)
+	    shell_type=csh
+	    ;;
+	-s)
+	    shell_type=sh
+	    ;;
+	-d*)
+	    mtn_dir=`echo "$1" | sed -e 's/^-d//'`
+	    if [ -z "$mtn_dir" ]; then shift; mtn_dir="$1"; fi
+	    if [ -z "$mtn_dir" ]; then
+		echo "mtnopt: missing required argument for -d" >&2
+		usage
+		exit 1
+	    fi
+	    ;;
+	-k*)
+	    mtn_keys=`echo "$1" | sed -e 's/^-k//'`
+	    if [ -z "$mtn_keys" ]; then shift; mtn_keys="$1"; fi
+	    if [ -z "$mtn_keys" ]; then
+		echo "mtnopt: missing required argument for -k" >&2
+		usage
+		exit 1
+	    fi
+	    ;;
+	-v)
+	    values_only=/bin/true
+	    ;;
+    esac
+    shift
+done
+
+if [ ! -d "$mtn_dir" ]; then
+    echo "mtnopt: $mtnopt isn't a directory or is missing"
+    exit 1
+elif [ ! -f "$mtn_dir/options" ]; then
+    echo "mtnopt: $mtnopt isn't a file or is missing"
+    exit 1
+fi
+
+cat $mtn_dir/options | while read L; do
+    eval `echo "$L" | sed -e 's/^ *\([a-z][a-z]*\) \(.*\)$/key=\1; val=\2/'`
+    if [ -z "$mtn_keys" ] || echo "$key" | egrep "^$mtn_keys\$" > /dev/null; then
+	if $values_only; then
+	    echo "$val"
+	else
+	    if [ "$shell_type" = sh ]; then
+		echo "MTN_$key=\"$val\";"
+	    else
+		echo "set MTN_$key=\"$val\";"
+	    fi
+	fi
+    fi
+done
