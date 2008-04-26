@@ -165,7 +165,9 @@ resolve_merge_conflicts(lua_hooks & lua,
       size_t remaining = result.file_content_conflicts.size();
       if (remaining > 0)
         {
-          P(F("%d content conflicts require user intervention") % remaining);
+          P(FP("%d content conflict requires user intervention",
+               "%d content conflicts require user intervention",
+               remaining) % remaining);
           result.report_file_content_conflicts(left_roster, right_roster, adaptor);
 
           try_to_merge_files(lua, left_roster, right_roster,
