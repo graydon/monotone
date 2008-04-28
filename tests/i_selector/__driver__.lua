@@ -29,6 +29,6 @@ selmap("i:" .. string.sub(REV1, 1, 2), {REV1})
 selmap("i:" .. string.sub(REV2, 1, 2), {REV2})
 
 -- expanding from the first char only
-selmap_xfail("i:" .. string.sub(REV1, 1, 1), {REV1})
-selmap_xfail("i:" .. string.sub(REV2, 1, 1), {REV2})
+selmap("i:" .. string.sub(REV1, 1, 1), {REV1})
+selmap("i:" .. string.sub(REV2, 1, 1), {REV2})
 

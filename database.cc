@@ -3137,15 +3137,15 @@ database_impl::add_prefix_matching_constraint(string const & colname,
                                               string const & prefix,
                                               query & q)
 {
-  L(FL("add_prefix_matching_constraint for '%s'")
-    % encode_hexenc(prefix));
+  L(FL("add_prefix_matching_constraint for '%s'") % prefix);
 
   if (prefix.empty())
     q.sql_cmd += "1";  // always true
   else
     {
-      string lower_bound(prefix);
-      string upper_bound(prefix);
+      string binary_prefix = decode_hexenc(prefix);
+      string lower_bound(binary_prefix);
+      string upper_bound(binary_prefix);
 
       string::reverse_iterator ity(upper_bound.rbegin());
       ++(*ity);
@@ -3177,6 +3177,17 @@ database_impl::add_prefix_matching_constraint(string const & colname,
           q.args.push_back(blob(lower_bound));
           q.args.push_back(blob(upper_bound));
         }
+
+      // encode_hexenc might have lost a nibble a the end, thus we possibly
+      // need to add a second check, with a LIKE operator on the hex
+      // encoded string.
+
+      if (prefix.size() % 2 == 1)
+        {
+          string pattern = prefix + '%';
+          q.sql_cmd += " AND (hex(" + colname + ") LIKE ?)";
+          q.args.push_back(text(pattern));
+        }
     }
 }
 
@@ -3188,7 +3199,7 @@ database::complete(string const & partial,
   completions.clear();
   query q("SELECT id FROM revisions WHERE ");
 
-  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
+  imp->add_prefix_matching_constraint("id", partial, q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3204,7 +3215,7 @@ database::complete(string const & partial,
   completions.clear();
 
   query q("SELECT id FROM files WHERE ");
-  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
+  imp->add_prefix_matching_constraint("id", partial, q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3213,7 +3224,7 @@ database::complete(string const & partial,
   res.clear();
 
   q = query("SELECT id FROM file_deltas WHERE ");
-  imp->add_prefix_matching_constraint("id", decode_hexenc(partial), q);
+  imp->add_prefix_matching_constraint("id", partial, q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3228,7 +3239,7 @@ database::complete(string const & partial,
   completions.clear();
   query q("SELECT hash, id FROM public_keys WHERE ");
 
-  imp->add_prefix_matching_constraint("hash", decode_hexenc(partial), q);
+  imp->add_prefix_matching_constraint("hash", partial, q);
   imp->fetch(res, 2, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
@@ -3246,7 +3257,7 @@ database::select_parent(string const & partial,
   completions.clear();
 
   query q("SELECT DISTINCT parent FROM revision_ancestry WHERE ");
-  imp->add_prefix_matching_constraint("child", partial, q);
+  imp->add_prefix_matching_constraint("child", encode_hexenc(partial), q);
   imp->fetch(res, 1, any_rows, q);
 
   for (size_t i = 0; i < res.size(); ++i)
