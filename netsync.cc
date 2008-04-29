@@ -1347,7 +1347,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
               "  %s dropkey %s\n"
               "on your local database before you run this command again,\n"
               "assuming that key currently present in your database does NOT have\n"
-              "a private counterpart (or in other words, is one of YOUR keys)");
+              "a private counterpart (or in other words, is one of YOUR keys)")
             % their_keyname % ui.prog_name % their_keyname);
         }
       else

@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-04-22 23:24+0200\n"
-"PO-Revision-Date: 2008-04-22 23:49+0100\n"
+"POT-Creation-Date: 2008-04-29 10:28+0200\n"
+"PO-Revision-Date: 2008-04-29 10:45+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -699,7 +699,6 @@ msgstr "Imposta l'epoca per il ramo"
 msgid "The epoch must be %s characters"
 msgstr "L'epoca deve essere di %s caratteri"
 
-# TODO: non mi convince "immagazzinata nel database"
 #: cmd_db.cc:322
 #, fuzzy
 msgid "This command modifies (or adds if it did not exist before) the variable named NAME, stored in the database, and sets it to the given value in VALUE.  The variable is placed in the domain DOMAIN."
@@ -1709,7 +1708,7 @@ msgstr "Checkout di una revisione da un database remoto in una directory"
 #: cmd_netsync.cc:318
 #, fuzzy
 msgid "If a revision is given, that's the one that will be checked out.  Otherwise, it will be the head of the branch supplied.  If no directory is given, the branch name will be used as directory"
-msgstr "Se viene specificata una revisione, sarà quella ad essere checkout. Altrimenti sarà fornita la testa del ramo. Se nessuna directory è data, il nome del ramo sarà usato come directory"
+msgstr "Se viene specificata una revisione, sarà quella ad essere checkout. Altrimenti sarà utilizzata la testa del ramo specificato. Se nessuna directory è data, il nome del ramo sarà usato come directory"
 
 #: cmd_netsync.cc:332
 #, c-format
@@ -2278,11 +2277,11 @@ msgstr "Importa i contenuti di una directory in un ramo"
 msgid "you must specify a directory to import"
 msgstr "devi specificare la directory da importare"
 
-# TODO: ‘estrarre’ non mi convince?
+# TODO: la forma indiretta mi convince poco
 #: cmd_ws_commit.cc:1394
-#, fuzzy, c-format
+#, c-format
 msgid "use --revision or --branch to specify the parent revision for the import"
-msgstr "utilizza ‘--revision’ o ‘--branch’ per specificare cosa estrarre con il checkout"
+msgstr "utilizza ‘--revision’ o ‘--branch’ per specificare la revisione di cui la revisione importata sarà figlia"
 
 #: cmd_ws_commit.cc:1405
 #, c-format
@@ -2667,9 +2666,9 @@ msgid "key '%s' is not equal to key '%s' in database"
 msgstr "la chiave ‘%s’ non è uguale alla chiave ‘%s’ nel database"
 
 #: database.cc:2745
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to get RSA verifying key for %s"
-msgstr "Fallito ottenimento chiave di verifica RSA per %s"
+msgstr "Impossibile trovare la chiave RSA di verifica per %s"
 
 # TODO: specificare "il certificato della"?
 #: database.cc:2948
@@ -2682,17 +2681,17 @@ msgstr "la revisione %s non è presente in database"
 msgid "dropping cert"
 msgstr "cancella certificato"
 
-#: database.cc:3624
+#: database.cc:3635
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:3637
+#: database.cc:3648
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:3645
+#: database.cc:3656
 #, c-format
 msgid ""
 "%s is a workspace, not a database\n"
@@ -2701,17 +2700,17 @@ msgstr ""
 "‘%s’ è uno spazio di lavoro, non un database\n"
 "(intendevi ‘%s’?)"
 
-#: database.cc:3648
+#: database.cc:3659
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una directory, non un database"
 
-#: database.cc:3656
+#: database.cc:3667
 #, c-format
 msgid "database %s already exists"
 msgstr "il database ‘%s’ esiste già"
 
-#: database.cc:3661
+#: database.cc:3672
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%s'\n"
@@ -2738,7 +2737,7 @@ msgid "markings"
 msgstr "contrassegni"
 
 #: database_check.cc:313
-#: netsync.cc:3154
+#: netsync.cc:3155
 #: rcs_import.cc:1232
 msgid "revisions"
 msgstr "revisioni"
@@ -2748,7 +2747,7 @@ msgid "ancestry"
 msgstr "ascendenza"
 
 #: database_check.cc:442
-#: netsync.cc:3158
+#: netsync.cc:3159
 msgid "keys"
 msgstr "chiavi"
 
@@ -3453,10 +3452,12 @@ msgstr "Chiamata al comando utente %s (comando lua: %s) fallita."
 
 #: merge.cc:168
 #, c-format
-msgid "%d content conflicts require user intervention"
-msgstr "è richiesto l'intervento dell'utente per %d conflitti di contenuto"
+msgid "%d content conflict requires user intervention"
+msgid_plural "%d content conflicts require user intervention"
+msgstr[0] "è richiesto l'intervento dell'utente per %d conflitto di contenuto"
+msgstr[1] "è richiesto l'intervento dell'utente per %d conflitti di contenuto"
 
-#: merge.cc:177
+#: merge.cc:179
 #, c-format
 msgid "merge failed due to unresolved conflicts"
 msgstr "‘merge’ fallito a causa di conflitti non risolti"
@@ -3676,306 +3677,307 @@ msgid ""
 "which is already in use in your database. you may want to execute\n"
 "  %s dropkey %s\n"
 "on your local database before you run this command again,\n"
-"assumed that your local key has NOT a private counterpart."
+"assuming that key currently present in your database does NOT have\n"
+"a private counterpart (or in other words, is one of YOUR keys)"
 msgstr ""
 
-#: netsync.cc:1357
+#: netsync.cc:1358
 #, c-format
 msgid "saving public key for %s to database"
 msgstr "salvo la chiave pubblica per ‘%s’ nel database"
 
-#: netsync.cc:1454
+#: netsync.cc:1455
 #, c-format
 msgid "rejected attempt at anonymous connection for write"
 msgstr "rifiutato un tentativo di connessione anonima in scrittura"
 
-#: netsync.cc:1461
+#: netsync.cc:1462
 #, c-format
 msgid "rejected attempt at anonymous connection while running as sink"
 msgstr "rifiutato un tentativo di connessione anonima funzionando come pozzo"
 
-#: netsync.cc:1477
+#: netsync.cc:1478
 #, c-format
 msgid "anonymous access to branch '%s' denied by server"
 msgstr "il server ha negato l'accesso anonimo al ramo ‘%s’"
 
-#: netsync.cc:1487
+#: netsync.cc:1488
 #, c-format
 msgid "allowed anonymous read permission for '%s' excluding '%s'"
 msgstr "concessi permessi di lettura anonima a ‘%s’ con esclusione di ‘%s’"
 
-#: netsync.cc:1493
+#: netsync.cc:1494
 #, c-format
 msgid "allowed anonymous read/write permission for '%s' excluding '%s'"
 msgstr "concessi permessi di lettura/scrittura anonime a ‘%s’ con esclusione di ‘%s’"
 
-#: netsync.cc:1557
+#: netsync.cc:1558
 #, c-format
 msgid "remote public key hash '%s' is unknown"
 msgstr "l'hash ‘%s’ della chiave pubblica remota è sconosciuto"
 
-#: netsync.cc:1576
+#: netsync.cc:1577
 #, c-format
 msgid "detected replay attack in auth netcmd"
 msgstr "individuato attacco replay nell'autenticazione netcmd"
 
-#: netsync.cc:1598
+#: netsync.cc:1599
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' while running as pure sink"
 msgstr "negato a ‘%s’ il permesso di lettura a ‘%s’ con esclusione di ‘%s’ nel ruolo di pozzo"
 
-#: netsync.cc:1613
+#: netsync.cc:1614
 #, c-format
 msgid "denied '%s' read permission for '%s' excluding '%s' because of branch '%s'"
 msgstr "negato a ‘%s’ il permesso di lettura a ‘%s’ con esclusione di ‘%s’ a causa del ramo ‘%s’"
 
-#: netsync.cc:1623
+#: netsync.cc:1624
 #, c-format
 msgid "allowed '%s' read permission for '%s' excluding '%s'"
 msgstr "concessi a ‘%s’ permessi di lettura per ‘%s’ con esclusione di ‘%s’"
 
-#: netsync.cc:1634
+#: netsync.cc:1635
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s' while running as pure source"
 msgstr "negato a ‘%s’ il permesso di scrittura a ‘%s’ con esclusione di ‘%s’ nel ruolo di sorgente"
 
-#: netsync.cc:1642
+#: netsync.cc:1643
 #, c-format
 msgid "denied '%s' write permission for '%s' excluding '%s'"
 msgstr "negati a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’"
 
-#: netsync.cc:1646
+#: netsync.cc:1647
 #, c-format
 msgid "allowed '%s' write permission for '%s' excluding '%s'"
 msgstr "concessi a ‘%s’ permessi di scrittura per ‘%s’ con esclusione di ‘%s’"
 
-#: netsync.cc:1667
+#: netsync.cc:1668
 #, c-format
 msgid "bad client signature"
 msgstr "firma del client non valida"
 
-#: netsync.cc:1683
+#: netsync.cc:1684
 #, c-format
 msgid "Unexpected 'refine' command on non-refined item type"
 msgstr "Comando ‘refine’ non atteso su un elemento di tipo non-refined"
 
-#: netsync.cc:1780
+#: netsync.cc:1781
 #, c-format
 msgid "unknown bye phase %d received"
 msgstr "ricevuta fase di saluto %d sconosciuta"
 
-#: netsync.cc:1795
+#: netsync.cc:1796
 #, c-format
 msgid "Unexpected 'done' command on non-refined item type"
 msgstr "Comando ‘done’ non atteso su un elemento di tipo non-refined"
 
-#: netsync.cc:1865
+#: netsync.cc:1866
 #, c-format
 msgid "%s with hash '%s' does not exist in our database"
 msgstr "‘%s’ con hash ‘%s’ non è presente nel database"
 
-#: netsync.cc:1971
+#: netsync.cc:1972
 #, c-format
 msgid "Mismatched epoch on branch %s. Server has '%s', client has '%s'."
 msgstr "Epoca non corrispondente sul ramo ‘%s’: il server usa ‘%s’, il client usa ‘%s’."
 
-#: netsync.cc:1992
+#: netsync.cc:1993
 #, c-format
 msgid "hash check failed for public key '%s' (%s); wanted '%s' got '%s'"
 msgstr "verifica dell'hash fallita per la chiave pubblica ‘%s’ (%s); atteso ‘%s’, ottenuto ‘%s’"
 
-#: netsync.cc:2001
+#: netsync.cc:2002
 #, c-format
 msgid "Received duplicate key %s"
 msgstr "Ricevuta chiave duplicata: %s"
 
-#: netsync.cc:2012
+#: netsync.cc:2013
 #, c-format
 msgid "hash check failed for revision cert '%s'"
 msgstr "l'hash nel certificato della revisione %s non è corretto"
 
-#: netsync.cc:2071
+#: netsync.cc:2072
 #, c-format
 msgid "Received warning from usher: %s"
 msgstr "Ricevuto avvertimento dall'usciere: %s"
 
-#: netsync.cc:2155
-#: netsync.cc:2186
+#: netsync.cc:2156
+#: netsync.cc:2187
 msgid "source and sink"
 msgstr "sorgente e pozzo"
 
-#: netsync.cc:2156
-#: netsync.cc:2187
+#: netsync.cc:2157
+#: netsync.cc:2188
 msgid "source"
 msgstr "sorgente"
 
-#: netsync.cc:2156
-#: netsync.cc:2187
+#: netsync.cc:2157
+#: netsync.cc:2188
 msgid "sink"
 msgstr "pozzo"
 
-#: netsync.cc:2343
+#: netsync.cc:2344
 #, c-format
 msgid "input buffer for peer %s is overfull after netcmd dispatch"
 msgstr "il buffer d'ingresso per il peer ‘%s’ è sovraccarico dopo invio netcmd"
 
-#: netsync.cc:2355
-#: netsync.cc:2447
+#: netsync.cc:2356
+#: netsync.cc:2448
 #, c-format
 msgid "protocol error while processing peer %s: '%s'"
 msgstr "errore di protocollo processando il peer ‘%s’: %s"
 
-#: netsync.cc:2361
+#: netsync.cc:2362
 #, c-format
 msgid "error: %s"
 msgstr "errore: %s"
 
-#: netsync.cc:2419
-#: netsync.cc:2882
+#: netsync.cc:2420
+#: netsync.cc:2883
 #, c-format
 msgid "connecting to %s"
 msgstr "connessione a ‘%s’"
 
-#: netsync.cc:2462
+#: netsync.cc:2463
 #, c-format
 msgid "timed out waiting for I/O with peer %s, disconnecting"
 msgstr "tempo disponibile finito aspettando I/O con peer ‘%s’, mi scollego"
 
-#: netsync.cc:2485
+#: netsync.cc:2486
 #, c-format
 msgid "processing failure while talking to peer %s, disconnecting"
 msgstr "ottenuto fallimento parlando col peer ‘%s’, mi scollego"
 
-#: netsync.cc:2502
+#: netsync.cc:2503
 #, c-format
 msgid "successful exchange with %s"
 msgstr "scambio con ‘%s’ avvenuto con successo"
 
-#: netsync.cc:2508
+#: netsync.cc:2509
 #, c-format
 msgid "peer %s disconnected after we informed them of error"
 msgstr "peer ‘%s’ disconnesso dopo nostra notifica di errore"
 
-#: netsync.cc:2513
+#: netsync.cc:2514
 #, c-format
 msgid "I/O failure while talking to peer %s, disconnecting"
 msgstr "I/O fallito mentre parlavo col peer ‘%s’, mi scollego"
 
-#: netsync.cc:2581
+#: netsync.cc:2582
 #, c-format
 msgid "protocol error while processing peer %s: '%s', marking as bad"
 msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, marcato come invalido"
 
-#: netsync.cc:2614
+#: netsync.cc:2615
 #, c-format
 msgid "accepted new client connection from %s : %s"
 msgstr "accettata connessione nuovo cliente da ‘%s’: ‘%s’"
 
-#: netsync.cc:2651
+#: netsync.cc:2652
 #, c-format
 msgid "protocol error while processing peer %s: '%s', disconnecting"
 msgstr "errore di protocollo processando peer ‘%s’: ‘%s’, mi scollego"
 
 # TODO: DEL peer?
-#: netsync.cc:2662
+#: netsync.cc:2663
 #, c-format
 msgid "peer %s read failed in working state (error)"
 msgstr "lettura del peer ‘%s’ fallita durante il lavoro (errore)"
 
 # TODO: DEL peer?
-#: netsync.cc:2667
+#: netsync.cc:2668
 #, c-format
 msgid "peer %s read failed in shutdown state (possibly client misreported error)"
 msgstr "lettura del peer ‘%s’ fallita durante la chiusura (forse il cliente ha mal trasmesso l'errore)"
 
-#: netsync.cc:2673
+#: netsync.cc:2674
 #, c-format
 msgid "peer %s read failed in confirmed state (success)"
 msgstr "lettura peer ‘%s’ fallita durante la conferma (successo)"
 
-#: netsync.cc:2694
+#: netsync.cc:2695
 #, c-format
 msgid "peer %s write failed in working state (error)"
 msgstr "scrittura peer ‘%s’ fallita durante il lavoro (errore)"
 
 # TODO: non sono sicura se il cliente è sogg o dest
-#: netsync.cc:2699
+#: netsync.cc:2700
 #, c-format
 msgid "peer %s write failed in shutdown state (possibly client misreported error)"
 msgstr "scrittura peer ‘%s’ fallita durante la chiusura (errore forse mal trasmesso al cliente)"
 
 # TODO: conferma DEL peer?
-#: netsync.cc:2705
+#: netsync.cc:2706
 #, c-format
 msgid "peer %s write failed in confirmed state (success)"
 msgstr "scrittura peer ‘%s’ fallita durante la conferma (successo)"
 
 # TODO: "mi scollego", "sconnessione in corso", o che? (da cambiare in tutti)
-#: netsync.cc:2732
+#: netsync.cc:2733
 #, c-format
 msgid "peer %s processing finished, disconnecting"
 msgstr "il peer ‘%s’ ha finito, mi scollego"
 
-#: netsync.cc:2754
+#: netsync.cc:2755
 #, c-format
 msgid "fd %d (peer %s) has been idle too long, disconnecting"
 msgstr "fd %d (peer %s) è stato fermo tropop a lungo, mi scollego"
 
-#: netsync.cc:2841
+#: netsync.cc:2842
 #, c-format
 msgid "beginning service on %s : %s"
 msgstr "attivo il servizio su %s : %s"
 
-#: netsync.cc:2842
+#: netsync.cc:2843
 msgid "<all interfaces>"
 msgstr "<tutte le interfacce>"
 
-#: netsync.cc:2856
+#: netsync.cc:2857
 #, c-format
 msgid "session limit %d reached, some connections will be refused"
 msgstr "numero limite di sessioni (%d) raggiunto, alcune connessioni verrano rifiutate"
 
-#: netsync.cc:2913
+#: netsync.cc:2914
 #, c-format
 msgid "Network error: %s"
 msgstr "Errore di rete: %s"
 
-#: netsync.cc:2974
+#: netsync.cc:2975
 #, c-format
 msgid "Network error on peer %s, disconnecting"
 msgstr "Errore di rete con il peer ‘%s’, mi scollego"
 
-#: netsync.cc:2980
+#: netsync.cc:2981
 #, c-format
 msgid "got OOB from peer %s, disconnecting"
 msgstr "ricevuti dati OOB dal peer ‘%s’, mi scollego"
 
-#: netsync.cc:3040
+#: netsync.cc:3041
 #, c-format
 msgid "beginning service on %s"
 msgstr "attivo il servizio su %s"
 
 # TODO: peer?
-#: netsync.cc:3103
+#: netsync.cc:3104
 #, c-format
 msgid "got some OOB data on fd %d (peer %s), disconnecting"
 msgstr "ricevuti dati OOB su fd %d (peer ‘%s’), mi scollego"
 
-#: netsync.cc:3148
+#: netsync.cc:3149
 #, c-format
 msgid "finding items to synchronize:"
 msgstr "cerco elementi da sincronizzare:"
 
-#: netsync.cc:3156
+#: netsync.cc:3157
 msgid "certificates"
 msgstr "certificati"
 
-#: netsync.cc:3257
+#: netsync.cc:3258
 #, c-format
 msgid "Cannot find key '%s'"
 msgstr "Non trovo la chiave ‘%s’"
 
-#: netsync.cc:3299
+#: netsync.cc:3300
 #, c-format
 msgid ""
 "include branch pattern contains a quote character:\n"
@@ -3984,7 +3986,7 @@ msgstr ""
 "il criterio di inclusione del ramo contiene un carattere virgolette:\n"
 "‘%s’"
 
-#: netsync.cc:3305
+#: netsync.cc:3306
 #, c-format
 msgid ""
 "exclude branch pattern contains a quote character:\n"
@@ -3993,8 +3995,8 @@ msgstr ""
 "il criterio di esclusione del ramo contiene un carattere virgolette:\n"
 "‘%s’"
 
-#: netsync.cc:3344
-#: netsync.cc:3348
+#: netsync.cc:3345
+#: netsync.cc:3349
 #, c-format
 msgid "network error: %s"
 msgstr "errore di rete: %s"
@@ -4217,9 +4219,8 @@ msgid "only update monotone's internal bookkeeping, not the filesystem"
 msgstr "aggiorna il registro interno di monotone, non il filesystem"
 
 #: options_list.hh:287
-#, fuzzy
 msgid "controls use of ssh-agent.  valid arguments are: 'yes' to use ssh-agent to make signatures if possible, 'no' to force use of monotone's internal code, 'only' to force use of ssh-agent, 'check' to sign with both and compare"
-msgstr "firma con ‘ssh-agent’. i parametri validi sono: ‘yes’ per firmare solo se viene trovata la chiave, ‘no’ per firmare solo con monotone, ‘only’ per firmare solo con ssh-agent, ‘check’ per firmare con entrambi e verificare"
+msgstr "controlla l'utilizzo di ‘ssh-agent’.  i parametri validi sono: ‘yes’ per firmare se possibile, ‘no’ per forzare l'uso del codice di firma di monotone, ‘only’ per forzare l'uso di ‘ssh-agent’, ‘check’ per firmare con entrambi e verificare"
 
 #: options_list.hh:295
 #, c-format
@@ -4444,7 +4445,7 @@ msgstr "percorso assoluto ‘%s’ non valido"
 # TODO: bookkeeping
 #: paths.cc:437
 #: paths.cc:455
-#, fuzzy, c-format
+#, c-format
 msgid "path '%s' is in bookkeeping dir"
 msgstr "il path ‘%s’ è nella cartella di bookkeeping"
 
@@ -4849,7 +4850,7 @@ msgstr "rinominato in ‘%s’ sulla destra"
 #: roster_merge.cc:544
 #, fuzzy, c-format
 msgid "conflict: duplicate name '%s' for the directory '%s'"
-msgstr "conflitto: nome ‘%s’ duplicato per la directory ‘%s’"
+msgstr "La voce del log manca dell'attributo 'name' (voce '%s' per la directory '%s')"
 
 #: roster_merge.cc:553
 #, c-format
@@ -5346,27 +5347,27 @@ msgstr "ssh_agent: tipo di pacchetto (%u) diverso da 12"
 #: ssh_agent.cc:351
 #, c-format
 msgid "ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), length (%i)"
-msgstr ""
+msgstr "ssh_agent: get_keys: consumato un numero errato di  byte della chiave, posizione (%u), lunghezza (%i)"
 
 #: ssh_agent.cc:375
 #, c-format
 msgid "ssh_agent: get_keys: not all or too many packet bytes consumed, location (%u), length (%i)"
-msgstr ""
+msgstr "ssh_agent: get_keys: consumato un numero errato di  byte del pacchetto, posizione (%u), lunghezza (%i)"
 
 #: ssh_agent.cc:418
 #, c-format
 msgid "ssh_agent: get_keys: attempted to sign data when not connected"
-msgstr ""
+msgstr "ssh_agent: get_keys: tentata firma quando non connessi"
 
 #: ssh_agent.cc:464
 #, c-format
 msgid "ssh_agent: sign_data: not all or too many signature bytes consumed, location (%u), length (%i)"
-msgstr ""
+msgstr "ssh_agent: get_keys: consumato un numero errato di  byte della firma, posizione (%u), lunghezza (%i)"
 
 #: ssh_agent.cc:470
 #, c-format
 msgid "ssh_agent: sign_data: not all or too many packet bytes consumed, location (%u), length (%i)"
-msgstr ""
+msgstr "ssh_agent: get_keys: consumato un numero errato di  byte del pacchetto, posizione (%u), lunghezza (%i)"
 
 #: ssh_agent.cc:480
 #, c-format
@@ -5612,7 +5613,7 @@ msgstr "specificazione esplicita port-number in URI contiene non-cifre"
 #: uri.cc:206
 #, fuzzy, c-format
 msgid "Bad URLencoded string '%s'"
-msgstr "Cattiva stringa URLcriptata ‘%s’"
+msgstr "Stringa di quoting non corretta %s: %s"
 
 #: vocab.cc:35
 #, c-format
