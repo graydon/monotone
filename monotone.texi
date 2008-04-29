@@ -4604,6 +4604,21 @@ branch already exists, any missing files are dropped and any unknown
 files are added before committing.
 
 If @command{--dry-run} is given, no commit is done.
+
+Roughly speaking, @command{mtn import} does the following:
+
+@example
+@group
+$ mtn setup @r{(with a twist)}
+$ mtn drop --missing
+$ mtn add --unknown
+$ mtn commit
+@end group
+@end example
+
+The twist with the @command{mtn setup} part is that it sets the parent
+to be the given revision or the head of the given branch instead of the
+null revision.
 @end ftable
 
 
