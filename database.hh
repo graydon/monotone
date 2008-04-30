@@ -156,6 +156,10 @@ public:
 
   void get_revision_manifest(revision_id const & cid,
                              manifest_id & mid);
+
+  void get_common_ancestors(std::set<revision_id> const & revs,
+                            std::set<revision_id> & common_ancestors);
+
   void get_revision_ids(std::set<revision_id> & ids);
   // this is exposed for 'db check':
   void get_file_ids(std::set<file_id> & ids);

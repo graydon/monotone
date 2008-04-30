@@ -2157,6 +2157,59 @@ database::get_revision_manifest(revision_id const & rid,
 }
 
 void
+database::get_common_ancestors(std::set<revision_id> const & revs,
+                               std::set<revision_id> & common_ancestors)
+{
+  set<revision_id> ancestors, all_common_ancestors;
+  vector<revision_id> frontier;
+  for (set<revision_id>::const_iterator i = revs.begin(); 
+       i != revs.end(); ++i)
+    {
+      I(revision_exists(*i));
+      ancestors.clear();
+      ancestors.insert(*i);
+      frontier.push_back(*i);
+      while (!frontier.empty())
+        {
+          revision_id rid = frontier.back();
+          frontier.pop_back();
+          if(!null_id(rid))
+            {
+              set<revision_id> parents;
+              get_revision_parents(rid, parents);
+              for (set<revision_id>::const_iterator i = parents.begin();
+                   i != parents.end(); ++i)
+                {
+                  if (ancestors.find(*i) == ancestors.end())
+                    {
+                      frontier.push_back(*i);
+                      ancestors.insert(*i);
+                    }
+                }
+            }
+        }
+      if (all_common_ancestors.empty())
+        all_common_ancestors = ancestors;
+      else
+        {
+          set<revision_id> common;
+          set_intersection(ancestors.begin(), ancestors.end(),
+                         all_common_ancestors.begin(), all_common_ancestors.end(),
+                         inserter(common, common.begin()));
+          all_common_ancestors = common;
+        }
+    }
+    
+  for (set<revision_id>::const_iterator i = all_common_ancestors.begin();
+       i != all_common_ancestors.end(); ++i)
+    {
+      // FIXME: where do these null'ed IDs come from?
+      if (null_id(*i)) continue;
+      common_ancestors.insert(*i);
+    }
+}
+
+void
 database::get_revision(revision_id const & id,
                        revision_t & rev)
 {

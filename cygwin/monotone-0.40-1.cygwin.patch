@@ -1,7 +1,7 @@
-diff -urN origsrc/monotone-0.38/CYGWIN-PATCHES/README src/monotone-0.38/CYGWIN-PATCHES/README
---- origsrc/monotone-0.38/CYGWIN-PATCHES/README	1970-01-01 01:00:00.000000000 +0100
-+++ src/monotone-0.38/CYGWIN-PATCHES/README	2007-12-12 23:45:00.630532300 +0100
-@@ -0,0 +1,98 @@
+diff -urN origsrc/monotone-0.40/CYGWIN-PATCHES/README src/monotone-0.40/CYGWIN-PATCHES/README
+--- origsrc/monotone-0.40/CYGWIN-PATCHES/README	1970-01-01 01:00:00.000000000 +0100
++++ src/monotone-0.40/CYGWIN-PATCHES/README	2008-04-23 21:35:37.906250000 +0200
+@@ -0,0 +1,101 @@
 +monotone
 +------------------------------------------
 +monotone is a free distributed version control system. it provides a simple,
@@ -26,7 +26,7 @@ diff -urN origsrc/monotone-0.38/CYGWIN-PATCHES/README src/monotone-0.38/CYGWIN-P
 +  http://monotone.ca/
 +
 +Canonical download:
-+  http://monotone.ca/downloads/0.38/monotone-0.38.tar.gz
++  http://monotone.ca/downloads/0.40/monotone-0.40.tar.gz
 +
 +License:
 +  GPL
@@ -37,28 +37,31 @@ diff -urN origsrc/monotone-0.38/CYGWIN-PATCHES/README src/monotone-0.38/CYGWIN-P
 +------------------------------------
 +
 +Build instructions:
-+  unpack monotone-0.38-1-src.tar.bz2
++  unpack monotone-0.40-1-src.tar.bz2
 +    if you use setup to install this src package, it will be
 +	 unpacked under /usr/src automatically
 +  cd /usr/src
-+  cygport monotone-0.38-1 all
++  cygport monotone-0.40-1 all
 +
 +This will create:
-+  /usr/src/monotone-0.38-1.tar.bz2
-+  /usr/src/monotone-0.38-1-src.tar.bz2
++  /usr/src/monotone-0.40-1.tar.bz2
++  /usr/src/monotone-0.40-1-src.tar.bz2
 +
-+Or use 'cygport monotone-0.38-1 prep' to get a patched source directory.
++Or use 'cygport monotone-0.40-1 prep' to get a patched source directory.
 +
 +To find out the files included in the binary distribution, you can
 +use "cygcheck -l monotone", or browse the listing for the appropriate version
 +at <http://cygwin.com/packages/>.
 +
 +For more information about this package, see the upstream documentation in
-+/usr/share/doc/monotone-0.38.
++/usr/share/doc/monotone-0.40.
 +
 +------------------
 +
 +Port Notes:
++
++----------  monotone-0.40-1 -- 2008-04-23 -----------
++Upstream major release. No patch needed.
 +
 +----------  monotone-0.38-1 -- 2007-12-12 -----------
 +Upstream major release. No patch needed.
@@ -100,9 +103,9 @@ diff -urN origsrc/monotone-0.38/CYGWIN-PATCHES/README src/monotone-0.38/CYGWIN-P
 +
 +Cygwin port maintained by: Lapo Luchini <lapo@lapo.it>
 +Please address all questions to the Cygwin mailing list at <cygwin@cygwin.com>
-diff -urN origsrc/monotone-0.38/CYGWIN-PATCHES/setup.hint src/monotone-0.38/CYGWIN-PATCHES/setup.hint
---- origsrc/monotone-0.38/CYGWIN-PATCHES/setup.hint	1970-01-01 01:00:00.000000000 +0100
-+++ src/monotone-0.38/CYGWIN-PATCHES/setup.hint	2007-10-28 15:23:36.007130100 +0100
+diff -urN origsrc/monotone-0.40/CYGWIN-PATCHES/setup.hint src/monotone-0.40/CYGWIN-PATCHES/setup.hint
+--- origsrc/monotone-0.40/CYGWIN-PATCHES/setup.hint	1970-01-01 01:00:00.000000000 +0100
++++ src/monotone-0.40/CYGWIN-PATCHES/setup.hint	2008-04-23 01:42:03.078125000 +0200
 @@ -0,0 +1,13 @@
 +# setup.hint for monotone
 +sdesc: "free distributed version control system"

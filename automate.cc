@@ -1555,50 +1555,19 @@ CMD_AUTOMATE(common_ancestors, N_("REV1 [REV2 [REV3 [...]]]"),
 
   database db(app);
 
-  set<revision_id> ancestors, common_ancestors;
-  vector<revision_id> frontier;
+  set<revision_id> revs, common_ancestors;
   for (args_vector::const_iterator i = args.begin(); i != args.end(); ++i)
     {
       revision_id rid(decode_hexenc((*i)()));
-      N(db.revision_exists(rid), F("no such revision '%s'") % rid);
-      ancestors.clear();
-      ancestors.insert(rid);
-      frontier.push_back(rid);
-      while (!frontier.empty())
-        {
-          revision_id rid = frontier.back();
-          frontier.pop_back();
-          if(!null_id(rid))
-            {
-              set<revision_id> parents;
-              db.get_revision_parents(rid, parents);
-              for (set<revision_id>::const_iterator i = parents.begin();
-                   i != parents.end(); ++i)
-                {
-                  if (ancestors.find(*i) == ancestors.end())
-                    {
-                      frontier.push_back(*i);
-                      ancestors.insert(*i);
-                    }
-                }
-            }
-        }
-      if (common_ancestors.empty())
-        common_ancestors = ancestors;
-      else
-        {
-          set<revision_id> common;
-          set_intersection(ancestors.begin(), ancestors.end(),
-                         common_ancestors.begin(), common_ancestors.end(),
-                         inserter(common, common.begin()));
-          common_ancestors = common;
-        }
+      N(db.revision_exists(rid), F("No such revision %s") % rid);
+      revs.insert(rid);
     }
+
+  db.get_common_ancestors(revs, common_ancestors);
 
   for (set<revision_id>::const_iterator i = common_ancestors.begin();
        i != common_ancestors.end(); ++i)
-    if (!null_id(*i))
-      output << *i << '\n';
+      output << *i << "\n";
 }
 
 // Name: branches
