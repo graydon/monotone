@@ -64,3 +64,4 @@
 ^unit_tester$
 ^unit_tests\.status$
 ^version\.texi$
+^monotone\.html$
