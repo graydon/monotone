@@ -40,6 +40,9 @@
 --			The absolute path for a file that will simply
 --			be touched by the note_netsync_end hook.
 --			Default: CONFDIR/monotone-netsync-end.flag
+--
+--			WARNING!  Do not try to store anything in that
+--			file, it will get erased...
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -53,16 +56,11 @@ if not MI_flagfile then MI_flagfile = MI_default_flagfile end
 -------------------------------------------------------------------------------
 -- Local hack of the note_netsync_* functions
 -------------------------------------------------------------------------------
-require "lfs"
-
 push_netsync_notifier(
    {
       ["end"] =
 	 function (...)
-	    local handle = io.open(MI_flagfile, "a+")
+	    local handle = io.open(MI_flagfile, "w+")
 	    io.close(handle)
-	    -- Because the open doesn't change the mtime if the file
-	    -- already exists, let's touch it as well.
-	    lfs.touch(MI_flagfile)
 	 end
    })
