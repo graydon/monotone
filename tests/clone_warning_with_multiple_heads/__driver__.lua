@@ -17,7 +17,7 @@ REV3=base_revision()
 
 testURI="file:" .. test.root .. "/test.db"
 
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dirA"),
+check(nodb_mtn("clone", testURI, "testbranch", "test_dirA"),
          1, false, true)
 check(qgrep(REV2, "stderr"))
 check(qgrep(REV3, "stderr"))

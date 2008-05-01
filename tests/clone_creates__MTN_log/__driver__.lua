@@ -14,7 +14,7 @@ check(mtn("--branch=testbranch", "--rcfile=commit_log.lua", "commit"), 0, false,
 
 testURI="file:" .. test.root .. "/test.db"
 
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "testbranch"), 0, false, true)
+check(nodb_mtn("clone", testURI, "testbranch", "testbranch"), 0, false, true)
 
 check(exists("testbranch/_MTN/log"))
 check(fsize("_MTN/log") == 0)

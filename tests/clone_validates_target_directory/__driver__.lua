@@ -7,13 +7,13 @@ commit()
 
 testURI="file:" .. test.root .. "/test.db"
 
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir1"), 0, false, false)
+check(nodb_mtn("clone", testURI, "testbranch", "test_dir1"), 0, false, false)
 
 writefile("test_dir2")
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir2"), 1, false, false)
+check(nodb_mtn("clone", testURI, "testbranch", "test_dir2"), 1, false, false)
 
 mkdir("test_dir3")
-check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir3"), 1, false, false)
+check(nodb_mtn("clone", testURI, "testbranch", "test_dir3"), 1, false, false)
 
 if existsonpath("chmod") and existsonpath("test") then
   -- skip this part if run as root (hi Gentoo!)
@@ -26,9 +26,9 @@ if existsonpath("chmod") and existsonpath("test") then
   else
     mkdir("test_dir4")
     check({"chmod", "444", "test_dir4"}, 0, false)
-    check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir4"),
+    check(nodb_mtn("clone", testURI, "testbranch", "test_dir4"),
              1, false, false)
-    check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir4/subdir"),
+    check(nodb_mtn("clone", testURI, "testbranch", "test_dir4/subdir"),
              1, false, false)
     -- Reset the permissions so Autotest can correctly clean up our
     -- temporary directory.
