@@ -2,22 +2,31 @@
 
         0.41 release
 
+        Changes
+
+        - mtn clone now takes a branch argument rather than a branch option
+          which is more what people expect given the the fact that
+          mtn push/pull/sync do not use a branch option either
+
         Bugs fixed
 
-        - If the options --db or --keydir were previously specified for a 
+        - If the options --db or --keydir were previously specified for a
           command which was executed inside a workspace and one or both
-          option arguments were invalid (f.e. invalid paths), they were 
+          option arguments were invalid (f.e. invalid paths), they were
           still written to _MTN/options of the particular workspace.
-          This lead to errors on any subsequent command which used these 
+          This lead to errors on any subsequent command which used these
           options. This bug is fixed in so far that basic file type
           checks are applied on both options, so its no longer possible
           to set non-existing paths accidently or use a path to a directory
           as option argument for --db.
 
-        - If a key clash occurs on a netsync operation, i.e. two different 
-          keys with the same key id are encountered, mtn now fails cleanly 
+        - If a key clash occurs on a netsync operation, i.e. two different
+          keys with the same key id are encountered, mtn now fails cleanly
           and provides further guidance how to proceed.
- 
+
+        - It was previously not possible to clone a branch / database
+          anonymously; this has been fixed.
+
 Fri Apr 11 22:50:44 UTC 2008
 
         0.40 release.

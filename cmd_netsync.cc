@@ -50,7 +50,7 @@ find_key(options & opts,
     return;
 
   rsa_keypair_id key;
-  
+
   utf8 host(info.client.unparsed);
   if (!info.client.u.host.empty())
     host = utf8(info.client.u.host);
@@ -108,7 +108,7 @@ build_client_connection_info(options & opts,
     {
       N(!include_or_exclude_given,
         F("Include/exclude pattern was given both as part of the URL and as a separate argument."));
-      
+
       // Pull include/exclude from the query string
       char const separator = '/';
       char const negate = '-';
@@ -127,7 +127,7 @@ build_client_connection_info(options & opts,
               if (begin < query.size())
                 end = query.find(separator, begin);
             }
-          
+
           bool is_exclude = false;
           if (item.size() >= 1 && item.at(0) == negate)
             {
@@ -143,7 +143,7 @@ build_client_connection_info(options & opts,
               is_exclude = true;
               item.erase(0, string("exclude=").size());
             }
-          
+
           if (is_exclude)
             excludes.push_back(arg_type(urldecode(item)));
           else
@@ -152,7 +152,7 @@ build_client_connection_info(options & opts,
       info.client.include_pattern = globish(includes);
       info.client.exclude_pattern = globish(excludes);
     }
-  
+
   // Maybe set the default values.
   if (!db.var_exists(default_server_key) || opts.set_default)
     {
@@ -175,7 +175,7 @@ build_client_connection_info(options & opts,
         db.set_var(default_exclude_pattern_key,
                    var_value(info.client.exclude_pattern()));
       }
-  
+
   info.client.use_argv =
     lua.hook_get_netsync_connect_command(info.client.u,
                                          info.client.include_pattern,
@@ -313,14 +313,14 @@ private:
 };
 
 CMD(clone, "clone", "", CMD_REF(network),
-    N_("ADDRESS[:PORTNUMBER] [DIRECTORY]"),
+    N_("ADDRESS[:PORTNUMBER] BRANCH [DIRECTORY]"),
     N_("Checks out a revision from a remote database into a directory"),
     N_("If a revision is given, that's the one that will be checked out.  "
        "Otherwise, it will be the head of the branch supplied.  "
        "If no directory is given, the branch name will be used as directory"),
-    options::opts::branch | options::opts::revision)
+    options::opts::revision)
 {
-  if (args.size() < 1 || args.size() > 2 || app.opts.revision_selectors.size() > 1)
+  if (args.size() < 2 || args.size() > 3 || app.opts.revision_selectors.size() > 1)
     throw usage(execid);
 
   revision_id ident;
@@ -328,18 +328,19 @@ CMD(clone, "clone", "", CMD_REF(network),
   netsync_connection_info info;
   info.client.unparsed = idx(args, 0);
 
-  N(app.opts.branch_given && !app.opts.branchname().empty(),
-    F("you must specify a branch to clone"));
+  branch_name branchname(idx(args, 1)());
 
-  if (args.size() == 1)
+  N(!branchname().empty(), F("you must specify a branch to clone"));
+
+  if (args.size() == 2)
     {
       // No checkout dir specified, use branch name for dir.
-      workspace_dir = system_path(app.opts.branchname());
+      workspace_dir = system_path(branchname());
     }
   else
     {
       // Checkout to specified dir.
-      workspace_dir = system_path(idx(args, 1));
+      workspace_dir = system_path(idx(args, 2));
     }
 
   require_path_is_nonexistent
@@ -359,9 +360,12 @@ CMD(clone, "clone", "", CMD_REF(network),
                                   / bookkeeping_root_component
                                   / ws_internal_db_file_name);
 
-  // must do this after setting dbname so that _MTN/options is written
-  // correctly
+  // this is actually stupid, but app.opts.branchname must be set here
+  // otherwise it will not be written into _MTN/options, in case
+  // a revision is chosen which has multiple branch certs
+  app.opts.branchname = branchname;
   workspace::create_workspace(app.opts, app.lua, workspace_dir);
+  app.opts.branchname = branch_name();
 
   database db(app);
   if (get_path_status(db.get_filename()) == path::nonexistent)
@@ -372,10 +376,11 @@ CMD(clone, "clone", "", CMD_REF(network),
   key_store keys(app);
   project_t project(db);
 
-  info.client.include_pattern = globish(app.opts.branchname());
+  info.client.include_pattern = globish(branchname());
   info.client.exclude_pattern = globish(app.opts.exclude_patterns);
+
   build_client_connection_info(app.opts, app.lua, db, keys,
-                               info, true, true);
+                               info, true, true, false);
 
   if (app.opts.signing_key() == "")
     P(F("doing anonymous pull; use -kKEYNAME if you need authentication"));
@@ -392,23 +397,19 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   if (app.opts.revision_selectors.size() == 0)
     {
-      // use branch head revision
-      N(!app.opts.branchname().empty(),
-        F("use --revision or --branch to specify what to checkout"));
-
       set<revision_id> heads;
-      project.get_branch_heads(app.opts.branchname, heads,
+      project.get_branch_heads(branchname, heads,
                                app.opts.ignore_suspend_certs);
       N(heads.size() > 0,
-        F("branch '%s' is empty") % app.opts.branchname);
+        F("branch '%s' is empty") % branchname);
       if (heads.size() > 1)
         {
-          P(F("branch %s has multiple heads:") % app.opts.branchname);
+          P(F("branch %s has multiple heads:") % branchname);
           for (set<revision_id>::const_iterator i = heads.begin(); i != heads.end(); ++i)
             P(i18n_format("  %s")
               % describe_revision(project, *i));
-          P(F("choose one with '%s checkout -r<id>'") % ui.prog_name);
-          E(false, F("branch %s has multiple heads") % app.opts.branchname);
+          P(F("choose one with '%s clone -r<id> SERVER BRANCH'") % ui.prog_name);
+          E(false, F("branch %s has multiple heads") % branchname);
         }
       ident = *(heads.begin());
     }
@@ -417,12 +418,9 @@ CMD(clone, "clone", "", CMD_REF(network),
       // use specified revision
       complete(app.opts, app.lua, project, idx(app.opts.revision_selectors, 0)(), ident);
 
-      guess_branch(app.opts, project, ident);
-      I(!app.opts.branchname().empty());
-
-      N(project.revision_is_in_branch(ident, app.opts.branchname),
+      N(project.revision_is_in_branch(ident, branchname),
         F("revision %s is not a member of branch %s")
-          % ident % app.opts.branchname);
+          % ident % branchname);
     }
 
   roster_t empty_roster, current_roster;
@@ -495,7 +493,7 @@ CMD_NO_WORKSPACE(serve, "serve", "", CMD_REF(network), "",
   pid_file pid(app.opts.pidfile);
 
   db.ensure_open();
-  
+
   netsync_connection_info info;
   info.server.addrs = app.opts.bind_uris;
 

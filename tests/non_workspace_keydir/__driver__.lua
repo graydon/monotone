@@ -27,17 +27,17 @@ else
 expected_ret = -15
 end
 
--- srv = bg(pure_mtn("serve", "--confdir="..test.root, "--keydir="..test.root.."/keys"), expected_ret, false, true)
--- sleep(2)
--- srv:finish()
--- check(qgrep("beginning service", "stderr"))
+srv = bg(pure_mtn("serve", "--confdir="..test.root, "--keydir="..test.root.."/keys"), expected_ret, false, true)
+sleep(2)
+srv:finish()
+check(qgrep("beginning service", "stderr"))
 
 -- this should find a private key in the keys directory under the specified confdir
 
--- srv = bg(pure_mtn("serve", "--confdir="..test.root), expected_ret, false, true)
--- sleep(2)
--- srv:finish()
--- check(qgrep("beginning service", "stderr"))
+srv = bg(pure_mtn("serve", "--confdir="..test.root), expected_ret, false, true)
+sleep(2)
+srv:finish()
+check(qgrep("beginning service", "stderr"))
 
 -- this should fail to decrypt the private key found in ~/.monotone/keys
 
@@ -50,7 +50,11 @@ end
 mkdir(test.root.."/empty")
 -- FIXME: this should probably be set globally in lua-testsuite.lua for
 --        all tests.
+if ostype == "Windows" then
+set_env("APPDATA", test.root.."/empty")
+else
 set_env("HOME", test.root.."/empty")
+end
 srv = bg(pure_mtn("serve"), 1, false, true)
 sleep(2)
 srv:finish()
