@@ -103,7 +103,7 @@ refiner::calculate_items_to_send()
   string typestr;
   netcmd_item_type_to_string(type, typestr);
 
-  //   L(FL("%s determined %d %s items to send") 
+  //   L(FL("%s determined %d %s items to send")
   //     % voicestr() % items_to_send.size() % typestr);
   calculated_items_to_send = true;
 }
@@ -205,7 +205,7 @@ refiner::begin_refinement()
   netcmd_item_type_to_string(type, typestr);
   L(FL("Beginning %s refinement on %s.") % typestr % voicestr());
 }
-  
+
 void
 refiner::process_done_command(size_t n_items)
 {
@@ -219,11 +219,11 @@ refiner::process_done_command(size_t n_items)
     % voicestr() % typestr % items_to_send.size() % items_to_receive);
 
   /*
-  if (local_items.size() < 25) 
+  if (local_items.size() < 25)
     {
       // Debugging aid.
       L(FL("+++ %d items in %s") % local_items.size() % voicestr());
-      for (set<id>::const_iterator i = local_items.begin(); 
+      for (set<id>::const_iterator i = local_items.begin();
            i != local_items.end(); ++i)
         {
           L(FL("%s item %s") % voicestr() % *i);
@@ -232,7 +232,7 @@ refiner::process_done_command(size_t n_items)
     }
   */
 
-  if (voice == server_voice) 
+  if (voice == server_voice)
     {
       //       L(FL("server responding to [done %s %d] with [done %s %d]")
       //         % typestr % n_items % typestr % items_to_send.size());
@@ -240,7 +240,7 @@ refiner::process_done_command(size_t n_items)
     }
 
   done = true;
-  
+
   // we can clear up the merkle trie's memory now
   table.clear();
 }
@@ -309,7 +309,7 @@ refiner::process_refinement_command(refinement_type ty,
                 {
                   cb.queue_refine_cmd(refinement_query, *mp);
                   ++queries_in_flight;
-                }                  
+                }
 
             }
 
@@ -374,7 +374,7 @@ refiner::process_refinement_command(refinement_type ty,
       // Possibly this signals the end of refinement.
       if (voice == client_voice && queries_in_flight == 0)
         {
-          string typestr;          
+          string typestr;
           netcmd_item_type_to_string(their_node.type, typestr);
           calculate_items_to_send();
           // L(FL("client sending [done %s %d]") % typestr % items_to_send.size());
@@ -400,20 +400,20 @@ refiner::process_refinement_command(refinement_type ty,
 using std::deque;
 using boost::shared_ptr;
 
-struct 
+struct
 refiner_pair
 {
   // This structure acts as a mock netsync session. It's only purpose is to
   // construct two refiners that are connected to one another, and route
   // refinement calls back and forth between them.
 
-  struct 
+  struct
   refiner_pair_callbacks : refiner_callbacks
   {
     refiner_pair & p;
     bool is_client;
-    refiner_pair_callbacks(refiner_pair & p, bool is_client) 
-      : p(p), is_client(is_client) 
+    refiner_pair_callbacks(refiner_pair & p, bool is_client)
+      : p(p), is_client(is_client)
     {}
 
     virtual void queue_refine_cmd(refinement_type ty,
@@ -434,7 +434,7 @@ refiner_pair
   refiner_pair_callbacks server_cb;
   refiner client;
   refiner server;
-  
+
   struct msg
   {
     msg(bool is_client, refinement_type ty, merkle_node const & node)
@@ -444,10 +444,10 @@ refiner_pair
         node(node)
     {}
 
-    msg(bool is_client, size_t items) 
+    msg(bool is_client, size_t items)
       : op(done),
         send_to_client(!is_client),
-        n_items(items) 
+        n_items(items)
     {}
 
     enum { refine, done } op;
@@ -460,14 +460,14 @@ refiner_pair
   deque<shared_ptr<msg> > events;
   size_t n_msgs;
 
-  void crank() 
+  void crank()
   {
-    
+
     shared_ptr<msg> m = events.front();
     events.pop_front();
     ++n_msgs;
 
-    switch (m->op) 
+    switch (m->op)
       {
 
       case msg::refine:
@@ -487,7 +487,7 @@ refiner_pair
   }
 
   refiner_pair(set<id> const & client_items,
-               set<id> const & server_items) : 
+               set<id> const & server_items) :
     client_cb(*this, true),
     server_cb(*this, false),
     // The item type here really doesn't matter.
@@ -509,22 +509,22 @@ refiner_pair
 
     while (! events.empty())
       crank();
-    
+
     // Refinement should have completed by here.
     UNIT_TEST_CHECK(client.done);
     UNIT_TEST_CHECK(server.done);
 
     check_set_differences("client", client);
     check_set_differences("server", server);
-    check_no_redundant_sends("client->server", 
-                             client.items_to_send, 
+    check_no_redundant_sends("client->server",
+                             client.items_to_send,
                              server.get_local_items());
-    check_no_redundant_sends("server->client", 
-                             server.items_to_send, 
+    check_no_redundant_sends("server->client",
+                             server.items_to_send,
                              client.get_local_items());
     UNIT_TEST_CHECK(client.items_to_send.size() == server.items_to_receive);
     UNIT_TEST_CHECK(server.items_to_send.size() == client.items_to_receive);
-    L(FL("stats: %d total, %d cs, %d sc, %d msgs") 
+    L(FL("stats: %d total, %d cs, %d sc, %d msgs")
       % (server.items_to_send.size() + client.get_local_items().size())
       % client.items_to_send.size()
       % server.items_to_send.size()
@@ -553,14 +553,14 @@ refiner_pair
       }
   }
 
-  void check_no_redundant_sends(char const * context, 
+  void check_no_redundant_sends(char const * context,
                                 set<id> const & src,
                                 set<id> const & dst)
   {
     for (set<id>::const_iterator i = src.begin(); i != src.end(); ++i)
       {
         set<id>::const_iterator j = dst.find(*i);
-        if (j != dst.end()) 
+        if (j != dst.end())
           {
             L(FL("WARNING: %s transmission will send redundant item %s")
               % context % *i);
@@ -576,7 +576,7 @@ refiner_pair
                    r.get_peer_items().begin(), r.get_peer_items().end(),
                    inserter(tmp, tmp.begin()));
     print_if_unequal(context,
-                     "diff(local,peer)", tmp, 
+                     "diff(local,peer)", tmp,
                      "items_to_send", r.items_to_send);
 
     UNIT_TEST_CHECK(tmp == r.items_to_send);
@@ -585,7 +585,7 @@ refiner_pair
 
 
 void
-check_combinations_of_sets(set<id> const & s0, 
+check_combinations_of_sets(set<id> const & s0,
                            set<id> const & a,
                            set<id> const & b)
 {
@@ -614,7 +614,7 @@ check_combinations_of_sets(set<id> const & s0,
 }
 
 
-void 
+void
 build_random_set(set<id> & s, size_t sz, bool clumpy, randomizer & rng)
 {
   while (s.size() < sz)
@@ -635,12 +635,12 @@ build_random_set(set<id> & s, size_t sz, bool clumpy, randomizer & rng)
               ++c;
               str[pos] = c;
               s.insert(id(str));
-            }          
+            }
         }
     }
 }
 
-size_t 
+size_t
 perturbed(size_t n, randomizer & rng)
 {
   // we sometimes perturb sizes to deviate a bit from natural word-multiple sizes
@@ -660,17 +660,17 @@ modulated_size(size_t base_set_size, size_t i)
 }
 
 
-void 
+void
 check_with_count(size_t base_set_size, randomizer & rng)
 {
-  if (base_set_size == 0) 
+  if (base_set_size == 0)
     return;
 
   L(FL("running refinement check with base set size %d") % base_set_size);
 
   // Our goal here is to construct a base set of a given size, and two
   // secondary sets which will be combined with the base set in various
-  // ways. 
+  // ways.
   //
   // The secondary sets will be built at the following sizes:
   //
@@ -683,10 +683,10 @@ check_with_count(size_t base_set_size, randomizer & rng)
   //
   // The base set is constructed in both clumpy and non-clumpy forms,
   // making 6 * 6 * 2 = 72 variations.
-  // 
+  //
   // Since each group of sets creates 9 sync scenarios, each "size" creates
   // 648 sync scenarios.
-  
+
   for (size_t c = 0; c < 2; ++c)
     {
       set<id> s0;
@@ -696,7 +696,7 @@ check_with_count(size_t base_set_size, randomizer & rng)
         {
           set<id> sa;
           build_random_set(sa, modulated_size(perturbed(base_set_size, rng), a), false, rng);
-          
+
           for (size_t b = 0; b < 6; ++b)
             {
               set<id> sb;
@@ -704,15 +704,15 @@ check_with_count(size_t base_set_size, randomizer & rng)
               check_combinations_of_sets(s0, sa, sb);
             }
         }
-    }          
+    }
 }
 
 UNIT_TEST(refiner, various_counts)
 {
-  { 
+  {
     // Once with zero-zero, for good measure.
     set<id> s0;
-    refiner_pair x(s0, s0); 
+    refiner_pair x(s0, s0);
   }
 
   // We run 3 primary counts, giving 1944 tests. Note that there is some
@@ -720,9 +720,15 @@ UNIT_TEST(refiner, various_counts)
   // of landing on such pleasant round numbers.
 
   randomizer rng;
-  check_with_count(1, rng); 
-  check_with_count(128, rng); 
-  check_with_count(1024, rng); 
+  check_with_count(1, rng);
+  check_with_count(128, rng);
+
+#if not defined(__CYGWIN__)
+  // Something in this test is very slow on Cygwin; so slow that the
+  // buildbot master thinks the slave is hung and terminates it. So we don't
+  // run this test on Cygwin.
+  check_with_count(1024, rng);
+#endif
 }
 
 #endif

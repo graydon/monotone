@@ -17,9 +17,10 @@ check(nodb_mtn("--branch=testbranch", "clone", testURI, "test_dir3"), 1, false, 
 
 if existsonpath("chmod") and existsonpath("test") then
   -- skip this part if run as root (hi Gentoo!)
-  -- Also skip if on Windows, since these permissions are not enforced there
+  -- Also skip if on Windows and Cygwin, since these permissions are not enforced there
   if check({"test", "-O", "/"}, false, false, false) == 0 or
-     ostype == "Windows"
+     ostype == "Windows" or
+     string.find (ostype, "CYGWIN")
   then
     partial_skip = true
   else
