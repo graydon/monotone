@@ -344,6 +344,8 @@ bin_PROGRAMS = mtn
 noinst_PROGRAMS = txt2c
 EXTRA_PROGRAMS =
 
+bin_SCRIPTS = mtnopt
+
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
 
@@ -719,6 +721,10 @@ txt2c: txt2c.cc
 	./txt2c $(TXT2CFLAGS) --no-static $< $(*F) >$@.tmp
 	cmp -s $@.tmp $@ || mv -f $@.tmp $@
 	rm -f $@.tmp
+
+# Support for scripts
+%: util/%
+	cp $< $@
 
 # This construct causes --strip-trailing to be applied only when
 # generating package_revision.c.
