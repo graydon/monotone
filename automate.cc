@@ -830,6 +830,7 @@ namespace
     symbol const old_path("old_path");
     symbol const new_path("new_path");
     symbol const status("status");
+    symbol const birth("birth");
     symbol const changes("changes");
   }
 }
@@ -960,6 +961,23 @@ inventory_determine_changes(inventory_item const & item, roster_t const & old_ro
     }
 }
 
+static revision_id
+inventory_determine_birth(inventory_item const & item,
+                          roster_t const & old_roster,
+                          marking_map const & old_marking)
+{
+  revision_id rid;
+  if (old_roster.has_node(item.new_node.id))
+    {
+      node_t node = old_roster.get_node(item.new_node.id);
+      marking_map::const_iterator m = old_marking.find(node->self);
+      I(m != old_marking.end());
+      marking_t mark = m->second;
+      rid = mark.birth_revision;
+    }
+  return rid;
+}
+
 // Name: inventory
 // Arguments: [PATH]...
 // Added in: 1.0
@@ -995,6 +1013,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
     F("this command can only be used in a single-parent workspace"));
 
   roster_t new_roster, old_roster = parent_roster(parents.begin());
+  marking_map old_marking = parent_marking(parents.begin());
   temp_node_id_source nis;
 
   work.get_current_roster_shape(db, nis, new_roster);
@@ -1051,6 +1070,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
 
       vector<string> changes;
       inventory_determine_changes(item, old_roster, changes);
+
+      revision_id birth_revision =
+        inventory_determine_birth(item, old_roster, old_marking);
 
       bool is_tracked =
         find(states.begin(), states.end(), "unknown") == states.end() &&
@@ -1113,6 +1135,9 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
       //
       // finally output the previously recorded states and changes
       //
+      if (!birth_revision.inner()().empty())
+        st.push_binary_pair(syms::birth, birth_revision.inner());
+
       I(!states.empty());
       st.push_str_multi(syms::status, states);
 

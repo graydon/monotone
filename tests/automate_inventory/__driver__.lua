@@ -20,6 +20,7 @@ addfile("original", "original")
 addfile("unchanged", "unchanged")
 addfile("patched", "patched")
 commit()
+rev1 = base_revision()
 
 addfile("added", "added")
 writefile("unknown", "unknown")
@@ -46,6 +47,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
  fs_type = "directory",
+ birth = rev1,
  status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -74,6 +76,7 @@ index = check_inventory (parsed, index,
 old_type = "file",
 new_type = "file",
  fs_type = "none",
+   birth = rev1,
   status = "missing"})
 
 index = check_inventory (parsed, index,
@@ -89,6 +92,7 @@ old_type = "file",
 new_type = "file",
  fs_type = "file",
   status = "known",
+   birth = rev1,
  changes = "content"})
 
 index = check_inventory (parsed, index,
@@ -96,6 +100,7 @@ index = check_inventory (parsed, index,
 new_type = "file",
 old_path = "original",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_target", "known"}})
 
 -- skip test.db, test_hooks.lua, tester.log, ts-stderr, ts-stdin, ts-stdout
@@ -106,6 +111,7 @@ index = check_inventory (parsed, index,
 old_type = "file",
 new_type = "file",
  fs_type = "file",
+   birth = rev1,
   status = "known"})
 
 index = check_inventory (parsed, index,
@@ -146,6 +152,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "unchanged",
  fs_type  = "file",
+ birth    = rev1,
  status   = {"rename_source", "rename_target", "known"},
  changes  = "content"})
 
@@ -158,6 +165,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "original",
  fs_type  = "file",
+ birth    = rev1,
  status   = {"rename_source", "rename_target", "known"},
  changes  = "content"})
 
@@ -182,6 +190,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "unchanged",
  fs_type  = "file",
+ birth    = rev1,
  status   = {"rename_source", "rename_target", "known"}})
 
 index = find_basic_io_line (parsed, {name = "path", values = "unchanged"})
@@ -193,6 +202,7 @@ check_inventory (parsed, index,
  new_type = "file",
  old_path = "original",
  fs_type  = "file",
+ birth    = rev1,
  status   = {"rename_source", "rename_target", "known"}})
 
 ----------
@@ -221,6 +231,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "r
  new_type = "file",
  old_path = "original",
  fs_type  = "file",
+ birth    = rev1,
  status   = {"rename_target", "known"}})
 
 ----------
@@ -249,6 +260,7 @@ new_path = "missing",
 new_type = "file",
 old_path = "original",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
@@ -261,6 +273,7 @@ new_path = "original",
 new_type = "file",
 old_path = "dropped",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
@@ -273,6 +286,7 @@ new_path = "dropped",
 new_type = "file",
 old_path = "missing",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"},
  changes = "content"})
 
@@ -295,6 +309,7 @@ new_path = "missing",
 new_type = "file",
 old_path = "original",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"}})
 
 check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "missing"}),
@@ -304,6 +319,7 @@ new_path = "original",
 new_type = "file",
 old_path = "dropped",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"}})
 
 check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "original"}),
@@ -313,6 +329,7 @@ new_path = "dropped",
 new_type = "file",
 old_path = "missing",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_source", "rename_target", "known"}})
 
 ----------
@@ -374,6 +391,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "r
 new_type = "file",
 old_path = "original",
  fs_type = "none",
+   birth = rev1,
   status = {"rename_target", "missing"}})
 
 ----------
@@ -392,6 +410,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "o
 old_type = "file",
 new_type = "file",
  fs_type = "none",
+   birth = rev1,
   status = {"missing"}})
 
 check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "renamed"}),
@@ -424,6 +443,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "r
 new_type = "file",
 old_path = "original",
  fs_type = "file",
+   birth = rev1,
   status = {"rename_target", "known"},
   changes = "content"})
 
@@ -453,6 +473,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "n
 
 mkdir("new_dir")
 commit()
+rev2 = base_revision();
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
@@ -461,6 +482,7 @@ check_inventory (parsed, find_basic_io_line (parsed, {name = "path", values = "n
 old_type = "directory",
 new_type = "directory",
  fs_type = "directory",
+   birth = rev2,
   status = {"known"}})
 
 remove("new_dir")
@@ -522,6 +544,7 @@ new_type = "file",
 changes = {"content", "attrs"}})
 
 commit()
+rev3 = base_revision()
 
 check(mtn("automate", "inventory", "--rcfile=inventory_hooks.lua"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
@@ -531,6 +554,7 @@ check_inventory (parsed, index,
 old_type = "file",
 new_type = "file",
  fs_type = "file",
+   birth = rev3,
   status = {"known"}})
 
 check(mtn("attr", "drop", "file-with-attributes", "foo"), 0, false, false)
@@ -543,6 +567,7 @@ check_inventory (parsed, index,
 old_type = "file",
 new_type = "file",
  fs_type = "file",
+   birth = rev3,
   status = {"known"},
  changes = {"attrs"}})
 

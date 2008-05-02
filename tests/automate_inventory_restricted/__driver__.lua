@@ -26,6 +26,7 @@ addfile("file_0", "original: root file_0")
 addfile("dir_a/file_a", "original: dir_a file_a")
 addfile("dir_b/file_b", "original: dir_b file_b")
 commit()
+rev1 = base_revision()
 
 -- Test that 'automate inventory' shows all directories
 check(mtn("automate", "inventory"), 0, true, false)
@@ -37,6 +38,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -44,6 +46,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -51,6 +54,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -58,6 +62,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
  status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -65,6 +70,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -72,6 +78,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 -- skip the test files in root
@@ -89,6 +96,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -96,6 +104,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -103,6 +112,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -110,6 +120,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 -- skip tester-generated files
@@ -130,6 +141,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -137,6 +149,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 -- prove that we checked all the output
@@ -155,6 +168,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -176,6 +190,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
  status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -183,6 +198,7 @@ index = check_inventory (parsed, index,
  new_type = "file",
  old_path = "dir_a/file_a",
   fs_type = "none",
+    birth = rev1,
    status = {"rename_target", "missing"}})
 -- "missing" because of --bookkeep-only
 
@@ -191,6 +207,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 checkexp ("checked all", #parsed, index-1)
@@ -208,6 +225,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -228,6 +246,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
  status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -235,6 +254,7 @@ index = check_inventory (parsed, index,
  new_type = "file",
  old_path = "dir_a/file_a",
   fs_type = "file",
+    birth = rev1,
    status = {"rename_target", "known"}})
 
 index = check_inventory (parsed, index,
@@ -242,6 +262,7 @@ index = check_inventory (parsed, index,
  old_type = "file",
  new_type = "file",
   fs_type = "file",
+    birth = rev1,
    status = {"known"}})
 
 checkexp ("checked all", #parsed, index-1)
@@ -261,6 +282,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -268,6 +290,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -275,6 +298,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -305,6 +329,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -312,6 +337,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -319,6 +345,7 @@ index = check_inventory (parsed, index,
  old_type = "directory",
  new_type = "directory",
   fs_type = "directory",
+    birth = rev1,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
@@ -376,6 +403,7 @@ index = check_inventory (parsed, index,
  new_type = "directory",
  old_path = "dir_a",
   fs_type = "directory",
+    birth = rev1,
    status = {"rename_target", "known" }})
 
 index = check_inventory (parsed, index,
@@ -383,6 +411,7 @@ index = check_inventory (parsed, index,
  new_type = "file",
  old_path = "dir_a/file_a",
   fs_type = "file",
+    birth = rev1,
    status = {"rename_target", "known" }})
 
 checkexp ("checked all", #parsed, index-1)
@@ -424,6 +453,7 @@ index = check_inventory (parsed, index,
  new_type = "directory",
  old_path = "dir_a",
   fs_type = "directory",
+    birth = rev1,
    status = {"rename_target", "known" }})
 
 checkexp ("checked all", #parsed, index-1)
