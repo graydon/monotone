@@ -62,7 +62,7 @@ check(readfile("expected-no-ignored.stdout") == readfile("stdout"))
 -- make sure 'automate stdio' handles at least one of the inventory options as well
 check(mtn("automate", "stdio"), 0, true, false, "o10:no-ignored0:e l9:inventory6:sourcee")
 canonicalize("stdout")
-check(("0:0:l:889:" .. readfile("expected-no-ignored.stdout")) == readfile("stdout"))
+check(("0:0:l:1149:" .. readfile("expected-no-ignored.stdout")) == readfile("stdout"))
 
 --
 -- now check --no-corresponding-renames

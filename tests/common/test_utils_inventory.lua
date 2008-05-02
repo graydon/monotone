@@ -89,6 +89,11 @@ function check_inventory (parsed, parsed_index, stanza, xfail)
       parsed_index = parsed_index + 1
    end
 
+   if stanza.birth then
+      check_basic_io_line (parsed_index, parsed[parsed_index], "birth", stanza.birth, xfail)
+      parsed_index = parsed_index + 1
+   end
+
    if stanza.status then
       check_basic_io_line (parsed_index, parsed[parsed_index], "status", stanza.status, xfail)
       parsed_index = parsed_index + 1
