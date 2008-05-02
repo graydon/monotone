@@ -8,6 +8,9 @@
           which is more what people expect given the the fact that
           mtn push/pull/sync do not use a branch option either
 
+        - mtn automate inventory will show the birth revision for any file
+          that has been committed.
+
         Bugs fixed
 
         - If the options --db or --keydir were previously specified for a
