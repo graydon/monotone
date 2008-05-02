@@ -6683,6 +6683,8 @@ paths for this restriction.
 
 @itemize
 @item
+8.0 -- added the output of the @code{birth} key
+@item
 7.0 -- added options @option{--no-ignored}, @option{--no-unknown},
 @option{--no-unchanged} and @option{--no-corresponding-renames}
 @item
@@ -6711,12 +6713,14 @@ new_type "file"
 old_type "file"
 new_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "known"
  changes "attrs"
 
     path "dropped"
 old_type "file"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "dropped"
 
    path "ignored~"
@@ -6727,18 +6731,21 @@ fs_type "file"
 old_type "file"
 new_type "file"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "missing"
 
     path "original"
 old_type "file"
 new_path "renamed"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 
     path "patched"
 old_type "file"
 new_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "known"
  changes "content"
 
@@ -6746,6 +6753,7 @@ new_type "file"
 old_type "file"
 new_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "known"
  changes "content" "attrs"
 
@@ -6753,12 +6761,14 @@ new_type "file"
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "known"
 
     path "unchanged"
 old_type "file"
 new_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "known"
 
    path "unknown"
@@ -6774,6 +6784,7 @@ new_path "unchanged"
 new_type "file"
 old_path "unchanged"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
 
     path "unchanged"
@@ -6782,6 +6793,7 @@ new_path "original"
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
 @end verbatim
 
@@ -6795,6 +6807,7 @@ new_path "unchanged"
 new_type "file"
 old_path "unchanged"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
  changes "content"
 
@@ -6804,6 +6817,7 @@ new_path "original"
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
  changes "content"
 
@@ -6817,12 +6831,14 @@ old_type "file"
 new_path "bar"
 new_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "added" "known"
 
     path "bar"
 new_type "file"
 old_path "foo"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "known"
 @end verbatim
 
@@ -6835,6 +6851,7 @@ new_path "bar"
 new_type "file"
 old_path "baz"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
 
     path "bar"
@@ -6843,6 +6860,7 @@ new_path "baz"
 new_type "file"
 old_path "foo"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
 
     path "baz"
@@ -6851,6 +6869,7 @@ new_path "foo"
 new_type "file"
 old_path "bar"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
 @end verbatim
 
@@ -6865,6 +6884,7 @@ new_path "bar"
 new_type "file"
 old_path "baz"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
  changes "content"
 
@@ -6874,6 +6894,7 @@ new_path "baz"
 new_type "file"
 old_path "foo"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
  changes "content"
 
@@ -6883,6 +6904,7 @@ new_path "foo"
 new_type "file"
 old_path "bar"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "rename_target" "known"
  changes "content"
 @end verbatim
@@ -6893,6 +6915,7 @@ unknown:
     path "dropped"
 old_type "file"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "dropped" "unknown"
 @end verbatim
 
@@ -6911,12 +6934,14 @@ and thus unknown source and missing target:
 old_type "file"
 new_path "renamed"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source" "unknown"
 
     path "renamed"
 new_type "file"
 old_path "original"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "missing"
 @end verbatim
 
@@ -6940,12 +6965,14 @@ Renamed in the manifest and the workspace and patched:
 old_type "file"
 new_path "renamed"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 
     path "renamed"
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "known"
  changes "content"
 @end verbatim
@@ -6956,12 +6983,14 @@ Renamed and restricted to @file{original} or @file{renamed}:
 old_type "file"
 new_path "renamed"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 
     path "renamed"
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "known"
  changes "content"
 @end verbatim
@@ -6972,6 +7001,7 @@ Renamed and restricted to @file{original} with the @option{--no-corresponding-re
 old_type "file"
 new_path "renamed"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 @end verbatim
 
@@ -6981,6 +7011,7 @@ Renamed and restricted to @file{renamed} with the @option{--no-corresponding-ren
 new_type "file"
 old_path "original"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "known"
  changes "content"
 @end verbatim
@@ -6991,6 +7022,7 @@ File is missing, an unversioned directory is in the way:
 old_type "file"
 new_type "file"
  fs_type "directory"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "invalid"
  changes "content"
 @end verbatim
@@ -7011,24 +7043,28 @@ unversioned file is in the way:
 old_type "directory"
 new_path "target"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 
     path "source/a"
 old_type "file"
 new_path "target/a"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_source"
 
     path "target"
 new_type "directory"
 old_path "source"
  fs_type "file"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "invalid"
 
     path "target/a"
 new_type "file"
 old_path "source/a"
  fs_type "none"
+   birth [cb271687054afd3c2b873c8994f206f08fb240d3]
   status "rename_target" "missing"
 @end verbatim
 
@@ -7074,6 +7110,10 @@ manifest.
 The new path for the node, if it has been renamed in the revision
 manifest.
 @option{new_path} is only output for rename sources.
+
+@item birth
+The identify of the revision that the node was first added in.
+@option{birth} is only output if it exists in a committed revision.
 
 @item status
 @option{status} is always output. Its value is one or more of:
