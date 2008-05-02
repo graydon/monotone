@@ -49,38 +49,36 @@
 -- Variables
 -------------------------------------------------------------------------------
 MI_default_flagfile = get_confdir() .. "/monotone-netsync-end.flag"
+MI_default_debug = false
 
 
 if not MI_flagfile then MI_flagfile = MI_default_flagfile end
+if not MI_debug then MI_debug = MI_default_debug end
 
 -------------------------------------------------------------------------------
 -- Local hack of the note_netsync_* functions
 -------------------------------------------------------------------------------
-do
-   local debug = false
-
-   push_netsync_notifier(
-      {
-	 ["end"] =
-	    function (nonce, status,
-		      bytes_in, bytes_out,
-		      certs_in, certs_out,
-		      revs_in, revs_out,
-		      keys_in, keys_out,
-		      ...)
-	       if debug then
-		  io.stderr:write("note_netsync_end: ",
-				  string.format("%d certs, %d revs, %d keys",
-						certs_in, revs_in, keys_in),
-				  "\n")
-	       end
-	       if certs_in > 0 or revs_in > 0 or keys_in > 0 then
-		  if debug then
-		     io.stderr:write("note_netsync_end: touching ", MI_flagfile, "\n")
-		  end
-		  local handle = io.open(MI_flagfile, "w+")
-		  io.close(handle)
-	       end
+push_netsync_notifier(
+   {
+      ["end"] =
+	 function (nonce, status,
+		   bytes_in, bytes_out,
+		   certs_in, certs_out,
+		   revs_in, revs_out,
+		   keys_in, keys_out,
+		   ...)
+	    if MI_debug then
+	       io.stderr:write("note_netsync_end: ",
+			       string.format("%d certs, %d revs, %d keys",
+					     certs_in, revs_in, keys_in),
+			       "\n")
 	    end
-      })
-end
+	    if certs_in > 0 or revs_in > 0 or keys_in > 0 then
+	       if MI_debug then
+		  io.stderr:write("note_netsync_end: touching ", MI_flagfile, "\n")
+	       end
+	       local handle = io.open(MI_flagfile, "w+")
+	       io.close(handle)
+	    end
+	 end
+   })
