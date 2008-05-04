@@ -32,7 +32,13 @@ function note_netsync_cert_received(rev_id,key,name,value,nonce)
    _note_netsync_cert_received(rev_id,key,name,value,nonce)
 end
 
-function note_netsync_end(nonce)
+function note_netsync_end(nonce, status)
+   -- only try to display results if we got
+   -- at least partial contents
+   if status > 211 then
+        return
+   end
+
    local first = true
    for item, amount in pairs(netsync_branches[nonce])
    do
