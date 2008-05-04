@@ -36,7 +36,7 @@ check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
 message = "conflict: missing root directory"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -85,7 +85,7 @@ addfile("foo/_MTN/bar", branch .. "-bar")
 
 message = "conflict: invalid name"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -133,7 +133,7 @@ check(mtn("mv", "bad/_MTN", "foo/_MTN"), 0, false, false)
 
 message = "conflict: invalid name"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -182,7 +182,7 @@ revert_to(base)
 check(mtn("mv", "bar", "foo"), 0, false, false)
 
 message = "conflict: directory loop"
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -234,7 +234,7 @@ check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
 message = "conflict: orphaned file"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -285,7 +285,7 @@ check(mtn("drop", "--recursive", "foo"), 0, false, false)
 
 message = "conflict: orphaned file"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -331,7 +331,7 @@ check(mtn("mv", "foo", "baz"), 0, false, false)
 
 message = "conflict: multiple names"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -381,7 +381,7 @@ addfile("bar", branch .. "-bar2")
 
 message = "conflict: duplicate name"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -428,7 +428,7 @@ check(mtn("mv", "bar", "abc"), 0, false, false)
 
 message = "conflict: duplicate name"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -474,7 +474,7 @@ addfile("bar", branch .. "-bar")
 
 message = "conflict: duplicate name"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -524,7 +524,7 @@ check(mtn("attr", "drop", "foo", "attr2"), 0, false, false)
 
 message = "conflict: multiple values for attribute"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -576,7 +576,7 @@ check(mtn("mv", "foo", "baz"), 0, false, false)
 
 message = "conflict: multiple values for attribute"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -628,7 +628,7 @@ writefile("baz", branch .. "-baz\naaa\nbbb\nCCC")
 
 message = "conflict: content conflict on file 'foo'"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 check(not qgrep("conflict: content conflict on file 'bar'", "stderr"))
 check(not qgrep("conflict: content conflict on file 'baz'", "stderr"))
@@ -678,7 +678,7 @@ check(mtn("mv", "foo", "baz"), 0, false, false)
 
 message = "conflict: content conflict on file"
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message, "stderr"))
 
 commit(branch .. "-propagate")
@@ -737,7 +737,7 @@ message2 = "conflict: duplicate name"
 -- this doesn't result in a duplicate name conflict because the multiple name
 -- conflict prevents foo from being attached in the result roster
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message1, "stderr"))
 check(not qgrep(message2, "stderr"))
 
@@ -800,7 +800,7 @@ message2 = "conflict: orphaned"
 -- this doesn't result in a directory loop conflict because the multiple name
 -- conflict prevents foo from being attached in the result roster
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message1, "stderr"))
 check(not qgrep(message2, "stderr"))
 
@@ -865,7 +865,7 @@ message2 = "conflict: directory loop"
 -- this doesn't result in a directory loop conflict because the multiple name
 -- conflict prevents foo from being attached in the result roster
 
-check(mtn("update", "--debug"), 1, false, true)
+check(mtn("update"), 1, false, true)
 check(qgrep(message1, "stderr"))
 check(not qgrep(message2, "stderr"))
 
@@ -940,7 +940,7 @@ message1 = "conflict: missing root directory"
 message2 = "conflict: duplicate name"
 message3 = "conflict: multiple names"
 
-check(indir(dir2, mtn("update", "--debug")), 1, false, true)
+check(indir(dir2, mtn("update")), 1, false, true)
 check(qgrep(message1, "stderr"))
 check(qgrep(message2, "stderr"))
 check(qgrep(message3, "stderr"))
@@ -1000,7 +1000,7 @@ addfile("foo", branch .. "-foo second")
 message1 = "conflict: missing root directory"
 message2 = "conflict: duplicate name"
 
--- check(mtn("update", "--debug"), 1, false, true)
+-- check(mtn("update"), 1, false, true)
 -- check(qgrep(message1, "stderr"))
 -- check(qgrep(message2, "stderr"))
 

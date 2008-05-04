@@ -1,0 +1,13 @@
+    left [446ea80c3f78fca1cfdb84aad55939f4e635ddc0]
+   right [367cb265f641ead9834f497ff3cbcb2b85ffe1fa]
+ancestor [d9ff68aa530d581731b0e5739b3494963cd89e91]
+
+        conflict "duplicate name"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
+       left_name "bar"
+    left_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
+      right_type "added file"
+      right_name "bar"
+   right_file_id [c809d71002ec57a2f1d10221f05993012a491436]

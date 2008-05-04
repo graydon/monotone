@@ -1,6 +1,6 @@
-??? ??? ?? ???????? UTC 2008
+??? ??? ?? ??:??:?? UTC ????
 
-        0.41 release
+        0.41 release.
 
         Changes
 
@@ -29,6 +29,12 @@
 
         - It was previously not possible to clone a branch / database
           anonymously; this has been fixed.
+
+        New features
+
+        - Add 'automate show_conflicts' command
+
+        Internal
 
 Fri Apr 11 22:50:44 UTC 2008
 

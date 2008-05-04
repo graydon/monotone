@@ -1,0 +1,10 @@
+    left [140a1d712e5e7368dc88766144e0975746f27b9a]
+   right [872259407b5e1445c6b463768243ddaf531bd73a]
+ancestor [cce148761e33b0abbaa1c072ee913dcc23d7bfc3]
+
+     conflict "orphaned file"
+   right_type "deleted directory"
+ancestor_name "foo"
+    left_type "added file"
+    left_name "foo/baz"
+ left_file_id [f5122a7f896cb2dd7ecaa84be89c94ab09c15101]

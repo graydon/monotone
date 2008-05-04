@@ -3011,11 +3011,12 @@ two revisions using the database merge commands @command{merge},
 @command{explicit_merge}, @command{propagate} and
 @command{merge_into_dir} or when using the workspace merge commands
 @command{update}, @command{pluck} and @command{merge_into_workspace}.
-The @command{show_conflicts} command can be used to list conflicts
-between database revisions which would be encountered by the database
-merge commands. Unfortunately, this command can't yet list conflicts
-between a database revision and the current workspace revision which
-would be encountered by the workspace merge commands.
+
+The @command{show_conflicts} and @command{automate show_conflicts}
+commands can be used to list conflicts between database revisions
+which would be encountered by the database merge commands.
+Unfortunately, these commands can't yet list conflicts between a
+database revision and the current workspace.
 
 @subsection Conflict Types
 
@@ -5424,6 +5425,9 @@ files to the current subdirectory of the workspace.
 
 This command shows what conflicts would need to be resolved in order to merge
 the given revisions.
+
+Note that this does not show conflicts due to update commands, since
+in that case one revision is the workspace.
 @end ftable
 
 
@@ -8576,6 +8580,268 @@ No output.
 
 If the revision is invalid prints an error message to stderr and
 exits with status 1.
+
+@end table
+
+@item mtn automate show_conflicts [@var{--branch BRANCH}] [@var{left_rev right_rev}]
+
+@table @strong
+@item Arguments:
+
+Optional left and right revision ids.
+
+If no revs are given, they default to the first two heads that would
+be chosen by the @command{merge} command for the current branch. If no
+workspace is present, the branch may be given by the @var{--branch}
+option.
+
+@item Added in:
+
+7.1
+
+@item Purpose:
+
+Show all conflicts between two revisions.
+
+This is intended to be used before a @command{merge}; an external tool
+can guide the user thru resolving each conflict in turn, then do the
+merge.
+
+For more information on conflicts, @ref{Merge Conflicts}.
+
+Note that this cannot be used to show conflicts that would occur in an
+@command{update}, since in that case one revision is the workspace.
+
+@item Sample output:
+
+The output starts by listing the revisions and their common ancestor:
+@verbatim
+    left [532ab5011ea9e64aa212d4ea52363b1b8133d5ba]
+   right [b94a03a922c2c281a88d8988db64e76a32edb6a1]
+ancestor [ead03530f5fefe50c9010157c42c0ebe18086559]
+@end verbatim
+
+Attribute changed in both branches, or dropped in one:
+@verbatim
+        conflict "attribute"
+       node_type "file"
+       attr_name "attr1"
+   ancestor_name "foo"
+ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+       left_name "foo"
+    left_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+ left_attr_value "valueX"
+      right_name "foo"
+   right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+right_attr_value "valueZ"
+
+        conflict "attribute"
+       node_type "file"
+       attr_name "attr2"
+   ancestor_name "foo"
+ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+       left_name "foo"
+    left_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+ left_attr_value "valueY"
+      right_name "foo"
+   right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
+right_attr_state "dropped"
+@end verbatim
+
+Missing root directory:
+@verbatim
+     conflict "missing root"
+    left_type "pivoted root"
+ancestor_name "foo"
+   right_type "deleted directory"
+ancestor_name "foo"
+@end verbatim
+
+Directory deleted and/or renamed:
+@verbatim
+     conflict "orphaned directory"
+   right_type "deleted directory"
+ancestor_name ""
+    left_type "renamed directory"
+ancestor_name ""
+    left_name "bar"
+
+     conflict "orphaned file"
+   right_type "deleted directory"
+ancestor_name "foo"
+    left_type "added file"
+    left_name "foo/baz"
+ left_file_id [f5122a7f896cb2dd7ecaa84be89c94ab09c15101]
+
+        conflict "orphaned file"
+      right_type "deleted directory"
+   ancestor_name "foo"
+       left_type "renamed file"
+   ancestor_name "bar"
+ancestor_file_id [ac4c6d06436632e017bb7d3ea241734e8899f8ce]
+       left_name "foo/baz"
+    left_file_id [ac4c6d06436632e017bb7d3ea241734e8899f8ce]
+
+     conflict "multiple names"
+    left_type "renamed directory"
+ancestor_name ""
+    left_name "aaa"
+   right_type "renamed directory"
+ancestor_name ""
+   right_name "bbb"
+
+     conflict "duplicate name"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name ""
+   right_type "renamed directory"
+ancestor_name "bar"
+   right_name ""
+
+     conflict "multiple names"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name "a/foo"
+   right_type "renamed directory"
+ancestor_name "foo"
+   right_name "b/foo"
+@end verbatim
+
+Directory loop created:
+@verbatim
+     conflict "directory loop created"
+    left_type "renamed directory"
+ancestor_name "foo"
+    left_name "bar/foo"
+   right_type "renamed directory"
+ancestor_name "bar"
+   right_name "foo/bar"
+@end verbatim
+
+File content changed (this may be resolvable by the internal line
+merger), file also renamed:
+@verbatim
+        conflict "content"
+       node_type "file"
+   ancestor_name "bar"
+ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
+       left_name "bar"
+    left_file_id [08cd878106a93ce2ef036a32499c1432adb3ee0d]
+      right_name "bar"
+   right_file_id [0cf419dd93d38b2daaaf1f5e0f3ec647745b9690]
+
+        conflict "content"
+       node_type "file"
+   ancestor_name "foo"
+ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
+       left_name "bar"
+    left_file_id [f1bb6fff2ad16d67143d89fc374ede7abec5d437]
+      right_name "baz"
+   right_file_id [b966b2d35b99e456cb0c55e4573ef0b1b155b4a9]
+@end verbatim
+
+File added and/or renamed:
+@verbatim
+     conflict "duplicate name"
+    left_type "added file"
+    left_name "bar"
+ left_file_id [ba4637112ee3e55a6106d647d6c4e04a6643f8eb]
+   right_type "added file"
+   right_name "bar"
+right_file_id [fe6d523f607e2f2fc0f0defad3bda0351a95a337]
+
+        conflict "duplicate name"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
+       left_name "bar"
+    left_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
+      right_type "added file"
+      right_name "bar"
+   right_file_id [c809d71002ec57a2f1d10221f05993012a491436]
+
+        conflict "duplicate name"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [918f3642b57a5e2dd13ee874e3dc2518a53ab4b4]
+       left_name "abc"
+    left_file_id [918f3642b57a5e2dd13ee874e3dc2518a53ab4b4]
+      right_type "renamed file"
+   ancestor_name "bar"
+ancestor_file_id [bdf46a521d5f1dd54c31dda15e99ff6b0c80394a]
+      right_name "abc"
+   right_file_id [bdf46a521d5f1dd54c31dda15e99ff6b0c80394a]
+@end verbatim
+
+File renamed to different names:
+@verbatim
+        conflict "multiple names"
+       left_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+       left_name "bar"
+    left_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+      right_type "renamed file"
+   ancestor_name "foo"
+ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+      right_name "baz"
+   right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
+@end verbatim
+
+Invalid file name (@file{_MTN} in root directory):
+@verbatim
+     conflict "invalid name"
+    left_type "pivoted root"
+ancestor_name "foo"
+   right_type "added directory"
+   right_name "foo/_MTN"
+
+        conflict "invalid name"
+       left_type "pivoted root"
+   ancestor_name "foo"
+      right_type "renamed file"
+   ancestor_name "bad/_MTN"
+ancestor_file_id [629d9e5d254241abf4b46f108fb53189e314e41d]
+      right_name "foo/_MTN"
+   right_file_id [629d9e5d254241abf4b46f108fb53189e314e41d]
+@end verbatim
+
+Revisions that don't share a common ancestor:
+@verbatim
+    left [161e426c3b0c3f98d0be225f69d6f893ce8e0442]
+   right [0e3260f51acd1e98c40666557eb6c0eefeae5f02]
+ancestor []
+
+conflict "missing root"
+
+  conflict "duplicate name"
+ left_type "added directory"
+ left_name ""
+right_type "added directory"
+right_name ""
+@end verbatim
+
+@item Output format:
+
+First the revision ids of the left and right revisions, and their
+common ancestor, are printed in one basic_io stanza.
+
+Then each conflict is listed in a basic_io stanza. Stanzas are
+separated by blank lines.
+
+Each conflict stanza starts with a @code{conflict} line, and contains
+up to eleven lines. The order of the lines is not important, and may
+change in future revisions, except that the first line will always be
+@code{conflict}.
+
+When the conflicts involve files, the file ids are output, so the file
+contents can be retrieved efficiently via @code{automate get_file},
+to aid in conflict resolution.
+
+@item Error conditions:
+
+If the revision IDs are given, but either is unknown or
+invalid, prints an error message to stderr and exits with status 1.
 
 @end table
 

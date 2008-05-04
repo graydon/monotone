@@ -1,0 +1,11 @@
+    left [36e62406e9792ad64f7af73c5192d2e4e53306c8]
+   right [2b96f8e6ed2bb566c22ebcbdd06d34d1043c237f]
+ancestor [56cafb3485be6d40923bacaddcd19cde63433028]
+
+     conflict "duplicate name"
+    left_type "added file"
+    left_name "bar"
+ left_file_id [ba4637112ee3e55a6106d647d6c4e04a6643f8eb]
+   right_type "added file"
+   right_name "bar"
+right_file_id [fe6d523f607e2f2fc0f0defad3bda0351a95a337]

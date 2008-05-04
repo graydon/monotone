@@ -1273,7 +1273,7 @@ CMD_AUTOMATE(get_current_revision, N_("[PATHS ...]"),
                            excluded, join_words(execid));
   rev.check_sane();
   N(rev.is_nontrivial(), F("no changes to commit"));
-  
+
   calculate_ident(rev, ident);
   write_revision(rev, dat);
 

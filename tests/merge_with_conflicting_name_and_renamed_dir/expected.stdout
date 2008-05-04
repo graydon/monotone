@@ -1,0 +1,11 @@
+    left [3e5ae9c2084d1ab530cd9690bac5e45ee6db7ade]
+   right [e7d401d9de91696feaf17569337d10ed6e02a9b5]
+ancestor [51ccdc67277ec1461e1140df66fd00d56db3e7b5]
+
+     conflict "duplicate name"
+    left_type "added file"
+    left_name "foo/x"
+ left_file_id [75e12a4830b87d440b8ecadbdbcdf20842278d30]
+   right_type "added file"
+   right_name "bar/x"
+right_file_id [53059abba1a72c7aff34a3eaf7fef10ed65541ce]

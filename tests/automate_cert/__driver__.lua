@@ -18,6 +18,11 @@ check(mtn("automate", "certs", base), 0, true, false)
 canonicalize("stdout")
 check(samefile("expected", "stdout"))
 
+-- check that 'cert' gets keydir from workspace options when run via stdio
+check(mtn_ws_opts("automate", "stdio"), 0, true, true, "l4:cert40:" .. base .. "9:testcert23:fooe")
+check("0:0:l:0:" == readfile("stdout"))
+check(samefile("empty", "stderr"))
+
 -- check edge cases:
 -- wrong number of arguments:
 check(mtn("automate", "cert", base, "asdf"), 1, false, false)

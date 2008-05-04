@@ -18,6 +18,7 @@
 #include "lua.hh"
 #include "lua_hooks.hh"
 #include "database.hh"
+#include "work.hh"
 
 using std::istream;
 using std::make_pair;
@@ -40,6 +41,10 @@ namespace commands {
                      string const & desc,
                      options::options_type const & opts) :
     command(name, "", CMD_REF(automate), false, false, params, abstract,
+            // We set use_workspace_options true, because all automate
+            // commands need a database, and they expect to get the database
+            // name from the workspace options, even if they don't need a
+            // workspace for anything else.
             desc, true, opts, false)
   {
   }
@@ -399,6 +404,16 @@ CMD_AUTOMATE(stdio, "",
               automate const * acmd = reinterpret_cast< automate const * >(cmd);
 
               opts = options::opts::globals() | acmd->opts();
+
+              if (cmd->use_workspace_options())
+                {
+                  // Re-read the ws options file, rather than just copying
+                  // the options from the previous apts.opts object, because
+                  // the file may have changed due to user activity.
+                  workspace::check_ws_format();
+                  workspace::get_ws_options(app.opts);
+                }
+
               opts.instantiate(&app.opts).from_key_value_pairs(params);
               acmd->exec_from_automate(app, id, args, os);
             }
