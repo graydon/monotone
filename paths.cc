@@ -13,6 +13,7 @@
 #include "paths.hh"
 #include "file_io.hh"
 #include "charset.hh"
+#include "lua.hh"
 
 using std::exception;
 using std::ostream;
@@ -151,7 +152,7 @@ has_bad_component_chars(string const & pc)
         return true;
     }
   return false;
-  
+
 }
 
 static bool
@@ -298,7 +299,7 @@ normalize_path(string const & in)
             }
         }
 #endif
-      
+
       I(!is_absolute_here(inT));
       if (inT.size() == 0)
         return leader;
@@ -338,6 +339,15 @@ normalize_path(string const & in)
       leader += *i;
     }
   return leader;
+}
+
+LUAEXT(normalize_path, )
+{
+  const char *pathstr = luaL_checkstring(L, -1);
+  N(pathstr, F("%s called with an invalid parameter") % "normalize_path");
+
+  lua_pushstring(L, normalize_path(string(pathstr)).c_str());
+  return 1;
 }
 
 static void
@@ -587,7 +597,7 @@ file_path::dirname_basename(file_path & dir, path_component & base) const
       dir = file_path();
       base = path_component(s, 0);
     }
-  else 
+  else
     {
       I(sep < s.size() - 1); // last component must have at least one char
       dir = file_path(s, 0, sep);
@@ -852,7 +862,7 @@ find_bookdir(system_path const & root, path_component const & bookdir,
       goto found;
     }
   return false;
-    
+
  found:
   // check for _MTN/. and _MTN/.. to see if mt dir is readable
   try
@@ -915,7 +925,7 @@ find_and_go_to_workspace(string const & search_root)
                                F("search root '%s' does not exist") % root,
                                F("search root '%s' is not a directory") % root);
     }
-  
+
   // first look for the current name of the bookkeeping directory.
   // if we don't find it, look for it under the old name, so that
   // migration has a chance to work.
@@ -980,7 +990,7 @@ UNIT_TEST(paths, path_component)
                             "_MTN",
                             0 };
 
-  
+
   for (char const * const * c = baddies; *c; ++c)
     {
       // the comparison prevents the compiler from eliminating the
@@ -996,7 +1006,7 @@ UNIT_TEST(paths, path_component)
   UNIT_TEST_CHECK_THROW(file_path_internal("foo") / path_component(),
                         logic_error);
 }
-                            
+
 
 UNIT_TEST(paths, file_path_internal)
 {
@@ -1312,7 +1322,7 @@ UNIT_TEST(paths, basename)
                           FL("basename('%s') = '%s' (expect '%s')")
                           % p->in % pc % p->out);
     }
-  
+
   UNIT_TEST_CHECKPOINT("bookkeeping_path basenames");
   for (struct t const *p = bp_cases; p->in; p++)
     {
@@ -1328,7 +1338,7 @@ UNIT_TEST(paths, basename)
 
   initial_abs_path.unset();
   initial_abs_path.set(system_path("/a/b"), true);
-  
+
   for (struct t const *p = sp_cases; p->in; p++)
     {
       system_path fp(p->in);
@@ -1415,7 +1425,7 @@ UNIT_TEST(paths, dirname)
   };
 
   initial_abs_path.unset();
-  
+
   UNIT_TEST_CHECKPOINT("file_path dirnames");
   for (struct t const *p = fp_cases; p->in; p++)
     {
@@ -1762,7 +1772,7 @@ UNIT_TEST(paths, ordering_random)
 
       do b = rng.uniform(0x7f - 0x20) + 0x20;
       while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
-      
+
       do c = rng.uniform(0x7f - 0x20) + 0x20;
       while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
 
@@ -1795,7 +1805,7 @@ UNIT_TEST(paths, ordering_random)
 
       do d = rng.uniform(0x7f - 0x20) + 0x20;
       while (d == 0x5c || d == 0x2f || d == 0x2e); // '\\', '/', '.'
-      
+
 
       x[0] = a;
       x[1] = b;
@@ -1810,7 +1820,7 @@ UNIT_TEST(paths, ordering_random)
         test_path_less_than(y, x);
     }
 
-  
+
   UNIT_TEST_CHECKPOINT("a/b and c/d");
   x[1] = '/';
   for (i = 0; i < ntrials; i++)
@@ -1820,7 +1830,7 @@ UNIT_TEST(paths, ordering_random)
 
       do b = rng.uniform(0x7f - 0x20) + 0x20;
       while (b == 0x5c || b == 0x2f || b == 0x2e); // '\\', '/', '.'
-      
+
       do c = rng.uniform(0x7f - 0x20) + 0x20;
       while (c == 0x5c || c == 0x2f || c == 0x2e); // '\\', '/', '.'
 
