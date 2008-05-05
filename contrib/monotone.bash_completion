@@ -201,7 +201,7 @@ _monotone() {
                       --next --no-files --no-graph --no-merges --to' -- $cur ) )
 		    _filedir
 		    ;;
-		approve | disapprove | comment | tag | testresult | cert | explicit_merge | trusted | update )
+		approve | disapprove | comment | suspend | tag | testresult | cert | explicit_merge | trusted | update )
 		    _monotone_complete revision
 		    ;;
 		ls | list )
@@ -290,7 +290,7 @@ _monotone() {
                           clone pull push serve sync
                           privkey pubkey read
                           cvs_import
-                          approve comment disapprove tag testresult
+                          approve comment disapprove suspend tag testresult
                           checkout co explicit_merge heads merge merge_into_dir
                           migrate_workspace propagate refresh_inodeprints setup
                           set unset
