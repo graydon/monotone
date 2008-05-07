@@ -947,8 +947,8 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
 //
 CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
              N_("Shows the conflicts between two revisions."),
-             N_("If no arguments are given, left_revid and right_revid default to the"
-                "first two heads that would be chosen by the merge command."),
+             N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
+                "first two heads that would be chosen by the 'merge' command."),
              options::opts::branch)
 {
   database    db(app);
