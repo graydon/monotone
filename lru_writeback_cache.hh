@@ -154,7 +154,7 @@ public:
     return (_dirty.find(key) != _dirty.end());
   }
 
-  /** @brief Checks for the existance of a key in the cache.
+  /** @brief Checks for the existence of a key in the cache.
    *  @param key to check for
    *  @return bool indicating whether or not the key was found.
    */
@@ -193,7 +193,7 @@ public:
   /** @brief Inserts a key-data pair into the cache and removes entries if neccessary.
    *  @param key object key for insertion
    *  @param data object data for insertion
-   *  @note This function checks key existance and touches the key if it already exists.
+   *  @note This function checks key existence and touches the key if it already exists.
    */
   inline void insert_clean(Key const & key, const Data & data)
   {

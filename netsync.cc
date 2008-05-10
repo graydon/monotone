@@ -1353,7 +1353,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
       else
         {
           // this should now always return true since we just checked
-          // for the existance of this particular key
+          // for the existence of this particular key
           I(project.db.put_key(their_keyname, their_key));
           W(F("saving public key for %s to database") % their_keyname);
         }
