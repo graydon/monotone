@@ -12,7 +12,7 @@
  *     'options::opts::name'.
  *
  *   OPTSET_REL(parent, child)
- *     Declare a relationship between to optsets, so that if the parent
+ *     Declare a relationship between two optsets, so that if the parent
  *     is reset or allowed for a command the child will also be.
  *
  *   OPTVAR(optset, type, name, default)

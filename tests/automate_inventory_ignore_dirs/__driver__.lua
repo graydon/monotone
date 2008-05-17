@@ -13,7 +13,7 @@ function sortContentsByLine(input)
   end
   table.insert(lines, string.sub(input, theStart))
   table.sort(lines)
-  
+
   local len = table.getn(lines)
   local output = lines[1]
   for i = 2, len do
@@ -25,8 +25,6 @@ end
 mtn_setup()
 
 check(get("local_hooks.lua"))
-check(get("expected.stderr"))
-check(get("expected.stdout"))
 
 include ("common/test_utils_inventory.lua")
 
@@ -45,14 +43,29 @@ mkdir ("source/ignored_dir")
 writefile ("source/ignored_dir/file_1", "ignored file 1")
 writefile ("source/ignored_dir/file_2", "ignored file 2")
 
-check(mtn("automate", "inventory", "--rcfile=local_hooks.lua", "source"), 0, true, false)
-
+check(mtn("automate", "inventory", "--rcfile=local_hooks.lua", "source"), 0, true, true)
 canonicalize("stdout")
-canonicalize("ts-stderr")
+canonicalize("stderr")
 
+check(get("expected.stdout"))
 check (readfile("expected.stdout") == readfile("stdout"))
 
-check (sortContentsByLine(readfile("expected.stderr")) == sortContentsByLine(readfile("ts-stderr")))
+check(get("expected.stderr"))
+check (sortContentsByLine(readfile("expected.stderr")) == sortContentsByLine(readfile("stderr")))
 
+
+-- However, if we then add a file in the ignored directory, it will
+-- be reported as 'missing'. So we output a warning for this.
+addfile("source/ignored_dir/oops", "commited ignored file!")
+
+check(mtn("automate", "inventory", "--rcfile=local_hooks.lua", "source"), 0, true, true)
+canonicalize("stdout")
+canonicalize("stderr")
+
+check(get("expected_2.stdout"))
+check (readfile("expected_2.stdout") == readfile("stdout"))
+
+check(get("expected_2.stderr"))
+check (sortContentsByLine(readfile("expected_2.stderr")) == sortContentsByLine(readfile("stderr")))
 
 -- end of file

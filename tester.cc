@@ -8,7 +8,7 @@
 #include "sanity.hh"
 #include "botan/botan.h"
 #include "botan_pipe_cache.hh"
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <cstring>
 
 #ifdef WIN32

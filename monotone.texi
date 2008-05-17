@@ -7140,6 +7140,10 @@ base manifest.
 @var{path} has been deleted in the workspace, but still exists in the revision
 manifest.
 
+A file will also be labeled @option{missing} if it is in a directory
+that is ignored due to a regular expression in @file{.mtn-ignore}, but
+is also in the revision manifest. A warning is issued in this case.
+
 @item ignored
 @var{path} is ignored by monotone.
 

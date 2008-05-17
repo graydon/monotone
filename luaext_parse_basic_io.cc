@@ -11,6 +11,9 @@ using std::make_pair;
 
 LUAEXT(parse_basic_io, )
 {
+  // This has no notion of a 'stanza'. It assumes a 'line' is a symbol
+  // followed by one or more string or hex values. It returns a table of
+  // lines.
   vector<pair<string, vector<string> > > res;
   const string str(luaL_checkstring(L, -1), lua_strlen(L, -1));
   basic_io::input_source in(str, "monotone_parse_basic_io_for_lua");
