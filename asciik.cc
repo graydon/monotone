@@ -118,6 +118,7 @@ Loop:
 #include "project.hh"
 #include "database.hh"
 #include "revision.hh"
+#include "transforms.hh"
 
 using std::insert_iterator;
 using std::max;
@@ -272,13 +273,13 @@ asciik::try_draw(vector<revision_id> const & next_row,
 
   set<pair<size_t, size_t> > preservation_links;
   bool have_shift = false;
-  for (size_t i = 0; i < curr_items; ++i) 
+  for (size_t i = 0; i < curr_items; ++i)
     {
-      if (idx(curr_row, i) != ghost) 
+      if (idx(curr_row, i) != ghost)
         {
           vector<revision_id>::const_iterator found =
             find(next_row.begin(), next_row.end(), idx(curr_row, i));
-          if (found != next_row.end()) 
+          if (found != next_row.end())
             {
               size_t j = distance(next_row.begin(), found);
               size_t d = i>j ? i-j : j-i;
@@ -394,6 +395,6 @@ CMD(asciik, "asciik", "", CMD_REF(debug), N_("SELECTOR"),
       set<revision_id> parents;
       db.get_revision_parents(*rev, parents);
       parents.erase(ghost); // remove the fake parent that root nodes have
-      graph.print(*rev, parents, rev->inner()());
+      graph.print(*rev, parents, encode_hexenc(rev->inner()()));
     }
 }
