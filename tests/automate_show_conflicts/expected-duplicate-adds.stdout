@@ -2,7 +2,7 @@
    right [2b96f8e6ed2bb566c22ebcbdd06d34d1043c237f]
 ancestor [56cafb3485be6d40923bacaddcd19cde63433028]
 
-     conflict "duplicate name"
+     conflict duplicate_name
     left_type "added file"
     left_name "bar"
  left_file_id [ba4637112ee3e55a6106d647d6c4e04a6643f8eb]

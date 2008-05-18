@@ -2,7 +2,7 @@
    right [16a19ace8ec26cd2ed13c7e727a3021e82a2204f]
 ancestor [b5f52dbc0dc530adffbdd140a7de5b129cf74f29]
 
-        conflict "orphaned file"
+        conflict orphaned_file
       right_type "deleted directory"
    ancestor_name "foo"
        left_type "renamed file"

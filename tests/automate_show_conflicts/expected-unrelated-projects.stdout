@@ -2,9 +2,9 @@
    right [0e3260f51acd1e98c40666557eb6c0eefeae5f02]
 ancestor []
 
-conflict "missing root"
+conflict missing_root
 
-  conflict "duplicate name"
+  conflict duplicate_name
  left_type "added directory"
  left_name ""
 right_type "added directory"

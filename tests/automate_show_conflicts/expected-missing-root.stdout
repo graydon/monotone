@@ -2,13 +2,13 @@
    right [b94a03a922c2c281a88d8988db64e76a32edb6a1]
 ancestor [ead03530f5fefe50c9010157c42c0ebe18086559]
 
-     conflict "missing root"
+     conflict missing_root
     left_type "pivoted root"
 ancestor_name "foo"
    right_type "deleted directory"
 ancestor_name "foo"
 
-     conflict "orphaned directory"
+     conflict orphaned_directory
    right_type "deleted directory"
 ancestor_name ""
     left_type "renamed directory"

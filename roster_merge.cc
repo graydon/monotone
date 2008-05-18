@@ -187,13 +187,22 @@ namespace
     symbol const ancestor_file_id("ancestor_file_id");
     symbol const ancestor_name("ancestor_name");
     symbol const attr_name("attr_name");
+    symbol const attribute("attribute");
     symbol const conflict("conflict");
+    symbol const content("content");
+    symbol const directory_loop_created("directory_loop_created");
+    symbol const duplicate_name("duplicate_name");
+    symbol const invalid_name("invalid_name");
     symbol const left_attr_state("left_attr_state");
     symbol const left_attr_value("left_attr_value");
     symbol const left_file_id("left_file_id");
     symbol const left_name("left_name");
     symbol const left_type("left_type");
+    symbol const missing_root("missing_root");
+    symbol const multiple_names("multiple_names");
     symbol const node_type("node_type");
+    symbol const orphaned_directory("orphaned_directory");
+    symbol const orphaned_file("orphaned_file");
     symbol const right_attr_state("right_attr_state");
     symbol const right_attr_value("right_attr_value");
     symbol const right_file_id("right_file_id");
@@ -224,13 +233,13 @@ put_added_conflict_left (basic_io::stanza & st,
       file_id fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, nid, fid);
       st.push_str_pair(syms::left_type, "added file");
-      st.push_str_pair(syms::left_name, name.as_external());
+      st.push_file_pair(syms::left_name, name);
       st.push_binary_pair(syms::left_file_id, fid.inner());
     }
   else
     {
       st.push_str_pair(syms::left_type, "added directory");
-      st.push_str_pair(syms::left_name, name.as_external());
+      st.push_file_pair(syms::left_name, name);
     }
 }
 
@@ -253,13 +262,13 @@ put_added_conflict_right (basic_io::stanza & st,
       db_adaptor.db.get_file_content (db_adaptor.right_rid, nid, fid);
 
       st.push_str_pair(syms::right_type, "added file");
-      st.push_str_pair(syms::right_name, name.as_external());
+      st.push_file_pair(syms::right_name, name);
       st.push_binary_pair(syms::right_file_id, fid.inner());
     }
   else
     {
       st.push_str_pair(syms::right_type, "added directory");
-      st.push_str_pair(syms::right_name, name.as_external());
+      st.push_file_pair(syms::right_name, name);
     }
 }
 
@@ -288,14 +297,14 @@ put_rename_conflict_left (basic_io::stanza & st,
       st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, nid, left_fid);
-      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
       st.push_binary_pair(syms::left_file_id, left_fid.inner());
     }
   else
     {
       st.push_str_pair(syms::left_type, "renamed directory");
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
     }
 }
 
@@ -325,14 +334,14 @@ put_rename_conflict_right (basic_io::stanza & st,
       st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, nid, right_fid);
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::right_name, right_name);
       st.push_binary_pair(syms::right_file_id, right_fid.inner());
     }
   else
     {
       st.push_str_pair(syms::right_type, "renamed directory");
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::right_name, right_name);
     }
 }
 
@@ -392,12 +401,12 @@ put_attr_conflict (basic_io::stanza & st,
       // FIXME: don't have this. st.push_str_pair(syms::ancestor_attr_value, ???);
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
-      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
       st.push_binary_pair(syms::left_file_id, left_fid.inner());
       put_attr_state_left (st, conflict);
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::right_name, right_name);
       st.push_binary_pair(syms::right_file_id, right_fid.inner());
       put_attr_state_right (st, conflict);
     }
@@ -407,9 +416,9 @@ put_attr_conflict (basic_io::stanza & st,
       st.push_str_pair(syms::attr_name, conflict.key());
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
       // FIXME: don't have this. st.push_str_pair(syms::ancestor_attr_value, ???);
-      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
       put_attr_state_left (st, conflict);
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::right_name, right_name);
       put_attr_state_right (st, conflict);
     }
 }
@@ -450,19 +459,19 @@ put_content_conflict (basic_io::stanza & st,
       st.push_binary_pair(syms::ancestor_file_id, ancestor_fid.inner());
       file_id left_fid;
       db_adaptor.db.get_file_content (db_adaptor.left_rid, conflict.nid, left_fid);
-      st.push_str_pair(syms::left_name, left_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
       st.push_binary_pair(syms::left_file_id, left_fid.inner());
       file_id right_fid;
       db_adaptor.db.get_file_content (db_adaptor.right_rid, conflict.nid, right_fid);
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::right_name, right_name);
       st.push_binary_pair(syms::right_file_id, right_fid.inner());
     }
   else
     {
       st.push_str_pair(syms::node_type, "directory");
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
-      st.push_str_pair(syms::left_name, left_name.as_external());
-      st.push_str_pair(syms::right_name, right_name.as_external());
+      st.push_file_pair(syms::left_name, left_name);
+      st.push_file_pair(syms::right_name, right_name);
     }
 }
 
@@ -516,7 +525,7 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
       basic_io::stanza st;
 
       if (basic_io)
-        st.push_str_pair(syms::conflict, "missing root");
+        st.push_str_pair(syms::conflict, syms::missing_root);
       else
         P(F("conflict: missing root directory"));
 
@@ -634,7 +643,7 @@ roster_merge_result::report_invalid_name_conflicts(roster_t const & left_roster,
                                    parent_lca_rid, parent_lca_roster);
 
       if (basic_io)
-        st.push_str_pair(syms::conflict, "invalid name");
+        st.push_str_pair(syms::conflict, syms::invalid_name);
       else
         P(F("conflict: invalid name _MTN in root directory"));
 
@@ -741,7 +750,7 @@ roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roste
       lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
 
       if (basic_io)
-        st.push_str_pair(syms::conflict, "directory loop created");
+        st.push_str_pair(syms::conflict, syms::directory_loop_created);
       else
         P(F("conflict: directory loop created"));
 
@@ -811,14 +820,14 @@ roster_merge_result::report_orphaned_node_conflicts(roster_t const & left_roster
 
       if (type == file_type)
           if (basic_io)
-            st.push_str_pair(syms::conflict, "orphaned file");
+            st.push_str_pair(syms::conflict, syms::orphaned_file);
           else
             P(F("conflict: orphaned file '%s' from revision %s")
               % lca_name % lca_rid);
       else
         {
           if (basic_io)
-            st.push_str_pair(syms::conflict, "orphaned directory");
+            st.push_str_pair(syms::conflict, syms::orphaned_directory);
           else
             P(F("conflict: orphaned directory '%s' from revision %s")
               % lca_name % lca_rid);
@@ -951,7 +960,7 @@ roster_merge_result::report_multiple_name_conflicts(roster_t const & left_roster
 
       if (basic_io)
         {
-          st.push_str_pair(syms::conflict, "multiple names");
+          st.push_str_pair(syms::conflict, syms::multiple_names);
           put_rename_conflict_left (st, adaptor, conflict.nid);
           put_rename_conflict_right (st, adaptor, conflict.nid);
         }
@@ -1015,7 +1024,7 @@ roster_merge_result::report_duplicate_name_conflicts(roster_t const & left_roste
       basic_io::stanza st;
 
       if (basic_io)
-        st.push_str_pair(syms::conflict, "duplicate name");
+        st.push_str_pair(syms::conflict, syms::duplicate_name);
       else
         {
           if (left_name == right_name)
@@ -1169,7 +1178,7 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
         {
           basic_io::stanza st;
 
-          st.push_str_pair(syms::conflict, "attribute");
+          st.push_str_pair(syms::conflict, syms::attribute);
           put_attr_conflict (st, adaptor, conflict);
           put_stanza (st, output);
         }
@@ -1285,7 +1294,7 @@ roster_merge_result::report_file_content_conflicts(roster_t const & left_roster,
         {
           basic_io::stanza st;
 
-          st.push_str_pair(syms::conflict, "content");
+          st.push_str_pair(syms::conflict, syms::content);
           put_content_conflict (st, adaptor, conflict);
           put_stanza (st, output);
         }

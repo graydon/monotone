@@ -8627,7 +8627,7 @@ ancestor [ead03530f5fefe50c9010157c42c0ebe18086559]
 
 Attribute changed in both branches, or dropped in one:
 @verbatim
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr1"
    ancestor_name "foo"
@@ -8639,7 +8639,7 @@ ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
    right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
 right_attr_value "valueZ"
 
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr2"
    ancestor_name "foo"
@@ -8654,7 +8654,7 @@ right_attr_state "dropped"
 
 Missing root directory:
 @verbatim
-     conflict "missing root"
+     conflict missing_root
     left_type "pivoted root"
 ancestor_name "foo"
    right_type "deleted directory"
@@ -8663,21 +8663,21 @@ ancestor_name "foo"
 
 Directory deleted and/or renamed:
 @verbatim
-     conflict "orphaned directory"
+     conflict orphaned_directory
    right_type "deleted directory"
 ancestor_name ""
     left_type "renamed directory"
 ancestor_name ""
     left_name "bar"
 
-     conflict "orphaned file"
+     conflict orphaned_file
    right_type "deleted directory"
 ancestor_name "foo"
     left_type "added file"
     left_name "foo/baz"
  left_file_id [f5122a7f896cb2dd7ecaa84be89c94ab09c15101]
 
-        conflict "orphaned file"
+        conflict orphaned_file
       right_type "deleted directory"
    ancestor_name "foo"
        left_type "renamed file"
@@ -8686,7 +8686,7 @@ ancestor_file_id [ac4c6d06436632e017bb7d3ea241734e8899f8ce]
        left_name "foo/baz"
     left_file_id [ac4c6d06436632e017bb7d3ea241734e8899f8ce]
 
-     conflict "multiple names"
+     conflict multiple_names
     left_type "renamed directory"
 ancestor_name ""
     left_name "aaa"
@@ -8694,7 +8694,7 @@ ancestor_name ""
 ancestor_name ""
    right_name "bbb"
 
-     conflict "duplicate name"
+     conflict duplicate_name
     left_type "renamed directory"
 ancestor_name "foo"
     left_name ""
@@ -8702,7 +8702,7 @@ ancestor_name "foo"
 ancestor_name "bar"
    right_name ""
 
-     conflict "multiple names"
+     conflict multiple_names
     left_type "renamed directory"
 ancestor_name "foo"
     left_name "a/foo"
@@ -8713,7 +8713,7 @@ ancestor_name "foo"
 
 Directory loop created:
 @verbatim
-     conflict "directory loop created"
+     conflict directory_loop_created
     left_type "renamed directory"
 ancestor_name "foo"
     left_name "bar/foo"
@@ -8725,7 +8725,7 @@ ancestor_name "bar"
 File content changed (this may be resolvable by the internal line
 merger), file also renamed:
 @verbatim
-        conflict "content"
+        conflict content
        node_type "file"
    ancestor_name "bar"
 ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
@@ -8734,7 +8734,7 @@ ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
       right_name "bar"
    right_file_id [0cf419dd93d38b2daaaf1f5e0f3ec647745b9690]
 
-        conflict "content"
+        conflict content
        node_type "file"
    ancestor_name "foo"
 ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
@@ -8746,7 +8746,7 @@ ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
 
 File added and/or renamed:
 @verbatim
-     conflict "duplicate name"
+     conflict duplicate_name
     left_type "added file"
     left_name "bar"
  left_file_id [ba4637112ee3e55a6106d647d6c4e04a6643f8eb]
@@ -8754,7 +8754,7 @@ File added and/or renamed:
    right_name "bar"
 right_file_id [fe6d523f607e2f2fc0f0defad3bda0351a95a337]
 
-        conflict "duplicate name"
+        conflict duplicate_name
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
@@ -8764,7 +8764,7 @@ ancestor_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
       right_name "bar"
    right_file_id [c809d71002ec57a2f1d10221f05993012a491436]
 
-        conflict "duplicate name"
+        conflict duplicate_name
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [918f3642b57a5e2dd13ee874e3dc2518a53ab4b4]
@@ -8779,7 +8779,7 @@ ancestor_file_id [bdf46a521d5f1dd54c31dda15e99ff6b0c80394a]
 
 File renamed to different names:
 @verbatim
-        conflict "multiple names"
+        conflict multiple_names
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
@@ -8794,13 +8794,13 @@ ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
 
 Invalid file name (@file{_MTN} in root directory):
 @verbatim
-     conflict "invalid name"
+     conflict invalid_name
     left_type "pivoted root"
 ancestor_name "foo"
    right_type "added directory"
    right_name "foo/_MTN"
 
-        conflict "invalid name"
+        conflict invalid_name
        left_type "pivoted root"
    ancestor_name "foo"
       right_type "renamed file"
@@ -8816,9 +8816,9 @@ Revisions that don't share a common ancestor:
    right [0e3260f51acd1e98c40666557eb6c0eefeae5f02]
 ancestor []
 
-conflict "missing root"
+conflict missing_root
 
-  conflict "duplicate name"
+  conflict duplicate_name
  left_type "added directory"
  left_name ""
 right_type "added directory"

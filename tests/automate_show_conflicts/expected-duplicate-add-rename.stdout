@@ -2,7 +2,7 @@
    right [367cb265f641ead9834f497ff3cbcb2b85ffe1fa]
 ancestor [d9ff68aa530d581731b0e5739b3494963cd89e91]
 
-        conflict "duplicate name"
+        conflict duplicate_name
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [c6864a8456855c48afe83488a47501fe8b94bd57]
