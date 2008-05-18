@@ -43,11 +43,13 @@ check(mtn("merge"), 1, false, false)
 check (mtn("automate", "show_conflicts"), 0, true, false)
 parsed = parse_basic_io(readfile("stdout"))
 
+-- The Lua parser returns the 'conflict <symbol>' line as two lines
+-- with no values, so the line count here seems odd.
 check_basic_io_line (1, parsed[1], "left", abe_1) -- 1337..
 check_basic_io_line (2, parsed[2], "right", beth_1) -- d5f1..
 check_basic_io_line (3, parsed[3], "ancestor", base)
 
-check_basic_io_line (7, parsed[7], "left_file_id", "61b8d4fb0e5d78be111f691b955d523c782fa92e")
+check_basic_io_line (8, parsed[8], "left_file_id", "61b8d4fb0e5d78be111f691b955d523c782fa92e")
 
 -- mtn is not up to actually doing the merge of checkout.sh yet, so we
 -- just drop beth's version
