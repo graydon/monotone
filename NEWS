@@ -30,6 +30,10 @@
         - It was previously not possible to clone a branch / database
           anonymously; this has been fixed.
 
+        - automate identified was broken in 0.40 when used over stdio, i.e.
+          the output of the command did not get into the right output
+          channel; this has been fixed
+
         New features
 
         - Add 'automate show_conflicts' command
