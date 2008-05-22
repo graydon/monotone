@@ -2,7 +2,7 @@
    right [feec4de91f4698bc77f1b50c82ee4513cc47ae8f]
 ancestor [c79cbcfb99f7a5e547815669b150dd3d9a28a598]
 
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr1"
    ancestor_name "foo"
@@ -14,7 +14,7 @@ ancestor_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
    right_file_id [bab2022ff2ed13501a8a83bcc6bd53f5042141be]
 right_attr_value "valueZ"
 
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr2"
    ancestor_name "foo"

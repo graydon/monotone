@@ -2162,7 +2162,7 @@ database::get_common_ancestors(std::set<revision_id> const & revs,
 {
   set<revision_id> ancestors, all_common_ancestors;
   vector<revision_id> frontier;
-  for (set<revision_id>::const_iterator i = revs.begin(); 
+  for (set<revision_id>::const_iterator i = revs.begin();
        i != revs.end(); ++i)
     {
       I(revision_exists(*i));
@@ -2199,7 +2199,7 @@ database::get_common_ancestors(std::set<revision_id> const & revs,
           all_common_ancestors = common;
         }
     }
-    
+
   for (set<revision_id>::const_iterator i = all_common_ancestors.begin();
        i != all_common_ancestors.end(); ++i)
     {
@@ -2357,7 +2357,7 @@ database::put_revision(revision_id const & new_id,
   I(rev.made_for == made_for_database);
   rev.check_sane();
 
-  // Phase 1: confirm the revision makes sense, and we the required files
+  // Phase 1: confirm the revision makes sense, and the required files
   // actually exist
   for (edge_map::const_iterator i = rev.edges.begin();
        i != rev.edges.end(); ++i)

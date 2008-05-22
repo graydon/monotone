@@ -2,7 +2,7 @@
    right [49d6a10f5f09b064a35f1700966795ae698f0555]
 ancestor [7d854bf031420b7a5c1cafcb908f1020593196a8]
 
-        conflict "content"
+        conflict content
        node_type "file"
    ancestor_name "bar"
 ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
@@ -11,7 +11,7 @@ ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
       right_name "bar"
    right_file_id [0cf419dd93d38b2daaaf1f5e0f3ec647745b9690]
 
-        conflict "content"
+        conflict content
        node_type "file"
    ancestor_name "baz"
 ancestor_file_id [55320c8cee4b87edb47ec6d7e678af53eed2c717]
@@ -20,7 +20,7 @@ ancestor_file_id [55320c8cee4b87edb47ec6d7e678af53eed2c717]
       right_name "baz"
    right_file_id [ac923b3bc65d6638cdee243bd46b57d3e14ce4ee]
 
-        conflict "content"
+        conflict content
        node_type "file"
    ancestor_name "foo"
 ancestor_file_id [26798f895189be8aa9a366011e3253c738966010]

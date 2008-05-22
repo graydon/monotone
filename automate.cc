@@ -17,7 +17,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 #include <boost/tuple/tuple.hpp>
 
 #include "app_state.hh"
@@ -880,7 +880,17 @@ inventory_determine_states(workspace & work, file_path const & fs_path,
   if (item.fs_type == path::nonexistent)
     {
       if (item.new_node.exists)
-        states.push_back("missing");
+        {
+          states.push_back("missing");
+
+          // If this node is in a directory that is ignored in .mtn-ignore,
+          // we will output this warning. Note that we don't detect a known
+          // file that is ignored but not in an ignored directory.
+          if (work.ignore_file(fs_path))
+            W(F("'%s' is both known and ignored; "
+              "it will be shown as 'missing'. Check .mtn-ignore.")
+            % fs_path);
+        }
     }
   else // exists on filesystem
     {

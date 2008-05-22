@@ -2,7 +2,7 @@
    right [459c32f4c7b4676d47e23aff2bd67c1e2eae5f09]
 ancestor [e7f711a68627ccae4aded5907fc80516ea1215fd]
 
-        conflict "invalid name"
+        conflict invalid_name
        left_type "pivoted root"
    ancestor_name "foo"
       right_type "renamed file"

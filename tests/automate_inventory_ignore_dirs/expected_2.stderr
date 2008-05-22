@@ -1,0 +1,6 @@
+ignore_file: 'keys': false
+ignore_file: 'source': false
+ignore_file: 'source/ignored_dir': true
+ignore_file: 'source/ignored_1': true
+ignore_file: 'source/ignored_dir/oops': true
+mtn: warning: 'source/ignored_dir/oops' is both known and ignored; it will be shown as 'missing'. Check .mtn-ignore.

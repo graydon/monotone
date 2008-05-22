@@ -245,7 +245,7 @@ CMD_AUTOMATE(identify, N_("PATH"),
   
   id ident;
   calculate_ident(dat, ident);
-  cout << ident << '\n';
+  output << ident << '\n';
 }
 
 static void

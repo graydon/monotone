@@ -2796,7 +2796,7 @@ void calculate_ident(roster_t const & ros,
 #include "roster_delta.hh"
 
 #include <cstdlib>
-#include <boost/lexical_cast.hpp>
+#include "lexical_cast.hh"
 
 using std::logic_error;
 using std::search;

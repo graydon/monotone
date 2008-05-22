@@ -2,7 +2,7 @@
    right [2654ad872bf18d40260aaf59e8ce0058bf54bddd]
 ancestor [d81bb87785fa1bbe11aed1ca6d3340d288b61b78]
 
-        conflict "multiple names"
+        conflict multiple_names
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
@@ -14,7 +14,7 @@ ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
       right_name "baz"
    right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
 
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr1"
    ancestor_name "foo"
@@ -26,7 +26,7 @@ ancestor_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
    right_file_id [e80910e54d0bdea1b6d295ada320b87aaf9fdc23]
 right_attr_value "valueZ"
 
-        conflict "attribute"
+        conflict attribute
        node_type "file"
        attr_name "attr2"
    ancestor_name "foo"

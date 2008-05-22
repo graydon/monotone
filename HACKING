@@ -31,7 +31,7 @@ vim: et:sw=2:sts=2:ts=2:cino=>2s,{s,\:s,+s,t0,g0,^-2,e-2,n-2,p2s,(0,=s:
 
 The appropriate astyle options are:
 
-astyle --style=gnu -s2 -p 
+astyle --style=gnu -s2 -p
 
 monotone's source includes a number of third party libraries.  These have
 been imported from upstream, and should retain the original coding style of
@@ -283,7 +283,7 @@ for the entire program.
 
 Because many functions take some of these objects as arguments, we
 have a convention for their position and order: all such arguments
-appear first within the overall argument list, and in the order of 
+appear first within the overall argument list, and in the order of
 the list below.
 
  * "app_state" is being phased out; it used to be an umbrella object
@@ -301,6 +301,9 @@ the list below.
    To the maximum extent practical, "options" objects should not
    appear in function arguments.  Instead, pass down specific fields
    that are relevant to the lower-level code.
+
+ * When adding new options, separate words with dash "-" not
+   underscore "_"; dash is easier to type.
 
  * "lua_hooks" holds the Lua interpreter handle and all the associated
    state, in particular all the hook functions that the user may

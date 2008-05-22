@@ -258,6 +258,7 @@ namespace basic_io
     void push_binary_triple(symbol const & k, std::string const & n,
 			 id const & v);
     void push_str_pair(symbol const & k, std::string const & v);
+    void push_str_pair(symbol const & k, symbol const & v);
     void push_str_triple(symbol const & k, std::string const & n,
 			 std::string const & v);
     void push_file_pair(symbol const & k, file_path const & v);

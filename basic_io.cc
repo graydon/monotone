@@ -97,6 +97,15 @@ void basic_io::stanza::push_str_pair(symbol const & k, string const & v)
     indent = k().size();
 }
 
+void basic_io::stanza::push_str_pair(symbol const & k, symbol const & v)
+{
+  // Note that this value is a symbol, not a string; the Lua basic_io parser
+  // will return this pair as two lines with no values.
+  entries.push_back(make_pair(k, v()));
+  if (k().size() > indent)
+    indent = k().size();
+}
+
 void basic_io::stanza::push_file_pair(symbol const & k, file_path const & v)
 {
   push_str_pair(k, v.as_internal());

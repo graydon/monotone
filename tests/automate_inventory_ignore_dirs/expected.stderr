@@ -1,5 +1,5 @@
-ignore_file: 'keys':
-ignore_file: 'source':
-ignore_file: 'source/ignored_dir':
-ignore_file: 'source/ignored_1':
-ignore_file: 'source/ignored_dir':
+ignore_file: 'keys': false
+ignore_file: 'source': false
+ignore_file: 'source/ignored_dir': true
+ignore_file: 'source/ignored_1': true
+ignore_file: 'source/ignored_dir': true

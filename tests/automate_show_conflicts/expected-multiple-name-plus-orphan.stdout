@@ -2,7 +2,7 @@
    right [894db59b5fe6bcc4a22cfc1e06e5865b2bd888b1]
 ancestor [e487f26d5c464b381743e394923b7fd44b00705e]
 
-        conflict "multiple names"
+        conflict multiple_names
        left_type "renamed file"
    ancestor_name "foo"
 ancestor_file_id [f53efd5c0abb89e4c292f9c0e5709e0cd95aec4a]

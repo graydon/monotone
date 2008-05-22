@@ -1,7 +1,15 @@
 function ignore_file(name)
-   io.stderr:write("ignore_file: '" .. name .. "':\n")
+   local result = false;
+   io.stderr:write("ignore_file: '" .. name .. "':")
 
-   if (name == "source/ignored_dir") then return true end
-   if (name == "source/ignored_1") then return true end
-   return false
+   if (name == "source/ignored_dir") then result = true end
+   if (name == "source/ignored_dir/oops") then result = true end
+   if (name == "source/ignored_1") then result = true end
+
+   if result then
+      io.stderr:write(" true\n")
+   else
+      io.stderr:write(" false\n")
+   end
+   return result
 end
