@@ -1413,6 +1413,10 @@ workspace::perform_additions(database & db, set<file_path> const & paths,
               break;
             case path::directory:
               build.visit_dir(*i);
+              if (!directory_empty(*i))
+                {
+                  W(F("Non-recursive add: Files in the directory '%s' will not be added automatically.") % *i);
+                }
               break;
             }
         }
