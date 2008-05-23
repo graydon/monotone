@@ -2255,6 +2255,27 @@ CMD_AUTOMATE(drop_db_variables, N_("DOMAIN [NAME]"),
     }
 }
 
+// Name: drop_db_variables
+// Arguments:
+//   none
+// Changes:
+//  8.0 (added)
+// Purpose:
+//   To show the path of the workspace root for the current directory.
+// Output format:
+//   A path
+// Error conditions:
+//   a runtime exception is thrown if the current directory isn't part
+//   of a workspace.
+CMD_AUTOMATE(get_workspace_root, "",
+             N_("Prints the workspace root for the current directory"),
+             "",
+             options::opts::none)
+{
+  workspace work(app);
+  output << get_current_working_dir() << '\n';
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76

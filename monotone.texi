@@ -8849,6 +8849,38 @@ invalid, prints an error message to stderr and exits with status 1.
 
 @end table
 
+@item mtn automate get_workspace_root
+
+@table @strong
+@item Arguments:
+
+None.
+
+@item Added in:
+
+8.0
+
+@item Purpose:
+
+To show the path of the workspace root for the current directory.
+
+@item Sample output:
+
+@verbatim
+/home/jim/juice
+@end verbatim
+
+@item Output format:
+
+A path.
+
+@item Error conditions:
+
+If the current directory isn't part of a workspace, prints an error to
+stderr and exits with status 1.
+
+@end table
+
 @end ftable
 
 @page

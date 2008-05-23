@@ -38,6 +38,8 @@
 
         - Add 'automate show_conflicts' command
 
+        - Add 'automate get_workspce_root' command
+
         Internal
 
 Fri Apr 11 22:50:44 UTC 2008
