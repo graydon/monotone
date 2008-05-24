@@ -4642,8 +4642,8 @@ or within an existing directory full of files, prior to using
 directory is used.
 
 
-@item mtn add @var{pathname...}
-@item mtn add --unknown
+@item mtn add [--recursive | -R] [--no-respect-ignore] @var{pathname...}
+@item mtn add [--recursive | -R] [--no-respect-ignore] --unknown [@var{pathname...}]
 This command places ``add'' entries for the paths specified in
 @var{pathname...} in the workspace's ``work list''. The work list of
 your workspace is stored in @file{_MTN/revision}, and is a list of
@@ -4659,6 +4659,13 @@ not immediately affect your database. When you @command{commit} your
 workspace, monotone will use the work list to build a new revision,
 which it will then commit to the database. The new revision will have
 any added entries inserted in its manifest.
+
+Adding directories, whether explicitly or using the @option{--unknown}
+option, is non-recursive by default.  The @command{add} command can be
+made recursive using the @option{--recursive} option.  When adding a
+directory non-recursively, monotone will warn if the directory is not
+empty (for reasons of implementation simplicity, this warning appears
+even if there are only ignorable files in the directory).
 
 @item mtn [--no-respect-ignore] mkdir @var{directory...}
 This command creates a directory in the filesystem relative to your
