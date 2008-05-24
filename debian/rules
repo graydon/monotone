@@ -107,24 +107,43 @@ clean:
 	dh_clean
 
 # Build architecture-independent files here.
-binary-indep: build-indep
-	dh_testdir
-	dh_testroot
-	dh_clean -k
-	dh_installdirs -i
+#
+# Both monotone-server and monotone-doc are permitted to have their
+# documentation directories be symlinks to the main package's
+# documentation directory, per Policy 12.5.  This means we should not
+# run dh_installexamples or dh_installchangelogs for either, and should
+# not run dh_installdocs for monotone-server.  monotone-doc needs us
+# to run dh_installdocs for monotone.pdf and doc-base support, but then
+# needs a bunch of -X flags to avoid conflicting files.
+#
 # The upstream makefiles' install targets do nothing useful for these
 # packages.  (In particular, we do not want the monolithic
 # monotone.html installed.)  Annoyingly, at present we cannot simply
 # dh_installdocs the entire html directory, because it contains a
 # bunch of unwanted junk; instead we dh_installdirs the directory
-# hierarchy that is required and use cp -p to put all the files in place.
-	cp -p html/*.html html/*.css debian/monotone-doc/usr/share/doc/html
-	cp -p html/figures/*.png debian/monotone-doc/usr/share/doc/html/figures
+# hierarchy that is required and use cp -p to put all the files in
+# place.  (Using globs in monotone-doc.docs would get everything dumped
+# directly into /usr/share/doc/monotone, which doesn't work.)
 
-	dh_installchangelogs -i
+binary-indep: build-indep
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+
+	dh_installdirs -i
+	cd debian/monotone-doc/usr/share/doc && \
+	    ln -s monotone monotone-doc
+	cd debian/monotone-server/usr/share/doc && \
+	    ln -s monotone monotone-server
+
+	cp -p html/*.html html/*.css \
+	    debian/monotone-doc/usr/share/doc/monotone/html
+	cp -p html/figures/*.png \
+	    debian/monotone-doc/usr/share/doc/monotone/html/figures
+	dh_installdocs -p monotone-doc -X copyright -X NEWS
+
 	dh_installdebconf -i
-	dh_installdocs -i
-	dh_installexamples -i
+
 # we should have logrotate support for monotone-server, but currently we don't
 #	dh_installlogrotate -i --name=monotone
 	dh_installinit -i --name=monotone
