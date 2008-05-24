@@ -22,6 +22,11 @@ get_current_working_dir()
   E(getcwd(buffer, 4096),
     F("cannot get working directory: %s") % strerror(errno));
   std::string str(buffer);
+
+  // strip trailing backslash, but not if at root dir
+  if (str.size() == 3 && str[1] == ':' && str[2] == '\\')
+    return str;
+
   if (str[str.size() - 1] == '\\')
     str = str.substr(0, str.size() - 1);
   return str;
@@ -290,7 +295,7 @@ rename_clobberingly_impl(const char * from, const char * to)
           L(FL("MoveFileEx failed with CALL_NOT_IMPLEMENTED, using fallback"));
 	}
     }
-  
+
   // This is not even remotely atomic, but what can you do?
   DeleteFile(to);
   return MoveFile(from, to);
@@ -361,13 +366,13 @@ make_temp_file(std::string const & dir, std::string & name)
       v /= base;
       tmp.at(tmp.size() -  5) = letters[v % base];
       v /= base;
-    
+
       HANDLE h = CreateFile(tmp.c_str(), GENERIC_READ|GENERIC_WRITE,
                             0, // exclusive access
                             (LPSECURITY_ATTRIBUTES)0, // default security
                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                             (HANDLE)0); // no template file
-                            
+
       if (h != INVALID_HANDLE_VALUE)
         {
           name = tmp;
