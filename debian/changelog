@@ -1,7 +1,25 @@
+monotone (0.40-2) unstable; urgency=low
+
+  * Automatically skip all tests involving netsync if it is impossible
+    to use TCP on the loopback interface.  (Closes: #474280)
+  * If the testsuite fails, dump the per-test logs for all failed
+    testcases into the main build log.
+
+  * Install HTML documentation in /usr/share/doc/monotone/html, not
+    /usr/share/doc/html.  (Closes: #480072)
+  * Make /usr/share/doc/monotone-server and /usr/share/doc/monotone-doc
+    symlinks to /usr/share/doc/monotone; do not ship any files in those
+    packages that are also in the main monotone package.  This requires
+    adding a dependency of monotone-doc on monotone.
+  * Register monotone manual with doc-base.
+  * Improve description of monotone-doc package.
+
+ -- Zack Weinberg <zackw@panix.com>  Sun, 25 May 2008 00:10:11 -0400
+
 monotone (0.40-1) unstable; urgency=low
 
   [ Zack Weinberg ]
-  * New upstream release.
+  * New upstream release.  (Closes: #482547)
     - Upstream "make distclean" now cleans up after "make html".
       (Closes: #473402)
 

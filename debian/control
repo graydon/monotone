@@ -39,6 +39,14 @@ Description: A distributed version (revision) control system - server scripts
 Package: monotone-doc
 Section: doc
 Architecture: all
+Depends: monotone (>= ${source:Version})
 Description: A distributed version (revision) control system - documentation
+ Monotone is a free, distributed version control system. It provides
+ fully disconnected operation, manages complete tree versions, keeps
+ its state in a local transactional database, supports overlapping
+ branches and extensible metadata, uses an efficient peer-to-peer
+ network protocol, performs history-sensitive merging, and delegates
+ trust functions to client-side RSA certificates.
+ .
  This package contains the documentation for monotone in Info, HTML, and PDF
- formats. See the description of the package monotone for more details.
+ formats.

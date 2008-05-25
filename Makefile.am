@@ -454,11 +454,13 @@ if WIN32_PLATFORM
   lib3rdparty_a_CPPFLAGS += -DWIN32
   lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
   tester_SOURCES += win32/tester-plaf.cc
+  check_net_SOURCES = win32/tester-check-net.c
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
   mtn_SOURCES += unix/main.cc
   lib3rdparty_a_SOURCES += botan/es_dev.cpp
   tester_SOURCES += unix/tester-plaf.cc
+  check_net_SOURCES = unix/tester-check-net.c
 endif
 
 if MISSING_INET_PTON
@@ -648,9 +650,9 @@ run_%_tests: Makefile
 %_tests.status: run_%_tests %-testsuite.lua tester$(EXEEXT) FORCE
 	+./run_$*_tests
 
-unit_tests.status : unit_tester
-lua_tests.status : mtn
-check_PROGRAMS = unit_tester tester
+unit_tests.status : unit_tester$(EXEEXT)
+lua_tests.status : mtn$(EXEEXT) check_net$(EXEEXT)
+check_PROGRAMS = unit_tester tester check_net
 
 # We want the tests re-run even if the .status files already exist.
 # .PHONY does not work for that (bad interaction with pattern rules),
