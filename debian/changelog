@@ -1,3 +1,10 @@
+monotone (0.40-3) unstable; urgency=low
+
+  * Don't compress the pdf documentation.
+  * Fix some other problems caught by lintian.
+
+ -- Zack Weinberg <zackw@panix.com>  Sun, 25 May 2008 11:35:05 -0400
+
 monotone (0.40-2) unstable; urgency=low
 
   * Automatically skip all tests involving netsync if it is impossible
