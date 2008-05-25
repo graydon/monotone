@@ -2,15 +2,15 @@ Document: monotone-manual
 Title: Monotone version control system manual
 Author: Graydon Hoare et al
 Abstract: This manual documents the Monotone distributed version control
-  system.  It includes a basic tutorial, several use examples, and
-  a detailed reference.
+ system.  It includes a basic tutorial, several use examples, and
+ a detailed reference.
 Section: Programming
 
 Format: HTML
 Index: /usr/share/doc/monotone/html/index.html
 Files: /usr/share/doc/monotone/html/*.html 
-  /usr/share/doc/monotone/html/*.css
-  /usr/share/doc/monotone/html/figures/*.png
+ /usr/share/doc/monotone/html/*.css
+ /usr/share/doc/monotone/html/figures/*.png
 
 Format: PDF
 Files: /usr/share/doc/monotone/monotone.pdf
