@@ -1,5 +1,8 @@
 monotone (0.40-2) unstable; urgency=low
 
+  * Automatically skip all tests involving netsync if it is impossible
+    to use TCP on the loopback interface.  (Closes: #474280)
+
   * Install HTML documentation in /usr/share/doc/monotone/html, not
     /usr/share/doc/html.  (Closes: #480072)
   * Make /usr/share/doc/monotone-server and /usr/share/doc/monotone-doc
@@ -9,7 +12,7 @@ monotone (0.40-2) unstable; urgency=low
   * Register monotone manual with doc-base.
   * Improve description of monotone-doc package.
 
- -- Zack Weinberg <zackw@panix.com>  Sat, 24 May 2008 09:30:07 -0400
+ -- Zack Weinberg <zackw@panix.com>  Sun, 25 May 2008 00:10:11 -0400
 
 monotone (0.40-1) unstable; urgency=low
 
