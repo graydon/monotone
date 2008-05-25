@@ -9059,6 +9059,12 @@ and the value of the cert. There is no default definition for this hook.
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
 
+@item note_netsync_revision_sent (@var{rev_id}, @var{revision}, @var{certs}, @var{session_id})
+
+Called by monotone after the revision @var{rev_id} is sent through
+netsync. The arguments are the same as for
+@var{note_netsync_revision_received}.
+
 @item note_netsync_cert_received (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{session_id})
 
 Called by monotone after a cert is received through netsync, if the revision
@@ -9071,6 +9077,13 @@ definition for this hook.
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
 
+@item note_netsync_cert_sent (@var{rev_id}, @var{key}, @var{name}, @var{value}, @var{session_id})
+
+Called by monotone after a cert is sent through netsync, if the revision
+that the cert is attached to was not also sent in the same netsync
+operation. The arguments are the same as for
+@var{note_netsync_cert_received}.
+
 @item note_netsync_pubkey_received (@var{keyname}, @var{session_id})
 
 Called by monotone after a pubkey is received through netsync. @var{keyname}
@@ -9078,6 +9091,11 @@ is the name of the key received. There is no default definition for this hook.
 @var{session_id} is used together with @code{note_netsync_start} and
 @code{note_netsync_end}.  If you're not interested in that type of
 tracking, you can ignore that variable entirely.
+
+@item note_netsync_pubkey_sent (@var{keyname}, @var{session_id})
+
+Called by monotone after a pubkey is sent through netsync. The arguments are the same as for
+@var{note_netsync_pubkey_received}.
 
 @item note_netsync_end (@var{session_id}, @var{status},
 @var{bytes_in}, @var{bytes_out}, @var{certs_in}, @var{certs_out},

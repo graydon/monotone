@@ -23,6 +23,17 @@ function note_netsync_revision_received(new_id, revision, certs, session_id)
    end
 end
 
+function note_netsync_revision_sent(new_id, revision, certs, session_id)
+   logfile:write(session_id .. " sent revision: new_id    = " .. new_id .. "\n")
+   logfile:write(session_id .. " sent revision: revision  = " .. revision .. "\n")
+   for i, cert in pairs(certs)
+   do
+      logfile:write(session_id .. " sent revision: cert.name  = " .. cert.name .. "\n")
+      logfile:write(session_id .. " sent revision: cert.value = " .. cert.value .. "\n")
+      logfile:write(session_id .. " sent revision: cert.key   = " .. cert.key .. "\n")
+   end
+end
+
 function note_netsync_cert_received(rev_id, key, name, value, session_id)
    logfile:write(session_id .. " cert: rev_id = " .. rev_id .. "\n")
    logfile:write(session_id .. " cert: name   = " .. name .. "\n")
@@ -30,8 +41,19 @@ function note_netsync_cert_received(rev_id, key, name, value, session_id)
    logfile:write(session_id .. " cert: key    = " .. key .. "\n")
 end
 
+function note_netsync_cert_sent(rev_id, key, name, value, session_id)
+   logfile:write(session_id .. " sent cert: rev_id = " .. rev_id .. "\n")
+   logfile:write(session_id .. " sent cert: name   = " .. name .. "\n")
+   logfile:write(session_id .. " sent cert: value  = " .. value .. "\n")
+   logfile:write(session_id .. " sent cert: key    = " .. key .. "\n")
+end
+
 function note_netsync_pubkey_received(keyname, session_id)
    logfile:write(session_id .. " pubkey: " .. keyname .. "\n")
+end
+
+function note_netsync_pubkey_sent(keyname, session_id)
+   logfile:write(session_id .. " sent pubkey: " .. keyname .. "\n")
 end
 
 function note_netsync_end(session_id, status,

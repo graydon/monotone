@@ -1,0 +1,14 @@
+start ---------------------------------------------------
+start: sync_type = push
+start: remote_keyname = tester@test.net
+start: includes = testbranch
+start: excludes = 
+sent cert: rev_id = REV1
+sent cert: name   = tag
+sent cert: value  = testtag
+sent cert: key    = tester@test.net
+end: status = 200
+end: certs in/out = 0/1
+end: revs in/out = 0/0
+end: keys in/out = 0/0
+end -----------------------------------------------------

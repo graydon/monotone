@@ -1170,7 +1170,8 @@ do
    local hook_functions = {}
    local supported_items = {
       "startup",
-      "start", "revision_received", "cert_received", "pubkey_received", "end"
+      "start", "revision_received", "revision_sent", "cert_received", "cert_sent",
+      "pubkey_received", "pubkey_sent", "end"
    }
 
    function _hook_functions_helper(f,...)
@@ -1195,11 +1196,20 @@ do
    function note_netsync_revision_received(...)
       return _hook_functions_helper("revision_received",...)
    end
+   function note_netsync_revision_sent(...)
+      return _hook_functions_helper("revision_sent",...)
+   end
    function note_netsync_cert_received(...)
       return _hook_functions_helper("cert_received",...)
    end
+   function note_netsync_cert_sent(...)
+      return _hook_functions_helper("cert_sent",...)
+   end
    function note_netsync_pubkey_received(...)
       return _hook_functions_helper("pubkey_received",...)
+   end
+   function note_netsync_pubkey_sent(...)
+      return _hook_functions_helper("pubkey_sent",...)
    end
    function note_netsync_end(...)
       return _hook_functions_helper("end",...)
