@@ -87,8 +87,8 @@ build-arch-stamp: config.status
 	make -j$(CPUS) -C po all
 	make -j$(CPUS) mtn
 ifeq "$(findstring nocheck, $(DEB_BUILD_OPTIONS))" ""
-	make -j$(CPUS) unit_tester tester
-	make check-local
+	make -j$(CPUS) unit_tester tester check_net
+	make check-local || sh contrib/dump-test-logs.sh
 endif
 	touch $@
 

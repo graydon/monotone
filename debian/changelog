@@ -2,6 +2,8 @@ monotone (0.40-2) unstable; urgency=low
 
   * Automatically skip all tests involving netsync if it is impossible
     to use TCP on the loopback interface.  (Closes: #474280)
+  * If the testsuite fails, dump the per-test logs for all failed
+    testcases into the main build log.
 
   * Install HTML documentation in /usr/share/doc/monotone/html, not
     /usr/share/doc/html.  (Closes: #480072)
@@ -17,7 +19,7 @@ monotone (0.40-2) unstable; urgency=low
 monotone (0.40-1) unstable; urgency=low
 
   [ Zack Weinberg ]
-  * New upstream release.
+  * New upstream release.  (Closes: #482547)
     - Upstream "make distclean" now cleans up after "make html".
       (Closes: #473402)
 
