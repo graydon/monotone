@@ -1,6 +1,7 @@
 #ifndef __LUA_HOOKS_HH__
 #define __LUA_HOOKS_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -35,7 +36,7 @@ class lua_hooks
   void add_std_hooks();
   void load_rcfile(utf8 const & file);
   void load_rcfile(any_path const & file, bool required);
-  
+
 public:
   lua_hooks(app_state * app);
   ~lua_hooks();
@@ -85,7 +86,7 @@ public:
                                         bool debug,
                                         std::vector<std::string> & argv);
   bool hook_use_transport_auth(uri const & u);
-                        
+
   bool hook_get_netsync_read_permitted(std::string const & branch,
                                        rsa_keypair_id const & identity);
   // anonymous no-key version
@@ -147,17 +148,30 @@ public:
                                globish exclude_pattern);
   bool hook_note_netsync_revision_received(revision_id const & new_id,
                                            revision_data const & rdat,
-                        std::set<std::pair<rsa_keypair_id,
-                                         std::pair<cert_name,
-                                                cert_value> > > const & certs,
+                                           std::set<std::pair<rsa_keypair_id,
+                                           std::pair<cert_name,
+                                           cert_value> > > const & certs,
                                            size_t session_id);
+  bool hook_note_netsync_revision_sent(revision_id const & new_id,
+                                       revision_data const & rdat,
+                                       std::set<std::pair<rsa_keypair_id,
+                                       std::pair<cert_name,
+                                       cert_value> > > const & certs,
+                                       size_t session_id);
   bool hook_note_netsync_pubkey_received(rsa_keypair_id const & kid,
                                          size_t session_id);
+  bool hook_note_netsync_pubkey_sent(rsa_keypair_id const & kid,
+                                     size_t session_id);
   bool hook_note_netsync_cert_received(revision_id const & rid,
                                        rsa_keypair_id const & kid,
                                        cert_name const & name,
                                        cert_value const & value,
                                        size_t session_id);
+  bool hook_note_netsync_cert_sent(revision_id const & rid,
+                                   rsa_keypair_id const & kid,
+                                   cert_name const & name,
+                                   cert_value const & value,
+                                   size_t session_id);
   bool hook_note_netsync_end(size_t session_id, int status,
                              size_t bytes_in, size_t bytes_out,
                              size_t certs_in, size_t certs_out,

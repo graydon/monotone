@@ -1,3 +1,7 @@
+-- Conveniently, all network tests load this file, so this skip_if
+-- suffices to skip all network tests if the network is unavailable
+-- (see lua-testsuite.lua and [platform]/tester-check-net.c).
+skip_if(no_network_tests)
 
 function mtn2(...)
   return mtn("--db=test2.db", "--keydir=keys2", unpack(arg))

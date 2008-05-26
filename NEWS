@@ -34,12 +34,18 @@
           the output of the command did not get into the right output
           channel; this has been fixed
 
+        - mtn would produce a warning if executed from the root
+          directory of a Windows drive; this has been fixed.
+
         New features
 
         - Add 'automate show_conflicts' command
 
         - Add 'automate get_workspce_root' command
 
+        - Add Lua hooks 'note_netsync_revision_sent',
+          'note_netsync_cert_sent', 'note_netsync_pubkey_sent'
+        
         Internal
 
 Fri Apr 11 22:50:44 UTC 2008

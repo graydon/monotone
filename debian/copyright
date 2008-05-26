@@ -1,10 +1,11 @@
+Monotone is a collective work, Copyright 2002-2008 by its development team.
+Copyright holders are listed in /usr/share/doc/monotone/AUTHORS.gz.
+The source file was downloaded from http://www.monotone.ca/downloads/
+Upstream authors are reachable at monotone-devel@nongnu.org
+
 This package was debianized by Tomas Fasth <tomfa@debian.org> on 2005-04-12,
 adopted by Shaun Jackman <sjackman@debian.org> on 2006-07-24, and adopted
 again by a team reachable at monotone-debian@nongnu.org on 2007-07-10.
-
-The source file was downloaded from http://www.monotone.ca/downloads/
-Upstream authors are reachable at monotone-devel@nongnu.org
-Copyright holders are listed in /usr/share/doc/monotone/AUTHORS.gz
 
 Overall license:
 
