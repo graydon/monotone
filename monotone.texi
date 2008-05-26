@@ -4663,9 +4663,8 @@ any added entries inserted in its manifest.
 Adding directories, whether explicitly or using the @option{--unknown}
 option, is non-recursive by default.  The @command{add} command can be
 made recursive using the @option{--recursive} option.  When adding a
-directory non-recursively, monotone will warn if the directory is not
-empty (for reasons of implementation simplicity, this warning appears
-even if there are only ignorable files in the directory).
+directory non-recursively, monotone will warn if the directory has
+any files that would be added by a recursive add.
 
 @item mtn [--no-respect-ignore] mkdir @var{directory...}
 This command creates a directory in the filesystem relative to your

@@ -767,11 +767,12 @@ addition_builder
   roster_t & ros;
   editable_roster_base & er;
   bool respect_ignore;
+  bool recursive;
 public:
   addition_builder(database & db, workspace & work,
                    roster_t & r, editable_roster_base & e,
-                   bool i = true)
-    : db(db), work(work), ros(r), er(e), respect_ignore(i)
+                   bool i, bool rec)
+    : db(db), work(work), ros(r), er(e), respect_ignore(i), recursive(rec)
   {}
   virtual bool visit_dir(file_path const & path);
   virtual void visit_file(file_path const & path);
@@ -822,6 +823,46 @@ addition_builder::add_nodes_for(file_path const & path,
 bool
 addition_builder::visit_dir(file_path const & path)
 {
+  if (!recursive) {
+    bool warn = false;
+  
+    // If the db can ever be stored in a dir
+    // then revisit this logic
+    I(!db.is_dbfile(path));
+  
+    if (!respect_ignore)
+      warn = !directory_empty(path);
+    else if (respect_ignore && !work.ignore_file(path))
+      {
+        vector<path_component> children;
+        read_directory(path, children, children);
+        
+        for (vector<path_component>::const_iterator i = children.begin();
+             i != children.end(); ++i)
+          {
+            try
+              {
+                file_path entry = path / *i;
+                if (!work.ignore_file(entry) && !db.is_dbfile(entry))
+                  {
+                    warn = true;
+                    break;
+                  }
+              }
+            catch (std::logic_error)
+              {
+                // ignore this file for purposes of the warning
+                // this file wouldn't have been added by a
+                // recursive add anyway.
+              }
+          }
+      }
+  
+    if (warn)
+      W(F("Non-recursive add: Files in the directory '%s' "
+          "will not be added automatically.") % path);
+  }
+  
   this->visit_file(path);
   return true;
 }
@@ -1227,7 +1268,7 @@ add_parent_dirs(database & db, node_id_source & nis, workspace & work,
                 file_path const & dst, roster_t & ros)
 {
   editable_roster_base er(ros, nis);
-  addition_builder build(db, work, ros, er);
+  addition_builder build(db, work, ros, er, false, true);
 
   // FIXME: this is a somewhat odd way to use the builder
   build.visit_dir(dst.dirname());
@@ -1390,7 +1431,7 @@ workspace::perform_additions(database & db, set<file_path> const & paths,
     }
 
   I(new_roster.has_root());
-  addition_builder build(db, *this, new_roster, er, respect_ignore);
+  addition_builder build(db, *this, new_roster, er, respect_ignore, recursive);
 
   for (set<file_path>::const_iterator i = paths.begin(); i != paths.end(); ++i)
     {
@@ -1413,10 +1454,6 @@ workspace::perform_additions(database & db, set<file_path> const & paths,
               break;
             case path::directory:
               build.visit_dir(*i);
-              if (!directory_empty(*i))
-                {
-                  W(F("Non-recursive add: Files in the directory '%s' will not be added automatically.") % *i);
-                }
               break;
             }
         }
