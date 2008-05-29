@@ -30,6 +30,11 @@
 --    NOTE: THIS SOFTWARE IS ONLY MEANT FOR SERVER PROCESSES!
 --    Anything else will fail miserably!
 --
+--    This hook is useful for any system that has a FAM system in
+--    place, such as incrond and gamin.  It simply touches a flag
+--    file, that can then be used to detect when scripts such as
+--    monotone-mirror.sh should be executed.
+--
 --    in your server's monotonerc, add the following include:
 --
 --	include("/PATH/TO/monotone-inotify.lua")
