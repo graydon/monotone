@@ -1,0 +1,13 @@
+#! /bin/sh
+
+case "$1" in
+    configure)
+        # directory turned into symlink; give dpkg a hand
+	if [ ! -L /usr/share/doc/monotone-doc ] && \
+	   [ -e /usr/share/doc/monotone-doc ]; then
+            rmdir /usr/share/doc/monotone-doc
+	    ln -sf monotone /usr/share/doc/monotone-doc
+	fi
+esac
+
+#DEBHELPER#

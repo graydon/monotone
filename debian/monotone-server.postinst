@@ -107,14 +107,21 @@ monotone_regenerate_caches ()
 case "$1" in
     configure)
 
+        # directory turned into symlink; give dpkg a hand
+	if [ ! -L /usr/share/doc/monotone-server ] && \
+	   [ -e /usr/share/doc/monotone-server ]; then
+            rmdir /usr/share/doc/monotone-server
+	    ln -sf monotone /usr/share/doc/monotone-server
+	fi
+
        MTN_HOME=/var/lib/monotone
        MTN_DB=$MTN_HOME/default.mtn
        MTN_CONFDIR=/etc/monotone
        MTN_KEYDIR=$MTN_HOME/keys
 	       
-       ucf --debconf-ok /usr/share/doc/monotone-server/examples/write-permissions /etc/monotone/write-permissions
-       ucf --debconf-ok /usr/share/doc/monotone-server/examples/read-permissions /etc/monotone/read-permissions
-       ucf --debconf-ok /usr/share/doc/monotone/contrib/get_passphrase_from_file.lua /etc/monotone/hooks.lua
+       ucf --debconf-ok /usr/share/monotone/write-permissions.base /etc/monotone/write-permissions
+       ucf --debconf-ok /usr/share/monotone/read-permissions.base /etc/monotone/read-permissions
+       ucf --debconf-ok /usr/share/monotone/hooks.lua.base /etc/monotone/hooks.lua
 
        ucfr monotone-server /etc/monotone/write-permissions
        ucfr monotone-server /etc/monotone/read-permissions

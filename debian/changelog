@@ -1,3 +1,14 @@
+monotone (0.40-4) unstable; urgency=low
+
+  * Corrected .diff.gz including regeneration of Makefile.in.
+    (Closes: #483090, #483018)
+  * monotone-server.postinst, monotone-doc.postinst: help out dpkg
+    with directory->symlink conversion.  (Closes: #483155)
+  * Install ucf baselines in /usr/share/monotone instead of getting
+    them from /usr/share/doc/monotone/..., per Policy 12.3.
+
+ -- Zack Weinberg <zackw@panix.com>  Wed, 28 May 2008 23:48:47 -0400
+
 monotone (0.40-3) unstable; urgency=low
 
   * Don't compress the pdf documentation.

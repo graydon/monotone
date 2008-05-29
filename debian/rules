@@ -142,6 +142,13 @@ binary-indep: build-indep
 	    debian/monotone-doc/usr/share/doc/monotone/html/figures
 	dh_installdocs -p monotone-doc -X copyright -X NEWS
 
+	cp -p examples/read-permissions \
+	    debian/monotone-server/usr/share/monotone/read-permissions.base
+	cp -p examples/write-permissions \
+	    debian/monotone-server/usr/share/monotone/write-permissions.base
+	cp -p contrib/get_passphrase_from_file.lua \
+	    debian/monotone-server/usr/share/monotone/hooks.lua.base
+
 	dh_installdebconf -i
 
 # we should have logrotate support for monotone-server, but currently we don't
