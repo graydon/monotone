@@ -4,7 +4,7 @@ mtn_dir=./_MTN
 mtn_keys=
 shell_type=sh
 if echo $SHELL | grep '/t?csh' > /dev/null; then shell_type=csh; fi
-values_only=/bin/false
+values_only=false
 
 usage () {
     echo "mtnopt: Usage: mtnopt [-c] [-s] [-d dir] [-k keys] [-v] [-h]"
@@ -36,7 +36,7 @@ while [ ! $# = 0 ]; do
 	    fi
 	    ;;
 	-v)
-	    values_only=/bin/true
+	    values_only=true
 	    ;;
 	-h)
 	    usage
