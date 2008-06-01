@@ -528,7 +528,7 @@ struct node_info
   file_id ident;
   full_attr_map_t attrs;
 
-  node_info() : exists(false), type(path::nonexistent) {}
+  node_info() : exists(false), id(the_null_node), type(path::nonexistent) {}
 };
 
 static void
