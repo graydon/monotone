@@ -3201,7 +3201,8 @@ database_impl::add_prefix_matching_constraint(string const & colname,
       string upper_bound(binary_prefix);
 
       string::reverse_iterator ity(upper_bound.rbegin());
-      ++(*ity);
+      if (ity != upper_bound.rend())
+        ++(*ity);
       while ((*ity == 0) && ity != upper_bound.rend())
         {
           ++ity;
