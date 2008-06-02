@@ -9,7 +9,7 @@ function pure_mtn(...)
     end
   end
   return {monotone_path, "--ssh-sign=no", "--norc", "--root=" .. test.root, "--db", "test.db",
-  	  "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
+      "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
 end
 
 -- this should find a private key in the specified keydir
@@ -27,14 +27,17 @@ else
 expected_ret = -15
 end
 
-srv = bg(pure_mtn("serve", "--confdir="..test.root, "--keydir="..test.root.."/keys"), expected_ret, false, true)
+-- some random address, code stolen from netsync.lua
+addr = "localhost:" .. math.random(1024, 65535)
+
+srv = bg(pure_mtn("serve", "--bind="..addr, "--confdir="..test.root, "--keydir="..test.root.."/keys"), expected_ret, false, true)
 sleep(2)
 srv:finish()
 check(qgrep("beginning service", "stderr"))
 
 -- this should find a private key in the keys directory under the specified confdir
 
-srv = bg(pure_mtn("serve", "--confdir="..test.root), expected_ret, false, true)
+srv = bg(pure_mtn("serve", "--bind="..addr, "--confdir="..test.root), expected_ret, false, true)
 sleep(2)
 srv:finish()
 check(qgrep("beginning service", "stderr"))
@@ -55,7 +58,7 @@ set_env("APPDATA", test.root.."/empty")
 else
 set_env("HOME", test.root.."/empty")
 end
-srv = bg(pure_mtn("serve"), 1, false, true)
+srv = bg(pure_mtn("serve", "--bind="..addr), 1, false, true)
 sleep(2)
 srv:finish()
 check(qgrep("misuse: you have no private key", "stderr"))
