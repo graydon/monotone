@@ -365,7 +365,13 @@ function prepare_to_run_tests (P)
    -- requires a helper program.
 
    local checknet = getpathof("check_net")
-   if checknet ~= nil then
+   if os.getenv("DISABLE_NETWORK_TESTS") ~= nil then
+      P("warning: DISABLE_NETWORK_TESTS set, skipping network server tests\n")
+      no_network_tests = true
+   elseif checknet == nil then
+      P("warning: check_net helper is missing, skipping network server tests\n")
+      no_network_tests = true
+   else
       writefile_q("in", nil)
       prepare_redirect("in", "out", "err")
       local status = execute(checknet)
@@ -381,9 +387,6 @@ function prepare_to_run_tests (P)
 	 P("warning: network unavailable, skipping network server tests\n")
 	 no_network_tests = true
       end
-   else
-      P("warning: check_net helper is missing, skipping network server tests\n")
-      no_network_tests = true
    end
 
    -- Record the full version of monotone under test in the logfile.
