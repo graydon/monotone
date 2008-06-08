@@ -7,31 +7,18 @@
 # the overall 'make' output.  Run, with no arguments, from the top
 # level of a monotone build tree.
 
-set -e
-cd tester_dir
+# Conveniently enough, testlib.lua does most of the work for us.
 
 dumped=0
-for log in */*/tester.log
+for log in tester_dir/*.log
 do
-    label=${log%/tester.log}
-    status=${log%/tester.log}/STATUS
-
-    if [ -f "$status" ]; then
-	shorttag=$(cat "$status")
-	case "$shorttag" in
-	    ok | skipped* | expected\ failure* | partial\ skip )
-		continue ;;
-	esac
-    else
-	shorttag="no status file"
-    fi
-
-    if [ $dumped -eq 0 ]; then
-	echo "### Detailed test logs:"
+    if grep "^\*\**$" < $log > /dev/null 2>&1; then
 	dumped=1
+	echo
+	echo "### $log ###"
+	echo
+	sed -ne '/^Running tests/,/^$/!p' < $log
     fi
-    echo "### $label	$shorttag"
-    cat "$log"
 done
 
 # Exit unsuccessfully if we dumped anything, so that a driver Makefile
