@@ -23,7 +23,9 @@ DEB_BUILD_OPTIONS += nocheck
 endif
 
 # This enables parallelism.
-CPUS ?= $(shell getconf _NPROCESSORS_ONLN)
+ifneq (,$(findstring parallel=,$(DEB_BUILD_OPTIONS)))
+PAR := -j$(patsubst parallel=%,%,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
+endif
 
 # DEB_BUILD_OPTIONS=noopt handling (Policy 10.1) and arch-specific
 # compiler options.  Allow total override of CFLAGS from the
@@ -78,17 +80,23 @@ endif
 		    --infodir='$${prefix}/share/info' CFLAGS="$(CFLAGS)" \
 		    CXXFLAGS="$(CFLAGS)" LDFLAGS="-Wl,-z,defs"
 
-build-arch: build-arch-stamp
-build-arch-stamp: config.status
-
 # We don't want to generate the info documentation in build-arch, so
 # we have to bypass the 'all' target.  (Revisit after automake-ectomy.)
-# The testsuite is still not entirely reliable in parallel mode.
-	make -j$(CPUS) -C po all
-	make -j$(CPUS) mtn
+
+# The testsuite is still not entirely reliable in parallel mode, and
+# thanks to buildd configuration decisions that no one will explain to
+# me in sufficient detail to detect reliably, we have to disable all
+# netsync tests.  (We could get away with only doing that on mips, but
+# who knows whether another architecture will decide to do the same
+# thing.)  The real fix for both these issues will be network tests
+# over local domain sockets, coming Real Soon Now from upstream.
+build-arch: build-arch-stamp
+build-arch-stamp: config.status
+	make $(PAR) -C po all
+	make $(PAR) mtn
 ifeq "$(findstring nocheck, $(DEB_BUILD_OPTIONS))" ""
-	make -j$(CPUS) unit_tester tester check_net
-	make check-local || sh contrib/dump-test-logs.sh
+	make $(PAR) unit_tester tester check_net
+	DISABLE_NETWORK_TESTS=1 make check-local || sh contrib/dump-test-logs.sh
 endif
 	touch $@
 
@@ -96,7 +104,7 @@ build-indep: build-indep-stamp
 build-indep-stamp: config.status
 
 # Just the formatted documentation.
-	make -j$(CPUS) info html monotone.pdf
+	make $(PAR) info html monotone.pdf
 	touch $@
 
 clean:

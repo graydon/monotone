@@ -1,3 +1,18 @@
+monotone (0.40-5) unstable; urgency=low
+
+  * Backport from upstream development tree:
+    - fix for broken ssh_agent support
+    - testsuite hardening against unusable network, and DISABLE_NETWORK_TESTS
+      environment variable support
+    - improved contrib/dump-test-logs.sh
+  * debian/rules: Set DISABLE_NETWORK_TESTS when running the testsuite;
+    this may cure the mips buildd problems for real.  Also, implement
+    support for DEB_BUILD_OPTS=parallel rather than probing available CPUs.
+  * monotone binary package Suggests: monotone-doc and monotone-server
+    (Closes: #476155)
+
+ -- Zack Weinberg <zackw@panix.com>  Sun, 08 Jun 2008 18:55:02 -0400
+
 monotone (0.40-4) unstable; urgency=low
 
   * Corrected .diff.gz including regeneration of Makefile.in.
