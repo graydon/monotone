@@ -1061,6 +1061,16 @@ function run_one_test(tname)
    test.bglist = {}
    test.log = io.open("tester.log", "w")
 
+   -- Sanitize $HOME.  This is done here so that each test gets its
+   -- very own empty directory (in case some test writes stuff inside).
+   unlogged_mkdir("emptyhomedir")
+   test.home = test.root .. "/emptyhomedir"
+   if ostype == "Windows" then
+      set_env("APPDATA", test.home)
+   else
+      set_env("HOME", test.home)
+   end
+
    L("Test ", test.name, "\n")
 
    local driverfile = testdir .. "/" .. test.name .. "/__driver__.lua"

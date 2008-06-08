@@ -31,7 +31,7 @@ check(mtn("ls", "known"), 0, "file1\nfile2\nfile3\nfile4\n", nil)
 -- subdirectory for the workspace (and therefore to keep it cleaner)
 -- or to ignore them all properly, this will have to change.
 check(mtn("ls", "ignored"), 0, "keys\ntest.db\ntest_hooks.lua\nts-stderr\nts-stdin\nts-stdout\n", nil)
-check(mtn("ls", "unknown"), 0, "_MTN.old\nmin_hooks.lua\npaths-new\npaths-old\nstderr\ntester.log\n", nil)
+check(mtn("ls", "unknown"), 0, "_MTN.old\nemptyhomedir\nmin_hooks.lua\npaths-new\npaths-old\nstderr\ntester.log\n", nil)
 
 -- we do this after the other tests so it doesn't interfere with them.
 remove("file4")

@@ -64,6 +64,11 @@ index = check_inventory (parsed, index,
   status = "dropped"})
 
 index = check_inventory (parsed, index,
+{   path = "emptyhomedir",
+ fs_type = "directory",
+  status = "unknown"})
+
+index = check_inventory (parsed, index,
 {   path = "ignored~",
  fs_type = "file",
   status = "ignored"})

@@ -22,9 +22,13 @@ else
   check({"chmod", "100", "noaccess"})
   check(mtn("--log=noaccess/my.log", "status"), 1, false, false)
 
-  srv = bg(mtn("serve", "--bind=127.0.0.2:55597", "--pid-file=noaccess/my.pid"), 1, false, false)
-  
+  -- we use --stdio here to avoid the possibility of the pidfile being
+  -- created and then the test tripping over network restrictions.
+  srv = bg(mtn("serve", "--stdio", "--pid-file=noaccess/my.pid"),
+	   1, nil, true, nil)
+
   check(srv:wait(5))
+  check(qgrep("failed to create pid file", "stderr"))
 end
 
 remove("noaccess")

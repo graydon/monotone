@@ -74,6 +74,11 @@ index = check_inventory (parsed, index,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
+{   path = "emptyhomedir",
+ fs_type = "directory",
+  status = "unknown"})
+
+index = check_inventory (parsed, index,
 {    path = "file_0",
  old_type = "file",
  new_type = "file",
@@ -114,6 +119,11 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
     birth = rev1,
    status = {"known"}})
+
+index = check_inventory (parsed, index,
+{   path = "emptyhomedir",
+ fs_type = "directory",
+  status = "unknown"})
 
 index = check_inventory (parsed, index,
 {    path = "file_0",
@@ -302,6 +312,11 @@ index = check_inventory (parsed, index,
    status = {"known"}})
 
 index = check_inventory (parsed, index,
+{   path = "emptyhomedir",
+ fs_type = "directory",
+  status = "unknown"})
+
+index = check_inventory (parsed, index,
 {    path = "file_0",
  old_type = "file",
  new_path = "dir_a/file_0",
@@ -347,6 +362,11 @@ index = check_inventory (parsed, index,
   fs_type = "directory",
     birth = rev1,
    status = {"known"}})
+
+index = check_inventory (parsed, index,
+{   path = "emptyhomedir",
+ fs_type = "directory",
+  status = "unknown"})
 
 index = check_inventory (parsed, index,
 {    path = "file_0",

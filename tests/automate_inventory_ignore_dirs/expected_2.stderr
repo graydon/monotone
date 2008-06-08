@@ -1,3 +1,4 @@
+ignore_file: 'emptyhomedir': false
 ignore_file: 'keys': false
 ignore_file: 'source': false
 ignore_file: 'source/ignored_dir': true

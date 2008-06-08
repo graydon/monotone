@@ -1,5 +1,6 @@
 .mtn-ignore
 dontignoreme
+emptyhomedir
 keys
 min_hooks.lua
 test_hooks.lua
