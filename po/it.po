@@ -5,8 +5,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: it\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-05-28 12:36+0200\n"
-"PO-Revision-Date: 2008-05-28 12:39+0100\n"
+"POT-Creation-Date: 2008-06-19 12:20+0200\n"
+"PO-Revision-Date: 2008-06-19 12:33+0100\n"
 "Last-Translator: Lapo Luchini <lapo@lapo.it>\n"
 "Language-Team: Lapo Luchini <lapo@lapo.it>\n"
 "MIME-Version: 1.0\n"
@@ -194,7 +194,7 @@ msgstr "Elenca le revisioni corrispondenti ad un selettore"
 #: automate.cc:890
 #, c-format
 msgid "'%s' is both known and ignored; it will be shown as 'missing'. Check .mtn-ignore."
-msgstr ""
+msgstr "‘%s’ è sia conosciuto che ignorato; verrà mostrato come ‘mancante’. Verifica il file ‘.mtn-ignore’."
 
 #: automate.cc:1004
 #: cmd_diff_log.cc:483
@@ -1582,7 +1582,7 @@ msgstr ""
 #: cmd_merging.cc:969
 #, c-format
 msgid "branch '%s' has %d heads; must be at least 2 for show_conflicts"
-msgstr ""
+msgstr "il ramo ‘%s’ ha %d teste; ‘show_conflicts’ ne richiede almeno 2"
 
 #: cmd_merging.cc:997
 msgid "[-r FROM] -r TO [PATH...]"
@@ -2716,17 +2716,17 @@ msgstr "la revisione %s non è presente in database"
 msgid "dropping cert"
 msgstr "cancella certificato"
 
-#: database.cc:3688
+#: database.cc:3689
 #, c-format
 msgid "no database specified"
 msgstr "nessuna database specificato"
 
-#: database.cc:3701
+#: database.cc:3702
 #, c-format
 msgid "database %s does not exist"
 msgstr "il database ‘%s’ non esiste"
 
-#: database.cc:3709
+#: database.cc:3710
 #, c-format
 msgid ""
 "%s is a workspace, not a database\n"
@@ -2735,17 +2735,17 @@ msgstr ""
 "‘%s’ è uno spazio di lavoro, non un database\n"
 "(intendevi ‘%s’?)"
 
-#: database.cc:3712
+#: database.cc:3713
 #, c-format
 msgid "%s is a directory, not a database"
 msgstr "‘%s’ è una directory, non un database"
 
-#: database.cc:3720
+#: database.cc:3721
 #, c-format
 msgid "database %s already exists"
 msgstr "il database ‘%s’ esiste già"
 
-#: database.cc:3725
+#: database.cc:3726
 #, c-format
 msgid ""
 "existing (possibly stale) journal file '%s' has same stem as new database '%s'\n"
