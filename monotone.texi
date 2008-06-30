@@ -979,7 +979,7 @@ having a common ancestor.
 @end smallexample
 @end ifinfo
 @ifnotinfo
-@image{figures/two-branches}
+@image{figures/two-branches,,10cm}
 @end ifnotinfo
 
 For each branch, the set of revisions with @emph{no children} is
