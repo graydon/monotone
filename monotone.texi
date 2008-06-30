@@ -3,6 +3,7 @@
 @setfilename monotone.info
 @settitle monotone documentation
 @setchapternewpage odd
+@finalout
 @c %**end of header
 
 @syncodeindex fn cp
