@@ -4672,7 +4672,7 @@ This command creates a directory in the filesystem relative to your
 current location and adds it to your workspace's ``work list''.  The
 changes are not reflected in your database until such time as you
 perform a commit.  If you use the @option{--no-respect-ignore} flag,
-entries in .mtn-ignore will not be honored.
+entries in @file{.mtn-ignore} will not be honored.
 
 @item mtn [--bookkeep-only] drop @var{pathname...}
 @itemx mtn drop --missing
