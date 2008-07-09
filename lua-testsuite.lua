@@ -24,7 +24,7 @@ function mtn_ws_opts(...)
       err("'mtn' environment variable not set")
     end
   end
-  return {monotone_path, "--ssh-sign=no", "--norc", "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
+  return {monotone_path, "--ssh-sign=no", "--no-default-confdir", "--norc", "--rcfile", test.root .. "/test_hooks.lua", unpack(arg)}
 end
 
 function mtn_outside_ws(...)
