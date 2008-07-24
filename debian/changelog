@@ -1,3 +1,12 @@
+monotone (0.40-6) unstable; urgency=low
+
+  * dump-test-logs.sh: always exit unsuccessfully, to prevent masking an
+    unsuccessful test run.
+  * syntax_errors_in_.mtn-ignore test: eliminate fragile dependency on
+    details of error messages / order of output.
+
+ -- Zack Weinberg <zackw@panix.com> Thu, 24 Jul 2008 15:00:35 -0700
+
 monotone (0.40-5) unstable; urgency=low
 
   * Backport from upstream development tree:

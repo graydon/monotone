@@ -1,18 +1,34 @@
 -- In this test, we put things in .mtn-ignore that trigger every
 -- possible syntax error message from the regular expression library,
 -- to ensure that the user's view of these errors is sensible.
+--
+-- It is just too error prone to try to grep for actual error message
+-- texts, so instead we check for functionality (despite the syntax
+-- errors, "ignoreme" and "ignoremetoo" should be ignored,
+-- "dontignoreme" not) and for the presence of at least *some* error
+-- messages on stderr.
 
 mtn_setup()
 
 writefile("ignoreme")
+writefile("ignoremetoo")
 writefile("dontignoreme")
 check(get("mtn-ignore", ".mtn-ignore"))
 
 check(raw_mtn("ls", "unknown"), 0, true, true)
-canonicalize("stdout")
-check(get("stdout-ref"))
-check(get("stderr-ref"))
 
-check(samefile("stdout", "stdout-ref"))
--- the first line of stderr may vary from run to run
-check(tailfile("stderr", 1) == readfile("stderr-ref"))
+check(qgrep("^dontignoreme$", "stdout"))
+check(not qgrep("^ignoreme$", "stdout"))
+check(not qgrep("^ignoremetoo$", "stdout"))
+
+check(qgrep("error near char", "stderr"))
+check(qgrep("skipping this regex", "stderr"))
+
+check(raw_mtn("ls", "ignored"), 0, true, true)
+
+check(not qgrep("^dontignoreme$", "stdout"))
+check(qgrep("^ignoreme$", "stdout"))
+check(qgrep("^ignoremetoo$", "stdout"))
+
+check(qgrep("error near char", "stderr"))
+check(qgrep("skipping this regex", "stderr"))

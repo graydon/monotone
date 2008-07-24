@@ -9,11 +9,12 @@
 
 # Conveniently enough, testlib.lua does most of the work for us.
 
-dumped=0
 for log in tester_dir/*.log
 do
-    if grep "^\*\**$" < $log > /dev/null 2>&1; then
-	dumped=1
+    if grep "0 failed" < $log > /dev/null 2>&1 &&
+       grep "0 succeeded unexpectedly" < $log > /dev/null 2>&1
+    then :
+    else
 	echo
 	echo "### $log ###"
 	echo
@@ -21,10 +22,12 @@ do
     fi
 done
 
-# Exit unsuccessfully if we dumped anything, so that a driver Makefile
+# Always exit unsuccessfully, so that a driver Makefile
 # can do something like
 #
 #        make check || sh dump-test-logs.sh
 #
 # and have that fail the build just like plain "make check" would.
-exit $dumped
+# (The above should dump something if and only if the preceding "make
+# check" failed, but that has been unreliable in the past.)
+exit 1
