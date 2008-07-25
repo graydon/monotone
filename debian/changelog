@@ -5,7 +5,7 @@ monotone (0.40-6) unstable; urgency=low
   * syntax_errors_in_.mtn-ignore test: eliminate fragile dependency on
     details of error messages / order of output.
 
- -- Zack Weinberg <zackw@panix.com> Thu, 24 Jul 2008 15:00:35 -0700
+ -- Zack Weinberg <zackw@panix.com>  Thu, 24 Jul 2008 15:00:35 -0700
 
 monotone (0.40-5) unstable; urgency=low
 
