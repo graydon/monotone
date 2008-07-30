@@ -58,7 +58,7 @@ check(mtn2("genkey", "unknown@tester.net"), 0, false, false, string.rep("unknown
 srv = netsync.start()
 srv:sync({"testbranch", "--key=unknown@tester.net"}, 2, 1)
 srv:stop()
-chk_errcode_is(422)
+chk_errcode_is(412) -- anonymous write (was 422 unknown key)
 clearnotes()
 
 check(mtn("db", "set_epoch", "testbranch", string.rep("0", 40)))

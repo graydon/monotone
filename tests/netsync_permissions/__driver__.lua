@@ -57,14 +57,14 @@ clean(2)
 srv:pull({"testbranch", "--key", keys.other})
 check(mtn2("automate", "get_revision", revs.base), 0, true, true)
 
--- pull with unknown key fails
+-- pull with unknown key falls back to anonymous
 
 clean(2)
 
 keys.unknown = "unknown@test.net"
 genkey(keys.unknown, mtn2)
-srv:pull({"testbranch", "--key", keys.unknown}, nil, 1)
-check(mtn2("automate", "get_revision", revs.base), 1, true, true)
+srv:pull({"testbranch", "--key", keys.unknown}, nil, 0)
+check(mtn2("automate", "get_revision", revs.base), 0, true, true)
 
 -- push with default key
 

@@ -1608,6 +1608,10 @@ session::process_auth_cmd(protocol_role their_role,
         project.db.put_key(their_key_id, their_keypair.pub);
       else
         {
+          return process_anonymous_cmd(their_role,
+                                       their_include_pattern,
+                                       their_exclude_pattern);
+          /*
           this->saved_nonce = id("");
 
           lua.hook_note_netsync_start(session_id, "server", their_role,
@@ -1617,6 +1621,7 @@ session::process_auth_cmd(protocol_role their_role,
           error(unknown_key,
                 (F("remote public key hash '%s' is unknown")
                  % encode_hexenc(client())).str());
+          */
         }
     }
 
