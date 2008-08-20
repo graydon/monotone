@@ -233,7 +233,7 @@ cpp_main(int argc, char ** argv)
 
           // check if the user specified default arguments for this command
           args_vector default_args;
-          if (app.lua.hook_get_default_command_options(cmd, default_args))
+          if (cmd.size() > 0 && app.lua.hook_get_default_command_options(cmd, default_args))
             optset.from_command_line(default_args, false);
 
           if (workspace::found)
