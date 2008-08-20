@@ -9222,6 +9222,20 @@ specify options with arguments in this hook such as
 @option{--exclude} option argument will be able to replace or remove the
 already excluded @var{path}.
 
+Simple example which enables recursive directory scanning for @command{mtn add}
+by default:
+@smallexample
+@group
+function get_default_command_options(command)
+    local default_options = @{@}
+    if (command[1] == "add") then
+        table.insert(default_options, "--recursive")
+    end
+    return default_options
+end
+@end group
+@end smallexample
+
 @item get_passphrase (@var{keypair_id})
 
 Returns a string which is the passphrase used to encrypt the private
