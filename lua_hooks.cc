@@ -560,6 +560,41 @@ lua_hooks::hook_get_encloser_pattern(file_path const & path,
 }
 
 bool
+lua_hooks::hook_get_default_command_options(commands::command_id const & cmd,
+                                            args_vector & args)
+{
+  Lua ll(st);
+  ll.func("get_default_command_options");
+
+  ll.push_table();
+  int k = 1;
+
+  // skip the first ID part, the command group, since this is mostly
+  // useless for the hook implementor
+  vector<utf8>::const_iterator i = cmd.begin();
+  i++;
+
+  for ( ; i != cmd.end(); ++i)
+    {
+      ll.push_int(k);
+      ll.push_str((*i)());
+      ll.set_table();
+      k++;
+    }
+
+  ll.call(1, 1);
+
+  ll.begin();
+  while (ll.next())
+    {
+      std::string arg;
+      ll.extract_str(arg).pop();
+      args.push_back(arg_type(arg));
+    }
+  return ll.ok();
+}
+
+bool
 lua_hooks::hook_use_inodeprints()
 {
   bool use = false, exec_ok = false;

@@ -110,7 +110,7 @@ read_global_options(options & opts, args_vector & args)
   option::concrete_option_set optset =
     options::opts::all_options().instantiate(&opts);
   optset.from_command_line(args);
-  
+
   return optset;
 }
 
@@ -166,7 +166,7 @@ cpp_main(int argc, char ** argv)
       // Set up the global sanity object.  No destructor is needed and
       // therefore no wrapper object is needed either.
       global_sanity.initialize(argc, argv, setlocale(LC_ALL, 0));
-      
+
       // Set up secure memory allocation etc
       Botan::LibraryInitializer acquire_botan("thread_safe=0 selftest=0 "
                                               "seed_rng=1 use_engines=0 "
@@ -176,11 +176,11 @@ cpp_main(int argc, char ** argv)
       pipe_cache_cleanup acquire_botan_pipe_caching;
       unfiltered_pipe = new Botan::Pipe;
       new (unfiltered_pipe_cleanup_mem) cached_botan_pipe(unfiltered_pipe);
-      
+
       // Record where we are.  This has to happen before any use of
       // paths.hh objects.
       save_initial_path();
-      
+
       // decode all argv values into a UTF-8 array
       args_vector args;
       for (int i = 1; i < argc; ++i)
@@ -230,6 +230,11 @@ cpp_main(int argc, char ** argv)
           // now grab any command specific options and parse the command
           // this needs to happen after the monotonercs have been read
           commands::command_id cmd = read_options(app.opts, optset, opt_args);
+
+          // check if the user specified default arguments for this command
+          args_vector default_args;
+          if (app.lua.hook_get_default_command_options(cmd, default_args))
+            optset.from_command_line(default_args, false);
 
           if (workspace::found)
             {

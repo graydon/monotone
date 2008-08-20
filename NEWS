@@ -39,6 +39,11 @@
 
         New features
 
+        - New 'get_default_command_options' lua hook which lets you
+          specify default options for a given, triggered command.
+          Useful f.e. if you always want to have your 'mtn add'
+          command executed with '-R' / '--recursive'
+ 
         - Add 'automate show_conflicts' command
 
         - Add 'automate get_workspace_root' command

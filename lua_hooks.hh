@@ -20,6 +20,7 @@
 #include "option.hh"
 #include "vocab.hh"
 #include "paths.hh"
+#include "commands.hh"
 
 struct uri;
 class app_state;
@@ -116,6 +117,9 @@ public:
 
   bool hook_get_encloser_pattern(file_path const & path,
                                  std::string & pattern);
+
+  bool hook_get_default_command_options(commands::command_id const & cmd,
+                                        args_vector & args);
 
   // workspace hooks
   bool hook_use_inodeprints();

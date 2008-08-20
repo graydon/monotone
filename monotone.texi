@@ -9208,6 +9208,20 @@ There is no default definition of this hook. The command-line option
 @option{--key=@var{keyname}} overrides any value returned from this
 hook function.
 
+@item get_default_command_options(@var{command})
+
+Returns a table of program options, either valid for the given command or
+valid global options. The @var{command} argument is given as a table of command
+parts, i.e. for commands with subcommands like @command{automate} or @command{db}
+this argument contains at least two elements.
+
+Note that there is no way to "override" these default options via a given
+command-line option once they've been set. This is especially true if you
+specify options with arguments in this hook such as
+@option{--exclude=@var{path}} - no subsequent command-line argument or
+@option{--exclude} option argument will be able to replace or remove the
+already excluded @var{path}.
+
 @item get_passphrase (@var{keypair_id})
 
 Returns a string which is the passphrase used to encrypt the private

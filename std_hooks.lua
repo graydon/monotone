@@ -123,23 +123,23 @@ function ignore_file(name)
    for i, line in pairs(ignored_files)
    do
       if (line ~= nil) then
-         local pcallstatus, result = pcall(function() 
-	    return regex.search(line, name) 
-	 end)
+         local pcallstatus, result = pcall(function()
+        return regex.search(line, name)
+     end)
          if pcallstatus == true then
             -- no error from the regex.search call
             if result == true then return true end
          else
-            -- regex.search had a problem, warn the user their 
+            -- regex.search had a problem, warn the user their
             -- .mtn-ignore file syntax is wrong
-	    if not warn_reported_file then
-	       io.stderr:write("mtn: warning: while matching file '"
-	       		       .. name .. "':\n")
-	       warn_reported_file = true
-	    end
+        if not warn_reported_file then
+           io.stderr:write("mtn: warning: while matching file '"
+                       .. name .. "':\n")
+           warn_reported_file = true
+        end
             io.stderr:write(".mtn-ignore:" .. i .. ": warning: " .. result
-	    		    .. "\n\t- skipping this regex for "
-			    .. "all remaining files.\n")
+                    .. "\n\t- skipping this regex for "
+                .. "all remaining files.\n")
             ignored_files[i] = nil
          end
       end
@@ -424,27 +424,27 @@ mergers.tortoise = {
 mergers.vim = {
    cmd = function (tbl)
       function execute_diff3(mine, yours, out)
-	 local diff3_args = {
-	    "diff3",
-	    "--merge",
-	    "--easy-only",
-	 }
-	 table.insert(diff3_args, string.gsub(mine, "\\", "/") .. "")
-	 table.insert(diff3_args, string.gsub(tbl.afile, "\\", "/") .. "")
-	 table.insert(diff3_args, string.gsub(yours, "\\", "/") .. "")
-      
-	 return execute_redirected("", string.gsub(out, "\\", "/"), "", unpack(diff3_args))
+     local diff3_args = {
+        "diff3",
+        "--merge",
+        "--easy-only",
+     }
+     table.insert(diff3_args, string.gsub(mine, "\\", "/") .. "")
+     table.insert(diff3_args, string.gsub(tbl.afile, "\\", "/") .. "")
+     table.insert(diff3_args, string.gsub(yours, "\\", "/") .. "")
+
+     return execute_redirected("", string.gsub(out, "\\", "/"), "", unpack(diff3_args))
       end
 
       io.write (string.format("\nWARNING: 'vim' was choosen to perform external 3-way merge.\n"..
           "You should merge all changes to *LEFT* file due to limitation of program\n"..
           "arguments.\n\n"))
-      
+
       local vim
       if os.getenv ("DISPLAY") ~= nil and program_exists_in_path ("gvim") then
-	 vim = "gvim"
+     vim = "gvim"
       else
-	 vim = "vim"
+     vim = "vim"
       end
 
       local lfile_merged = tbl.lfile .. ".merged"
@@ -455,7 +455,7 @@ mergers.vim = {
       if ret == 2 then
          io.write(string.format(gettext("Error running diff3 for merger '%s'\n"), vim))
          os.remove(lfile_merged)
-	 return false
+     return false
       end
 
       -- now merge rfile using diff3
@@ -464,12 +464,12 @@ mergers.vim = {
          io.write(string.format(gettext("Error running diff3 for merger '%s'\n"), vim))
          os.remove(lfile_merged)
          os.remove(rfile_merged)
-	 return false
+     return false
       end
-      
+
       os.rename(lfile_merged, tbl.lfile)
       os.rename(rfile_merged, tbl.rfile)
-      
+
       local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
                           tbl.lfile, tbl.rfile)
       if (ret ~= 0) then
@@ -480,19 +480,19 @@ mergers.vim = {
    end ,
    available =
       function ()
-	 return program_exists_in_path("diff3") and
+     return program_exists_in_path("diff3") and
             (program_exists_in_path("vim") or
-	    program_exists_in_path("gvim"))
+        program_exists_in_path("gvim"))
       end ,
    wanted =
       function ()
-	 local editor = os.getenv("EDITOR")
-	 if editor and
-	    not (string.find(editor, "vim") or
-		 string.find(editor, "gvim")) then
-	    return false
-	 end
-	 return true
+     local editor = os.getenv("EDITOR")
+     if editor and
+        not (string.find(editor, "vim") or
+         string.find(editor, "gvim")) then
+        return false
+     end
+     return true
       end
 }
 
@@ -518,9 +518,9 @@ mergers.rcsmerge = {
    end,
    available =
       function ()
-	 local merge = os.getenv("MTN_RCSMERGE")
-	 return merge and
-	    program_exists_in_path(merge) and program_exists_in_path("vim")
+     local merge = os.getenv("MTN_RCSMERGE")
+     return merge and
+        program_exists_in_path(merge) and program_exists_in_path("vim")
       end ,
    wanted = function () return os.getenv("MTN_RCSMERGE") ~= nil end
 }
@@ -631,7 +631,7 @@ mergers.diffutils = {
         --  assume it is requested (if it is available at all)
         return true
     end
-}   
+}
 
 mergers.emacs = {
    cmd = function (tbl)
@@ -658,18 +658,18 @@ mergers.emacs = {
    end,
    available =
       function ()
-	 return program_exists_in_path("xemacs") or
-	    program_exists_in_path("emacs")
+     return program_exists_in_path("xemacs") or
+        program_exists_in_path("emacs")
       end ,
    wanted =
       function ()
-	 local editor = os.getenv("EDITOR")
-	 if editor and
-	    not (string.find(editor, "emacs") or
-		 string.find(editor, "gnu")) then
-	    return false
-	 end
-	 return true
+     local editor = os.getenv("EDITOR")
+     if editor and
+        not (string.find(editor, "emacs") or
+         string.find(editor, "gnu")) then
+        return false
+     end
+     return true
       end
 }
 
@@ -841,17 +841,17 @@ function merge3 (anc_path, left_path, right_path, merged_path, ancestor, left, r
             end
          end
       else
-	 if mkey then
-	    io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
+     if mkey then
+        io.write (string.format("The possible commands for the "..mkey.." merger aren't available.\n"..
                 "You may want to check that $MTN_MERGE or the lua variable `merger' is set\n"..
                 "to something available.  If you want to use vim or emacs, you can also\n"..
-		"set $EDITOR to something appropriate.\n"))
-	 else
-	    io.write (string.format("No external 3-way merge command found.\n"..
+        "set $EDITOR to something appropriate.\n"))
+     else
+        io.write (string.format("No external 3-way merge command found.\n"..
                 "You may want to check that $EDITOR is set to an editor that supports 3-way\n"..
                 "merge, set this explicitly in your get_preferred_merge3_command hook,\n"..
                 "or add a 3-way merge program to your path.\n"))
-	 end
+     end
       end
    end
 
@@ -1144,6 +1144,12 @@ function get_mtn_command(host)
         return "mtn"
 end
 
+function get_default_command_options(command)
+   local default_args = {}
+   return default_args
+end
+
+
 function get_remote_unix_socket_command(host)
     return "socat"
 end
@@ -1178,12 +1184,12 @@ do
       local s = "continue"
       local v = nil
       for _,n in pairs(hook_functions) do
-	 if n[f] then
-	    s,v = n[f](...)
-	 end
-	 if s ~= "continue" then
-	    break
-	 end
+     if n[f] then
+        s,v = n[f](...)
+     end
+     if s ~= "continue" then
+        break
+     end
       end
       return v
    end
@@ -1217,38 +1223,38 @@ do
 
    function add_hook_functions(functions, precedence)
       if type(functions) ~= "table" or type(precedence) ~= "number" then
-	 return false, "Invalid type"
+     return false, "Invalid type"
       end
       if hook_functions[precedence] then
-	 return false, "Precedence already taken"
+     return false, "Precedence already taken"
       end
 
       local unknown_items = ""
       local warning = nil
       local is_member =
-	 function (s,t)
-	    for k,v in pairs(t) do if s == v then return true end end
-	    return false
-	 end
+     function (s,t)
+        for k,v in pairs(t) do if s == v then return true end end
+        return false
+     end
 
       for n,f in pairs(functions) do
-	 if type(n) == "string" then
-	    if not is_member(n, supported_items) then
-	       if unknown_items ~= "" then
-		  unknown_items = unknown_items .. ","
-	       end
-	       unknown_items = unknown_items .. n
-	    end
-	    if type(f) ~= "function" then
-	       return false, "Value for functions item "..n.." isn't a function"
-	    end
-	 else
-	    warning = "Non-string item keys found in functions table"
-	 end
+     if type(n) == "string" then
+        if not is_member(n, supported_items) then
+           if unknown_items ~= "" then
+          unknown_items = unknown_items .. ","
+           end
+           unknown_items = unknown_items .. n
+        end
+        if type(f) ~= "function" then
+           return false, "Value for functions item "..n.." isn't a function"
+        end
+     else
+        warning = "Non-string item keys found in functions table"
+     end
       end
 
       if warning == nil and unknown_items ~= "" then
-	 warning = "Unknown item(s) " .. unknown_items .. " in functions table"
+     warning = "Unknown item(s) " .. unknown_items .. " in functions table"
       end
 
       hook_functions[precedence] = functions
