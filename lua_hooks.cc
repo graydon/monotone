@@ -885,7 +885,7 @@ lua_hooks::hook_note_commit(revision_id const & new_id,
   Lua ll(st);
   ll
     .func("note_commit")
-    .push_str(new_id.inner()())
+    .push_str(encode_hexenc(new_id.inner()()))
     .push_str(rdat.inner()());
 
   ll.push_table();

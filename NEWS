@@ -37,6 +37,9 @@
         - mtn would produce a warning if executed from the root
           directory of a Windows drive; this has been fixed.
 
+        - the 'note_commit' hook now returns the new revision id 
+          hexencoded again - the bug was introduced in 0.40
+
         New features
 
         - New 'get_default_command_options' lua hook which lets you
