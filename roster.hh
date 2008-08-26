@@ -1,6 +1,7 @@
 #ifndef __ROSTER_HH__
 #define __ROSTER_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -201,6 +202,10 @@ public:
   bool get_attr(file_path const & pth,
                 attr_key const & key,
                 attr_value & val) const;
+
+  void get_file_details(node_id nid,
+                        file_id & fid,
+                        file_path & pth) const;
 
   void extract_path_set(std::set<file_path> & paths) const;
 

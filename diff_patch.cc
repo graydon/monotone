@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -767,6 +768,61 @@ content_merger::attribute_manual_merge(file_path const & path,
 }
 
 bool
+content_merger::attempt_auto_merge(file_path const & anc_path, // inputs
+                                   file_path const & left_path,
+                                   file_path const & right_path,
+                                   file_id const & ancestor_id,
+                                   file_id const & left_id,
+                                   file_id const & right_id,
+                                   file_data & left_data, // outputs
+                                   file_data & right_data,
+                                   file_data & merge_data)
+{
+  I(left_id != right_id);
+
+  if (attribute_manual_merge(left_path, left_ros) ||
+      attribute_manual_merge(right_path, right_ros))
+    {
+      return false;
+    }
+
+  // both files mergeable by monotone internal algorithm, try to merge
+  // note: the ancestor is not considered for manual merging. Forcing the
+  // user to merge manually just because of an ancestor mistakenly marked
+  // manual seems too harsh
+
+  file_data ancestor_data;
+
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
+
+  data const left_unpacked = left_data.inner();
+  data const ancestor_unpacked = ancestor_data.inner();
+  data const right_unpacked = right_data.inner();
+
+  string const left_encoding(get_file_encoding(left_path, left_ros));
+  string const anc_encoding(get_file_encoding(anc_path, anc_ros));
+  string const right_encoding(get_file_encoding(right_path, right_ros));
+
+  vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
+  split_into_lines(left_unpacked(), left_encoding, left_lines);
+  split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
+  split_into_lines(right_unpacked(), right_encoding, right_lines);
+
+  if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
+    {
+      string tmp;
+
+      join_lines(merged_lines, tmp);
+      merge_data = file_data(tmp);
+      return true;
+    }
+
+  return false;
+}
+
+bool
 content_merger::try_auto_merge(file_path const & anc_path,
                                file_path const & left_path,
                                file_path const & right_path,
@@ -795,50 +851,19 @@ content_merger::try_auto_merge(file_path const & anc_path,
       return true;
     }
 
-  file_data left_data, right_data, ancestor_data;
-  data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+  file_data left_data, right_data, merge_data;
 
-  adaptor.get_version(left_id, left_data);
-  adaptor.get_version(ancestor_id, ancestor_data);
-  adaptor.get_version(right_id, right_data);
-
-  left_unpacked = left_data.inner();
-  ancestor_unpacked = ancestor_data.inner();
-  right_unpacked = right_data.inner();
-
-  if (!attribute_manual_merge(left_path, left_ros) &&
-      !attribute_manual_merge(right_path, right_ros))
+  if (attempt_auto_merge(anc_path, left_path, right_path,
+                         ancestor_id, left_id, right_id,
+                         left_data, right_data, merge_data))
     {
-      // both files mergeable by monotone internal algorithm, try to merge
-      // note: the ancestor is not considered for manual merging. Forcing the
-      // user to merge manually just because of an ancestor mistakenly marked
-      // manual seems too harsh
-      string left_encoding, anc_encoding, right_encoding;
-      left_encoding = this->get_file_encoding(left_path, left_ros);
-      anc_encoding = this->get_file_encoding(anc_path, anc_ros);
-      right_encoding = this->get_file_encoding(right_path, right_ros);
+      L(FL("internal 3-way merged ok"));
+      calculate_ident(merge_data, merged_id);
 
-      vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
-      split_into_lines(left_unpacked(), left_encoding, left_lines);
-      split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
-      split_into_lines(right_unpacked(), right_encoding, right_lines);
+      adaptor.record_merge(left_id, right_id, merged_id,
+                           left_data, right_data, merge_data);
 
-      if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
-        {
-          file_id tmp_id;
-          file_data merge_data;
-          string tmp;
-
-          L(FL("internal 3-way merged ok"));
-          join_lines(merged_lines, tmp);
-          merge_data = file_data(tmp);
-          calculate_ident(merge_data, merged_id);
-
-          adaptor.record_merge(left_id, right_id, merged_id,
-                               left_data, right_data, merge_data);
-
-          return true;
-        }
+      return true;
     }
 
   return false;

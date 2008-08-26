@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -68,6 +69,14 @@ void basic_io::stanza::push_binary_pair(symbol const & k, id const & v)
   push_hex_pair(k, hexenc<id>(encode_hexenc(v())));
 }
 
+void
+basic_io::stanza::push_symbol(symbol const & k)
+{
+  entries.push_back(make_pair(k, ""));
+  if (k().size() > indent)
+    indent = k().size();
+}
+
 void basic_io::stanza::push_hex_pair(symbol const & k, hexenc<id> const & v)
 {
   entries.push_back(make_pair(k, ""));
@@ -127,6 +136,22 @@ void basic_io::stanza::push_str_multi(symbol const & k,
   entries.push_back(make_pair(k, val));
   if (k().size() > indent)
     indent = k().size();
+}
+
+void basic_io::stanza::push_str_multi(symbol const & k1,
+                                      symbol const & k2,
+                                      vector<string> const & v)
+{
+  string val = k2();
+  for (vector<string>::const_iterator i = v.begin();
+       i != v.end(); ++i)
+    {
+      val += " ";
+      val += escape(*i);
+    }
+  entries.push_back(make_pair(k1, val));
+  if (k1().size() > indent)
+    indent = k1().size();
 }
 
 void basic_io::stanza::push_str_triple(symbol const & k,

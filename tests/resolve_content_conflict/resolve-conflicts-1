@@ -1,0 +1,33 @@
+    left [c28c3c0f5a7f9cde848be91f79d86a6dd63e88ca]
+   right [9340b41fa26b20293292cb37449cc722b1b55a5a]
+ancestor [4c059d3a8bbe8e624e46a50b298b4f301caf380d]
+
+         conflict content
+        node_type "file"
+    ancestor_name "bar"
+ ancestor_file_id [fc8a40f0b775e86503c7522399f309f6ac298348]
+        left_name "bar"
+     left_file_id [bf227d19bccee7740bb58219910ff0930b6200c1]
+       right_name "bar"
+    right_file_id [5fd4e3cf64e24e969cfcd2380cf244aee9e52d5d]
+resolved_internal 
+
+         conflict content
+        node_type "file"
+    ancestor_name "baz"
+ ancestor_file_id [ae708173915e11248629c18d16c96c3a34f87d16]
+        left_name "baz"
+     left_file_id [c438704db55b0d6f819e7e79c1622e5d757b926b]
+       right_name "baz"
+    right_file_id [f0ef173c31428d85dcca6399de12c6352f8b72b3]
+resolved_internal 
+
+        conflict content
+       node_type "file"
+   ancestor_name "foo"
+ancestor_file_id [0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33]
+       left_name "foo"
+    left_file_id [841e3d2ada1a56123f9efe9db0d0c045ff9e6d8f]
+      right_name "foo"
+   right_file_id [3506995775abf41d3cdeb1e0417bdd3bcf059395]
+resolved_user "foo"

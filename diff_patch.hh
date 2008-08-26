@@ -1,6 +1,7 @@
 #ifndef __DIFF_PATCH_HH__
 #define __DIFF_PATCH_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -179,7 +180,21 @@ struct content_merger
       adaptor(adaptor)
   {}
 
-  // merge3 on a file (line by line)
+  // Attempt merge3 on a file (line by line). Return true and valid data if
+  // it would succeed; false and invalid data otherwise.
+  bool attempt_auto_merge(file_path const & anc_path, // inputs
+                          file_path const & left_path,
+                          file_path const & right_path,
+                          file_id const & ancestor_id,
+                          file_id const & left_id,
+                          file_id const & right_id,
+                          file_data & left_data, // outputs
+                          file_data & right_data,
+                          file_data & merge_data);
+
+  // Attempt merge3 on a file (line by line). If it succeeded, store results
+  // in database and return true and valid merged_id; return false
+  // otherwise.
   bool try_auto_merge(file_path const & anc_path,
                       file_path const & left_path,
                       file_path const & right_path,

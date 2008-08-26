@@ -143,7 +143,8 @@ CMD(update, "update", "", CMD_REF(workspace), "",
        "different revision, preserving uncommitted changes as it does so.  "
        "If a revision is given, update the workspace to that revision.  "
        "If not, update the workspace to the head of the branch."),
-    options::opts::branch | options::opts::revision)
+    options::opts::branch | options::opts::revision |
+    options::opts::resolve_conflicts_opts)
 {
   if (args.size() > 0)
     throw usage(execid);
@@ -281,8 +282,9 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   content_merge_workspace_adaptor wca(db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
+  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
   resolve_merge_conflicts(app.lua, *working_roster, chosen_roster,
-                          result, wca);
+                          result, wca, false);
 
   // Make sure it worked...
   I(result.is_clean());
@@ -297,7 +299,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   make_revision_for_workspace(chosen_rid, chosen_roster,
                               merged_roster, remaining);
 
-  // small race condition here...
+  // small race condition here... FIXME: what is it?
   work.put_work_rev(remaining);
   work.update_any_attrs(db);
   work.maybe_update_inodeprints(db);
@@ -355,7 +357,7 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
 
   revision_id merged;
   transaction_guard guard(project.db);
-  interactive_merge_and_store(lua, project.db, left, right, merged);
+  interactive_merge_and_store(lua, project.db, opts, left, right, merged);
 
   project.put_standard_certs_from_options(opts, lua, keys, merged, branch,
                                           utf8(log.str()));
@@ -375,7 +377,16 @@ typedef set<revision_id>::const_iterator rid_set_iter;
 static revpair
 find_heads_to_merge(database & db, set<revision_id> const heads)
 {
-  I(heads.size() > 2);
+  I(heads.size() >= 2);
+
+  if (heads.size() == 2)
+    {
+      rid_set_iter i = heads.begin();
+      revision_id left = *i++;
+      revision_id right = *i++;
+      return revpair(left, right);
+    };
+
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
 
@@ -417,7 +428,8 @@ find_heads_to_merge(database & db, set<revision_id> const heads)
 CMD(merge, "merge", "", CMD_REF(tree), "",
     N_("Merges unmerged heads of a branch"),
     "",
-    options::opts::branch | options::opts::date | options::opts::author)
+    options::opts::branch | options::opts::date | options::opts::author |
+    options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -448,6 +460,12 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
   size_t pass = 1, todo = heads.size() - 1;
 
+  if (app.opts.resolve_conflicts_given || app.opts.resolve_conflicts_file_given)
+    {
+      // conflicts and resolutions only apply to first merge, so only do that one.
+      todo = 1;
+    }
+
   // If there are more than two heads to be merged, on each iteration we
   // merge a pair whose least common ancestor is not an ancestor of any
   // other pair's least common ancestor.  For example, if the history graph
@@ -460,7 +478,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   //        A   B
   //
   // A and B will be merged first, and then the result will be merged with C.
-  while (heads.size() > 2)
+  while (pass <= todo)
     {
       P(F("merge %d / %d:") % pass % todo);
       P(F("calculating best pair of heads to merge next"));
@@ -476,19 +494,9 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       pass++;
     }
 
-  // Last one.
-  I(pass == todo);
-  if (todo > 1)
-    P(F("merge %d / %d:") % pass % todo);
+  if (heads.size() > 1)
+    P(F("note: branch '%s' still has %s heads; run merge again") % app.opts.branchname % heads.size());
 
-  rid_set_iter i = heads.begin();
-  revision_id left = *i++;
-  revision_id right = *i++;
-  I(i == heads.end());
-
-  merge_two(app.opts, app.lua, project, keys,
-            left, right, app.opts.branchname, string("merge"),
-            std::cout, false);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -496,7 +504,8 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
+    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile |
+    options::opts::resolve_conflicts_opts)
 {
   if (args.size() != 2)
     throw usage(execid);
@@ -535,7 +544,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
+    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile |
+    options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -601,8 +611,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         db.get_roster(left_rid, left_roster, left_marking_map);
         db.get_roster(right_rid, right_roster, right_marking_map);
         db.get_uncommon_ancestors(left_rid, right_rid,
-                                      left_uncommon_ancestors,
-                                      right_uncommon_ancestors);
+                                  left_uncommon_ancestors,
+                                  right_uncommon_ancestors);
 
         if (!idx(args,2)().empty())
           {
@@ -637,8 +647,12 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor
           dba(db, left_rid, right_rid, left_marking_map, right_marking_map);
 
+        bool resolutions_given;
+
+        parse_resolve_conflicts_opts (app.opts, left_roster, right_roster, result, resolutions_given);
+
         resolve_merge_conflicts(app.lua, left_roster, right_roster,
-                                result, dba);
+                                result, dba, false);
 
         {
           dir_t moved_root = left_roster.root();
@@ -681,7 +695,8 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
        "pending changes in the current workspace.  Both OTHER-REVISION and "
        "the workspace's base revision will be recorded as parents on commit.  "
        "The workspace's selected branch is not changed."),
-    options::opts::none)
+    options::opts::none |
+    options::opts::resolve_conflicts_opts)
 {
   revision_id left_id, right_id;
   cached_roster left, right;
@@ -752,7 +767,8 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   content_merge_workspace_adaptor wca(db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca);
+  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
+  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca, false);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -789,7 +805,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
     N_("Merges two explicitly given revisions"),
     N_("The results of the merge are placed on the branch specified by "
        "DEST-BRANCH."),
-    options::opts::date | options::opts::author)
+    options::opts::date | options::opts::author |
+    options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -832,7 +849,12 @@ namespace
 }
 
 static void
-show_conflicts_core (database & db, revision_id const & l_id, revision_id const & r_id, bool const basic_io, std::ostream & output)
+show_conflicts_core (database & db,
+                     lua_hooks & lua,
+                     revision_id const & l_id,
+                     revision_id const & r_id,
+                     bool const basic_io,
+                     std::ostream & output)
 {
   N(!is_ancestor(db, l_id, r_id),
     F("%s is an ancestor of %s; no merge is needed.")
@@ -907,7 +929,7 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       result.report_duplicate_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
 
       result.report_attribute_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
-      result.report_file_content_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(lua, *l_roster, *r_roster, adaptor, basic_io, output);
     }
 }
 
@@ -926,7 +948,7 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
 
-  show_conflicts_core(db, l_id, r_id, false, std::cout);
+  show_conflicts_core(db, app.lua, l_id, r_id, false, std::cout);
 }
 
 // Name: show_conflicts
@@ -968,19 +990,9 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
       N(heads.size() >= 2,
         F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
 
-      if (heads.size() == 2)
-        {
-          set<revision_id>::const_iterator i = heads.begin();
-          l_id = *i;
-          ++i;
-          r_id = *i;
-        }
-      else
-        {
-          revpair p = find_heads_to_merge (db, heads);
-          l_id = p.first;
-          r_id = p.second;
-        }
+      revpair p = find_heads_to_merge (db, heads);
+      l_id = p.first;
+      r_id = p.second;
     }
   else if (args.size() == 2)
     {
@@ -991,7 +1003,7 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
   else
     N(false, F("wrong argument count"));
 
-  show_conflicts_core(db, l_id, r_id, true, output);
+  show_conflicts_core(db, app.lua, l_id, r_id, true, output);
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
@@ -1005,7 +1017,8 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
        "compared to its parent.\n"
        "If two revisions are given, applies the changes made to get from the "
        "first revision to the second."),
-    options::opts::revision | options::opts::depth | options::opts::exclude)
+    options::opts::revision | options::opts::depth | options::opts::exclude |
+    options::opts::resolve_conflicts_opts)
 {
   database db(app);
   workspace work(app);
@@ -1135,8 +1148,9 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // to_roster is not fetched from the db which does not have temporary nids
   wca.cache_roster(to_rid, to_roster);
 
+  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
   resolve_merge_conflicts(app.lua, *working_roster, *to_roster,
-                          result, wca);
+                          result, wca, false);
 
   I(result.is_clean());
   // temporary node ids may appear

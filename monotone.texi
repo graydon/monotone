@@ -3019,6 +3019,33 @@ which would be encountered by the database merge commands.
 Unfortunately, these commands can't yet list conflicts between a
 database revision and the current workspace.
 
+All merging commands accept options that specify conflict resolutions:
+@table @command
+@item --resolve-conflicts=@var{conflict resolution}
+@item --resolve-conflicts-file=@var{filename}
+@end table
+
+For @command{--resolve-conflicts-file}, the file must contain the output
+of @command{automate show_conflicts}, with conflict resolutions
+appended to each stanza. @file{_MTN/conflicts} is a good place to put
+the file.
+
+For @command{--resolve-conflicts}, a single conflict resolution is given
+in the string; it has the same format as the conflict resolutions in
+the file, and must be applicable to all conflicts in the merge. This
+is most usefull when there is a single conflict.
+
+The @command{merge} command normally will perform as many merges as
+necessary to merge all current heads of a branch. However, when
+@command{--resolve-conflicts} or @command{--resolve-conflicts-file} is given,
+the conflicts and their resolutions apply only to the first merge, so
+the subsequent merges are not done; the @command{merge} command must
+be repeated, possibly with new conflicts and resolutions, to merge the
+remaining heads.
+
+The possible conflict resolutions are discussed with each conflict in
+the following sections.
+
 @subsection Conflict Types
 
 Monotone versions both files and directories explicitly and it tracks
@@ -8606,9 +8633,14 @@ be chosen by the @command{merge} command for the current branch. If no
 workspace is present, the branch may be given by the @var{--branch}
 option.
 
-@item Added in:
+@item Changes:
 
-7.1
+@itemize
+@item
+FIXME_RESOLVE_CONFLICTS: -- added default resolution for file content conflicts
+@item
+7.1 -- initial
+@end itemize
 
 @item Purpose:
 
@@ -8732,14 +8764,15 @@ ancestor_name "bar"
 File content changed (this may be resolvable by the internal line
 merger), file also renamed:
 @verbatim
-        conflict content
-       node_type "file"
-   ancestor_name "bar"
-ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
-       left_name "bar"
-    left_file_id [08cd878106a93ce2ef036a32499c1432adb3ee0d]
-      right_name "bar"
-   right_file_id [0cf419dd93d38b2daaaf1f5e0f3ec647745b9690]
+         conflict content
+        node_type "file"
+    ancestor_name "bar"
+ ancestor_file_id [f0ef49fe92167fe2a086588019ffcff7ea561786]
+        left_name "bar"
+     left_file_id [08cd878106a93ce2ef036a32499c1432adb3ee0d]
+       right_name "bar"
+    right_file_id [0cf419dd93d38b2daaaf1f5e0f3ec647745b9690]
+resolved_internal
 
         conflict content
        node_type "file"
@@ -8750,6 +8783,10 @@ ancestor_file_id [50bf338804db2685a575124c8c8371d06b65c523]
       right_name "baz"
    right_file_id [b966b2d35b99e456cb0c55e4573ef0b1b155b4a9]
 @end verbatim
+@code{resolved_internal} is a conflict resolution; see @ref{Merge
+Conflicts}. If the file contents in the two revs can be successfully
+merged by the internal line merger, @code{resolved_internal} is
+output.
 
 File added and/or renamed:
 @verbatim
