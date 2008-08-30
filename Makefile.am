@@ -344,7 +344,7 @@ bin_PROGRAMS = mtn
 noinst_PROGRAMS = txt2c
 EXTRA_PROGRAMS =
 
-bin_SCRIPTS = mtnopt
+dist_bin_SCRIPTS = mtnopt
 
 mtn_SOURCES = $(MOST_SOURCES) monotone.cc
 nodist_mtn_SOURCES = std_hooks.c schema.c
