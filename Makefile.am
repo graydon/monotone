@@ -666,7 +666,8 @@ mostlyclean-local:
 
 DISTCLEANFILES = mt-stdint.h xgettext.opts pch-build.hh.gch.dep	\
 	run_tester_tests run_unit_tests run_lua_tests		\
-	tester_tests.status unit_tests.status lua_tests.status
+	tester_tests.status unit_tests.status lua_tests.status  \
+	mtnopt
 
 # distcheck stuff
 
