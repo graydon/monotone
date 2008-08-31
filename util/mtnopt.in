@@ -38,10 +38,13 @@ while [ ! $# = 0 ]; do
 	-v)
 	    values_only=true
 	    ;;
-	-h)
+	-h|--help)
 	    usage
-	    exit 2
+	    exit 0
 	    ;;
+	--version)
+	    echo "mtnopt from monotone @PACKAGE_VERSION@"
+	    exit 0
     esac
     shift
 done

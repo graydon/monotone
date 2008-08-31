@@ -2,5 +2,5 @@ If you've downloaded a release, see INSTALL for installation
 instructions.  If you've checked this out, the generated files are not
 included, and you must use "autoreconf --install" to create them.
 
-"make html" for docs, or read the .info file and / or man page.
+"make html" for docs, or read the .info file.
 

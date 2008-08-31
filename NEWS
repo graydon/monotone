@@ -4,57 +4,73 @@
 
         Changes
 
-        - mtn clone now takes a branch argument rather than a branch option
-          which is more what people expect given the the fact that
-          mtn push/pull/sync do not use a branch option either
+        - 'mtn clone' now takes a branch argument rather than a branch
+          option which is more what people expect given the fact that
+          mtn push/pull/sync do not use a branch option either.
 
-        - mtn automate inventory will show the birth revision for any file
-          that has been committed.
+        - 'mtn automate inventory' will show the birth revision for
+          any file that has been committed.
 
         Bugs fixed
 
-        - If the options --db or --keydir were previously specified for a
-          command which was executed inside a workspace and one or both
-          option arguments were invalid (f.e. invalid paths), they were
-          still written to _MTN/options of the particular workspace.
-          This lead to errors on any subsequent command which used these
+        - If the options '--db' or '--keydir' were previously
+          specified for a command which was executed inside a
+          workspace and one or both option arguments were invalid
+          (f.e. invalid paths), they were still written to
+          _MTN/options of the particular workspace.  This lead to
+          errors on any subsequent command which used these
           options. This bug is fixed in so far that basic file type
-          checks are applied on both options, so its no longer possible
-          to set non-existing paths accidently or use a path to a directory
-          as option argument for --db.
+          checks are applied on both options, so its no longer
+          possible to set non-existing paths accidentally or use a
+          path to a directory as option argument for '--db'.
 
-        - If a key clash occurs on a netsync operation, i.e. two different
-          keys with the same key id are encountered, mtn now fails cleanly
-          and provides further guidance how to proceed.
+        - If a key clash occurs on a netsync operation, i.e. two
+          different keys with the same key id are encountered, mtn now
+          fails cleanly and provides further guidance how to proceed.
 
         - It was previously not possible to clone a branch / database
           anonymously; this has been fixed.
 
-        - automate identified was broken in 0.40 when used over stdio, i.e.
-          the output of the command did not get into the right output
-          channel; this has been fixed
+        - If the client tries to use an unknown key, try to fall back
+          to anonymous pull instead of failing immediately.
 
-        - mtn would produce a warning if executed from the root
+        - 'mtn automate identify' was broken in 0.40 when used over
+          stdio, i.e. the output of the command did not get into the
+          right output channel; this has been fixed.
+
+        - Monotone would produce a warning if executed from the root
           directory of a Windows drive; this has been fixed.
 
-        - the 'note_commit' hook now returns the new revision id 
-          hexencoded again - the bug was introduced in 0.40
+        - The 'note_commit' hook now returns the new revision id
+          hex-encoded again - the bug was introduced in 0.40.
 
         New features
+
+        - New 'mtn suspend' command which lets you mark certain
+          revisions and thus whole branches as discontinued
+          ("suspended") by attaching a special suspend cert to the
+          revision. All relevant mtn commands (f.e. mtn heads,
+          mtn ls branches) honor this cert by default. To ignore it,
+          simply add '--ignore-suspend-certs' to your command line.
+          Suspended revisions can have children, which are in no
+          way affected by the cert of their parent, i.e. suspended
+          development lines or branches can simply be "unsuspended"
+          by committing to them.
+          This feature was already added in monotone 0.37, but was
+          forgotten to be mentioned in NEWS back then.
 
         - New 'get_default_command_options' lua hook which lets you
           specify default options for a given, triggered command.
           Useful f.e. if you always want to have your 'mtn add'
-          command executed with '-R' / '--recursive'
- 
-        - Add 'automate show_conflicts' command
+          command executed with '-R' / '--recursive'.
 
-        - Add 'automate get_workspace_root' command
+        - Add 'automate show_conflicts' command.
+
+        - Add 'automate get_workspace_root' command.
 
         - Add Lua hooks 'note_netsync_revision_sent',
-          'note_netsync_cert_sent', 'note_netsync_pubkey_sent'
-        
-        Internal
+          'note_netsync_cert_sent' and 'note_netsync_pubkey_sent'.
+
 
 Fri Apr 11 22:50:44 UTC 2008
 

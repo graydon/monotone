@@ -32,9 +32,9 @@ monotone_check_minimum_previous_version ()
 	echo "Cannot automatically upgrade from monotone version $2." >&2
 	echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
 	echo "information on manually upgrading your database." >&2
-	/bin/false
+	false
     else
-	/bin/true
+	true
     fi
 }
 
@@ -50,15 +50,15 @@ monotone_migrate ()
 	if $MTN --db=$MTN_DB db migrate --rcfile=$MTN_CONFDIR/hooks.lua \
 	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
 	    echo "Database successfully migrated." >&2
-	    /bin/true
+	    true
 	else
 	    echo "*** Error migrating database. ***" >&2
 	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
 	    echo "information on manually upgrading your database." >&2
-	    /bin/false
+	    false
 	fi
     else
-	/bin/true
+	true
     fi
 }
 
@@ -71,15 +71,15 @@ monotone_rosterify ()
 	if $MTN --db=$MTN_DB db rosterify --rcfile=$MTN_CONFDIR/hooks.lua \
 	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
 	    echo "Database successfully rosterified." >&2
-	    /bin/true
+	    true
 	else
 	    echo "*** Error rosterifying database. ***" >&2
 	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
 	    echo "information on manually upgrading your database." >&2
-	    /bin/false
+	    false
 	fi
     else
-	/bin/true
+	true
     fi
 }
 
@@ -92,15 +92,15 @@ monotone_regenerate_caches ()
 	if $MTN --db=$MTN_DB db regenerate_caches --rcfile=$MTN_CONFDIR/hooks.lua \
 	    --norc --keydir=$MTN_KEYDIR --confdir=$MTN_CONFDIR >&2; then
 	    echo "Caches successfully regenerated." >&2
-	    /bin/true
+	    true
 	else
 	    echo "*** Error regenerating roster. ***" >&2
 	    echo "Please see UPGRADE and README.changesets in /usr/share/doc/monotone for" >&2
 	    echo "information on manually upgrading your database." >&2
-	    /bin/false
+	    false
 	fi
     else
-	/bin/true
+	true
     fi
 }
 
