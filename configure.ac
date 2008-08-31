@@ -7,6 +7,7 @@ AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
 AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([util/mtnopt])
 
 # Checks for programs.
 dnl Note: AC_PROG_CC is implied by AM_PROG_CC_C_O and in any case has
