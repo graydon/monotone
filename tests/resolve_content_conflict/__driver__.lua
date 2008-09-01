@@ -17,7 +17,7 @@ revert_to(base)
 
 writefile("foo", "foo\nsecond\nrevision")
 writefile("bar", "bar\none\ntwo\nthree\nfour")
-writefile("baz", "baz\naaa\nbbb\nCCC")
+writefile("baz", "baz\nAaa\nbbb\nCCC")
 commit("testbranch", "second")
 second = base_revision()
 
@@ -26,7 +26,11 @@ canonicalize("stdout")
 check(samefilestd("conflicts-1", "stdout"))
 
 writefile("foo", "foo\nmerged\nrevision")
+mkdir("_MTN/result")
+writefile("_MTN/result/baz", "baz\nAaa\nBbb\nCcc")
 
+-- foo and baz can't be handled by the internal line merger. We
+-- specify one user file in _MTN, one out, to ensure mtn handles both.
 check(get("resolve-conflicts-1", "_MTN/conflicts"))
 check(mtn("merge", "--resolve-conflicts-file=_MTN/conflicts"), 0, nil, true)
 canonicalize("stderr")
@@ -38,5 +42,5 @@ check(samefilestd("update-1", "stderr"))
 
 check(readfile("foo") == "foo\nmerged\nrevision")
 check(readfile("bar") == "bar\nzero\none\ntwo\nthree\nfour\n")
-check(readfile("baz") == "baz\nAAA\nbbb\nCCC\n")
+check(readfile("baz") == "baz\nAaa\nBbb\nCcc")
 -- end of file

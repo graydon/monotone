@@ -121,14 +121,18 @@ struct file_content_conflict
 {
   node_id nid;
   file_id left, right;
-  std::pair<resolve_conflicts::resolution_t, file_path> resolution;
+  // The second item is a file path. We don't use type 'file_path' because
+  // that can't be in _MTN. We don't specify 'bookkeeping_path' because that
+  // _must_ be in _MTN. We want users to have a choice of workflow. This is
+  // local data only, so it is in system encoding.
+  std::pair<resolve_conflicts::resolution_t, std::string> resolution;
 
   file_content_conflict () :
     nid(the_null_node),
-    resolution(std::make_pair(resolve_conflicts::none, file_path())) {};
+    resolution(std::make_pair(resolve_conflicts::none, std::string())) {};
 
   file_content_conflict(node_id nid) :
-    nid(nid), resolution(std::make_pair(resolve_conflicts::none, file_path())) {};
+    nid(nid), resolution(std::make_pair(resolve_conflicts::none, std::string())) {};
 };
 
 template <> void dump(invalid_name_conflict const & conflict, std::string & out);

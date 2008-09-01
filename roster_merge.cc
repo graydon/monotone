@@ -507,7 +507,7 @@ put_content_conflict (basic_io::stanza & st,
           break;
 
         case resolve_conflicts::content_user:
-          st.push_file_pair(syms::resolved_user, conflict.resolution.second);
+          st.push_str_pair(syms::resolved_user, conflict.resolution.second);
           break;
 
         default:
@@ -1385,7 +1385,7 @@ roster_merge_result::report_file_content_conflicts(lua_hooks & lua,
           basic_io::stanza st;
 
           if (auto_merge_succeeds(lua, conflict, adaptor, left_roster, right_roster))
-            conflict.resolution = make_pair(resolve_conflicts::content_internal, file_path());
+            conflict.resolution = make_pair(resolve_conflicts::content_internal, std::string());
 
           st.push_str_pair(syms::conflict, syms::content);
           put_content_conflict (st, left_roster, right_roster, adaptor, conflict);
@@ -1505,14 +1505,15 @@ parse_duplicate_name_conflicts(basic_io::parser & pars,
             {
               conflict.left_resolution.first = resolve_conflicts::rename;
               pars.sym();
-              conflict.left_resolution.second = file_path_internal (pars.token);
+              // File path is specified by the user, so it's an external string.
+              conflict.left_resolution.second = file_path_external (utf8(pars.token));
               pars.str();
             }
           else if (pars.symp (syms::resolved_rename_right))
             {
               conflict.right_resolution.first = resolve_conflicts::rename;
               pars.sym();
-              conflict.right_resolution.second = file_path_internal (pars.token);
+              conflict.right_resolution.second = file_path_external (utf8(pars.token));
               pars.str();
             }
           else
@@ -1579,7 +1580,7 @@ parse_file_content_conflicts(basic_io::parser & pars,
             {
               conflict.resolution.first = resolve_conflicts::content_user;
               pars.sym();
-              conflict.resolution.second = file_path_internal (pars.token);
+              conflict.resolution.second = pars.token;
               pars.str();
             }
           else
@@ -1619,7 +1620,7 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.left_resolution.first  = resolve_conflicts::rename;
           pars.sym();
-          conflict.left_resolution.second = file_path_internal (pars.token);
+          conflict.left_resolution.second = file_path_external (utf8(pars.token));
           pars.str();
         }
       else if (pars.symp (syms::resolved_rename_right))
@@ -1631,7 +1632,7 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.right_resolution.first  = resolve_conflicts::rename;
           pars.sym();
-          conflict.right_resolution.second = file_path_internal (pars.token);
+          conflict.right_resolution.second = file_path_external (utf8(pars.token));
           pars.str();
         }
       else if (pars.symp (syms::resolved_user))
@@ -1643,7 +1644,7 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.resolution.first  = resolve_conflicts::content_user;
           pars.sym();
-          conflict.resolution.second = file_path_internal (pars.token);
+          conflict.resolution.second = pars.token;
           pars.str();
         }
       else
@@ -1869,7 +1870,19 @@ roster_merge_result::resolve_file_content_conflicts(lua_hooks & lua,
               data result_raw_data;
               adaptor.get_version(conflict.left, left_data);
               adaptor.get_version(conflict.right, right_data);
-              read_data(conflict.resolution.second, result_raw_data);
+
+              // FIXME: there aught to be a simpler way to read an arbitrary file!
+              if (bookkeeping_path::external_string_is_bookkeeping_path(utf8(conflict.resolution.second)))
+                {
+                  bookkeeping_path p(conflict.resolution.second);
+                  read_data(p, result_raw_data);
+                }
+              else
+                {
+                  file_path p(file_path_external(utf8(conflict.resolution.second)));
+                  read_data(p, result_raw_data);
+                }
+
               result_data = file_data(result_raw_data);
               calculate_ident(result_data, result_id);
 
