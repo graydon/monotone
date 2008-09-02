@@ -217,6 +217,7 @@ namespace
 
   namespace syms
   {
+    symbol const ancestor("ancestor");
     symbol const ancestor_file_id("ancestor_file_id");
     symbol const ancestor_name("ancestor_name");
     symbol const attr_name("attr_name");
@@ -226,6 +227,7 @@ namespace
     symbol const directory_loop_created("directory_loop_created");
     symbol const duplicate_name("duplicate_name");
     symbol const invalid_name("invalid_name");
+    symbol const left("left");
     symbol const left_attr_state("left_attr_state");
     symbol const left_attr_value("left_attr_value");
     symbol const left_file_id("left_file_id");
@@ -240,6 +242,7 @@ namespace
     symbol const resolved_rename_left("resolved_rename_left");
     symbol const resolved_rename_right("resolved_rename_right");
     symbol const resolved_user("resolved_user");
+    symbol const right("right");
     symbol const right_attr_state("right_attr_state");
     symbol const right_attr_value("right_attr_value");
     symbol const right_file_id("right_file_id");
@@ -507,7 +510,7 @@ put_content_conflict (basic_io::stanza & st,
           break;
 
         case resolve_conflicts::content_user:
-          st.push_file_pair(syms::resolved_user, conflict.resolution.second);
+          st.push_str_pair(syms::resolved_user, conflict.resolution.second);
           break;
 
         default:
@@ -1385,7 +1388,7 @@ roster_merge_result::report_file_content_conflicts(lua_hooks & lua,
           basic_io::stanza st;
 
           if (auto_merge_succeeds(lua, conflict, adaptor, left_roster, right_roster))
-            conflict.resolution = make_pair(resolve_conflicts::content_internal, file_path());
+            conflict.resolution = make_pair(resolve_conflicts::content_internal, std::string());
 
           st.push_str_pair(syms::conflict, syms::content);
           put_content_conflict (st, left_roster, right_roster, adaptor, conflict);
@@ -1465,126 +1468,198 @@ namespace resolve_conflicts
   }
 }
 
+static char const * const conflicts_mismatch_msg = "conflicts file does not match current conflicts";
+static char const * const conflict_resolution_not_supported_msg = "%s is not a supported conflict resolution for %s";
+static char const * const conflict_extra = "extra chars at end of conflict";
+
 static void
-parse_duplicate_name_conflicts(basic_io::parser & pars,
-                               std::vector<duplicate_name_conflict> & conflicts,
-                               roster_t const & left_roster,
-                               roster_t const & right_roster)
+read_duplicate_name_conflict(basic_io::parser & pars,
+                             duplicate_name_conflict & conflict,
+                             roster_t const & left_roster,
+                             roster_t const & right_roster)
+{
+  string tmp;
+  string left_name, right_name;
+
+  // we don't care what type of file/dir these are; the right type will get
+  // written back out.
+  pars.esym(syms::left_type); pars.str(); 
+  pars.esym (syms::left_name); pars.str(left_name);
+  pars.esym(syms::left_file_id); pars.hex();
+  
+  pars.esym(syms::right_type); pars.str();
+  pars.esym (syms::right_name); pars.str(right_name);
+  pars.esym(syms::right_file_id); pars.hex();
+
+  conflict.left_nid = left_roster.get_node (file_path_internal (left_name))->self;
+  conflict.right_nid = right_roster.get_node (file_path_internal (right_name))->self;
+
+  // check for a resolution
+  while ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
+    {
+      if (pars.symp (syms::resolved_rename_left))
+        {
+          conflict.left_resolution.first = resolve_conflicts::rename;
+          pars.sym();
+          // File path is specified by the user, so it's an external string.
+          conflict.left_resolution.second = file_path_external (utf8(pars.token));
+          pars.str();
+        }
+      else if (pars.symp (syms::resolved_rename_right))
+        {
+          conflict.right_resolution.first = resolve_conflicts::rename;
+          pars.sym();
+          conflict.right_resolution.second = file_path_external (utf8(pars.token));
+          pars.str();
+        }
+      else
+        N(false, F(conflict_resolution_not_supported_msg) % pars.token % "duplicate_name");
+    }
+
+} // read_duplicate_name_conflict
+
+static void
+read_duplicate_name_conflicts(basic_io::parser & pars,
+                              std::vector<duplicate_name_conflict> & conflicts,
+                              roster_t const & left_roster,
+                              roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::duplicate_name))
+    {
+      duplicate_name_conflict conflict;
+
+      pars.sym();
+
+      read_duplicate_name_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+      
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_duplicate_name_conflicts
+
+static void
+validate_duplicate_name_conflicts(basic_io::parser & pars,
+                                  std::vector<duplicate_name_conflict> & conflicts,
+                                  roster_t const & left_roster,
+                                  roster_t const & right_roster)
 {
   for (std::vector<duplicate_name_conflict>::iterator i = conflicts.begin();
        i != conflicts.end();
        ++i)
     {
-      duplicate_name_conflict & conflict = *i;
+      duplicate_name_conflict & merge_conflict = *i;
+      duplicate_name_conflict file_conflict;
 
       pars.esym(syms::duplicate_name);
 
-      node_id left_nid, right_nid;
-      string left_name, right_name;
+      read_duplicate_name_conflict(pars, file_conflict, left_roster, right_roster);
 
-      pars.esym(syms::left_type); pars.str();
-      pars.esym (syms::left_name); pars.str(left_name);
-      pars.esym(syms::left_file_id); pars.hex();
+      // Note that we do not confirm the file ids.
+      N(merge_conflict.left_nid == file_conflict.left_nid &&
+        merge_conflict.right_nid == file_conflict.right_nid,
+        F(conflicts_mismatch_msg));
 
-      pars.esym(syms::right_type); pars.str();
-      pars.esym (syms::right_name); pars.str(right_name);
-      pars.esym(syms::right_file_id); pars.hex();
-
-      left_nid = left_roster.get_node (file_path_internal (left_name))->self;
-      right_nid = right_roster.get_node (file_path_internal (right_name))->self;
-
-      // Note that we cannot confirm the file ids.
-      N(left_nid == conflict.left_nid && right_nid == conflict.right_nid,
-        F("conflicts file does not match current conflicts: (duplicate_name, left %s, right %s")
-        % left_name % right_name);
-
-      // check for a resolution
-      while ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
-        {
-          if (pars.symp (syms::resolved_rename_left))
-            {
-              conflict.left_resolution.first = resolve_conflicts::rename;
-              pars.sym();
-              conflict.left_resolution.second = file_path_internal (pars.token);
-              pars.str();
-            }
-          else if (pars.symp (syms::resolved_rename_right))
-            {
-              conflict.right_resolution.first = resolve_conflicts::rename;
-              pars.sym();
-              conflict.right_resolution.second = file_path_internal (pars.token);
-              pars.str();
-            }
-          else
-            N(false, F("%s is not a supported conflict resolution for %s") % pars.token % "duplicate_name");
-        }
-
+      merge_conflict.left_resolution = file_conflict.left_resolution;
+      merge_conflict.right_resolution = file_conflict.right_resolution;
+      
       if (pars.tok.in.lookahead != EOF)
         pars.esym (syms::conflict);
       else
         {
           std::vector<duplicate_name_conflict>::iterator tmp = i;
-          N(++tmp == conflicts.end(), F("conflicts file does not match current conflicts"));
+          N(++tmp == conflicts.end(), F(conflicts_mismatch_msg));
         }
     }
-} // parse_duplicate_name_conflicts
+} // validate_duplicate_name_conflicts
 
 static void
-parse_file_content_conflicts(basic_io::parser & pars,
-                             std::vector<file_content_conflict> & conflicts,
-                             roster_t const & left_roster,
-                             roster_t const & right_roster)
+read_file_content_conflict(basic_io::parser & pars,
+                           file_content_conflict & conflict,
+                           roster_t const & left_roster,
+                           roster_t const & right_roster)
+{
+  string tmp;
+  string left_name, right_name, result_name;
+
+  pars.esym(syms::node_type); pars.str(tmp); I(tmp == "file");
+
+  pars.esym (syms::ancestor_name); pars.str();
+  pars.esym (syms::ancestor_file_id); pars.hex();
+
+  pars.esym (syms::left_name); pars.str(left_name);
+  pars.esym(syms::left_file_id); pars.hex();
+
+  pars.esym (syms::right_name); pars.str(right_name);
+  pars.esym(syms::right_file_id); pars.hex();
+
+  conflict.nid = left_roster.get_node (file_path_internal (left_name))->self;
+  I(conflict.nid = right_roster.get_node (file_path_internal (right_name))->self);
+
+  // check for a resolution
+  if ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
+    {
+      if (pars.symp (syms::resolved_internal))
+        {
+          conflict.resolution.first = resolve_conflicts::content_internal;
+          pars.sym();
+        }
+      else if (pars.symp (syms::resolved_user))
+        {
+          conflict.resolution.first = resolve_conflicts::content_user;
+          pars.sym();
+          conflict.resolution.second = pars.token;
+          pars.str();
+        }
+      else
+        N(false, F(conflict_resolution_not_supported_msg) % pars.token % "file_content");
+    }
+
+} // read_file_content_conflict
+
+static void
+read_file_content_conflicts(basic_io::parser & pars,
+                            std::vector<file_content_conflict> & conflicts,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::content))
+    {
+      file_content_conflict conflict;
+
+      pars.sym();
+
+      read_file_content_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_file_content_conflicts
+
+static void
+validate_file_content_conflicts(basic_io::parser & pars,
+                                std::vector<file_content_conflict> & conflicts,
+                                roster_t const & left_roster,
+                                roster_t const & right_roster)
 {
   for (std::vector<file_content_conflict>::iterator i = conflicts.begin();
        i != conflicts.end();
        ++i)
     {
-      string tmp;
-      node_id left_nid, right_nid;
-      string left_name, right_name, result_name;
-
-      file_content_conflict & conflict = *i;
+      file_content_conflict & merge_conflict = *i;
+      file_content_conflict file_conflict;
 
       pars.esym(syms::content);
 
-      pars.esym(syms::node_type);
-      pars.str(tmp);
-      I(tmp == "file");
+      read_file_content_conflict(pars, file_conflict, left_roster, right_roster);
 
-      pars.esym (syms::ancestor_name); pars.str();
-      pars.esym (syms::ancestor_file_id); pars.hex();
+      N(merge_conflict.nid == file_conflict.nid,
+        F("conflicts_mismatch_msg"));
 
-      pars.esym (syms::left_name); pars.str(left_name);
-      pars.esym(syms::left_file_id); pars.hex();
-
-      pars.esym (syms::right_name); pars.str(right_name);
-      pars.esym(syms::right_file_id); pars.hex();
-
-      left_nid = left_roster.get_node (file_path_internal (left_name))->self;
-      right_nid = right_roster.get_node (file_path_internal (right_name))->self;
-
-      N(left_nid == conflict.nid & right_nid == conflict.nid,
-        F("conflicts file does not match current conflicts: (file_content, left %s, right %s")
-        % left_name % right_name);
-
-      // check for a resolution
-      if ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
-        {
-          if (pars.symp (syms::resolved_internal))
-            {
-              conflict.resolution.first = resolve_conflicts::content_internal;
-              pars.sym();
-            }
-          else if (pars.symp (syms::resolved_user))
-            {
-              conflict.resolution.first = resolve_conflicts::content_user;
-              pars.sym();
-              conflict.resolution.second = file_path_internal (pars.token);
-              pars.str();
-            }
-          else
-            N(false, F("%s is not a supported conflict resolution for %s") % pars.token % "file_content");
-        }
+      merge_conflict.resolution = file_conflict.resolution;
 
       if (pars.tok.in.lookahead != EOF)
         pars.esym (syms::conflict);
@@ -1594,7 +1669,197 @@ parse_file_content_conflicts(basic_io::parser & pars,
           N(++tmp == conflicts.end(), F("conflicts file does not match current conflicts"));
         }
     }
-} // parse_file_content_conflicts
+} // validate_file_content_conflicts
+
+static void
+read_conflict_file_core(basic_io::parser pars,
+                        roster_t const & left_roster,
+                        roster_t const & right_roster,
+                        roster_merge_result & result,
+                        bool validate)
+{
+  pars.esym (syms::conflict);
+
+  // If we are validating, there must be one stanza in the file for each
+  // conflict; otherwise something has changed since the file was
+  // regenerated. So we go thru the conflicts in the same order they are
+  // generated; see merge.cc resolve_merge_conflicts.
+
+  // resolve_merge_conflicts should not call us if there are any conflicts
+  // for which we don't currently support resolutions; assert that.
+
+  I(!result.missing_root_dir);
+  I(result.invalid_name_conflicts.size() == 0);
+  I(result.directory_loop_conflicts.size() == 0);
+  I(result.orphaned_node_conflicts.size() == 0);
+  I(result.multiple_name_conflicts.size() == 0);
+  I(result.attribute_conflicts.size() == 0);
+
+  // These are the ones we know how to resolve.
+
+  if (validate)
+    {
+      validate_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
+      validate_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
+    }
+  else
+    {
+      read_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
+      read_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
+    }
+
+  N(pars.tok.in.lookahead == EOF, F("extra data in file"));
+} // read_conflict_file_core
+
+void
+roster_merge_result::read_conflict_file(database & db,
+                                        std::string const file_name,
+                                        revision_id & ancestor_rid,
+                                        revision_id & left_rid,
+                                        revision_id & right_rid,
+                                        roster_t & left_roster,
+                                        marking_map & left_marking,
+                                        roster_t & right_roster,
+                                        marking_map & right_marking)
+{
+  data dat;
+
+  read_data (system_path(utf8(file_name)), dat);
+
+  basic_io::input_source src(dat(), file_name);
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+  std::string temp;
+  
+  // Read left, right, ancestor.
+  pars.esym(syms::left);
+  pars.hex(temp);
+  left_rid = revision_id(decode_hexenc(temp));
+  pars.esym(syms::right);
+  pars.hex(temp);
+  right_rid = revision_id(decode_hexenc(temp));
+  pars.esym(syms::ancestor);
+  pars.hex(temp);
+  ancestor_rid = revision_id(decode_hexenc(temp));
+
+  db.get_roster(left_rid, left_roster, left_marking);
+  db.get_roster(right_rid, right_roster, right_marking);
+  
+  read_conflict_file_core(pars, left_roster, right_roster, *this, false);
+  
+} // roster_merge_result::read_conflict_file
+
+void
+roster_merge_result::set_first_conflict(std::string conflict)
+{
+  basic_io::input_source src(conflict, "resolve_conflicts string");
+  basic_io::tokenizer tok(src);
+  basic_io::parser pars(tok);
+
+  // To find the first conflict, go thru the conflicts we know how to
+  // resolve in the same order we output them.
+  for (std::vector<duplicate_name_conflict>::iterator i = duplicate_name_conflicts.begin();
+       i != duplicate_name_conflicts.end();
+       ++i)
+    {
+      duplicate_name_conflict & conflict = *i;
+
+      if (conflict.left_resolution.first == resolve_conflicts::none)
+        {
+          for (int i = 1; i <= 2; i++)
+            {
+              if (pars.symp (syms::resolved_rename_left))
+                {                  
+                  conflict.left_resolution.first  = resolve_conflicts::rename;
+                  pars.sym();
+                  conflict.left_resolution.second = file_path_external (utf8(pars.token));
+                  pars.str();
+                }
+              else if (pars.symp (syms::resolved_rename_right))
+                {
+                  conflict.right_resolution.first  = resolve_conflicts::rename;
+                  pars.sym();
+                  conflict.right_resolution.second = file_path_external (utf8(pars.token));
+                  pars.str();
+                }
+              else
+                N(false, F(conflict_resolution_not_supported_msg) % pars.token % "duplicate_name");
+              }
+
+          N(pars.tok.in.lookahead == EOF, F(conflict_extra));
+          return;
+        }
+    }
+
+  for (std::vector<file_content_conflict>::iterator i = file_content_conflicts.begin();
+       i != file_content_conflicts.end();
+       ++i)
+    {
+      file_content_conflict & conflict = *i;
+
+      if (conflict.resolution.first == resolve_conflicts::none)
+        {
+          if (pars.symp (syms::resolved_user))
+            {
+              conflict.resolution.first  = resolve_conflicts::content_user;
+              pars.sym();
+              conflict.resolution.second = pars.token;
+              pars.str();
+            }
+          else
+            {
+              // We don't allow the user to specify 'resolved_internal'; that
+              // is only done by automate show_conflicts.
+              N(false, F(conflict_resolution_not_supported_msg) % pars.token % "file_content");
+            }
+          
+          N(pars.tok.in.lookahead == EOF, F(conflict_extra));
+          return;
+        }
+    }
+
+  N(false, F("no resolvable yet unresolved conflicts"));
+  
+} // roster_merge_result::set_first_conflict
+
+
+void
+roster_merge_result::write_conflict_file(database & db,
+                                         lua_hooks & lua,
+                                         std::string file_name,
+                                         revision_id const & ancestor_rid,
+                                         revision_id const & left_rid,
+                                         revision_id const & right_rid,
+                                         boost::shared_ptr<roster_t> left_roster,
+                                         marking_map const & left_marking,
+                                         boost::shared_ptr<roster_t> right_roster,
+                                         marking_map const & right_marking)
+{
+  std::ostringstream output;
+
+  content_merge_database_adaptor adaptor(db, left_rid, right_rid,
+                                         left_marking, right_marking);
+
+  adaptor.cache_roster (left_rid, left_roster);
+  adaptor.cache_roster (right_rid, right_roster);
+  {
+    // match format in cmd_merging.cc show_conflicts_core
+    basic_io::stanza st;
+    basic_io::printer pr;
+    st.push_binary_pair(syms::left, left_rid.inner());
+    st.push_binary_pair(syms::right, right_rid.inner());
+    st.push_binary_pair(syms::ancestor, adaptor.lca.inner());
+    pr.print_stanza(st);
+    output.write(pr.buf.data(), pr.buf.size());
+  }
+
+  report_duplicate_name_conflicts(*left_roster, *right_roster, adaptor, false, output);
+  report_file_content_conflicts(lua, *left_roster, *right_roster, adaptor, false, output);
+
+  data dat(output.str());
+  write_data(system_path(file_name), dat, system_path("_MTN"));
+  
+} // roster_merge_result::write_conflict_file
 
 static void
 parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & result)
@@ -1619,7 +1884,7 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.left_resolution.first  = resolve_conflicts::rename;
           pars.sym();
-          conflict.left_resolution.second = file_path_internal (pars.token);
+          conflict.left_resolution.second = file_path_external (utf8(pars.token));
           pars.str();
         }
       else if (pars.symp (syms::resolved_rename_right))
@@ -1631,7 +1896,7 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.right_resolution.first  = resolve_conflicts::rename;
           pars.sym();
-          conflict.right_resolution.second = file_path_internal (pars.token);
+          conflict.right_resolution.second = file_path_external (utf8(pars.token));
           pars.str();
         }
       else if (pars.symp (syms::resolved_user))
@@ -1643,14 +1908,14 @@ parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & resul
 
           conflict.resolution.first  = resolve_conflicts::content_user;
           pars.sym();
-          conflict.resolution.second = file_path_internal (pars.token);
+          conflict.resolution.second = pars.token;
           pars.str();
         }
       else
         N(false, F("%s is not a supported conflict resolution") % pars.token);
 
     } // while
-}
+} // parse_resolve_conflicts_str
 
 void
 parse_resolve_conflicts_opts (options const & opts,
@@ -1678,10 +1943,7 @@ parse_resolve_conflicts_opts (options const & opts,
 
       data dat;
 
-      if (opts.resolve_conflicts_file().substr(0, 4) == "_MTN")
-        read_data (bookkeeping_path(opts.resolve_conflicts_file()), dat);
-      else
-        read_data (file_path_external(opts.resolve_conflicts_file), dat);
+      read_data (system_path(opts.resolve_conflicts_file()), dat);
 
       basic_io::input_source src(dat(), opts.resolve_conflicts_file());
       basic_io::tokenizer tok(src);
@@ -1694,33 +1956,8 @@ parse_resolve_conflicts_opts (options const & opts,
           pars.sym();
           pars.hex();
         }
-
-      // Get into the first conflict
-      pars.esym (syms::conflict);
-
-      // There must be one stanza in the file for each conflict; otherwise
-      // something has changed since the file was regenerated. So we go thru
-      // the conflicts in the same order they are generated; see merge.cc
-      // resolve_merge_conflicts.
-
-      // resolve_merge_conflicts should not call us if there are any
-      // conflicts for which we don't currently support resolutions; assert
-      // that
-
-      I(!result.missing_root_dir);
-      I(result.invalid_name_conflicts.size() == 0);
-      I(result.directory_loop_conflicts.size() == 0);
-      I(result.orphaned_node_conflicts.size() == 0);
-      I(result.multiple_name_conflicts.size() == 0);
-      I(result.attribute_conflicts.size() == 0);
-
-      // These are the ones we know how to resolve.
-
-      parse_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
-      parse_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
-
-      if (src.lookahead != EOF)
-        pars.err("extra conflicts in file");
+      
+      read_conflict_file_core (pars, left_roster, right_roster, result, true);
     }
   else
     resolutions_given = false;
@@ -1869,7 +2106,9 @@ roster_merge_result::resolve_file_content_conflicts(lua_hooks & lua,
               data result_raw_data;
               adaptor.get_version(conflict.left, left_data);
               adaptor.get_version(conflict.right, right_data);
-              read_data(conflict.resolution.second, result_raw_data);
+
+              read_data(system_path(conflict.resolution.second), result_raw_data);
+
               result_data = file_data(result_raw_data);
               calculate_ident(result_data, result_id);
 

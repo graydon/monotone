@@ -143,8 +143,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
        "different revision, preserving uncommitted changes as it does so.  "
        "If a revision is given, update the workspace to that revision.  "
        "If not, update the workspace to the head of the branch."),
-    options::opts::branch | options::opts::revision |
-    options::opts::resolve_conflicts_opts)
+    options::opts::branch | options::opts::revision)
 {
   if (args.size() > 0)
     throw usage(execid);
@@ -282,7 +281,6 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   content_merge_workspace_adaptor wca(db, old_rid, old_roster,
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
-  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
   resolve_merge_conflicts(app.lua, *working_roster, chosen_roster,
                           result, wca, false);
 
@@ -652,7 +650,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         parse_resolve_conflicts_opts (app.opts, left_roster, right_roster, result, resolutions_given);
 
         resolve_merge_conflicts(app.lua, left_roster, right_roster,
-                                result, dba, false);
+                                result, dba, resolutions_given);
 
         {
           dir_t moved_root = left_roster.root();
@@ -695,8 +693,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
        "pending changes in the current workspace.  Both OTHER-REVISION and "
        "the workspace's base revision will be recorded as parents on commit.  "
        "The workspace's selected branch is not changed."),
-    options::opts::none |
-    options::opts::resolve_conflicts_opts)
+    options::opts::none)
 {
   revision_id left_id, right_id;
   cached_roster left, right;
@@ -767,7 +764,6 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   content_merge_workspace_adaptor wca(db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
   resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca, false);
 
   // Make sure it worked...
@@ -874,8 +870,8 @@ show_conflicts_core (database & db,
                *r_roster, r_marking, r_uncommon_ancestors,
                result);
 
-  // note that left and right are in the order specified on the command line
-  // they are not in lexical order as they are with other merge commands so
+  // Note that left and right are in the order specified on the command line.
+  // They are not in lexical order as they are with other merge commands so
   // they may appear swapped here. The user may have done that deliberately,
   // especially via automate, so we don't sort them here.
 
@@ -1006,6 +1002,85 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
   show_conflicts_core(db, app.lua, l_id, r_id, true, output);
 }
 
+CMD(resolve_conflict, "resolve_conflict", "", CMD_REF(tree),
+    N_("CONFLICTS-FILE CONFLICT"),
+    N_("Set the resolution for the first conflict in the conflicts file."),
+    "",
+    options::opts::none)
+{
+  database db(app);
+  roster_merge_result roster;
+  revision_id ancestor_rid, left_rid, right_rid;
+  boost::shared_ptr<roster_t> left_roster = shared_ptr<roster_t>(new roster_t());
+  boost::shared_ptr<roster_t> right_roster = shared_ptr<roster_t>(new roster_t());
+  marking_map left_marking, right_marking;
+
+  roster.clear(); // default constructor doesn't do this.
+  
+  roster.read_conflict_file(db, idx(args,0)(), ancestor_rid, left_rid, right_rid,
+                            *left_roster, left_marking, *right_roster, right_marking);
+  roster.set_first_conflict(idx(args,1)());
+  roster.write_conflict_file(db, app.lua, idx(args,0)(), ancestor_rid, left_rid, right_rid,
+                             left_roster, left_marking, right_roster, right_marking);
+}
+
+CMD_AUTOMATE(file_merge, N_("LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"),
+             N_("Prints the results of the internal line merger, given two child revisions and file names"),
+             "",
+             options::opts::none)
+{
+  // We would have liked to take arguments of ancestor, left, right revision
+  // and file ids; those are provided by show_conflicts and would save
+  // computing the common ancestor and searching for file names. But we need
+  // the file names to get the manual merge and file encoding attributes,
+  // and there is no way to go from file id to file name. And there is no
+  // way to specify the ancestor id for a merge adaptor; why should we trust
+  // the user?
+
+  N(args.size() == 4,
+    F("wrong argument count"));
+
+  database  db(app);
+  project_t project(db);
+
+  revision_id left_rid;
+  complete(app.opts, app.lua, project, idx(args,0)(), left_rid);
+  file_path const left_path = file_path_external(idx(args,1));
+
+  revision_id right_rid;
+  complete(app.opts, app.lua, project, idx(args,2)(), right_rid);
+  file_path const right_path = file_path_external(idx(args,3));
+
+  roster_t left_roster;
+  roster_t right_roster;
+  marking_map left_marking, right_marking;
+  db.get_roster(left_rid, left_roster, left_marking);
+  db.get_roster(right_rid, right_roster, right_marking);
+
+  content_merge_database_adaptor adaptor(db, left_rid, right_rid,
+                                         left_marking, right_marking);
+
+  file_t left_n = downcast_to_file_t(left_roster.get_node(left_path));
+  file_t right_n = downcast_to_file_t(right_roster.get_node(right_path));
+
+  revision_id ancestor_rid;
+  file_path ancestor_path;
+  file_id ancestor_fid;
+  shared_ptr<roster_t const> ancestor_roster;
+  adaptor.get_ancestral_roster(left_n->self, ancestor_rid, ancestor_roster);
+  ancestor_roster->get_file_details(left_n->self, ancestor_fid, ancestor_path);
+
+  content_merger cm(app.lua, *ancestor_roster, left_roster, right_roster, adaptor);
+  file_data ancestor_data, left_data, right_data, merge_data;
+
+  N(cm.attempt_auto_merge(ancestor_path, left_path, right_path,
+                          ancestor_fid, left_n->content, right_n->content,
+                          left_data, right_data, merge_data),
+    F("internal line merger failed"));
+
+  output << merge_data;
+}
+
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
     N_("Applies changes made at arbitrary places in history"),
     N_("This command takes changes made at any point in history, and "
@@ -1017,8 +1092,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
        "compared to its parent.\n"
        "If two revisions are given, applies the changes made to get from the "
        "first revision to the second."),
-    options::opts::revision | options::opts::depth | options::opts::exclude |
-    options::opts::resolve_conflicts_opts)
+    options::opts::revision | options::opts::depth | options::opts::exclude)
 {
   database db(app);
   workspace work(app);
@@ -1148,7 +1222,6 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   // to_roster is not fetched from the db which does not have temporary nids
   wca.cache_roster(to_rid, to_roster);
 
-  // FIXME_RESOLVE_CONFLICTS: add conflict resolutions here
   resolve_merge_conflicts(app.lua, *working_roster, *to_roster,
                           result, wca, false);
 

@@ -8026,6 +8026,49 @@ with status 1.
 
 @end table
 
+@item mtn automate file_merge @var{left-rid} @var{left-path} @var{right-rid} @var{right-path}
+
+@table @strong
+@item Arguments:
+
+@var{left-rid}, @var{left-fid}, @var{right-rid}, @var{right-fid}
+specify two files to merge, by revision and file path.
+
+@item Added in:
+
+8.0
+
+@item Purpose:
+
+Prints the result of the internal line merge on the contents of the
+specified files.
+
+This command does not just take two file ids, because the revision ids
+and paths are needed to check for manual merge and file encoding
+attributes.
+
+@item Sample output:
+
+@verbatim
+If you've downloaded a release, see INSTALL for installation
+instructions.  If you've checked this out, the generated files are not
+included, and you must use "autoreconf --install" to create them.
+
+"make html" for docs, or read the .info file and / or man page.
+@end verbatim
+
+@item Output format:
+
+The file merge results are output without modification.
+
+@item Error conditions:
+
+If either file id is unknown or invalid, or if the internal line
+merger fails, prints an error message to stderr and exits with status
+1.
+
+@end table
+
 @item mtn automate get_option @var{option}
 
 @table @strong
