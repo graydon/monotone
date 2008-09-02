@@ -947,6 +947,40 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   show_conflicts_core(db, app.lua, l_id, r_id, false, std::cout);
 }
 
+static void get_conflicts_rids(args_vector const & args,
+                               database & db,
+                               project_t & project,
+                               app_state & app,
+                               revision_id & left_rid,
+                               revision_id & right_rid)
+{
+  if (args.size() == 0)
+    {
+      // get ids from heads
+      N(app.opts.branchname() != "",
+        F("please specify a branch, with --branch=BRANCH"));
+
+      set<revision_id> heads;
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
+
+      N(heads.size() >= 2,
+        F("branch '%s' has only 1 head; must be at least 2 for conflicts") % app.opts.branchname);
+
+      revpair p = find_heads_to_merge (db, heads);
+      left_rid = p.first;
+      right_rid = p.second;
+    }
+  else if (args.size() == 2)
+    {
+      // get ids from args
+      complete(app.opts, app.lua, project, idx(args,0)(), left_rid);
+      complete(app.opts, app.lua, project, idx(args,1)(), right_rid);
+    }
+  else
+    N(false, F("wrong argument count"));
+}
+
 // Name: show_conflicts
 // Arguments:
 //   Two revision ids (optional, determined from the workspace if not given; there must be exactly two heads)
@@ -967,61 +1001,34 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
              N_("Shows the conflicts between two revisions."),
              N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
                 "first two heads that would be chosen by the 'merge' command."),
-             options::opts::branch)
+             options::opts::branch | options::opts::ignore_suspend_certs)
 {
   database    db(app);
   project_t   project(db);
   revision_id l_id, r_id;
 
-  if (args.size() == 0)
-    {
-      // get ids from heads
-      N(app.opts.branchname() != "",
-        F("please specify a branch, with --branch=BRANCH"));
-
-      set<revision_id> heads;
-      project.get_branch_heads(app.opts.branchname, heads,
-                               app.opts.ignore_suspend_certs);
-
-      N(heads.size() >= 2,
-        F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
-
-      revpair p = find_heads_to_merge (db, heads);
-      l_id = p.first;
-      r_id = p.second;
-    }
-  else if (args.size() == 2)
-    {
-      // get ids from args
-      complete(app.opts, app.lua, project, idx(args,0)(), l_id);
-      complete(app.opts, app.lua, project, idx(args,1)(), r_id);
-    }
-  else
-    N(false, F("wrong argument count"));
-
+  get_conflicts_rids(args, db, project, app, l_id, r_id);
   show_conflicts_core(db, app.lua, l_id, r_id, true, output);
 }
 
-CMD(resolve_conflict, "resolve_conflict", "", CMD_REF(tree),
-    N_("CONFLICTS-FILE CONFLICT"),
-    N_("Set the resolution for the first conflict in the conflicts file."),
-    "",
-    options::opts::none)
+CMD(store, "store", "", CMD_REF(conflicts),
+    "[LEFT_REVID RIGHT_REVID]",
+    N_("Store the conflicts from merging two revisions."),
+    N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
+       "first two heads that would be chosen by the 'merge' command."),
+    options::opts::branch | options::opts::conflicts_opts)
 {
-  database db(app);
-  roster_merge_result roster;
-  revision_id ancestor_rid, left_rid, right_rid;
-  boost::shared_ptr<roster_t> left_roster = shared_ptr<roster_t>(new roster_t());
-  boost::shared_ptr<roster_t> right_roster = shared_ptr<roster_t>(new roster_t());
-  marking_map left_marking, right_marking;
+  database    db(app);
+  project_t   project(db);
+  revision_id left_id, right_id;
 
-  roster.clear(); // default constructor doesn't do this.
-  
-  roster.read_conflict_file(db, idx(args,0)(), ancestor_rid, left_rid, right_rid,
-                            *left_roster, left_marking, *right_roster, right_marking);
-  roster.set_first_conflict(idx(args,1)());
-  roster.write_conflict_file(db, app.lua, idx(args,0)(), ancestor_rid, left_rid, right_rid,
-                             left_roster, left_marking, right_roster, right_marking);
+  get_conflicts_rids(args, db, project, app, left_id, right_id);
+
+  std::ostringstream output;
+  show_conflicts_core(db, app.lua, left_id, right_id, true, output);
+
+  data dat(output.str());
+  write_data(system_path(app.opts.conflicts_file), dat, system_path("_MTN"));
 }
 
 CMD_AUTOMATE(file_merge, N_("LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"),

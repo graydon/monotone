@@ -279,6 +279,7 @@ void commands::automate_ ## C :: exec_from_automate                  \
 
 CMD_FWD_DECL(__root__);
 CMD_FWD_DECL(automation);
+CMD_FWD_DECL(conflicts);
 CMD_FWD_DECL(database);
 CMD_FWD_DECL(debug);
 CMD_FWD_DECL(informative);

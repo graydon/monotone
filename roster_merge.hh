@@ -29,7 +29,15 @@
 
 namespace resolve_conflicts
 {
-  enum resolution_t {none, content_user, content_internal, rename};
+  enum resolution_t {none, content_user, content_internal, rename, drop};
+
+  typedef std::pair<resolve_conflicts::resolution_t, boost::shared_ptr<any_path> > file_resolution_t;
+
+  boost::shared_ptr<any_path> new_file_path(std::string path);
+
+  // Return a file_path, bookkeeping_path, or system_path, as appropriate.
+  // This keeps the file names in the conflict file relative if possible.
+  boost::shared_ptr<any_path> new_optimal_path(std::string path);
 }
 
 // renaming the root dir allows these:
@@ -94,7 +102,9 @@ struct duplicate_name_conflict
 {
   node_id left_nid, right_nid;
   std::pair<node_id, path_component> parent_name;
-  std::pair<resolve_conflicts::resolution_t, file_path> left_resolution, right_resolution;
+  // file part of resolution must be a file_path if resolution is 'rename';
+  // it may be a bookkeeping or system path if resolution is 'user'.
+  resolve_conflicts::file_resolution_t left_resolution, right_resolution;
 
   duplicate_name_conflict ()
   {left_resolution.first = resolve_conflicts::none;
@@ -121,18 +131,14 @@ struct file_content_conflict
 {
   node_id nid;
   file_id left, right;
-  // The second item is a file path. We don't use type 'file_path' because
-  // that can't be in _MTN. We don't specify 'bookkeeping_path' because that
-  // _must_ be in _MTN. We want users to have a choice of workflow. This is
-  // local data only, so it is in system encoding.
-  std::pair<resolve_conflicts::resolution_t, std::string> resolution;
+  resolve_conflicts::file_resolution_t resolution;
 
   file_content_conflict () :
-    nid(the_null_node),
-    resolution(std::make_pair(resolve_conflicts::none, std::string())) {};
+    nid(the_null_node)
+    {resolution.first = resolve_conflicts::none;};
 
   file_content_conflict(node_id nid) :
-    nid(nid), resolution(std::make_pair(resolve_conflicts::none, std::string())) {};
+    nid(nid) {resolution.first = resolve_conflicts::none;};
 };
 
 template <> void dump(invalid_name_conflict const & conflict, std::string & out);
@@ -239,7 +245,7 @@ struct roster_merge_result
   // If validate, compare file contents to existing conflicts, and add
   // resolutions. Otherwise just read into conflicts.
   void read_conflict_file(database & db,
-                          std::string file_name,
+                          system_path const file_name,
                           revision_id & ancestor_rid,
                           revision_id & left_rid,
                           revision_id & right_rid,
@@ -248,11 +254,9 @@ struct roster_merge_result
                           roster_t & right_roster,
                           marking_map & r_marking);
 
-  void set_first_conflict(std::string conflict);
-
   void write_conflict_file(database & db,
                            lua_hooks & lua,
-                           std::string file_name,
+                           system_path const file_name,
                            revision_id const & ancestor_rid,
                            revision_id const & left_rid,
                            revision_id const & right_rid,

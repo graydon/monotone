@@ -1,4 +1,5 @@
--- Test setting conflict resolutions in a conflict file
+-- Test showing and setting all possible conflict resolutions in a
+-- conflict file.
 
 mtn_setup()
 
@@ -37,31 +38,45 @@ addfile("thermostat.c", "thermostat honeywell")
 commit("testbranch", "beth_1")
 beth_1 = base_revision()
 
-check (mtn("automate", "show_conflicts"), 0, true, nil)
-canonicalize("stdout")
-check(samefilestd("conflicts-1", "stdout"))
-
--- Save the conflicts file so we can edit it 
+-- Don't use _MTN/conflicts, to test that capability
 mkdir("resolutions")
+check (mtn("conflicts", "--conflict_file=resolutions/conflicts", "store", abe_1, beth_1), 0, true, nil)
+check(samefilestd("conflicts-1", "resolutions/conflicts"))
+
 rename("stdout", "resolutions/conflicts")
 
--- 'resolve_conflict' specifies a resolution for the first unresolved
--- conflict in the file.
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "show_first", resolution), 0, true, nil)
+canonicalize("stdout")
+check(samefilestd("show_first-checkout_left"), "stdout")
+
 resolution = "resolved_drop_left\n resolved_user_right \"resolutions/checkout_left.sh\""
-check(mtn("resolve_conflict", "resolutions/conflicts", resolution), 0, nil, nil)
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "resolve_first", resolution), 0, nil, nil)
+
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "show_first", resolution), 0, true, nil)
+canonicalize("stdout")
+check(samefilestd("show_first-checkout_right"), "stdout")
+
+resolution = "resolved_drop_rightt\n resolved_user_left \"resolutions/checkout_right.sh\""
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "resolve_first", resolution), 0, nil, nil)
+
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "show_first", resolution), 0, true, nil)
+canonicalize("stdout")
+check(samefilestd("show_first-thermostat"), "stdout")
 
 resolution = "resolved_rename_left \"thermostat-westinghouse.c\"\n resolved_rename_right \"thermostat-honeywell.c\""
-check(mtn("resolve_conflict", "resolutions/conflicts", resolution), 0, nil, nil)
+check(mtn("conflicts", "--conflict_file=resolutions/conflicts", "resolve_first", resolution), 0, nil, nil)
 
-check(samefilestd("conflicts-2", "resolutions/conflicts"))
+check(samefilestd("conflicts-resolved", "resolutions/conflicts"))
 
 -- This succeeds
 check(mtn("merge", "--resolve-conflicts-file", "resolutions/conflicts"), 0, true, nil)
 canonicalize("stdout")
 check(samefilestd("merge-1", "stdout"))
 
+-- Verify user specified resolution files
 check(mtn("update"), 0, nil, false)
 
 check("checkout_left.sh beth 2" == readfile("checkout_left.sh"))
+check("checkout_right.sh beth 2" == readfile("checkout_right.sh"))
 
 -- end of file
