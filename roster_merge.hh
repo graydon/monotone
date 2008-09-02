@@ -233,6 +233,33 @@ struct roster_merge_result
                                       roster_t const & right_roster,
                                       content_merge_adaptor & adaptor);
   void clear();
+
+  // Conflict file editing
+
+  // If validate, compare file contents to existing conflicts, and add
+  // resolutions. Otherwise just read into conflicts.
+  void read_conflict_file(database & db,
+                          std::string file_name,
+                          revision_id & ancestor_rid,
+                          revision_id & left_rid,
+                          revision_id & right_rid,
+                          roster_t & left_roster,
+                          marking_map & left_marking,
+                          roster_t & right_roster,
+                          marking_map & r_marking);
+
+  void set_first_conflict(std::string conflict);
+
+  void write_conflict_file(database & db,
+                           lua_hooks & lua,
+                           std::string file_name,
+                           revision_id const & ancestor_rid,
+                           revision_id const & left_rid,
+                           revision_id const & right_rid,
+                           boost::shared_ptr<roster_t> left_roster,
+                           marking_map const & left_marking,
+                           boost::shared_ptr<roster_t> right_roster,
+                           marking_map const & right_marking);
 };
 
 template <> void dump(roster_merge_result const & result, std::string & out);

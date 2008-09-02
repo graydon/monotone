@@ -8,7 +8,6 @@
 -- thermostat-westinghouse.c and thermostat-honeywell.c
 
 mtn_setup()
-include ("common/test_utils_inventory.lua")
 
 --  Get a non-empty base revision
 addfile("randomfile", "blah blah blah")

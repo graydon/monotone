@@ -870,8 +870,8 @@ show_conflicts_core (database & db,
                *r_roster, r_marking, r_uncommon_ancestors,
                result);
 
-  // note that left and right are in the order specified on the command line
-  // they are not in lexical order as they are with other merge commands so
+  // Note that left and right are in the order specified on the command line.
+  // They are not in lexical order as they are with other merge commands so
   // they may appear swapped here. The user may have done that deliberately,
   // especially via automate, so we don't sort them here.
 
@@ -1002,7 +1002,29 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
   show_conflicts_core(db, app.lua, l_id, r_id, true, output);
 }
 
-CMD_AUTOMATE(file_merge, N_("[LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME]"),
+CMD(resolve_conflict, "resolve_conflict", "", CMD_REF(tree),
+    N_("CONFLICTS-FILE CONFLICT"),
+    N_("Set the resolution for the first conflict in the conflicts file."),
+    "",
+    options::opts::none)
+{
+  database db(app);
+  roster_merge_result roster;
+  revision_id ancestor_rid, left_rid, right_rid;
+  boost::shared_ptr<roster_t> left_roster = shared_ptr<roster_t>(new roster_t());
+  boost::shared_ptr<roster_t> right_roster = shared_ptr<roster_t>(new roster_t());
+  marking_map left_marking, right_marking;
+
+  roster.clear(); // default constructor doesn't do this.
+  
+  roster.read_conflict_file(db, idx(args,0)(), ancestor_rid, left_rid, right_rid,
+                            *left_roster, left_marking, *right_roster, right_marking);
+  roster.set_first_conflict(idx(args,1)());
+  roster.write_conflict_file(db, app.lua, idx(args,0)(), ancestor_rid, left_rid, right_rid,
+                             left_roster, left_marking, right_roster, right_marking);
+}
+
+CMD_AUTOMATE(file_merge, N_("LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"),
              N_("Prints the results of the internal line merger, given two child revisions and file names"),
              "",
              options::opts::none)
