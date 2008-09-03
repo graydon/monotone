@@ -658,6 +658,7 @@ OPTION(resolve_conflicts_opts, resolve_conflicts, true, "resolve-conflicts",
     F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
   resolve_conflicts = arg;
 }
+#endif
 
 OPTSET(conflicts_opts)
 OPTVAR(conflicts_opts, system_path, conflicts_file, system_path("_MTN/conflicts"))
@@ -668,8 +669,6 @@ OPTION(conflicts_opts, conflicts_file, true, "conflicts-file",
 {
   conflicts_file = system_path(utf8(arg));
 }
-#endif
-
 #endif
 
 // Local Variables:
