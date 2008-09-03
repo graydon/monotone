@@ -1,13 +1,16 @@
+#define APPNAME="monotone"
+#define APPVERS="0.41"
+
 [Setup]
-AppName=monotone
-AppVersion=0.40
-AppVerName=monotone 0.40
-OutputBaseFileName=monotone-0.40-setup
+AppName={#APPNAME}
+AppVersion={#APPVERS}
+AppVerName={#APPNAME} {#APPVERS}
+OutputBaseFileName={#APPNAME}-{#APPVERS}-setup
 AppCopyright=Copyright © 2002-2008 Graydon Hoare et al.
 AppPublisher=venge.net
 AppPublisherURL=http://www.monotone.ca/
-DefaultDirName={pf}\monotone
-DefaultGroupName=monotone
+DefaultDirName={pf}\{#APPNAME}
+DefaultGroupName={#APPNAME}
 MinVersion=4.0,4.0
 OutputDir=.
 AllowNoIcons=1
