@@ -1,0 +1,23 @@
+    left [1337cb1059c4bc3e376b14381b43e9383c654da1]
+   right [d5f1dd136c86b5bbd5e71b0c3365667e328af492]
+ancestor [b3ac8a77cee78263b66800c635441ecb1f259a42]
+
+           conflict duplicate_name
+          left_type "added file"
+          left_name "checkout.sh"
+       left_file_id [61b8d4fb0e5d78be111f691b955d523c782fa92e]
+         right_type "added file"
+         right_name "checkout.sh"
+      right_file_id [dd6805ae36432d6edcbdff6ea578ea981ffa2144]
+ resolved_drop_left 
+resolved_user_right "_MTN/resolutions/checkout.sh"
+
+             conflict duplicate_name
+            left_type "added file"
+            left_name "thermostat.c"
+         left_file_id [4cdcec6fa2f9d5c075d5b80d03c708c8e4801196]
+           right_type "added file"
+           right_name "thermostat.c"
+        right_file_id [7e9f2712c5d3570815f1546772d9119474d32afc]
+ resolved_rename_left "thermostat-westinghouse.c"
+resolved_rename_right "thermostat-honeywell.c"

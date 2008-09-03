@@ -44,35 +44,39 @@ check(mtn("merge"), 1, nil, false)
 -- For thermostat.c, she specifies a conflict resolution that renames
 -- both versions.
 
-check (mtn("automate", "show_conflicts"), 0, true, nil)
-canonicalize("stdout")
-check(samefilestd("conflicts-1", "stdout"))
+check(mtn("conflicts", "store"), 0, true, nil)
+check(samefilestd("conflicts-1", "_MTN/conflicts"))
 
--- Save the conflicts file so we can edit it later
-mkdir("resolutions")
-rename("stdout", "resolutions/conflicts")
+-- Find out what the first unresolved conflict is
+check(mtn("conflicts", "show_first"), 0, nil, true)
 
 -- Retrieve Abe's version of checkout.sh, and pretend we did a manual
--- merge, using our favorite merge tool. We put the files outside the
--- workspace, so 'update' doesn't complain.
+-- merge, using our favorite merge tool. We put the files in the
+-- bookkeeping area, so mtn doesn't see them.
+mkdir("_MTN/resolutions")
 check(mtn("automate", "get_file", "61b8d4fb0e5d78be111f691b955d523c782fa92e"), 0, true, nil)
-rename("stdout", "resolutions/checkout.sh-abe")
-check(readfile("resolutions/checkout.sh-abe") == "checkout.sh abe 1")
+rename("stdout", "_MTN/resolutions/checkout.sh-abe")
+check(readfile("_MTN/resolutions/checkout.sh-abe") == "checkout.sh abe 1")
 
-writefile("resolutions/checkout.sh", "checkout.sh beth 2")
+writefile("_MTN/resolutions/checkout.sh", "checkout.sh beth 2")
 
--- 'resolve_conflict' specifies a resolution for the first unresolved
--- conflict in the file.
-resolution = "resolved_drop_left\n resolved_user_right \"resolutions/checkout.sh\""
-check(mtn("resolve_conflict", "resolutions/conflicts", resolution), 0, nil, nil)
+-- specify a part of the resolution for the first unresolved conflict in the file.
+check(mtn("conflicts", "resolve_first_left", "drop"), 0, nil, nil)
 
-resolution = "resolved_rename_left \"thermostat-westinghouse.c\"\n resolved_rename_right \"thermostat-honeywell.c\""
-check(mtn("resolve_conflict", "resolutions/conflicts", resolution), 0, nil, nil)
+-- and now the other part
+check(mtn("conflicts", "show_first"), 0, nil, true)
+check(mtn("conflicts", "resolve_first_right", "user", "_MTN/resolutions/checkout.sh"), 0, nil, nil)
 
-check(samefilestd("conflicts-2", "resolutions/conflicts"))
+-- Find out what the next unresolved conflict is
+check(mtn("conflicts", "show_first"), 0, nil, true)
+
+check(mtn("conflicts", "resolve_first_left", "rename", "thermostat-westinghouse.c"), 0, nil, nil)
+check(mtn("conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"), 0, nil, nil)
+
+check(samefilestd("conflicts-resolved", "_MTN/conflicts"))
 
 -- This succeeds
-check(mtn("merge", "--resolve-conflicts-file", "resolutions/conflicts"), 0, true, nil)
+check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts"), 0, true, nil)
 canonicalize("stdout")
 check(samefilestd("merge-1", "stdout"))
 
