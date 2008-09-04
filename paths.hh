@@ -356,6 +356,9 @@ public:
   bool operator==(const system_path & other) const
   { return data== other.data; }
 
+  bool operator <(const system_path & other) const
+  { return data < other.data; }
+
   system_path operator /(path_component const & to_append) const;
   system_path operator /(char const * to_append) const;
   system_path dirname() const;
