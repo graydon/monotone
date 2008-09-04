@@ -120,8 +120,82 @@ error_in_transform(Botan::Exception & e)
 
 SPECIALIZE_XFORM(Base64_Encoder,);
 SPECIALIZE_XFORM(Base64_Decoder, Botan::IGNORE_WS);
-SPECIALIZE_XFORM(Hex_Encoder, Hex_Encoder::Lowercase);
-SPECIALIZE_XFORM(Hex_Decoder, Botan::IGNORE_WS);
+//SPECIALIZE_XFORM(Hex_Encoder, Hex_Encoder::Lowercase);
+template<> string xform<Botan::Hex_Encoder>(string const & in)
+{
+  string out;
+  out.reserve(in.size()<<1);
+  for (string::const_iterator i = in.begin();
+       i != in.end(); ++i)
+    {
+      int h = (*i>>4) & 0x0f;
+      if (h < 10)
+        out.push_back(h + '0');
+      else
+        out.push_back(h + 'a' - 10);
+      int l = *i & 0x0f;
+      if (l < 10)
+        out.push_back(l + '0');
+      else
+        out.push_back(l + 'a' - 10);
+    }
+  return out;
+}
+//SPECIALIZE_XFORM(Hex_Decoder, Botan::IGNORE_WS);
+template<> string xform<Botan::Hex_Decoder>(string const & in)
+{
+  string out;
+  out.reserve(in.size()>>1);
+  bool high(true);
+  int o = 0;
+  for (string::const_iterator i = in.begin();
+       i != in.end(); ++i)
+    {
+      int c = *i;
+      if (c >= '0' && c <= '9')
+        {
+          o += (c - '0');
+        }
+      else if (c >= 'a' && c <= 'f')
+        {
+          o += (c - 'a' + 10);
+        }
+      else if (c >= 'A' && c <= 'F')
+        {
+          o += (c - 'A' + 10);
+        }
+      else if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        {
+          continue;
+        }
+      else // garbage
+        {
+          try
+            {
+              throw Botan::Decoding_Error(string("invalid hex character '") + (char)c + "'");
+            }
+          catch(Botan::Exception & e)
+            {
+              error_in_transform(e);
+            }
+        }
+      if (high)
+        {
+          o <<= 4;
+        }
+      else
+        {
+          out.push_back(o);
+          o = 0;
+        }
+      high = !high;
+    }
+  if (!high)
+    { // Hex string wasn't a whole number of bytes
+      //I(false); // Drop the last char (!!)
+    }
+  return out;
+}
 SPECIALIZE_XFORM(Gzip_Compression,);
 SPECIALIZE_XFORM(Gzip_Decompression,);
 
