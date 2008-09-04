@@ -2,7 +2,7 @@ mtn_setup()
 
 -- Make sure we test the monotone source for mtnopt, not whatever the
 -- user happens to have in PATH
-getstd ("../mtnopt", "mtnopt")
+copy (initial_dir .. "/mtnopt", "mtnopt")
 
 normalized_testroot = normalize_path (test.root)
 
