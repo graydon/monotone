@@ -82,7 +82,7 @@ MOST_SOURCES = 								\
 	cleanup.hh unit_tests.hh					\
 	cycle_detector.hh randomfile.hh adler32.hh			\
 	randomizer.cc randomizer.hh					\
-	netio.hh smap.hh gettext.h					\
+	netio.hh gettext.h						\
 	package_revision.c package_revision.h				\
 	package_full_revision.c package_full_revision.h			\
 	option.cc option.hh options.cc options.hh options_list.hh	\
