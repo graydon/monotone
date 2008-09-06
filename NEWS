@@ -1,18 +1,21 @@
 ??? ???  ? ??:??:?? UTC 2008
 
-	0.42 release.
+        0.42 release.
 
-	Changes
+        Changes
 
-	Bugs fixed
-	
-	- 'mtn db kill_rev_locally' did not update the inodeprint
-	  cache when executed from a workspace on which the 
-          revision's changes where applied. 
+        Bugs fixed
 
-	New features
+        - 'mtn db kill_rev_locally' did not update the inodeprint
+          cache when executed from a workspace on which the
+          revision's changes where applied.
 
-	Internal
+        New features
+
+        - New 'mtn ls duplicates' command which lets you list
+          duplicated files in a given revision or the workspace.
+
+        Internal
 
 
 Wed Sep  3 21:13:18 UTC 2008
