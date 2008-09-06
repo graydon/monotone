@@ -823,11 +823,11 @@ roster_t::drop_detached_node(node_id nid)
     I(downcast_to_dir_t(n)->children.empty());
   // all right, kill it
   safe_erase(nodes, nid);
-  // can use safe_erase here, because while not every detached node appears in
-  // old_locations, all those that used to be in the tree do.  and you should
-  // only ever be dropping nodes that were detached, not nodes that you just
-  // created and that have never been attached.
-  safe_erase(old_locations, nid);
+
+  // Resolving a duplicate name conflict via drop one side requires dropping
+  // nodes that were never attached. So we erase the key without checking
+  // whether it was present.
+  old_locations.erase(nid);
 }
 
 

@@ -535,6 +535,27 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 }
 
 void
+content_merge_database_adaptor::record_file(file_id const & parent_ident,
+                                            file_id const & merged_ident,
+                                            file_data const & parent_data,
+                                            file_data const & merged_data)
+{
+  L(FL("recording file %s -> %s")
+    % parent_ident
+    % merged_ident);
+
+  transaction_guard guard(db);
+
+  if (!(parent_ident == merged_ident))
+    {
+      delta parent_delta;
+      diff(parent_data.inner(), merged_data.inner(), parent_delta);
+      db.put_file_version(parent_ident, merged_ident, file_delta(parent_delta));
+    }
+  guard.commit();
+}
+
+void
 content_merge_database_adaptor::cache_roster(revision_id const & rid,
                                              boost::shared_ptr<roster_t const> roster)
 {
@@ -641,6 +662,21 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 }
 
 void
+content_merge_workspace_adaptor::record_file(file_id const & parent_id,
+                                             file_id const & merged_id,
+                                             file_data const & parent_data,
+                                             file_data const & merged_data)
+{
+  L(FL("temporarily recording file %s -> %s")
+    % parent_id
+    % merged_id);
+  // this is an insert instead of a safe_insert because it is perfectly
+  // legal (though rare) to have multiple merges resolve to the same file
+  // contents.
+  temporary_store.insert(make_pair(merged_id, merged_data));
+}
+
+void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
                                                       revision_id & rid,
                                                       shared_ptr<roster_t const> & anc)
@@ -722,6 +758,15 @@ content_merge_checkout_adaptor::record_merge(file_id const & left_ident,
                                              file_data const & left_data,
                                              file_data const & right_data,
                                              file_data const & merged_data)
+{
+  I(false);
+}
+
+void
+content_merge_checkout_adaptor::record_file(file_id const & parent_ident,
+                                            file_id const & merged_ident,
+                                            file_data const & parent_data,
+                                            file_data const & merged_data)
 {
   I(false);
 }

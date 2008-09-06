@@ -36,7 +36,7 @@ check(mtn("merge"), 1, nil, false)
 -- For checkout.sh, she retrieves Abe's version to merge with hers,
 -- using 'automate get_file'. This requires knowing the file id
 -- of Abe's commit, which we get from 'automate show_conflicts'.
--- 
+--
 -- mtn is not up to actually doing the merge of checkout.sh yet (that
 -- requires sutures), so we specify a conflict resolution that drops
 -- Abe's version and keeps Beth's manual merge.
@@ -76,9 +76,11 @@ check(mtn("conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"
 check(samefilestd("conflicts-resolved", "_MTN/conflicts"))
 
 -- This succeeds
-check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts"), 0, true, nil)
-canonicalize("stdout")
-check(samefilestd("merge-1", "stdout"))
+check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts"), 0, nil, true)
+canonicalize("stderr")
+check(samefilestd("merge-1", "stderr"))
+
+check(mtn("conflicts", "clean"), 0, nil, true)
 
 check(mtn("update"), 0, nil, false)
 

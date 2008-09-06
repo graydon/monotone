@@ -49,6 +49,12 @@ content_merge_adaptor
                             file_data const & right_data,
                             file_data const & merged_data) = 0;
 
+  // For use when one side of the merge is dropped
+  virtual void record_file(file_id const & parent_ident,
+                           file_id const & merged_ident,
+                           file_data const & parent_data,
+                           file_data const & merged_data) = 0;
+
   virtual void get_ancestral_roster(node_id nid,
                                     revision_id & rid,
                                     boost::shared_ptr<roster_t const> & anc) = 0;
@@ -81,6 +87,11 @@ content_merge_database_adaptor
                     file_data const & left_data,
                     file_data const & right_data,
                     file_data const & merged_data);
+
+  void record_file(file_id const & parent_ident,
+                   file_id const & merged_ident,
+                   file_data const & parent_data,
+                   file_data const & merged_data);
 
   void cache_roster(revision_id const & rid,
                     boost::shared_ptr<roster_t const> roster);
@@ -125,6 +136,11 @@ content_merge_workspace_adaptor
                     file_data const & right_data,
                     file_data const & merged_data);
 
+  void record_file(file_id const & parent_ident,
+                   file_id const & merged_ident,
+                   file_data const & parent_data,
+                   file_data const & merged_data);
+
   void get_ancestral_roster(node_id nid,
                             revision_id & rid,
                             boost::shared_ptr<roster_t const> & anc);
@@ -148,6 +164,11 @@ content_merge_checkout_adaptor
                     file_data const & left_data,
                     file_data const & right_data,
                     file_data const & merged_data);
+
+  void record_file(file_id const & parent_ident,
+                   file_id const & merged_ident,
+                   file_data const & parent_data,
+                   file_data const & merged_data);
 
   void get_ancestral_roster(node_id nid,
                             revision_id & rid,

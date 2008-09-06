@@ -264,8 +264,8 @@ namespace
     symbol const node_type("node_type");
     symbol const orphaned_directory("orphaned_directory");
     symbol const orphaned_file("orphaned_file");
-    symbol const resolved_drop_right("resolved_drop_right");
     symbol const resolved_drop_left("resolved_drop_left");
+    symbol const resolved_drop_right("resolved_drop_right");
     symbol const resolved_internal("resolved_internal");
     symbol const resolved_rename_left("resolved_rename_left");
     symbol const resolved_rename_right("resolved_rename_right");
@@ -502,7 +502,7 @@ put_duplicate_name_resolution(basic_io::stanza & st,
     {
     case resolve_conflicts::none:
       break;
-      
+
     case resolve_conflicts::content_user:
       switch (side)
         {
@@ -515,7 +515,7 @@ put_duplicate_name_resolution(basic_io::stanza & st,
           break;
         }
       break;
-      
+
     case resolve_conflicts::rename:
       switch (side)
         {
@@ -528,7 +528,7 @@ put_duplicate_name_resolution(basic_io::stanza & st,
           break;
         }
       break;
-      
+
     case resolve_conflicts::drop:
       switch (side)
         {
@@ -541,7 +541,7 @@ put_duplicate_name_resolution(basic_io::stanza & st,
           break;
         }
       break;
-      
+
     default:
       I(false);
     }
@@ -1573,10 +1573,10 @@ read_duplicate_name_conflict(basic_io::parser & pars,
 
   // we don't care what type of file/dir these are; the right type will get
   // written back out.
-  pars.esym(syms::left_type); pars.str(); 
+  pars.esym(syms::left_type); pars.str();
   pars.esym (syms::left_name); pars.str(left_name);
   pars.esym(syms::left_file_id); pars.hex();
-  
+
   pars.esym(syms::right_type); pars.str();
   pars.esym (syms::right_name); pars.str(right_name);
   pars.esym(syms::right_file_id); pars.hex();
@@ -1646,7 +1646,7 @@ read_duplicate_name_conflicts(basic_io::parser & pars,
       read_duplicate_name_conflict(pars, conflict, left_roster, right_roster);
 
       conflicts.push_back(conflict);
-      
+
       if (pars.tok.in.lookahead != EOF)
         pars.esym (syms::conflict);
     }
@@ -1676,7 +1676,7 @@ validate_duplicate_name_conflicts(basic_io::parser & pars,
 
       merge_conflict.left_resolution = file_conflict.left_resolution;
       merge_conflict.right_resolution = file_conflict.right_resolution;
-      
+
       if (pars.tok.in.lookahead != EOF)
         pars.esym (syms::conflict);
       else
@@ -1843,7 +1843,7 @@ roster_merge_result::read_conflict_file(database & db,
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
   std::string temp;
-  
+
   // Read left, right, ancestor.
   pars.esym(syms::left);
   pars.hex(temp);
@@ -1857,9 +1857,9 @@ roster_merge_result::read_conflict_file(database & db,
 
   db.get_roster(left_rid, left_roster, left_marking);
   db.get_roster(right_rid, right_roster, right_marking);
-  
+
   read_conflict_file_core(pars, left_roster, right_roster, *this, false);
-  
+
 } // roster_merge_result::read_conflict_file
 
 void
@@ -1897,7 +1897,7 @@ roster_merge_result::write_conflict_file(database & db,
 
   data dat(output.str());
   write_data(file_name, dat, system_path("_MTN"));
-  
+
 } // roster_merge_result::write_conflict_file
 
 static void
@@ -1995,7 +1995,7 @@ parse_resolve_conflicts_opts (options const & opts,
           pars.sym();
           pars.hex();
         }
-      
+
       read_conflict_file_core (pars, left_roster, right_roster, result, true);
     }
   else
@@ -2027,6 +2027,65 @@ attach_node (lua_hooks & lua,
 
 } // attach_node
 
+static void
+resolve_duplicate_name_one_side(lua_hooks & lua,
+                                resolve_conflicts::file_resolution_t const & resolution,
+                                resolve_conflicts::file_resolution_t const & other_resolution,
+                                file_path const & name,
+                                file_id const & fid,
+                                node_id const nid,
+                                content_merge_adaptor & adaptor,
+                                roster_t & result_roster)
+{
+  switch (resolution.first)
+    {
+    case resolve_conflicts::content_user:
+      {
+        N(other_resolution.first == resolve_conflicts::drop ||
+          other_resolution.first == resolve_conflicts::rename,
+          F("inconsistent left/right resolutions for %s") % name);
+
+        P(F("replacing content of %s with %s") % name % resolution.second->as_external());
+
+        file_id result_fid;
+        file_data parent_data, result_data;
+        data result_raw_data;
+        adaptor.get_version(fid, parent_data);
+
+        read_data(*resolution.second, result_raw_data);
+
+        result_data = file_data(result_raw_data);
+        calculate_ident(result_data, result_fid);
+
+        file_t result_node = downcast_to_file_t(result_roster.get_node(nid));
+        result_node->content = result_fid;
+
+        adaptor.record_file(fid, result_fid, parent_data, result_data);
+
+        attach_node(lua, result_roster, nid, name);
+      }
+      break;
+
+    case resolve_conflicts::drop:
+      P(F("dropping %s") % name);
+      result_roster.drop_detached_node(nid);
+      break;
+
+    case resolve_conflicts::rename:
+      P(F("renaming %s to %s") % name % *resolution.second);
+      attach_node
+        (lua, result_roster, nid, file_path_internal (resolution.second->as_internal()));
+      break;
+
+    case resolve_conflicts::none:
+      N(false, F("no resolution provided for duplicate_name %s") % name);
+      break;
+
+    default:
+      N(false, F("%s: invalid resolution for duplicate_name %s") % image (resolution.first) % name);
+    }
+} // resolve_duplicate_name_one_side
+
 void
 roster_merge_result::resolve_duplicate_name_conflicts(lua_hooks & lua,
                                                       roster_t const & left_roster,
@@ -2052,54 +2111,16 @@ roster_merge_result::resolve_duplicate_name_conflicts(lua_hooks & lua,
       node_id right_nid= conflict.right_nid;
 
       file_path left_name, right_name;
+      file_id left_fid, right_fid;
 
-      left_roster.get_name(left_nid, left_name);
-      right_roster.get_name(right_nid, right_name);
+      left_roster.get_file_details(left_nid, left_fid, left_name);
+      right_roster.get_file_details(right_nid, right_fid, right_name);
 
-      switch (conflict.left_resolution.first)
-      {
-      case resolve_conflicts::content_user:
-        P(F("replacing content of %s with %s") % left_name % conflict.left_resolution.second->as_external());
-        I(false);  // FIXME_RESOLVE_CONFLICTS: not implemented
-        // something like adaptor.record_file();
-        break;
+      resolve_duplicate_name_one_side
+        (lua, conflict.left_resolution, conflict.right_resolution, left_name, left_fid, left_nid, adaptor, roster);
 
-      case resolve_conflicts::drop:
-        P(F("dropping %s") % left_name);
-        I(false);  // FIXME_RESOLVE_CONFLICTS: not implemented
-        // something like drop_detached_node();
-        break;
-
-      case resolve_conflicts::rename:
-        P(F("renaming %s to %s") % left_name % conflict.left_resolution.second);
-        attach_node
-          (lua, this->roster, left_nid, file_path_internal (conflict.left_resolution.second->as_internal()));
-        break;
-
-      case resolve_conflicts::none:
-        N(false, F("no resolution provided for duplicate_name %s") % left_name);
-        break;
-
-      default:
-        N(false, F("%s: invalid resolution for this conflict") % image (conflict.left_resolution.first));
-      }
-
-      switch (conflict.right_resolution.first)
-        {
-        case resolve_conflicts::rename:
-          P(F("renaming %s to %s") % right_name % conflict.right_resolution.second);
-          attach_node
-            (lua, this->roster, right_nid, file_path_internal (conflict.right_resolution.second->as_internal()));
-          break;
-
-        case resolve_conflicts::none:
-          // Just keep current name
-          this->roster.attach_node (right_nid, right_name);
-          break;
-
-        default:
-          N(false, F("%s: invalid resolution for this conflict") % image (conflict.right_resolution.first));
-        }
+      resolve_duplicate_name_one_side
+        (lua, conflict.right_resolution, conflict.left_resolution, right_name, right_fid, right_nid, adaptor, roster);
     } // end for
 
   duplicate_name_conflicts.clear();
