@@ -67,7 +67,7 @@ How to release a new version of monotone
    $ tar xvzf SOMEDIR/monotone-<NEW VERSION>.tar.gz
    $ cd monotone-<NEW VERSION>
    $ ./configure
-   $ make monotone.pdf html
+   $ LANG=c make monotone.pdf html
 
 8) Upload everything to the website (uses monotone):
 
