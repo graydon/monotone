@@ -1,3 +1,20 @@
+??? ???  ? ??:??:?? UTC 2008
+
+	0.42 release.
+
+	Changes
+
+	Bugs fixed
+	
+	- 'mtn db kill_rev_locally' did not update the inodeprint
+	  cache when executed from a workspace on which the 
+          revision's changes where applied. 
+
+	New features
+
+	Internal
+
+
 Wed Sep  3 21:13:18 UTC 2008
 
         0.41 release.
