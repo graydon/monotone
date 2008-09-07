@@ -10,6 +10,13 @@
           cache when executed from a workspace on which the
           revision's changes where applied.
 
+        - Some recent performance issues have been corrected:
+          * since 0.40, there is much more use of hex encoding/decoding.
+            These functions have been sped up considerably.
+          * since 0.40, every command in an 'automate stdio' session
+            would reinitialize the database. This was rather slow, so
+            monotone will now keep the database open between commands.
+
         New features
 
         - New 'mtn ls duplicates' command which lets you list
