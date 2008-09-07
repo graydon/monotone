@@ -1,3 +1,4 @@
+// Copyright 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
 // This is made available under the GNU GPL v2 or later.
 
@@ -632,6 +633,41 @@ OPTION(automate_inventory_opts, no_corresponding_renames, false, "no-correspondi
 #ifdef option_bodies
 {
   no_corresponding_renames = true;
+}
+#endif
+
+OPTSET(resolve_conflicts_opts)
+OPTVAR(resolve_conflicts_opts, utf8, resolve_conflicts_file, )
+OPTVAR(resolve_conflicts_opts, std::string, resolve_conflicts, )
+
+OPTION(resolve_conflicts_opts, resolve_conflicts_file, true, "resolve-conflicts-file",
+       gettext_noop("use file to resolve conflicts"))
+#ifdef option_bodies
+{
+  N(!resolve_conflicts_given,
+    F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
+  resolve_conflicts_file = utf8(arg);
+}
+#endif
+
+OPTION(resolve_conflicts_opts, resolve_conflicts, true, "resolve-conflicts",
+       gettext_noop("use argument to resolve conflicts"))
+#ifdef option_bodies
+{
+  N(!resolve_conflicts_file_given,
+    F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
+  resolve_conflicts = arg;
+}
+#endif
+
+OPTSET(conflicts_opts)
+OPTVAR(conflicts_opts, system_path, conflicts_file, system_path("_MTN/conflicts"))
+
+OPTION(conflicts_opts, conflicts_file, true, "conflicts-file",
+       gettext_noop("file in which to store conflicts"))
+#ifdef option_bodies
+{
+  conflicts_file = system_path(utf8(arg));
 }
 #endif
 

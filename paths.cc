@@ -483,7 +483,14 @@ bookkeeping_path::external_string_is_bookkeeping_path(utf8 const & path)
 {
   // FIXME: this charset casting everywhere is ridiculous
   string normalized;
-  normalize_external_path(path(), normalized);
+  try
+    {
+      normalize_external_path(path(), normalized);
+    }
+  catch (informative_failure &)
+    {
+      return false;
+    }
   return internal_string_is_bookkeeping_path(utf8(normalized));
 }
 bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
@@ -1928,6 +1935,11 @@ UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
   char const * const no[] = {"../foo",
                        "../foo/bar",
                        "../foo/_MTN",
+#ifdef WIN32
+                       "c:/foo/foo", // don't throw informative_failure exception
+#else
+                       "/foo/foo", // don't throw informative_failure exception
+#endif
                        0 };
   for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path

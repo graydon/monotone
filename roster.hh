@@ -1,6 +1,7 @@
 #ifndef __ROSTER_HH__
 #define __ROSTER_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -202,6 +203,10 @@ public:
                 attr_key const & key,
                 attr_value & val) const;
 
+  void get_file_details(node_id nid,
+                        file_id & fid,
+                        file_path & pth) const;
+
   void extract_path_set(std::set<file_path> & paths) const;
 
   node_map const & all_nodes() const
@@ -253,22 +258,6 @@ private:
   // conservative --- perhaps it will turn out that it is _too_ conservative
   // and causes problems, in which case we should probably switch to the
   // former.
-  //
-  // FIXME: This _is_ all a little nasty, because this can be a source of
-  // abstraction leak -- for instance, roster_merge's contract is that nodes
-  // involved in name-related conflicts will be detached in the roster it returns.
-  // Those nodes really should be allowed to be attached anywhere, or dropped,
-  // which is not actually expressible right now.  Worse, whether or not they
-  // are in old_locations map is an implementation detail of roster_merge --
-  // it may temporarily attach and then detach the nodes it creates, but this
-  // is not deterministic or part of its interface.  The main time this would
-  // be a _problem_ is if we add interactive resolution of tree rearrangement
-  // conflicts -- if someone resolves a rename conflict by saying that one
-  // side wins, or by deleting one of the conflicting nodes, and this all
-  // happens in memory, then it may trigger a spurious invariant failure here.
-  // If anyone ever decides to add this kind of functionality, then it would
-  // definitely make sense to move this checking into editable_tree.  For now,
-  // though, no such functionality is planned, so we'll see what happens.
   //
   // The implementation itself uses the map old_locations.  A node can be in
   // the following states:

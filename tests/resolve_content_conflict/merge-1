@@ -1,0 +1,10 @@
+mtn: 2 heads on branch 'testbranch'
+mtn: merge 1 / 1:
+mtn: calculating best pair of heads to merge next
+mtn: [left]  92bba9973b061f3617638edbc32610f7712b7a51
+mtn: [right] c28c3c0f5a7f9cde848be91f79d86a6dd63e88ca
+mtn: merged bar, bar
+mtn: replacing content of baz, baz with _MTN/result/baz
+mtn: replacing content of foo, foo with foo
+mtn: [merged] ad3e91f197b102b27435049513a87778550dfd89
+mtn: note: your workspaces have not been updated
