@@ -33,10 +33,9 @@ How to release a new version of monotone
      configure.ac: change the call to AC_INIT
      monotone.spec: change the "Version:" field, and add an entry to
        the %changelog section.
-     win32/monotone.iss: the version number is mentioned several times
-       in this file, make sure to replace them all.
-     visualc/config.h: again, the version number is mentioned several
-       times, don't miss any.
+     win32/monotone.iss: look out for "#define APPVERS"
+     visualc/config.h: the version number is mentioned several times,
+       don't miss any.
      debian/changelog: rather than modifying this file directly, run
        the command "debchange -v <NEW VERSION>-0.1".  (If you screw up
        and need to roll a new unofficial package, use "debchange -i"
@@ -68,7 +67,7 @@ How to release a new version of monotone
    $ tar xvzf SOMEDIR/monotone-<NEW VERSION>.tar.gz
    $ cd monotone-<NEW VERSION>
    $ ./configure
-   $ make monotone.pdf html
+   $ LANG=c make monotone.pdf html
 
 8) Upload everything to the website (uses monotone):
 
@@ -121,7 +120,7 @@ How to release a new version of monotone
 11) Once you're pretty sure things have gone well, tag the source:
 
     $ mtn tag <REVISION> monotone-<NEW VERSION>
-    
+
     This is the last possible moment to back out!
 
     $ mtn sync

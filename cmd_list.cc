@@ -155,6 +155,103 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
   guard.commit();
 }
 
+CMD(duplicates, "duplicates", "", CMD_REF(list), "",
+    N_("Lists duplicate files in the specified revision."
+       " If no revision is specified, use the workspace"),
+    "",
+    options::opts::revision)
+{
+  if (args.size() != 0)
+    throw usage(execid);
+
+  revision_id rev_id;
+  roster_t roster;
+  database db(app);
+  project_t project(db);
+
+  N(app.opts.revision_selectors.size() <= 1,
+    F("more than one revision given"));
+
+  if (app.opts.revision_selectors.size() == 0)
+    {
+      workspace work(app);
+      temp_node_id_source nis;
+
+      work.get_current_roster_shape(db, nis, roster);
+    }
+  else
+    {
+      complete(app.opts, app.lua, project,
+               idx(app.opts.revision_selectors, 0)(), rev_id);
+      N(db.revision_exists(rev_id),
+        F("no revision %s found in database") % rev_id);
+      db.get_roster(rev_id, roster);
+    }
+
+  // To find the duplicate files, we put all file_ids in a map
+  // and count how many times they occur in the roster.
+  //
+  // Structure of file_id_map is following:
+  //  first : file_id
+  //  second :
+  //    first : unsigned int
+  //    second : file_paths (=vector<file_path>)
+  typedef std::vector<file_path> file_paths;
+  typedef std::pair<unsigned int, file_paths> file_count;
+  typedef std::map<file_id, file_count> file_id_map;
+  file_id_map file_map;
+
+  node_map const & nodes = roster.all_nodes();
+  for (node_map::const_iterator i = nodes.begin();
+       i != nodes.end(); ++i)
+    {
+      node_t node = i->second;
+      if (is_file_t(node))
+        {
+          file_t f = downcast_to_file_t(node);
+          file_path p;
+          roster.get_name(i->first, p);
+
+          file_id_map::iterator iter = file_map.find(f->content);
+          if (iter == file_map.end())
+            {
+              file_paths paths;
+              paths.push_back(p);
+              file_count fc(1, paths);
+              file_map.insert(make_pair(f->content, fc));
+            }
+          else
+            {
+              iter->second.first++;
+              iter->second.second.push_back(p);
+            }
+        }
+    }
+
+  string empty_checksum(40, ' ');
+  for (file_id_map::const_iterator i = file_map.begin();
+       i != file_map.end(); ++i)
+    {
+      if (i->second.first > 1)
+        {
+          bool first_print = true;
+          for (file_paths::const_iterator j = i->second.second.begin();
+               j != i->second.second.end(); ++j)
+            {
+              if (first_print)
+                {
+                  cout << i->first;
+                  first_print = false;
+                }
+              else
+                cout << empty_checksum;
+
+              cout << " " << *j << '\n';
+            }
+        }
+    }
+}
+
 CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
     N_("Lists keys that match a pattern"),
     "",

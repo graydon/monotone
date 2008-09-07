@@ -12,7 +12,7 @@
 
 #include "vector.hh"
 #include <set>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include "rev_types.hh"
 #include "cert.hh"
 
@@ -433,7 +433,7 @@ public:
     revision_id const & id, cert_name const & name, cert_value const & val);
 
 private:
-  boost::scoped_ptr<database_impl> imp;
+  boost::shared_ptr<database_impl> imp;
   lua_hooks & lua;
 };
 

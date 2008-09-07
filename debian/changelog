@@ -1,11 +1,11 @@
-monotone (0.41-1) UNRELEASED; urgency=low
+monotone (0.41-1) unstable; urgency=low
 
   * New upstream version.
   * Don't invoke 'false' and 'true' by absolute path
     in monotone-server.postinst.
   * Policy 3.8.0; no changes required.
 
- -- Zack Weinberg <zackw@panix.com>  Sat, 30 Aug 2008 12:41:23 -0700
+ -- Zack Weinberg <zackw@panix.com>  Wed, 03 Sep 2008 23:25:14 +0200
 
 monotone (0.40-6) unstable; urgency=low
 

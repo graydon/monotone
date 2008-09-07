@@ -1,6 +1,6 @@
 Summary: monotone is a distributed version control tool
 Name: monotone
-Version: 0.40
+Version: 0.41
 Release: 0.mtn.2%{?dist}
 License: GPL
 Group: Development/Tools
@@ -44,7 +44,7 @@ rm -rf %{buildroot}
 if [ -x /sbin/install-info ]; then
   /sbin/install-info --info-dir=%{_infodir} %{_infodir}/monotone.info.gz || :
 fi
- 
+
 %postun
 if [ $1 -eq 0 -a -x /sbin/install-info ]; then
   /sbin/install-info --info-dir=%{_infodir} --remove monotone || :
@@ -59,6 +59,9 @@ fi
 
 
 %changelog
+* Wed Sep 03 Thomas Keller <me@thomaskeller.biz>
+- 0.41 release.
+
 * Thu Apr 10 Richard Levitte <richard@levitte.org>
 - 0.40 release.
 
@@ -187,8 +190,8 @@ fi
 - set CFLAGS/CXXFLAGS since RH compiler can do optimization
 - remove info details since texi has category / entry
 
-* Wed Sep 27 2003 graydon hoare <graydon@pobox.com> 
+* Wed Sep 27 2003 graydon hoare <graydon@pobox.com>
 - 0.5 release.
 
-* Wed Sep 24 2003 graydon hoare <graydon@pobox.com> 
+* Wed Sep 24 2003 graydon hoare <graydon@pobox.com>
 - Initial build.

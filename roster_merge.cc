@@ -687,24 +687,28 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
             P(F("directory '%s' pivoted to root on the left") % left_lca_name);
 
           if (!right_roster.has_node(left_root))
-            if (basic_io)
-              {
-                st.push_str_pair(syms::right_type, "deleted directory");
-                st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
-              }
-            else
-              P(F("directory '%s' deleted on the right") % left_lca_name);
+            {
+              if (basic_io)
+                {
+                  st.push_str_pair(syms::right_type, "deleted directory");
+                  st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
+                }
+              else
+                P(F("directory '%s' deleted on the right") % left_lca_name);
+            }
         }
       else if (left_root == left_lca_root && right_root != right_lca_root)
         {
           if (!left_roster.has_node(right_root))
-            if (basic_io)
-              {
-                st.push_str_pair(syms::left_type, "deleted directory");
-                st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
-              }
-            else
-              P(F("directory '%s' deleted on the left") % right_lca_name);
+            {
+              if (basic_io)
+                {
+                  st.push_str_pair(syms::left_type, "deleted directory");
+                  st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+                }
+              else
+                P(F("directory '%s' deleted on the left") % right_lca_name);
+            }
 
           if (basic_io)
             {
@@ -725,22 +729,26 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
             P(F("directory '%s' pivoted to root on the left") % left_lca_name);
 
           if (!right_roster.has_node(left_root))
-            if (basic_io)
-              {
-                st.push_str_pair(syms::right_type, "deleted directory");
-                st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
-              }
-            else
-              P(F("directory '%s' deleted on the right") % left_lca_name);
+            {
+              if (basic_io)
+                {
+                  st.push_str_pair(syms::right_type, "deleted directory");
+                  st.push_str_pair(syms::ancestor_name, left_lca_name.as_external());
+                }
+              else
+                P(F("directory '%s' deleted on the right") % left_lca_name);
+            }
 
           if (!left_roster.has_node(right_root))
-            if (basic_io)
-              {
-                st.push_str_pair(syms::left_type, "deleted directory");
-                st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
-              }
-            else
-              P(F("directory '%s' deleted on the left") % right_lca_name);
+            {
+              if (basic_io)
+                {
+                  st.push_str_pair(syms::left_type, "deleted directory");
+                  st.push_str_pair(syms::ancestor_name, right_lca_name.as_external());
+                }
+              else
+                P(F("directory '%s' deleted on the left") % right_lca_name);
+            }
 
           if (basic_io)
             {
@@ -902,32 +910,40 @@ roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roste
         P(F("conflict: directory loop created"));
 
       if (left_name != lca_name)
-        if (basic_io)
-          put_rename_conflict_left (st, adaptor, conflict.nid);
-        else
-          P(F("'%s' renamed to '%s' on the left")
-            % lca_name % left_name);
+        {
+          if (basic_io)
+            put_rename_conflict_left (st, adaptor, conflict.nid);
+          else
+            P(F("'%s' renamed to '%s' on the left")
+              % lca_name % left_name);
+        }
 
       if (right_name != lca_name)
-        if (basic_io)
-          put_rename_conflict_right (st, adaptor, conflict.nid);
-        else
-          P(F("'%s' renamed to '%s' on the right")
-            % lca_name % right_name);
+        {
+          if (basic_io)
+            put_rename_conflict_right (st, adaptor, conflict.nid);
+          else
+            P(F("'%s' renamed to '%s' on the right")
+              % lca_name % right_name);
+        }
 
       if (left_parent_name != lca_parent_name)
-        if (basic_io)
-          put_rename_conflict_left (st, adaptor, conflict.parent_name.first);
-        else
-          P(F("'%s' renamed to '%s' on the left")
-            % lca_parent_name % left_parent_name);
+        {
+          if (basic_io)
+            put_rename_conflict_left (st, adaptor, conflict.parent_name.first);
+          else
+            P(F("'%s' renamed to '%s' on the left")
+              % lca_parent_name % left_parent_name);
+        }
 
       if (right_parent_name != lca_parent_name)
-        if (basic_io)
-          put_rename_conflict_right (st, adaptor, conflict.parent_name.first);
-        else
-          P(F("'%s' renamed to '%s' on the right")
-            % lca_parent_name % right_parent_name);
+        {
+          if (basic_io)
+            put_rename_conflict_right (st, adaptor, conflict.parent_name.first);
+          else
+            P(F("'%s' renamed to '%s' on the right")
+              % lca_parent_name % right_parent_name);
+        }
 
       if (basic_io)
         put_stanza(st, output);

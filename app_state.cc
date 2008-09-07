@@ -9,13 +9,28 @@
 
 #include "base.hh"
 #include "app_state.hh"
+#include "database.hh"
+
+#include <map>
+
+class app_state_private
+{
+public:
+  std::map<system_path, boost::shared_ptr<database_impl> > databases;
+};
 
 app_state::app_state()
-  : lua(this), mtn_automate_allowed(false)
+  : _hidden(new app_state_private()), lua(this), mtn_automate_allowed(false)
 {}
 
 app_state::~app_state()
 {}
+
+boost::shared_ptr<database_impl> &
+app_state::lookup_db(system_path const & f)
+{
+  return _hidden->databases[f];
+}
 
 // Local Variables:
 // mode: C++

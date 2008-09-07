@@ -188,7 +188,8 @@ CMD(db_kill_rev_locally, "kill_rev_locally", "", CMD_REF(db), "ID",
           db.get_revision(revid, new_work_rev);
           new_work_rev.made_for = made_for_workspace;
           work.put_work_rev(new_work_rev);
-          
+          work.maybe_update_inodeprints(db);
+
           // extra paranoia... we _should_ never run this section twice
           // since a merged workspace would fail early with work.has_changes()
           break;
@@ -354,7 +355,7 @@ CMD(unset, "unset", "", CMD_REF(variables), N_("DOMAIN NAME"),
   var_key k(d, n);
 
   database db(app);
-  N(db.var_exists(k), 
+  N(db.var_exists(k),
     F("no var with name %s in domain %s") % n % d);
   db.clear_var(k);
 }

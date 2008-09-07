@@ -5427,6 +5427,16 @@ Value : 2003-10-16  graydon hoare  <graydon@@pobox.com>
 @end group
 @end smallexample
 
+@item mtn list duplicates [--revision=@var{id}]
+@item mtn ls duplicates [--revision=@var{id}]
+
+This command lists duplicate files in a given revision. If no revision is
+given, the workspace is used instead. Ignored and unknown files are
+excluded from the listing.
+
+Two or more files are considered duplicates if the @sc{sha1} hashes of their
+contents are equal.
+
 @item mtn list keys
 @item mtn ls keys
 @itemx mtn list keys @var{pattern}

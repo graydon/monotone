@@ -419,8 +419,15 @@ database_impl::~database_impl()
 }
 
 database::database(app_state & app)
-  : imp(new database_impl(app.opts.dbname)), lua(app.lua)
-{}
+  : lua(app.lua)
+{
+  boost::shared_ptr<database_impl> & i = app.lookup_db(app.opts.dbname);
+  if (!i)
+    {
+      i.reset(new database_impl(app.opts.dbname));
+    }
+  imp = i;
+}
 
 database::~database()
 {}

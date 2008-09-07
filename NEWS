@@ -1,4 +1,31 @@
-??? ??? ?? ??:??:?? UTC ????
+??? ???  ? ??:??:?? UTC 2008
+
+        0.42 release.
+
+        Changes
+
+        Bugs fixed
+
+        - 'mtn db kill_rev_locally' did not update the inodeprint
+          cache when executed from a workspace on which the
+          revision's changes where applied.
+
+        - Some recent performance issues have been corrected:
+          * since 0.40, there is much more use of hex encoding/decoding.
+            These functions have been sped up considerably.
+          * since 0.40, every command in an 'automate stdio' session
+            would reinitialize the database. This was rather slow, so
+            monotone will now keep the database open between commands.
+
+        New features
+
+        - New 'mtn ls duplicates' command which lets you list
+          duplicated files in a given revision or the workspace.
+
+        Internal
+
+
+Wed Sep  3 21:13:18 UTC 2008
 
         0.41 release.
 
