@@ -850,6 +850,7 @@ show_conflicts_core (database & db,
                      revision_id const & l_id,
                      revision_id const & r_id,
                      bool const basic_io,
+                     bool warn_unsupported,
                      std::ostream & output)
 {
   N(!is_ancestor(db, l_id, r_id),
@@ -926,6 +927,15 @@ show_conflicts_core (database & db,
 
       result.report_attribute_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
       result.report_file_content_conflicts(lua, *l_roster, *r_roster, adaptor, basic_io, output);
+
+      if (warn_unsupported)
+        {
+          int const count = result.count_unsupported_resolution();
+          if (count > 0)
+            P(FP("warning: %s conflict with no supported resolutions.",
+                 "warning: %s conflicts with no supported resolutions.",
+                 count) % count);
+        }
     }
 }
 
@@ -944,7 +954,7 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
 
-  show_conflicts_core(db, app.lua, l_id, r_id, false, std::cout);
+  show_conflicts_core(db, app.lua, l_id, r_id, false, false, std::cout);
 }
 
 static void get_conflicts_rids(args_vector const & args,
@@ -1008,14 +1018,15 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
   revision_id l_id, r_id;
 
   get_conflicts_rids(args, db, project, app, l_id, r_id);
-  show_conflicts_core(db, app.lua, l_id, r_id, true, output);
+  show_conflicts_core(db, app.lua, l_id, r_id, true, false, output);
 }
 
 CMD(store, "store", "", CMD_REF(conflicts),
     "[LEFT_REVID RIGHT_REVID]",
     N_("Store the conflicts from merging two revisions."),
     N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
-       "first two heads that would be chosen by the 'merge' command."),
+       "first two heads that would be chosen by the 'merge' command. If "
+       "--conflicts-file is not given, '_MTN/conflicts' is used."),
     options::opts::branch | options::opts::conflicts_opts)
 {
   database    db(app);
@@ -1025,7 +1036,7 @@ CMD(store, "store", "", CMD_REF(conflicts),
   get_conflicts_rids(args, db, project, app, left_id, right_id);
 
   std::ostringstream output;
-  show_conflicts_core(db, app.lua, left_id, right_id, true, output);
+  show_conflicts_core(db, app.lua, left_id, right_id, true, true, output);
 
   data dat(output.str());
   write_data(system_path(app.opts.conflicts_file), dat, system_path("_MTN"));

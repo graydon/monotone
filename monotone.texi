@@ -4687,6 +4687,9 @@ have resolutions, so they will not show up in subsequent
 Show the first unresolved conflict in the conflicts file, and list the
 possible resolutions.
 
+@item mtn conflicts --conflicts-file=@var{file} show_remaining
+Show remaining unresolved conflicts in the conflicts file.
+
 @item mtn conflicts --conflicts-file=@var{file} resolve_first @var{resolution}
 Specify a resolution for the first conflict in the conflicts file; it
 must be a single file conflict. The conflicts file is updated.
@@ -8768,8 +8771,8 @@ option.
 
 @itemize
 @item
-8.1: -- added default resolution for file content conflicts, user
-resolutions for others.
+8.1: -- Added default resolution for file content conflicts, user
+resolutions for others. @code{directory_loop_created} changed to @code{directory_loop}
 @item
 7.1 -- initial
 @end itemize
@@ -8889,7 +8892,7 @@ ancestor_name "foo"
 
 Directory loop created:
 @verbatim
-     conflict directory_loop_created
+     conflict directory_loop
     left_type "renamed directory"
 ancestor_name "foo"
     left_name "bar/foo"

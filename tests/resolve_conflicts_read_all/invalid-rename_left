@@ -1,0 +1,4 @@
+mtn: warning: 1 conflict with no supported resolutions.
+mtn: conflict: invalid name _MTN in root directory
+mtn: 'foo' pivoted to root on the left
+mtn: 'bad/_MTN' renamed to 'foo/_MTN' on the right

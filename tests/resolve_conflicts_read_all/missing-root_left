@@ -1,0 +1,7 @@
+mtn: warning: 2 conflicts with no supported resolutions.
+mtn: conflict: missing root directory
+mtn: directory 'foo' pivoted to root on the left
+mtn: directory 'foo' deleted on the right
+mtn: conflict: orphaned directory '' from revision ead03530f5fefe50c9010157c42c0ebe18086559
+mtn: parent directory '' was deleted on the right
+mtn: directory 'bar' was renamed from '' on the left

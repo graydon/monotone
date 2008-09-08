@@ -50,13 +50,13 @@ namespace resolve_conflicts
 struct invalid_name_conflict
 {
   node_id nid;
-  std::pair<node_id, path_component> parent_name;
+  std::pair<node_id, path_component> parent_name; // renamed from (if any)
 };
 
 struct directory_loop_conflict
 {
   node_id nid;
-  std::pair<node_id, path_component> parent_name;
+  std::pair<node_id, path_component> parent_name; // renamed from (if any)
 };
 
 // orphaned nodes always merged their name cleanly, so we simply put that name
@@ -64,7 +64,13 @@ struct directory_loop_conflict
 struct orphaned_node_conflict
 {
   node_id nid;
+  // nid is the orphaned node; it exists in one parent, but the directory
+  // containing it does not exist in the other.
+
   std::pair<node_id, path_component> parent_name;
+  // parent_name is the name of the orphaned node, in the parent revision
+  // where it exists. parent_name.first is the directory containing
+  // parent_name.second
 };
 
 // our general strategy is to return a (possibly insane) roster, and a list of
@@ -164,7 +170,7 @@ struct roster_merge_result
   // - attribute conflicts
   // - file content conflicts
 
-  bool missing_root_dir;
+  bool missing_root_conflict;
   std::vector<invalid_name_conflict> invalid_name_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
 
@@ -181,6 +187,7 @@ struct roster_merge_result
   bool is_clean() const;
   bool has_content_conflicts() const;
   bool has_non_content_conflicts() const;
+  int  count_unsupported_resolution() const;
   void log_conflicts() const;
 
   void report_missing_root_conflicts(roster_t const & left,
