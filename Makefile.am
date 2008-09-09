@@ -566,9 +566,8 @@ monotone-$(PACKAGE_VERSION).pkg: monotone.pdf html
 	plutil -convert xml1 -o monotone-xml.pmproj.in $(srcdir)/mac/monotone.pmproj
 	sed "s/__MONOTONE_VERSION__/$(PACKAGE_VERSION)/g" \
 		< monotone-xml.pmproj.in > monotone-xml.pmproj
-	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf \
-		$(srcdir)/COPYING .
-	mv COPYING COPYING.txt
+	cp $(srcdir)/mac/monotone-pkg-logo.gif $(srcdir)/mac/package-intro.rtf .
+	cp $(srcdir)/COPYING COPYING.txt
 	chmod -R o-w,g-w,a+rX $(PKG_INST_ROOT)
 	sudo chown -R root:wheel $(PKG_INST_ROOT)/usr
 	sudo chown -R root:admin $(PKG_INST_ROOT)/Developer
