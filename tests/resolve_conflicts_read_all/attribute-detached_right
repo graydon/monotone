@@ -1,0 +1,10 @@
+mtn: warning: 3 conflicts with no supported resolutions.
+mtn: conflict: multiple names for file 'foo' from revision d81bb87785fa1bbe11aed1ca6d3340d288b61b78
+mtn: renamed to 'baz' on the left
+mtn: renamed to 'bar' on the right
+mtn: conflict: multiple values for attribute 'attr1' on file 'foo' from revision d81bb87785fa1bbe11aed1ca6d3340d288b61b78
+mtn: set to 'valueZ' on left file 'baz'
+mtn: set to 'valueX' on right file 'bar'
+mtn: conflict: multiple values for attribute 'attr2' on file 'foo' from revision d81bb87785fa1bbe11aed1ca6d3340d288b61b78
+mtn: deleted from left file 'baz'
+mtn: set to 'valueY' on right file 'bar'

@@ -463,7 +463,9 @@ remove(dir2)
 check(mtn("co", "--revision", base, "--branch", branch, dir2), 0, false, false)
 check(indir(dir2, mtn("pivot_root", "bar", "bbb")), 0, true, true)
 
-check_conflicts(branch)
+check(indir(dir2, mtn("commit", "--message", "blah-blah", "--branch", branch .. "-propagate")), 0, false, false)
+check_conflicts_left(branch)
+check_conflicts_right(branch)
 
 
 -- unrelated projects

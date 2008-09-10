@@ -1438,6 +1438,7 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
 {
   MM(left_roster);
   MM(right_roster);
+  MM(roster);
 
   for (size_t i = 0; i < attribute_conflicts.size(); ++i)
     {
@@ -1454,9 +1455,11 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
         }
       else
         {
-          node_type type = get_type(roster, conflict.nid);
+          // this->roster is null when we are called from 'conflicts
+          // show_remaining'; treat as unattached in that case.
+          node_type type = get_type(left_roster, conflict.nid);
 
-          if (roster.is_attached(conflict.nid))
+          if (roster.all_nodes().size() > 0 && roster.is_attached(conflict.nid))
             {
               file_path name;
               roster.get_name(conflict.nid, name);
@@ -1692,11 +1695,15 @@ read_missing_root_conflicts(basic_io::parser & pars,
     {
       pars.sym();
 
-      pars.esym(syms::left_type); pars.str();
-      pars.esym(syms::ancestor_name); pars.str();
-      pars.esym(syms::right_type); pars.str();
-      pars.esym(syms::ancestor_name); pars.str();
-
+      if (pars.symp(syms::left_type))
+        {
+          pars.sym(); pars.str();
+          pars.esym(syms::ancestor_name); pars.str();
+          pars.esym(syms::right_type); pars.str();
+          pars.esym(syms::ancestor_name); pars.str();
+        }
+      // else unrelated projects (branches); nothing else output
+      
       missing_root_conflict = true;
 
       if (pars.tok.in.lookahead != EOF)
@@ -1996,25 +2003,29 @@ validate_duplicate_name_conflicts(basic_io::parser & pars,
 
 static void
 read_attr_state_left(basic_io::parser & pars,
-                     std::pair<bool, attr_value> value)
+                     std::pair<bool, attr_value> & value)
 {
+  string tmp;
+
   if (pars.symp(syms::left_attr_value))
     {
       pars.sym();
       value.first = true;
-      pars.str();
-      value.second = attr_value(pars.token);
+      pars.str(tmp);
+      value.second = attr_value(tmp);
     }
   else
     {
       pars.esym(syms::left_attr_state);
+      pars.str(tmp);
+      I(tmp == "dropped");
       value.first = false;
     }
 } // read_attr_state_left
 
 static void
 read_attr_state_right(basic_io::parser & pars,
-                      std::pair<bool, attr_value> value)
+                      std::pair<bool, attr_value> & value)
 {
   string tmp;
 
