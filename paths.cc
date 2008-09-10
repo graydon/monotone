@@ -1123,7 +1123,6 @@ UNIT_TEST(paths, file_path_external_null_prefix)
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-                            "",
                             // some baddies made bad by a security kluge --
                             // see the comment in in_bookkeeping_dir
                             "_mtn",
@@ -1157,22 +1156,21 @@ UNIT_TEST(paths, file_path_external_null_prefix)
   check_fp_normalizes_to(".foo/bar", ".foo/bar");
   check_fp_normalizes_to("..foo/bar", "..foo/bar");
   check_fp_normalizes_to(".", "");
+  check_fp_normalizes_to("", "");
 #ifndef WIN32
   check_fp_normalizes_to("foo:bar", "foo:bar");
 #endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "foo/with,other+@weird*%#$=stuff/bar");
 
-  // Why are these tests with // in them commented out?  because boost::fs
-  // sucks and can't normalize them.  FIXME.
-  //check_fp_normalizes_to("foo//bar", "foo/bar");
+  check_fp_normalizes_to("foo//bar", "foo/bar");
   check_fp_normalizes_to("foo/../bar", "bar");
   check_fp_normalizes_to("foo/bar/", "foo/bar");
   check_fp_normalizes_to("foo/bar/.", "foo/bar");
   check_fp_normalizes_to("foo/bar/./", "foo/bar");
   check_fp_normalizes_to("foo/./bar/", "foo/bar");
   check_fp_normalizes_to("./foo", "foo");
-  //check_fp_normalizes_to("foo///.//", "foo");
+  check_fp_normalizes_to("foo///.//", "foo");
 
   initial_rel_path.unset();
 }
@@ -1206,7 +1204,6 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
                             "c:foo",
                             "c:/foo",
 #endif
-                            "",
                             // some baddies made bad by a security kluge --
                             // see the comment in in_bookkeeping_dir
                             "../../_mtn",
@@ -1240,21 +1237,20 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
+  check_fp_normalizes_to("", "a/b");
 #ifndef WIN32
   check_fp_normalizes_to("foo:bar", "a/b/foo:bar");
 #endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "a/b/foo/with,other+@weird*%#$=stuff/bar");
-  // why are the tests with // in them commented out?  because boost::fs sucks
-  // and can't normalize them.  FIXME.
-  //check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
+  check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
   check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/.", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/./", "a/b/foo/bar");
   check_fp_normalizes_to("foo/./bar/", "a/b/foo/bar");
   check_fp_normalizes_to("./foo", "a/b/foo");
-  //check_fp_normalizes_to("foo///.//", "a/b/foo");
+  check_fp_normalizes_to("foo///.//", "a/b/foo");
   // things that would have been bad without the initial_rel_path:
   check_fp_normalizes_to("../foo", "a/foo");
   check_fp_normalizes_to("..", "a");

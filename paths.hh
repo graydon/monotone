@@ -48,12 +48,14 @@
 //          is extremely fast.  such strings are interpreted as being relative
 //          to the project root.
 //        file_path_external: use this for strings that come from the user.
-//          these strings are normalized before being checked, and if there is
-//          a problem trigger N() invariants rather than I() invariants.  if in
-//          a workspace, such strings are interpreted as being
-//          _relative to the user's original directory_.
-//          if not in a workspace, strings are treated as referring to some
-//          database object directly.
+//          these strings are normalized before being checked, and if there
+//          is a problem trigger N() invariants rather than I() invariants.
+//          if in a workspace, such strings are interpreted as being
+//          _relative to the user's original directory_. if not in a
+//          workspace, strings are treated as relative to the tree root. The
+//          null string is accepted as referring to the workspace root
+//          directory, because that is how file_path.as_external() outputs
+//          that directory.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
 //
