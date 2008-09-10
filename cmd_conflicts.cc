@@ -8,6 +8,7 @@
 // PURPOSE.
 
 #include "base.hh"
+#include <iostream>
 
 #include "app_state.hh"
 #include "cmd.hh"
@@ -45,11 +46,13 @@ struct conflicts_t
     };
 };
 
+typedef enum {first, remaining} show_conflicts_case_t;
+
 static void
-show_first_conflict(conflicts_t conflicts)
+show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_case)
 {
-  // To find the first conflict, go thru the conflicts we know how to
-  // resolve in the same order we output them.
+  // Go thru the conflicts we know how to resolve in the same order
+  // merge.cc resolve_merge_conflicts outputs them.
   for (std::vector<duplicate_name_conflict>::iterator i = conflicts.result.duplicate_name_conflicts.begin();
        i != conflicts.result.duplicate_name_conflicts.end();
        ++i)
@@ -62,22 +65,30 @@ show_first_conflict(conflicts_t conflicts)
           file_path left_name;
           conflicts.left_roster->get_name(conflict.left_nid, left_name);
           P(F("duplicate_name %s") % left_name);
-          P(F("possible resolutions:"));
 
-          if (conflict.left_resolution.first == resolve_conflicts::none)
+          switch (show_case)
             {
-              P(F("resolve_first_left drop"));
-              P(F("resolve_first_left rename \"name\""));
-              P(F("resolve_first_left user \"name\""));
-            }
+            case first:
+              P(F("possible resolutions:"));
 
-          if (conflict.right_resolution.first == resolve_conflicts::none)
-            {
-              P(F("resolve_first_right drop"));
-              P(F("resolve_first_right rename \"name\""));
-              P(F("resolve_first_right user \"name\""));
+              if (conflict.left_resolution.first == resolve_conflicts::none)
+                {
+                  P(F("resolve_first_left drop"));
+                  P(F("resolve_first_left rename \"name\""));
+                  P(F("resolve_first_left user \"name\""));
+                }
+
+              if (conflict.right_resolution.first == resolve_conflicts::none)
+                {
+                  P(F("resolve_first_right drop"));
+                  P(F("resolve_first_right rename \"name\""));
+                  P(F("resolve_first_right user \"name\""));
+                }
+              return;
+
+            case remaining:
+              break;
             }
-          return;
         }
     }
 
@@ -92,15 +103,64 @@ show_first_conflict(conflicts_t conflicts)
           file_path name;
           conflicts.left_roster->get_name(conflict.nid, name);
           P(F("content %s") % name);
-          P(F("possible resolutions:"));
-          P(F("resolve user \"file_name\""));
-          return;
+
+          switch (show_case)
+            {
+            case first:
+              P(F("possible resolutions:"));
+              P(F("resolve user \"file_name\""));
+              return;
+
+            case remaining:
+              break;
+            }
         }
     }
 
-  N(false, F("no resolvable yet unresolved conflicts"));
-  
-} // show_first_conflict
+  switch (show_case)
+    {
+    case first:
+      {
+        int const count = conflicts.result.count_unsupported_resolution();
+        if (count > 0)
+            P(FP("warning: %s conflict with no supported resolutions.",
+                 "warning: %s conflicts with no supported resolutions.",
+                 count) % count);
+        else
+          P(F("all conflicts resolved"));
+      }
+      break;
+
+    case remaining:
+      {
+        int const count = conflicts.result.count_unsupported_resolution();
+        if (count > 0)
+          {
+            P(FP("warning: %s conflict with no supported resolutions.",
+                 "warning: %s conflicts with no supported resolutions.",
+                 count) % count);
+
+            content_merge_database_adaptor adaptor
+              (db, conflicts.left_rid, conflicts.right_rid, conflicts.left_marking, conflicts.right_marking);
+
+            conflicts.result.report_missing_root_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+            conflicts.result.report_invalid_name_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+            conflicts.result.report_directory_loop_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+            conflicts.result.report_orphaned_node_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+            conflicts.result.report_multiple_name_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+            conflicts.result.report_attribute_conflicts
+              (*conflicts.left_roster, *conflicts.right_roster, adaptor, false, std::cout);
+          }
+      }
+      break;
+    }
+
+} // show_conflicts
 
 enum side_t {left, right, neither};
 static char const * const conflict_resolution_not_supported_msg = "%s is not a supported conflict resolution for %s";
@@ -128,7 +188,7 @@ set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
     }
   else
     N(false, F(conflict_resolution_not_supported_msg) % idx(args,0) % "duplicate_name");
-  
+
 } //set_duplicate_name_conflict
 
 static void
@@ -173,13 +233,13 @@ set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & arg
            ++i)
         {
           file_content_conflict & conflict = *i;
-          
+
           if (conflict.resolution.first == resolve_conflicts::none)
             {
               if ("user" == idx(args,0)())
                 {
                   N(args.size() == 2, F("wrong number of arguments"));
-                  
+
                   conflict.resolution.first  = resolve_conflicts::content_user;
                   conflict.resolution.second = resolve_conflicts::new_optimal_path(idx(args,1)());
                 }
@@ -219,19 +279,31 @@ set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & arg
 
 CMD(show_first, "show_first", "", CMD_REF(conflicts),
     "",
-    N_("Show the first conflict in the conflicts file, and possible resolutions."),
+    N_("Show the first unresolved conflict in the conflicts file, and possible resolutions."),
     "",
     options::opts::conflicts_opts)
 {
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
-  show_first_conflict(conflicts);
+  show_conflicts(db, conflicts, first);
+}
+
+CMD(show_remaining, "show_remaining", "", CMD_REF(conflicts),
+    "",
+    N_("Show the remaining unresolved conflicts in the conflicts file."),
+    "",
+    options::opts::conflicts_opts)
+{
+  database db(app);
+  conflicts_t conflicts (db, app.opts.conflicts_file);
+
+  show_conflicts(db, conflicts, remaining);
 }
 
 CMD(resolve_first, "resolve_first", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the resolution for the first single-file conflict."),
+    N_("Set the resolution for the first unresolved single-file conflict."),
     "",
     options::opts::conflicts_opts)
 {
@@ -245,7 +317,7 @@ CMD(resolve_first, "resolve_first", "", CMD_REF(conflicts),
 
 CMD(resolve_first_left, "resolve_first_left", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the left resolution for the first two-file conflict."),
+    N_("Set the left resolution for the first unresolved two-file conflict."),
     "",
     options::opts::conflicts_opts)
 {
@@ -259,7 +331,7 @@ CMD(resolve_first_left, "resolve_first_left", "", CMD_REF(conflicts),
 
 CMD(resolve_first_right, "resolve_first_right", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the right resolution for the first two-file conflict."),
+    N_("Set the right resolution for the first unresolved two-file conflict."),
     "",
     options::opts::conflicts_opts)
 {
@@ -279,7 +351,7 @@ CMD(clean, "clean", "", CMD_REF(conflicts),
 {
   bookkeeping_path conflicts_file("conflicts");
   bookkeeping_path resolutions_dir("resolutions");
-  
+
   if (path_exists(conflicts_file))
     delete_file(conflicts_file);
 

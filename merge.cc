@@ -133,7 +133,7 @@ resolve_merge_conflicts(lua_hooks & lua,
           // resolutions, give a nice error message.
           char const * const msg = "conflict resolution for %s not yet supported";
 
-          N(!result.missing_root_dir, F(msg) % "missing_root_dir");
+          N(!result.missing_root_conflict, F(msg) % "missing_root_dir");
           N(result.invalid_name_conflicts.size() == 0, F(msg) % "invalid_name_conflicts");
           N(result.directory_loop_conflicts.size() == 0, F(msg) % "directory_loop_conflicts");
           N(result.orphaned_node_conflicts.size() == 0, F(msg) % "orphaned_node_conflicts");

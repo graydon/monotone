@@ -1,0 +1,4 @@
+mtn: warning: 1 conflict with no supported resolutions.
+mtn: conflict: multiple names for file 'foo' from revision 560b97068441495b17d8924f6122a1c47213a08b
+mtn: renamed to 'bar' on the left
+mtn: renamed to 'baz' on the right

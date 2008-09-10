@@ -1,5 +1,5 @@
 -- Test showing and setting all possible conflict resolutions in a
--- conflict file.
+-- conflict file. Also test 'conflict show_remaining'.
 
 mtn_setup()
 
@@ -48,6 +48,10 @@ mkdir("resolutions")
 check (mtn("conflicts", "--conflicts-file=resolutions/conflicts", "store", abe_1, beth_1), 0, nil, nil)
 check(samefilestd("conflicts-1", "resolutions/conflicts"))
 
+check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_remaining"), 0, nil, true)
+canonicalize("stderr")
+check(samefilestd("show_remaining-checkout_left", "stderr"))
+
 check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_first-checkout_left", "stderr"))
@@ -63,6 +67,10 @@ check(samefilestd("show_first-checkout_right", "stderr"))
 writefile("resolutions/checkout_right.sh", "checkout_right.sh beth 2")
 check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_right", "drop"), 0, nil, nil)
 check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_left", "user", "resolutions/checkout_right.sh"), 0, nil, nil)
+
+check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_remaining"), 0, nil, true)
+canonicalize("stderr")
+check(samefilestd("show_remaining-thermostat", "stderr"))
 
 check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
 canonicalize("stderr")

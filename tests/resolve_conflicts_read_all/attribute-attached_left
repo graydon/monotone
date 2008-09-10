@@ -1,0 +1,7 @@
+mtn: warning: 2 conflicts with no supported resolutions.
+mtn: conflict: multiple values for attribute 'attr1' on file 'foo' from revision c79cbcfb99f7a5e547815669b150dd3d9a28a598
+mtn: set to 'valueX' on left file 'foo'
+mtn: set to 'valueZ' on right file 'foo'
+mtn: conflict: multiple values for attribute 'attr2' on file 'foo' from revision c79cbcfb99f7a5e547815669b150dd3d9a28a598
+mtn: set to 'valueY' on left file 'foo'
+mtn: deleted from right file 'foo'

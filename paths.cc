@@ -366,7 +366,6 @@ normalize_external_path(string const & path, string & normalized)
     }
   else
     {
-      N(!path.empty(), F("empty path '%s' is invalid") % path);
       N(!is_absolute_here(path), F("absolute path '%s' is invalid") % path);
       string base;
       try

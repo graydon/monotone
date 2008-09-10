@@ -1,0 +1,8 @@
+mtn: duplicate_name 
+mtn: warning: 2 conflicts with no supported resolutions.
+mtn: conflict: missing root directory
+mtn: directory 'bar' pivoted to root on the left
+mtn: directory 'foo' pivoted to root on the right
+mtn: conflict: multiple names for directory '' from revision 5bc669f00cf90b76dd38077827565b624d823756
+mtn: renamed to 'bbb' on the left
+mtn: renamed to 'aaa' on the right

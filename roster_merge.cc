@@ -180,7 +180,7 @@ roster_merge_result::has_content_conflicts() const
 bool
 roster_merge_result::has_non_content_conflicts() const
 {
-  return missing_root_dir
+  return missing_root_conflict
     || !invalid_name_conflicts.empty()
     || !directory_loop_conflicts.empty()
     || !orphaned_node_conflicts.empty()
@@ -188,10 +188,22 @@ roster_merge_result::has_non_content_conflicts() const
     || !duplicate_name_conflicts.empty()
     || !attribute_conflicts.empty();
 }
+
+int
+roster_merge_result::count_unsupported_resolution() const
+{
+  return (missing_root_conflict ? 1 : 0)
+    + invalid_name_conflicts.size()
+    + directory_loop_conflicts.size()
+    + orphaned_node_conflicts.size()
+    + multiple_name_conflicts.size()
+    + attribute_conflicts.size();
+}
+
 static void
 dump_conflicts(roster_merge_result const & result, string & out)
 {
-  if (result.missing_root_dir)
+  if (result.missing_root_conflict)
     out += (FL("missing_root_conflict: root directory has been removed\n")).str();
 
   dump(result.invalid_name_conflicts, out);
@@ -250,7 +262,7 @@ namespace
     symbol const attribute("attribute");
     symbol const conflict("conflict");
     symbol const content("content");
-    symbol const directory_loop_created("directory_loop_created");
+    symbol const directory_loop("directory_loop");
     symbol const duplicate_name("duplicate_name");
     symbol const invalid_name("invalid_name");
     symbol const left("left");
@@ -282,9 +294,9 @@ namespace
 }
 
 static void
-put_added_conflict_left (basic_io::stanza & st,
-                         content_merge_adaptor & adaptor,
-                         node_id const nid)
+put_added_conflict_left(basic_io::stanza & st,
+                        content_merge_adaptor & adaptor,
+                        node_id const nid)
 {
   // We access the roster via the adaptor, to be sure we use the left
   // roster; avoids typos in long parameter lists.
@@ -314,9 +326,9 @@ put_added_conflict_left (basic_io::stanza & st,
 }
 
 static void
-put_added_conflict_right (basic_io::stanza & st,
-                          content_merge_adaptor & adaptor,
-                          node_id const nid)
+put_added_conflict_right(basic_io::stanza & st,
+                         content_merge_adaptor & adaptor,
+                         node_id const nid)
 {
   content_merge_database_adaptor & db_adaptor (dynamic_cast<content_merge_database_adaptor &>(adaptor));
   boost::shared_ptr<roster_t const> roster(db_adaptor.rosters[db_adaptor.right_rid]);
@@ -343,9 +355,9 @@ put_added_conflict_right (basic_io::stanza & st,
 }
 
 static void
-put_rename_conflict_left (basic_io::stanza & st,
-                          content_merge_adaptor & adaptor,
-                          node_id const nid)
+put_rename_conflict_left(basic_io::stanza & st,
+                         content_merge_adaptor & adaptor,
+                         node_id const nid)
 {
   content_merge_database_adaptor & db_adaptor (dynamic_cast<content_merge_database_adaptor &>(adaptor));
   boost::shared_ptr<roster_t const> ancestor_roster(db_adaptor.rosters[db_adaptor.lca]);
@@ -375,6 +387,97 @@ put_rename_conflict_left (basic_io::stanza & st,
       st.push_str_pair(syms::left_type, "renamed directory");
       st.push_str_pair(syms::ancestor_name, ancestor_name.as_external());
       st.push_file_pair(syms::left_name, left_name);
+    }
+}
+
+static void
+get_nid_name_pair(roster_t const & roster,
+                  string const & path,
+                  node_id & nid,
+                  std::pair<node_id, path_component> & name)
+{
+  node_t const node = roster.get_node(file_path_external(utf8(path)));
+  nid = node->self;
+  name = make_pair (node->parent, node->name);
+}
+
+static void
+read_added_rename_conflict_left(basic_io::parser & pars,
+                                roster_t const & roster,
+                                node_id & left_nid,
+                                std::pair<node_id, path_component> & left_name)
+{
+  string tmp;
+
+  pars.esym(syms::left_type);
+
+  pars.str(tmp);
+
+  if (tmp == "renamed file")
+    {
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::ancestor_file_id); pars.hex();
+
+      pars.esym(syms::left_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, left_nid, left_name);
+      pars.esym(syms::left_file_id); pars.hex();
+    }
+  else if (tmp == "renamed directory")
+    {
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::left_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, left_nid, left_name);
+    }
+  else if (tmp == "added file")
+    {
+      pars.esym(syms::left_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, left_nid, left_name);
+      pars.esym(syms::left_file_id); pars.hex();
+    }
+  else if (tmp == "added directory")
+    {
+      pars.esym(syms::left_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, left_nid, left_name);
+    }
+} // read_added_rename_conflict_left
+
+static void
+read_added_rename_conflict_right(basic_io::parser & pars,
+                                 roster_t const & roster,
+                                 node_id & right_nid,
+                                 std::pair<node_id, path_component> & right_name)
+{
+  string tmp;
+
+  pars.esym(syms::right_type);
+
+  pars.str(tmp);
+
+  if (tmp == "renamed file")
+    {
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::ancestor_file_id); pars.hex();
+
+      pars.esym(syms::right_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, right_nid, right_name);
+      pars.esym(syms::right_file_id); pars.hex();
+    }
+  else if (tmp == "renamed directory")
+    {
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::right_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, right_nid, right_name);
+    }
+  else if (tmp == "added file")
+    {
+      pars.esym(syms::right_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, right_nid, right_name);
+      pars.esym(syms::right_file_id); pars.hex();
+    }
+  else if (tmp == "added directory")
+    {
+      pars.esym(syms::right_name); pars.str(tmp);
+      get_nid_name_pair(roster, tmp, right_nid, right_name);
     }
 }
 
@@ -645,7 +748,7 @@ roster_merge_result::report_missing_root_conflicts(roster_t const & left_roster,
   MM(left_roster);
   MM(right_roster);
 
-  if (missing_root_dir)
+  if (missing_root_conflict)
     {
       node_id left_root, right_root;
       left_root = left_roster.root()->self;
@@ -905,7 +1008,7 @@ roster_merge_result::report_directory_loop_conflicts(roster_t const & left_roste
       lca_roster->get_name(conflict.parent_name.first, lca_parent_name);
 
       if (basic_io)
-        st.push_str_pair(syms::conflict, syms::directory_loop_created);
+        st.push_str_pair(syms::conflict, syms::directory_loop);
       else
         P(F("conflict: directory loop created"));
 
@@ -1335,6 +1438,7 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
 {
   MM(left_roster);
   MM(right_roster);
+  MM(roster);
 
   for (size_t i = 0; i < attribute_conflicts.size(); ++i)
     {
@@ -1351,9 +1455,11 @@ roster_merge_result::report_attribute_conflicts(roster_t const & left_roster,
         }
       else
         {
-          node_type type = get_type(roster, conflict.nid);
+          // this->roster is null when we are called from 'conflicts
+          // show_remaining'; treat as unattached in that case.
+          node_type type = get_type(left_roster, conflict.nid);
 
-          if (roster.is_attached(conflict.nid))
+          if (roster.all_nodes().size() > 0 && roster.is_attached(conflict.nid))
             {
               file_path name;
               roster.get_name(conflict.nid, name);
@@ -1579,26 +1685,219 @@ static char const * const conflict_resolution_not_supported_msg = "%s is not a s
 static char const * const conflict_extra = "extra chars at end of conflict";
 
 static void
+read_missing_root_conflicts(basic_io::parser & pars,
+                            bool & missing_root_conflict,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  // There can be only one of these
+  if (pars.tok.in.lookahead != EOF && pars.symp(syms::missing_root))
+    {
+      pars.sym();
+
+      if (pars.symp(syms::left_type))
+        {
+          pars.sym(); pars.str();
+          pars.esym(syms::ancestor_name); pars.str();
+          pars.esym(syms::right_type); pars.str();
+          pars.esym(syms::ancestor_name); pars.str();
+        }
+      // else unrelated projects (branches); nothing else output
+
+      missing_root_conflict = true;
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+  else
+    {
+      missing_root_conflict = false;
+    }
+} // read_missing_root_conflicts
+
+static void
+read_invalid_name_conflict(basic_io::parser & pars,
+                           invalid_name_conflict & conflict,
+                           roster_t const & left_roster,
+                           roster_t const & right_roster)
+{
+  if (pars.symp(syms::left_type))
+    {
+      pars.sym();
+      pars.str(); // "pivoted root"
+      pars.esym(syms::ancestor_name); pars.str(); // lca_parent_name
+      read_added_rename_conflict_right (pars, right_roster, conflict.nid, conflict.parent_name);
+    }
+  else
+    {
+      pars.esym(syms::right_type);
+      pars.str(); // "pivoted root"
+      pars.esym(syms::ancestor_name); pars.str(); // lca_parent_name
+      read_added_rename_conflict_left (pars, left_roster, conflict.nid, conflict.parent_name);
+    }
+} // read_invalid_name_conflict
+
+static void
+read_invalid_name_conflicts(basic_io::parser & pars,
+                            std::vector<invalid_name_conflict> & conflicts,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::invalid_name))
+    {
+      invalid_name_conflict conflict;
+
+      pars.sym();
+
+      read_invalid_name_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_invalid_name_conflicts
+
+static void
+read_directory_loop_conflict(basic_io::parser & pars,
+                             directory_loop_conflict & conflict,
+                             roster_t const & left_roster,
+                             roster_t const & right_roster)
+{
+  string tmp;
+
+  // syms::directory_loop has been read
+
+  if (pars.symp(syms::left_type))
+    {
+      read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.parent_name);
+    }
+  if (pars.symp(syms::right_type))
+    {
+      read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.parent_name);
+    }
+
+  if (pars.symp(syms::left_type))
+    {
+      pars.sym();
+      pars.str(); // "renamed directory"
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::left_name); pars.str();
+    }
+  if (pars.symp(syms::right_type))
+    {
+      pars.sym();
+      pars.str(); // "renamed directory"
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::right_name); pars.str();
+    }
+
+} // read_directory_loop_conflict
+
+static void
+read_directory_loop_conflicts(basic_io::parser & pars,
+                              std::vector<directory_loop_conflict> & conflicts,
+                              roster_t const & left_roster,
+                              roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::directory_loop))
+    {
+      directory_loop_conflict conflict;
+
+      pars.sym();
+
+      read_directory_loop_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_directory_loop_conflicts
+
+
+static void
+read_orphaned_node_conflict(basic_io::parser & pars,
+                            orphaned_node_conflict & conflict,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  if (pars.symp(syms::left_type))
+    {
+      pars.sym(); pars.str(); // "deleted directory | file"
+      pars.esym(syms::ancestor_name); pars.str();
+      read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.parent_name);
+    }
+  else
+    {
+      pars.esym(syms::right_type);
+      pars.str(); // "deleted directory | file"
+      pars.esym(syms::ancestor_name); pars.str();
+      read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.parent_name);
+    }
+} // read_orphaned_node_conflict
+
+static void
+read_orphaned_node_conflicts(basic_io::parser & pars,
+                            std::vector<orphaned_node_conflict> & conflicts,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && (pars.symp(syms::orphaned_directory) || pars.symp(syms::orphaned_file)))
+    {
+      orphaned_node_conflict conflict;
+
+      pars.sym();
+
+      read_orphaned_node_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_orphaned_node_conflicts
+
+
+static void
+read_multiple_name_conflict(basic_io::parser & pars,
+                            multiple_name_conflict & conflict,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.left);
+  read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.right);
+} // read_multiple_name_conflict
+
+static void
+read_multiple_name_conflicts(basic_io::parser & pars,
+                             std::vector<multiple_name_conflict> & conflicts,
+                             roster_t const & left_roster,
+                             roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::multiple_names))
+    {
+      multiple_name_conflict conflict(the_null_node);
+
+      pars.sym();
+
+      read_multiple_name_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_multiple_name_conflicts
+
+static void
 read_duplicate_name_conflict(basic_io::parser & pars,
                              duplicate_name_conflict & conflict,
                              roster_t const & left_roster,
                              roster_t const & right_roster)
 {
-  string tmp;
-  string left_name, right_name;
-
-  // we don't care what type of file/dir these are; the right type will get
-  // written back out.
-  pars.esym(syms::left_type); pars.str();
-  pars.esym (syms::left_name); pars.str(left_name);
-  pars.esym(syms::left_file_id); pars.hex();
-
-  pars.esym(syms::right_type); pars.str();
-  pars.esym (syms::right_name); pars.str(right_name);
-  pars.esym(syms::right_file_id); pars.hex();
-
-  conflict.left_nid = left_roster.get_node (file_path_internal (left_name))->self;
-  conflict.right_nid = right_roster.get_node (file_path_internal (right_name))->self;
+  read_added_rename_conflict_left(pars, left_roster, conflict.left_nid, conflict.parent_name);
+  read_added_rename_conflict_right(pars, right_roster, conflict.right_nid, conflict.parent_name);
 
   // check for a resolution
   while ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
@@ -1667,7 +1966,6 @@ read_duplicate_name_conflicts(basic_io::parser & pars,
         pars.esym (syms::conflict);
     }
 } // read_duplicate_name_conflicts
-
 static void
 validate_duplicate_name_conflicts(basic_io::parser & pars,
                                   std::vector<duplicate_name_conflict> & conflicts,
@@ -1702,6 +2000,113 @@ validate_duplicate_name_conflicts(basic_io::parser & pars,
         }
     }
 } // validate_duplicate_name_conflicts
+
+static void
+read_attr_state_left(basic_io::parser & pars,
+                     std::pair<bool, attr_value> & value)
+{
+  string tmp;
+
+  if (pars.symp(syms::left_attr_value))
+    {
+      pars.sym();
+      value.first = true;
+      pars.str(tmp);
+      value.second = attr_value(tmp);
+    }
+  else
+    {
+      pars.esym(syms::left_attr_state);
+      pars.str(tmp);
+      I(tmp == "dropped");
+      value.first = false;
+    }
+} // read_attr_state_left
+
+static void
+read_attr_state_right(basic_io::parser & pars,
+                      std::pair<bool, attr_value> & value)
+{
+  string tmp;
+
+  if (pars.symp(syms::right_attr_value))
+    {
+      pars.sym();
+      value.first = true;
+      pars.str(tmp);
+      value.second = attr_value(tmp);
+    }
+  else
+    {
+      pars.esym(syms::right_attr_state);
+      pars.str(tmp);
+      I(tmp == "dropped");
+      value.first = false;
+    }
+} // read_attr_state_right
+
+static void
+read_attribute_conflict(basic_io::parser & pars,
+                        attribute_conflict & conflict,
+                        roster_t const & left_roster,
+                        roster_t const & right_roster)
+{
+  string tmp;
+
+  pars.esym(syms::node_type);
+
+  pars.str(tmp);
+
+  if (tmp == "file")
+    {
+      pars.esym(syms::attr_name); pars.str(tmp);
+      conflict.key = attr_key(tmp);
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::ancestor_file_id); pars.hex();
+      pars.esym(syms::left_name); pars.str(tmp);
+      conflict.nid = left_roster.get_node(file_path_external(utf8(tmp)))->self;
+      pars.esym(syms::left_file_id); pars.hex();
+      read_attr_state_left(pars, conflict.left);
+      pars.esym(syms::right_name); pars.str();
+      pars.esym(syms::right_file_id); pars.hex();
+      read_attr_state_right(pars, conflict.right);
+    }
+  else if (tmp == "directory")
+    {
+      pars.esym(syms::attr_name); pars.str(tmp);
+      conflict.key = attr_key(tmp);
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::left_name); pars.str(tmp);
+      conflict.nid = left_roster.get_node(file_path_external(utf8(tmp)))->self;
+      read_attr_state_left(pars, conflict.left);
+      pars.esym(syms::right_name); pars.str();
+      read_attr_state_right(pars, conflict.right);
+    }
+  else
+    I(false);
+
+} // read_attribute_conflict
+
+static void
+read_attribute_conflicts(basic_io::parser & pars,
+                         std::vector<attribute_conflict> & conflicts,
+                         roster_t const & left_roster,
+                         roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::attribute))
+    {
+      attribute_conflict conflict(the_null_node);
+
+      pars.sym();
+
+      read_attribute_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_attribute_conflicts
 
 static void
 read_file_content_conflict(basic_io::parser & pars,
@@ -1814,26 +2219,34 @@ read_conflict_file_core(basic_io::parser pars,
   // regenerated. So we go thru the conflicts in the same order they are
   // generated; see merge.cc resolve_merge_conflicts.
 
-  // resolve_merge_conflicts should not call us if there are any conflicts
-  // for which we don't currently support resolutions; assert that.
-
-  I(!result.missing_root_dir);
-  I(result.invalid_name_conflicts.size() == 0);
-  I(result.directory_loop_conflicts.size() == 0);
-  I(result.orphaned_node_conflicts.size() == 0);
-  I(result.multiple_name_conflicts.size() == 0);
-  I(result.attribute_conflicts.size() == 0);
-
-  // These are the ones we know how to resolve.
-
   if (validate)
     {
+      // resolve_merge_conflicts should not call us if there are any conflicts
+      // for which we don't currently support resolutions; assert that.
+
+      I(!result.missing_root_conflict);
+      I(result.invalid_name_conflicts.size() == 0);
+      I(result.directory_loop_conflicts.size() == 0);
+      I(result.orphaned_node_conflicts.size() == 0);
+      I(result.multiple_name_conflicts.size() == 0);
+      I(result.attribute_conflicts.size() == 0);
+
+      // These are the ones we know how to resolve.
+
       validate_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
       validate_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
     }
   else
     {
+      // Read in the ones we know how to resolve. Also read in the ones we
+      // don't know how to resolve, so we can report them.
+      read_missing_root_conflicts(pars, result.missing_root_conflict, left_roster, right_roster);
+      read_invalid_name_conflicts(pars, result.invalid_name_conflicts, left_roster, right_roster);
+      read_directory_loop_conflicts(pars, result.directory_loop_conflicts, left_roster, right_roster);
+      read_orphaned_node_conflicts(pars, result.orphaned_node_conflicts, left_roster, right_roster);
+      read_multiple_name_conflicts(pars, result.multiple_name_conflicts, left_roster, right_roster);
       read_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
+      read_attribute_conflicts(pars, result.attribute_conflicts, left_roster, right_roster);
       read_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
     }
 
@@ -1908,7 +2321,13 @@ roster_merge_result::write_conflict_file(database & db,
     output.write(pr.buf.data(), pr.buf.size());
   }
 
+  report_missing_root_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_invalid_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_directory_loop_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_orphaned_node_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_multiple_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
   report_duplicate_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_attribute_conflicts(*left_roster, *right_roster, adaptor, true, output);
   report_file_content_conflicts(lua, *left_roster, *right_roster, adaptor, true, output);
 
   data dat(output.str());
@@ -2224,7 +2643,7 @@ roster_merge_result::resolve_file_content_conflicts(lua_hooks & lua,
 void
 roster_merge_result::clear()
 {
-  missing_root_dir = false;
+  missing_root_conflict = false;
   invalid_name_conflicts.clear();
   directory_loop_conflicts.clear();
 
@@ -2716,7 +3135,7 @@ roster_merge(roster_t const & left_parent,
 
   // now check for the possible global problems
   if (!result.roster.has_root())
-    result.missing_root_dir = true;
+    result.missing_root_conflict = true;
   else
     {
       // we can't have an illegal _MTN dir unless we have a root node in the
@@ -3696,9 +4115,9 @@ struct simple_missing_root_dir : public structural_conflict_helper
   virtual void check()
     {
       I(!result.is_clean());
-      I(result.missing_root_dir);
+      I(result.missing_root_conflict);
       result.roster.attach_node(result.roster.create_dir_node(nis), file_path());
-      result.missing_root_dir = false;
+      result.missing_root_conflict = false;
       I(result.is_clean());
       result.roster.check_sane();
     }
@@ -3888,13 +4307,13 @@ struct multiple_name_plus_missing_root : public structural_conflict_helper
       check_helper(idx(result.multiple_name_conflicts, 1),
                    idx(result.multiple_name_conflicts, 0));
 
-    I(result.missing_root_dir);
+    I(result.missing_root_conflict);
 
     result.roster.attach_node(left_root_nid, file_path());
     result.roster.attach_node(right_root_nid, file_path_internal("totally_other_name"));
     result.multiple_name_conflicts.pop_back();
     result.multiple_name_conflicts.pop_back();
-    result.missing_root_dir = false;
+    result.missing_root_conflict = false;
     I(result.is_clean());
     result.roster.check_sane();
   }
@@ -3924,7 +4343,7 @@ struct duplicate_name_plus_missing_root : public structural_conflict_helper
     I(c.left_nid == left_root_nid && c.right_nid == right_root_nid);
     I(c.parent_name == make_pair(the_null_node, path_component()));
 
-    I(result.missing_root_dir);
+    I(result.missing_root_conflict);
 
     // we can't just attach one of these as the root -- see the massive
     // comment on the old_locations member of roster_t, in roster.hh.
@@ -3932,7 +4351,7 @@ struct duplicate_name_plus_missing_root : public structural_conflict_helper
     result.roster.attach_node(left_root_nid, file_path_internal("totally_left_name"));
     result.roster.attach_node(right_root_nid, file_path_internal("totally_right_name"));
     result.duplicate_name_conflicts.pop_back();
-    result.missing_root_dir = false;
+    result.missing_root_conflict = false;
     I(result.is_clean());
     result.roster.check_sane();
   }
