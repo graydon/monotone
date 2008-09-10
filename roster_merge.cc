@@ -464,7 +464,7 @@ read_added_rename_conflict_right(basic_io::parser & pars,
     }
   else if (tmp == "renamed directory")
     {
-      pars.esym(syms::ancestor_name); pars.str(tmp);
+      pars.esym(syms::ancestor_name); pars.str();
       pars.esym(syms::right_name); pars.str(tmp);
       get_nid_name_pair(roster, tmp, right_nid, right_name);
     }
@@ -1761,7 +1761,29 @@ read_directory_loop_conflict(basic_io::parser & pars,
 
   // syms::directory_loop has been read
 
-  I(false);
+  if (pars.symp(syms::left_type))
+    {
+      read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.parent_name);
+    }
+  if (pars.symp(syms::right_type))
+    {
+      read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.parent_name);
+    }
+
+  if (pars.symp(syms::left_type))
+    {
+      pars.sym();
+      pars.str(); // "renamed directory"
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::left_name); pars.str();
+    }
+  if (pars.symp(syms::right_type))
+    {
+      pars.sym();
+      pars.str(); // "renamed directory"
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::right_name); pars.str();
+    }
 
 } // read_directory_loop_conflict
 
@@ -1797,14 +1819,14 @@ read_orphaned_node_conflict(basic_io::parser & pars,
     {
       pars.sym(); pars.str(); // "deleted directory | file"
       pars.esym(syms::ancestor_name); pars.str();
-      read_added_rename_conflict_right (pars, right_roster, conflict.nid, conflict.parent_name);
+      read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.parent_name);
     }
   else
     {
       pars.esym(syms::right_type);
       pars.str(); // "deleted directory | file"
       pars.esym(syms::ancestor_name); pars.str();
-      read_added_rename_conflict_left (pars, left_roster, conflict.nid, conflict.parent_name);
+      read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.parent_name);
     }
 } // read_orphaned_node_conflict
 
@@ -1829,27 +1851,46 @@ read_orphaned_node_conflicts(basic_io::parser & pars,
     }
 } // read_orphaned_node_conflicts
 
+
+static void
+read_multiple_name_conflict(basic_io::parser & pars,
+                            multiple_name_conflict & conflict,
+                            roster_t const & left_roster,
+                            roster_t const & right_roster)
+{
+  read_added_rename_conflict_left(pars, left_roster, conflict.nid, conflict.left);
+  read_added_rename_conflict_right(pars, right_roster, conflict.nid, conflict.right);
+} // read_multiple_name_conflict
+
+static void
+read_multiple_name_conflicts(basic_io::parser & pars,
+                             std::vector<multiple_name_conflict> & conflicts,
+                             roster_t const & left_roster,
+                             roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::multiple_names))
+    {
+      multiple_name_conflict conflict(the_null_node);
+
+      pars.sym();
+
+      read_multiple_name_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_multiple_name_conflicts
+
 static void
 read_duplicate_name_conflict(basic_io::parser & pars,
                              duplicate_name_conflict & conflict,
                              roster_t const & left_roster,
                              roster_t const & right_roster)
 {
-  string tmp;
-  string left_name, right_name;
-
-  // we don't care what type of file/dir these are; the right type will get
-  // written back out.
-  pars.esym(syms::left_type); pars.str();
-  pars.esym (syms::left_name); pars.str(left_name);
-  pars.esym(syms::left_file_id); pars.hex();
-
-  pars.esym(syms::right_type); pars.str();
-  pars.esym (syms::right_name); pars.str(right_name);
-  pars.esym(syms::right_file_id); pars.hex();
-
-  conflict.left_nid = left_roster.get_node (file_path_internal (left_name))->self;
-  conflict.right_nid = right_roster.get_node (file_path_internal (right_name))->self;
+  read_added_rename_conflict_left(pars, left_roster, conflict.left_nid, conflict.parent_name);
+  read_added_rename_conflict_right(pars, right_roster, conflict.right_nid, conflict.parent_name);
 
   // check for a resolution
   while ((!pars.symp (syms::conflict)) && pars.tok.in.lookahead != EOF)
@@ -1918,7 +1959,6 @@ read_duplicate_name_conflicts(basic_io::parser & pars,
         pars.esym (syms::conflict);
     }
 } // read_duplicate_name_conflicts
-
 static void
 validate_duplicate_name_conflicts(basic_io::parser & pars,
                                   std::vector<duplicate_name_conflict> & conflicts,
@@ -1953,6 +1993,109 @@ validate_duplicate_name_conflicts(basic_io::parser & pars,
         }
     }
 } // validate_duplicate_name_conflicts
+
+static void
+read_attr_state_left(basic_io::parser & pars,
+                     std::pair<bool, attr_value> value)
+{
+  if (pars.symp(syms::left_attr_value))
+    {
+      pars.sym();
+      value.first = true;
+      pars.str();
+      value.second = attr_value(pars.token);
+    }
+  else
+    {
+      pars.esym(syms::left_attr_state);
+      value.first = false;
+    }
+} // read_attr_state_left
+
+static void
+read_attr_state_right(basic_io::parser & pars,
+                      std::pair<bool, attr_value> value)
+{
+  string tmp;
+
+  if (pars.symp(syms::right_attr_value))
+    {
+      pars.sym();
+      value.first = true;
+      pars.str(tmp);
+      value.second = attr_value(tmp);
+    }
+  else
+    {
+      pars.esym(syms::right_attr_state);
+      pars.str(tmp);
+      I(tmp == "dropped");
+      value.first = false;
+    }
+} // read_attr_state_right
+
+static void
+read_attribute_conflict(basic_io::parser & pars,
+                        attribute_conflict & conflict,
+                        roster_t const & left_roster,
+                        roster_t const & right_roster)
+{
+  string tmp;
+
+  pars.esym(syms::node_type);
+
+  pars.str(tmp);
+
+  if (tmp == "file")
+    {
+      pars.esym(syms::attr_name); pars.str(tmp);
+      conflict.key = attr_key(tmp);
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::ancestor_file_id); pars.hex();
+      pars.esym(syms::left_name); pars.str(tmp);
+      conflict.nid = left_roster.get_node(file_path_external(utf8(tmp)))->self;
+      pars.esym(syms::left_file_id); pars.hex();
+      read_attr_state_left(pars, conflict.left);
+      pars.esym(syms::right_name); pars.str();
+      pars.esym(syms::right_file_id); pars.hex();
+      read_attr_state_right(pars, conflict.right);
+    }
+  else if (tmp == "directory")
+    {
+      pars.esym(syms::attr_name); pars.str(tmp);
+      conflict.key = attr_key(tmp);
+      pars.esym(syms::ancestor_name); pars.str();
+      pars.esym(syms::left_name); pars.str(tmp);
+      conflict.nid = left_roster.get_node(file_path_external(utf8(tmp)))->self;
+      read_attr_state_left(pars, conflict.left);
+      pars.esym(syms::right_name); pars.str();
+      read_attr_state_right(pars, conflict.right);
+    }
+  else
+    I(false);
+
+} // read_attribute_conflict
+
+static void
+read_attribute_conflicts(basic_io::parser & pars,
+                         std::vector<attribute_conflict> & conflicts,
+                         roster_t const & left_roster,
+                         roster_t const & right_roster)
+{
+  while (pars.tok.in.lookahead != EOF && pars.symp(syms::attribute))
+    {
+      attribute_conflict conflict(the_null_node);
+
+      pars.sym();
+
+      read_attribute_conflict(pars, conflict, left_roster, right_roster);
+
+      conflicts.push_back(conflict);
+
+      if (pars.tok.in.lookahead != EOF)
+        pars.esym (syms::conflict);
+    }
+} // read_attribute_conflicts
 
 static void
 read_file_content_conflict(basic_io::parser & pars,
@@ -2088,11 +2231,11 @@ read_conflict_file_core(basic_io::parser pars,
       // don't know how to resolve, so we can report them.
       read_missing_root_conflicts(pars, result.missing_root_conflict, left_roster, right_roster);
       read_invalid_name_conflicts(pars, result.invalid_name_conflicts, left_roster, right_roster);
-//       read_directory_loop_conflicts(pars, result.directory_loop_conflicts, left_roster, right_roster);
+      read_directory_loop_conflicts(pars, result.directory_loop_conflicts, left_roster, right_roster);
       read_orphaned_node_conflicts(pars, result.orphaned_node_conflicts, left_roster, right_roster);
-//       read_multiple_name_conflicts(pars, result.multiple_name_conflicts, left_roster, right_roster);
+      read_multiple_name_conflicts(pars, result.multiple_name_conflicts, left_roster, right_roster);
       read_duplicate_name_conflicts(pars, result.duplicate_name_conflicts, left_roster, right_roster);
-//      read_attribute_conflicts(pars, result.attribute_conflicts, left_roster, right_roster);
+      read_attribute_conflicts(pars, result.attribute_conflicts, left_roster, right_roster);
       read_file_content_conflicts(pars, result.file_content_conflicts, left_roster, right_roster);
     }
 
@@ -2167,7 +2310,13 @@ roster_merge_result::write_conflict_file(database & db,
     output.write(pr.buf.data(), pr.buf.size());
   }
 
+  report_missing_root_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_invalid_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_directory_loop_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_orphaned_node_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_multiple_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
   report_duplicate_name_conflicts(*left_roster, *right_roster, adaptor, true, output);
+  report_attribute_conflicts(*left_roster, *right_roster, adaptor, true, output);
   report_file_content_conflicts(lua, *left_roster, *right_roster, adaptor, true, output);
 
   data dat(output.str());
