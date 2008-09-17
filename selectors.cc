@@ -381,7 +381,7 @@ complete(options const & opts, lua_hooks & lua,
   P(F("expanding selection '%s'") % str);
   complete_selector(project, sels, completions);
 
-  N(completions.size() != 0,
+  N(!completions.empty(),
     F("no match for selection '%s'") % str);
 
   for (set<revision_id>::const_iterator i = completions.begin();
@@ -406,7 +406,7 @@ complete(options const & opts, lua_hooks & lua,
 
   complete(opts, lua, project, str, completions);
 
-  I(completions.size() > 0);
+  I(!completions.empty());
   diagnose_ambiguous_expansion(project, str, completions);
 
   completion = *completions.begin();

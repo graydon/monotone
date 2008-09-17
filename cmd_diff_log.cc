@@ -365,7 +365,7 @@ prepare_diff(app_state & app,
   N(app.opts.revision_selectors.size() <= 2,
     F("more than two revisions given"));
 
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       roster_t old_roster, restricted_roster, new_roster;
       revision_id old_rid;
@@ -509,7 +509,7 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
   vector<string> lines;
   split_into_lines(summary(), lines);
   cout << "#\n";
-  if (summary().size() > 0)
+  if (!summary().empty())
     {
       cout << revs << "#\n";
       for (vector<string>::iterator i = lines.begin();
@@ -644,7 +644,7 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
   frontier_t frontier(rev_cmp(!(next>0)));
   revision_id first_rid; // for mapping paths to node ids when restricted
 
-  if (app.opts.from.size() == 0)
+  if (app.opts.from.empty())
     {
       workspace work(app,
                      F("try passing a --from revision to start at"));
@@ -680,10 +680,10 @@ CMD(log, "log", "", CMD_REF(informative), N_("[FILE] ..."),
 
   node_restriction mask;
 
-  if (args.size() > 0)
+  if (!args.empty())
     {
       // User wants to trace only specific files
-      if (app.opts.from.size() == 0)
+      if (app.opts.from.empty())
         {
           workspace work(app);
           roster_t new_roster;

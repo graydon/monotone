@@ -227,7 +227,7 @@ fully_normalized_path(string const & path)
 static inline bool
 in_bookkeeping_dir(string const & path)
 {
-  if (path.size() == 0 || (path[0] != '_'))
+  if (path.empty() || (path[0] != '_'))
     return false;
   if (path.size() == 1 || (path[1] != 'M' && path[1] != 'm'))
     return false;
@@ -271,7 +271,7 @@ normalize_path(string const & in)
           leader = "/";
           inT = inT.substr(1);
 
-          if (inT.size() > 0 && inT[0] == '/')
+          if (!inT.empty() && inT[0] == '/')
             {
               // if there are exactly two slashes at the beginning they
               // are both preserved.  three or more are the same as one.
@@ -301,7 +301,7 @@ normalize_path(string const & in)
 #endif
 
       I(!is_absolute_here(inT));
-      if (inT.size() == 0)
+      if (inT.empty())
         return leader;
     }
 

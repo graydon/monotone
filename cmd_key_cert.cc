@@ -122,7 +122,7 @@ CMD(ssh_agent_export, "ssh_agent_export", "", CMD_REF(key_and_cert),
   rsa_keypair_id id;
   get_user_key(app.opts, app.lua, db, keys, id);
 
-  if (args.size() == 0)
+  if (args.empty())
     keys.export_key_for_agent(id, cout);
   else
     {

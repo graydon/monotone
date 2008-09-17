@@ -129,7 +129,7 @@ get_user_key(options const & opts, lua_hooks & lua,
     {
       vector<rsa_keypair_id> all_privkeys;
       keys.get_key_ids(all_privkeys);
-      N(all_privkeys.size() > 0, 
+      N(!all_privkeys.empty(), 
         F("you have no private key to make signatures with\n"
           "perhaps you need to 'genkey <your email>'"));
       N(all_privkeys.size() < 2,

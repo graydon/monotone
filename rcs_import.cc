@@ -844,7 +844,7 @@ cvs_history::push_branch(string const & branch_name, bool private_branch)
   shared_ptr<cvs_branch> branch;
 
   string bname = base_branch + "." + branch_name;
-  I(stk.size() > 0);
+  I(!stk.empty());
 
   if (private_branch)
     {
@@ -1231,7 +1231,7 @@ import_cvs_repo(project_t & project,
 
   ticker n_revs(_("revisions"), "r", 1);
 
-  while (cvs.branches.size() > 0)
+  while (!cvs.branches.empty())
     {
       transaction_guard guard(project.db);
       map<string, shared_ptr<cvs_branch> >::const_iterator i = cvs.branches.begin();

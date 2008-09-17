@@ -87,7 +87,7 @@ CMD_AUTOMATE(interface_version, "",
              "",
              options::opts::none)
 {
-  N(args.size() == 0,
+  N(args.empty(),
     F("no arguments needed"));
 
   output << interface_version << '\n';
@@ -343,7 +343,7 @@ CMD_AUTOMATE(stdio, "",
              "",
              options::opts::automate_stdio_size)
 {
-  N(args.size() == 0,
+  N(args.empty(),
     F("no arguments needed"));
 
   database db(app);
@@ -384,7 +384,7 @@ CMD_AUTOMATE(stdio, "",
               set< command_id > matches =
                 CMD_REF(automate)->complete_command(id);
 
-              if (matches.size() == 0)
+              if (matches.empty())
                 {
                   N(false, F("no completions for this command"));
                 }
@@ -475,7 +475,7 @@ LUAEXT(mtn_automate, )
       set< commands::command_id > matches =
         CMD_REF(automate)->complete_command(id);
 
-      if (matches.size() == 0)
+      if (matches.empty())
         {
           N(false, F("no completions for this command"));
         }

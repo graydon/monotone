@@ -395,12 +395,12 @@ CMD(clone, "clone", "", CMD_REF(network),
 
   transaction_guard guard(db, false);
 
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       set<revision_id> heads;
       project.get_branch_heads(branchname, heads,
                                app.opts.ignore_suspend_certs);
-      N(heads.size() > 0,
+      N(!heads.empty(),
         F("branch '%s' is empty") % branchname);
       if (heads.size() > 1)
         {

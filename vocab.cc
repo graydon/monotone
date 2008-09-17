@@ -96,7 +96,7 @@ verify(rsa_keypair_id const & val)
 inline void
 verify(netsync_session_key & val)
 {
-  if (val().size() == 0)
+  if (val().empty())
     {
       val.s = std::string(constants::netsync_session_key_length_in_bytes, 0);
       return;
@@ -109,7 +109,7 @@ verify(netsync_session_key & val)
 inline void
 verify(netsync_hmac_value & val)
 {
-  if (val().size() == 0)
+  if (val().empty())
     {
       val.s = std::string(constants::netsync_hmac_value_length_in_bytes, 0);
       return;

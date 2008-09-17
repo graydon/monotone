@@ -31,7 +31,7 @@ struct file_randomizer
       return static_cast<size_t>(rng.uniform(lines.size()));
     else
       {
-        if (lines.size() == 0)
+        if (lines.empty())
           return 0;
         else
           return static_cast<size_t>(rng.uniform(lines.size() - 1));

@@ -146,7 +146,7 @@ CMD(annotate, "annotate", "", CMD_REF(informative), N_("PATH"),
   L(FL("annotate file '%s'") % file);
 
   roster_t roster;
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       // What this _should_ do is calculate the current workspace roster
       // and/or revision and hand that to do_annotate.  This should just
@@ -198,19 +198,15 @@ CMD(identify, "identify", "", CMD_REF(debug), N_("[PATH]"),
        "one from the standard input is calculated."),
     options::opts::none)
 {
-  if (!(args.size() == 0 || args.size() == 1))
+  if (args.size() > 1)
     throw usage(execid);
 
   data dat;
 
-  if (args.size() == 1)
-    {
-      read_data_for_command_line(idx(args, 0), dat);
-    }
+  if (args.empty())
+    read_data_stdin(dat);
   else
-    {
-      read_data_stdin(dat);
-    }
+    read_data_for_command_line(idx(args, 0), dat);
 
   id ident;
   calculate_ident(dat, ident);
@@ -296,7 +292,7 @@ CMD(cat, "cat", "", CMD_REF(informative),
 
   database db(app);
   revision_id rid;
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       workspace work(app);
       parent_map parents;
@@ -363,7 +359,7 @@ CMD_AUTOMATE(get_file_of, N_("FILENAME"),
   database db(app);
 
   revision_id rid;
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       workspace work(app);
 

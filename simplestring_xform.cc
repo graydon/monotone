@@ -299,7 +299,7 @@ UNIT_TEST(simplestring_xform, split_into_words)
   vector< utf8 > words;
 
   words = split_into_words(utf8(""));
-  UNIT_TEST_CHECK(words.size() == 0);
+  UNIT_TEST_CHECK(words.empty());
 
   words = split_into_words(utf8("foo"));
   UNIT_TEST_CHECK(words.size() == 1);

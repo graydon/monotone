@@ -136,7 +136,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
 
       vector<string> lines;
       split_into_lines(washed, lines);
-      std::string value_first_line = lines.size() > 0 ? idx(lines, 0) : "";
+      std::string value_first_line = lines.empty() ? "" : idx(lines, 0);
 
       cout << string(guess_terminal_width(), '-') << '\n'
            << (i18n_format(str)
@@ -149,7 +149,7 @@ CMD(certs, "certs", "", CMD_REF(list), "ID",
         cout << (i18n_format(extra_str) % idx(lines, i));
     }
 
-  if (certs.size() > 0)
+  if (!certs.empty())
     cout << '\n';
 
   guard.commit();
@@ -161,7 +161,7 @@ CMD(duplicates, "duplicates", "", CMD_REF(list), "",
     "",
     options::opts::revision)
 {
-  if (args.size() != 0)
+  if (!args.empty())
     throw usage(execid);
 
   revision_id rev_id;
@@ -172,7 +172,7 @@ CMD(duplicates, "duplicates", "", CMD_REF(list), "",
   N(app.opts.revision_selectors.size() <= 1,
     F("more than one revision given"));
 
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       workspace work(app);
       temp_node_id_source nis;
@@ -302,7 +302,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         }
     }
 
-  if (pubkeys.size() > 0)
+  if (!pubkeys.empty())
     {
       cout << "\n[public keys]\n";
       for (map<rsa_keypair_id, bool>::iterator i = pubkeys.begin();
@@ -333,7 +333,7 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
       cout << '\n';
     }
 
-  if (privkeys.size() > 0)
+  if (!privkeys.empty())
     {
       cout << "\n[private keys]\n";
       for (vector<rsa_keypair_id>::iterator i = privkeys.begin();
@@ -358,10 +358,9 @@ CMD(keys, "keys", "", CMD_REF(list), "[PATTERN]",
         }
     }
 
-  if (pubkeys.size() == 0 &&
-      privkeys.size() == 0)
+  if (pubkeys.empty() && privkeys.empty())
     {
-      if (args.size() == 0)
+      if (args.empty())
         P(F("no keys found"));
       else
         W(F("no keys found matching '%s'") % idx(args, 0)());
@@ -400,7 +399,7 @@ CMD(epochs, "epochs", "", CMD_REF(list), "[BRANCH [...]]",
   map<branch_name, epoch_data> epochs;
   db.get_epochs(epochs);
 
-  if (args.size() == 0)
+  if (args.empty())
     {
       for (map<branch_name, epoch_data>::const_iterator
              i = epochs.begin();
@@ -447,7 +446,7 @@ CMD(vars, "vars", "", CMD_REF(list), "[DOMAIN]",
 {
   bool filterp;
   var_domain filter;
-  if (args.size() == 0)
+  if (args.empty())
     {
       filterp = false;
     }
@@ -678,7 +677,7 @@ CMD_AUTOMATE(keys, "",
              "",
              options::opts::none)
 {
-  N(args.size() == 0,
+  N(args.empty(),
     F("no arguments needed"));
 
   database db(app);

@@ -283,7 +283,7 @@ workspace::get_current_roster_shape(database & db,
   // make_roster_for_revision does not handle correctly.
   if (rev.edges.size() == 1 && null_id(edge_old_revision(rev.edges.begin())))
     {
-      I(ros.all_nodes().size() == 0);
+      I(ros.all_nodes().empty());
       editable_roster_base er(ros, nis);
       edge_changes(rev.edges.begin()).apply_to(er);
     }
@@ -672,7 +672,7 @@ workspace::init_attributes(file_path const & path, editable_roster_base & er)
 {
   map<string, string> attrs;
   lua.hook_init_attributes(path, attrs);
-  if (attrs.size() > 0)
+  if (!attrs.empty())
     for (map<string, string>::const_iterator i = attrs.begin();
          i != attrs.end(); ++i)
       er.set_attr(path, attr_key(i->first), attr_value(i->second));

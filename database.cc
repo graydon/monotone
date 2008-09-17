@@ -2302,7 +2302,7 @@ database::has_rev_height(rev_height const & height)
   imp->fetch(res, one_col, any_rows,
              query("SELECT height FROM heights WHERE height = ?")
              % blob(height()));
-  I((res.size() == 1) || (res.size() == 0));
+  I((res.size() == 1) || (res.empty()));
   return res.size() == 1;
 }
 
@@ -2666,7 +2666,7 @@ database::public_key_exists(id const & hash)
   imp->fetch(res, one_col, any_rows,
              query("SELECT id FROM public_keys WHERE hash = ?")
              % blob(hash()));
-  I((res.size() == 1) || (res.size() == 0));
+  I((res.size() == 1) || (res.empty()));
   if (res.size() == 1)
     return true;
   return false;
@@ -2679,7 +2679,7 @@ database::public_key_exists(rsa_keypair_id const & id)
   imp->fetch(res, one_col, any_rows,
              query("SELECT id FROM public_keys WHERE id = ?")
              % text(id()));
-  I((res.size() == 1) || (res.size() == 0));
+  I((res.size() == 1) || (res.empty()));
   if (res.size() == 1)
     return true;
   return false;
@@ -2846,7 +2846,7 @@ database_impl::cert_exists(cert const & t,
 
   fetch(res, 1, any_rows, q);
 
-  I(res.size() == 0 || res.size() == 1);
+  I(res.empty() || res.size() == 1);
   return res.size() == 1;
 }
 
@@ -3165,7 +3165,7 @@ database::revision_cert_exists(revision_id const & hash)
                    "FROM revision_certs "
                    "WHERE hash = ?")
              % blob(hash.inner()()));
-  I(res.size() == 0 || res.size() == 1);
+  I(res.empty() || res.size() == 1);
   return (res.size() == 1);
 }
 
@@ -3434,7 +3434,7 @@ database::epoch_exists(epoch_id const & eid)
   imp->fetch(res, one_col, any_rows,
              query("SELECT hash FROM branch_epochs WHERE hash = ?")
              % blob(eid.inner()()));
-  I(res.size() == 1 || res.size() == 0);
+  I(res.size() == 1 || res.empty());
   return res.size() == 1;
 }
 

@@ -112,7 +112,7 @@ roster_merge_result::is_clean() const
 bool
 roster_merge_result::has_content_conflicts() const
 {
-  return file_content_conflicts.size() > 0;
+  return !file_content_conflicts.empty();
 }
 
 bool

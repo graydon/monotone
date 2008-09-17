@@ -607,7 +607,7 @@ namespace commands
     out << string(colabstract - col, ' ');
     col = colabstract;
     string desc(abstract);
-    if (subcommands.size() > 0)
+    if (!subcommands.empty())
       {
         desc += " (" + subcommands + ')';
       }
@@ -617,7 +617,7 @@ namespace commands
   static void explain_children(command::children_set const & children,
                                ostream & out)
   {
-    I(children.size() > 0);
+    I(!children.empty());
 
     vector< command const * > sorted;
 
@@ -666,7 +666,7 @@ namespace commands
           << "\n\n";
     else
       {
-        if (cmd->children().size() > 0)
+        if (!cmd->children().empty())
           out << format_text(F("Subcommands of '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
@@ -679,7 +679,7 @@ namespace commands
     // Print command parameters.
     string params = cmd->params();
     split_into_lines(params, lines);
-    if (lines.size() > 0)
+    if (!lines.empty())
       {
         for (vector<string>::const_iterator j = lines.begin();
              j != lines.end(); ++j)
@@ -1036,14 +1036,14 @@ UNIT_TEST(commands, command_complete_command)
   {
     command_id id = make_command_id("foo");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    UNIT_TEST_REQUIRE(matches.size() == 0);
+    UNIT_TEST_REQUIRE(matches.empty());
   }
 
   // Non-existent multi-word identifier.
   {
     command_id id = make_command_id("foo bar");
     set< command_id > matches = CMD_REF(top)->complete_command(id);
-    UNIT_TEST_REQUIRE(matches.size() == 0);
+    UNIT_TEST_REQUIRE(matches.empty());
   }
 
   // Single-word identifier with one match. Exact matches are found

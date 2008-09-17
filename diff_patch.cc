@@ -1072,7 +1072,7 @@ void unidiff_hunk_writer::delete_at(size_t a_pos)
 
 void unidiff_hunk_writer::flush_hunk(size_t pos)
 {
-  if (hunk.size() > 0)
+  if (!hunk.empty())
     {
       // insert trailing context
       size_t a_pos = a_begin + a_len;

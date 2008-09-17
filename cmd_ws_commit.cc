@@ -612,7 +612,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   if (args.size() > 1 || app.opts.revision_selectors.size() > 1)
     throw usage(execid);
 
-  if (app.opts.revision_selectors.size() == 0)
+  if (app.opts.revision_selectors.empty())
     {
       // use branch head revision
       N(!app.opts.branchname().empty(),
@@ -621,7 +621,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
       set<revision_id> heads;
       project.get_branch_heads(app.opts.branchname, heads,
                                app.opts.ignore_suspend_certs);
-      N(heads.size() > 0,
+      N(!heads.empty(),
         F("branch '%s' is empty") % app.opts.branchname);
       if (heads.size() > 1)
         {
@@ -657,7 +657,7 @@ CMD(checkout, "checkout", "co", CMD_REF(tree), N_("[DIRECTORY]"),
   {
     bool checkout_dot = false;
 
-    if (args.size() == 0)
+    if (args.empty())
       {
         // No checkout dir specified, use branch name for dir.
         N(!app.opts.branchname().empty(),
@@ -865,7 +865,7 @@ CMD_AUTOMATE(get_attributes, N_("PATH"),
              "",
              options::opts::none)
 {
-  N(args.size() > 0,
+  N(!args.empty(),
     F("wrong argument count"));
 
   database db(app);
@@ -1405,7 +1405,7 @@ CMD_NO_WORKSPACE(import, "import", "", CMD_REF(tree), N_("DIRECTORY"),
           P(F("choose one with '%s import -r<id>'") % ui.prog_name);
           E(false, F("branch %s has multiple heads") % app.opts.branchname);
         }
-      if (heads.size() > 0)
+      if (!heads.empty())
         ident = *(heads.begin());
     }
 

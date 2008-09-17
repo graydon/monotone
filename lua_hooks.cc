@@ -591,7 +591,7 @@ lua_hooks::hook_get_default_command_options(commands::command_id const & cmd,
       ll.extract_str(arg).pop();
       args.push_back(arg_type(arg));
     }
-  return ll.ok() && args.size() > 0;
+  return ll.ok() && !args.empty();
 }
 
 bool

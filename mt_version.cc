@@ -36,7 +36,7 @@ CMD_NO_WORKSPACE(version, "version", "", CMD_REF(informative), "",
     "",
     options::opts::full)
 {
-  N(args.size() == 0,
+  N(args.empty(),
     F("no arguments allowed"));
 
   string version;

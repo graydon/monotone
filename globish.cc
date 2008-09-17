@@ -71,7 +71,7 @@ compile_charclass(string const & pat, string::const_iterator p,
         }
       // A dash at the beginning or end of the pattern is literal.
       else if (*p == '-'
-               && in_class.size() != 0
+               && !in_class.empty()
                && p+1 != pat.end()
                && p[1] != ']')
         {
@@ -126,7 +126,7 @@ compile_charclass(string const & pat, string::const_iterator p,
   N(p != pat.end(),
     F("invalid pattern '%s': unmatched '['") % pat);
 
-  N(in_class.size() != 0,
+  N(!in_class.empty(),
     F("invalid pattern '%s': empty character class") % pat);
 
   // minor optimization: one-element non-inverted character class becomes

@@ -156,7 +156,7 @@ find_match(match_table const & matches,
              && !delta.back().payload.empty())
         {
           I(a[apos - 1] == *(delta.back().payload.rbegin()));
-          I(delta.back().payload.size() > 0);
+          I(!delta.back().payload.empty());
           delta.back().payload.resize(delta.back().payload.size() - 1);
           --apos;
           --bpos;
@@ -322,16 +322,16 @@ compute_delta(string const & a,
   // xdelta. several places of the xdelta code prefer assertions which are
   // only true with non-empty chunks anyways.
 
-  if (a.size() == 0 && b.size() != 0)
+  if (a.empty() && !b.empty())
     delta_insns.push_back(insn(b));
-  else if (a.size() != 0 && b.size() == 0)
+  else if (!a.empty() && b.empty())
     delta_insns.push_back(insn(0, 0));
   else if (a == b)
     delta_insns.push_back(insn(0, a.size()));
   else
     {
-      I(a.size() > 0);
-      I(b.size() > 0);
+      I(!a.empty());
+      I(!b.empty());
 
       L(FL("computing binary delta instructions"));
       compute_delta_insns(a, b, delta_insns);

@@ -865,7 +865,7 @@ parse_makeflags(char const * mflags,
 
   vector<string> mf(split_into_words(mflags));
 
-  if (mf.size() == 0 || (mf.size() == 1 && mf[0] == ""))
+  if (mf.empty() || (mf.size() == 1 && mf[0] == ""))
     return;
 
   if (mf[0][0] != '-')
@@ -987,7 +987,7 @@ parse_command_line(int argc, char const * const * argv,
                  && tests_to_run.size() == 3 && jobs == 0),
     F("incorrect self-invocation; -r <abs path to lua-testsuite.lua> <abs path to tester_dir> <test>"));
 
-  if (tests_to_run.size() == 0)
+  if (tests_to_run.empty())
     {
       P(F("%s: no test suite specified\n") % argv[0]);
       need_help = true;

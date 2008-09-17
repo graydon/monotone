@@ -409,7 +409,7 @@ guess_branch(options & opts, project_t & project,
       set<branch_name> branches;
       project.get_revision_branches(ident, branches);
 
-      N(branches.size() != 0,
+      N(!branches.empty(),
         F("no branch certs found for revision %s, "
           "please provide a branch name") % ident);
 

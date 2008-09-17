@@ -325,7 +325,7 @@ sqlite3_unhex_fn(sqlite3_context *f, int nargs, sqlite3_value **args)
     }
   // This is only ever used with 20-byte SHA1 hashes or empty strings, so
   // make sure that's what we've got.
-  if (decoded.size() != constants::idlen_bytes && decoded.size() != 0)
+  if (decoded.size() != constants::idlen_bytes && !decoded.empty())
     {
       sqlite3_result_error(f, "unhex() result is the wrong length", -1);
       return;
@@ -843,7 +843,7 @@ calculate_schema_id(sqlite3 * db, string & ident)
       tokenizer tokens(table_schema, sep);
       for (tokenizer::iterator i = tokens.begin(); i != tokens.end(); i++)
         {
-          if (schema.size() != 0)
+          if (!schema.empty())
             schema += " ";
           schema += *i;
         }

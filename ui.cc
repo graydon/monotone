@@ -461,7 +461,7 @@ void
 user_interface::finish_ticking()
 {
   I(imp);
-  if (imp->tickers.size() == 0 && imp->last_write_was_a_tick)
+  if (imp->tickers.empty() && imp->last_write_was_a_tick)
     {
       imp->tick_trailer = "";
       imp->t_writer->clear_line();

@@ -354,7 +354,7 @@ An invariant failure indicates that there is a bug in monotone.  e.g.
 User naughtiness handles error conditions where the user has asked monotone
 to do something it is unable to.  e.g.
 
-    N(completions.size() != 0,
+    N(!completions.empty(),
         F("no match for selection '%s'") % str);
 
 Error conditions handle most other error cases, where monotone is unable to

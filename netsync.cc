@@ -796,7 +796,7 @@ session::note_cert(id const & c)
 id
 session::mk_nonce()
 {
-  I(this->saved_nonce().size() == 0);
+  I(this->saved_nonce().empty());
   char buf[constants::merkle_hash_length_in_bytes];
   Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf),
           constants::merkle_hash_length_in_bytes);
@@ -1356,7 +1356,7 @@ session::process_hello_cmd(rsa_keypair_id const & their_keyname,
                            id const & nonce)
 {
   I(!this->received_remote_key);
-  I(this->saved_nonce().size() == 0);
+  I(this->saved_nonce().empty());
 
   if (use_transport_auth)
     {
@@ -2443,7 +2443,7 @@ build_stream_to_server(options & opts, lua_hooks & lua,
 
   if (info.client.use_argv)
     {
-      I(info.client.argv.size() > 0);
+      I(!info.client.argv.empty());
       string cmd = info.client.argv[0];
       info.client.argv.erase(info.client.argv.begin());
       return shared_ptr<Netxx::StreamBase>

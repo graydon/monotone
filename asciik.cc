@@ -245,7 +245,7 @@ asciik::draw(size_t const curr_items,
   if (num_lines < 2)
     lines.push_back(string(""));
   // ignore empty lines at the end
-  while ((num_lines > 2) && (lines[num_lines - 1].size() == 0))
+  while ((num_lines > 2) && (lines[num_lines - 1].empty()))
     --num_lines;
 
   // prints it out
@@ -314,7 +314,7 @@ asciik::try_draw(vector<revision_id> const & next_row,
     preservation_crosses.begin(), preservation_crosses.end(),
     parent_crosses.begin(), parent_crosses.end(),
     insert_iterator<set<size_t> >(intersection_crosses, intersection_crosses.begin()));
-  if (intersection_crosses.size() > 0)
+  if (!intersection_crosses.empty())
     return false;
 
   set<pair<size_t, size_t> > links(preservation_links);
@@ -360,7 +360,7 @@ asciik::print(revision_id const & rev,
     curr_row = no_ghost;
   else if (try_draw(next_row, curr_loc, parents, annotation))
     curr_row = next_row;
-  else if (new_revs.size() == 0) // this line has disappeared
+  else if (new_revs.empty()) // this line has disappeared
     {
       vector<revision_id> extra_ghost(next_row);
       I(curr_loc < extra_ghost.size());

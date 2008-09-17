@@ -25,7 +25,7 @@ public:
   rev_height child_height(u32 nr) const;
   static rev_height root_height();
 
-  bool valid() const { return d.size() > 0; }
+  bool valid() const { return !d.empty(); }
 
   bool operator ==(rev_height const & other) const
   {

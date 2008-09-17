@@ -129,7 +129,7 @@ namespace
     }
     void validate_base64(string const & s) const
     {
-      E(s.size() > 0
+      E(!s.empty()
         && s.find_first_not_of(constants::legal_base64_bytes) == string::npos,
         F("malformed packet: invalid base64 block"));
     }
@@ -140,13 +140,13 @@ namespace
     }
     void validate_key(string const & k) const
     {
-      E(k.size() > 0
+      E(!k.empty()
         && k.find_first_not_of(constants::legal_key_name_bytes) == string::npos,
         F("malformed packet: invalid key name"));
     }
     void validate_certname(string const & cn) const
     {
-      E(cn.size() > 0
+      E(!cn.empty()
         && cn.find_first_not_of(constants::legal_cert_name_bytes) == string::npos,
         F("malformed packet: invalid cert name"));
     }
@@ -154,7 +154,7 @@ namespace
     {
       string next;
       iss >> next;
-      E(next.size() == 0,
+      E(next.empty(),
         F("malformed packet: too many arguments in header"));
     }
 
@@ -196,11 +196,11 @@ namespace
     static void read_rest(istream& in, string& dest)
     {
     
-      while( true )
+      while (true)
         {
           string t;
           in >> t;
-          if( t.size() == 0 ) break;
+          if (t.empty()) break;
           dest += t;
         }
     }

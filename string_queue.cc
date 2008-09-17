@@ -64,7 +64,7 @@ UNIT_TEST(string_queue, string_queue)
   UNIT_TEST_CHECK_THROW( sq1.pop_front( 1 ), logic_error );
 
   // it's empty again
-  UNIT_TEST_CHECK( sq1.size() == 0 );
+  UNIT_TEST_CHECK( sq1.empty() );
 }
 
 #endif // BUILD_UNIT_TESTS

@@ -1867,8 +1867,8 @@ namespace {
       // passed to this function is a temp_node_id_source, then we are being
       // called from get_current_roster_shape, and we should not attempt to
       // verify that these rosters match as far as content IDs.
-      if (left_cs.deltas_applied.size() == 0
-          && right_cs.deltas_applied.size() == 0
+      if (left_cs.deltas_applied.empty()
+          && right_cs.deltas_applied.empty()
           && typeid(nis) == typeid(temp_node_id_source))
         I(equal_shapes(new_roster, from_right_r));
       else
@@ -2822,7 +2822,7 @@ do_testing_on_one_roster(roster_t const & r)
 {
   if (!r.has_root())
     {
-      I(r.all_nodes().size() == 0);
+      I(r.all_nodes().empty());
       // not much testing to be done on an empty roster -- can't iterate over
       // it or read/write it.
       return;
