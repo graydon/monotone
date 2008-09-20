@@ -637,37 +637,39 @@ OPTION(automate_inventory_opts, no_corresponding_renames, false, "no-correspondi
 #endif
 
 OPTSET(resolve_conflicts_opts)
-OPTVAR(resolve_conflicts_opts, utf8, resolve_conflicts_file, )
-OPTVAR(resolve_conflicts_opts, std::string, resolve_conflicts, )
+OPTVAR(resolve_conflicts_opts, bookkeeping_path, resolve_conflicts_file, )
+OPTVAR(resolve_conflicts_opts, bool, resolve_conflicts, )
 
 OPTION(resolve_conflicts_opts, resolve_conflicts_file, true, "resolve-conflicts-file",
        gettext_noop("use file to resolve conflicts"))
 #ifdef option_bodies
 {
-  N(!resolve_conflicts_given,
-    F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
-  resolve_conflicts_file = utf8(arg);
+  N(bookkeeping_path::external_string_is_bookkeeping_path(utf8(arg)),
+    F("conflicts file must be under _MTN"));
+  resolve_conflicts_file = bookkeeping_path(arg);
 }
 #endif
 
-OPTION(resolve_conflicts_opts, resolve_conflicts, true, "resolve-conflicts",
-       gettext_noop("use argument to resolve conflicts"))
+OPTION(resolve_conflicts_opts, resolve_conflicts, false, "resolve-conflicts",
+       gettext_noop("use _MTN/conflicts to resolve conflicts"))
 #ifdef option_bodies
 {
   N(!resolve_conflicts_file_given,
     F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
-  resolve_conflicts = arg;
+  resolve_conflicts_file = bookkeeping_path("_MTN/conflicts");
 }
 #endif
 
 OPTSET(conflicts_opts)
-OPTVAR(conflicts_opts, system_path, conflicts_file, system_path("_MTN/conflicts"))
+OPTVAR(conflicts_opts, bookkeeping_path, conflicts_file, bookkeeping_path("_MTN/conflicts"))
 
 OPTION(conflicts_opts, conflicts_file, true, "conflicts-file",
        gettext_noop("file in which to store conflicts"))
 #ifdef option_bodies
 {
-  conflicts_file = system_path(utf8(arg));
+  N(bookkeeping_path::external_string_is_bookkeeping_path(utf8(arg)),
+    F("conflicts file must be under _MTN"));
+  conflicts_file = bookkeeping_path(arg);
 }
 #endif
 

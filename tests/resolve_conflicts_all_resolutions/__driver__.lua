@@ -45,51 +45,51 @@ beth_1 = base_revision()
 
 -- Don't use _MTN/conflicts, to test that capability
 mkdir("resolutions")
-check (mtn("conflicts", "--conflicts-file=resolutions/conflicts", "store", abe_1, beth_1), 0, nil, nil)
-check(samefilestd("conflicts-1", "resolutions/conflicts"))
+check (mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "store", abe_1, beth_1), 0, nil, nil)
+check(samefilestd("conflicts-1", "_MTN/conflicts-1"))
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_remaining"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_remaining"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_remaining-checkout_left", "stderr"))
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_first-checkout_left", "stderr"))
 
 writefile("resolutions/checkout_left.sh", "checkout_left.sh beth 2")
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_left", "drop"), 0, nil, nil)
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_right", "user", "resolutions/checkout_left.sh"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_left", "drop"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_right", "user", "resolutions/checkout_left.sh"), 0, nil, nil)
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_first-checkout_right", "stderr"))
 
 writefile("resolutions/checkout_right.sh", "checkout_right.sh beth 2")
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_right", "drop"), 0, nil, nil)
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_left", "user", "resolutions/checkout_right.sh"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_right", "drop"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_left", "user", "resolutions/checkout_right.sh"), 0, nil, nil)
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_remaining"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_remaining"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_remaining-thermostat", "stderr"))
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_first-thermostat", "stderr"))
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_left", "rename", "thermostat-westinghouse.c"), 0, nil, nil)
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_left", "rename", "thermostat-westinghouse.c"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_right", "rename", "thermostat-honeywell.c"), 0, nil, nil)
 
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "show_first"), 0, nil, true)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("show_first-user", "stderr"))
 
 writefile("resolutions/user_file", "user_file merged")
-check(mtn("conflicts", "--conflicts-file=resolutions/conflicts", "resolve_first", "user", "resolutions/user_file"), 0, nil, nil)
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first", "user", "resolutions/user_file"), 0, nil, nil)
 
-check(samefilestd("conflicts-resolved", "resolutions/conflicts"))
+check(samefilestd("conflicts-resolved", "_MTN/conflicts-1"))
 
 -- This succeeds
-check(mtn("merge", "--resolve-conflicts-file", "resolutions/conflicts"), 0, nil, true)
+check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts-1"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("merge-1", "stderr"))
 

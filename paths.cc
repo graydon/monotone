@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -351,7 +352,7 @@ LUAEXT(normalize_path, )
 }
 
 static void
-normalize_external_path(string const & path, string & normalized)
+normalize_external_path(string const & path, string & normalized, bool to_workspace_root)
 {
   if (!initial_rel_path.initialized)
     {
@@ -370,7 +371,11 @@ normalize_external_path(string const & path, string & normalized)
       string base;
       try
         {
-          base = initial_rel_path.get();
+          if (to_workspace_root)
+            base = "";
+          else
+            base = initial_rel_path.get();
+
           if (base == "")
             normalized = normalize_path(path);
           else
@@ -434,14 +439,14 @@ template <> void dump(path_component const & pc, std::string & to)
 // complete paths to files within a working directory
 ///////////////////////////////////////////////////////////////////////////
 
-file_path::file_path(file_path::source_type type, string const & path)
+file_path::file_path(file_path::source_type type, string const & path, bool to_workspace_root)
 {
   MM(path);
   I(utf8_validate(utf8(path)));
   if (type == external)
     {
       string normalized;
-      normalize_external_path(path, normalized);
+      normalize_external_path(path, normalized, to_workspace_root);
       N(!in_bookkeeping_dir(normalized),
         F("path '%s' is in bookkeeping dir") % normalized);
       data = normalized;
@@ -452,14 +457,14 @@ file_path::file_path(file_path::source_type type, string const & path)
   I(is_valid_internal(data));
 }
 
-file_path::file_path(file_path::source_type type, utf8 const & path)
+file_path::file_path(file_path::source_type type, utf8 const & path, bool to_workspace_root)
 {
   MM(path);
   I(utf8_validate(path));
   if (type == external)
     {
       string normalized;
-      normalize_external_path(path(), normalized);
+      normalize_external_path(path(), normalized, to_workspace_root);
       N(!in_bookkeeping_dir(normalized),
         F("path '%s' is in bookkeeping dir") % normalized);
       data = normalized;
@@ -484,7 +489,7 @@ bookkeeping_path::external_string_is_bookkeeping_path(utf8 const & path)
   string normalized;
   try
     {
-      normalize_external_path(path(), normalized);
+      normalize_external_path(path(), normalized, true);
     }
   catch (informative_failure &)
     {
@@ -805,6 +810,27 @@ system_path::system_path(utf8 const & path)
 {
   data = const_system_path(utf8(path));
 }
+
+boost::shared_ptr<any_path>
+new_optimal_path(std::string path, bool to_workspace_root)
+{
+  utf8 const utf8_path = utf8(path);
+  string normalized;
+  try
+    {
+      normalize_external_path(utf8_path(), normalized, to_workspace_root);
+    }
+  catch (informative_failure &)
+    {
+      // not in workspace
+      return boost::shared_ptr<any_path>(new system_path(path));
+    }
+
+  if (in_bookkeeping_dir(normalized))
+    return boost::shared_ptr<any_path>(new bookkeeping_path(normalized));
+  else
+    return boost::shared_ptr<any_path>(new file_path(file_path_internal(normalized)));
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // workspace (and path root) handling

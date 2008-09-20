@@ -20,6 +20,7 @@ ancestor_file_id [ae708173915e11248629c18d16c96c3a34f87d16]
     left_file_id [c438704db55b0d6f819e7e79c1622e5d757b926b]
       right_name "files/baz"
    right_file_id [b87f48c43f61d258cc0b12d07bd53a7ddde357a9]
+   resolved_user "_MTN/result/baz"
 
         conflict content
        node_type "file"
@@ -29,3 +30,4 @@ ancestor_file_id [0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33]
     left_file_id [841e3d2ada1a56123f9efe9db0d0c045ff9e6d8f]
       right_name "files/foo"
    right_file_id [3506995775abf41d3cdeb1e0417bdd3bcf059395]
+   resolved_user "files/foo"

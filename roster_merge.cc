@@ -37,23 +37,7 @@ namespace resolve_conflicts
     return boost::shared_ptr<any_path>(new file_path(file_path_external(utf8(path))));
   };
 
-  boost::shared_ptr<any_path>
-  new_optimal_path(std::string path)
-  {
-    if (bookkeeping_path::external_string_is_bookkeeping_path(utf8(path)))
-      return boost::shared_ptr<any_path>(new bookkeeping_path(path));
-    else
-      try
-        {
-          return new_file_path(path);
-        }
-      catch (informative_failure &)
-        {
-          return boost::shared_ptr<any_path>(new system_path(path));
-        }
-  };
-
-  static char * const
+  static char const * const
   image(resolve_conflicts::resolution_t resolution)
   {
     switch (resolution)
@@ -1599,8 +1583,9 @@ roster_merge_result::report_file_content_conflicts(lua_hooks & lua,
         {
           basic_io::stanza st;
 
-          if (auto_merge_succeeds(lua, conflict, adaptor, left_roster, right_roster))
-            conflict.resolution.first = resolve_conflicts::content_internal;
+          if (conflict.resolution.first == resolve_conflicts::none)
+            if (auto_merge_succeeds(lua, conflict, adaptor, left_roster, right_roster))
+              conflict.resolution.first = resolve_conflicts::content_internal;
 
           st.push_str_pair(syms::conflict, syms::content);
           put_content_conflict (st, left_roster, right_roster, adaptor, conflict);
@@ -1930,14 +1915,14 @@ read_duplicate_name_conflict(basic_io::parser & pars,
         {
           conflict.left_resolution.first = resolve_conflicts::content_user;
           pars.sym();
-          conflict.left_resolution.second = resolve_conflicts::new_optimal_path(pars.token);
+          conflict.left_resolution.second = new_optimal_path(pars.token, true);
           pars.str();
         }
       else if (pars.symp (syms::resolved_user_right))
         {
           conflict.right_resolution.first = resolve_conflicts::content_user;
           pars.sym();
-          conflict.right_resolution.second = resolve_conflicts::new_optimal_path(pars.token);
+          conflict.right_resolution.second = new_optimal_path(pars.token, true);
           pars.str();
         }
       else
@@ -2143,7 +2128,7 @@ read_file_content_conflict(basic_io::parser & pars,
         {
           conflict.resolution.first = resolve_conflicts::content_user;
           pars.sym();
-          conflict.resolution.second = resolve_conflicts::new_optimal_path(pars.token);
+          conflict.resolution.second = new_optimal_path(pars.token, true);
           pars.str();
         }
       else
@@ -2255,7 +2240,7 @@ read_conflict_file_core(basic_io::parser pars,
 
 void
 roster_merge_result::read_conflict_file(database & db,
-                                        system_path const file_name,
+                                        bookkeeping_path const & file_name,
                                         revision_id & ancestor_rid,
                                         revision_id & left_rid,
                                         revision_id & right_rid,
@@ -2294,7 +2279,7 @@ roster_merge_result::read_conflict_file(database & db,
 void
 roster_merge_result::write_conflict_file(database & db,
                                          lua_hooks & lua,
-                                         system_path const file_name,
+                                         bookkeeping_path const & file_name,
                                          revision_id const & ancestor_rid,
                                          revision_id const & left_rid,
                                          revision_id const & right_rid,
@@ -2331,65 +2316,9 @@ roster_merge_result::write_conflict_file(database & db,
   report_file_content_conflicts(lua, *left_roster, *right_roster, adaptor, true, output);
 
   data dat(output.str());
-  write_data(file_name, dat, system_path("_MTN"));
+  write_data(file_name, dat);
 
 } // roster_merge_result::write_conflict_file
-
-static void
-parse_resolve_conflicts_str(basic_io::parser & pars, roster_merge_result & result)
-{
-  char const * error_message_1 = "can't specify a %s conflict resolution for more than one conflict";
-  char const * error_message_2 = "conflict resolution %s is not appropriate for current conflicts";
-
-  // We don't detect all cases of inappropriate resolutions here; that would
-  // be too hard to maintain as more conflicts and/or resolutions are added.
-  // If the single resolution specified is not appropriate for some
-  // conflict, that conflict will not be resolved, which will be reported
-  // later. Then the user will need to use a conflict resolution file.
-  while (pars.tok.in.lookahead != EOF)
-    {
-      // resolution alphabetical order
-      if (pars.symp (syms::resolved_rename_left))
-        {
-          N(result.duplicate_name_conflicts.size() == 1,
-            F(error_message_1) % syms::resolved_rename_left);
-
-          duplicate_name_conflict & conflict = *result.duplicate_name_conflicts.begin();
-
-          conflict.left_resolution.first  = resolve_conflicts::rename;
-          pars.sym();
-          conflict.left_resolution.second = resolve_conflicts::new_file_path(pars.token);
-          pars.str();
-        }
-      else if (pars.symp (syms::resolved_rename_right))
-        {
-          N(result.duplicate_name_conflicts.size() == 1,
-            F(error_message_1) % syms::resolved_rename_right);
-
-          duplicate_name_conflict & conflict = *result.duplicate_name_conflicts.begin();
-
-          conflict.right_resolution.first  = resolve_conflicts::rename;
-          pars.sym();
-          conflict.right_resolution.second = resolve_conflicts::new_file_path(pars.token);
-          pars.str();
-        }
-      else if (pars.symp (syms::resolved_user))
-        {
-          N(result.file_content_conflicts.size() == 1,
-            F(error_message_1) % syms::resolved_user);
-
-          file_content_conflict & conflict = *result.file_content_conflicts.begin();
-
-          conflict.resolution.first  = resolve_conflicts::content_user;
-          pars.sym();
-          conflict.resolution.second = resolve_conflicts::new_optimal_path(pars.token);
-          pars.str();
-        }
-      else
-        N(false, F("%s is not a supported conflict resolution") % pars.token);
-
-    } // while
-} // parse_resolve_conflicts_str
 
 void
 parse_resolve_conflicts_opts (options const & opts,
@@ -2398,28 +2327,15 @@ parse_resolve_conflicts_opts (options const & opts,
                               roster_merge_result & result,
                               bool & resolutions_given)
 {
-  if (opts.resolve_conflicts_given)
-    {
-      resolutions_given = true;
-
-      basic_io::input_source src(opts.resolve_conflicts, "resolve_conflicts string");
-      basic_io::tokenizer tok(src);
-      basic_io::parser pars(tok);
-
-      parse_resolve_conflicts_str(pars, result);
-
-      if (src.lookahead != EOF)
-        pars.err("invalid conflict resolution syntax");
-    }
-  else if (opts.resolve_conflicts_file_given)
+if (opts.resolve_conflicts_given || opts.resolve_conflicts_file_given)
     {
       resolutions_given = true;
 
       data dat;
 
-      read_data (system_path(opts.resolve_conflicts_file()), dat);
+      read_data (system_path(opts.resolve_conflicts_file), dat);
 
-      basic_io::input_source src(dat(), opts.resolve_conflicts_file());
+      basic_io::input_source src(dat(), opts.resolve_conflicts_file.as_external());
       basic_io::tokenizer tok(src);
       basic_io::parser pars(tok);
 

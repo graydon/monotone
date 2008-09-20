@@ -1,7 +1,7 @@
 mtn: updating along branch 'testbranch'
-mtn: selected update target ad3e91f197b102b27435049513a87778550dfd89
-mtn: [left]  97cdd788b32b8b7c3a43883a39ff8e213960eb42
-mtn: [right] ad3e91f197b102b27435049513a87778550dfd89
-mtn: modifying bar
-mtn: modifying baz
-mtn: updated to base revision ad3e91f197b102b27435049513a87778550dfd89
+mtn: selected update target d18cecd65445fa5b10732c6ca8a8bbdac2a6610a
+mtn: [left]  e9d684d80d320d181793766e43a2feb525d254f8
+mtn: [right] d18cecd65445fa5b10732c6ca8a8bbdac2a6610a
+mtn: modifying files/bar
+mtn: modifying files/baz
+mtn: updated to base revision d18cecd65445fa5b10732c6ca8a8bbdac2a6610a

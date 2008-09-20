@@ -32,7 +32,6 @@ function merged_revision()
 end
 
 branch = "content-attached"
-resolution = "resolved_user \"foo\""
 setup(branch)
 
 addfile("foo", branch .. "-foo")
@@ -50,18 +49,21 @@ writefile("foo", branch .. "-foo second revision")
 commit(branch .. "-propagate")
 second = base_revision()
 
-check(mtn("propagate", branch , branch .. "-propagate", "--resolve-conflicts", resolution), 0, nil, true)
+check(mtn("conflicts", "store", "h:" .. branch , "h:" .. branch .. "-propagate"), 0, nil, true)
+check(mtn("conflicts", "resolve_first", "user", "foo"), 0, nil, nil)
+
+check(mtn("propagate", branch , branch .. "-propagate", "--resolve-conflicts"), 0, nil, true)
 merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)
 
-check(mtn("explicit_merge", first, second, branch, "--resolve-conflicts", resolution), 0, nil, true)
-merged = merged_revision()
+check(mtn("explicit_merge", first, second, branch,
+"--resolve-conflicts"), 0, nil, true) merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)
 
 -- create a second head on 'branch'
 writefile("foo", branch .. "-foo third revision")
 commit(branch)
-check(mtn("merge", "--branch", branch, "--resolve-conflicts", resolution), 0, nil, true)
+check(mtn("merge", "--branch", branch, "--resolve-conflicts"), 0, nil, true)
 merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)
 

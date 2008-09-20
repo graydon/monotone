@@ -3023,7 +3023,8 @@ database revision and the current workspace.
 In addition, the @command{conflicts} set of commands can be used to
 specify resolutions for some conflicts. The resolutions are stored in a
 file, and given to the @command{merge} command via the
-@command{--resolve-conflicts-file=filename} option; see @xref{Conflicts}.
+@command{--resolve-conflicts-file=filename} or
+@command{--resolve-conflicts} option; see @xref{Conflicts}.
 
 The @command{merge} command normally will perform as many merges as
 necessary to merge all current heads of a branch. However, when
@@ -4662,11 +4663,17 @@ This lets the user take as much time as needed to prepare all the
 conflict resolutions, and avoids losing work when a merge is aborted
 due to a complicated conflict.
 
-For all of these commands, if the @command{--conflicts-file} option is
-not given, the file @file{_MTN/conflicts} is used.
+These commands require a workspace, to provide a place to store the
+conflicts and user resolution files.
 
-Except for @command{conflicts clean}, these commands do not require a
-workspace, unless the default conflicts file is used.
+For all of these commands, if the @command{--conflicts-file} option is
+not given, the file @file{_MTN/conflicts} is used. If the
+@command{--conflicts-file} option is given, the file must be in the
+bookkeeping directory.
+
+Files given in these commands are relative to the current working
+directory, or absolute. In the conflict file, they are relative to the
+workspace root, or absolute.
 
 @ftable @command
 @item mtn conflicts --conflicts-file=@var{file} store @var{left_rev_id} @var{right_rev_id}

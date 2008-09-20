@@ -35,9 +35,6 @@ namespace resolve_conflicts
 
   boost::shared_ptr<any_path> new_file_path(std::string path);
 
-  // Return a file_path, bookkeeping_path, or system_path, as appropriate.
-  // This keeps the file names in the conflict file relative if possible.
-  boost::shared_ptr<any_path> new_optimal_path(std::string path);
 }
 
 // renaming the root dir allows these:
@@ -252,7 +249,7 @@ struct roster_merge_result
   // If validate, compare file contents to existing conflicts, and add
   // resolutions. Otherwise just read into conflicts.
   void read_conflict_file(database & db,
-                          system_path const file_name,
+                          bookkeeping_path const & file_name,
                           revision_id & ancestor_rid,
                           revision_id & left_rid,
                           revision_id & right_rid,
@@ -263,7 +260,7 @@ struct roster_merge_result
 
   void write_conflict_file(database & db,
                            lua_hooks & lua,
-                           system_path const file_name,
+                           bookkeeping_path const & file_name,
                            revision_id const & ancestor_rid,
                            revision_id const & left_rid,
                            revision_id const & right_rid,

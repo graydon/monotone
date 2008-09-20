@@ -1039,7 +1039,7 @@ CMD(store, "store", "", CMD_REF(conflicts),
   show_conflicts_core(db, app.lua, left_id, right_id, true, true, output);
 
   data dat(output.str());
-  write_data(system_path(app.opts.conflicts_file), dat, system_path("_MTN"));
+  write_data(app.opts.conflicts_file, dat);
 }
 
 CMD_AUTOMATE(file_merge, N_("LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"),

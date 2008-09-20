@@ -76,7 +76,7 @@ check(mtn("conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"
 check(samefilestd("conflicts-resolved", "_MTN/conflicts"))
 
 -- This succeeds
-check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts"), 0, nil, true)
+check(mtn("merge", "--resolve-conflicts"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("merge-1", "stderr"))
 

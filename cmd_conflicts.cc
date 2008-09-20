@@ -27,7 +27,7 @@ struct conflicts_t
   boost::shared_ptr<roster_t> right_roster;
   marking_map left_marking, right_marking;
 
-  conflicts_t(database & db, system_path file):
+  conflicts_t(database & db, bookkeeping_path const & file):
     left_roster(boost::shared_ptr<roster_t>(new roster_t())),
     right_roster(boost::shared_ptr<roster_t>(new roster_t()))
   {
@@ -38,7 +38,7 @@ struct conflicts_t
                               *right_roster, right_marking);
   };
 
-  void write (database & db, lua_hooks & lua, system_path file)
+  void write (database & db, lua_hooks & lua, bookkeeping_path const & file)
     {
       result.write_conflict_file
         (db, lua, file, ancestor_rid, left_rid, right_rid,
@@ -184,7 +184,7 @@ set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
     {
       N(args.size() == 2, F("wrong number of arguments"));
       resolution.first  = resolve_conflicts::content_user;
-      resolution.second = resolve_conflicts::new_optimal_path(idx(args,1)());
+      resolution.second = new_optimal_path(idx(args,1)(), false);
     }
   else
     N(false, F(conflict_resolution_not_supported_msg) % idx(args,0) % "duplicate_name");
@@ -241,7 +241,7 @@ set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & arg
                   N(args.size() == 2, F("wrong number of arguments"));
 
                   conflict.resolution.first  = resolve_conflicts::content_user;
-                  conflict.resolution.second = resolve_conflicts::new_optimal_path(idx(args,1)());
+                  conflict.resolution.second = new_optimal_path(idx(args,1)(), false);
                 }
               else
                 {
@@ -274,7 +274,7 @@ set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & arg
 
 /// commands
 
-// CMD(store) is in cmd_merging, since it needs access to
+// CMD(store) is in cmd_merging.cc, since it needs access to
 // show_conflicts_core, and doesn't need conflicts_t.
 
 CMD(show_first, "show_first", "", CMD_REF(conflicts),
@@ -349,8 +349,8 @@ CMD(clean, "clean", "", CMD_REF(conflicts),
     "",
     options::opts::none)
 {
-  bookkeeping_path conflicts_file("conflicts");
-  bookkeeping_path resolutions_dir("resolutions");
+  bookkeeping_path conflicts_file("_MTN/conflicts");
+  bookkeeping_path resolutions_dir("_MTN/resolutions");
 
   if (path_exists(conflicts_file))
     delete_file(conflicts_file);
