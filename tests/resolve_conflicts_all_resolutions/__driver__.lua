@@ -2,6 +2,7 @@
 -- conflict file. Also test 'conflict show_remaining'.
 
 mtn_setup()
+get("merge3_hook.lua")
 
 -- Generate a conflicts file, with one conflict for each type of
 -- resolution. The list of currently supported resolutions is in
@@ -15,18 +16,25 @@ mtn_setup()
 -- resolved_rename_left     thermostat.c -> thermostat-westinghouse.c
 -- resolved_rename_right    thermostat.c -> thermostat-honeywell.c
 -- resolved_user            user_file
+-- resolved_user            interactive_file
 -- resolved_user_left       checkout_left.sh beth
 -- resolved_user_right      checkout_right.sh abe
 --
 -- We can't set 'resolved_internal' directly; it is set by 'conflicts store'.
+--
+-- We have two files that have 'resolved_user' resolutions; one by 'mtn
+-- conflicts resolve_first user ...', one by 'mtn conflicts
+-- resolve_first interactive ...'.
 
 addfile("simple_file", "simple\none\ntwo\nthree\n")
 addfile("user_file", "blah blah blah")
+addfile("interactive_file", "interactive base")
 commit()
 base = base_revision()
 
 addfile("simple_file", "simple\nzero\none\ntwo\nthree\n")
 writefile("user_file", "user_file abe 1")
+writefile("interactive_file", "interactive_file abe 1")
 addfile("checkout_left.sh", "checkout_left.sh abe 1")
 addfile("checkout_right.sh", "checkout_right.sh abe 1")
 addfile("thermostat.c", "thermostat westinghouse")
@@ -37,6 +45,7 @@ revert_to(base)
 
 addfile("simple_file", "simple\none\ntwo\nthree\nfour\n")
 writefile("user_file", "user_file beth 1")
+writefile("interactive_file", "interactive_file beth 1")
 addfile("checkout_left.sh", "checkout_left.sh beth 1")
 addfile("checkout_right.sh", "checkout_right.sh beth 1")
 addfile("thermostat.c", "thermostat honeywell")
@@ -81,6 +90,13 @@ check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first_right
 
 check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
 canonicalize("stderr")
+check(samefilestd("show_first-interactive", "stderr"))
+
+mkdir("_MTN/resolutions")
+check(mtn("--rcfile=merge3_hook.lua", "conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first", "interactive", "_MTN/resolutions/interactive_file"), 0, true, nil)
+
+check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "show_first"), 0, nil, true)
+canonicalize("stderr")
 check(samefilestd("show_first-user", "stderr"))
 
 writefile("resolutions/user_file", "user_file merged")
@@ -99,5 +115,6 @@ check(mtn("update"), 0, nil, false)
 check("checkout_left.sh beth 2" == readfile("checkout_left.sh"))
 check("checkout_right.sh beth 2" == readfile("checkout_right.sh"))
 check("user_file merged" == readfile("user_file"))
+check("interactive_file merged" == readfile("interactive_file"))
 
 -- end of file

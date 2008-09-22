@@ -1,6 +1,6 @@
-    left [deb9772dea922e56623683f9fa58558670cda9a6]
-   right [670f6a2810983d1f6ce4c6c076f5f685ffd4b17c]
-ancestor [59f6060f7ed4dd514c2e0a9bd291ed9a9af29e23]
+    left [6fcbac878d4e20dc024bf16e63bd88906ac21afd]
+   right [138053fd821daa41aa98e55641d087da1d70ca2b]
+ancestor [ecceebea23b1c81b980671b4cac91ed3421396c3]
 
            conflict duplicate_name
           left_type "added file"
@@ -31,6 +31,16 @@ resolved_drop_right
         right_file_id [7e9f2712c5d3570815f1546772d9119474d32afc]
  resolved_rename_left "thermostat-westinghouse.c"
 resolved_rename_right "thermostat-honeywell.c"
+
+        conflict content
+       node_type "file"
+   ancestor_name "interactive_file"
+ancestor_file_id [c0377dbf53083e56aec683b6f54790321963ac62]
+       left_name "interactive_file"
+    left_file_id [942f274ea0d3ef68b821d67f8b01f79d17cfbf8f]
+      right_name "interactive_file"
+   right_file_id [f5545d552609d36494a195deee7f9df617cb3443]
+   resolved_user "_MTN/resolutions/interactive_file"
 
          conflict content
         node_type "file"

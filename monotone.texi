@@ -4714,9 +4714,18 @@ resolution files in @file{_MTN/resolutions}; this command provides a
 convenient way to clean up.
 @end ftable
 
-For single file conflicts, the only possible resolution is:
+For single file conflicts, there are two possible resolutions:
 
 @ftable @command
+@item interactive @var{file}
+The Lua @code{merge3} hook is called to allow the user to manually
+merge the left and right files, leaving the result in the specified file.
+
+@var{file} must be a bookkeeping path; under @file{_MTN}.
+
+This inserts a @var{resolved_user file} conflict resolution in the
+conflicts file.
+
 @item user @var{file}
 The file contents are replaced by the contents of the specified file.
 

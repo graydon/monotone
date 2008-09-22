@@ -133,7 +133,7 @@ struct attribute_conflict
 struct file_content_conflict
 {
   node_id nid;
-  file_id left, right;
+  file_id ancestor, left, right; // ancestor is set only when reading in a conflicts file
   resolve_conflicts::file_resolution_t resolution;
 
   file_content_conflict () :

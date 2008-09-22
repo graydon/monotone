@@ -2105,13 +2105,16 @@ read_file_content_conflict(basic_io::parser & pars,
   pars.esym(syms::node_type); pars.str(tmp); I(tmp == "file");
 
   pars.esym (syms::ancestor_name); pars.str();
-  pars.esym (syms::ancestor_file_id); pars.hex();
-
+  pars.esym (syms::ancestor_file_id); pars.hex(tmp);
+  conflict.ancestor = file_id(decode_hexenc(tmp));
+  
   pars.esym (syms::left_name); pars.str(left_name);
-  pars.esym(syms::left_file_id); pars.hex();
+  pars.esym(syms::left_file_id); pars.hex(tmp);
+  conflict.left = file_id(decode_hexenc(tmp));
 
   pars.esym (syms::right_name); pars.str(right_name);
-  pars.esym(syms::right_file_id); pars.hex();
+  pars.esym(syms::right_file_id); pars.hex(tmp);
+  conflict.right = file_id(decode_hexenc(tmp));
 
   conflict.nid = left_roster.get_node (file_path_internal (left_name))->self;
   I(conflict.nid = right_roster.get_node (file_path_internal (right_name))->self);
@@ -2269,6 +2272,8 @@ roster_merge_result::read_conflict_file(database & db,
   pars.hex(temp);
   ancestor_rid = revision_id(decode_hexenc(temp));
 
+  // we don't fetch the ancestor roster here, because not every function
+  // needs it.
   db.get_roster(left_rid, left_roster, left_marking);
   db.get_roster(right_rid, right_roster, right_marking);
 

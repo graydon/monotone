@@ -23,6 +23,7 @@ struct conflicts_t
 {
   roster_merge_result result;
   revision_id ancestor_rid, left_rid, right_rid;
+  boost::shared_ptr<roster_t> ancestor_roster;
   boost::shared_ptr<roster_t> left_roster;
   boost::shared_ptr<roster_t> right_roster;
   marking_map left_marking, right_marking;
@@ -108,7 +109,8 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
             {
             case first:
               P(F("possible resolutions:"));
-              P(F("resolve user \"file_name\""));
+              P(F("resolve_first interactive \"file_name\""));
+              P(F("resolve_first user \"file_name\""));
               return;
 
             case remaining:
@@ -165,6 +167,47 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
 enum side_t {left, right, neither};
 static char const * const conflict_resolution_not_supported_msg = "%s is not a supported conflict resolution for %s";
 
+// Call Lua merge3 hook to merge left_fid, right_fid, store result in result_path
+static bool
+do_interactive_merge(database & db,
+                     lua_hooks & lua,
+                     conflicts_t & conflicts,
+                     node_id const nid,
+                     file_id const & ancestor_fid,
+                     file_id const & left_fid,
+                     file_id const & right_fid,
+                     bookkeeping_path const & result_path)
+{
+  file_path ancestor_path, left_path, right_path;
+
+  if (!conflicts.ancestor_roster)
+    {
+      conflicts.ancestor_roster = boost::shared_ptr<roster_t>(new roster_t());
+      db.get_roster(conflicts.ancestor_rid, *conflicts.ancestor_roster);
+    }
+
+  conflicts.ancestor_roster->get_name(nid, ancestor_path);
+  conflicts.left_roster->get_name(nid, left_path);
+  conflicts.right_roster->get_name(nid, right_path);
+  
+  file_data left_data, right_data, ancestor_data;
+  data merged_unpacked;
+
+  db.get_file_version(left_fid, left_data);
+  db.get_file_version(ancestor_fid, ancestor_data);
+  db.get_file_version(right_fid, right_data);
+
+  if (lua.hook_merge3(ancestor_path, left_path, right_path, file_path(),
+                      ancestor_data.inner(), left_data.inner(),
+                      right_data.inner(), merged_unpacked))
+    {
+      write_data(result_path, merged_unpacked);
+      return true;
+    }
+
+  return false;
+} // do_interactive_merge
+
 static void
 set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
                             args_vector const & args)
@@ -192,7 +235,11 @@ set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
 } //set_duplicate_name_conflict
 
 static void
-set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & args)
+set_first_conflict(database & db,
+                   lua_hooks & lua,
+                   conflicts_t & conflicts,
+                   args_vector const & args,
+                   side_t side)
 {
   if (side != neither)
     {
@@ -236,7 +283,22 @@ set_first_conflict(side_t side, conflicts_t & conflicts, args_vector const & arg
 
           if (conflict.resolution.first == resolve_conflicts::none)
             {
-              if ("user" == idx(args,0)())
+              if ("interactive" == idx(args,0)())
+                {
+                  N(bookkeeping_path::external_string_is_bookkeeping_path(utf8(idx(args,1)())),
+                    F("result path must be under _MTN"));
+                  bookkeeping_path const result_path(idx(args,1)());
+                  
+                  N(args.size() == 2, F("wrong number of arguments"));
+
+                  if (do_interactive_merge(db, lua, conflicts, conflict.nid,
+                                           conflict.ancestor, conflict.left, conflict.right, result_path))
+                    {
+                      conflict.resolution.first  = resolve_conflicts::content_user;
+                      conflict.resolution.second = boost::shared_ptr<any_path>(new bookkeeping_path(result_path));
+                    }
+                }
+              else if ("user" == idx(args,0)())
                 {
                   N(args.size() == 2, F("wrong number of arguments"));
 
@@ -310,7 +372,7 @@ CMD(resolve_first, "resolve_first", "", CMD_REF(conflicts),
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
-  set_first_conflict(neither, conflicts, args);
+  set_first_conflict(db, app.lua, conflicts, args, neither);
 
   conflicts.write (db, app.lua, app.opts.conflicts_file);
 }
@@ -324,7 +386,7 @@ CMD(resolve_first_left, "resolve_first_left", "", CMD_REF(conflicts),
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
-  set_first_conflict(left, conflicts, args);
+  set_first_conflict(db, app.lua, conflicts, args, left);
 
   conflicts.write (db, app.lua, app.opts.conflicts_file);
 }
@@ -338,7 +400,7 @@ CMD(resolve_first_right, "resolve_first_right", "", CMD_REF(conflicts),
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
-  set_first_conflict(right, conflicts, args);
+  set_first_conflict(db, app.lua, conflicts, args, right);
 
   conflicts.write (db, app.lua, app.opts.conflicts_file);
 }
