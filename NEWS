@@ -17,10 +17,6 @@
             would reinitialize the database. This was rather slow, so
             monotone will now keep the database open between commands.
 
-        - Small performance gains especially for annotate by replacing
-          'size() == 0' and similar checks with the faster 'empty()'
-          STL method.
-
         New features
 
         - New 'mtn ls duplicates' command which lets you list
