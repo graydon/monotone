@@ -1,6 +1,6 @@
 /*************************************************
 * Exceptions Source File                         *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/exceptn.h>
@@ -31,16 +31,6 @@ Invalid_Block_Size::Invalid_Block_Size(const std::string& mode,
 Invalid_IV_Length::Invalid_IV_Length(const std::string& mode, u32bit bad_len)
    {
    set_msg("IV length " + to_string(bad_len) + " is invalid for " + mode);
-   }
-
-/*************************************************
-* Constructor for Invalid_Message_Number         *
-*************************************************/
-Invalid_Message_Number::Invalid_Message_Number(const std::string& where,
-                                               u32bit message_no)
-   {
-   set_msg("Pipe::" + where + ": Invalid message number " +
-           to_string(message_no));
    }
 
 /*************************************************

@@ -1,6 +1,6 @@
 /*************************************************
 * Low Level Types Header File                    *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_TYPES_H__
@@ -30,8 +30,8 @@ typedef signed int s32bit;
 
 namespace Botan_types {
 
-typedef Botan::byte byte;
-typedef Botan::u32bit u32bit;
+using Botan::byte;
+using Botan::u32bit;
 
 }
 

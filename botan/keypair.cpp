@@ -1,11 +1,10 @@
 /*************************************************
 * Keypair Checks Source File                     *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/keypair.h>
 #include <botan/look_pk.h>
-#include <botan/rng.h>
 #include <memory>
 
 namespace Botan {
@@ -15,7 +14,8 @@ namespace KeyPair {
 /*************************************************
 * Check an encryption key pair for consistency   *
 *************************************************/
-void check_key(PK_Encryptor* encryptor, PK_Decryptor* decryptor)
+void check_key(RandomNumberGenerator& rng,
+               PK_Encryptor* encryptor, PK_Decryptor* decryptor)
    {
    if(encryptor->maximum_input_size() == 0)
       return;
@@ -24,9 +24,9 @@ void check_key(PK_Encryptor* encryptor, PK_Decryptor* decryptor)
    std::auto_ptr<PK_Decryptor> dec(decryptor);
 
    SecureVector<byte> message(enc->maximum_input_size() - 1);
-   Global_RNG::randomize(message, message.size());
+   rng.randomize(message, message.size());
 
-   SecureVector<byte> ciphertext = enc->encrypt(message);
+   SecureVector<byte> ciphertext = enc->encrypt(message, rng);
    if(ciphertext == message)
       throw Self_Test_Failure("Encryption key pair consistency failure");
 
@@ -38,19 +38,21 @@ void check_key(PK_Encryptor* encryptor, PK_Decryptor* decryptor)
 /*************************************************
 * Check a signature key pair for consistency     *
 *************************************************/
-void check_key(PK_Signer* signer, PK_Verifier* verifier)
+void check_key(RandomNumberGenerator& rng,
+               PK_Signer* signer, PK_Verifier* verifier)
    {
    std::auto_ptr<PK_Signer> sig(signer);
    std::auto_ptr<PK_Verifier> ver(verifier);
 
    SecureVector<byte> message(16);
-   Global_RNG::randomize(message, message.size());
+   rng.randomize(message, message.size());
 
    SecureVector<byte> signature;
 
-   try {
-      signature = sig->sign_message(message);
-   }
+   try
+      {
+      signature = sig->sign_message(message, rng);
+      }
    catch(Encoding_Error)
       {
       return;

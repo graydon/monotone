@@ -1,13 +1,12 @@
 /*************************************************
 * DER Encoder Header File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DER_ENCODER_H__
 #define BOTAN_DER_ENCODER_H__
 
-#include <botan/secmem.h>
-#include <botan/enums.h>
+#include <botan/asn1_int.h>
 #include <vector>
 
 namespace Botan {
@@ -15,7 +14,7 @@ namespace Botan {
 /*************************************************
 * General DER Encoding Object                    *
 *************************************************/
-class DER_Encoder
+class BOTAN_DLL DER_Encoder
    {
    public:
       SecureVector<byte> get_contents();

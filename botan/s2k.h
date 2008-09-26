@@ -1,19 +1,20 @@
 /*************************************************
 * S2K Header File                                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_S2K_H__
 #define BOTAN_S2K_H__
 
-#include <botan/base.h>
+#include <botan/symkey.h>
+#include <botan/rng.h>
 
 namespace Botan {
 
 /*************************************************
 * S2K Interface                                  *
 *************************************************/
-class S2K
+class BOTAN_DLL S2K
    {
    public:
       virtual S2K* clone() const = 0;
@@ -25,7 +26,7 @@ class S2K
       void set_iterations(u32bit);
       void change_salt(const byte[], u32bit);
       void change_salt(const MemoryRegion<byte>&);
-      void new_random_salt(u32bit);
+      void new_random_salt(RandomNumberGenerator& rng, u32bit);
 
       u32bit iterations() const { return iter; }
       SecureVector<byte> current_salt() const { return salt; }

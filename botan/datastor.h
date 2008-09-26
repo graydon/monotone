@@ -1,6 +1,6 @@
 /*************************************************
 * Data Store Header File                         *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DATA_STORE_H__
@@ -17,10 +17,10 @@ namespace Botan {
 /*************************************************
 * Data Store                                     *
 *************************************************/
-class Data_Store
+class BOTAN_DLL Data_Store
    {
    public:
-      class Matcher
+      class BOTAN_DLL Matcher
          {
          public:
             virtual bool operator()(const std::string&,

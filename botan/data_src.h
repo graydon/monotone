@@ -1,6 +1,6 @@
 /*************************************************
 * DataSource Header File                         *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DATA_SRC_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Generic DataSource Interface                   *
 *************************************************/
-class DataSource
+class BOTAN_DLL DataSource
    {
    public:
       virtual u32bit read(byte[], u32bit) = 0;
@@ -36,7 +36,7 @@ class DataSource
 /*************************************************
 * Memory-Based DataSource                        *
 *************************************************/
-class DataSource_Memory : public DataSource
+class BOTAN_DLL DataSource_Memory : public DataSource
    {
    public:
       u32bit read(byte[], u32bit);
@@ -54,7 +54,7 @@ class DataSource_Memory : public DataSource
 /*************************************************
 * Stream-Based DataSource                        *
 *************************************************/
-class DataSource_Stream : public DataSource
+class BOTAN_DLL DataSource_Stream : public DataSource
    {
    public:
       u32bit read(byte[], u32bit);
@@ -62,10 +62,13 @@ class DataSource_Stream : public DataSource
       bool end_of_data() const;
       std::string id() const;
 
+      DataSource_Stream(std::istream&, const std::string& id = "");
       DataSource_Stream(const std::string&, bool = false);
       ~DataSource_Stream();
    private:
-      const std::string fsname;
+      const std::string identifier;
+      const bool owner;
+
       std::istream* source;
       u32bit total_read;
    };

@@ -1,6 +1,6 @@
 /*************************************************
 * CRC32 Header File                              *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_CRC32_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * CRC32                                          *
 *************************************************/
-class CRC32 : public HashFunction
+class BOTAN_DLL CRC32 : public HashFunction
    {
    public:
       void clear() throw() { crc = 0xFFFFFFFF; }

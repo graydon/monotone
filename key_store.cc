@@ -49,6 +49,8 @@ struct key_store_state
   map<rsa_keypair_id, keypair> keys;
   map<id, rsa_keypair_id> hashes;
 
+  boost::shared_ptr<Botan::RandomNumberGenerator> rng;
+
   // These are used to cache keys and signers (if the hook allows).
   map<rsa_keypair_id, shared_ptr<RSA_PrivateKey> > privkey_cache;
   map<rsa_keypair_id, shared_ptr<PK_Signer> > signer_cache;
@@ -58,7 +60,7 @@ struct key_store_state
 
   key_store_state(app_state & app)
     : key_dir(app.opts.key_dir), ssh_sign_mode(app.opts.ssh_sign),
-      have_read(false), lua(app.lua)
+      have_read(false), lua(app.lua), rng(app.rng)
   {
     N(app.opts.key_dir_given
       || app.opts.conf_dir_given
@@ -154,6 +156,12 @@ key_store::key_store(app_state & a)
 
 key_store::~key_store()
 {}
+
+Botan::RandomNumberGenerator &
+key_store::get_rng()
+{
+  return *s->rng;
+}
 
 system_path const &
 key_store::get_key_dir()
@@ -384,7 +392,7 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
   try // with empty passphrase
     {
       Botan::DataSource_Memory ds(kp.priv());
-      pkcs8_key.reset(Botan::PKCS8::load_key(ds, ""));
+      pkcs8_key.reset(Botan::PKCS8::load_key(ds, *rng, ""));
     }
   catch (Botan::Exception & e)
     {
@@ -403,7 +411,7 @@ key_store_state::decrypt_private_key(rsa_keypair_id const & id,
         try
           {
             Botan::DataSource_Memory ds(kp.priv());
-            pkcs8_key.reset(Botan::PKCS8::load_key(ds, phrase()));
+            pkcs8_key.reset(Botan::PKCS8::load_key(ds, *rng, phrase()));
             break;
           }
         catch (Botan::Exception & e)
@@ -476,7 +484,7 @@ key_store::create_key_pair(database & db,
 
   // okay, now we can create the key
   P(F("generating key-pair '%s'") % id);
-  RSA_PrivateKey priv(constants::keylen);
+  RSA_PrivateKey priv(*s->rng, static_cast<Botan::u32bit>(constants::keylen));
 
   // serialize and maybe encrypt the private key
   keypair kp;
@@ -484,7 +492,7 @@ key_store::create_key_pair(database & db,
 
   unfiltered_pipe->start_msg();
   if ((*maybe_passphrase)().length())
-    Botan::PKCS8::encrypt_key(priv, *unfiltered_pipe,
+    Botan::PKCS8::encrypt_key(priv, *unfiltered_pipe, *s->rng,
                               (*maybe_passphrase)(),
                               "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                               Botan::RAW_BER);
@@ -533,7 +541,7 @@ key_store::change_key_passphrase(rsa_keypair_id const & id)
   get_passphrase(new_phrase, id, true, false);
 
   unfiltered_pipe->start_msg();
-  Botan::PKCS8::encrypt_key(*priv, *unfiltered_pipe, new_phrase(),
+  Botan::PKCS8::encrypt_key(*priv, *unfiltered_pipe, *s->rng, new_phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
   unfiltered_pipe->end_msg();
@@ -648,7 +656,9 @@ key_store::make_signature(database & db,
             s->signer_cache.insert(make_pair(id, signer));
         }
 
-      sig = signer->sign_message(reinterpret_cast<Botan::byte const *>(tosign.data()), tosign.size());
+      sig = signer->sign_message(
+        reinterpret_cast<Botan::byte const *>(tosign.data()),
+        tosign.size(), *s->rng);
       sig_string = string(reinterpret_cast<char const*>(sig.begin()), sig.size());
     }
 
@@ -702,7 +712,7 @@ key_store::export_key_for_agent(rsa_keypair_id const & id,
   p.start_msg();
   if (new_phrase().length())
     Botan::PKCS8::encrypt_key(*priv,
-                              p,
+                              p, *s->rng,
                               new_phrase(),
                               "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
   else
@@ -750,7 +760,7 @@ key_store_state::migrate_old_key_pair
         SecureVector<Botan::byte> arc4_decrypt(arc4_decryptor.read_all());
         Botan::DataSource_Memory ds(Botan::PEM_Code::encode(arc4_decrypt,
                                                             "PRIVATE KEY"));
-        pkcs8_key.reset(Botan::PKCS8::load_key(ds));
+        pkcs8_key.reset(Botan::PKCS8::load_key(ds, *rng));
         break;
       }
     catch (Botan::Exception & e)
@@ -772,7 +782,7 @@ key_store_state::migrate_old_key_pair
 
   // now we can write out the new key
   unfiltered_pipe->start_msg();
-  Botan::PKCS8::encrypt_key(*priv_key, *unfiltered_pipe, phrase(),
+  Botan::PKCS8::encrypt_key(*priv_key, *unfiltered_pipe, *rng, phrase(),
                             "PBE-PKCS5v20(SHA-1,TripleDES/CBC)",
                             Botan::RAW_BER);
   unfiltered_pipe->end_msg();

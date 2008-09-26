@@ -1,6 +1,6 @@
 /*************************************************
 * Filters Header File                            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_FILTERS_H__
@@ -9,7 +9,6 @@
 #include <botan/pipe.h>
 #include <botan/basefilt.h>
 #include <botan/data_snk.h>
-#include <botan/pk_filts.h>
 #include <botan/base64.h>
 #include <botan/hex.h>
 
@@ -18,7 +17,7 @@ namespace Botan {
 /*************************************************
 * Stream Cipher Filter                           *
 *************************************************/
-class StreamCipher_Filter : public Keyed_Filter
+class BOTAN_DLL StreamCipher_Filter : public Keyed_Filter
    {
    public:
       void seek(u32bit position) { cipher->seek(position); }
@@ -38,7 +37,7 @@ class StreamCipher_Filter : public Keyed_Filter
 /*************************************************
 * Hash Filter                                    *
 *************************************************/
-class Hash_Filter : public Filter
+class BOTAN_DLL Hash_Filter : public Filter
    {
    public:
       void write(const byte input[], u32bit len) { hash->update(input, len); }
@@ -54,7 +53,7 @@ class Hash_Filter : public Filter
 /*************************************************
 * MessageAuthenticationCode Filter               *
 *************************************************/
-class MAC_Filter : public Keyed_Filter
+class BOTAN_DLL MAC_Filter : public Keyed_Filter
    {
    public:
       void write(const byte input[], u32bit len) { mac->update(input, len); }

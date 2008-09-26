@@ -1,6 +1,6 @@
 /*************************************************
 * PBE Retrieval Source File                      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/oids.h>
@@ -34,8 +34,6 @@ PBE* get_pbe(const std::string& pbe_name)
 
    if(!pbe_obj)
       throw Algorithm_Not_Found(pbe_name);
-
-   pbe_obj->new_params();
 
    return pbe_obj;
    }

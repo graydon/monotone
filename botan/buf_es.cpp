@@ -1,6 +1,6 @@
 /*************************************************
 * Buffered EntropySource Source File             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/buf_es.h>
@@ -71,14 +71,6 @@ void Buffered_EntropySource::add_bytes(const void* entropy_ptr, u32bit length)
 void Buffered_EntropySource::add_bytes(u64bit entropy)
    {
    add_bytes(&entropy, 8);
-   }
-
-/*************************************************
-* Add entropy to the internal buffer             *
-*************************************************/
-void Buffered_EntropySource::add_timestamp()
-   {
-   add_bytes(system_clock());
    }
 
 /*************************************************

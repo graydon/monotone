@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS #5 PBES1 Source File                      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
@@ -8,7 +8,7 @@
 #include <botan/ber_dec.h>
 #include <botan/parsing.h>
 #include <botan/lookup.h>
-#include <botan/rng.h>
+#include <botan/libstate.h>
 #include <algorithm>
 #include <memory>
 
@@ -82,11 +82,11 @@ void PBE_PKCS5v15::set_key(const std::string& passphrase)
 /*************************************************
 * Create a new set of PBES1 parameters           *
 *************************************************/
-void PBE_PKCS5v15::new_params()
+void PBE_PKCS5v15::new_params(RandomNumberGenerator& rng)
    {
    iterations = 2048;
    salt.create(8);
-   Global_RNG::randomize(salt, salt.size());
+   rng.randomize(salt, salt.size());
    }
 
 /*************************************************
@@ -145,12 +145,14 @@ OID PBE_PKCS5v15::get_oid() const
 *************************************************/
 PBE_PKCS5v15::PBE_PKCS5v15(const std::string& d_algo,
                            const std::string& c_algo, Cipher_Dir dir) :
-   direction(dir), digest(deref_alias(d_algo)), cipher(c_algo)
+   direction(dir),
+   digest(global_state().deref_alias(d_algo)),
+   cipher(c_algo)
    {
    std::vector<std::string> cipher_spec = split_on(c_algo, '/');
    if(cipher_spec.size() != 2)
       throw Invalid_Argument("PBE-PKCS5 v1.5: Invalid cipher spec " + c_algo);
-   const std::string cipher_algo = deref_alias(cipher_spec[0]);
+   const std::string cipher_algo = global_state().deref_alias(cipher_spec[0]);
    const std::string cipher_mode = cipher_spec[1];
 
    if(!have_block_cipher(cipher_algo))

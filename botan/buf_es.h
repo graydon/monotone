@@ -1,19 +1,20 @@
 /*************************************************
 * Buffered EntropySource Header File             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BUFFERED_ES_H__
 #define BOTAN_BUFFERED_ES_H__
 
-#include <botan/base.h>
+#include <botan/rng.h>
+#include <botan/secmem.h>
 
 namespace Botan {
 
 /*************************************************
 * Buffered EntropySource                         *
 *************************************************/
-class Buffered_EntropySource : public EntropySource
+class BOTAN_DLL Buffered_EntropySource : public EntropySource
    {
    public:
       u32bit slow_poll(byte[], u32bit);
@@ -24,7 +25,6 @@ class Buffered_EntropySource : public EntropySource
 
       void add_bytes(const void*, u32bit);
       void add_bytes(u64bit);
-      void add_timestamp();
 
       virtual void do_slow_poll() = 0;
       virtual void do_fast_poll();

@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Header File            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_X509_CERT_STORE_H__
@@ -43,10 +43,10 @@ enum X509_Code {
 /*************************************************
 * X.509 Certificate Store                        *
 *************************************************/
-class X509_Store
+class BOTAN_DLL X509_Store
    {
    public:
-      class Search_Func
+      class BOTAN_DLL Search_Func
          {
          public:
             virtual bool match(const X509_Certificate&) const = 0;
@@ -78,16 +78,18 @@ class X509_Store
 
       static X509_Code check_sig(const X509_Object&, Public_Key*);
 
-      X509_Store();
+      X509_Store(u32bit time_slack = 24*60*60,
+                 u32bit cache_results = 30*60);
+
       X509_Store(const X509_Store&);
       ~X509_Store();
    private:
       X509_Store& operator=(const X509_Store&) { return (*this); }
 
-      class Cert_Info
+      class BOTAN_DLL Cert_Info
          {
          public:
-            bool is_verified() const;
+            bool is_verified(u32bit timeout) const;
             bool is_trusted() const;
             X509_Code verify_result() const;
             void set_result(X509_Code) const;
@@ -101,7 +103,7 @@ class X509_Store
             mutable u64bit last_checked;
          };
 
-      class CRL_Data
+      class BOTAN_DLL CRL_Data
          {
          public:
             X509_DN issuer;
@@ -126,6 +128,7 @@ class X509_Store
       std::vector<Cert_Info> certs;
       std::vector<CRL_Data> revoked;
       std::vector<Certificate_Store*> stores;
+      u32bit time_slack, validation_cache_timeout;
       mutable bool revoked_info_valid;
    };
 

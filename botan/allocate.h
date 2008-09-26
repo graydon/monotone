@@ -1,6 +1,6 @@
 /*************************************************
 * Allocator Header File                          *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_ALLOCATOR_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Allocator Interface                            *
 *************************************************/
-class Allocator
+class BOTAN_DLL Allocator
    {
    public:
       static Allocator* get(bool);

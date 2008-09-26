@@ -32,16 +32,25 @@ D: Bzip2 compression module
 S: Colorado, USA
 
 N: Justin Karneges
-D: The Qt-related modules, X.509 API design
+D: Qt support modules (mutexes and types), X.509 API design
 
 N: Jack Lloyd
 E: lloyd@randombit.net
 W: http://www.randombit.net/
 P: 3F69 2E64 6D92 3BBE E7AE  9258 5C0F 96E8 4EC1 6D6B
-D: Original author
+D: Original designer/author, maintainer 2001-current
 S: New York NY, USA
+
+N: Joel Low
+D: DLL symbol visibility
 
 N: Luca Piccarreta
 E: luca.piccarreta@gmail.com
 D: x86/amd64 assembler, BigInt optimizations, Win32 mutex module
 S: Italy
+
+N: Falko Strenzke
+E: strenzke@flexsecure.de
+W: http://www.flexsecure.de/
+D: Shanks-Tonelli algorithm
+S: Darmstadt, Germany

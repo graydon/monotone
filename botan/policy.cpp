@@ -1,9 +1,9 @@
 /*************************************************
 * Default Policy Source File                     *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
-#include <botan/config.h>
+#include <botan/libstate.h>
 
 namespace Botan {
 
@@ -12,7 +12,7 @@ namespace {
 /*************************************************
 * OID loading helper function                    *
 *************************************************/
-void add_oid(Config& config,
+void add_oid(Library_State& config,
              const std::string& oid_str,
              const std::string& name)
    {
@@ -25,7 +25,7 @@ void add_oid(Config& config,
 /*************************************************
 * Load all of the default OIDs                   *
 *************************************************/
-void set_default_oids(Config& config)
+void set_default_oids(Library_State& config)
    {
    add_oid(config, "1.2.840.113549.1.1.1", "RSA");
    add_oid(config, "2.5.8.1.1", "RSA");
@@ -166,7 +166,7 @@ void set_default_oids(Config& config)
 /*************************************************
 * Set the default algorithm aliases              *
 *************************************************/
-void set_default_aliases(Config& config)
+void set_default_aliases(Library_State& config)
    {
    config.add_alias("OpenPGP.Cipher.1",  "IDEA");
    config.add_alias("OpenPGP.Cipher.2",  "TripleDES");
@@ -210,39 +210,16 @@ void set_default_aliases(Config& config)
 /*************************************************
 * Set the default configuration toggles          *
 *************************************************/
-void set_default_config(Config& config)
+void set_default_config(Library_State& config)
    {
-   config.set_option("base/memory_chunk", "64*1024");
-   config.set_option("base/pkcs8_tries", "3");
-   config.set_option("base/default_pbe",
-                     "PBE-PKCS5v20(SHA-1,TripleDES/CBC)");
    config.set_option("base/default_allocator", "malloc");
 
-   config.set_option("pk/blinder_size", "64");
    config.set_option("pk/test/public", "basic");
    config.set_option("pk/test/private", "basic");
    config.set_option("pk/test/private_gen", "all");
 
-   config.set_option("pem/search", "4*1024");
-   config.set_option("pem/forgive", "8");
-   config.set_option("pem/width", "64");
-
-   config.set_option("rng/ms_capi_prov_type", "INTEL_SEC:RSA_FULL");
-   config.set_option("rng/unix_path", "/bin:/sbin:/usr/bin:/usr/sbin");
-   config.set_option("rng/es_files", "/dev/random:/dev/srandom:/dev/urandom");
-   config.set_option("rng/egd_path",
-                     "/var/run/egd-pool:/dev/egd-pool");
-   config.set_option("rng/slow_poll_request", "256");
-   config.set_option("rng/fast_poll_request", "64");
-
-   config.set_option("x509/validity_slack", "24h");
-   config.set_option("x509/v1_assume_ca", "false");
-   config.set_option("x509/cache_verify_results", "30m");
-
    config.set_option("x509/ca/allow_ca", "false");
    config.set_option("x509/ca/basic_constraints", "always");
-   config.set_option("x509/ca/default_expire", "1y");
-   config.set_option("x509/ca/signing_offset", "30s");
    config.set_option("x509/ca/rsa_hash", "SHA-1");
    config.set_option("x509/ca/str_type", "latin1");
 
@@ -262,7 +239,7 @@ void set_default_config(Config& config)
 /*************************************************
 * Set the built-in discrete log groups           *
 *************************************************/
-void set_default_dl_groups(Config& config)
+void set_default_dl_groups(Library_State& config)
    {
    config.set("dl", "modp/ietf/768",
       "-----BEGIN X942 DH PARAMETERS-----"
@@ -392,7 +369,7 @@ void set_default_dl_groups(Config& config)
 /*************************************************
 * Set the default policy                         *
 *************************************************/
-void Config::load_defaults()
+void Library_State::load_default_config()
    {
    set_default_config(*this);
    set_default_aliases(*this);

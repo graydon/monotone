@@ -1,21 +1,64 @@
 /*************************************************
 * X.509 Certificate Extensions Source File       *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/x509_ext.h>
-#include <botan/x509stat.h>
-#include <botan/libstate.h>
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
 #include <botan/lookup.h>
 #include <botan/oids.h>
-#include <botan/config.h>
+#include <botan/libstate.h>
 #include <botan/bit_ops.h>
 #include <algorithm>
 #include <memory>
 
 namespace Botan {
+
+/*************************************************
+* List of X.509 Certificate Extensions           *
+*************************************************/
+Certificate_Extension* Extensions::get_extension(const OID& oid)
+   {
+#define X509_EXTENSION(NAME, TYPE) \
+   if(OIDS::name_of(oid, NAME))    \
+      return new Cert_Extension::TYPE();
+
+   X509_EXTENSION("X509v3.KeyUsage", Key_Usage);
+   X509_EXTENSION("X509v3.BasicConstraints", Basic_Constraints);
+   X509_EXTENSION("X509v3.SubjectKeyIdentifier", Subject_Key_ID);
+   X509_EXTENSION("X509v3.AuthorityKeyIdentifier", Authority_Key_ID);
+   X509_EXTENSION("X509v3.ExtendedKeyUsage", Extended_Key_Usage);
+   X509_EXTENSION("X509v3.IssuerAlternativeName", Issuer_Alternative_Name);
+   X509_EXTENSION("X509v3.SubjectAlternativeName", Subject_Alternative_Name);
+   X509_EXTENSION("X509v3.CRLNumber", CRL_Number);
+   X509_EXTENSION("X509v3.CertificatePolicies", Certificate_Policies);
+
+   return 0;
+   }
+
+/*************************************************
+* Extensions Copy Constructor                    *
+*************************************************/
+Extensions::Extensions(const Extensions& extensions) : ASN1_Object()
+   {
+   *this = extensions;
+   }
+
+/*************************************************
+* Extensions Assignment Operator                 *
+*************************************************/
+Extensions& Extensions::operator=(const Extensions& other)
+   {
+   for(u32bit j = 0; j != extensions.size(); ++j)
+      delete extensions[j];
+   extensions.clear();
+
+   for(u32bit j = 0; j != other.extensions.size(); ++j)
+      extensions.push_back(other.extensions[j]->copy());
+
+   return (*this);
+   }
 
 /*************************************************
 * Return the OID of this extension               *
@@ -37,7 +80,7 @@ void Extensions::encode_into(DER_Encoder& to_object) const
       std::string setting;
 
       if(ext->config_id() != "")
-         setting = global_config().option("x509/exts/" + ext->config_id());
+         setting = global_state().option("x509/exts/" + ext->config_id());
 
       if(setting == "")
          setting = "yes";
@@ -84,8 +127,7 @@ void Extensions::decode_from(BER_Decoder& from_source)
             .verify_end()
          .end_cons();
 
-      Certificate_Extension* ext =
-         global_state().x509_state().get_extension(oid);
+      Certificate_Extension* ext = get_extension(oid);
 
       if(!ext)
          {
@@ -111,21 +153,6 @@ void Extensions::contents_to(Data_Store& subject_info,
    {
    for(u32bit j = 0; j != extensions.size(); ++j)
       extensions[j]->contents_to(subject_info, issuer_info);
-   }
-
-/*************************************************
-* Copy another extensions list                   *
-*************************************************/
-Extensions& Extensions::copy_this(const Extensions& other)
-   {
-   for(u32bit j = 0; j != extensions.size(); ++j)
-      delete extensions[j];
-   extensions.clear();
-
-   for(u32bit j = 0; j != other.extensions.size(); ++j)
-      extensions.push_back(other.extensions[j]->copy());
-
-   return (*this);
    }
 
 /*************************************************

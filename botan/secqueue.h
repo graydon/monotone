@@ -1,6 +1,6 @@
 /*************************************************
 * SecureQueue Header File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_SECURE_QUEUE_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * SecureQueue                                    *
 *************************************************/
-class SecureQueue : public Fanout_Filter, public DataSource
+class BOTAN_DLL SecureQueue : public Fanout_Filter, public DataSource
    {
    public:
       void write(const byte[], u32bit);

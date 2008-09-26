@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Public Key Source File                   *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/x509_key.h>
@@ -98,6 +98,7 @@ Public_Key* load_key(DataSource& source)
                               alg_id.oid.as_string());
 
       std::auto_ptr<X509_Decoder> decoder(key_obj->x509_decoder());
+
       if(!decoder.get())
          throw Decoding_Error("Key does not support X.509 decoding");
 

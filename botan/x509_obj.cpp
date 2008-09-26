@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 SIGNED Object Source File                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/x509_obj.h>
@@ -195,6 +195,7 @@ bool X509_Object::check_signature(Public_Key& pub_key) const
 * Apply the X.509 SIGNED macro                   *
 *************************************************/
 MemoryVector<byte> X509_Object::make_signed(PK_Signer* signer,
+                                            RandomNumberGenerator& rng,
                                             const AlgorithmIdentifier& algo,
                                             const MemoryRegion<byte>& tbs_bits)
    {
@@ -202,7 +203,7 @@ MemoryVector<byte> X509_Object::make_signed(PK_Signer* signer,
       .start_cons(SEQUENCE)
          .raw_bytes(tbs_bits)
          .encode(algo)
-         .encode(signer->sign_message(tbs_bits), BIT_STRING)
+         .encode(signer->sign_message(tbs_bits, rng), BIT_STRING)
       .end_cons()
    .get_contents();
    }

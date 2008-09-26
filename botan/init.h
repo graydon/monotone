@@ -1,11 +1,12 @@
 /*************************************************
 * Library Initialization Header File             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_INIT_H__
 #define BOTAN_INIT_H__
 
+#include <botan/build.h>
 #include <string>
 #include <map>
 
@@ -14,12 +15,11 @@ namespace Botan {
 /*************************************************
 * Options for initializing the library           *
 *************************************************/
-class InitializerOptions
+class BOTAN_DLL InitializerOptions
    {
    public:
       bool thread_safe() const;
       bool use_engines() const;
-      bool seed_rng() const;
       bool secure_memory() const;
       bool fips_mode() const;
       bool self_test() const;
@@ -32,7 +32,7 @@ class InitializerOptions
 /*************************************************
 * Library Initialization/Shutdown Object         *
 *************************************************/
-class LibraryInitializer
+class BOTAN_DLL LibraryInitializer
    {
    public:
       static void initialize(const std::string& = "");

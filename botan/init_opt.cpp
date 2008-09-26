@@ -1,6 +1,6 @@
 /*************************************************
 * Initialization Options Source File             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/init.h>
@@ -59,14 +59,6 @@ bool InitializerOptions::secure_memory() const
 bool InitializerOptions::use_engines() const
    {
    return boolean_arg(args, "use_engines");
-   }
-
-/*************************************************
-* Check if RNG seeding should be enabled         *
-*************************************************/
-bool InitializerOptions::seed_rng() const
-   {
-   return boolean_arg(args, "seed_rng", true);
    }
 
 /*************************************************

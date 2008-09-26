@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 SIGNED Object Header File                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_X509_OBJECT_H__
@@ -8,6 +8,8 @@
 
 #include <botan/asn1_obj.h>
 #include <botan/pipe.h>
+#include <botan/enums.h>
+#include <botan/rng.h>
 #include <vector>
 
 namespace Botan {
@@ -15,7 +17,7 @@ namespace Botan {
 /*************************************************
 * Generic X.509 SIGNED Object                    *
 *************************************************/
-class X509_Object
+class BOTAN_DLL X509_Object
    {
    public:
       SecureVector<byte> tbs_data() const;
@@ -23,6 +25,7 @@ class X509_Object
       AlgorithmIdentifier signature_algorithm() const;
 
       static MemoryVector<byte> make_signed(class PK_Signer*,
+                                            RandomNumberGenerator&,
                                             const AlgorithmIdentifier&,
                                             const MemoryRegion<byte>&);
 

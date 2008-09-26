@@ -1,6 +1,6 @@
 /*************************************************
 * DLIES Source File                              *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/dlies.h>
@@ -24,7 +24,8 @@ DLIES_Encryptor::DLIES_Encryptor(const PK_Key_Agreement_Key& k,
 /*************************************************
 * DLIES Encryption                               *
 *************************************************/
-SecureVector<byte> DLIES_Encryptor::enc(const byte in[], u32bit length) const
+SecureVector<byte> DLIES_Encryptor::enc(const byte in[], u32bit length,
+                                        RandomNumberGenerator&) const
    {
    if(length > maximum_input_size())
       throw Invalid_Argument("DLIES: Plaintext too large");

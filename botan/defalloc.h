@@ -1,6 +1,6 @@
 /*************************************************
 * Basic Allocators Header File                   *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BASIC_ALLOC_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Malloc Allocator                              *
 *************************************************/
-class Malloc_Allocator : public Allocator
+class BOTAN_DLL Malloc_Allocator : public Allocator
    {
    public:
       void* allocate(u32bit);
@@ -25,10 +25,9 @@ class Malloc_Allocator : public Allocator
 /*************************************************
 * Locking Allocator                              *
 *************************************************/
-class Locking_Allocator : public Pooling_Allocator
+class BOTAN_DLL Locking_Allocator : public Pooling_Allocator
    {
    public:
-      Locking_Allocator() : Pooling_Allocator(64*1024, true) {}
       std::string type() const { return "locking"; }
    private:
       void* alloc_block(u32bit);

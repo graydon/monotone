@@ -1,6 +1,6 @@
 /*************************************************
 * Blinder Header File                            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BLINDER_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Blinding Function Object                       *
 *************************************************/
-class Blinder
+class BOTAN_DLL Blinder
    {
    public:
       BigInt blind(const BigInt&) const;

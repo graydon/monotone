@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Base Source File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/bigint.h>
@@ -87,6 +87,15 @@ BigInt::BigInt(const byte input[], u32bit length, Base base)
    {
    set_sign(Positive);
    *this = decode(input, length, base);
+   }
+
+/*************************************************
+* Construct a BigInt from an encoded BigInt      *
+*************************************************/
+BigInt::BigInt(RandomNumberGenerator& rng, u32bit bits)
+   {
+   set_sign(Positive);
+   randomize(rng, bits);
    }
 
 /*************************************************

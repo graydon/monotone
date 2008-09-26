@@ -1,6 +1,6 @@
 /*************************************************
 * Pooling Allocator Header File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_POOLING_ALLOCATOR_H__
@@ -17,7 +17,7 @@ namespace Botan {
 /*************************************************
 * Pooling Allocator                              *
 *************************************************/
-class Pooling_Allocator : public Allocator
+class BOTAN_DLL Pooling_Allocator : public Allocator
    {
    public:
       void* allocate(u32bit);
@@ -25,7 +25,7 @@ class Pooling_Allocator : public Allocator
 
       void destroy();
 
-      Pooling_Allocator(u32bit, bool);
+      Pooling_Allocator();
       ~Pooling_Allocator();
    private:
       void get_more_core(u32bit);
@@ -34,7 +34,7 @@ class Pooling_Allocator : public Allocator
       virtual void* alloc_block(u32bit) = 0;
       virtual void dealloc_block(void*, u32bit) = 0;
 
-      class Memory_Block
+      class BOTAN_DLL Memory_Block
          {
          public:
             Memory_Block(void*);
@@ -61,7 +61,7 @@ class Pooling_Allocator : public Allocator
             byte* buffer, *buffer_end;
          };
 
-      const u32bit PREF_SIZE;
+      static const u32bit PREF_SIZE = BOTAN_MEM_POOL_CHUNK_SIZE;
 
       std::vector<Memory_Block> blocks;
       std::vector<Memory_Block>::iterator last_used;

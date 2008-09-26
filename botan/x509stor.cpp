@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Certificate Store Source File            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/x509stor.h>
@@ -8,7 +8,6 @@
 #include <botan/pubkey.h>
 #include <botan/look_pk.h>
 #include <botan/oids.h>
-#include <botan/config.h>
 #include <botan/util.h>
 #include <algorithm>
 #include <memory>
@@ -16,6 +15,21 @@
 namespace Botan {
 
 namespace {
+
+/*************************************************
+* Do a validity check                            *
+*************************************************/
+s32bit validity_check(const X509_Time& start, const X509_Time& end,
+                      u64bit current_time, u32bit slack)
+   {
+   const s32bit NOT_YET_VALID = -1, VALID_TIME = 0, EXPIRED = 1;
+
+   if(start.cmp(current_time + slack) > 0)
+      return NOT_YET_VALID;
+   if(end.cmp(current_time - slack) < 0)
+      return EXPIRED;
+   return VALID_TIME;
+   }
 
 /*************************************************
 * Compare the value of unique ID fields          *
@@ -153,21 +167,25 @@ bool X509_Store::CRL_Data::operator<(const X509_Store::CRL_Data& other) const
 /*************************************************
 * X509_Store Constructor                         *
 *************************************************/
-X509_Store::X509_Store()
+X509_Store::X509_Store(u32bit slack, u32bit cache_timeout)
    {
    revoked_info_valid = true;
+
+   validation_cache_timeout = cache_timeout;
+   time_slack = slack;
    }
 
 /*************************************************
 * X509_Store Copy Constructor                    *
 *************************************************/
-X509_Store::X509_Store(const X509_Store& store)
+X509_Store::X509_Store(const X509_Store& other)
    {
-   certs = store.certs;
-   revoked = store.revoked;
-   revoked_info_valid = store.revoked_info_valid;
-   for(u32bit j = 0; j != store.stores.size(); ++j)
-      stores[j] = store.stores[j]->clone();
+   certs = other.certs;
+   revoked = other.revoked;
+   revoked_info_valid = other.revoked_info_valid;
+   for(u32bit j = 0; j != other.stores.size(); ++j)
+      stores[j] = other.stores[j]->clone();
+   time_slack = other.time_slack;
    }
 
 /*************************************************
@@ -195,7 +213,7 @@ X509_Code X509_Store::validate_cert(const X509_Certificate& cert,
    const u64bit current_time = system_time();
 
    s32bit time_check = validity_check(cert.start_time(), cert.end_time(),
-                                      current_time);
+                                      current_time, time_slack);
    if(time_check < 0)      return CERT_NOT_YET_VALID;
    else if(time_check > 0) return CERT_HAS_EXPIRED;
 
@@ -209,8 +227,12 @@ X509_Code X509_Store::validate_cert(const X509_Certificate& cert,
    for(u32bit j = 0; j != indexes.size() - 1; ++j)
       {
       const X509_Certificate& current_cert = certs[indexes[j]].cert;
+
       time_check = validity_check(current_cert.start_time(),
-                                  current_cert.end_time(), current_time);
+                                  current_cert.end_time(),
+                                  current_time,
+                                  time_slack);
+
       if(time_check < 0)      return CERT_NOT_YET_VALID;
       else if(time_check > 0) return CERT_HAS_EXPIRED;
 
@@ -284,7 +306,7 @@ X509_Code X509_Store::construct_cert_chain(const X509_Certificate& end_cert,
          return CERT_ISSUER_NOT_FOUND;
       indexes.push_back(parent);
 
-      if(certs[parent].is_verified())
+      if(certs[parent].is_verified(validation_cache_timeout))
          if(certs[parent].verify_result() != VERIFIED)
             return certs[parent].verify_result();
 
@@ -313,7 +335,7 @@ X509_Code X509_Store::construct_cert_chain(const X509_Certificate& end_cert,
 
       const u32bit cert = indexes.back();
 
-      if(certs[cert].is_verified())
+      if(certs[cert].is_verified(validation_cache_timeout))
          {
          if(certs[cert].verify_result() != VERIFIED)
             throw Internal_Error("X509_Store::construct_cert_chain");
@@ -338,7 +360,7 @@ X509_Code X509_Store::construct_cert_chain(const X509_Certificate& end_cert,
 X509_Code X509_Store::check_sig(const Cert_Info& cert_info,
                                 const Cert_Info& ca_cert_info) const
    {
-   if(cert_info.is_verified())
+   if(cert_info.is_verified(validation_cache_timeout))
       return cert_info.verify_result();
 
    const X509_Certificate& cert    = cert_info.cert;
@@ -410,7 +432,8 @@ void X509_Store::recompute_revoked_info() const
 
    for(u32bit j = 0; j != certs.size(); ++j)
       {
-      if((certs[j].is_verified()) && (certs[j].verify_result() != VERIFIED))
+      if((certs[j].is_verified(validation_cache_timeout)) &&
+         (certs[j].verify_result() != VERIFIED))
          continue;
 
       if(is_revoked(certs[j].cert))
@@ -539,7 +562,8 @@ void X509_Store::add_trusted_certs(DataSource& source)
 X509_Code X509_Store::add_crl(const X509_CRL& crl)
    {
    s32bit time_check = validity_check(crl.this_update(), crl.next_update(),
-                                      system_time());
+                                      system_time(), time_slack);
+
    if(time_check < 0)      return CRL_NOT_YET_VALID;
    else if(time_check > 0) return CRL_HAS_EXPIRED;
 
@@ -651,19 +675,16 @@ bool X509_Store::Cert_Info::is_trusted() const
 /*************************************************
 * Check if this certificate has been verified    *
 *************************************************/
-bool X509_Store::Cert_Info::is_verified() const
+bool X509_Store::Cert_Info::is_verified(u32bit timeout) const
    {
    if(!checked)
       return false;
    if(result != VERIFIED && result != CERT_NOT_YET_VALID)
       return true;
 
-   const u32bit CACHE_TIME =
-      global_config().option_as_time("x509/cache_verify_results");
-
    const u64bit current_time = system_time();
 
-   if(current_time > last_checked + CACHE_TIME)
+   if(current_time > last_checked + timeout)
       checked = false;
 
    return checked;

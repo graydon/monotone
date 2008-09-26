@@ -1,6 +1,6 @@
 /*************************************************
 * DL Scheme Header File                          *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DL_ALGO_H__
@@ -9,16 +9,17 @@
 #include <botan/dl_group.h>
 #include <botan/x509_key.h>
 #include <botan/pkcs8.h>
+#include <botan/rng.h>
 
 namespace Botan {
 
 /*************************************************
 * DL Public Key                                  *
 *************************************************/
-class DL_Scheme_PublicKey : public virtual Public_Key
+class BOTAN_DLL DL_Scheme_PublicKey : public virtual Public_Key
    {
    public:
-      bool check_key(bool) const;
+      bool check_key(RandomNumberGenerator& rng, bool) const;
 
       const DL_Group& get_domain() const { return group; }
       const BigInt& get_y() const { return y; }
@@ -39,20 +40,20 @@ class DL_Scheme_PublicKey : public virtual Public_Key
 /*************************************************
 * DL Private Key                                 *
 *************************************************/
-class DL_Scheme_PrivateKey : public virtual DL_Scheme_PublicKey,
-                             public virtual Private_Key
+class BOTAN_DLL DL_Scheme_PrivateKey : public virtual DL_Scheme_PublicKey,
+                                       public virtual Private_Key
    {
    public:
-      bool check_key(bool) const;
+      bool check_key(RandomNumberGenerator& rng, bool) const;
 
       const BigInt& get_x() const { return x; }
 
       PKCS8_Encoder* pkcs8_encoder() const;
-      PKCS8_Decoder* pkcs8_decoder();
+      PKCS8_Decoder* pkcs8_decoder(RandomNumberGenerator&);
    protected:
       BigInt x;
    private:
-      virtual void PKCS8_load_hook(bool = false) {}
+      virtual void PKCS8_load_hook(RandomNumberGenerator&, bool = false) {}
    };
 
 }

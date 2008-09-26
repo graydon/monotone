@@ -1,12 +1,13 @@
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
 #define BOTAN_BIGINT_H__
 
-#include <botan/base.h>
+#include <botan/rng.h>
+#include <botan/secmem.h>
 #include <botan/mp_types.h>
 #include <iosfwd>
 
@@ -15,12 +16,12 @@ namespace Botan {
 /*************************************************
 * BigInt                                         *
 *************************************************/
-class BigInt
+class BOTAN_DLL BigInt
    {
    public:
       enum Base { Octal = 8, Decimal = 10, Hexadecimal = 16, Binary = 256 };
       enum Sign { Negative = 0, Positive = 1 };
-      enum NumberType { Random, Power2 };
+      enum NumberType { Power2 };
 
       struct DivideByZero : public Exception
          { DivideByZero() : Exception("BigInt divide by zero") {} };
@@ -82,7 +83,7 @@ class BigInt
       word operator[](u32bit) const;
       void clear() { reg.clear(); }
 
-      void randomize(u32bit = 0);
+      void randomize(RandomNumberGenerator& rng, u32bit n);
 
       void binary_encode(byte[]) const;
       void binary_decode(const byte[], u32bit);
@@ -102,6 +103,7 @@ class BigInt
       BigInt(const BigInt&);
       BigInt(const std::string&);
       BigInt(const byte[], u32bit, Base = Binary);
+      BigInt(RandomNumberGenerator& rng, u32bit bits);
       BigInt(Sign, u32bit);
       BigInt(NumberType, u32bit);
    private:
@@ -113,14 +115,14 @@ class BigInt
 /*************************************************
 * Arithmetic Operators                           *
 *************************************************/
-BigInt operator+(const BigInt&, const BigInt&);
-BigInt operator-(const BigInt&, const BigInt&);
-BigInt operator*(const BigInt&, const BigInt&);
-BigInt operator/(const BigInt&, const BigInt&);
-BigInt operator%(const BigInt&, const BigInt&);
-word   operator%(const BigInt&, word);
-BigInt operator<<(const BigInt&, u32bit);
-BigInt operator>>(const BigInt&, u32bit);
+BigInt BOTAN_DLL operator+(const BigInt&, const BigInt&);
+BigInt BOTAN_DLL operator-(const BigInt&, const BigInt&);
+BigInt BOTAN_DLL operator*(const BigInt&, const BigInt&);
+BigInt BOTAN_DLL operator/(const BigInt&, const BigInt&);
+BigInt BOTAN_DLL operator%(const BigInt&, const BigInt&);
+word   BOTAN_DLL operator%(const BigInt&, word);
+BigInt BOTAN_DLL operator<<(const BigInt&, u32bit);
+BigInt BOTAN_DLL operator>>(const BigInt&, u32bit);
 
 /*************************************************
 * Comparison Operators                           *
@@ -141,8 +143,8 @@ inline bool operator>(const BigInt& a, const BigInt& b)
 /*************************************************
 * I/O Operators                                  *
 *************************************************/
-std::ostream& operator<<(std::ostream&, const BigInt&);
-std::istream& operator>>(std::istream&, BigInt&);
+BOTAN_DLL std::ostream& operator<<(std::ostream&, const BigInt&);
+BOTAN_DLL std::istream& operator>>(std::istream&, BigInt&);
 
 }
 

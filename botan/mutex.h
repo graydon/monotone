@@ -1,6 +1,6 @@
 /*************************************************
 * Mutex Header File                              *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_MUTEX_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Mutex Base Class                               *
 *************************************************/
-class Mutex
+class BOTAN_DLL Mutex
    {
    public:
       virtual void lock() = 0;
@@ -24,7 +24,7 @@ class Mutex
 /*************************************************
 * Mutex Factory                                  *
 *************************************************/
-class Mutex_Factory
+class BOTAN_DLL Mutex_Factory
    {
    public:
       virtual Mutex* make() = 0;
@@ -34,7 +34,7 @@ class Mutex_Factory
 /*************************************************
 * Default Mutex Factory                          *
 *************************************************/
-class Default_Mutex_Factory : public Mutex_Factory
+class BOTAN_DLL Default_Mutex_Factory : public Mutex_Factory
    {
    public:
       Mutex* make();
@@ -43,25 +43,13 @@ class Default_Mutex_Factory : public Mutex_Factory
 /*************************************************
 * Mutex Holding Class                            *
 *************************************************/
-class Mutex_Holder
+class BOTAN_DLL Mutex_Holder
    {
    public:
       Mutex_Holder(Mutex*);
       ~Mutex_Holder();
    private:
       Mutex* mux;
-   };
-
-/*************************************************
-* Named Mutex Holder                             *
-*************************************************/
-class Named_Mutex_Holder
-   {
-   public:
-      Named_Mutex_Holder(const std::string&);
-      ~Named_Mutex_Holder();
-   private:
-      const std::string mutex_name;
    };
 
 }

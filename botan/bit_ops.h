@@ -1,6 +1,6 @@
 /*************************************************
 * Bit/Word Operations Header File                *
-* (C) 1999-2008 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BIT_OPS_H__
@@ -66,7 +66,8 @@ inline void xor_buf(byte data[], const byte mask[], u32bit length)
 /*************************************************
 * XOR Arrays                                     *
 *************************************************/
-inline void xor_buf(byte out[], const byte in[], const byte mask[], u32bit length)
+inline void xor_buf(byte out[], const byte in[],
+                    const byte mask[], u32bit length)
    {
    while(length >= 8)
       {

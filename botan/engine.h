@@ -1,6 +1,6 @@
 /*************************************************
 * Engine Header File                             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_ENGINE_H__
@@ -20,11 +20,11 @@ namespace Botan {
 /*************************************************
 * Engine Base Class                              *
 *************************************************/
-class Engine
+class BOTAN_DLL Engine
    {
    public:
       template<typename T>
-      class Algorithm_Cache
+      class BOTAN_DLL Algorithm_Cache
          {
          public:
             virtual T* get(const std::string&) const = 0;

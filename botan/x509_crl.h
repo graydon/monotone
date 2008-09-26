@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 CRL Header File                          *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_X509_CRL_H__
@@ -15,7 +15,7 @@ namespace Botan {
 /*************************************************
 * X.509 CRL                                      *
 *************************************************/
-class X509_CRL : public X509_Object
+class BOTAN_DLL X509_CRL : public X509_Object
    {
    public:
       struct X509_CRL_Error : public Exception

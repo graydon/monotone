@@ -1,13 +1,24 @@
 /*************************************************
 * Pipe Source File                               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pipe.h>
 #include <botan/out_buf.h>
 #include <botan/secqueue.h>
+#include <botan/parsing.h>
 
 namespace Botan {
+
+/*************************************************
+* Constructor for Invalid_Message_Number         *
+*************************************************/
+Pipe::Invalid_Message_Number::Invalid_Message_Number(const std::string& where,
+                                                     message_id msg)
+   {
+   set_msg("Pipe::" + where + ": Invalid message number " +
+           to_string(msg));
+   }
 
 namespace {
 
@@ -100,7 +111,7 @@ bool Pipe::end_of_data() const
 /*************************************************
 * Set the default read message                   *
 *************************************************/
-void Pipe::set_default_msg(u32bit msg)
+void Pipe::set_default_msg(message_id msg)
    {
    if(msg >= message_count())
       throw Invalid_Argument("Pipe::set_default_msg: msg number is too high");
@@ -276,7 +287,7 @@ void Pipe::pop()
 /*************************************************
 * Return the number of messages in this Pipe     *
 *************************************************/
-u32bit Pipe::message_count() const
+Pipe::message_id Pipe::message_count() const
    {
    return outputs->message_count();
    }
@@ -284,7 +295,10 @@ u32bit Pipe::message_count() const
 /*************************************************
 * Static Member Variables                        *
 *************************************************/
-const u32bit Pipe::LAST_MESSAGE    = 0xFFFFFFFE;
-const u32bit Pipe::DEFAULT_MESSAGE = 0xFFFFFFFF;
+const Pipe::message_id Pipe::LAST_MESSAGE =
+   static_cast<Pipe::message_id>(-2);
+
+const Pipe::message_id Pipe::DEFAULT_MESSAGE =
+   static_cast<Pipe::message_id>(-1);
 
 }

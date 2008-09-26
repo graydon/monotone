@@ -1,12 +1,12 @@
 /*************************************************
 * Win32 CAPI EntropySource Header File           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_EXT_ENTROPY_SRC_WIN32_CAPI_H__
 #define BOTAN_EXT_ENTROPY_SRC_WIN32_CAPI_H__
 
-#include <botan/base.h>
+#include <botan/rng.h>
 #include <vector>
 
 namespace Botan {

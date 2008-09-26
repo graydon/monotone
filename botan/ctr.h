@@ -1,6 +1,6 @@
 /*************************************************
 * CTR Mode Header File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_CTR_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * CTR-BE Mode                                    *
 *************************************************/
-class CTR_BE : public BlockCipherMode
+class BOTAN_DLL CTR_BE : public BlockCipherMode
    {
    public:
       CTR_BE(const std::string&);

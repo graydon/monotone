@@ -1,6 +1,6 @@
 /*************************************************
 * Version Information Header File                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_VERSION_H__
@@ -14,10 +14,10 @@ namespace Botan {
 /*************************************************
 * Get information describing the version         *
 *************************************************/
-std::string version_string();
-u32bit version_major();
-u32bit version_minor();
-u32bit version_patch();
+BOTAN_DLL std::string version_string();
+BOTAN_DLL u32bit version_major();
+BOTAN_DLL u32bit version_minor();
+BOTAN_DLL u32bit version_patch();
 
 /*************************************************
 * Macros for compile-time version checks         *

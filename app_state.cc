@@ -20,7 +20,8 @@ public:
 };
 
 app_state::app_state()
-  : _hidden(new app_state_private()), lua(this), mtn_automate_allowed(false)
+  : _hidden(new app_state_private()), lua(this), mtn_automate_allowed(false),
+    rng(Botan::RandomNumberGenerator::make_rng())
 {}
 
 app_state::~app_state()

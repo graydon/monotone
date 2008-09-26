@@ -1,6 +1,6 @@
 /*************************************************
 * MDx Hash Function Header File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_MDX_BASE_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * MDx Hash Function Base Class                   *
 *************************************************/
-class MDx_HashFunction : public HashFunction
+class BOTAN_DLL MDx_HashFunction : public HashFunction
    {
    public:
       MDx_HashFunction(u32bit, u32bit, bool, bool, u32bit = 8);
