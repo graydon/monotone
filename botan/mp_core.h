@@ -38,10 +38,15 @@ void bigint_shr1(word[], u32bit, u32bit, u32bit);
 void bigint_shr2(word[], const word[], u32bit, u32bit, u32bit);
 
 /*************************************************
-* Multiplication and Squaring Operations         *
+* Simple O(N^2) Multiplication and Squaring      *
 *************************************************/
-word bigint_mul_add_words(word[], const word[], u32bit, word);
+void bigint_simple_mul(word z[], const word x[], u32bit x_size,
+                       const word y[], u32bit y_size);
+void bigint_simple_sqr(word z[], const word x[], u32bit x_size);
 
+/*************************************************
+* Linear Multiply                                *
+*************************************************/
 void bigint_linmul2(word[], u32bit, word);
 void bigint_linmul3(word[], const word[], u32bit, word);
 void bigint_linmul_add(word[], u32bit, const word[], u32bit, word);
@@ -66,10 +71,13 @@ void bigint_wordmul(word, word, word*, word*);
 void bigint_comba_mul4(word[8], const word[4], const word[4]);
 void bigint_comba_mul6(word[12], const word[6], const word[6]);
 void bigint_comba_mul8(word[16], const word[8], const word[8]);
+void bigint_comba_mul16(word[32], const word[16], const word[16]);
 
 void bigint_comba_sqr4(word[8], const word[4]);
 void bigint_comba_sqr6(word[12], const word[6]);
 void bigint_comba_sqr8(word[16], const word[8]);
+void bigint_comba_sqr8(word[32], const word[16]);
+void bigint_comba_sqr16(word[64], const word[32]);
 
 }
 

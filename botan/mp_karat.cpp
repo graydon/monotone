@@ -5,33 +5,11 @@
 
 #include <botan/mp_core.h>
 #include <botan/mem_ops.h>
+#include <botan/mp_asmi.h>
 
 namespace Botan {
 
 namespace {
-
-/*************************************************
-* Simple O(N^2) Multiplication                   *
-*************************************************/
-void bigint_simple_mul(word z[], const word x[], u32bit x_size,
-                                 const word y[], u32bit y_size)
-   {
-   clear_mem(z, x_size + y_size);
-
-   for(u32bit j = 0; j != x_size; ++j)
-      z[j+y_size] = bigint_mul_add_words(z + j, y, y_size, x[j]);
-   }
-
-/*************************************************
-* Simple O(N^2) Squaring                         *
-*************************************************/
-void bigint_simple_sqr(word z[], const word x[], u32bit x_size)
-   {
-   clear_mem(z, 2*x_size);
-
-   for(u32bit j = 0; j != x_size; ++j)
-      z[j+x_size] = bigint_mul_add_words(z + j, x, x_size, x[j]);
-   }
 
 /*************************************************
 * Karatsuba Multiplication Operation             *
@@ -39,13 +17,13 @@ void bigint_simple_sqr(word z[], const word x[], u32bit x_size)
 void karatsuba_mul(word z[], const word x[], const word y[], u32bit N,
                    word workspace[])
    {
-   const u32bit KARATSUBA_MUL_LOWER_SIZE = BOTAN_KARAT_MUL_THRESHOLD;
-
    if(N == 6)
       bigint_comba_mul6(z, x, y);
    else if(N == 8)
       bigint_comba_mul8(z, x, y);
-   else if(N < KARATSUBA_MUL_LOWER_SIZE || N % 2)
+   else if(N == 16)
+      bigint_comba_mul16(z, x, y);
+   else if(N < BOTAN_KARAT_MUL_THRESHOLD || N % 2)
       bigint_simple_mul(z, x, N, y, N);
    else
       {
@@ -81,9 +59,30 @@ void karatsuba_mul(word z[], const word x[], const word y[], u32bit N,
       karatsuba_mul(z0, x0, y0, N2, workspace+N);
       karatsuba_mul(z1, x1, y1, N2, workspace+N);
 
-      word carry = bigint_add3_nc(workspace+N, z0, N, z1, N);
-      carry += bigint_add2_nc(z + N2, N, workspace + N, N);
-      bigint_add2_nc(z + N + N2, N2, &carry, 1);
+      const u32bit blocks_of_8 = N - (N % 8);
+
+      word carry = 0;
+
+      for(u32bit j = 0; j != blocks_of_8; j += 8)
+         carry = word8_add3(workspace + N + j, z0 + j, z1 + j, carry);
+
+      for(u32bit j = blocks_of_8; j != N; ++j)
+         workspace[N + j] = word_add(z0[j], z1[j], &carry);
+
+      word carry2 = 0;
+
+      for(u32bit j = 0; j != blocks_of_8; j += 8)
+         carry2 = word8_add2(z + N2 + j, workspace + N + j, carry2);
+
+      for(u32bit j = blocks_of_8; j != N; ++j)
+         z[N2 + j] = word_add(z[N2 + j], workspace[N + j], &carry2);
+
+      z[N + N2] = word_add(z[N + N2], carry2, &carry);
+
+      if(carry)
+         for(u32bit j = 1; j != N2; ++j)
+            if(++z[N + N2 + j])
+               break;
 
       if((cmp0 == cmp1) || (cmp0 == 0) || (cmp1 == 0))
          bigint_add2(z + N2, 2*N-N2, workspace, N);
@@ -97,13 +96,13 @@ void karatsuba_mul(word z[], const word x[], const word y[], u32bit N,
 *************************************************/
 void karatsuba_sqr(word z[], const word x[], u32bit N, word workspace[])
    {
-   const u32bit KARATSUBA_SQR_LOWER_SIZE = BOTAN_KARAT_SQR_THRESHOLD;
-
    if(N == 6)
       bigint_comba_sqr6(z, x);
    else if(N == 8)
       bigint_comba_sqr8(z, x);
-   else if(N < KARATSUBA_SQR_LOWER_SIZE || N % 2)
+   else if(N == 16)
+      bigint_comba_sqr16(z, x);
+   else if(N < BOTAN_KARAT_SQR_THRESHOLD || N % 2)
       bigint_simple_sqr(z, x, N);
    else
       {
@@ -131,9 +130,30 @@ void karatsuba_sqr(word z[], const word x[], u32bit N, word workspace[])
       karatsuba_sqr(z0, x0, N2, workspace+N);
       karatsuba_sqr(z1, x1, N2, workspace+N);
 
-      word carry = bigint_add3_nc(workspace+N, z0, N, z1, N);
-      carry += bigint_add2_nc(z + N2, N, workspace + N, N);
-      bigint_add2_nc(z + N + N2, N2, &carry, 1);
+      const u32bit blocks_of_8 = N - (N % 8);
+
+      word carry = 0;
+
+      for(u32bit j = 0; j != blocks_of_8; j += 8)
+         carry = word8_add3(workspace + N + j, z0 + j, z1 + j, carry);
+
+      for(u32bit j = blocks_of_8; j != N; ++j)
+         workspace[N + j] = word_add(z0[j], z1[j], &carry);
+
+      word carry2 = 0;
+
+      for(u32bit j = 0; j != blocks_of_8; j += 8)
+         carry2 = word8_add2(z + N2 + j, workspace + N + j, carry2);
+
+      for(u32bit j = blocks_of_8; j != N; ++j)
+         z[N2 + j] = word_add(z[N2 + j], workspace[N + j], &carry2);
+
+      z[N + N2] = word_add(z[N + N2], carry2, &carry);
+
+      if(carry)
+         for(u32bit j = 1; j != N2; ++j)
+            if(++z[N + N2 + j])
+               break;
 
       if(cmp == 0)
          bigint_add2(z + N2, 2*N-N2, workspace, N);
@@ -214,50 +234,6 @@ u32bit karatsuba_size(u32bit z_size, u32bit x_size, u32bit x_sw)
    return 0;
    }
 
-/*************************************************
-* Handle small operand multiplies                *
-*************************************************/
-void handle_small_mul(word z[], u32bit z_size,
-                      const word x[], u32bit x_size, u32bit x_sw,
-                      const word y[], u32bit y_size, u32bit y_sw)
-   {
-   if(x_sw == 1)        bigint_linmul3(z, y, y_sw, x[0]);
-   else if(y_sw == 1)   bigint_linmul3(z, x, x_sw, y[0]);
-
-   else if(x_sw <= 4 && x_size >= 4 &&
-           y_sw <= 4 && y_size >= 4 && z_size >= 8)
-      bigint_comba_mul4(z, x, y);
-
-   else if(x_sw <= 6 && x_size >= 6 &&
-           y_sw <= 6 && y_size >= 6 && z_size >= 12)
-      bigint_comba_mul6(z, x, y);
-
-   else if(x_sw <= 8 && x_size >= 8 &&
-           y_sw <= 8 && y_size >= 8 && z_size >= 16)
-      bigint_comba_mul8(z, x, y);
-
-   else
-      bigint_simple_mul(z, x, x_sw, y, y_sw);
-   }
-
-/*************************************************
-* Handle small operand squarings                 *
-*************************************************/
-void handle_small_sqr(word z[], u32bit z_size,
-                      const word x[], u32bit x_size, u32bit x_sw)
-   {
-   if(x_sw == 1)
-      bigint_linmul3(z, x, x_sw, x[0]);
-   else if(x_sw <= 4 && x_size >= 4 && z_size >= 8)
-      bigint_comba_sqr4(z, x);
-   else if(x_sw <= 6 && x_size >= 6 && z_size >= 12)
-      bigint_comba_sqr6(z, x);
-   else if(x_sw <= 8 && x_size >= 8 && z_size >= 16)
-      bigint_comba_sqr8(z, x);
-   else
-      bigint_simple_sqr(z, x, x_sw);
-   }
-
 }
 
 /*************************************************
@@ -267,21 +243,48 @@ void bigint_mul(word z[], u32bit z_size, word workspace[],
                 const word x[], u32bit x_size, u32bit x_sw,
                 const word y[], u32bit y_size, u32bit y_sw)
    {
-   if(x_size <= 8 || y_size <= 8)
+   if(x_sw == 1)
       {
-      handle_small_mul(z, z_size, x, x_size, x_sw, y, y_size, y_sw);
-      return;
+      bigint_linmul3(z, y, y_sw, x[0]);
       }
-
-   const u32bit N = karatsuba_size(z_size, x_size, x_sw, y_size, y_sw);
-
-   if(N)
+   else if(y_sw == 1)
       {
-      clear_mem(workspace, 2*N);
-      karatsuba_mul(z, x, y, N, workspace);
+      bigint_linmul3(z, x, x_sw, y[0]);
       }
-   else
+   else if(x_sw <= 4 && x_size >= 4 &&
+           y_sw <= 4 && y_size >= 4 && z_size >= 8)
+      {
+      bigint_comba_mul4(z, x, y);
+      }
+   else if(x_sw <= 6 && x_size >= 6 &&
+           y_sw <= 6 && y_size >= 6 && z_size >= 12)
+      {
+      bigint_comba_mul6(z, x, y);
+      }
+   else if(x_sw <= 8 && x_size >= 8 &&
+           y_sw <= 8 && y_size >= 8 && z_size >= 16)
+      {
+      bigint_comba_mul8(z, x, y);
+      }
+   else if(x_sw <= 16 && x_size >= 16 &&
+           y_sw <= 16 && y_size >= 16 && z_size >= 32)
+      {
+      bigint_comba_mul16(z, x, y);
+      }
+   else if(x_sw < BOTAN_KARAT_MUL_THRESHOLD || y_sw < BOTAN_KARAT_MUL_THRESHOLD)
       bigint_simple_mul(z, x, x_sw, y, y_sw);
+   else
+      {
+      const u32bit N = karatsuba_size(z_size, x_size, x_sw, y_size, y_sw);
+
+      if(N)
+         {
+         clear_mem(workspace, 2*N);
+         karatsuba_mul(z, x, y, N, workspace);
+         }
+      else
+         bigint_simple_mul(z, x, x_sw, y, y_sw);
+      }
    }
 
 /*************************************************
@@ -290,21 +293,42 @@ void bigint_mul(word z[], u32bit z_size, word workspace[],
 void bigint_sqr(word z[], u32bit z_size, word workspace[],
                 const word x[], u32bit x_size, u32bit x_sw)
    {
-   if(x_size <= 8 || x_sw <= 8)
+   if(x_sw == 1)
       {
-      handle_small_sqr(z, z_size, x, x_size, x_sw);
-      return;
+      bigint_linmul3(z, x, x_sw, x[0]);
       }
-
-   const u32bit N = karatsuba_size(z_size, x_size, x_sw);
-
-   if(N)
+   else if(x_sw <= 4 && x_size >= 4 && z_size >= 8)
       {
-      clear_mem(workspace, 2*N);
-      karatsuba_sqr(z, x, N, workspace);
+      bigint_comba_sqr4(z, x);
+      }
+   else if(x_sw <= 6 && x_size >= 6 && z_size >= 12)
+      {
+      bigint_comba_sqr6(z, x);
+      }
+   else if(x_sw <= 8 && x_size >= 8 && z_size >= 16)
+      {
+      bigint_comba_sqr8(z, x);
+      }
+   else if(x_sw <= 16 && x_size >= 16 && z_size >= 32)
+      {
+      bigint_comba_sqr16(z, x);
+      }
+   else if(x_size < BOTAN_KARAT_SQR_THRESHOLD)
+      {
+      bigint_simple_sqr(z, x, x_sw);
       }
    else
-      bigint_simple_sqr(z, x, x_sw);
+      {
+      const u32bit N = karatsuba_size(z_size, x_size, x_sw);
+
+      if(N)
+         {
+         clear_mem(workspace, 2*N);
+         karatsuba_sqr(z, x, N, workspace);
+         }
+      else
+         bigint_simple_sqr(z, x, x_sw);
+      }
    }
 
 }

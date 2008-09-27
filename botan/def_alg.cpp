@@ -12,6 +12,9 @@
 #include <botan/noekeon.h>
 
 #include <botan/arc4.h>
+#if 0 // disable salsa for monotone
+#include <botan/salsa20.h>
+#endif
 
 #include <botan/crc32.h>
 #include <botan/sha160.h>
@@ -86,6 +89,15 @@ Default_Engine::find_block_cipher(const std::string& algo_spec) const
    HANDLE_TYPE_NO_ARGS("TripleDES", TripleDES);
    HANDLE_TYPE_NO_ARGS("Noekeon", Noekeon);
 
+#if 0 // disable Luby-Rackoff for monotone
+   if(algo_name == "Luby-Rackoff" && name.size() >= 2)
+      {
+      HashFunction* hash = find_hash(name[1]);
+      if(hash)
+         return new LubyRackoff(hash);
+      }
+#endif
+
    return 0;
    }
 
@@ -102,6 +114,9 @@ Default_Engine::find_stream_cipher(const std::string& algo_spec) const
 
    HANDLE_TYPE_ONE_U32BIT("ARC4", ARC4, 0);
    HANDLE_TYPE_ONE_U32BIT("RC4_drop", ARC4, 768);
+#if 0 // disable salsa for monotone
+   HANDLE_TYPE_NO_ARGS("Salsa20", Salsa20);
+#endif
 
    return 0;
    }

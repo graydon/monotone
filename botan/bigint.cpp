@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Base Source File                        *
-* (C) 1999-2007 Jack Lloyd                       *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/bigint.h>
@@ -103,14 +103,14 @@ BigInt::BigInt(RandomNumberGenerator& rng, u32bit bits)
 *************************************************/
 void BigInt::swap(BigInt& other)
    {
-   std::swap(reg, other.reg);
+   reg.swap(other.reg);
    std::swap(signedness, other.signedness);
    }
 
 /*************************************************
 * Grow the internal storage                      *
 *************************************************/
-void BigInt::grow_reg(u32bit n) const
+void BigInt::grow_reg(u32bit n)
    {
    reg.grow_to(round_up(size() + n, 8));
    }
@@ -118,7 +118,7 @@ void BigInt::grow_reg(u32bit n) const
 /*************************************************
 * Grow the internal storage                      *
 *************************************************/
-void BigInt::grow_to(u32bit n) const
+void BigInt::grow_to(u32bit n)
    {
    if(n > size())
       reg.grow_to(round_up(n, 8));
@@ -235,25 +235,6 @@ void BigInt::mask_bits(u32bit n)
    }
 
 /*************************************************
-* Count the significant words                    *
-*************************************************/
-u32bit BigInt::sig_words() const
-   {
-   const word* x = data();
-   u32bit top_set = size();
-
-   while(top_set >= 4)
-      {
-      word sum = x[top_set-1] | x[top_set-2] | x[top_set-3] | x[top_set-4];
-      if(sum) break;
-      else    top_set -= 4;
-      }
-   while(top_set && (x[top_set-1] == 0))
-      top_set--;
-   return top_set;
-   }
-
-/*************************************************
 * Count how many bytes are being used            *
 *************************************************/
 u32bit BigInt::bytes() const
@@ -298,16 +279,6 @@ u32bit BigInt::encoded_size(Base base) const
    }
 
 /*************************************************
-* Return true if this number is zero             *
-*************************************************/
-bool BigInt::is_zero() const
-   {
-   for(u32bit j = 0; j != size(); ++j)
-      if(reg[j]) return false;
-   return true;
-   }
-
-/*************************************************
 * Set the sign                                   *
 *************************************************/
 void BigInt::set_sign(Sign s)
@@ -347,23 +318,6 @@ BigInt BigInt::operator-() const
    }
 
 /*************************************************
-* Return a reference to the indexed word         *
-*************************************************/
-word& BigInt::operator[](u32bit index)
-   {
-   reg.grow_to(index+1);
-   return reg[index];
-   }
-
-/*************************************************
-* Return the value of the indexed word           *
-*************************************************/
-word BigInt::operator[](u32bit index) const
-   {
-   return (index < size()) ? reg[index] : 0;
-   }
-
-/*************************************************
 * Return the absolute value of this number       *
 *************************************************/
 BigInt BigInt::abs() const
@@ -389,6 +343,7 @@ void BigInt::binary_encode(byte output[]) const
 void BigInt::binary_decode(const byte buf[], u32bit length)
    {
    const u32bit WORD_BYTES = sizeof(word);
+
    reg.create(round_up((length / WORD_BYTES) + 1, 8));
 
    for(u32bit j = 0; j != length / WORD_BYTES; ++j)

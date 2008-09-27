@@ -113,7 +113,7 @@ BOTAN_SOURCES = 							\
 	botan/base.cpp botan/basefilt.cpp botan/ber_dec.cpp		\
 	botan/big_code.cpp botan/bigint.cpp botan/big_io.cpp		\
 	botan/big_ops2.cpp botan/big_ops3.cpp botan/big_rand.cpp	\
-	botan/bit_ops.cpp botan/blinding.cpp botan/buf_es.cpp		\
+	botan/blinding.cpp botan/buf_es.cpp				\
 	botan/buf_filt.cpp botan/cbc.cpp botan/cbc_mac.cpp		\
 	botan/certstor.cpp botan/cfb.cpp botan/charset.cpp		\
 	botan/crc32.cpp botan/crl_ent.cpp botan/ctr.cpp botan/cts.cpp	\
@@ -136,6 +136,7 @@ BOTAN_SOURCES = 							\
 	botan/mgf1.cpp botan/mlock.cpp botan/modebase.cpp		\
 	botan/mode_pad.cpp botan/modules.cpp botan/mp_asm.cpp		\
 	botan/mp_comba.cpp botan/mp_karat.cpp botan/mp_misc.cpp		\
+	botan/mp_monty.cpp						\
 	botan/mp_mulop.cpp botan/mp_numth.cpp botan/mp_shift.cpp	\
 	botan/mutex.cpp botan/noekeon.cpp botan/numthry.cpp		\
 	botan/ofb.cpp botan/oids.cpp botan/out_buf.cpp			\
@@ -159,6 +160,7 @@ BOTAN_SOURCES = 							\
 	botan/asn1_int.h botan/asn1_obj.h botan/asn1_oid.h		\
 	botan/base64.h botan/basefilt.h botan/base.h botan/ber_dec.h	\
 	botan/bigint.h botan/bit_ops.h botan/blinding.h botan/botan.h	\
+	botan/bswap.h							\
 	botan/buf_es.h botan/buf_filt.h botan/build.h botan/cbc.h	\
 	botan/cbc_mac.h botan/certstor.h botan/cfb.h botan/charset.h	\
 	botan/crc32.h botan/crl_ent.h botan/ctr.h botan/cts.h		\
@@ -180,13 +182,15 @@ BOTAN_SOURCES = 							\
 	botan/pk_algs.h botan/pk_core.h botan/pkcs10.h botan/pkcs5.h	\
 	botan/pkcs8.h botan/pk_keys.h botan/pk_ops.h botan/pk_util.h	\
 	botan/pow_mod.h botan/pubkey.h botan/randpool.h botan/reducer.h	\
-	botan/rng.h botan/rsa.h botan/s2k.h botan/secmem.h		\
+	botan/rng.h botan/rotate.h botan/rsa.h botan/s2k.h		\
+	botan/secmem.h							\
 	botan/secqueue.h botan/selftest.h botan/sha160.h botan/sha256.h	\
 	botan/stl_util.h botan/symkey.h botan/timers.h botan/types.h	\
 	botan/ui.h botan/util.h botan/version.h botan/x509_ca.h		\
 	botan/x509cert.h botan/x509_crl.h botan/x509_ext.h		\
 	botan/x509find.h botan/x509_key.h botan/x509_obj.h		\
-	botan/x509self.h botan/x509stor.h botan/x931_rng.h
+	botan/x509self.h botan/x509stor.h botan/x931_rng.h		\
+	botan/xor_buf.h
 
 
 # windows only: botan/es_capi.h  botan/es_capi.cpp  botan/es_win32.{cpp,h}
@@ -399,8 +403,8 @@ AM_CXXFLAGS = $(AM_CPPFLAGS)
 AM_LDFLAGS =
 
 lib3rdparty_a_CPPFLAGS =
-lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS)
-lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS)
+lib3rdparty_a_CFLAGS = $(AM_CFLAGS) $(LIB3RDPARTY_CFLAGS) -fpermissive
+lib3rdparty_a_CXXFLAGS = $(AM_CXXFLAGS) $(LIB3RDPARTY_CXXFLAGS) -fpermissive
 
 mtn_LDFLAGS =
 mtn_CPPFLAGS = -I$(top_srcdir)/lua

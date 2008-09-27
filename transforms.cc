@@ -58,15 +58,11 @@ NORETURN(static inline void error_in_transform(Botan::Exception & e));
 static inline void
 error_in_transform(Botan::Exception & e)
 {
-  // why do people make up their own out-of-memory exceptions?
-  if (typeid(e) == typeid(Botan::Memory_Exhaustion))
-    throw std::bad_alloc();
-
   // these classes can all indicate data corruption
-  else if (typeid(e) == typeid(Botan::Encoding_Error)
-           || typeid(e) == typeid(Botan::Decoding_Error)
-           || typeid(e) == typeid(Botan::Stream_IO_Error)
-           || typeid(e) == typeid(Botan::Integrity_Failure))
+  if (typeid(e) == typeid(Botan::Encoding_Error)
+      || typeid(e) == typeid(Botan::Decoding_Error)
+      || typeid(e) == typeid(Botan::Stream_IO_Error)
+      || typeid(e) == typeid(Botan::Integrity_Failure))
     {
       // clean up the what() string a little: throw away the
       // "botan: TYPE: " part...

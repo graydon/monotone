@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Header File                             *
-* (C) 1999-2007 Jack Lloyd                       *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BIGINT_H__
@@ -47,8 +47,18 @@ class BOTAN_DLL BigInt
       s32bit cmp(const BigInt&, bool = true) const;
       bool is_even() const { return (get_bit(0) == 0); }
       bool is_odd()  const { return (get_bit(0) == 1); }
+
+      bool is_zero() const
+         {
+         const u32bit sw = sig_words();
+
+         for(u32bit i = 0; i != sw; ++i)
+            if(reg[i])
+               return false;
+         return true;
+         }
+
       bool is_nonzero() const { return (!is_zero()); }
-      bool is_zero() const;
 
       void set_bit(u32bit);
       void clear_bit(u32bit);
@@ -57,8 +67,10 @@ class BOTAN_DLL BigInt
       bool get_bit(u32bit) const;
       u32bit get_substring(u32bit, u32bit) const;
       byte byte_at(u32bit) const;
+
+      // same as operator[], remove this
       word word_at(u32bit n) const
-         { return ((n < size()) ? reg[n] : 0); }
+         { return ((n < size()) ? get_reg()[n] : 0); }
 
       u32bit to_u32bit() const;
 
@@ -70,18 +82,31 @@ class BOTAN_DLL BigInt
       void set_sign(Sign);
       BigInt abs() const;
 
-      u32bit size() const { return reg.size(); }
-      u32bit sig_words() const;
+      u32bit size() const { return get_reg().size(); }
+
+      u32bit sig_words() const
+         {
+         const word* x = reg.begin();
+         u32bit sig = reg.size();
+
+         while(sig && (x[sig-1] == 0))
+            sig--;
+         return sig;
+         }
+
       u32bit bytes() const;
       u32bit bits() const;
 
       const word* data() const { return reg.begin(); }
       SecureVector<word>& get_reg() { return reg; }
-      void grow_reg(u32bit) const;
+      const SecureVector<word>& get_reg() const { return reg; }
 
-      word& operator[](u32bit);
-      word operator[](u32bit) const;
-      void clear() { reg.clear(); }
+      void grow_reg(u32bit);
+      void grow_to(u32bit);
+
+      word& operator[](u32bit i) { return reg[i]; }
+      word operator[](u32bit i) const { return reg[i]; }
+      void clear() { get_reg().clear(); }
 
       void randomize(RandomNumberGenerator& rng, u32bit n);
 
@@ -107,7 +132,6 @@ class BOTAN_DLL BigInt
       BigInt(Sign, u32bit);
       BigInt(NumberType, u32bit);
    private:
-      void grow_to(u32bit) const;
       SecureVector<word> reg;
       Sign signedness;
    };
