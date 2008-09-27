@@ -184,6 +184,7 @@ Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type leng
 	    switch (error_code) {
 		case EPIPE:
 		case ECONNRESET:
+		case ETIMEDOUT:
 		    return 0;
 
 		case EINTR:
@@ -237,6 +238,7 @@ Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, con
 
 	    switch (error_code) {
 		case ECONNRESET:
+		case ETIMEDOUT:
 		    return 0;
 
 		case EINTR:
