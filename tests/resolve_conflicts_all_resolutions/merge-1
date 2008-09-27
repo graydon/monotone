@@ -1,0 +1,16 @@
+mtn: 2 heads on branch 'testbranch'
+mtn: merge 1 / 1:
+mtn: calculating best pair of heads to merge next
+mtn: [left]  138053fd821daa41aa98e55641d087da1d70ca2b
+mtn: [right] 6fcbac878d4e20dc024bf16e63bd88906ac21afd
+mtn: dropping checkout_left.sh
+mtn: replacing content of checkout_left.sh with resolutions/checkout_left.sh
+mtn: replacing content of checkout_right.sh with resolutions/checkout_right.sh
+mtn: dropping checkout_right.sh
+mtn: renaming thermostat.c to thermostat-westinghouse.c
+mtn: renaming thermostat.c to thermostat-honeywell.c
+mtn: replacing content of interactive_file, interactive_file with _MTN/resolutions/interactive_file
+mtn: merged simple_file, simple_file
+mtn: replacing content of user_file, user_file with resolutions/user_file
+mtn: [merged] d617fe493dc8a88bf4d5463b782208cb5e4c9768
+mtn: note: your workspaces have not been updated

@@ -16,6 +16,7 @@
 
 #include "diff_patch.hh"
 #include "merge.hh"
+#include "options.hh"
 #include "revision.hh"
 #include "roster_merge.hh"
 #include "safe_map.hh"
@@ -32,17 +33,6 @@ using boost::shared_ptr;
 namespace
 {
   enum merge_method { auto_merge, user_merge };
-
-  void
-  get_file_details(roster_t const & ros, node_id nid,
-                   file_id & fid,
-                   file_path & pth)
-  {
-    I(ros.has_node(nid));
-    file_t f = downcast_to_file_t(ros.get_node(nid));
-    fid = f->content;
-    ros.get_name(nid, pth);
-  }
 
   void
   try_to_merge_files(lua_hooks & lua,
@@ -71,9 +61,9 @@ namespace
 
         file_id anc_id, left_id, right_id;
         file_path anc_path, left_path, right_path;
-        get_file_details(*roster_for_file_lca, conflict.nid, anc_id, anc_path);
-        get_file_details(left_roster, conflict.nid, left_id, left_path);
-        get_file_details(right_roster, conflict.nid, right_id, right_path);
+        roster_for_file_lca->get_file_details(conflict.nid, anc_id, anc_path);
+        left_roster.get_file_details(conflict.nid, left_id, left_path);
+        right_roster.get_file_details(conflict.nid, right_id, right_path);
 
         file_id merged_id;
 
@@ -130,16 +120,31 @@ resolve_merge_conflicts(lua_hooks & lua,
                         roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
-                        content_merge_adaptor & adaptor)
+                        content_merge_adaptor & adaptor,
+                        bool resolutions_given)
 {
-  // FIXME_ROSTERS: we only have code (below) to invoke the
-  // line-merger on content conflicts. Other classes of conflict will
-  // cause an invariant to trip below.  Probably just a bunch of lua
-  // hooks for remaining conflict types will be ok.
-
   if (!result.is_clean())
-    result.log_conflicts();
+    {
+      result.log_conflicts();
 
+      if (resolutions_given)
+        {
+          // If there are any conflicts for which we don't currently support
+          // resolutions, give a nice error message.
+          char const * const msg = "conflict resolution for %s not yet supported";
+
+          N(!result.missing_root_conflict, F(msg) % "missing_root_dir");
+          N(result.invalid_name_conflicts.size() == 0, F(msg) % "invalid_name_conflicts");
+          N(result.directory_loop_conflicts.size() == 0, F(msg) % "directory_loop_conflicts");
+          N(result.orphaned_node_conflicts.size() == 0, F(msg) % "orphaned_node_conflicts");
+          N(result.multiple_name_conflicts.size() == 0, F(msg) % "multiple_name_conflicts");
+          N(result.attribute_conflicts.size() == 0, F(msg) % "attribute_conflicts");
+
+          // resolve the ones we can.
+          result.resolve_duplicate_name_conflicts(lua, left_roster, right_roster, adaptor);
+          result.resolve_file_content_conflicts(lua, left_roster, right_roster, adaptor);
+        }
+    }
 
   if (result.has_non_content_conflicts())
     {
@@ -152,7 +157,7 @@ resolve_merge_conflicts(lua_hooks & lua,
       result.report_duplicate_name_conflicts(left_roster, right_roster, adaptor, false, std::cout);
 
       result.report_attribute_conflicts(left_roster, right_roster, adaptor, false, std::cout);
-      result.report_file_content_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+      result.report_file_content_conflicts(lua, left_roster, right_roster, adaptor, false, std::cout);
     }
   else if (result.has_content_conflicts())
     {
@@ -170,7 +175,7 @@ resolve_merge_conflicts(lua_hooks & lua,
           P(FP("%d content conflict requires user intervention",
                "%d content conflicts require user intervention",
                remaining) % remaining);
-          result.report_file_content_conflicts(left_roster, right_roster, adaptor, false, std::cout);
+          result.report_file_content_conflicts(lua, left_roster, right_roster, adaptor, false, std::cout);
 
           try_to_merge_files(lua, left_roster, right_roster,
                              result, adaptor, user_merge);
@@ -182,7 +187,9 @@ resolve_merge_conflicts(lua_hooks & lua,
 }
 
 void
-interactive_merge_and_store(lua_hooks & lua, database & db,
+interactive_merge_and_store(lua_hooks & lua,
+                            database & db,
+                            options const & opts,
                             revision_id const & left_rid,
                             revision_id const & right_rid,
                             revision_id & merged_rid)
@@ -202,10 +209,13 @@ interactive_merge_and_store(lua_hooks & lua, database & db,
                right_roster, right_marking_map, right_uncommon_ancestors,
                result);
 
+  bool resolutions_given;
   content_merge_database_adaptor dba(db, left_rid, right_rid,
                                      left_marking_map, right_marking_map);
-  resolve_merge_conflicts(lua, left_roster, right_roster,
-                          result, dba);
+
+  parse_resolve_conflicts_opts (opts, left_roster, right_roster, result, resolutions_given);
+
+  resolve_merge_conflicts(lua, left_roster, right_roster, result, dba, resolutions_given);
 
   // write new files into the db
   store_roster_merge_result(db,

@@ -1,0 +1,4 @@
+mtn: warning: 1 conflict with no supported resolutions.
+mtn: conflict: directory loop created
+mtn: 'bar' renamed to 'foo/bar' on the right
+mtn: 'foo' renamed to 'bar/foo' on the left

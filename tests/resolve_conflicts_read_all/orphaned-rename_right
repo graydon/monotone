@@ -1,0 +1,4 @@
+mtn: warning: 1 conflict with no supported resolutions.
+mtn: conflict: orphaned file 'bar' from revision b5f52dbc0dc530adffbdd140a7de5b129cf74f29
+mtn: parent directory 'foo' was deleted on the left
+mtn: file 'foo/baz' was renamed from 'bar' on the right

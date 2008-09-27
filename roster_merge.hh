@@ -1,6 +1,7 @@
 #ifndef __ROSTER_MERGE_HH__
 #define __ROSTER_MERGE_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -9,6 +10,8 @@
 // This program is distributed WITHOUT ANY WARRANTY; without even the
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
+
+#include <boost/shared_ptr.hpp>
 
 #include "rev_types.hh"
 #include "database.hh"
@@ -24,6 +27,16 @@
 //     manifest.)
 //
 
+namespace resolve_conflicts
+{
+  enum resolution_t {none, content_user, content_internal, rename, drop};
+
+  typedef std::pair<resolve_conflicts::resolution_t, boost::shared_ptr<any_path> > file_resolution_t;
+
+  boost::shared_ptr<any_path> new_file_path(std::string path);
+
+}
+
 // renaming the root dir allows these:
 //   -- _MTN in root
 //   -- missing root directory
@@ -34,13 +47,13 @@
 struct invalid_name_conflict
 {
   node_id nid;
-  std::pair<node_id, path_component> parent_name;
+  std::pair<node_id, path_component> parent_name; // renamed from (if any)
 };
 
 struct directory_loop_conflict
 {
   node_id nid;
-  std::pair<node_id, path_component> parent_name;
+  std::pair<node_id, path_component> parent_name; // renamed from (if any)
 };
 
 // orphaned nodes always merged their name cleanly, so we simply put that name
@@ -48,7 +61,13 @@ struct directory_loop_conflict
 struct orphaned_node_conflict
 {
   node_id nid;
+  // nid is the orphaned node; it exists in one parent, but the directory
+  // containing it does not exist in the other.
+
   std::pair<node_id, path_component> parent_name;
+  // parent_name is the name of the orphaned node, in the parent revision
+  // where it exists. parent_name.first is the directory containing
+  // parent_name.second
 };
 
 // our general strategy is to return a (possibly insane) roster, and a list of
@@ -86,6 +105,13 @@ struct duplicate_name_conflict
 {
   node_id left_nid, right_nid;
   std::pair<node_id, path_component> parent_name;
+  // file part of resolution must be a file_path if resolution is 'rename';
+  // it may be a bookkeeping or system path if resolution is 'user'.
+  resolve_conflicts::file_resolution_t left_resolution, right_resolution;
+
+  duplicate_name_conflict ()
+  {left_resolution.first = resolve_conflicts::none;
+    right_resolution.first = resolve_conflicts::none;};
 };
 
 // nodes with attribute conflicts are left attached in the resulting tree (unless
@@ -107,10 +133,16 @@ struct attribute_conflict
 struct file_content_conflict
 {
   node_id nid;
-  file_content_conflict(node_id nid) : nid(nid) {}
-  file_id left, right;
-};
+  file_id ancestor, left, right; // ancestor is set only when reading in a conflicts file
+  resolve_conflicts::file_resolution_t resolution;
 
+  file_content_conflict () :
+    nid(the_null_node)
+    {resolution.first = resolve_conflicts::none;};
+
+  file_content_conflict(node_id nid) :
+    nid(nid) {resolution.first = resolve_conflicts::none;};
+};
 
 template <> void dump(invalid_name_conflict const & conflict, std::string & out);
 template <> void dump(directory_loop_conflict const & conflict, std::string & out);
@@ -135,7 +167,7 @@ struct roster_merge_result
   // - attribute conflicts
   // - file content conflicts
 
-  bool missing_root_dir;
+  bool missing_root_conflict;
   std::vector<invalid_name_conflict> invalid_name_conflicts;
   std::vector<directory_loop_conflict> directory_loop_conflicts;
 
@@ -152,6 +184,7 @@ struct roster_merge_result
   bool is_clean() const;
   bool has_content_conflicts() const;
   bool has_non_content_conflicts() const;
+  int  count_unsupported_resolution() const;
   void log_conflicts() const;
 
   void report_missing_root_conflicts(roster_t const & left,
@@ -180,24 +213,61 @@ struct roster_merge_result
                                       content_merge_adaptor & adaptor,
                                       bool const basic_io,
                                       std::ostream & output) const;
+
   void report_duplicate_name_conflicts(roster_t const & left,
                                        roster_t const & right,
                                        content_merge_adaptor & adaptor,
                                        bool const basic_io,
                                        std::ostream & output) const;
+  void resolve_duplicate_name_conflicts(lua_hooks & lua,
+                                        roster_t const & left_roster,
+                                        roster_t const & right_roster,
+                                        content_merge_adaptor & adaptor);
 
   void report_attribute_conflicts(roster_t const & left,
                                   roster_t const & right,
                                   content_merge_adaptor & adaptor,
                                   bool const basic_io,
                                   std::ostream & output) const;
-  void report_file_content_conflicts(roster_t const & left,
-                                     roster_t const & right,
+
+  // not 'const' because this sets resolution to 'resolved_internal' if the
+  // internal merger would succeed.
+  void report_file_content_conflicts(lua_hooks & lua,
+                                     roster_t const & left_roster,
+                                     roster_t const & right_roster,
                                      content_merge_adaptor & adaptor,
                                      bool const basic_io,
-                                     std::ostream & output) const;
-
+                                     std::ostream & output);
+  void resolve_file_content_conflicts(lua_hooks & lua,
+                                      roster_t const & left_roster,
+                                      roster_t const & right_roster,
+                                      content_merge_adaptor & adaptor);
   void clear();
+
+  // Conflict file editing
+
+  // If validate, compare file contents to existing conflicts, and add
+  // resolutions. Otherwise just read into conflicts.
+  void read_conflict_file(database & db,
+                          bookkeeping_path const & file_name,
+                          revision_id & ancestor_rid,
+                          revision_id & left_rid,
+                          revision_id & right_rid,
+                          roster_t & left_roster,
+                          marking_map & left_marking,
+                          roster_t & right_roster,
+                          marking_map & r_marking);
+
+  void write_conflict_file(database & db,
+                           lua_hooks & lua,
+                           bookkeeping_path const & file_name,
+                           revision_id const & ancestor_rid,
+                           revision_id const & left_rid,
+                           revision_id const & right_rid,
+                           boost::shared_ptr<roster_t> left_roster,
+                           marking_map const & left_marking,
+                           boost::shared_ptr<roster_t> right_roster,
+                           marking_map const & right_marking);
 };
 
 template <> void dump(roster_merge_result const & result, std::string & out);
@@ -211,6 +281,12 @@ roster_merge(roster_t const & left_parent,
              std::set<revision_id> const & right_uncommon_ancestors,
              roster_merge_result & result);
 
+void
+parse_resolve_conflicts_opts (options const & opts,
+                              roster_t const & left_roster,
+                              roster_t const & right_roster,
+                              roster_merge_result & result,
+                              bool & resolutions_given);
 
 // Local Variables:
 // mode: C++
