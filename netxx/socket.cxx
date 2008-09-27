@@ -184,7 +184,7 @@ Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type leng
 	    switch (error_code) {
 		case EPIPE:
 		case ECONNRESET:
-#if not defined(WIN32)
+#ifdef ETIMEDOUT
 		case ETIMEDOUT:
 #endif
 		    return 0;
@@ -240,7 +240,7 @@ Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, con
 
 	    switch (error_code) {
 		case ECONNRESET:
-#if not defined(WIN32)
+#ifdef ETIMEDOUT
                 case ETIMEDOUT:
 #endif
 		    return 0;
