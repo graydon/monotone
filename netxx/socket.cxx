@@ -1,11 +1,11 @@
 /*
  * Copyright (C) 2001-2004 Peter J Jones (pjones@pmade.org)
  * All Rights Reserved
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * 3. Neither the name of the Author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -49,7 +49,7 @@
 #include <cstdio>
 
 //####################################################################
-namespace 
+namespace
 {
     const Netxx::socket_type const_invalid_socket = -1;
     void get_domain_and_type (Netxx::Socket::Type stype, int &domain, int &type);
@@ -60,7 +60,7 @@ Netxx::Socket::Socket (void)
 {
 #   if defined(WIN32)
 	WSADATA wsdata;
-	
+
 	if (WSAStartup(MAKEWORD(2,2), &wsdata) != 0) {
 	    throw Exception("failed to load WinSock");
 	}
@@ -72,7 +72,7 @@ Netxx::Socket::Socket (Type type)
 {
 #   if defined(WIN32)
 	WSADATA wsdata;
-	
+
 	if (WSAStartup(MAKEWORD(2,2), &wsdata) != 0) {
 	    throw Exception("failed to load WinSock");
 	}
@@ -97,14 +97,14 @@ Netxx::Socket::Socket (int socketfd)
 {
 #   if defined(WIN32)
 	WSADATA wsdata;
-	
+
 	if (WSAStartup(MAKEWORD(2,2), &wsdata) != 0) {
 	    throw Exception("failed to load WinSock");
 	}
 #   endif
 }
 //####################################################################
-Netxx::Socket::Socket (const Socket &other) 
+Netxx::Socket::Socket (const Socket &other)
     : probe_ready_(false), type_ready_(other.type_ready_), type_(other.type_)
 {
     if (other.socketfd_ != const_invalid_socket) {
@@ -112,7 +112,7 @@ Netxx::Socket::Socket (const Socket &other)
 
 #	if defined(WIN32)
 	    WSADATA wsdata;
-	    
+
 	    if (WSAStartup(MAKEWORD(2,2), &wsdata) != 0)
 		throw Exception("failed to load WinSock");
 
@@ -122,7 +122,7 @@ Netxx::Socket::Socket (const Socket &other)
 	    if (WSADuplicateSocket(other.socketfd_, GetCurrentProcessId(), &proto_info)) {
 		throw Exception("failed to duplicate socket");
 	    }
-	    
+
 	    if ( (dup_socket = WSASocket(FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO,
 		    FROM_PROTOCOL_INFO, &proto_info, 0, WSA_FLAG_OVERLAPPED)) == INVALID_SOCKET)
 	    {
@@ -144,13 +144,13 @@ Netxx::Socket::Socket (const Socket &other)
     }
 }
 //####################################################################
-Netxx::Socket& Netxx::Socket::operator= (const Socket &other) 
+Netxx::Socket& Netxx::Socket::operator= (const Socket &other)
 {
     Socket tmp(other); swap(tmp);
     return *this;
 }
 //####################################################################
-void Netxx::Socket::swap (Socket &other) 
+void Netxx::Socket::swap (Socket &other)
 {
     std::swap(socketfd_, other.socketfd_);
     std::swap(type_ready_, other.type_ready_);
@@ -160,7 +160,7 @@ void Netxx::Socket::swap (Socket &other)
     probe_.clear(); other.probe_.clear();
 }
 //####################################################################
-Netxx::Socket::~Socket (void) 
+Netxx::Socket::~Socket (void)
 {
     close();
 
@@ -169,7 +169,7 @@ Netxx::Socket::~Socket (void)
 #   endif
 }
 //####################################################################
-Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type length, const Timeout &timeout) 
+Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type length, const Timeout &timeout)
 {
     const char *buffer_ptr = static_cast<const char*>(buffer);
     signed_size_type rc, bytes_written=0;
@@ -184,7 +184,9 @@ Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type leng
 	    switch (error_code) {
 		case EPIPE:
 		case ECONNRESET:
+#if not defined(WIN32)
 		case ETIMEDOUT:
+#endif
 		    return 0;
 
 		case EINTR:
@@ -219,7 +221,7 @@ Netxx::signed_size_type Netxx::Socket::write (const void *buffer, size_type leng
     return bytes_written;
 }
 //####################################################################
-Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, const Timeout &timeout) 
+Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, const Timeout &timeout)
 {
     signed_size_type rc;
 
@@ -238,7 +240,9 @@ Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, con
 
 	    switch (error_code) {
 		case ECONNRESET:
-		case ETIMEDOUT:
+#if not defined(WIN32)
+                case ETIMEDOUT:
+#endif
 		    return 0;
 
 		case EINTR:
@@ -275,7 +279,7 @@ Netxx::signed_size_type Netxx::Socket::read (void *buffer, size_type length, con
     return rc;
 }
 //####################################################################
-bool Netxx::Socket::readable (const Timeout &timeout) 
+bool Netxx::Socket::readable (const Timeout &timeout)
 {
     if (!probe_ready_) {
 	probe_.add(socketfd_);
@@ -287,7 +291,7 @@ bool Netxx::Socket::readable (const Timeout &timeout)
     return true;
 }
 //####################################################################
-bool Netxx::Socket::writable (const Timeout &timeout) 
+bool Netxx::Socket::writable (const Timeout &timeout)
 {
     if (!probe_ready_) {
 	probe_.add(socketfd_);
@@ -299,7 +303,7 @@ bool Netxx::Socket::writable (const Timeout &timeout)
     return true;
 }
 //####################################################################
-bool Netxx::Socket::readable_or_writable (const Timeout &timeout) 
+bool Netxx::Socket::readable_or_writable (const Timeout &timeout)
 {
     if (!probe_ready_) {
 	probe_.add(socketfd_);
@@ -311,7 +315,7 @@ bool Netxx::Socket::readable_or_writable (const Timeout &timeout)
     return true;
 }
 //####################################################################
-void Netxx::Socket::close (void) 
+void Netxx::Socket::close (void)
 {
     if (socketfd_ != const_invalid_socket) {
 #	if defined(WIN32)
@@ -324,23 +328,23 @@ void Netxx::Socket::close (void)
     }
 }
 //####################################################################
-void Netxx::Socket::release (void) 
+void Netxx::Socket::release (void)
 {
   socketfd_ = const_invalid_socket;
 }
 //####################################################################
-Netxx::Socket::Type Netxx::Socket::get_type (void) const 
+Netxx::Socket::Type Netxx::Socket::get_type (void) const
 {
     if (!type_ready_) throw Exception("Netxx bug: Socket::get_type called when !type_ready_");
     return type_;
 }
 //####################################################################
-int Netxx::Socket::get_socketfd (void) const 
+int Netxx::Socket::get_socketfd (void) const
 {
     return socketfd_;
 }
 //####################################################################
-void Netxx::Socket::set_socketfd (socket_type socketfd) 
+void Netxx::Socket::set_socketfd (socket_type socketfd)
 {
     close();
     probe_ready_ = false;
@@ -348,35 +352,35 @@ void Netxx::Socket::set_socketfd (socket_type socketfd)
     probe_.clear();
 }
 //####################################################################
-bool Netxx::Socket::operator! (void) const 
+bool Netxx::Socket::operator! (void) const
 {
     return socketfd_ == const_invalid_socket;
 }
 //####################################################################
-bool Netxx::Socket::operator< (const Socket &other) const 
+bool Netxx::Socket::operator< (const Socket &other) const
 {
     return socketfd_ < other.socketfd_;
 }
 //####################################################################
-bool Netxx::Socket::operator< (socket_type socketfd) const 
+bool Netxx::Socket::operator< (socket_type socketfd) const
 {
     return socketfd_ < socketfd;
 }
 //####################################################################
-bool Netxx::operator== (const Netxx::Socket &first, const Netxx::Socket &second) 
+bool Netxx::operator== (const Netxx::Socket &first, const Netxx::Socket &second)
 {
     return first.get_socketfd() == second.get_socketfd();
 }
 //####################################################################
-bool Netxx::operator!= (const Netxx::Socket &first, const Netxx::Socket &second) 
+bool Netxx::operator!= (const Netxx::Socket &first, const Netxx::Socket &second)
 {
     return !(first == second);
 }
 //####################################################################
-namespace 
+namespace
 {
     //####################################################################
-    void get_domain_and_type (Netxx::Socket::Type stype, int &domain, int &type) 
+    void get_domain_and_type (Netxx::Socket::Type stype, int &domain, int &type)
     {
 	switch (stype) {
 	    case Netxx::Socket::TCP:
