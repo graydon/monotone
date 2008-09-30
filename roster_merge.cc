@@ -2107,7 +2107,7 @@ read_file_content_conflict(basic_io::parser & pars,
   pars.esym (syms::ancestor_name); pars.str();
   pars.esym (syms::ancestor_file_id); pars.hex(tmp);
   conflict.ancestor = file_id(decode_hexenc(tmp));
-  
+
   pars.esym (syms::left_name); pars.str(left_name);
   pars.esym(syms::left_file_id); pars.hex(tmp);
   conflict.left = file_id(decode_hexenc(tmp));
@@ -2268,16 +2268,21 @@ roster_merge_result::read_conflict_file(database & db,
   pars.esym(syms::right);
   pars.hex(temp);
   right_rid = revision_id(decode_hexenc(temp));
-  pars.esym(syms::ancestor);
-  pars.hex(temp);
-  ancestor_rid = revision_id(decode_hexenc(temp));
 
-  // we don't fetch the ancestor roster here, because not every function
-  // needs it.
-  db.get_roster(left_rid, left_roster, left_marking);
-  db.get_roster(right_rid, right_roster, right_marking);
+  if (pars.symp(syms::ancestor))
+    {
+      pars.sym();
+      pars.hex(temp);
+      ancestor_rid = revision_id(decode_hexenc(temp));
 
-  read_conflict_file_core(pars, left_roster, right_roster, *this, false);
+      // we don't fetch the ancestor roster here, because not every function
+      // needs it.
+      db.get_roster(left_rid, left_roster, left_marking);
+      db.get_roster(right_rid, right_roster, right_marking);
+
+      read_conflict_file_core(pars, left_roster, right_roster, *this, false);
+    }
+  // else no conflicts
 
 } // roster_merge_result::read_conflict_file
 
@@ -2327,7 +2332,9 @@ roster_merge_result::write_conflict_file(database & db,
 
 void
 parse_resolve_conflicts_opts (options const & opts,
+                              revision_id const & left_rid,
                               roster_t const & left_roster,
+                              revision_id const & right_rid,
                               roster_t const & right_roster,
                               roster_merge_result & result,
                               bool & resolutions_given)
@@ -2343,16 +2350,23 @@ if (opts.resolve_conflicts_given || opts.resolve_conflicts_file_given)
       basic_io::input_source src(dat(), opts.resolve_conflicts_file.as_external());
       basic_io::tokenizer tok(src);
       basic_io::parser pars(tok);
+      std::string temp;
 
-      // Skip left, right, ancestor. FIXME_SUTURE: should check these! But don't
-      // see how to access them right now.
-      for (int i = 1; i <= 3; i++)
+      pars.esym(syms::left);
+      pars.hex(temp);
+      N(left_rid == revision_id(decode_hexenc(temp)), F("left revision id does not match conflict file"));
+
+      pars.esym(syms::right);
+      pars.hex(temp);
+      N(right_rid == revision_id(decode_hexenc(temp)), F("right revision id does not match conflict file"));
+
+      if (pars.symp(syms::ancestor))
         {
           pars.sym();
-          pars.hex();
-        }
+          pars.hex(temp);
 
-      read_conflict_file_core (pars, left_roster, right_roster, result, true);
+          read_conflict_file_core (pars, left_roster, right_roster, result, true);
+        }
     }
   else
     resolutions_given = false;

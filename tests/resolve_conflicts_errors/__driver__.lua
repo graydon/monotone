@@ -34,4 +34,6 @@ check(mtn("conflicts", "--conflicts-file", "conflicts", "store", left, right), 1
 canonicalize("stderr")
 check(samefilestd("conflicts-attr-store-2", "stderr"))
 
+-- FIXME: use old conflicts file for new merge
+
 -- end of file

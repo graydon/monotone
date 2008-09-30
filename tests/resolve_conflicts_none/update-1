@@ -1,0 +1,8 @@
+mtn: updating along branch 'testbranch'
+mtn: selected update target 7f38dd536c4f995a4a7ccd788d2b5be2755805cf
+mtn: [left]  9c1b716d160fd291ed7c68f5b6387cfbf8afb6fb
+mtn: [right] 7f38dd536c4f995a4a7ccd788d2b5be2755805cf
+mtn: modifying bar
+mtn: modifying baz
+mtn: modifying foo
+mtn: updated to base revision 7f38dd536c4f995a4a7ccd788d2b5be2755805cf

@@ -213,7 +213,7 @@ interactive_merge_and_store(lua_hooks & lua,
   content_merge_database_adaptor dba(db, left_rid, right_rid,
                                      left_marking_map, right_marking_map);
 
-  parse_resolve_conflicts_opts (opts, left_roster, right_roster, result, resolutions_given);
+  parse_resolve_conflicts_opts (opts, left_rid, left_roster, right_rid, right_roster, result, resolutions_given);
 
   resolve_merge_conflicts(lua, left_roster, right_roster, result, dba, resolutions_given);
 

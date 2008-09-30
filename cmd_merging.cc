@@ -647,7 +647,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
         bool resolutions_given;
 
-        parse_resolve_conflicts_opts (app.opts, left_roster, right_roster, result, resolutions_given);
+        parse_resolve_conflicts_opts
+          (app.opts, left_rid, left_roster, right_rid, right_roster, result, resolutions_given);
 
         resolve_merge_conflicts(app.lua, left_roster, right_roster,
                                 result, dba, resolutions_given);
@@ -853,24 +854,6 @@ show_conflicts_core (database & db,
                      bool warn_unsupported,
                      std::ostream & output)
 {
-  N(!is_ancestor(db, l_id, r_id),
-    F("%s is an ancestor of %s; no merge is needed.")
-    % l_id % r_id);
-  N(!is_ancestor(db, r_id, l_id),
-    F("%s is an ancestor of %s; no merge is needed.")
-    % r_id % l_id);
-  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
-  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
-  marking_map l_marking, r_marking;
-  db.get_roster(l_id, *l_roster, l_marking);
-  db.get_roster(r_id, *r_roster, r_marking);
-  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
-  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
-  roster_merge_result result;
-  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
-               *r_roster, r_marking, r_uncommon_ancestors,
-               result);
-
   // Note that left and right are in the order specified on the command line.
   // They are not in lexical order as they are with other merge commands so
   // they may appear swapped here. The user may have done that deliberately,
@@ -888,6 +871,48 @@ show_conflicts_core (database & db,
       P(F("[left]  %s") % l_id);
       P(F("[right] %s") % r_id);
     }
+
+  if (is_ancestor(db, l_id, r_id))
+    {
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
+        P(F("%s is an ancestor of %s; no merge is needed.")
+          % l_id % r_id);
+
+      return;
+    }
+
+  if (is_ancestor(db, r_id, l_id))
+    {
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
+        P(F("%s is an ancestor of %s; no merge is needed.")
+          % r_id % l_id);
+
+      return;
+    }
+
+  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
+  marking_map l_marking, r_marking;
+  db.get_roster(l_id, *l_roster, l_marking);
+  db.get_roster(r_id, *r_roster, r_marking);
+  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
+  roster_merge_result result;
+  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
+               *r_roster, r_marking, r_uncommon_ancestors,
+               result);
 
   if (result.is_clean())
     {

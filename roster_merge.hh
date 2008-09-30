@@ -283,7 +283,9 @@ roster_merge(roster_t const & left_parent,
 
 void
 parse_resolve_conflicts_opts (options const & opts,
+                              revision_id const & left_rid,
                               roster_t const & left_roster,
+                              revision_id const & right_rid,
                               roster_t const & right_roster,
                               roster_merge_result & result,
                               bool & resolutions_given);

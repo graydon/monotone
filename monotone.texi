@@ -8830,6 +8830,9 @@ The output starts by listing the revisions and their common ancestor:
 ancestor [ead03530f5fefe50c9010157c42c0ebe18086559]
 @end verbatim
 
+If there are no conflicts, the ancestor revision is not output, and no
+conflict stanzas are output.
+
 Attribute changed in both branches, or dropped in one:
 @verbatim
         conflict attribute
