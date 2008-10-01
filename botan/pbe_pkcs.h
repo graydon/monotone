@@ -1,6 +1,6 @@
 /*************************************************
 * PKCS PBE Header File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_PBE_PKCS_H__
@@ -8,13 +8,14 @@
 
 #include <botan/pbe.h>
 #include <botan/pipe.h>
+#include <botan/enums.h>
 
 namespace Botan {
 
 /*************************************************
 * PKCS#5 v1.5 PBE                                *
 *************************************************/
-class PBE_PKCS5v15 : public PBE
+class BOTAN_DLL PBE_PKCS5v15 : public PBE
    {
    public:
       void write(const byte[], u32bit);
@@ -23,10 +24,11 @@ class PBE_PKCS5v15 : public PBE
       PBE_PKCS5v15(const std::string&, const std::string&, Cipher_Dir);
    private:
       void set_key(const std::string&);
-      void new_params();
+      void new_params(RandomNumberGenerator& rng);
       MemoryVector<byte> encode_params() const;
       void decode_params(DataSource&);
       OID get_oid() const;
+
       void flush_pipe(bool);
       const Cipher_Dir direction;
       const std::string digest, cipher;
@@ -38,7 +40,7 @@ class PBE_PKCS5v15 : public PBE
 /*************************************************
 * PKCS#5 v2.0 PBE                                *
 *************************************************/
-class PBE_PKCS5v20 : public PBE
+class BOTAN_DLL PBE_PKCS5v20 : public PBE
    {
    public:
       void write(const byte[], u32bit);
@@ -48,10 +50,11 @@ class PBE_PKCS5v20 : public PBE
       PBE_PKCS5v20(const std::string&, const std::string&);
    private:
       void set_key(const std::string&);
-      void new_params();
+      void new_params(RandomNumberGenerator& rng);
       MemoryVector<byte> encode_params() const;
       void decode_params(DataSource&);
       OID get_oid() const;
+
       void flush_pipe(bool);
       bool known_cipher(const std::string&) const;
 

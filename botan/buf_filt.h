@@ -1,6 +1,6 @@
 /*************************************************
 * Buffering Filter Header File                   *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BUFFERING_FILTER_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Buffering Filter                               *
 *************************************************/
-class Buffering_Filter : public Filter
+class BOTAN_DLL Buffering_Filter : public Filter
    {
    public:
       void write(const byte[], u32bit);

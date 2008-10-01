@@ -1,14 +1,12 @@
 /*************************************************
-* FIPS-140 Self Tests Source File                *
-* (C) 1999-2007 The Botan Project                *
+* Startup Self Tests Source File                 *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
-#include <botan/fips140.h>
+#include <botan/selftest.h>
 #include <botan/lookup.h>
 
 namespace Botan {
-
-namespace FIPS140 {
 
 namespace {
 
@@ -150,21 +148,13 @@ bool passes_self_tests()
              "BA0AA3F3D9AE3C1C7A3B1696A0B68CF7",
              "0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B"
              "0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B0B");
-
-     mac_kat("X9.19-MAC",
-             "31311C3931383237333634351C1C35383134333237361C1C3B3132333435"
-             "36373839303132333435363D3939313231303030303F1C30303031323530"
-             "301C393738363533343132343837363932331C", "C209CCB78EE1B606",
-             "0123456789ABCDEFFEDCBA9876543210");
   }
-  catch(std::exception)
+  catch(std::exception& e)
      {
      return false;
      }
 
   return true;
   }
-
-}
 
 }

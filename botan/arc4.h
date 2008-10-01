@@ -1,6 +1,6 @@
 /*************************************************
 * ARC4 Header File                               *
-* (C) 1999-2008 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_ARC4_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * ARC4                                           *
 *************************************************/
-class ARC4 : public StreamCipher
+class BOTAN_DLL ARC4 : public StreamCipher
    {
    public:
       void clear() throw();

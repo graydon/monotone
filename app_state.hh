@@ -10,6 +10,9 @@
 // implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 // PURPOSE.
 
+#include <boost/shared_ptr.hpp>
+#include "botan/rng.h"
+
 #include "options.hh"
 #include "lua_hooks.hh"
 
@@ -32,6 +35,7 @@ public:
   options opts;
   lua_hooks lua;
   bool mtn_automate_allowed;
+  boost::shared_ptr<Botan::RandomNumberGenerator> rng;
 };
 
 // Local Variables:

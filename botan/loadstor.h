@@ -1,16 +1,17 @@
 /*************************************************
 * Load/Store Operators Header File               *
-* (C) 1999-2008 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
+*     2007 Yves Jerschow                         *
 *************************************************/
 
 #ifndef BOTAN_LOAD_STORE_H__
 #define BOTAN_LOAD_STORE_H__
 
 #include <botan/types.h>
+#include <botan/bswap.h>
+#include <botan/rotate.h>
 
 #if BOTAN_TARGET_UNALIGNED_LOADSTOR_OK
-
-#include <botan/bit_ops.h>
 
 #if defined(BOTAN_TARGET_CPU_IS_BIG_ENDIAN)
 

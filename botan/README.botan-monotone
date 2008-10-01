@@ -8,20 +8,33 @@ directory.
 
 Steps to update net.venge.monotone.botan with net.randombit.net:
 
-1) "mtn pull randombit.net net.randombit.botan"
+1) Pull the newest revisions of botan and of the staging branch:
 
-2) "mtn propagate net.randombit.botan au.asn.ucc.matt.botan.monotone-2"
+   mtn pull randombit.net net.randombit.botan
+   mtn pull bluegap.ch au.asn.ucc.matt.botan.monotone-2
 
-3) "mtn up" in an a.a.u.m.b.monotone-2 workspace. 
-   In a n.v.m.botan botan/ dir, do "rm *".
-   Then copy the entire contents (no subdirs though) from the staging
-   branch's root dir to the botan/ dir.
+2) Propagate from a tagged botan release version to the staging branch:
 
-4) "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If 
+   mtn explicit_merge t:1.7.12 h:au.asn.ucc.matt.botan.monotone-2 \
+           au.asn.ucc.matt.botan.monotone-2
+
+3) Update the botan files of monotone from the staging branch.
+
+    * Update an a.a.u.m.b.monotone-2 workspace  "mtn up"
+    * In a n.v.m.botan botan/ dir, do "rm *".
+    * Then copy the entire contents (no subdirs though) from the staging
+      branch's root dir to the botan/ dir, i.e.:
+      "cp $BOTAN_STAGING/* $MTN_BOTAN/botan/"
+
+4) Make sure monotone tracks the botan files properly
+
+   "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If 
    there are obviously renamed files, use "mtn rename" to fix them. 
-   Otherwise add/drop files as appropriate. Also fix up Makefile.am.
+   Otherwise add/drop files as appropriate. Also fix up Makefile.am
 
-4) make check in n.v.m.botan. If it succeeds, commit. If there are problems,
+5) Make monotone work with the upgraded botan library
+
+   "make check" in n.v.m.botan. If it succeeds, commit. If there are problems,
    copy the changes back to the staging branch and commit there as well. You
    might need to move some files from Attic/src/ to / in the staging branch.
 

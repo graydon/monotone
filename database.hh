@@ -13,6 +13,8 @@
 #include "vector.hh"
 #include <set>
 #include <boost/shared_ptr.hpp>
+#include "botan/rng.h"
+
 #include "rev_types.hh"
 #include "cert.hh"
 
@@ -435,6 +437,7 @@ public:
 private:
   boost::shared_ptr<database_impl> imp;
   lua_hooks & lua;
+  boost::shared_ptr<Botan::RandomNumberGenerator> rng;
 };
 
 // not a member function, defined in database_check.cc

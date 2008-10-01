@@ -2,6 +2,7 @@
 #define __KEY_STORE_H__
 
 #include <boost/scoped_ptr.hpp>
+#include "botan/rng.h"
 #include "vector.hh"
 #include "vocab.hh"
 #include "paths.hh"
@@ -35,6 +36,7 @@ public:
   explicit key_store(app_state & a);
   ~key_store();
 
+  Botan::RandomNumberGenerator & get_rng();
   system_path const & get_key_dir();
 
   // Basic key I/O

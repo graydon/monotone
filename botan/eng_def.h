@@ -1,6 +1,6 @@
 /*************************************************
 * Default Engine Header File                     *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DEFAULT_ENGINE_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Default Engine                                 *
 *************************************************/
-class Default_Engine : public Engine
+class BOTAN_DLL Default_Engine : public Engine
    {
    public:
       IF_Operation* if_op(const BigInt&, const BigInt&, const BigInt&,

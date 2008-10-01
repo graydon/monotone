@@ -1,6 +1,6 @@
 /*************************************************
 * Secure Memory Buffers Header File              *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_SECURE_MEMORY_BUFFERS_H__
@@ -61,35 +61,35 @@ class MemoryRegion
       void destroy() { create(0); }
 
       void create(u32bit);
-      void grow_to(u32bit) const;
+      void grow_to(u32bit);
       void swap(MemoryRegion<T>&);
 
       ~MemoryRegion() { deallocate(buf, allocated); }
    protected:
       MemoryRegion() { buf = 0; alloc = 0; used = allocated = 0; }
-      MemoryRegion(const MemoryRegion<T>& copy)
+      MemoryRegion(const MemoryRegion<T>& other)
          {
          buf = 0;
          used = allocated = 0;
-         alloc = copy.alloc;
-         set(copy.buf, copy.used);
+         alloc = other.alloc;
+         set(other.buf, other.used);
          }
 
-      void init(bool locking, u32bit size = 0)
-         { alloc = Allocator::get(locking); create(size); }
+      void init(bool locking, u32bit length = 0)
+         { alloc = Allocator::get(locking); create(length); }
    private:
-      T* allocate(u32bit n) const
+      T* allocate(u32bit n)
          {
          return static_cast<T*>(alloc->allocate(sizeof(T)*n));
          }
 
-      void deallocate(T* p, u32bit n) const
+      void deallocate(T* p, u32bit n)
          { alloc->deallocate(p, sizeof(T)*n); }
 
-      mutable T* buf;
-      mutable u32bit used;
-      mutable u32bit allocated;
-      mutable Allocator* alloc;
+      T* buf;
+      u32bit used;
+      u32bit allocated;
+      Allocator* alloc;
    };
 
 /*************************************************
@@ -108,7 +108,7 @@ void MemoryRegion<T>::create(u32bit n)
 * Increase the size of the buffer                *
 *************************************************/
 template<typename T>
-void MemoryRegion<T>::grow_to(u32bit n) const
+void MemoryRegion<T>::grow_to(u32bit n)
    {
    if(n > used && n <= allocated)
       {

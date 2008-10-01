@@ -1,6 +1,6 @@
 /*************************************************
 * Certificate Store Header File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_CERT_STORE_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Certificate Store Interface                    *
 *************************************************/
-class Certificate_Store
+class BOTAN_DLL Certificate_Store
    {
    public:
       virtual std::vector<X509_Certificate>

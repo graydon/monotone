@@ -419,7 +419,7 @@ database_impl::~database_impl()
 }
 
 database::database(app_state & app)
-  : lua(app.lua)
+  : lua(app.lua), rng(app.rng)
 {
   boost::shared_ptr<database_impl> & i = app.lookup_db(app.opts.dbname);
   if (!i)
@@ -2768,7 +2768,7 @@ database::encrypt_rsa(rsa_keypair_id const & pub_id,
   SecureVector<Botan::byte> ct;
   ct = encryptor->encrypt(
           reinterpret_cast<Botan::byte const *>(plaintext.data()),
-          plaintext.size());
+          plaintext.size(), *rng);
   ciphertext = rsa_oaep_sha_data(string(reinterpret_cast<char const *>(ct.begin()),
                                         ct.size()));
 }

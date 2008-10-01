@@ -1,11 +1,10 @@
 /*************************************************
 * Filter Source File                             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/filter.h>
 #include <botan/secqueue.h>
-#include <botan/libstate.h>
 
 namespace Botan {
 
@@ -25,8 +24,6 @@ Filter::Filter()
 *************************************************/
 void Filter::send(const byte input[], u32bit length)
    {
-   global_state().pulse(PIPE_WRITE);
-
    bool nothing_attached = true;
    for(u32bit j = 0; j != total_ports(); ++j)
       if(next[j])

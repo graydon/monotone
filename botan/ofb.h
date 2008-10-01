@@ -1,6 +1,6 @@
 /*************************************************
 * OFB Mode Header File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_OFB_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * OFB Mode                                       *
 *************************************************/
-class OFB : public BlockCipherMode
+class BOTAN_DLL OFB : public BlockCipherMode
    {
    public:
       OFB(const std::string&);

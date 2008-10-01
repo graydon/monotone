@@ -1,6 +1,6 @@
 /*************************************************
 * RSA Source File                                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/rsa.h>
@@ -33,7 +33,8 @@ BigInt RSA_PublicKey::public_op(const BigInt& i) const
 /*************************************************
 * RSA Encryption Function                        *
 *************************************************/
-SecureVector<byte> RSA_PublicKey::encrypt(const byte in[], u32bit len) const
+SecureVector<byte> RSA_PublicKey::encrypt(const byte in[], u32bit len,
+                                          RandomNumberGenerator&) const
    {
    BigInt i(in, len);
    return BigInt::encode_1363(public_op(i), n.bytes());
@@ -51,20 +52,21 @@ SecureVector<byte> RSA_PublicKey::verify(const byte in[], u32bit len) const
 /*************************************************
 * Create a RSA private key                       *
 *************************************************/
-RSA_PrivateKey::RSA_PrivateKey(u32bit bits, u32bit exp)
+RSA_PrivateKey::RSA_PrivateKey(RandomNumberGenerator& rng,
+                               u32bit bits, u32bit exp)
    {
-   if(bits < 128)
+   if(bits < 512)
       throw Invalid_Argument(algo_name() + ": Can't make a key that is only " +
                              to_string(bits) + " bits long");
    if(exp < 3 || exp % 2 == 0)
       throw Invalid_Argument(algo_name() + ": Invalid encryption exponent");
 
    e = exp;
-   p = random_prime((bits + 1) / 2, e);
-   q = random_prime(bits - p.bits(), e);
+   p = random_prime(rng, (bits + 1) / 2, e);
+   q = random_prime(rng, bits - p.bits(), e);
    d = inverse_mod(e, lcm(p - 1, q - 1));
 
-   PKCS8_load_hook(true);
+   PKCS8_load_hook(rng, true);
 
    if(n.bits() != bits)
       throw Self_Test_Failure(algo_name() + " private key generation failed");
@@ -73,7 +75,8 @@ RSA_PrivateKey::RSA_PrivateKey(u32bit bits, u32bit exp)
 /*************************************************
 * RSA_PrivateKey Constructor                     *
 *************************************************/
-RSA_PrivateKey::RSA_PrivateKey(const BigInt& prime1, const BigInt& prime2,
+RSA_PrivateKey::RSA_PrivateKey(RandomNumberGenerator& rng,
+                               const BigInt& prime1, const BigInt& prime2,
                                const BigInt& exp, const BigInt& d_exp,
                                const BigInt& mod)
    {
@@ -86,7 +89,7 @@ RSA_PrivateKey::RSA_PrivateKey(const BigInt& prime1, const BigInt& prime2,
    if(d == 0)
       d = inverse_mod(e, lcm(p - 1, q - 1));
 
-   PKCS8_load_hook();
+   PKCS8_load_hook(rng);
    }
 
 /*************************************************
@@ -115,7 +118,8 @@ SecureVector<byte> RSA_PrivateKey::decrypt(const byte in[], u32bit len) const
 /*************************************************
 * RSA Signature Operation                        *
 *************************************************/
-SecureVector<byte> RSA_PrivateKey::sign(const byte in[], u32bit len) const
+SecureVector<byte> RSA_PrivateKey::sign(const byte in[], u32bit len,
+                                        RandomNumberGenerator&) const
    {
    return BigInt::encode_1363(private_op(in, len), n.bytes());
    }
@@ -123,9 +127,9 @@ SecureVector<byte> RSA_PrivateKey::sign(const byte in[], u32bit len) const
 /*************************************************
 * Check Private RSA Parameters                   *
 *************************************************/
-bool RSA_PrivateKey::check_key(bool strong) const
+bool RSA_PrivateKey::check_key(RandomNumberGenerator& rng, bool strong) const
    {
-   if(!IF_Scheme_PrivateKey::check_key(strong))
+   if(!IF_Scheme_PrivateKey::check_key(rng, strong))
       return false;
 
    if(!strong)
@@ -134,12 +138,15 @@ bool RSA_PrivateKey::check_key(bool strong) const
    if((e * d) % lcm(p - 1, q - 1) != 1)
       return false;
 
-   try {
-      KeyPair::check_key(get_pk_encryptor(*this, "EME1(SHA-1)"),
+   try
+      {
+      KeyPair::check_key(rng,
+                         get_pk_encryptor(*this, "EME1(SHA-1)"),
                          get_pk_decryptor(*this, "EME1(SHA-1)")
          );
 
-      KeyPair::check_key(get_pk_signer(*this, "EMSA4(SHA-1)"),
+      KeyPair::check_key(rng,
+                         get_pk_signer(*this, "EMSA4(SHA-1)"),
                          get_pk_verifier(*this, "EMSA4(SHA-1)")
          );
       }

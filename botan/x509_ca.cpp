@@ -1,16 +1,17 @@
 /*************************************************
 * X.509 Certificate Authority Source File        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/x509_ca.h>
 #include <botan/x509stor.h>
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
-#include <botan/config.h>
+#include <botan/libstate.h>
 #include <botan/lookup.h>
 #include <botan/look_pk.h>
 #include <botan/numthry.h>
+#include <botan/parsing.h>
 #include <botan/oids.h>
 #include <botan/util.h>
 #include <algorithm>
@@ -41,11 +42,10 @@ X509_CA::X509_CA(const X509_Certificate& c,
 * Sign a PKCS #10 certificate request            *
 *************************************************/
 X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
-                                       u32bit expire_time) const
+                                       RandomNumberGenerator& rng,
+                                       const X509_Time& not_before,
+                                       const X509_Time& not_after)
    {
-   if(req.is_CA() && !global_config().option_as_bool("x509/ca/allow_ca"))
-      throw Policy_Violation("X509_CA: Attempted to sign new CA certificate");
-
    Key_Constraints constraints;
    if(req.is_CA())
       constraints = Key_Constraints(KEY_CERT_SIGN | CRL_SIGN);
@@ -70,19 +70,8 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
    extensions.add(
       new Cert_Extension::Subject_Alternative_Name(req.subject_alt_name()));
 
-   /*
-   extensions.add(
-      new Cert_Extension::Issuer_Alternative_Name(issuer_alt));
-   */
-
-   if(expire_time == 0)
-      expire_time = global_config().option_as_time("x509/ca/default_expire");
-
-   const u64bit current_time = system_time();
-
-   return make_cert(signer, ca_sig_algo, req.raw_public_key(),
-                    X509_Time(current_time),
-                    X509_Time(current_time + expire_time),
+   return make_cert(signer, rng, ca_sig_algo, req.raw_public_key(),
+                    not_before, not_after,
                     cert.subject_dn(), req.subject_dn(),
                     extensions);
    }
@@ -91,6 +80,7 @@ X509_Certificate X509_CA::sign_request(const PKCS10_Request& req,
 * Create a new certificate                       *
 *************************************************/
 X509_Certificate X509_CA::make_cert(PK_Signer* signer,
+                                    RandomNumberGenerator& rng,
                                     const AlgorithmIdentifier& sig_algo,
                                     const MemoryRegion<byte>& pub_key,
                                     const X509_Time& not_before,
@@ -102,13 +92,16 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
    const u32bit X509_CERT_VERSION = 3;
    const u32bit SERIAL_BITS = 128;
 
-   DataSource_Memory source(X509_Object::make_signed(signer, sig_algo,
+   BigInt serial_no(rng, SERIAL_BITS);
+
+   DataSource_Memory source(X509_Object::make_signed(signer, rng, sig_algo,
          DER_Encoder().start_cons(SEQUENCE)
             .start_explicit(0)
                .encode(X509_CERT_VERSION-1)
             .end_explicit()
 
-            .encode(random_integer(SERIAL_BITS))
+            .encode(serial_no)
+
             .encode(sig_algo)
             .encode(issuer_dn)
 
@@ -135,10 +128,11 @@ X509_Certificate X509_CA::make_cert(PK_Signer* signer,
 /*************************************************
 * Create a new, empty CRL                        *
 *************************************************/
-X509_CRL X509_CA::new_crl(u32bit next_update) const
+X509_CRL X509_CA::new_crl(RandomNumberGenerator& rng,
+                          u32bit next_update) const
    {
    std::vector<CRL_Entry> empty;
-   return make_crl(empty, 1, next_update);
+   return make_crl(empty, 1, next_update, rng);
    }
 
 /*************************************************
@@ -146,6 +140,7 @@ X509_CRL X509_CA::new_crl(u32bit next_update) const
 *************************************************/
 X509_CRL X509_CA::update_crl(const X509_CRL& crl,
                              const std::vector<CRL_Entry>& new_revoked,
+                             RandomNumberGenerator& rng,
                              u32bit next_update) const
    {
    std::vector<CRL_Entry> already_revoked = crl.get_revoked();
@@ -179,20 +174,23 @@ X509_CRL X509_CA::update_crl(const X509_CRL& crl,
    std::unique_copy(all_revoked.begin(), all_revoked.end(),
                     std::back_inserter(cert_list));
 
-   return make_crl(cert_list, crl.crl_number() + 1, next_update);
+   return make_crl(cert_list, crl.crl_number() + 1, next_update, rng);
    }
 
 /*************************************************
 * Create a CRL                                   *
 *************************************************/
 X509_CRL X509_CA::make_crl(const std::vector<CRL_Entry>& revoked,
-                           u32bit crl_number, u32bit next_update) const
+                           u32bit crl_number, u32bit next_update,
+                           RandomNumberGenerator& rng) const
    {
    const u32bit X509_CRL_VERSION = 2;
 
    if(next_update == 0)
-      next_update = global_config().option_as_time("x509/crl/next_update");
+      next_update = timespec_to_u32bit(
+         global_state().option("x509/crl/next_update"));
 
+   // Totally stupid: ties encoding logic to the return of std::time!!
    const u64bit current_time = system_time();
 
    Extensions extensions;
@@ -200,7 +198,7 @@ X509_CRL X509_CA::make_crl(const std::vector<CRL_Entry>& revoked,
       new Cert_Extension::Authority_Key_ID(cert.subject_key_id()));
    extensions.add(new Cert_Extension::CRL_Number(crl_number));
 
-   DataSource_Memory source(X509_Object::make_signed(signer, ca_sig_algo,
+   DataSource_Memory source(X509_Object::make_signed(signer, rng, ca_sig_algo,
          DER_Encoder().start_cons(SEQUENCE)
             .encode(X509_CRL_VERSION-1)
             .encode(ca_sig_algo)
@@ -249,13 +247,35 @@ PK_Signer* choose_sig_format(const Private_Key& key,
    {
    std::string padding;
    Signature_Format format;
-   Config::choose_sig_format(key.algo_name(), padding, format);
 
-   sig_algo.oid = OIDS::lookup(key.algo_name() + "/" + padding);
+   const std::string algo_name = key.algo_name();
+
+   if(algo_name == "RSA")
+      {
+      std::string hash = global_state().option("x509/ca/rsa_hash");
+
+      if(hash == "")
+         throw Invalid_State("No value set for x509/ca/rsa_hash");
+
+      hash = global_state().deref_alias(hash);
+
+      padding = "EMSA3(" + hash + ")";
+      format = IEEE_1363;
+      }
+   else if(algo_name == "DSA")
+      {
+      std::string hash = global_state().deref_alias("SHA-1");
+      padding = "EMSA1(" + hash + ")";
+      format = DER_SEQUENCE;
+      }
+   else
+      throw Invalid_Argument("Unknown X.509 signing key type: " + algo_name);
+
+   sig_algo.oid = OIDS::lookup(algo_name + "/" + padding);
 
    std::auto_ptr<X509_Encoder> encoding(key.x509_encoder());
    if(!encoding.get())
-      throw Encoding_Error("Key " + key.algo_name() + " does not support "
+      throw Encoding_Error("Key " + algo_name + " does not support "
                            "X.509 encoding");
 
    sig_algo.parameters = encoding->alg_id().parameters;

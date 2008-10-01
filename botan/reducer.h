@@ -1,6 +1,6 @@
 /*************************************************
 * Modular Reducer Header File                    *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_MODARITH_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Modular Reducer                                *
 *************************************************/
-class Modular_Reducer
+class BOTAN_DLL Modular_Reducer
    {
    public:
       BigInt multiply(const BigInt&, const BigInt&) const;

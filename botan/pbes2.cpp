@@ -1,14 +1,14 @@
 /*************************************************
 * PKCS #5 PBES2 Source File                      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pbe_pkcs.h>
+#include <botan/libstate.h>
 #include <botan/der_enc.h>
 #include <botan/ber_dec.h>
 #include <botan/parsing.h>
 #include <botan/lookup.h>
-#include <botan/rng.h>
 #include <botan/asn1_obj.h>
 #include <botan/oids.h>
 #include <algorithm>
@@ -81,14 +81,16 @@ void PBE_PKCS5v20::set_key(const std::string& passphrase)
 /*************************************************
 * Create a new set of PBES2 parameters           *
 *************************************************/
-void PBE_PKCS5v20::new_params()
+void PBE_PKCS5v20::new_params(RandomNumberGenerator& rng)
    {
    iterations = 2048;
    key_length = max_keylength_of(cipher_algo);
+
    salt.create(8);
+   rng.randomize(salt, salt.size());
+
    iv.create(block_size_of(cipher_algo));
-   Global_RNG::randomize(salt, salt.size());
-   Global_RNG::randomize(iv, iv.size());
+   rng.randomize(iv, iv.size());
    }
 
 /*************************************************
@@ -154,7 +156,7 @@ void PBE_PKCS5v20::decode_params(DataSource& source)
    std::vector<std::string> cipher_spec = split_on(cipher, '/');
    if(cipher_spec.size() != 2)
       throw Decoding_Error("PBE-PKCS5 v2.0: Invalid cipher spec " + cipher);
-   cipher_algo = deref_alias(cipher_spec[0]);
+   cipher_algo = global_state().deref_alias(cipher_spec[0]);
 
    if(!known_cipher(cipher_algo) || cipher_spec[1] != "CBC")
       throw Decoding_Error("PBE-PKCS5 v2.0: Don't know param format for " +
@@ -194,12 +196,14 @@ bool PBE_PKCS5v20::known_cipher(const std::string& algo) const
 *************************************************/
 PBE_PKCS5v20::PBE_PKCS5v20(const std::string& d_algo,
                            const std::string& c_algo) :
-   direction(ENCRYPTION), digest(deref_alias(d_algo)), cipher(c_algo)
+   direction(ENCRYPTION),
+   digest(global_state().deref_alias(d_algo)),
+   cipher(c_algo)
    {
    std::vector<std::string> cipher_spec = split_on(cipher, '/');
    if(cipher_spec.size() != 2)
       throw Invalid_Argument("PBE-PKCS5 v2.0: Invalid cipher spec " + cipher);
-   cipher_algo = deref_alias(cipher_spec[0]);
+   cipher_algo = global_state().deref_alias(cipher_spec[0]);
    const std::string cipher_mode = cipher_spec[1];
 
    if(!have_block_cipher(cipher_algo))

@@ -1,11 +1,11 @@
 /*************************************************
 * DES Source File                                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/des.h>
 #include <botan/loadstor.h>
-#include <botan/bit_ops.h>
+#include <botan/xor_buf.h>
 
 namespace Botan {
 

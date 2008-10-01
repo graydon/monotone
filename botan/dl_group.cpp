@@ -1,10 +1,10 @@
 /*************************************************
 * Discrete Logarithm Parameters Source File      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/dl_group.h>
-#include <botan/config.h>
+#include <botan/libstate.h>
 #include <botan/parsing.h>
 #include <botan/numthry.h>
 #include <botan/der_enc.h>
@@ -28,7 +28,7 @@ DL_Group::DL_Group()
 *************************************************/
 DL_Group::DL_Group(const std::string& type)
    {
-   std::string grp_contents = global_config().get("dl", type);
+   std::string grp_contents = global_state().get("dl", type);
 
    if(grp_contents == "")
       throw Invalid_Argument("DL_Group: Unknown group " + type);
@@ -40,7 +40,8 @@ DL_Group::DL_Group(const std::string& type)
 /*************************************************
 * DL_Group Constructor                           *
 *************************************************/
-DL_Group::DL_Group(PrimeType type, u32bit pbits, u32bit qbits)
+DL_Group::DL_Group(RandomNumberGenerator& rng,
+                   PrimeType type, u32bit pbits, u32bit qbits)
    {
    if(pbits < 512)
       throw Invalid_Argument("DL_Group: prime size " + to_string(pbits) +
@@ -48,7 +49,7 @@ DL_Group::DL_Group(PrimeType type, u32bit pbits, u32bit qbits)
 
    if(type == Strong)
       {
-      p = random_safe_prime(pbits);
+      p = random_safe_prime(rng, pbits);
       q = (p - 1) / 2;
       g = 2;
       }
@@ -59,18 +60,18 @@ DL_Group::DL_Group(PrimeType type, u32bit pbits, u32bit qbits)
          if(!qbits)
             qbits = 2 * dl_work_factor(pbits);
 
-         q = random_prime(qbits);
+         q = random_prime(rng, qbits);
          BigInt X;
-         while(p.bits() != pbits || !is_prime(p))
+         while(p.bits() != pbits || !is_prime(p, rng))
             {
-            X = random_integer(pbits);
+            X.randomize(rng, pbits);
             p = X - (X % (2*q) - 1);
             }
          }
       else
          {
          qbits = qbits ? qbits : ((pbits == 1024) ? 160 : 256);
-         generate_dsa_primes(p, q, pbits, qbits);
+         generate_dsa_primes(rng, p, q, pbits, qbits);
          }
 
       g = make_dsa_generator(p, q);
@@ -82,10 +83,11 @@ DL_Group::DL_Group(PrimeType type, u32bit pbits, u32bit qbits)
 /*************************************************
 * DL_Group Constructor                           *
 *************************************************/
-DL_Group::DL_Group(const MemoryRegion<byte>& seed, u32bit pbits, u32bit qbits)
+DL_Group::DL_Group(RandomNumberGenerator& rng,
+                   const MemoryRegion<byte>& seed, u32bit pbits, u32bit qbits)
    {
-   if(!generate_dsa_primes(p, q, pbits, qbits, seed))
-      throw Invalid_Argument("DL_Group: The seed/counter given does not "
+   if(!generate_dsa_primes(rng, p, q, pbits, qbits, seed))
+      throw Invalid_Argument("DL_Group: The seed given does not "
                              "generate a DSA group");
 
    g = make_dsa_generator(p, q);
@@ -125,9 +127,6 @@ void DL_Group::initialize(const BigInt& p1, const BigInt& q1, const BigInt& g1)
    g = g1;
    q = q1;
 
-   if(q == 0 && check_prime((p - 1) / 2))
-      q = (p - 1) / 2;
-
    initialized = true;
    }
 
@@ -143,7 +142,8 @@ void DL_Group::init_check() const
 /*************************************************
 * Verify the parameters                          *
 *************************************************/
-bool DL_Group::verify_group(bool strong) const
+bool DL_Group::verify_group(RandomNumberGenerator& rng,
+                            bool strong) const
    {
    init_check();
 
@@ -155,9 +155,9 @@ bool DL_Group::verify_group(bool strong) const
    if(!strong)
       return true;
 
-   if(!check_prime(p))
+   if(!check_prime(p, rng))
       return false;
-   if((q > 0) && !check_prime(q))
+   if((q > 0) && !check_prime(q, rng))
       return false;
    return true;
    }

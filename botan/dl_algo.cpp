@@ -1,6 +1,6 @@
 /*************************************************
 * DL Scheme Source File                          *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/dl_algo.h>
@@ -99,7 +99,7 @@ PKCS8_Encoder* DL_Scheme_PrivateKey::pkcs8_encoder() const
 /*************************************************
 * Return the PKCS #8 private key decoder         *
 *************************************************/
-PKCS8_Decoder* DL_Scheme_PrivateKey::pkcs8_decoder()
+PKCS8_Decoder* DL_Scheme_PrivateKey::pkcs8_decoder(RandomNumberGenerator& rng)
    {
    class DL_Scheme_Decoder : public PKCS8_Decoder
       {
@@ -113,25 +113,28 @@ PKCS8_Decoder* DL_Scheme_PrivateKey::pkcs8_decoder()
          void key_bits(const MemoryRegion<byte>& bits)
             {
             BER_Decoder(bits).decode(key->x);
-            key->PKCS8_load_hook();
+            key->PKCS8_load_hook(rng);
             }
 
-         DL_Scheme_Decoder(DL_Scheme_PrivateKey* k) : key(k) {}
+         DL_Scheme_Decoder(DL_Scheme_PrivateKey* k, RandomNumberGenerator& r) :
+            key(k), rng(r) {}
       private:
          DL_Scheme_PrivateKey* key;
+         RandomNumberGenerator& rng;
       };
 
-   return new DL_Scheme_Decoder(this);
+   return new DL_Scheme_Decoder(this, rng);
    }
 
 /*************************************************
 * Check Public DL Parameters                     *
 *************************************************/
-bool DL_Scheme_PublicKey::check_key(bool strong) const
+bool DL_Scheme_PublicKey::check_key(RandomNumberGenerator& rng,
+                                    bool strong) const
    {
    if(y < 2 || y >= group_p())
       return false;
-   if(!group.verify_group(strong))
+   if(!group.verify_group(rng, strong))
       return false;
    return true;
    }
@@ -139,14 +142,15 @@ bool DL_Scheme_PublicKey::check_key(bool strong) const
 /*************************************************
 * Check DL Scheme Private Parameters             *
 *************************************************/
-bool DL_Scheme_PrivateKey::check_key(bool strong) const
+bool DL_Scheme_PrivateKey::check_key(RandomNumberGenerator& rng,
+                                     bool strong) const
    {
    const BigInt& p = group_p();
    const BigInt& g = group_g();
 
    if(y < 2 || y >= p || x < 2 || x >= p)
       return false;
-   if(!group.verify_group(strong))
+   if(!group.verify_group(rng, strong))
       return false;
 
    if(!strong)

@@ -1,6 +1,6 @@
 /*************************************************
 * Lookup Table Management Header File            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_LOOKUP_MANGEMENT_H__
@@ -15,12 +15,12 @@ namespace Botan {
 /*************************************************
 * Add an algorithm to the lookup table           *
 *************************************************/
-void add_algorithm(BlockCipher*);
-void add_algorithm(StreamCipher*);
-void add_algorithm(HashFunction*);
-void add_algorithm(MessageAuthenticationCode*);
-void add_algorithm(S2K*);
-void add_algorithm(BlockCipherModePaddingMethod*);
+BOTAN_DLL void add_algorithm(BlockCipher*);
+BOTAN_DLL void add_algorithm(StreamCipher*);
+BOTAN_DLL void add_algorithm(HashFunction*);
+BOTAN_DLL void add_algorithm(MessageAuthenticationCode*);
+BOTAN_DLL void add_algorithm(S2K*);
+BOTAN_DLL void add_algorithm(BlockCipherModePaddingMethod*);
 
 }
 

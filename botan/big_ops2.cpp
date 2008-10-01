@@ -1,6 +1,6 @@
 /*************************************************
 * BigInt Assignment Operators Source File        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/bigint.h>
@@ -20,7 +20,7 @@ BigInt& BigInt::operator+=(const BigInt& y)
    const u32bit reg_size = std::max(x_sw, y_sw) + 1;
    grow_to(reg_size);
 
-   if((sign() == y.sign()))
+   if(sign() == y.sign())
       bigint_add2(get_reg(), reg_size - 1, y.data(), y_sw);
    else
       {
@@ -30,12 +30,12 @@ BigInt& BigInt::operator+=(const BigInt& y)
          {
          SecureVector<word> z(reg_size - 1);
          bigint_sub3(z, y.data(), reg_size - 1, data(), x_sw);
-         copy_mem(reg.begin(), z.begin(), z.size());
+         copy_mem(get_reg().begin(), z.begin(), z.size());
          set_sign(y.sign());
          }
       else if(relative_size == 0)
          {
-         reg.clear();
+         get_reg().clear();
          set_sign(Positive);
          }
       else if(relative_size > 0)
@@ -63,7 +63,7 @@ BigInt& BigInt::operator-=(const BigInt& y)
          {
          SecureVector<word> z(reg_size - 1);
          bigint_sub3(z, y.data(), reg_size - 1, data(), x_sw);
-         copy_mem(reg.begin(), z.begin(), z.size());
+         copy_mem(get_reg().begin(), z.begin(), z.size());
          }
       else
          bigint_add2(get_reg(), reg_size - 1, y.data(), y_sw);
@@ -74,7 +74,7 @@ BigInt& BigInt::operator-=(const BigInt& y)
       {
       if(sign() == y.sign())
          {
-         reg.clear();
+         get_reg().clear();
          set_sign(Positive);
          }
       else
@@ -101,7 +101,7 @@ BigInt& BigInt::operator*=(const BigInt& y)
 
    if(x_sw == 0 || y_sw == 0)
       {
-      reg.clear();
+      get_reg().clear();
       set_sign(Positive);
       }
    else if(x_sw == 1 && y_sw)
@@ -161,7 +161,7 @@ word BigInt::operator%=(word mod)
        word result = (word_at(0) & (mod - 1));
        clear();
        grow_to(2);
-       reg[0] = result;
+       get_reg()[0] = result;
        return result;
        }
 
@@ -173,9 +173,9 @@ word BigInt::operator%=(word mod)
    grow_to(2);
 
    if(remainder && sign() == BigInt::Negative)
-      reg[0] = mod - remainder;
+      get_reg()[0] = mod - remainder;
    else
-      reg[0] = remainder;
+      get_reg()[0] = remainder;
 
    set_sign(BigInt::Positive);
 

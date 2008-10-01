@@ -1,6 +1,6 @@
 /*************************************************
 * OctetString Header File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_SYMKEY_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Octet String                                   *
 *************************************************/
-class OctetString
+class BOTAN_DLL OctetString
    {
    public:
       u32bit length() const { return bits.size(); }
@@ -29,12 +29,11 @@ class OctetString
 
       void set_odd_parity();
 
-      void change(u32bit);
       void change(const std::string&);
       void change(const byte[], u32bit);
       void change(const MemoryRegion<byte>& in) { bits = in; }
 
-      OctetString(u32bit len) { change(len); }
+      OctetString(class RandomNumberGenerator&, u32bit len);
       OctetString(const std::string& str = "") { change(str); }
       OctetString(const byte in[], u32bit len) { change(in, len); }
       OctetString(const MemoryRegion<byte>& in) { change(in); }
@@ -45,10 +44,10 @@ class OctetString
 /*************************************************
 * Operations on Octet Strings                    *
 *************************************************/
-bool operator==(const OctetString&, const OctetString&);
-bool operator!=(const OctetString&, const OctetString&);
-OctetString operator+(const OctetString&, const OctetString&);
-OctetString operator^(const OctetString&, const OctetString&);
+BOTAN_DLL bool operator==(const OctetString&, const OctetString&);
+BOTAN_DLL bool operator!=(const OctetString&, const OctetString&);
+BOTAN_DLL OctetString operator+(const OctetString&, const OctetString&);
+BOTAN_DLL OctetString operator^(const OctetString&, const OctetString&);
 
 /*************************************************
 * Alternate Names                                *

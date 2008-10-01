@@ -1,11 +1,12 @@
 /*************************************************
 * User Interface Header File                     *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_UI_H__
 #define BOTAN_UI_H__
 
+#include <botan/build.h>
 #include <string>
 
 namespace Botan {
@@ -13,7 +14,7 @@ namespace Botan {
 /*************************************************
 * User Interface                                 *
 *************************************************/
-class User_Interface
+class BOTAN_DLL User_Interface
    {
    public:
       enum UI_Result { OK, CANCEL_ACTION };
@@ -24,7 +25,7 @@ class User_Interface
       User_Interface(const std::string& = "");
       virtual ~User_Interface() {}
    protected:
-      const std::string preset_passphrase;
+      std::string preset_passphrase;
       mutable bool first_try;
    };
 

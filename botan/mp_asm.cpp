@@ -1,6 +1,7 @@
 /*************************************************
 * Lowest Level MPI Algorithms Source File        *
-* (C) 1999-2008 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
+*     2006 Luca Piccarreta                       *
 *************************************************/
 
 #include <botan/mp_asm.h>
@@ -169,35 +170,6 @@ void bigint_linmul3(word z[], const word x[], u32bit x_size, word y)
       z[j] = word_madd2(x[j], y, &carry);
 
    z[x_size] = carry;
-   }
-
-/*************************************************
-* Montgomery Reduction Algorithm                 *
-*************************************************/
-void bigint_monty_redc(word z[], u32bit z_size,
-                       const word x[], u32bit x_size, word u)
-   {
-   for(u32bit j = 0; j != x_size; ++j)
-      {
-      word* z_j = z + j;
-
-      const word y = z_j[0] * u;
-
-      word carry = bigint_mul_add_words(z_j, x, x_size, y);
-
-      word z_sum = z_j[x_size] + carry;
-      carry = (z_sum < z_j[x_size]);
-      z_j[x_size] = z_sum;
-
-      for(u32bit k = x_size + 1; carry && k != z_size - j; ++k)
-         {
-         ++z_j[k];
-         carry = !z_j[k];
-         }
-      }
-
-   if(bigint_cmp(z + x_size, x_size + 1, x, x_size) >= 0)
-      bigint_sub2(z + x_size, x_size + 1, x, x_size);
    }
 
 }

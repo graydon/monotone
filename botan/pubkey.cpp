@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Base Source File                    *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pubkey.h>
@@ -17,17 +17,19 @@ namespace Botan {
 /*************************************************
 * Encrypt a message                              *
 *************************************************/
-SecureVector<byte> PK_Encryptor::encrypt(const byte in[], u32bit len) const
+SecureVector<byte> PK_Encryptor::encrypt(const byte in[], u32bit len,
+                                         RandomNumberGenerator& rng) const
    {
-   return enc(in, len);
+   return enc(in, len, rng);
    }
 
 /*************************************************
 * Encrypt a message                              *
 *************************************************/
-SecureVector<byte> PK_Encryptor::encrypt(const MemoryRegion<byte>& in) const
+SecureVector<byte> PK_Encryptor::encrypt(const MemoryRegion<byte>& in,
+                                         RandomNumberGenerator& rng) const
    {
-   return enc(in.begin(), in.size());
+   return enc(in.begin(), in.size(), rng);
    }
 
 /*************************************************
@@ -58,17 +60,21 @@ PK_Encryptor_MR_with_EME::PK_Encryptor_MR_with_EME(const PK_Encrypting_Key& k,
 /*************************************************
 * Encrypt a message                              *
 *************************************************/
-SecureVector<byte> PK_Encryptor_MR_with_EME::enc(const byte msg[],
-                                                 u32bit length) const
+SecureVector<byte>
+PK_Encryptor_MR_with_EME::enc(const byte msg[],
+                              u32bit length,
+                              RandomNumberGenerator& rng) const
    {
    SecureVector<byte> message;
-   if(encoder) message = encoder->encode(msg, length, key.max_input_bits());
-   else        message.set(msg, length);
+   if(encoder)
+      message = encoder->encode(msg, length, key.max_input_bits(), rng);
+   else
+      message.set(msg, length);
 
    if(8*(message.size() - 1) + high_bit(message[0]) > key.max_input_bits())
       throw Exception("PK_Encryptor_MR_with_EME: Input is too large");
 
-   return key.encrypt(message, message.size());
+   return key.encrypt(message, message.size(), rng);
    }
 
 /*************************************************
@@ -137,18 +143,20 @@ void PK_Signer::set_output_format(Signature_Format format)
 /*************************************************
 * Sign a message                                 *
 *************************************************/
-SecureVector<byte> PK_Signer::sign_message(const byte msg[], u32bit length)
+SecureVector<byte> PK_Signer::sign_message(const byte msg[], u32bit length,
+                                           RandomNumberGenerator& rng)
    {
    update(msg, length);
-   return signature();
+   return signature(rng);
    }
 
 /*************************************************
 * Sign a message                                 *
 *************************************************/
-SecureVector<byte> PK_Signer::sign_message(const MemoryRegion<byte>& msg)
+SecureVector<byte> PK_Signer::sign_message(const MemoryRegion<byte>& msg,
+                                           RandomNumberGenerator& rng)
    {
-   return sign_message(msg, msg.size());
+   return sign_message(msg, msg.size(), rng);
    }
 
 /*************************************************
@@ -178,11 +186,13 @@ void PK_Signer::update(const MemoryRegion<byte>& in)
 /*************************************************
 * Create a signature                             *
 *************************************************/
-SecureVector<byte> PK_Signer::signature()
+SecureVector<byte> PK_Signer::signature(RandomNumberGenerator& rng)
    {
    SecureVector<byte> encoded = emsa->encoding_of(emsa->raw_data(),
-                                                  key.max_input_bits());
-   SecureVector<byte> plain_sig = key.sign(encoded, encoded.size());
+                                                  key.max_input_bits(),
+                                                  rng);
+
+   SecureVector<byte> plain_sig = key.sign(encoded, encoded.size(), rng);
 
    if(key.message_parts() == 1 || sig_format == IEEE_1363)
       return plain_sig;
@@ -357,7 +367,11 @@ PK_Verifier_wo_MR::PK_Verifier_wo_MR(const PK_Verifying_wo_MR_Key& k,
 bool PK_Verifier_wo_MR::validate_signature(const MemoryRegion<byte>& msg,
                                            const byte sig[], u32bit sig_len)
    {
-   SecureVector<byte> encoded = emsa->encoding_of(msg, key.max_input_bits());
+   Null_RNG rng;
+
+   SecureVector<byte> encoded =
+      emsa->encoding_of(msg, key.max_input_bits(), rng);
+
    return key.verify(encoded, encoded.size(), sig, sig_len);
    }
 

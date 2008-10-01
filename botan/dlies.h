@@ -1,6 +1,6 @@
 /*************************************************
 * DLIES Header File                              *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DLIES_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * DLIES Encryption                               *
 *************************************************/
-class DLIES_Encryptor : public PK_Encryptor
+class BOTAN_DLL DLIES_Encryptor : public PK_Encryptor
    {
    public:
       DLIES_Encryptor(const PK_Key_Agreement_Key&,
@@ -21,7 +21,8 @@ class DLIES_Encryptor : public PK_Encryptor
                       const std::string& = "HMAC(SHA-160)", u32bit = 20);
       void set_other_key(const MemoryRegion<byte>&);
    private:
-      SecureVector<byte> enc(const byte[], u32bit) const;
+      SecureVector<byte> enc(const byte[], u32bit,
+                             RandomNumberGenerator&) const;
       u32bit maximum_input_size() const;
       const PK_Key_Agreement_Key& key;
       SecureVector<byte> other_key;
@@ -33,7 +34,7 @@ class DLIES_Encryptor : public PK_Encryptor
 /*************************************************
 * DLIES Decryption                               *
 *************************************************/
-class DLIES_Decryptor : public PK_Decryptor
+class BOTAN_DLL DLIES_Decryptor : public PK_Decryptor
    {
    public:
       DLIES_Decryptor(const PK_Key_Agreement_Key&,

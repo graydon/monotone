@@ -1,6 +1,6 @@
 /*************************************************
 * SHA-256 Header File                            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_SHA_256_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * SHA-256                                        *
 *************************************************/
-class SHA_256 : public MDx_HashFunction
+class BOTAN_DLL SHA_256 : public MDx_HashFunction
    {
    public:
       void clear() throw();

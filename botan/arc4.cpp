@@ -1,10 +1,10 @@
 /*************************************************
 * ARC4 Source File                               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/arc4.h>
-#include <botan/bit_ops.h>
+#include <botan/xor_buf.h>
 #include <botan/parsing.h>
 
 namespace Botan {

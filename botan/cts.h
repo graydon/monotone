@@ -1,6 +1,6 @@
 /*************************************************
 * CTS Mode Header File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_CTS_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * CTS Encryption                                 *
 *************************************************/
-class CTS_Encryption : public BlockCipherMode
+class BOTAN_DLL CTS_Encryption : public BlockCipherMode
    {
    public:
       CTS_Encryption(const std::string&);
@@ -28,7 +28,7 @@ class CTS_Encryption : public BlockCipherMode
 /*************************************************
 * CTS Decryption                                 *
 *************************************************/
-class CTS_Decryption : public BlockCipherMode
+class BOTAN_DLL CTS_Decryption : public BlockCipherMode
    {
    public:
       CTS_Decryption(const std::string&);

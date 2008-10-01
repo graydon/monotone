@@ -1,11 +1,10 @@
 /*************************************************
 * AES Source File                                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/aes.h>
 #include <botan/loadstor.h>
-#include <botan/bit_ops.h>
 
 namespace Botan {
 

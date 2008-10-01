@@ -1,6 +1,6 @@
 /*************************************************
 * BER Decoder Header File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_BER_DECODER_H__
@@ -8,13 +8,14 @@
 
 #include <botan/asn1_oid.h>
 #include <botan/data_src.h>
+#include <botan/enums.h>
 
 namespace Botan {
 
 /*************************************************
 * BER Decoding Object                            *
 *************************************************/
-class BER_Decoder
+class BOTAN_DLL BER_Decoder
    {
    public:
       BER_Object get_next_object();
@@ -24,7 +25,7 @@ class BER_Decoder
       BER_Decoder& verify_end();
       BER_Decoder& discard_remaining();
 
-      BER_Decoder  start_cons(ASN1_Tag);
+      BER_Decoder  start_cons(ASN1_Tag, ASN1_Tag = UNIVERSAL);
       BER_Decoder& end_cons();
 
       BER_Decoder& raw_bytes(MemoryRegion<byte>&);
@@ -120,7 +121,7 @@ BER_Decoder& BER_Decoder::decode_list(std::vector<T>& vec, bool clear_it)
 *************************************************/
 namespace BER {
 
-void decode(BER_Decoder&, Key_Constraints&);
+void BOTAN_DLL decode(BER_Decoder&, Key_Constraints&);
 
 }
 

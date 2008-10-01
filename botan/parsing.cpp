@@ -1,6 +1,6 @@
 /*************************************************
 * Parser Functions Source File                   *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/parsing.h>
@@ -52,6 +52,37 @@ std::string to_string(u64bit n, u32bit min_len)
       lenstr = "0" + lenstr;
 
    return lenstr;
+   }
+
+/*************************************************
+* Convert a string into a time duration          *
+*************************************************/
+u32bit timespec_to_u32bit(const std::string& timespec)
+   {
+   if(timespec == "")
+      return 0;
+
+   const char suffix = timespec[timespec.size()-1];
+   std::string value = timespec.substr(0, timespec.size()-1);
+
+   u32bit scale = 1;
+
+   if(Charset::is_digit(suffix))
+      value += suffix;
+   else if(suffix == 's')
+      scale = 1;
+   else if(suffix == 'm')
+      scale = 60;
+   else if(suffix == 'h')
+      scale = 60 * 60;
+   else if(suffix == 'd')
+      scale = 24 * 60 * 60;
+   else if(suffix == 'y')
+      scale = 365 * 24 * 60 * 60;
+   else
+      throw Decoding_Error("timespec_to_u32bit: Bad input " + timespec);
+
+   return scale * to_u32bit(value);
    }
 
 /*************************************************
@@ -208,34 +239,6 @@ bool x500_name_cmp(const std::string& name1, const std::string& name2)
    if((p1 != name1.end()) || (p2 != name2.end()))
       return false;
    return true;
-   }
-
-/*************************************************
-* Parse and compute an arithmetic expression     *
-*************************************************/
-u32bit parse_expr(const std::string& expr)
-   {
-   const bool have_add = (expr.find('+') != std::string::npos);
-   const bool have_mul = (expr.find('*') != std::string::npos);
-
-   if(have_add)
-      {
-      std::vector<std::string> sub_expr = split_on(expr, '+');
-      u32bit result = 0;
-      for(u32bit j = 0; j != sub_expr.size(); ++j)
-         result += parse_expr(sub_expr[j]);
-      return result;
-      }
-   else if(have_mul)
-      {
-      std::vector<std::string> sub_expr = split_on(expr, '*');
-      u32bit result = 1;
-      for(u32bit j = 0; j != sub_expr.size(); ++j)
-         result *= parse_expr(sub_expr[j]);
-      return result;
-      }
-   else
-      return to_u32bit(expr);
    }
 
 /*************************************************

@@ -1,11 +1,11 @@
 /*************************************************
 * OFB Mode Source File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/ofb.h>
 #include <botan/lookup.h>
-#include <botan/bit_ops.h>
+#include <botan/xor_buf.h>
 #include <algorithm>
 
 namespace Botan {

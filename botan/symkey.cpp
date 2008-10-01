@@ -1,13 +1,13 @@
 /*************************************************
 * OctetString Source File                        *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/symkey.h>
-#include <botan/bit_ops.h>
+#include <botan/xor_buf.h>
+#include <botan/rng.h>
 #include <botan/pipe.h>
 #include <botan/hex.h>
-#include <botan/rng.h>
 #include <algorithm>
 
 namespace Botan {
@@ -15,10 +15,11 @@ namespace Botan {
 /*************************************************
 * Create an OctetString from RNG output          *
 *************************************************/
-void OctetString::change(u32bit length)
+OctetString::OctetString(RandomNumberGenerator& rng,
+                         u32bit length)
    {
    bits.create(length);
-   Global_RNG::randomize(bits, length);
+   rng.randomize(bits, length);
    }
 
 /*************************************************

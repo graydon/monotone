@@ -1,6 +1,6 @@
 /*************************************************
 * CBC-MAC Header File                            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_CBC_MAC__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * CBC-MAC                                        *
 *************************************************/
-class CBC_MAC : public MessageAuthenticationCode
+class BOTAN_DLL CBC_MAC : public MessageAuthenticationCode
    {
    public:
       void clear() throw();

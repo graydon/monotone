@@ -1,14 +1,12 @@
 /*************************************************
 * DSA Parameter Generation Source File           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/dl_group.h>
 #include <botan/numthry.h>
-#include <botan/libstate.h>
 #include <botan/lookup.h>
 #include <botan/parsing.h>
-#include <botan/rng.h>
 #include <algorithm>
 #include <memory>
 
@@ -21,12 +19,15 @@ namespace {
 *************************************************/
 bool fips186_3_valid_size(u32bit pbits, u32bit qbits)
    {
-   if(pbits == 1024 && qbits == 160)
-      return true;
-   if(pbits == 2048 && (qbits == 224 || qbits == 256))
-      return true;
-   if(pbits == 3072 && qbits == 256)
-      return true;
+   if(qbits == 160)
+      return (pbits == 512 || pbits == 768 || pbits == 1024);
+
+   if(qbits == 224)
+      return (pbits == 2048);
+
+   if(qbits == 256)
+      return (pbits == 2048 || pbits == 3072);
+
    return false;
    }
 
@@ -35,7 +36,8 @@ bool fips186_3_valid_size(u32bit pbits, u32bit qbits)
 /*************************************************
 * Attempt DSA prime generation with given seed   *
 *************************************************/
-bool DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
+bool DL_Group::generate_dsa_primes(RandomNumberGenerator& rng,
+                                   BigInt& p, BigInt& q,
                                    u32bit pbits, u32bit qbits,
                                    const MemoryRegion<byte>& seed_c)
    {
@@ -81,11 +83,8 @@ bool DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
    q.set_bit(qbits-1);
    q.set_bit(0);
 
-   if(!is_prime(q))
+   if(!is_prime(q, rng))
       return false;
-
-   global_state().pulse(PRIME_FOUND);
-
    const u32bit n = (pbits-1) / (HASH_SIZE * 8),
                 b = (pbits-1) % (HASH_SIZE * 8);
 
@@ -94,8 +93,6 @@ bool DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
 
    for(u32bit j = 0; j != 4096; ++j)
       {
-      global_state().pulse(PRIME_SEARCHING);
-
       for(u32bit k = 0; k <= n; ++k)
          {
          ++seed;
@@ -109,11 +106,8 @@ bool DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
 
       p = X - (X % (2*q) - 1);
 
-      if(p.bits() == pbits && is_prime(p))
-         {
-         global_state().pulse(PRIME_FOUND);
+      if(p.bits() == pbits && is_prime(p, rng))
          return true;
-         }
       }
    return false;
    }
@@ -121,17 +115,17 @@ bool DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
 /*************************************************
 * Generate DSA Primes                            *
 *************************************************/
-SecureVector<byte> DL_Group::generate_dsa_primes(BigInt& p, BigInt& q,
+SecureVector<byte> DL_Group::generate_dsa_primes(RandomNumberGenerator& rng,
+                                                 BigInt& p, BigInt& q,
                                                  u32bit pbits, u32bit qbits)
    {
    SecureVector<byte> seed(qbits/8);
 
    while(true)
       {
-      Global_RNG::randomize(seed, seed.size());
-      global_state().pulse(PRIME_SEARCHING);
+      rng.randomize(seed, seed.size());
 
-      if(generate_dsa_primes(p, q, pbits, qbits, seed))
+      if(generate_dsa_primes(rng, p, q, pbits, qbits, seed))
          return seed;
       }
    }

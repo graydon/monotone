@@ -798,8 +798,8 @@ session::mk_nonce()
 {
   I(this->saved_nonce().empty());
   char buf[constants::merkle_hash_length_in_bytes];
-  Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf),
-          constants::merkle_hash_length_in_bytes);
+  keys.get_rng().randomize(reinterpret_cast<Botan::byte *>(buf),
+                             constants::merkle_hash_length_in_bytes);
   this->saved_nonce = id(string(buf, buf + constants::merkle_hash_length_in_bytes));
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   return this->saved_nonce;

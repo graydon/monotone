@@ -1,6 +1,6 @@
 /*************************************************
 * DataSink Header File                           *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DATA_SINK_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Generic DataSink Interface                     *
 *************************************************/
-class DataSink : public Filter
+class BOTAN_DLL DataSink : public Filter
    {
    public:
       bool attachable() { return false; }
@@ -28,17 +28,19 @@ class DataSink : public Filter
 /*************************************************
 * Stream-Based DataSink                          *
 *************************************************/
-class DataSink_Stream : public DataSink
+class BOTAN_DLL DataSink_Stream : public DataSink
    {
    public:
       void write(const byte[], u32bit);
-      DataSink_Stream(std::ostream&);
+
+      DataSink_Stream(std::ostream&, const std::string& = "");
       DataSink_Stream(const std::string&, bool = false);
       ~DataSink_Stream();
    private:
-      const std::string fsname;
+      const std::string identifier;
+      const bool owner;
+
       std::ostream* sink;
-      bool owns;
    };
 
 }

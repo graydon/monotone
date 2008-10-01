@@ -1,6 +1,6 @@
 /*************************************************
 * RSA Header File                                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_RSA_H__
@@ -13,14 +13,16 @@ namespace Botan {
 /*************************************************
 * RSA Public Key                                 *
 *************************************************/
-class RSA_PublicKey : public PK_Encrypting_Key,
-                      public PK_Verifying_with_MR_Key,
-                      public virtual IF_Scheme_PublicKey
+class BOTAN_DLL RSA_PublicKey : public PK_Encrypting_Key,
+                                public PK_Verifying_with_MR_Key,
+                                public virtual IF_Scheme_PublicKey
    {
    public:
       std::string algo_name() const { return "RSA"; }
 
-      SecureVector<byte> encrypt(const byte[], u32bit) const;
+      SecureVector<byte> encrypt(const byte[], u32bit,
+                                 RandomNumberGenerator& rng) const;
+
       SecureVector<byte> verify(const byte[], u32bit) const;
 
       RSA_PublicKey() {}
@@ -32,21 +34,26 @@ class RSA_PublicKey : public PK_Encrypting_Key,
 /*************************************************
 * RSA Private Key                                *
 *************************************************/
-class RSA_PrivateKey : public RSA_PublicKey,
-                       public PK_Decrypting_Key,
-                       public PK_Signing_Key,
-                       public IF_Scheme_PrivateKey
+class BOTAN_DLL RSA_PrivateKey : public RSA_PublicKey,
+                                 public PK_Decrypting_Key,
+                                 public PK_Signing_Key,
+                                 public IF_Scheme_PrivateKey
    {
    public:
-      SecureVector<byte> decrypt(const byte[], u32bit) const;
-      SecureVector<byte> sign(const byte[], u32bit) const;
+      SecureVector<byte> sign(const byte[], u32bit,
+                              RandomNumberGenerator&) const;
 
-      bool check_key(bool) const;
+      SecureVector<byte> decrypt(const byte[], u32bit) const;
+
+      bool check_key(RandomNumberGenerator& rng, bool) const;
 
       RSA_PrivateKey() {}
-      RSA_PrivateKey(const BigInt&, const BigInt&, const BigInt&,
-                     const BigInt& = 0, const BigInt& = 0);
-      RSA_PrivateKey(u32bit, u32bit = 65537);
+
+      RSA_PrivateKey(RandomNumberGenerator&,
+                     const BigInt& p, const BigInt& q, const BigInt& e,
+                     const BigInt& d = 0, const BigInt& n = 0);
+
+      RSA_PrivateKey(RandomNumberGenerator&, u32bit bits, u32bit = 65537);
    private:
       BigInt private_op(const byte[], u32bit) const;
    };

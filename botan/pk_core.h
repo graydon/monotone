@@ -1,6 +1,6 @@
 /*************************************************
 * PK Algorithm Core Header File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_PK_CORE_H__
@@ -16,7 +16,7 @@ namespace Botan {
 /*************************************************
 * IF Core                                        *
 *************************************************/
-class IF_Core
+class BOTAN_DLL IF_Core
    {
    public:
       BigInt public_op(const BigInt&) const;
@@ -26,9 +26,14 @@ class IF_Core
 
       IF_Core() { op = 0; }
       IF_Core(const IF_Core&);
-      IF_Core(const BigInt&, const BigInt&,
-              const BigInt& = 0, const BigInt& = 0, const BigInt& = 0,
-              const BigInt& = 0, const BigInt& = 0, const BigInt& = 0);
+
+      IF_Core(const BigInt&, const BigInt&);
+
+      IF_Core(RandomNumberGenerator& rng,
+              const BigInt&, const BigInt&,
+              const BigInt&, const BigInt&, const BigInt&,
+              const BigInt&, const BigInt&, const BigInt&);
+
       ~IF_Core() { delete op; }
    private:
       IF_Operation* op;
@@ -38,7 +43,7 @@ class IF_Core
 /*************************************************
 * DSA Core                                       *
 *************************************************/
-class DSA_Core
+class BOTAN_DLL DSA_Core
    {
    public:
       SecureVector<byte> sign(const byte[], u32bit, const BigInt&) const;
@@ -57,7 +62,7 @@ class DSA_Core
 /*************************************************
 * NR Core                                        *
 *************************************************/
-class NR_Core
+class BOTAN_DLL NR_Core
    {
    public:
       SecureVector<byte> sign(const byte[], u32bit, const BigInt&) const;
@@ -76,7 +81,7 @@ class NR_Core
 /*************************************************
 * ElGamal Core                                   *
 *************************************************/
-class ELG_Core
+class BOTAN_DLL ELG_Core
    {
    public:
       SecureVector<byte> encrypt(const byte[], u32bit, const BigInt&) const;
@@ -86,7 +91,11 @@ class ELG_Core
 
       ELG_Core() { op = 0; }
       ELG_Core(const ELG_Core&);
-      ELG_Core(const DL_Group&, const BigInt&, const BigInt& = 0);
+
+      ELG_Core(const DL_Group&, const BigInt&);
+      ELG_Core(RandomNumberGenerator&, const DL_Group&,
+               const BigInt&, const BigInt&);
+
       ~ELG_Core() { delete op; }
    private:
       ELG_Operation* op;
@@ -97,7 +106,7 @@ class ELG_Core
 /*************************************************
 * DH Core                                        *
 *************************************************/
-class DH_Core
+class BOTAN_DLL DH_Core
    {
    public:
       BigInt agree(const BigInt&) const;
@@ -106,7 +115,8 @@ class DH_Core
 
       DH_Core() { op = 0; }
       DH_Core(const DH_Core&);
-      DH_Core(const DL_Group&, const BigInt&);
+      DH_Core(RandomNumberGenerator& rng,
+              const DL_Group&, const BigInt&);
       ~DH_Core() { delete op; }
    private:
       DH_Operation* op;

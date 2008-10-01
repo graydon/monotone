@@ -1,12 +1,12 @@
 /*************************************************
 * PKCS #5 Source File                            *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pkcs5.h>
 #include <botan/lookup.h>
 #include <botan/loadstor.h>
-#include <botan/bit_ops.h>
+#include <botan/xor_buf.h>
 #include <botan/hmac.h>
 #include <algorithm>
 #include <memory>

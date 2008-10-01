@@ -1,6 +1,6 @@
 /*************************************************
 * Filter Header File                             *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_FILTER_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Filter Base Class                              *
 *************************************************/
-class Filter
+class BOTAN_DLL Filter
    {
    public:
       virtual void write(const byte[], u32bit) = 0;
@@ -55,7 +55,7 @@ class Filter
 /*************************************************
 * Fanout Filter Base Class                       *
 *************************************************/
-class Fanout_Filter : public Filter
+class BOTAN_DLL Fanout_Filter : public Filter
    {
    protected:
       void incr_owns() { ++filter_owns; }

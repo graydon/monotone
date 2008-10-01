@@ -1,47 +1,45 @@
 /*************************************************
 * PK Algorithm Core Source File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/pk_core.h>
 #include <botan/numthry.h>
 #include <botan/engine.h>
-#include <botan/config.h>
+#include <botan/parsing.h>
 #include <algorithm>
 
 namespace Botan {
 
 namespace {
 
-/*************************************************
-* Return a new blinding factor                   *
-*************************************************/
-BigInt blinding_factor(u32bit modulus_size)
-   {
-   const u32bit BLINDING_BITS =
-      global_config().option_as_u32bit("pk/blinder_size");
-
-   if(BLINDING_BITS == 0)
-      return 0;
-   return random_integer(std::min(modulus_size - 1, BLINDING_BITS));
-   }
+const u32bit BLINDING_BITS = BOTAN_PRIVATE_KEY_OP_BLINDING_BITS;
 
 }
 
 /*************************************************
 * IF_Core Constructor                            *
 *************************************************/
-IF_Core::IF_Core(const BigInt& e, const BigInt& n, const BigInt& d,
+IF_Core::IF_Core(const BigInt& e, const BigInt& n)
+   {
+   op = Engine_Core::if_op(e, n, 0, 0, 0, 0, 0, 0);
+   }
+
+
+/*************************************************
+* IF_Core Constructor                            *
+*************************************************/
+IF_Core::IF_Core(RandomNumberGenerator& rng,
+                 const BigInt& e, const BigInt& n, const BigInt& d,
                  const BigInt& p, const BigInt& q,
                  const BigInt& d1, const BigInt& d2, const BigInt& c)
    {
    op = Engine_Core::if_op(e, n, d, p, q, d1, d2, c);
 
-   if(d != 0)
+   if(BLINDING_BITS)
       {
-      BigInt k = blinding_factor(n.bits());
-      if(k != 0)
-         blinder = Blinder(power_mod(k, e, n), inverse_mod(k, n), n);
+      BigInt k(rng, std::min(n.bits()-1, BLINDING_BITS));
+      blinder = Blinder(power_mod(k, e, n), inverse_mod(k, n), n);
       }
    }
 
@@ -180,19 +178,27 @@ SecureVector<byte> NR_Core::sign(const byte in[], u32bit length,
 /*************************************************
 * ELG_Core Constructor                           *
 *************************************************/
-ELG_Core::ELG_Core(const DL_Group& group, const BigInt& y, const BigInt& x)
+ELG_Core::ELG_Core(const DL_Group& group, const BigInt& y)
+   {
+   op = Engine_Core::elg_op(group, y, 0);
+   p_bytes = 0;
+   }
+
+/*************************************************
+* ELG_Core Constructor                           *
+*************************************************/
+ELG_Core::ELG_Core(RandomNumberGenerator& rng,
+                   const DL_Group& group, const BigInt& y, const BigInt& x)
    {
    op = Engine_Core::elg_op(group, y, x);
 
-   p_bytes = 0;
-   if(x != 0)
-      {
-      const BigInt& p = group.get_p();
-      p_bytes = group.get_p().bytes();
+   const BigInt& p = group.get_p();
+   p_bytes = p.bytes();
 
-      BigInt k = blinding_factor(p.bits());
-      if(k != 0)
-         blinder = Blinder(k, power_mod(k, x, p), p);
+   if(BLINDING_BITS)
+      {
+      BigInt k(rng, std::min(p.bits()-1, BLINDING_BITS));
+      blinder = Blinder(k, power_mod(k, x, p), p);
       }
    }
 
@@ -247,12 +253,15 @@ SecureVector<byte> ELG_Core::decrypt(const byte in[], u32bit length) const
 /*************************************************
 * DH_Core Constructor                            *
 *************************************************/
-DH_Core::DH_Core(const DL_Group& group, const BigInt& x)
+DH_Core::DH_Core(RandomNumberGenerator& rng,
+                 const DL_Group& group, const BigInt& x)
    {
    op = Engine_Core::dh_op(group, x);
 
    const BigInt& p = group.get_p();
-   BigInt k = blinding_factor(p.bits());
+
+   BigInt k(rng, std::min(p.bits()-1, BLINDING_BITS));
+
    if(k != 0)
       blinder = Blinder(k, power_mod(inverse_mod(k, p), x, p), p);
    }

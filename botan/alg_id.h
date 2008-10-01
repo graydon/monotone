@@ -1,6 +1,6 @@
 /*************************************************
 * Algorithm Identifier Header File               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_ALGORITHM_IDENTIFIER_H__
@@ -15,7 +15,7 @@ namespace Botan {
 /*************************************************
 * Algorithm Identifier                           *
 *************************************************/
-class AlgorithmIdentifier : public ASN1_Object
+class BOTAN_DLL AlgorithmIdentifier : public ASN1_Object
    {
    public:
       enum Encoding_Option { USE_NULL_PARAM };
@@ -33,6 +33,14 @@ class AlgorithmIdentifier : public ASN1_Object
       OID oid;
       SecureVector<byte> parameters;
    };
+
+/*************************************************
+* Comparison Operations                          *
+*************************************************/
+bool BOTAN_DLL operator==(const AlgorithmIdentifier&,
+                          const AlgorithmIdentifier&);
+bool BOTAN_DLL operator!=(const AlgorithmIdentifier&,
+                          const AlgorithmIdentifier&);
 
 }
 

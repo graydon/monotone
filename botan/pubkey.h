@@ -1,6 +1,6 @@
 /*************************************************
 * Public Key Interface Header File               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_PUBKEY_H__
@@ -12,24 +12,30 @@
 
 namespace Botan {
 
+enum Signature_Format { IEEE_1363, DER_SEQUENCE };
+
 /*************************************************
 * Public Key Encryptor                           *
 *************************************************/
-class PK_Encryptor
+class BOTAN_DLL PK_Encryptor
    {
    public:
-      SecureVector<byte> encrypt(const byte[], u32bit) const;
-      SecureVector<byte> encrypt(const MemoryRegion<byte>&) const;
+      SecureVector<byte> encrypt(const byte[], u32bit,
+                                 RandomNumberGenerator&) const;
+      SecureVector<byte> encrypt(const MemoryRegion<byte>&,
+                                 RandomNumberGenerator&) const;
+
       virtual u32bit maximum_input_size() const = 0;
       virtual ~PK_Encryptor() {}
    private:
-      virtual SecureVector<byte> enc(const byte[], u32bit) const = 0;
+      virtual SecureVector<byte> enc(const byte[], u32bit,
+                                     RandomNumberGenerator&) const = 0;
    };
 
 /*************************************************
 * Public Key Decryptor                           *
 *************************************************/
-class PK_Decryptor
+class BOTAN_DLL PK_Decryptor
    {
    public:
       SecureVector<byte> decrypt(const byte[], u32bit) const;
@@ -42,23 +48,28 @@ class PK_Decryptor
 /*************************************************
 * Public Key Signer                              *
 *************************************************/
-class PK_Signer
+class BOTAN_DLL PK_Signer
    {
    public:
-      SecureVector<byte> sign_message(const byte[], u32bit);
-      SecureVector<byte> sign_message(const MemoryRegion<byte>&);
+      SecureVector<byte> sign_message(const byte[], u32bit,
+                                      RandomNumberGenerator&);
+      SecureVector<byte> sign_message(const MemoryRegion<byte>&,
+                                      RandomNumberGenerator&);
 
       void update(byte);
       void update(const byte[], u32bit);
       void update(const MemoryRegion<byte>&);
 
-      SecureVector<byte> signature();
+      SecureVector<byte> signature(RandomNumberGenerator&);
 
       void set_output_format(Signature_Format);
 
       PK_Signer(const PK_Signing_Key&, const std::string&);
       ~PK_Signer() { delete emsa; }
    private:
+      PK_Signer(const PK_Signer&);
+      PK_Signer& operator=(const PK_Signer&);
+
       const PK_Signing_Key& key;
       Signature_Format sig_format;
       EMSA* emsa;
@@ -67,7 +78,7 @@ class PK_Signer
 /*************************************************
 * Public Key Verifier                            *
 *************************************************/
-class PK_Verifier
+class BOTAN_DLL PK_Verifier
    {
    public:
       bool verify_message(const byte[], u32bit, const byte[], u32bit);
@@ -93,12 +104,15 @@ class PK_Verifier
 
       Signature_Format sig_format;
       EMSA* emsa;
+   private:
+      PK_Verifier(const PK_Verifier&);
+      PK_Verifier& operator=(const PK_Verifier&);
    };
 
 /*************************************************
 * Key Agreement                                  *
 *************************************************/
-class PK_Key_Agreement
+class BOTAN_DLL PK_Key_Agreement
    {
    public:
       SymmetricKey derive_key(u32bit, const byte[], u32bit,
@@ -108,6 +122,9 @@ class PK_Key_Agreement
 
       PK_Key_Agreement(const PK_Key_Agreement_Key&, const std::string&);
    private:
+      PK_Key_Agreement(const PK_Key_Agreement_Key&);
+      PK_Key_Agreement& operator=(const PK_Key_Agreement&);
+
       const PK_Key_Agreement_Key& key;
       const std::string kdf_name;
    };
@@ -115,14 +132,21 @@ class PK_Key_Agreement
 /*************************************************
 * Encryption with an MR algorithm and an EME     *
 *************************************************/
-class PK_Encryptor_MR_with_EME : public PK_Encryptor
+class BOTAN_DLL PK_Encryptor_MR_with_EME : public PK_Encryptor
    {
    public:
       u32bit maximum_input_size() const;
+
       PK_Encryptor_MR_with_EME(const PK_Encrypting_Key&, const std::string&);
       ~PK_Encryptor_MR_with_EME() { delete encoder; }
+
    private:
-      SecureVector<byte> enc(const byte[], u32bit) const;
+      PK_Encryptor_MR_with_EME(const PK_Encryptor_MR_with_EME&);
+      PK_Encryptor_MR_with_EME& operator=(const PK_Encryptor_MR_with_EME&);
+
+      SecureVector<byte> enc(const byte[], u32bit,
+                             RandomNumberGenerator& rng) const;
+
       const PK_Encrypting_Key& key;
       const EME* encoder;
    };
@@ -130,13 +154,17 @@ class PK_Encryptor_MR_with_EME : public PK_Encryptor
 /*************************************************
 * Decryption with an MR algorithm and an EME     *
 *************************************************/
-class PK_Decryptor_MR_with_EME : public PK_Decryptor
+class BOTAN_DLL PK_Decryptor_MR_with_EME : public PK_Decryptor
    {
    public:
       PK_Decryptor_MR_with_EME(const PK_Decrypting_Key&, const std::string&);
       ~PK_Decryptor_MR_with_EME() { delete encoder; }
    private:
+      PK_Decryptor_MR_with_EME(const PK_Decryptor_MR_with_EME&);
+      PK_Decryptor_MR_with_EME& operator=(const PK_Decryptor_MR_with_EME&);
+
       SecureVector<byte> dec(const byte[], u32bit) const;
+
       const PK_Decrypting_Key& key;
       const EME* encoder;
    };
@@ -144,11 +172,14 @@ class PK_Decryptor_MR_with_EME : public PK_Decryptor
 /*************************************************
 * Public Key Verifier with Message Recovery      *
 *************************************************/
-class PK_Verifier_with_MR : public PK_Verifier
+class BOTAN_DLL PK_Verifier_with_MR : public PK_Verifier
    {
    public:
       PK_Verifier_with_MR(const PK_Verifying_with_MR_Key&, const std::string&);
    private:
+      PK_Verifier_with_MR(const PK_Verifying_with_MR_Key&);
+      PK_Verifier_with_MR& operator=(const PK_Verifier_with_MR&);
+
       bool validate_signature(const MemoryRegion<byte>&, const byte[], u32bit);
       u32bit key_message_parts() const { return key.message_parts(); }
       u32bit key_message_part_size() const { return key.message_part_size(); }
@@ -159,11 +190,14 @@ class PK_Verifier_with_MR : public PK_Verifier
 /*************************************************
 * Public Key Verifier without Message Recovery   *
 *************************************************/
-class PK_Verifier_wo_MR : public PK_Verifier
+class BOTAN_DLL PK_Verifier_wo_MR : public PK_Verifier
    {
    public:
       PK_Verifier_wo_MR(const PK_Verifying_wo_MR_Key&, const std::string&);
    private:
+      PK_Verifier_wo_MR(const PK_Verifying_wo_MR_Key&);
+      PK_Verifier_wo_MR& operator=(const PK_Verifier_wo_MR&);
+
       bool validate_signature(const MemoryRegion<byte>&, const byte[], u32bit);
       u32bit key_message_parts() const { return key.message_parts(); }
       u32bit key_message_part_size() const { return key.message_part_size(); }

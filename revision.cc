@@ -42,6 +42,7 @@
 #include "database.hh"
 #include "roster.hh"
 #include "graph.hh"
+#include "key_store.hh"
 
 using std::back_inserter;
 using std::copy;
@@ -932,7 +933,7 @@ void anc_graph::write_certs()
     for (set<string>::const_iterator i = branches.begin(); i != branches.end(); ++i)
       {
         char buf[constants::epochlen_bytes];
-        Botan::Global_RNG::randomize(reinterpret_cast<Botan::byte *>(buf), constants::epochlen_bytes);
+        keys.get_rng().randomize(reinterpret_cast<Botan::byte *>(buf), constants::epochlen_bytes);
         epoch_data new_epoch(string(buf, buf + constants::epochlen_bytes));
         L(FL("setting epoch for %s to %s")
           % *i % new_epoch);

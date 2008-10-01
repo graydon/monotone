@@ -1,6 +1,6 @@
 /*************************************************
 * Pipe Header File                               *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_PIPE_H__
@@ -15,10 +15,19 @@ namespace Botan {
 /*************************************************
 * Pipe                                           *
 *************************************************/
-class Pipe : public DataSource
+class BOTAN_DLL Pipe : public DataSource
    {
    public:
-      static const u32bit LAST_MESSAGE, DEFAULT_MESSAGE;
+      typedef u32bit message_id;
+
+      class Invalid_Message_Number : public Invalid_Argument
+         {
+         public:
+            Invalid_Message_Number(const std::string&, message_id);
+         };
+
+      static const message_id LAST_MESSAGE;
+      static const message_id DEFAULT_MESSAGE;
 
       void write(const byte[], u32bit);
       void write(const MemoryRegion<byte>&);
@@ -31,22 +40,22 @@ class Pipe : public DataSource
       void process_msg(const std::string&);
       void process_msg(DataSource&);
 
-      u32bit remaining(u32bit = DEFAULT_MESSAGE) const;
+      u32bit remaining(message_id = DEFAULT_MESSAGE) const;
 
       u32bit read(byte[], u32bit);
-      u32bit read(byte[], u32bit, u32bit);
-      u32bit read(byte&, u32bit = DEFAULT_MESSAGE);
+      u32bit read(byte[], u32bit, message_id);
+      u32bit read(byte&, message_id = DEFAULT_MESSAGE);
 
-      SecureVector<byte> read_all(u32bit = DEFAULT_MESSAGE);
-      std::string read_all_as_string(u32bit = DEFAULT_MESSAGE);
+      SecureVector<byte> read_all(message_id = DEFAULT_MESSAGE);
+      std::string read_all_as_string(message_id = DEFAULT_MESSAGE);
 
       u32bit peek(byte[], u32bit, u32bit) const;
-      u32bit peek(byte[], u32bit, u32bit, u32bit) const;
-      u32bit peek(byte&, u32bit, u32bit = DEFAULT_MESSAGE) const;
+      u32bit peek(byte[], u32bit, u32bit, message_id) const;
+      u32bit peek(byte&, u32bit, message_id = DEFAULT_MESSAGE) const;
 
-      u32bit default_msg() const { return default_read; }
-      void set_default_msg(u32bit);
-      u32bit message_count() const;
+      message_id default_msg() const { return default_read; }
+      void set_default_msg(message_id);
+      message_id message_count() const;
       bool end_of_data() const;
 
       void start_msg();
@@ -68,19 +77,19 @@ class Pipe : public DataSource
       void find_endpoints(Filter*);
       void clear_endpoints(Filter*);
 
-      u32bit get_message_no(const std::string&, u32bit) const;
+      message_id get_message_no(const std::string&, message_id) const;
 
       Filter* pipe;
       class Output_Buffers* outputs;
-      u32bit default_read;
+      message_id default_read;
       bool inside_msg;
    };
 
 /*************************************************
 * I/O Operators for Pipe                         *
 *************************************************/
-std::ostream& operator<<(std::ostream&, Pipe&);
-std::istream& operator>>(std::istream&, Pipe&);
+BOTAN_DLL std::ostream& operator<<(std::ostream&, Pipe&);
+BOTAN_DLL std::istream& operator>>(std::istream&, Pipe&);
 
 }
 

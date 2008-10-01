@@ -1,6 +1,6 @@
 /*************************************************
 * IF Scheme Source File                          *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/if_algo.h>
@@ -114,7 +114,7 @@ PKCS8_Encoder* IF_Scheme_PrivateKey::pkcs8_encoder() const
 /*************************************************
 * Return the PKCS #8 public key decoder          *
 *************************************************/
-PKCS8_Decoder* IF_Scheme_PrivateKey::pkcs8_decoder()
+PKCS8_Decoder* IF_Scheme_PrivateKey::pkcs8_decoder(RandomNumberGenerator& rng)
    {
    class IF_Scheme_Decoder : public PKCS8_Decoder
       {
@@ -141,15 +141,17 @@ PKCS8_Decoder* IF_Scheme_PrivateKey::pkcs8_decoder()
             if(version != 0)
                throw Decoding_Error("Unknown PKCS #1 key format version");
 
-            key->PKCS8_load_hook();
+            key->PKCS8_load_hook(rng);
             }
 
-         IF_Scheme_Decoder(IF_Scheme_PrivateKey* k) : key(k) {}
+         IF_Scheme_Decoder(IF_Scheme_PrivateKey* k, RandomNumberGenerator& r) :
+            key(k), rng(r) {}
       private:
          IF_Scheme_PrivateKey* key;
+         RandomNumberGenerator& rng;
       };
 
-   return new IF_Scheme_Decoder(this);
+   return new IF_Scheme_Decoder(this, rng);
    }
 
 /*************************************************
@@ -158,31 +160,31 @@ PKCS8_Decoder* IF_Scheme_PrivateKey::pkcs8_decoder()
 void IF_Scheme_PublicKey::X509_load_hook()
    {
    core = IF_Core(e, n);
-   load_check();
    }
 
 /*************************************************
 * Algorithm Specific PKCS #8 Initialization Code *
 *************************************************/
-void IF_Scheme_PrivateKey::PKCS8_load_hook(bool generated)
+void IF_Scheme_PrivateKey::PKCS8_load_hook(RandomNumberGenerator& rng,
+                                           bool generated)
    {
    if(n == 0)  n = p * q;
    if(d1 == 0) d1 = d % (p - 1);
    if(d2 == 0) d2 = d % (q - 1);
    if(c == 0)  c = inverse_mod(q, p);
 
-   core = IF_Core(e, n, d, p, q, d1, d2, c);
+   core = IF_Core(rng, e, n, d, p, q, d1, d2, c);
 
    if(generated)
-      gen_check();
+      gen_check(rng);
    else
-      load_check();
+      load_check(rng);
    }
 
 /*************************************************
 * Check IF Scheme Public Parameters              *
 *************************************************/
-bool IF_Scheme_PublicKey::check_key(bool) const
+bool IF_Scheme_PublicKey::check_key(RandomNumberGenerator&, bool) const
    {
    if(n < 35 || n.is_even() || e < 2)
       return false;
@@ -192,7 +194,8 @@ bool IF_Scheme_PublicKey::check_key(bool) const
 /*************************************************
 * Check IF Scheme Private Parameters             *
 *************************************************/
-bool IF_Scheme_PrivateKey::check_key(bool strong) const
+bool IF_Scheme_PrivateKey::check_key(RandomNumberGenerator& rng,
+                                     bool strong) const
    {
    if(n < 35 || n.is_even() || e < 2 || d < 2 || p < 3 || q < 3 || p*q != n)
       return false;
@@ -202,7 +205,7 @@ bool IF_Scheme_PrivateKey::check_key(bool strong) const
 
    if(d1 != d % (p - 1) || d2 != d % (q - 1) || c != inverse_mod(q, p))
       return false;
-   if(!check_prime(p) || !check_prime(q))
+   if(!check_prime(p, rng) || !check_prime(q, rng))
       return false;
    return true;
    }

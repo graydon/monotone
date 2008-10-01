@@ -1,6 +1,6 @@
 /*************************************************
 * Hex Encoder/Decoder Header File                *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_HEX_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Hex Encoder                                    *
 *************************************************/
-class Hex_Encoder : public Filter
+class BOTAN_DLL Hex_Encoder : public Filter
    {
    public:
       enum Case { Uppercase, Lowercase };
@@ -39,7 +39,7 @@ class Hex_Encoder : public Filter
 /*************************************************
 * Hex Decoder                                    *
 *************************************************/
-class Hex_Decoder : public Filter
+class BOTAN_DLL Hex_Decoder : public Filter
    {
    public:
       static byte decode(const byte[2]);

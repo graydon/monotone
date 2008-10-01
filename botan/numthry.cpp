@@ -1,10 +1,10 @@
 /*************************************************
 * Number Theory Source File                      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2008 Jack Lloyd                       *
 *************************************************/
 
 #include <botan/numthry.h>
-#include <botan/libstate.h>
+#include <botan/bit_ops.h>
 #include <algorithm>
 
 namespace Botan {
@@ -57,10 +57,12 @@ u32bit miller_rabin_test_iterations(u32bit bits, bool verify)
    for(u32bit j = 0; tests[j].bits; ++j)
       {
       if(bits <= tests[j].bits)
+         {
          if(verify)
             return tests[j].verify_iter;
          else
             return tests[j].check_iter;
+         }
       }
    return 2;
    }
@@ -72,12 +74,27 @@ u32bit miller_rabin_test_iterations(u32bit bits, bool verify)
 *************************************************/
 u32bit low_zero_bits(const BigInt& n)
    {
-   if(n.is_zero()) return 0;
+   if(n.is_negative() || n.is_zero()) return 0;
 
-   u32bit bits = 0, max_bits = n.bits();
-   while((n.get_bit(bits) == 0) && bits < max_bits)
-      ++bits;
-   return bits;
+   u32bit low_zero = 0;
+
+   if(n.is_positive() && n.is_nonzero())
+      {
+      for(u32bit i = 0; i != n.size(); ++i)
+         {
+         word x = n[i];
+
+         if(x)
+            {
+            low_zero += ctz(x);
+            break;
+            }
+         else
+            low_zero += BOTAN_MP_WORD_BITS;
+         }
+      }
+
+   return low_zero;
    }
 
 /*************************************************
@@ -209,41 +226,43 @@ s32bit simple_primality_tests(const BigInt& n)
 /*************************************************
 * Fast check of primality                        *
 *************************************************/
-bool check_prime(const BigInt& n)
+bool check_prime(const BigInt& n, RandomNumberGenerator& rng)
    {
-   return run_primality_tests(n, 0);
+   return run_primality_tests(rng, n, 0);
    }
 
 /*************************************************
 * Test for primality                             *
 *************************************************/
-bool is_prime(const BigInt& n)
+bool is_prime(const BigInt& n, RandomNumberGenerator& rng)
    {
-   return run_primality_tests(n, 1);
+   return run_primality_tests(rng, n, 1);
    }
 
 /*************************************************
 * Verify primality                               *
 *************************************************/
-bool verify_prime(const BigInt& n)
+bool verify_prime(const BigInt& n, RandomNumberGenerator& rng)
    {
-   return run_primality_tests(n, 2);
+   return run_primality_tests(rng, n, 2);
    }
 
 /*************************************************
 * Verify primality                               *
 *************************************************/
-bool run_primality_tests(const BigInt& n, u32bit level)
+bool run_primality_tests(RandomNumberGenerator& rng,
+                         const BigInt& n, u32bit level)
    {
    s32bit simple_tests = simple_primality_tests(n);
    if(simple_tests) return (simple_tests == 1) ? true : false;
-   return passes_mr_tests(n, level);
+   return passes_mr_tests(rng, n, level);
    }
 
 /*************************************************
 * Test for primaility using Miller-Rabin         *
 *************************************************/
-bool passes_mr_tests(const BigInt& n, u32bit level)
+bool passes_mr_tests(RandomNumberGenerator& rng,
+                     const BigInt& n, u32bit level)
    {
    const u32bit PREF_NONCE_BITS = 40;
 
@@ -267,7 +286,7 @@ bool passes_mr_tests(const BigInt& n, u32bit level)
    BigInt nonce;
    for(u32bit j = 0; j != tests; ++j)
       {
-      if(verify) nonce = random_integer(NONCE_BITS);
+      if(verify) nonce.randomize(rng, NONCE_BITS);
       else       nonce = PRIMES[j];
 
       if(!mr.passes_test(nonce))
@@ -284,15 +303,12 @@ bool MillerRabin_Test::passes_test(const BigInt& a)
    if(a < 2 || a >= n_minus_1)
       throw Invalid_Argument("Bad size for nonce in Miller-Rabin test");
 
-   global_state().pulse(PRIME_TESTING);
-
    BigInt y = pow_mod(a);
    if(y == 1 || y == n_minus_1)
       return true;
 
    for(u32bit j = 1; j != s; ++j)
       {
-      global_state().pulse(PRIME_TESTING);
       y = reducer.square(y);
 
       if(y == 1)

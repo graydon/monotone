@@ -1,6 +1,6 @@
 /*************************************************
 * Diffie-Hellman Header File                     *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_DIFFIE_HELLMAN_H__
@@ -14,7 +14,7 @@ namespace Botan {
 /*************************************************
 * Diffie-Hellman Public Key                      *
 *************************************************/
-class DH_PublicKey : public virtual DL_Scheme_PublicKey
+class BOTAN_DLL DH_PublicKey : public virtual DL_Scheme_PublicKey
    {
    public:
       std::string algo_name() const { return "DH"; }
@@ -33,9 +33,9 @@ class DH_PublicKey : public virtual DL_Scheme_PublicKey
 /*************************************************
 * Diffie-Hellman Private Key                     *
 *************************************************/
-class DH_PrivateKey : public DH_PublicKey,
-                      public PK_Key_Agreement_Key,
-                      public virtual DL_Scheme_PrivateKey
+class BOTAN_DLL DH_PrivateKey : public DH_PublicKey,
+                                public PK_Key_Agreement_Key,
+                                public virtual DL_Scheme_PrivateKey
    {
    public:
       SecureVector<byte> derive_key(const byte[], u32bit) const;
@@ -45,10 +45,10 @@ class DH_PrivateKey : public DH_PublicKey,
       MemoryVector<byte> public_value() const;
 
       DH_PrivateKey() {}
-      DH_PrivateKey(const DL_Group&);
-      DH_PrivateKey(const DL_Group&, const BigInt&, const BigInt& = 0);
+      DH_PrivateKey(RandomNumberGenerator&, const DL_Group&,
+                    const BigInt& = 0);
    private:
-      void PKCS8_load_hook(bool = false);
+      void PKCS8_load_hook(RandomNumberGenerator&, bool = false);
       DH_Core core;
    };
 

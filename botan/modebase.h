@@ -1,6 +1,6 @@
 /*************************************************
 * Block Cipher Mode Header File                  *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_MODEBASE_H__
@@ -13,7 +13,7 @@ namespace Botan {
 /*************************************************
 * Block Cipher Mode                              *
 *************************************************/
-class BlockCipherMode : public Keyed_Filter
+class BOTAN_DLL BlockCipherMode : public Keyed_Filter
    {
    public:
       std::string name() const;

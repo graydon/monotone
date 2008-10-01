@@ -1,6 +1,6 @@
 /*************************************************
 * X.509 Self-Signed Certificate Header File      *
-* (C) 1999-2007 The Botan Project                *
+* (C) 1999-2007 Jack Lloyd                       *
 *************************************************/
 
 #ifndef BOTAN_X509_SELF_H__
@@ -15,7 +15,7 @@ namespace Botan {
 /*************************************************
 * Options for X.509 Certificates                 *
 *************************************************/
-class X509_Cert_Options
+class BOTAN_DLL X509_Cert_Options
    {
    public:
       std::string common_name;
@@ -47,7 +47,8 @@ class X509_Cert_Options
       void add_ex_constraint(const OID&);
       void add_ex_constraint(const std::string&);
 
-      X509_Cert_Options(const std::string& = "");
+      X509_Cert_Options(const std::string& = "",
+                        u32bit expire = 365 * 24 * 60 * 60);
    };
 
 namespace X509 {
@@ -55,14 +56,17 @@ namespace X509 {
 /*************************************************
 * Create a self-signed X.509 certificate         *
 *************************************************/
-X509_Certificate create_self_signed_cert(const X509_Cert_Options&,
-                                         const Private_Key&);
+BOTAN_DLL X509_Certificate
+create_self_signed_cert(const X509_Cert_Options&,
+                        const Private_Key&,
+                        RandomNumberGenerator& rng);
 
 /*************************************************
 * Create a PKCS #10 certificate request          *
 *************************************************/
-PKCS10_Request create_cert_req(const X509_Cert_Options&,
-                               const Private_Key&);
+BOTAN_DLL PKCS10_Request create_cert_req(const X509_Cert_Options&,
+                                         const Private_Key&,
+                                         RandomNumberGenerator& rng);
 
 }
 

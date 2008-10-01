@@ -16,7 +16,8 @@
 #include <errno.h>
 #include <unistd.h>
 
-#include "botan/botan.h"
+#include <boost/shared_ptr.hpp>
+#include "botan/rng.h"
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -32,6 +33,9 @@ monotone_mkstemp(string &tmpl)
   int count = 0, fd = -1;
   string tmp;
 
+  boost::shared_ptr<Botan::RandomNumberGenerator> rng(
+    Botan::RandomNumberGenerator::make_rng());
+
   static const char letters[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   static const int NLETTERS = sizeof (letters) - 1;
@@ -45,7 +49,7 @@ monotone_mkstemp(string &tmpl)
       tmp = tmpl.substr(0, len-6);
 
       for (i = 0; i < 6; ++i)
-        tmp.append(1, letters[Botan::Global_RNG::random() % NLETTERS]);
+        tmp.append(1, letters[rng->next_byte() % NLETTERS]);
 #ifdef _MSC_VER
       fd = _open(tmp.c_str(), _O_RDWR | _O_CREAT | _O_EXCL | _O_BINARY, 0600);
 #else
