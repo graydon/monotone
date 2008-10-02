@@ -102,18 +102,26 @@ function dir_matches(name, dir)
    return false
 end
 
+function portable_readline(f)
+    line = f:read()
+    if line ~= nil then
+        line = string.gsub(line, "\r$","") -- strip possible \r left from windows editing
+    end
+    return line
+end
+
 function ignore_file(name)
    -- project specific
    if (ignored_files == nil) then
       ignored_files = {}
       local ignfile = io.open(".mtn-ignore", "r")
       if (ignfile ~= nil) then
-         local line = ignfile:read()
+         local line = portable_readline(ignfile)
          while (line ~= nil) do
             if line ~= "" then
                 table.insert(ignored_files, line)
             end
-            line = ignfile:read()
+            line = portable_readline(ignfile)
          end
          io.close(ignfile)
       end
