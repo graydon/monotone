@@ -107,9 +107,14 @@ function netsync.start(opts, n, min)
   while fsize(out.prefix .. "stderr") == 0 do
     sleep(1)
     check(out:check())
-  end
-  mt.stop = mt.finish
-  return out
+ end
+ local mt_finish = mt.finish
+ mt.finish = function(obj, timeout)
+                sleep(1)
+                mt_finish(obj, timeout)
+             end
+ mt.stop = mt.finish
+ return out
 end
 
 function netsync.internal.run(oper, pat, opts)
