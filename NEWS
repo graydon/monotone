@@ -17,6 +17,9 @@
             would reinitialize the database. This was rather slow, so
             monotone will now keep the database open between commands.
 
+	- The Lua-based contributed Monotone extension introduced in
+	  0.38 haven't been added to the tarball; this has been fixed.
+ 
         New features
 
         - New 'mtn ls duplicates' command which lets you list
