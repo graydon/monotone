@@ -189,7 +189,7 @@ do_interactive_merge(database & db,
   conflicts.ancestor_roster->get_name(nid, ancestor_path);
   conflicts.left_roster->get_name(nid, left_path);
   conflicts.right_roster->get_name(nid, right_path);
-  
+
   file_data left_data, right_data, ancestor_data;
   data merged_unpacked;
 
@@ -288,7 +288,7 @@ set_first_conflict(database & db,
                   N(bookkeeping_path::external_string_is_bookkeeping_path(utf8(idx(args,1)())),
                     F("result path must be under _MTN"));
                   bookkeeping_path const result_path(idx(args,1)());
-                  
+
                   N(args.size() == 2, F("wrong number of arguments"));
 
                   if (do_interactive_merge(db, lua, conflicts, conflict.nid,

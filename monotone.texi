@@ -8797,7 +8797,7 @@ option.
 
 @itemize
 @item
-8.1: -- Added default resolution for file content conflicts, user
+8.2: -- Added default resolution for file content conflicts, user
 resolutions for others. @code{directory_loop_created} changed to @code{directory_loop}.
 @item
 7.1 -- initial
