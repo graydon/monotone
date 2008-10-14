@@ -312,7 +312,7 @@ struct netsync_error
   netsync_error(string const & s): msg(s) {}
 };
 
-struct
+class
 session:
   public refiner_callbacks,
   public enumerator_callbacks
@@ -323,15 +323,19 @@ session:
   globish our_exclude_pattern;
   globish_matcher our_matcher;
 
+public:
   project_t & project;
+private:
   key_store & keys;
   lua_hooks & lua;
   bool use_transport_auth;
   rsa_keypair_id const & signing_key;
   vector<rsa_keypair_id> const & keys_to_push;
 
+public:
   string peer_id;
   shared_ptr<Netxx::StreamBase> str;
+private:
 
   string_queue inbuf;
   // deque of pair<string data, size_t cur_pos>
@@ -343,7 +347,9 @@ session:
 
   netcmd cmd;
   bool armed;
+public:
   bool arm();
+private:
 
   bool received_remote_key;
   rsa_keypair_id remote_peer_key_name;
@@ -352,7 +358,9 @@ session:
   chained_hmac write_hmac;
   bool authenticated;
 
+public:
   time_t last_io_time;
+private:
   auto_ptr<ticker> byte_in_ticker;
   auto_ptr<ticker> byte_out_ticker;
   auto_ptr<ticker> cert_in_ticker;
@@ -381,6 +389,7 @@ session:
 
   id saved_nonce;
 
+public:
   enum
     {
       working_state,
@@ -390,6 +399,7 @@ session:
     protocol_state;
 
   bool encountered_error;
+private:
 
   static const int no_error = 200;
   static const int partial_transfer = 211;
@@ -428,6 +438,7 @@ session:
   void note_rev(revision_id const & rev);
   void note_cert(id const & c);
 
+public:
   session(options & opts,
           lua_hooks & lua,
           project_t & project,
@@ -441,6 +452,7 @@ session:
           bool initiated_by_server = false);
 
   virtual ~session();
+private:
 
   id mk_nonce();
   void mark_recent_io();
@@ -453,16 +465,20 @@ session:
   bool queued_all_items();
   bool received_all_items();
   bool finished_working();
+public:
   void maybe_step();
   void maybe_say_goodbye(transaction_guard & guard);
+private:
 
   void note_item_arrived(netcmd_item_type ty, id const & i);
   void maybe_note_epochs_finished();
   void note_item_sent(netcmd_item_type ty, id const & i);
 
+public:
   Netxx::Probe::ready_type which_events() const;
   bool read_some();
   bool write_some();
+private:
 
   void error(int errcode, string const & errmsg);
 
@@ -538,8 +554,10 @@ session:
   void rebuild_merkle_trees(set<branch_name> const & branches);
 
   void send_all_data(netcmd_item_type ty, set<id> const & items);
+public:
   void begin_service();
   bool process(transaction_guard & guard);
+private:
 
   bool initiated_by_server;
 };
