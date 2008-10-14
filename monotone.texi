@@ -2930,7 +2930,8 @@ directory is done by traversing parent directories until an
 @file{_MTN} directory is found or the filesystem root is reached. Upon
 finding an @file{_MTN} directory, the @file{_MTN/options} file is read for
 default options. The @option{--root} option may be used to stop the
-search early, before reaching the root of the physical filesystem.
+search early, before reaching the root of the physical filesystem. The
+@option{--no-workspace} option may be used to prevent the search entirely.
 
 Many monotone commands don't require a workspace and will simply
 proceed with no default options if no @file{_MTN} directory is found.

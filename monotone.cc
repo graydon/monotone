@@ -221,7 +221,14 @@ cpp_main(int argc, char ** argv)
           // and if found, change directory to it
           // Certain commands may subsequently require a workspace or fail
           // if we didn't find one at this point.
-          workspace::found = find_and_go_to_workspace(app.opts.root);
+          if (app.opts.no_workspace)
+            {
+              workspace::found = false;
+            }
+          else
+            {
+              workspace::found = find_and_go_to_workspace(app.opts.root);
+            }
 
           // Load all available monotonercs.  If we found a workspace above,
           // we'll pick up _MTN/monotonerc as well as the user's monotonerc.

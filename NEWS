@@ -25,6 +25,9 @@
         - New 'mtn ls duplicates' command which lets you list
           duplicated files in a given revision or the workspace.
 
+        - New option --no-workspace, to make monotone ignore any
+          workspace it might have been run in.
+
         Internal
 
         - Update Botan to 1.7.12.

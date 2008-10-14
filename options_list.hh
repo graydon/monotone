@@ -527,6 +527,14 @@ GOPT(root, "root", std::string, ,
 }
 #endif
 
+GOPT(no_workspace, "no-workspace", bool, false,
+     gettext_noop("don't look for a workspace"))
+#ifdef option_bodies
+{
+  no_workspace = true;
+}
+#endif
+
 OPT(set_default, "set-default", bool, false,
      gettext_noop("use the current arguments as the future default"))
 #ifdef option_bodies
