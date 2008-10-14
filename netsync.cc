@@ -1087,21 +1087,18 @@ session::error(int errcode, string const & errmsg)
 Netxx::Probe::ready_type
 session::which_events() const
 {
-  // Only ask to read if we're not armed.
-  if (outbuf.empty())
+  Netxx::Probe::ready_type ret = Netxx::Probe::ready_oobd;
+  if (!outbuf.empty())
     {
-      if (inbuf.size() < constants::netcmd_maxsz && !armed)
-        return Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
-      else
-        return Netxx::Probe::ready_oobd;
+      ret = ret | Netxx::Probe::ready_write;
     }
-  else
+  // Only ask to read if we're not armed, don't go storing
+  // 128 MB at a time unless we think we need to.
+  if (inbuf.size() < constants::netcmd_maxsz && !armed)
     {
-      if (inbuf.size() < constants::netcmd_maxsz && !armed)
-        return Netxx::Probe::ready_write | Netxx::Probe::ready_read | Netxx::Probe::ready_oobd;
-      else
-        return Netxx::Probe::ready_write | Netxx::Probe::ready_oobd;
+      ret = ret | Netxx::Probe::ready_read;
     }
+  return ret;
 }
 
 bool
