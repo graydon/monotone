@@ -330,6 +330,8 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   using std::max;
 
   ostringstream log;
+  utf8 log_message("");
+  bool log_message_given;
   size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
 
   if (branch != opts.branchname)
@@ -341,6 +343,8 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
 
   if (branch != opts.branchname)
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
+
+  process_commit_message_args(opts, log_message_given, log_message, utf8(log.str()));
 
   // Now it's time for the real work.
   if (automate)
@@ -357,8 +361,7 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   transaction_guard guard(project.db);
   interactive_merge_and_store(lua, project.db, opts, left, right, merged);
 
-  project.put_standard_certs_from_options(opts, lua, keys, merged, branch,
-                                          utf8(log.str()));
+  project.put_standard_certs_from_options(opts, lua, keys, merged, branch, log_message);
 
   guard.commit();
   if (automate)
@@ -427,7 +430,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
     N_("Merges unmerged heads of a branch"),
     "",
     options::opts::branch | options::opts::date | options::opts::author |
-    options::opts::resolve_conflicts_opts)
+    options::opts::messages | options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -503,7 +506,7 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
     N_("Merges from one branch to another asymmetrically"),
     "",
     options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile |
-    options::opts::resolve_conflicts_opts)
+    options::opts::messages | options::opts::resolve_conflicts_opts)
 {
   if (args.size() != 2)
     throw usage(execid);
@@ -542,7 +545,7 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile |
+    options::opts::date | options::opts::author | options::opts::messages |
     options::opts::resolve_conflicts_opts)
 {
   database db(app);
@@ -666,14 +669,14 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
       bool log_message_given;
       utf8 log_message;
-      process_commit_message_args(app.opts, log_message_given, log_message);
-      if (!log_message_given)
-        log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
+      utf8 log_prefix = utf8((FL("propagate from branch '%s' (head %s)\n"
                                "            to branch '%s' (head %s)\n")
                             % idx(args, 0)
                             % *src_i
                             % idx(args, 1)
                             % *dst_i).str());
+
+      process_commit_message_args(app.opts, log_message_given, log_message, log_prefix);
 
       project.put_standard_certs_from_options(app.opts, app.lua,
                                               keys,
@@ -803,7 +806,7 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
     N_("The results of the merge are placed on the branch specified by "
        "DEST-BRANCH."),
     options::opts::date | options::opts::author |
-    options::opts::resolve_conflicts_opts)
+    options::opts::messages | options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);

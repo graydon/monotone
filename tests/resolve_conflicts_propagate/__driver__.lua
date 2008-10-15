@@ -43,11 +43,17 @@ check(mtn("conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"
 
 check(samefilestd("conflicts-resolved", "_MTN/conflicts"))
 
-check(mtn("propagate", "--resolve-conflicts", "abe_branch", "beth_branch"), 0, nil, true)
+logmsg = "rename thermostat, drop/merge checkout"
+check(mtn("propagate", "--resolve-conflicts", "abe_branch", "beth_branch", "--message", logmsg), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("propagate-1", "stderr"))
-
 check(mtn("conflicts", "clean"), 0, nil, true)
+
+check(mtn("update"), 0, nil, false)
+merged = base_revision()
+
+check(mtn("automate", "certs", merged), 0, true, nil)
+check(qgrep(logmsg, "stdout"), 0)
 
 -- Propagate beth_branch to abe_branch
 

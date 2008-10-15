@@ -76,13 +76,18 @@ check(mtn("conflicts", "resolve_first_right", "rename", "thermostat-honeywell.c"
 check(samefilestd("conflicts-resolved", "_MTN/conflicts"))
 
 -- This succeeds
-check(mtn("merge", "--resolve-conflicts"), 0, nil, true)
+logmsg = "rename thermostat, merge/drop checkout"
+check(mtn("merge", "--resolve-conflicts", "--message", logmsg), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("merge-1", "stderr"))
 
 check(mtn("conflicts", "clean"), 0, nil, true)
 
 check(mtn("update"), 0, nil, false)
+merged = base_revision()
+
+check(mtn("automate", "certs", merged), 0, true, nil)
+check(qgrep(logmsg, "stdout"), 0)
 
 check("checkout.sh beth 2" == readfile("checkout.sh"))
 
