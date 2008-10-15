@@ -210,6 +210,7 @@ do_interactive_merge(database & db,
 
 static void
 set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
+                            resolve_conflicts::file_resolution_t const & other_resolution,
                             args_vector const & args)
 {
   if ("drop" == idx(args, 0)())
@@ -226,6 +227,9 @@ set_duplicate_name_conflict(resolve_conflicts::file_resolution_t & resolution,
   else if ("user" == idx(args, 0)())
     {
       N(args.size() == 2, F("wrong number of arguments"));
+      N(other_resolution.first != resolve_conflicts::content_user,
+        F("left and right resolutions cannot both be 'user'"));
+
       resolution.first  = resolve_conflicts::content_user;
       resolution.second = new_optimal_path(idx(args,1)(), false);
     }
@@ -254,7 +258,7 @@ set_first_conflict(database & db,
             case left:
               if (conflict.left_resolution.first == resolve_conflicts::none)
                 {
-                  set_duplicate_name_conflict(conflict.left_resolution, args);
+                  set_duplicate_name_conflict(conflict.left_resolution, conflict.right_resolution, args);
                   return;
                 }
               break;
@@ -262,7 +266,7 @@ set_first_conflict(database & db,
             case right:
               if (conflict.right_resolution.first == resolve_conflicts::none)
                 {
-                  set_duplicate_name_conflict(conflict.right_resolution, args);
+                  set_duplicate_name_conflict(conflict.right_resolution, conflict.left_resolution, args);
                   return;
                 }
               break;

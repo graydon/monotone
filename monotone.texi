@@ -4759,6 +4759,11 @@ file.
 
 @end ftable
 
+monotone internals note: we don't provide an @code{interactive}
+resolution for two-file conflicts, because monotone currently does not
+provide a @code{merge2} Lua hook. two-file conflicts don't have a
+shared ancestor, so @code{merge3} is not applicable.
+
 @page
 @node    Workspace, Network, Tree, Command Reference
 @section Workspace
