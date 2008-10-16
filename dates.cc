@@ -37,7 +37,7 @@ using std::string;
 #endif
 
 const string &
-date_t::as_iso_8601_extended() const 
+date_t::as_iso_8601_extended() const
 {
   I(this->valid());
   return d;
@@ -120,7 +120,7 @@ inline bool
 is_leap_year(unsigned int year)
 {
   return (year % 4 == 0
-	  && (year % 100 != 0 || year % 400 == 0));
+    && (year % 100 != 0 || year % 400 == 0));
 }
 inline u32
 secs_in_year(unsigned int year)
@@ -144,7 +144,7 @@ date_t::from_unix_epoch(u64 t)
 
   // validate our assumptions about which basic type is u64 (see above).
   I(PROBABLE_U64_MAX == std::numeric_limits<u64>::max());
-  
+
   // time_t values after this point will overflow a signed 32-bit year
   // counter.  'year' above is unsigned, but the system's struct tm almost
   // certainly uses a signed tm_year; it is best to be consistent.
@@ -154,7 +154,7 @@ date_t::from_unix_epoch(u64 t)
   // year.  This will therefore approximate the correct year (minus 1970).
   // It may be off in either direction, but by no more than one year
   // (empirically tested for every year from 1970 to 2**32 - 1).
-  year = t/31556952;
+  year = t / 31556952;
 
   // Given the above approximation, recalculate the _exact_ number of
   // seconds to the beginning of that year.  For this to work correctly
@@ -185,9 +185,9 @@ date_t::from_unix_epoch(u64 t)
     {
       unsigned int this_month = MONTHS[month] * DAY;
       if (month == 1 && is_leap_year(year))
-	this_month += DAY;
+        this_month += DAY;
       if (t < this_month)
-	break;
+        break;
 
       t -= this_month;
       month++;
@@ -339,7 +339,7 @@ UNIT_TEST(date, from_string)
 #define OK(x,y) UNIT_TEST_CHECK(date_t::from_string(x).as_iso_8601_extended() \
                             == (y))
 #define NO(x) UNIT_TEST_CHECK_THROW(date_t::from_string(x), informative_failure)
-  
+
   // canonical format
   OK("2007-03-01T18:41:13", "2007-03-01T18:41:13");
   // squashed format
@@ -390,7 +390,7 @@ UNIT_TEST(date, from_string)
 
   // two digit years are not accepted
   NO("07-03-01T18:41:13");
-  
+
   // components out of range
   NO("1969-03-01T18:41:13");
 
@@ -418,7 +418,7 @@ UNIT_TEST(date, from_string)
   // leap year February
   OK("2008-02-29T18:41:13", "2008-02-29T18:41:13");
   NO("2008-02-30T18:41:13");
-  
+
   // maybe we should support these, but we don't
   NO("2007-03-01");
   NO("18:41");
