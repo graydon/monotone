@@ -225,10 +225,14 @@ date_t::from_string(string const & s)
       size_t i = d.size() - 1;  // last character of the array
 
       // seconds
+      u8 sec;
       N(d.at(i) >= '0' && d.at(i) <= '9'
         && d.at(i-1) >= '0' && d.at(i-1) <= '5',
         F("unrecognized date (monotone only understands ISO 8601 format)"));
+      sec = (d.at(i-1) - '0')*10 + (d.at(i) - '0');
       i -= 2;
+      N(sec < 60,
+        F("seconds out of range"));
 
       // optional colon
       if (d.at(i) == ':')
@@ -237,10 +241,14 @@ date_t::from_string(string const & s)
         d.insert(i+1, 1, ':');
 
       // minutes
+      u8 min;
       N(d.at(i) >= '0' && d.at(i) <= '9'
         && d.at(i-1) >= '0' && d.at(i-1) <= '5',
         F("unrecognized date (monotone only understands ISO 8601 format)"));
+      min = (d.at(i-1) - '0')*10 + (d.at(i) - '0');
       i -= 2;
+      N(min < 60,
+        F("minutes out of range"));
 
       // optional colon
       if (d.at(i) == ':')
@@ -249,11 +257,15 @@ date_t::from_string(string const & s)
         d.insert(i+1, 1, ':');
 
       // hours
+      u8 hour;
       N((d.at(i-1) >= '0' && d.at(i-1) <= '1'
          && d.at(i) >= '0' && d.at(i) <= '9')
         || (d.at(i-1) == '2' && d.at(i) >= '0' && d.at(i) <= '3'),
         F("unrecognized date (monotone only understands ISO 8601 format)"));
+      hour = (d.at(i-1) - '0')*10 + (d.at(i) - '0');
       i -= 2;
+      N(hour < 24,
+        F("hour out of range"));
 
       // 'T' is required at this point; we also accept a space
       N(d.at(i) == 'T' || d.at(i) == ' ',
