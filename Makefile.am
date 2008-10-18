@@ -515,7 +515,7 @@ EXTRA_DIST = $(PDF_FIGURES) $(PNG_FIGURES) INSTALL README.changesets	\
 	contrib/colorize contrib/color-logs.sh contrib/color-logs.conf	\
 	contrib/get_stdio.pl contrib/ciabot_monotone_hookversion.py	\
 	contrib/Monotone.pm $(wildcard $(srcdir)/contrib/*.lua)		\
-	$(wildcard $(srcdir)/contrib/command/*.lua)			\	
+	$(wildcard $(srcdir)/contrib/command/*.lua)			\
 	contrib/command/README $(wildcard $(srcdir)/examples/*)		\
 	win32/monotone.iss win32/modpath.iss $(wildcard			\
 	$(srcdir)/debian/*) mac/monotone-pkg-logo.gif			\
@@ -691,7 +691,7 @@ $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 CLEAN_SOURCES = std_hooks.c testlib.c schema.c \
 	package_revision.c package_full_revision.c \
 	package_revision_raw.txt \
-	package_full_revision.txt package_full_revision_raw.txt 
+	package_full_revision.txt package_full_revision_raw.txt
 
 BUILT_SOURCES = $(PCH_FILE) $(PCH_BUILD)
 
