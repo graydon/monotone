@@ -312,12 +312,77 @@ struct netsync_error
   netsync_error(string const & s): msg(s) {}
 };
 
-class session_base
+class reactable
 {
+  static unsigned int count;
+protected:
+  static unsigned int num_reactables() { return count; }
+public:
+  reactable() { ++count; }
+  virtual ~reactable()
+  {
+    I(count != 0);
+    --count;
+  }
+
+  // Handle an I/O event.
+  virtual bool do_io(Netxx::Probe::ready_type event) = 0;
+  // Can we timeout after being idle for a long time?
+  virtual bool can_timeout() = 0;
+  // Have we been idle for too long?
+  virtual bool timed_out(time_t now) = 0;
+  // Do one unit of work.
+  virtual bool do_work(transaction_guard & guard) = 0;
+  // Is there any work waiting to be done?
+  virtual bool arm() = 0;
+  // Are we a pipe pair (as opposed to a socket)?
+  // Netxx::PipeCompatibleProbe acts slightly differently, depending.
+  virtual bool is_pipe_pair() = 0;
+  // Netxx::Probe::ready() returns sockets, reactor needs to be
+  // able to map them back to reactables.
+  virtual vector<Netxx::socket_type> get_sockets() = 0;
+  // Netxx::StreamBase and Netxx::StreamServer don't have a
+  // common base, so we don't have anything we can expose to
+  // let the reactor add us to the probe itself.
+  virtual void add_to_probe(Netxx::PipeCompatibleProbe & probe) = 0;
+  virtual void remove_from_probe(Netxx::PipeCompatibleProbe & probe) = 0;
+  // Where are we talking to / listening on?
+  virtual string name() = 0;
+};
+unsigned int reactable::count = 0;
+
+class session_base : public reactable
+{
+  bool read_some();
+  bool write_some();
+  void mark_recent_io()
+  {
+    last_io_time = ::time(NULL);
+  }
+protected:
+  virtual void note_bytes_in(int count) { return; }
+  virtual void note_bytes_out(int count) { return; }
+  string_queue inbuf;
+private:
+  deque< pair<string, size_t> > outbuf;
+  size_t outbuf_size; // so we can avoid queueing up too much stuff
+protected:
+  void queue_output(string const & s)
+  {
+    outbuf.push_back(make_pair(s, 0));
+    outbuf_size += s.size();
+  }
+  bool output_overfull() const
+  {
+    return outbuf.size() > constants::bufsz * 10;
+  }
 public:
   string peer_id;
+  string name() { return peer_id; }
+private:
   shared_ptr<Netxx::StreamBase> str;
   time_t last_io_time;
+public:
 
   enum 
     {
@@ -331,6 +396,7 @@ public:
 
   session_base(string const & peer_id,
                shared_ptr<Netxx::StreamBase> str) :
+    outbuf_size(0),
     peer_id(peer_id), str(str),
     last_io_time(::time(NULL)),
     protocol_state(working_state),
@@ -339,12 +405,183 @@ public:
   virtual ~session_base()
   { }
   virtual bool arm() = 0;
-  virtual Netxx::Probe::ready_type which_events() = 0;
-  virtual bool do_io(Netxx::Probe::ready_type) = 0;
   virtual bool do_work(transaction_guard & guard) = 0;
 
-  //virtual void begin_service();
+private:
+  Netxx::Probe::ready_type which_events();
+public:
+  virtual bool do_io(Netxx::Probe::ready_type);
+  bool can_timeout() { return true; }
+  bool timed_out(time_t now)
+  {
+    return static_cast<unsigned long>(last_io_time + constants::netsync_timeout_seconds)
+      < static_cast<unsigned long>(now);
+  }
+
+  bool is_pipe_pair()
+  {
+    return str->get_socketfd() == -1;
+  }
+  vector<Netxx::socket_type> get_sockets()
+  {
+    vector<Netxx::socket_type> out;
+    Netxx::socket_type fd = str->get_socketfd();
+    if (fd == -1)
+      {
+        shared_ptr<Netxx::PipeStream> pipe =
+          boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(str);
+        I(pipe);
+        out.push_back(pipe->get_readfd());
+        out.push_back(pipe->get_writefd());
+      }
+    else
+      out.push_back(fd);
+    return out;
+  }
+  void add_to_probe(Netxx::PipeCompatibleProbe & probe)
+  {
+    probe.add(*str, which_events());
+  }
+  void remove_from_probe(Netxx::PipeCompatibleProbe & probe)
+  {
+    I(!is_pipe_pair());
+    probe.remove(*str);
+  }
 };
+
+Netxx::Probe::ready_type
+session_base::which_events()
+{
+  Netxx::Probe::ready_type ret = Netxx::Probe::ready_oobd;
+  if (!outbuf.empty())
+    {
+      L(FL("probing write on %s") % peer_id);
+      ret = ret | Netxx::Probe::ready_write;
+    }
+  // Only ask to read if we're not armed, don't go storing
+  // 128 MB at a time unless we think we need to.
+  if (inbuf.size() < constants::netcmd_maxsz && !arm())
+    {
+      L(FL("probing read on %s") % peer_id);
+      ret = ret | Netxx::Probe::ready_read;
+    }
+  return ret;
+}
+
+bool
+session_base::read_some()
+{
+  I(inbuf.size() < constants::netcmd_maxsz);
+  char tmp[constants::bufsz];
+  Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
+  if (count > 0)
+    {
+      L(FL("read %d bytes from fd %d (peer %s)")
+        % count % str->get_socketfd() % peer_id);
+      if (encountered_error)
+        {
+          L(FL("in error unwind mode, so throwing them into the bit bucket"));
+          return true;
+        }
+      inbuf.append(tmp,count);
+      mark_recent_io();
+      note_bytes_in(count);
+      return true;
+    }
+  else
+    return false;
+}
+
+bool
+session_base::write_some()
+{
+  I(!outbuf.empty());
+  size_t writelen = outbuf.front().first.size() - outbuf.front().second;
+  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second,
+                                            min(writelen,
+                                            constants::bufsz));
+  if (count > 0)
+    {
+      if ((size_t)count == writelen)
+        {
+          outbuf_size -= outbuf.front().first.size();
+          outbuf.pop_front();
+        }
+      else
+        {
+          outbuf.front().second += count;
+        }
+      L(FL("wrote %d bytes to fd %d (peer %s)")
+        % count % str->get_socketfd() % peer_id);
+      mark_recent_io();
+      note_bytes_out(count);
+      if (encountered_error && outbuf.empty())
+        {
+          // we've flushed our error message, so it's time to get out.
+          L(FL("finished flushing output queue in error unwind mode, disconnecting"));
+          return false;
+        }
+      return true;
+    }
+  else
+    return false;
+}
+
+bool
+session_base::do_io(Netxx::Probe::ready_type what)
+{
+  bool ok = true;
+  try
+    {
+      if (what & Netxx::Probe::ready_read)
+        {
+          if (!read_some())
+            ok = false;
+        }
+      if (what & Netxx::Probe::ready_write)
+        {
+          if (!write_some())
+            ok = false;
+        }
+
+      if (what & Netxx::Probe::ready_oobd)
+        {
+          P(F("got OOB from peer %s, disconnecting")
+            % peer_id);
+          ok = false;
+        }
+      else if (!ok)
+        {
+          switch (protocol_state)
+            {
+            case working_state:
+              P(F("peer %s IO failed in working state (error)")
+                % peer_id);
+              break;
+
+            case shutdown_state:
+              P(F("peer %s IO failed in shutdown state "
+                  "(possibly client misreported error)")
+                % peer_id);
+              break;
+
+            case confirmed_state:
+              P(F("peer %s IO failed in confirmed state (success)")
+                % peer_id);
+              break;
+            }
+        }
+    }
+  catch (Netxx::Exception & e)
+    {
+      P(F("Network error on peer %s, disconnecting")
+        % peer_id);
+      ok = false;
+    }
+  return ok;
+}
+
+////////////////////////////////////////////////////////////////////////
 
 class
 session:
@@ -364,14 +601,6 @@ session:
   bool use_transport_auth;
   rsa_keypair_id const & signing_key;
   vector<rsa_keypair_id> const & keys_to_push;
-
-  string_queue inbuf;
-  // deque of pair<string data, size_t cur_pos>
-  deque< pair<string,size_t> > outbuf;
-  // the total data stored in outbuf - this is
-  // used as a valve to stop too much data
-  // backing up
-  size_t outbuf_size;
 
   netcmd cmd;
   bool armed;
@@ -468,7 +697,6 @@ public:
 private:
 
   id mk_nonce();
-  void mark_recent_io();
 
   void set_session_key(string const & key);
   void set_session_key(rsa_oaep_sha_data const & key_encrypted);
@@ -486,12 +714,10 @@ private:
   void note_item_sent(netcmd_item_type ty, id const & i);
 
 public:
-  Netxx::Probe::ready_type which_events();
-  bool do_io(Netxx::Probe::ready_type what);
   bool do_work(transaction_guard & guard);
 private:
-  bool read_some();
-  bool write_some();
+  void note_bytes_in(int count);
+  void note_bytes_out(int count);
 
   void error(int errcode, string const & errmsg);
 
@@ -599,8 +825,6 @@ session::session(options & opts,
   use_transport_auth(opts.use_transport_auth),
   signing_key(opts.signing_key),
   keys_to_push(opts.keys_to_push),
-  inbuf(),
-  outbuf_size(0),
   armed(false),
   received_remote_key(false),
   remote_peer_key_name(""),
@@ -830,12 +1054,6 @@ session::mk_nonce()
   this->saved_nonce = id(string(buf, buf + constants::merkle_hash_length_in_bytes));
   I(this->saved_nonce().size() == constants::merkle_hash_length_in_bytes);
   return this->saved_nonce;
-}
-
-void
-session::mark_recent_io()
-{
-  last_io_time = ::time(NULL);
 }
 
 void
@@ -1071,15 +1289,10 @@ session::write_netcmd_and_try_flush(netcmd const & cmd)
   {
     string buf;
     cmd.write(buf, write_hmac);
-    outbuf.push_back(make_pair(buf, 0));
-    outbuf_size += buf.size();
+    queue_output(buf);
   }
   else
     L(FL("dropping outgoing netcmd (because we're in error unwind mode)"));
-  // FIXME: this helps keep the protocol pipeline full but it seems to
-  // interfere with initial and final sequences. careful with it.
-  // write_some();
-  // read_some();
 }
 
 // This method triggers a special "error unwind" mode to netsync.  In this
@@ -1092,79 +1305,6 @@ session::error(int errcode, string const & errmsg)
 {
   error_code = errcode;
   throw netsync_error(errmsg);
-}
-
-Netxx::Probe::ready_type
-session::which_events()
-{
-  Netxx::Probe::ready_type ret = Netxx::Probe::ready_oobd;
-  if (!outbuf.empty())
-    {
-      L(FL("probing write on %s") % peer_id);
-      ret = ret | Netxx::Probe::ready_write;
-    }
-  // Only ask to read if we're not armed, don't go storing
-  // 128 MB at a time unless we think we need to.
-  if (inbuf.size() < constants::netcmd_maxsz && !arm())
-    {
-      L(FL("probing read on %s") % peer_id);
-      ret = ret | Netxx::Probe::ready_read;
-    }
-  return ret;
-}
-
-bool
-session::do_io(Netxx::Probe::ready_type what)
-{
-  bool ok = true;
-  try
-    {
-      if (what & Netxx::Probe::ready_read)
-        {
-          if (!read_some())
-            ok = false;
-        }
-      if (what & Netxx::Probe::ready_write)
-        {
-          if (!write_some())
-            ok = false;
-        }
-
-      if (what & Netxx::Probe::ready_oobd)
-        {
-          P(F("got OOB from peer %s, disconnecting")
-            % peer_id);
-          ok = false;
-        }
-      else if (!ok)
-        {
-          switch (protocol_state)
-            {
-            case working_state:
-              P(F("peer %s IO failed in working state (error)")
-                % peer_id);
-              break;
-
-            case shutdown_state:
-              P(F("peer %s IO failed in shutdown state "
-                  "(possibly client misreported error)")
-                % peer_id);
-              break;
-
-            case confirmed_state:
-              P(F("peer %s IO failed in confirmed state (success)")
-                % peer_id);
-              break;
-            }
-        }
-    }
-  catch (Netxx::Exception & e)
-    {
-      P(F("Network error on peer %s, disconnecting")
-        % peer_id);
-      ok = false;
-    }
-  return ok;
 }
 
 bool
@@ -1180,67 +1320,20 @@ session::do_work(transaction_guard & guard)
     return false;
 }
 
-bool
-session::read_some()
+void
+session::note_bytes_in(int count)
 {
-  I(inbuf.size() < constants::netcmd_maxsz);
-  char tmp[constants::bufsz];
-  Netxx::signed_size_type count = str->read(tmp, sizeof(tmp));
-  if (count > 0)
-    {
-      L(FL("read %d bytes from fd %d (peer %s)")
-        % count % str->get_socketfd() % peer_id);
-      if (encountered_error)
-        {
-          L(FL("in error unwind mode, so throwing them into the bit bucket"));
-          return true;
-        }
-      inbuf.append(tmp,count);
-      mark_recent_io();
-      if (byte_in_ticker.get() != NULL)
-        (*byte_in_ticker) += count;
-      bytes_in += count;
-      return true;
-    }
-  else
-    return false;
+  if (byte_in_ticker.get() != NULL)
+    (*byte_in_ticker) += count;
+  bytes_in += count;
 }
 
-bool
-session::write_some()
+void
+session::note_bytes_out(int count)
 {
-  I(!outbuf.empty());
-  size_t writelen = outbuf.front().first.size() - outbuf.front().second;
-  Netxx::signed_size_type count = str->write(outbuf.front().first.data() + outbuf.front().second,
-                                            min(writelen,
-                                            constants::bufsz));
-  if (count > 0)
-    {
-      if ((size_t)count == writelen)
-        {
-          outbuf_size -= outbuf.front().first.size();
-          outbuf.pop_front();
-        }
-      else
-        {
-          outbuf.front().second += count;
-        }
-      L(FL("wrote %d bytes to fd %d (peer %s)")
-        % count % str->get_socketfd() % peer_id);
-      mark_recent_io();
-      if (byte_out_ticker.get() != NULL)
-        (*byte_out_ticker) += count;
-      bytes_out += count;
-      if (encountered_error && outbuf.empty())
-        {
-          // we've flushed our error message, so it's time to get out.
-          L(FL("finished flushing output queue in error unwind mode, disconnecting"));
-          return false;
-        }
-      return true;
-    }
-  else
-    return false;
+  if (byte_out_ticker.get() != NULL)
+    (*byte_out_ticker) += count;
+  bytes_out += count;
 }
 
 // senders
@@ -2448,7 +2541,7 @@ session::maybe_step()
 {
   while (done_all_refinements()
          && !rev_enumerator.done()
-         && outbuf_size < constants::bufsz * 10)
+         && !output_overfull())
     {
       rev_enumerator.step();
     }
@@ -2473,7 +2566,7 @@ session::arm()
   if (!armed)
     {
       // Don't pack the buffer unnecessarily.
-      if (outbuf_size > constants::bufsz * 10)
+      if (output_overfull())
         return false;
 
       if (cmd.read(inbuf, read_hmac))
@@ -2594,10 +2687,11 @@ make_server(std::list<utf8> const & addresses,
 
 class reactor;
 
-class listener_base
+class listener_base : public reactable
 {
-public:
+protected:
   shared_ptr<Netxx::StreamServer> srv;
+public:
   listener_base(shared_ptr<Netxx::StreamServer> srv)
     : srv(srv)
   {
@@ -2606,6 +2700,37 @@ public:
   {
   }
   virtual bool do_io(Netxx::Probe::ready_type event) = 0;
+  bool timed_out(time_t now) { return false; }
+  bool do_work(transaction_guard & guard) { return true; }
+  bool arm() { return false; }
+  bool can_timeout() { return false; }
+
+  string name() { return ""; } // FIXME
+
+  bool is_pipe_pair()
+  {
+    return false;
+  }
+  vector<Netxx::socket_type> get_sockets()
+  {
+    return srv->get_probe_info()->get_sockets();
+  }
+  void add_to_probe(Netxx::PipeCompatibleProbe & probe)
+  {
+    if (num_reactables() >= constants::netsync_connection_limit)
+      {
+        W(F("session limit %d reached, some connections "
+            "will be refused") % constants::netsync_connection_limit);
+      }
+    else
+      {
+        probe.add(*srv);
+      }
+  }
+  void remove_from_probe(Netxx::PipeCompatibleProbe & probe)
+  {
+    probe.remove(*srv);
+  }
 };
 
 class listener : public listener_base
@@ -2651,70 +2776,45 @@ class reactor
 {
   bool have_pipe;
   Netxx::Timeout forever, timeout, instant;
+  bool can_have_timeout;
 
   Netxx::PipeCompatibleProbe probe;
-  set<shared_ptr<session_base> > sessions;
-  set<shared_ptr<listener_base> > listeners;
+  set<shared_ptr<reactable> > items;
 
-  map<Netxx::socket_type, shared_ptr<session_base> > session_lookup;
-  map<Netxx::socket_type, shared_ptr<listener_base> > listener_lookup;
+  map<Netxx::socket_type, shared_ptr<reactable> > lookup;
 
   bool readying;
   int have_armed;
-  void ready_for_io(shared_ptr<session_base> sess, transaction_guard & guard)
+  void ready_for_io(shared_ptr<reactable> item, transaction_guard & guard)
   {
-    if (sess->do_work(guard))
+    if (item->do_work(guard))
       {
         try
           {
-            if (sess->arm())
+            if (item->arm())
               {
                 ++have_armed;
               }
-            probe.add(*sess->str, sess->which_events());
-            if (sess->str->get_socketfd() == -1)
+            item->add_to_probe(probe);
+            vector<Netxx::socket_type> ss = item->get_sockets();
+            for (vector<Netxx::socket_type>::iterator i = ss.begin();
+                 i != ss.end(); ++i)
               {
-                shared_ptr<Netxx::PipeStream> pipe =
-                  boost::dynamic_pointer_cast<Netxx::PipeStream, Netxx::StreamBase>(sess->str);
-                I(pipe);
-                session_lookup.insert(make_pair(pipe->get_readfd(),
-                                                sess));
-                session_lookup.insert(make_pair(pipe->get_writefd(),
-                                                sess));
+                lookup.insert(make_pair(*i, item));
               }
-            else
-              {
-                session_lookup.insert(make_pair(sess->str->get_socketfd(),
-                                                sess));
-              }
+            if (item->can_timeout())
+              can_have_timeout = true;
           }
         catch (bad_decode & bd)
           {
             W(F("protocol error while processing peer %s: '%s'")
-              % sess->peer_id % bd.what);
-            remove(sess);
+              % item->name() % bd.what);
+            remove(item);
           }
       }
     else
       {
-        remove(sess);
-      }
-  }
-  void ready_for_io(shared_ptr<listener_base> listen, transaction_guard & guard)
-  {
-    if (sessions.size() >= constants::netsync_connection_limit)
-      {
-        W(F("session limit %d reached, some connections "
-            "will be refused") % constants::netsync_connection_limit);
-      }
-    else
-      {
-        probe.add(*listen->srv);
-      }
-    vector<Netxx::socket_type> ss = listen->srv->get_probe_info()->get_sockets();
-    for (vector<Netxx::socket_type>::iterator i = ss.begin(); i != ss.end(); ++i)
-      {
-        listener_lookup.insert(make_pair(*i, listen));
+        remove(item);
       }
   }
 public:
@@ -2725,65 +2825,44 @@ public:
       readying(false),
       have_armed(0)
   { }
-  void add(shared_ptr<session_base> sess, transaction_guard & guard)
+  void add(shared_ptr<reactable> item, transaction_guard & guard)
   {
     I(!have_pipe);
-    if (sess->str->get_socketfd() == -1)
+    if (item->is_pipe_pair())
       {
-        I(sessions.size() == 0);
-        I(listeners.size() == 0);
+        I(items.size() == 0);
         have_pipe = true;
       }
-    sessions.insert(sess);
+    items.insert(item);
     if (readying)
-      ready_for_io(sess, guard);
+      ready_for_io(item, guard);
   }
-  void add(shared_ptr<listener_base> listen, transaction_guard & guard)
+  void remove(shared_ptr<reactable> item)
   {
-    I(!have_pipe);
-    listeners.insert(listen);
-    if (readying)
-      ready_for_io(listen, guard);
-  }
-  void remove(shared_ptr<session_base> sess)
-  {
-    set<shared_ptr<session_base> >::iterator i = sessions.find(sess);
-    if (i != sessions.end())
+    set<shared_ptr<reactable> >::iterator i = items.find(item);
+    if (i != items.end())
       {
-        sessions.erase(i);
+        items.erase(i);
         have_pipe = false;
       }
-  }
-  void remove(shared_ptr<listener_base> listen)
-  {
-    set<shared_ptr<listener_base> >::iterator i = listeners.find(listen);
-    if (i != listeners.end())
-      listeners.erase(i);
   }
 
   int size() const
   {
-    return sessions.size() + listeners.size();
+    return items.size();
   }
 
   void ready(transaction_guard & guard)
   {
     readying = true;
     have_armed = 0;
+    can_have_timeout = false;
 
     probe.clear();
-    session_lookup.clear();
-    set<shared_ptr<session_base> > s_todo = sessions;
-    for (set<shared_ptr<session_base> >::iterator i = s_todo.begin();
-         i != s_todo.end(); ++i)
-      {
-        ready_for_io(*i, guard);
-      }
-
-    listener_lookup.clear();
-    set<shared_ptr<listener_base> > l_todo = listeners;
-    for (set<shared_ptr<listener_base> >::iterator i = l_todo.begin();
-         i != l_todo.end(); ++i)
+    lookup.clear();
+    set<shared_ptr<reactable> > todo = items;
+    for (set<shared_ptr<reactable> >::iterator i = todo.begin();
+         i != todo.end(); ++i)
       {
         ready_for_io(*i, guard);
       }
@@ -2795,7 +2874,7 @@ public:
     readying = false;
     bool timed_out = true;
     Netxx::Timeout how_long;
-    if (sessions.empty())
+    if (!can_have_timeout)
       how_long = forever;
     else if (have_armed > 0)
       {
@@ -2819,30 +2898,23 @@ public:
 
         timed_out = false;
 
-        map<Netxx::socket_type, shared_ptr<session_base> >::iterator s
-          = session_lookup.find(fd);
-        map<Netxx::socket_type, shared_ptr<listener_base> >::iterator l
-          = listener_lookup.find(fd);
-        if (s != session_lookup.end())
+        map<Netxx::socket_type, shared_ptr<reactable> >::iterator r
+          = lookup.find(fd);
+        if (r != lookup.end())
           {
-            if (sessions.find(s->second) != sessions.end())
+            if (items.find(r->second) != items.end())
               {
-                if (!s->second->do_io(event))
+                if (!r->second->do_io(event))
                   {
-                    remove(s->second);
+                    remove(r->second);
                   }
               }
             else
               {
-                L(FL("Got i/o on dead peer %s") % s->second->peer_id);
+                L(FL("Got i/o on dead peer %s") % r->second->name());
               }
             if (!pipe)
-              probe.remove(*s->second->str);
-          }
-        else if (l != listener_lookup.end())
-          {
-            l->second->do_io(event);
-            probe.remove(*l->second->srv);
+              r->second->remove_from_probe(probe);
           }
         else
           {
@@ -2855,15 +2927,14 @@ public:
   void prune()
   {
     time_t now = ::time(NULL);
-    set<shared_ptr<session_base> > s_todo = sessions;
-    for (set<shared_ptr<session_base> >::iterator i = s_todo.begin();
-         i != s_todo.end(); ++i)
+    set<shared_ptr<reactable> > todo = items;
+    for (set<shared_ptr<reactable> >::iterator i = todo.begin();
+         i != todo.end(); ++i)
       {
-        if (static_cast<unsigned long>((*i)->last_io_time + constants::netsync_timeout_seconds)
-            < static_cast<unsigned long>(now))
+        if ((*i)->timed_out(now))
           {
             P(F("peer %s has been idle too long, disconnecting")
-              % (*i)->peer_id);
+              % (*i)->name());
             remove(*i);
           }
       }
@@ -2901,7 +2972,7 @@ listener::do_io(Netxx::Probe::ready_type event)
                                            lexical_cast<string>(client), str));
       sess->begin_service();
       I(guard);
-      react.add(shared_ptr<session_base>(sess), *guard);
+      react.add(sess, *guard);
     }
   return true;
 }
@@ -2976,7 +3047,7 @@ call_server(options & opts,
                                        info.client.unparsed(), server));
 
   reactor react;
-  react.add(shared_ptr<session_base>(sess), guard);
+  react.add(sess, guard);
 
   while (true)
     {
@@ -3104,7 +3175,7 @@ serve_connections(options & opts,
   shared_ptr<listener> listen(new listener(opts, lua, project, keys,
                                            react, role, addresses,
                                            guard, use_ipv6));
-  react.add(shared_ptr<listener_base>(listen), *guard);
+  react.add(listen, *guard);
 
 
   while (true)
@@ -3127,7 +3198,7 @@ serve_connections(options & opts,
 
           if (sess)
             {
-              react.add(shared_ptr<session_base>(sess), *guard);
+              react.add(sess, *guard);
               L(FL("Opened connection to %s") % sess->peer_id);
             }
         }
@@ -3155,7 +3226,7 @@ serve_single_connection(project_t & project,
   transaction_guard guard(project.db);
 
   reactor react;
-  react.add(shared_ptr<session_base>(sess), guard);
+  react.add(sess, guard);
 
   while (react.size() > 0)
     {
