@@ -4,6 +4,8 @@ mtn_setup()
 -- check output if there are no changes
 check(mtn("automate", "content_diff"), 0, true, true)
 check(fsize("stdout") == 0 and fsize("stderr") == 0)
+check(mtn("automate", "content_diff", "--with-header"), 0, true, true)
+check(fsize("stdout") == 0 and fsize("stderr") == 0)
 
 -- check non-existing path
 check(mtn("automate", "content_diff", "non_existing"), 1, true, true)
@@ -30,6 +32,10 @@ check(mtn("automate", "content_diff", "-r", R1), 0, true, true)
 check(fsize("stdout") ~= 0)
 check(mtn("automate", "content_diff", "-r", R1, "-r", R2), 0, true, true)
 check(fsize("stdout") ~= 0)
+check(not qgrep("# patch", "stdout"))
+check(mtn("automate", "content_diff", "-r", R1, "-r", R2, "--with-header"), 0, true, true)
+check(fsize("stdout") ~= 0)
+check(qgrep("# patch", "stdout"))
 
 -- three and more should not
 check(mtn("automate", "content_diff", "-r", R1, "-r", R2, "-r", R3), 1, true, true)

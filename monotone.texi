@@ -7898,13 +7898,19 @@ workspace is needed in this case.
 
 4.0
 
+@item Updated in:
+
+8.1
+
+Added @option{--with-header} option.
+
 @item Purpose:
 
 Prints the content changes between two revisions or a revision and the current
 workspace. This command differs from @command{mtn diff} in that way that it only
-outputs content changes and keeps quite on renames or drops, as the header of
-@command{mtn diff} is omitted (this is what @command{mtn automate get_revision}
-already provides).
+outputs content changes and keeps quiet on renames or drops by default, as the
+header of @command{mtn diff} is omitted unless @option{--with-header} is given
+and is omitted regardless if there are no changes.
 
 @item Sample output:
 

@@ -480,6 +480,33 @@ prepare_diff(app_state & app,
     revheader = header.str();
 }
 
+void dump_header(std::string const & revs,
+                 cset const & changes,
+                 std::ostream & out,
+                 bool show_if_empty)
+{
+  data summary;
+  write_cset(changes, summary);
+  if (summary().empty() && !show_if_empty)
+    return;
+
+  vector<string> lines;
+  split_into_lines(summary(), lines);
+  cout << "#\n";
+  if (!summary().empty())
+    {
+      out << revs << "#\n";
+      for (vector<string>::iterator i = lines.begin();
+           i != lines.end(); ++i)
+        out << "# " << *i << '\n';
+    }
+  else
+    {
+      out << "# " << _("no changes") << '\n';
+    }
+  out << "#\n";
+}
+
 CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
     N_("Shows current differences"),
     N_("Compares the current tree with the files in the repository and "
@@ -503,24 +530,10 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
 
   prepare_diff(app, db, included, args, new_is_archived, revs);
 
-  data summary;
-  write_cset(included, summary);
-
-  vector<string> lines;
-  split_into_lines(summary(), lines);
-  cout << "#\n";
-  if (!summary().empty())
+  if (!app.opts.without_header)
     {
-      cout << revs << "#\n";
-      for (vector<string>::iterator i = lines.begin();
-           i != lines.end(); ++i)
-        cout << "# " << *i << '\n';
+      dump_header(revs, included, cout, true);
     }
-  else
-    {
-      cout << "# " << _("no changes") << '\n';
-    }
-  cout << "#\n";
 
   if (app.opts.diff_format == external_diff)
     {
@@ -541,13 +554,13 @@ CMD(diff, "diff", "di", CMD_REF(informative), N_("[PATH]..."),
 // Added in: 4.0
 // Purpose: Availability of mtn diff as automate command.
 //
-// Output format: Like mtn diff, but with the header part omitted (as this is
-// doubles the output of automate get_revision). If no content changes happened,
-// the output is empty. All file operations beside mtn add are omitted,
-// as they don't change the content of the file.
+// Output format: Like mtn diff, but with the header part omitted by default.
+// If no content changes happened, the output is empty. All file operations
+// beside mtn add are omitted, as they don't change the content of the file.
 CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
              N_("Calculates diffs of files"),
              "",
+             options::opts::with_header | options::opts::without_header |
              options::opts::revision | options::opts::depth |
              options::opts::exclude)
 {
@@ -557,6 +570,12 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
   database db(app);
 
   prepare_diff(app, db, included, args, new_is_archived, dummy_header);
+
+
+  if (app.opts.with_header)
+    {
+      dump_header(dummy_header, included, cout, false);
+    }
 
   dump_diffs(app.lua, db, included, output,
              app.opts.diff_format, new_is_archived, !app.opts.no_show_encloser);
