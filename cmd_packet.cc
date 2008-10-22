@@ -146,6 +146,35 @@ namespace
   };
 }
 
+// Name : read_packets
+// Arguments:
+//   packet-data
+// Added in: 8.1
+// Purpose:
+//   Store public keys (and incidentally anything else that can be
+//   represented as a packet) into the database.
+// Input format:
+//   The format of the packet-data argument is identical to the output
+//   of "mtn pubkey <keyname>" (or other packet output commands).
+// Output format:
+//   No output.
+// Error conditions:
+//   Invalid input formatting.
+CMD_AUTOMATE(read_packets, N_("PACKET-DATA"),
+             N_("Load the given packets into the database."),
+             "",
+             options::opts::none)
+{
+  N(args.size() == 1,
+    F("wrong argument count"));
+
+  database db(app);
+  key_store keys(app);
+  packet_db_writer dbw(db, keys);
+
+  istringstream ss(idx(args,0)());
+  read_packets(ss, dbw);
+}
 
 CMD(read, "read", "", CMD_REF(packet_io), "[FILE1 [FILE2 [...]]]",
     N_("Reads packets from files"),
