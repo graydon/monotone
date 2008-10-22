@@ -574,7 +574,7 @@ CMD_AUTOMATE(content_diff, N_("[FILE [...]]"),
 
   if (app.opts.with_header)
     {
-      dump_header(dummy_header, included, cout, false);
+      dump_header(dummy_header, included, output, false);
     }
 
   dump_diffs(app.lua, db, included, output,
