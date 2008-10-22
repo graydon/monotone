@@ -492,7 +492,7 @@ void dump_header(std::string const & revs,
 
   vector<string> lines;
   split_into_lines(summary(), lines);
-  cout << "#\n";
+  out << "#\n";
   if (!summary().empty())
     {
       out << revs << "#\n";
