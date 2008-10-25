@@ -339,19 +339,23 @@ find_next_subpattern(string::const_iterator p,
   for (; p != pe; p++)
     switch (*p)
       {
-      default: break;
+      default:
+        break;
 
       case META_ALT_BRA:
-        depth++; break;
+        depth++;
+        break;
 
       case META_ALT_KET:
         depth--;
         if (depth == 0)
           return p+1;
+        break;
 
       case META_ALT_OR:
         if (depth == 1 && want_alternatives)
           return p+1;
+        break;
       }
 
   I(false);
