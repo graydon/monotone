@@ -334,6 +334,7 @@ find_next_subpattern(string::const_iterator p,
                        string::const_iterator pe,
                        bool want_alternatives)
 {
+  L(FL("Finding subpattern in '%s'") % decode(p, pe));
   unsigned int depth = 1;
   for (; p != pe; p++)
     switch (*p)
@@ -703,6 +704,19 @@ UNIT_TEST(globish, complex_matches)
     UNIT_TEST_CHECK(m("foo"));
     UNIT_TEST_CHECK(!m("bar"));
   }
+}
+
+UNIT_TEST(globish, nested_matches)
+{
+  globish g("a.{i.{x,y},j}");
+  UNIT_TEST_CHECK(g.matches("a.i.x"));
+  UNIT_TEST_CHECK(g.matches("a.i.y"));
+  UNIT_TEST_CHECK(g.matches("a.j"));
+  UNIT_TEST_CHECK(!g.matches("q"));
+  UNIT_TEST_CHECK(!g.matches("a.q"));
+  UNIT_TEST_CHECK(!g.matches("a.j.q"));
+  UNIT_TEST_CHECK(!g.matches("a.i.q"));
+  UNIT_TEST_CHECK(!g.matches("a.i.x.q"));
 }
 
 #endif // BUILD_UNIT_TESTS
