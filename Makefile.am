@@ -125,8 +125,8 @@ BOTAN_SOURCES = 							\
 	botan/dsa_gen.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
-	botan/eng_base.cpp botan/engine.cpp botan/es_dev.cpp		\
-	botan/es_egd.cpp botan/exceptn.cpp botan/filter.cpp		\
+	botan/eng_base.cpp botan/engine.cpp 		\
+	botan/exceptn.cpp botan/filter.cpp		\
 	botan/filters.cpp botan/get_algo.cpp botan/get_enc.cpp		\
 	botan/get_pbe.cpp botan/hash_id.cpp botan/hex.cpp		\
 	botan/hmac.cpp botan/if_algo.cpp botan/init_def.cpp		\
@@ -451,6 +451,7 @@ else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
   mtn_SOURCES += unix/main.cc
   lib3rdparty_a_SOURCES += botan/es_dev.cpp
+  lib3rdparty_a_SOURCES += botan/es_egd.cpp
   tester_SOURCES += unix/tester-plaf.cc
   check_net_SOURCES = unix/tester-check-net.c
 endif
