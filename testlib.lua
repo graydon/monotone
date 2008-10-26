@@ -439,6 +439,10 @@ function samefile(left, right)
  end
 end
 
+function samefilestd(left, right)
+   return samefile(testdir .. "/" .. test.name .. "/" .. left, right)
+end
+
 function samelines(f, t)
   local fl = {}
   for l in io.lines(f) do table.insert(fl, l) end

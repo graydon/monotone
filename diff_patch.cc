@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2002 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -534,6 +535,27 @@ content_merge_database_adaptor::record_merge(file_id const & left_ident,
 }
 
 void
+content_merge_database_adaptor::record_file(file_id const & parent_ident,
+                                            file_id const & merged_ident,
+                                            file_data const & parent_data,
+                                            file_data const & merged_data)
+{
+  L(FL("recording file %s -> %s")
+    % parent_ident
+    % merged_ident);
+
+  transaction_guard guard(db);
+
+  if (!(parent_ident == merged_ident))
+    {
+      delta parent_delta;
+      diff(parent_data.inner(), merged_data.inner(), parent_delta);
+      db.put_file_version(parent_ident, merged_ident, file_delta(parent_delta));
+    }
+  guard.commit();
+}
+
+void
 content_merge_database_adaptor::cache_roster(revision_id const & rid,
                                              boost::shared_ptr<roster_t const> roster)
 {
@@ -640,6 +662,21 @@ content_merge_workspace_adaptor::record_merge(file_id const & left_id,
 }
 
 void
+content_merge_workspace_adaptor::record_file(file_id const & parent_id,
+                                             file_id const & merged_id,
+                                             file_data const & parent_data,
+                                             file_data const & merged_data)
+{
+  L(FL("temporarily recording file %s -> %s")
+    % parent_id
+    % merged_id);
+  // this is an insert instead of a safe_insert because it is perfectly
+  // legal (though rare) to have multiple merges resolve to the same file
+  // contents.
+  temporary_store.insert(make_pair(merged_id, merged_data));
+}
+
+void
 content_merge_workspace_adaptor::get_ancestral_roster(node_id nid,
                                                       revision_id & rid,
                                                       shared_ptr<roster_t const> & anc)
@@ -726,6 +763,15 @@ content_merge_checkout_adaptor::record_merge(file_id const & left_ident,
 }
 
 void
+content_merge_checkout_adaptor::record_file(file_id const & parent_ident,
+                                            file_id const & merged_ident,
+                                            file_data const & parent_data,
+                                            file_data const & merged_data)
+{
+  I(false);
+}
+
+void
 content_merge_checkout_adaptor::get_ancestral_roster(node_id nid,
                                                      revision_id & rid,
                                                      shared_ptr<roster_t const> & anc)
@@ -767,6 +813,61 @@ content_merger::attribute_manual_merge(file_path const & path,
 }
 
 bool
+content_merger::attempt_auto_merge(file_path const & anc_path, // inputs
+                                   file_path const & left_path,
+                                   file_path const & right_path,
+                                   file_id const & ancestor_id,
+                                   file_id const & left_id,
+                                   file_id const & right_id,
+                                   file_data & left_data, // outputs
+                                   file_data & right_data,
+                                   file_data & merge_data)
+{
+  I(left_id != right_id);
+
+  if (attribute_manual_merge(left_path, left_ros) ||
+      attribute_manual_merge(right_path, right_ros))
+    {
+      return false;
+    }
+
+  // both files mergeable by monotone internal algorithm, try to merge
+  // note: the ancestor is not considered for manual merging. Forcing the
+  // user to merge manually just because of an ancestor mistakenly marked
+  // manual seems too harsh
+
+  file_data ancestor_data;
+
+  adaptor.get_version(left_id, left_data);
+  adaptor.get_version(ancestor_id, ancestor_data);
+  adaptor.get_version(right_id, right_data);
+
+  data const left_unpacked = left_data.inner();
+  data const ancestor_unpacked = ancestor_data.inner();
+  data const right_unpacked = right_data.inner();
+
+  string const left_encoding(get_file_encoding(left_path, left_ros));
+  string const anc_encoding(get_file_encoding(anc_path, anc_ros));
+  string const right_encoding(get_file_encoding(right_path, right_ros));
+
+  vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
+  split_into_lines(left_unpacked(), left_encoding, left_lines);
+  split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
+  split_into_lines(right_unpacked(), right_encoding, right_lines);
+
+  if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
+    {
+      string tmp;
+
+      join_lines(merged_lines, tmp);
+      merge_data = file_data(tmp);
+      return true;
+    }
+
+  return false;
+}
+
+bool
 content_merger::try_auto_merge(file_path const & anc_path,
                                file_path const & left_path,
                                file_path const & right_path,
@@ -795,50 +896,19 @@ content_merger::try_auto_merge(file_path const & anc_path,
       return true;
     }
 
-  file_data left_data, right_data, ancestor_data;
-  data left_unpacked, ancestor_unpacked, right_unpacked, merged_unpacked;
+  file_data left_data, right_data, merge_data;
 
-  adaptor.get_version(left_id, left_data);
-  adaptor.get_version(ancestor_id, ancestor_data);
-  adaptor.get_version(right_id, right_data);
-
-  left_unpacked = left_data.inner();
-  ancestor_unpacked = ancestor_data.inner();
-  right_unpacked = right_data.inner();
-
-  if (!attribute_manual_merge(left_path, left_ros) &&
-      !attribute_manual_merge(right_path, right_ros))
+  if (attempt_auto_merge(anc_path, left_path, right_path,
+                         ancestor_id, left_id, right_id,
+                         left_data, right_data, merge_data))
     {
-      // both files mergeable by monotone internal algorithm, try to merge
-      // note: the ancestor is not considered for manual merging. Forcing the
-      // user to merge manually just because of an ancestor mistakenly marked
-      // manual seems too harsh
-      string left_encoding, anc_encoding, right_encoding;
-      left_encoding = this->get_file_encoding(left_path, left_ros);
-      anc_encoding = this->get_file_encoding(anc_path, anc_ros);
-      right_encoding = this->get_file_encoding(right_path, right_ros);
+      L(FL("internal 3-way merged ok"));
+      calculate_ident(merge_data, merged_id);
 
-      vector<string> left_lines, ancestor_lines, right_lines, merged_lines;
-      split_into_lines(left_unpacked(), left_encoding, left_lines);
-      split_into_lines(ancestor_unpacked(), anc_encoding, ancestor_lines);
-      split_into_lines(right_unpacked(), right_encoding, right_lines);
+      adaptor.record_merge(left_id, right_id, merged_id,
+                           left_data, right_data, merge_data);
 
-      if (merge3(ancestor_lines, left_lines, right_lines, merged_lines))
-        {
-          file_id tmp_id;
-          file_data merge_data;
-          string tmp;
-
-          L(FL("internal 3-way merged ok"));
-          join_lines(merged_lines, tmp);
-          merge_data = file_data(tmp);
-          calculate_ident(merge_data, merged_id);
-
-          adaptor.record_merge(left_id, right_id, merged_id,
-                               left_data, right_data, merge_data);
-
-          return true;
-        }
+      return true;
     }
 
   return false;

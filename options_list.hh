@@ -1,3 +1,4 @@
+// Copyright 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright 2006 Timothy Brownawell <tbrownaw@gmail.com>
 // This is made available under the GNU GPL v2 or later.
 
@@ -659,6 +660,47 @@ OPTION(automate_inventory_opts, no_corresponding_renames, false, "no-correspondi
 #ifdef option_bodies
 {
   no_corresponding_renames = true;
+}
+#endif
+
+OPTSET(resolve_conflicts_opts)
+OPTVAR(resolve_conflicts_opts, bookkeeping_path, resolve_conflicts_file, )
+OPTVAR(resolve_conflicts_opts, bool, resolve_conflicts, )
+
+OPTION(resolve_conflicts_opts, resolve_conflicts_file, true, "resolve-conflicts-file",
+       gettext_noop("use file to resolve conflicts"))
+#ifdef option_bodies
+{
+  // we can't call  bookkeeping_path::external_string_is_bookkeeping_path
+  // here, because we haven't found the workspace yet.
+  N(bookkeeping_path::internal_string_is_bookkeeping_path(utf8(arg)),
+    F("conflicts file must be under _MTN"));
+  resolve_conflicts_file = bookkeeping_path(arg);
+}
+#endif
+
+OPTION(resolve_conflicts_opts, resolve_conflicts, false, "resolve-conflicts",
+       gettext_noop("use _MTN/conflicts to resolve conflicts"))
+#ifdef option_bodies
+{
+  N(!resolve_conflicts_file_given,
+    F("only one of --resolve-conflicts or --resolve-conflicts-file may be given"));
+  resolve_conflicts_file = bookkeeping_path("_MTN/conflicts");
+}
+#endif
+
+OPTSET(conflicts_opts)
+OPTVAR(conflicts_opts, bookkeeping_path, conflicts_file, bookkeeping_path("_MTN/conflicts"))
+
+OPTION(conflicts_opts, conflicts_file, true, "conflicts-file",
+       gettext_noop("file in which to store conflicts"))
+#ifdef option_bodies
+{
+  // we can't call bookkeeping_path::external_string_is_bookkeeping_path
+  // here, because we haven't found the workspace yet.
+  N(bookkeeping_path::internal_string_is_bookkeeping_path(utf8(arg)),
+    F("conflicts file must be under _MTN"));
+  conflicts_file = bookkeeping_path(arg);
 }
 #endif
 

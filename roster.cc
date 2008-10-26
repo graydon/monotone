@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -45,6 +46,19 @@ using std::vector;
 using boost::lexical_cast;
 
 ///////////////////////////////////////////////////////////////////
+
+namespace
+{
+  namespace syms
+  {
+    symbol const birth("birth");
+    symbol const dormant_attr("dormant_attr");
+    symbol const ident("ident");
+
+    symbol const path_mark("path_mark");
+    symbol const attr_mark("attr_mark");
+  }
+}
 
 template <> void
 dump(node_id const & val, string & out)
@@ -517,9 +531,8 @@ shallow_equal(node_t a, node_t b,
 }
 
 
-// FIXME_ROSTERS: why does this do two loops?  why does it pass 'true' to
-// shallow_equal?
-// -- njs
+// FIXME_ROSTERS: why does this do two loops? why does it pass 'true' for
+// shallow_compare_dir_children to shallow_equal? -- njs
 bool
 roster_t::operator==(roster_t const & other) const
 {
@@ -810,11 +823,11 @@ roster_t::drop_detached_node(node_id nid)
     I(downcast_to_dir_t(n)->children.empty());
   // all right, kill it
   safe_erase(nodes, nid);
-  // can use safe_erase here, because while not every detached node appears in
-  // old_locations, all those that used to be in the tree do.  and you should
-  // only ever be dropping nodes that were detached, not nodes that you just
-  // created and that have never been attached.
-  safe_erase(old_locations, nid);
+
+  // Resolving a duplicate name conflict via drop one side requires dropping
+  // nodes that were never attached. So we erase the key without checking
+  // whether it was present.
+  old_locations.erase(nid);
 }
 
 
@@ -847,6 +860,7 @@ roster_t::create_file_node(file_id const & content, node_id_source & nis)
   create_file_node(content, nid);
   return nid;
 }
+
 void
 roster_t::create_file_node(file_id const & content, node_id nid)
 {
@@ -1858,7 +1872,6 @@ namespace {
       left_cs.apply_to(from_left_er);
       right_cs.apply_to(from_right_er);
 
-      set<node_id> new_ids;
       unify_rosters(new_roster, from_left_er.new_nodes,
                     from_right_r, from_right_er.new_nodes,
                     nis);
@@ -2430,6 +2443,17 @@ select_nodes_modified_by_cset(cset const & cs,
 }
 
 void
+roster_t::get_file_details(node_id nid,
+                           file_id & fid,
+                           file_path & pth) const
+{
+  I(has_node(nid));
+  file_t f = downcast_to_file_t(get_node(nid));
+  fid = f->content;
+  get_name(nid, pth);
+}
+
+void
 roster_t::extract_path_set(set<file_path> & paths) const
 {
   paths.clear();
@@ -2473,11 +2497,11 @@ push_marking(basic_io::stanza & st,
 {
 
   I(!null_id(mark.birth_revision));
-  st.push_binary_pair(basic_io::syms::birth, mark.birth_revision.inner());
+  st.push_binary_pair(syms::birth, mark.birth_revision.inner());
 
   for (set<revision_id>::const_iterator i = mark.parent_name.begin();
        i != mark.parent_name.end(); ++i)
-    st.push_binary_pair(basic_io::syms::path_mark, i->inner());
+    st.push_binary_pair(syms::path_mark, i->inner());
 
   if (is_file)
     {
@@ -2493,7 +2517,7 @@ push_marking(basic_io::stanza & st,
     {
       for (set<revision_id>::const_iterator j = i->second.begin();
            j != i->second.end(); ++j)
-        st.push_binary_triple(basic_io::syms::attr_mark, i->first(), j->inner());
+        st.push_binary_triple(syms::attr_mark, i->first(), j->inner());
     }
 }
 
@@ -2505,13 +2529,13 @@ parse_marking(basic_io::parser & pa,
   while (pa.symp())
     {
       string rev;
-      if (pa.symp(basic_io::syms::birth))
+      if (pa.symp(syms::birth))
         {
           pa.sym();
           pa.hex(rev);
           marking.birth_revision = revision_id(decode_hexenc(rev));
         }
-      else if (pa.symp(basic_io::syms::path_mark))
+      else if (pa.symp(syms::path_mark))
         {
           pa.sym();
           pa.hex(rev);
@@ -2523,7 +2547,7 @@ parse_marking(basic_io::parser & pa,
           pa.hex(rev);
           safe_insert(marking.file_content, revision_id(decode_hexenc(rev)));
         }
-      else if (pa.symp(basic_io::syms::attr_mark))
+      else if (pa.symp(syms::attr_mark))
         {
           string k;
           pa.sym();
@@ -2573,7 +2597,7 @@ roster_t::print_to(basic_io::printer & pr,
       if (print_local_parts)
         {
           I(curr->self != the_null_node);
-          st.push_str_pair(basic_io::syms::ident, lexical_cast<string>(curr->self));
+          st.push_str_pair(syms::ident, lexical_cast<string>(curr->self));
         }
 
       // Push the non-dormant part of the attr map
@@ -2596,7 +2620,7 @@ roster_t::print_to(basic_io::printer & pr,
               if (!j->second.first)
                 {
                   I(j->second.second().empty());
-                  st.push_str_pair(basic_io::syms::dormant_attr, j->first());
+                  st.push_str_pair(syms::dormant_attr, j->first());
                 }
             }
 
@@ -2662,7 +2686,7 @@ roster_t::parse_from(basic_io::parser & pa,
           pa.str(pth);
           pa.esym(basic_io::syms::content);
           pa.hex(content);
-          pa.esym(basic_io::syms::ident);
+          pa.esym(syms::ident);
           pa.str(ident);
           n = file_t(new file_node(read_num(ident),
                                    file_id(decode_hexenc(content))));
@@ -2671,7 +2695,7 @@ roster_t::parse_from(basic_io::parser & pa,
         {
           pa.sym();
           pa.str(pth);
-          pa.esym(basic_io::syms::ident);
+          pa.esym(syms::ident);
           pa.str(ident);
           n = dir_t(new dir_node(read_num(ident)));
         }
@@ -2704,7 +2728,7 @@ roster_t::parse_from(basic_io::parser & pa,
         }
 
       // Dormant attrs
-      while(pa.symp(basic_io::syms::dormant_attr))
+      while(pa.symp(syms::dormant_attr))
         {
           pa.sym();
           string k;

@@ -1,6 +1,7 @@
 #ifndef __PATHS_HH__
 #define __PATHS_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -48,12 +49,14 @@
 //          is extremely fast.  such strings are interpreted as being relative
 //          to the project root.
 //        file_path_external: use this for strings that come from the user.
-//          these strings are normalized before being checked, and if there is
-//          a problem trigger N() invariants rather than I() invariants.  if in
-//          a workspace, such strings are interpreted as being
-//          _relative to the user's original directory_.
-//          if not in a workspace, strings are treated as referring to some
-//          database object directly.
+//          these strings are normalized before being checked, and if there
+//          is a problem trigger N() invariants rather than I() invariants.
+//          if in a workspace, such strings are interpreted as being
+//          _relative to the user's original directory_. if not in a
+//          workspace, strings are treated as relative to the tree root. The
+//          null string is accepted as referring to the workspace root
+//          directory, because that is how file_path.as_external() outputs
+//          that directory.
 //      file_path's also provide optimized splitting and joining
 //      functionality.
 //
@@ -80,8 +83,10 @@
 //       representing this path for internal use.  for instance, this is the
 //       string that should be embedded into the text of revisions.
 //    -- a method .as_external(), which returns a std::string suitable for
-//       passing to filesystem interface functions.  in practice, this means
-//       that it is recoded into an appropriate character set, etc.
+//       passing to filesystem interface functions. in practice, this means
+//       that it is recoded into an appropriate character set, etc. For
+//       bookkeeping_path and file_path, .as_external() is relative to the
+//       workspace root.
 //    -- a operator<< for ostreams.  this should always be used when writing
 //       out paths for display to the user.  at the moment it just calls one
 //       of the above functions, but this is _not_ correct.  there are
@@ -95,6 +100,8 @@
 //           F("my path is %s") % my_path
 //       i.e., nothing fancy necessary, for purposes of F() just treat it like
 //       it were a string
+
+#include <boost/shared_ptr.hpp>
 
 class any_path;
 class file_path;
@@ -256,15 +263,17 @@ private:
   // external paths:
   //   -- are converted to internal syntax (/ rather than \, etc.)
   //   -- normalized
-  //   -- assumed to be relative to the user's cwd, and munged
-  //      to become relative to root of the workspace instead
+  //   -- if not 'to_workspace_root', assumed to be relative to the user's
+  //      cwd, and munged to become relative to root of the workspace
+  //      instead
   // internal and external paths:
   //   -- are confirmed to be normalized and relative
   //   -- not to be in _MTN/
-  file_path(source_type type, std::string const & path);
-  file_path(source_type type, utf8 const & path);
+  file_path(source_type type, std::string const & path, bool to_workspace_root);
+  file_path(source_type type, utf8 const & path, bool to_workspace_root);
   friend file_path file_path_internal(std::string const & path);
   friend file_path file_path_external(utf8 const & path);
+  friend file_path file_path_external_ws(utf8 const & path);
 
   // private substring constructor, does no validation.  used by dirname()
   // and operator/ with a path_component.
@@ -279,14 +288,21 @@ private:
   friend class roster_t;
 };
 
-// these are the public file_path constructors
+// these are the public file_path constructors. path is relative to the
+// current working directory.
 inline file_path file_path_internal(std::string const & path)
 {
-  return file_path(file_path::internal, path);
+  return file_path(file_path::internal, path, false);
 }
 inline file_path file_path_external(utf8 const & path)
 {
-  return file_path(file_path::external, path);
+  return file_path(file_path::external, path, false);
+}
+
+// path is relative to the workspace root
+inline file_path file_path_external_ws(utf8 const & path)
+{
+  return file_path(file_path::external, path, true);
 }
 
 class bookkeeping_path : public any_path
@@ -375,6 +391,12 @@ private:
 template <> void dump(file_path const & sp, std::string & out);
 template <> void dump(bookkeeping_path const & sp, std::string & out);
 template <> void dump(system_path const & sp, std::string & out);
+
+// Return a file_path, bookkeeping_path, or system_path, as appropriate.
+// 'path' is an external path. If to_workspace_root, path is relative to
+// workspace root, or absolute. Otherwise, it is relative to the current
+// working directory, or absolute.
+boost::shared_ptr<any_path> new_optimal_path(std::string path, bool to_workspace_root);
 
 // record the initial path.  must be called before any use of system_path.
 void

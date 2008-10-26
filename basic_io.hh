@@ -1,6 +1,7 @@
 #ifndef __BASIC_IO_HH__
 #define __BASIC_IO_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2004 Graydon Hoare <graydon@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -29,29 +30,21 @@ namespace basic_io
 
   namespace
     {
-      namespace syms 
+      namespace syms
         {
           // general format symbol
           symbol const format_version("format_version");
-          
-          // roster symbols
+
+          // common symbols
           symbol const dir("dir");
           symbol const file("file");
           symbol const content("content");
           symbol const attr("attr");
-      
-          // 'local' roster and marking symbols
-          // FIXME: should these be listed as "general" symbols here as well?
-          symbol const ident("ident");
-          symbol const birth("birth");
-          symbol const dormant_attr("dormant_attr");
-      
-          symbol const path_mark("path_mark");
+
           symbol const content_mark("content_mark");
-          symbol const attr_mark("attr_mark");
         }
     }
-    
+
   typedef enum
     {
       TOK_SYMBOL,
@@ -77,7 +70,7 @@ namespace basic_io
     inline void peek()
     {
       if (LIKELY(curr != in.end()))
-        // we do want to distinguish between EOF and '\xff', 
+        // we do want to distinguish between EOF and '\xff',
         // so we translate '\xff' to 255u
 	lookahead = widen<unsigned int,char>(*curr);
       else
@@ -162,7 +155,7 @@ namespace basic_io
                 in.err("non-hex character in hex string");
               advance();
 	    }
-	
+
 	  store(val);
 
 	  if (UNLIKELY(static_cast<char>(in.lookahead) != ']'))
@@ -230,13 +223,13 @@ namespace basic_io
 		}
 	      advance();
 	    }
-	
+
 	  store(val);
 
 	  if (UNLIKELY(static_cast<char>(in.lookahead) != '"'))
 	    in.err("string did not end with '\"'");
 	  in.advance();
-	
+
 	  return basic_io::TOK_STRING;
 	}
       else
@@ -253,6 +246,7 @@ namespace basic_io
     stanza();
     size_t indent;
     std::vector<std::pair<symbol, std::string> > entries;
+    void push_symbol(symbol const & k);
     void push_hex_pair(symbol const & k, hexenc<id> const & v);
     void push_binary_pair(symbol const & k, id const & v);
     void push_binary_triple(symbol const & k, std::string const & n,
@@ -264,10 +258,13 @@ namespace basic_io
     void push_file_pair(symbol const & k, file_path const & v);
     void push_str_multi(symbol const & k,
                         std::vector<std::string> const & v);
+    void push_str_multi(symbol const & k1,
+                        symbol const & k2,
+                        std::vector<std::string> const & v);
   };
 
 
-  // Note: printer uses a static buffer; thus only one buffer 
+  // Note: printer uses a static buffer; thus only one buffer
   // may be referenced (globally). An invariant will be triggered
   // if more than one basic_io::printer is instantiated.
   struct
