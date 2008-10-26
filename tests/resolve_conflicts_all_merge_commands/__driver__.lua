@@ -1,5 +1,11 @@
--- Demonstrate that all merge commands support --resolve-conflicts.
+-- Demonstrate that all non-workspace merge commands support --resolve-conflicts.
 --
+-- The merge commands are defined in cmd_merging.cc; search for CMD.
+-- They are: merge, propagate, explicit_merge, merge_into_dir.
+--
+-- propagate is implemented by calling merge_into_dir,
+-- so we don't need to test the latter explicitly.
+
 -- We don't explicitly test --resolve-conflicts-file, because that is
 -- handled by the same code, and other tests show it works.
 --
@@ -7,9 +13,6 @@
 -- resolutions.
 
 -- The test structure is borrowed from ../conflict_messages/__driver__.lua
-
--- Note that 'propagate' is implemented by calling 'merge_into_dir',
--- so we don't need to test the latter explicitly.
 
 mtn_setup()
 
@@ -56,13 +59,15 @@ check(mtn("propagate", branch , branch .. "-propagate", "--resolve-conflicts"), 
 merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)
 
-check(mtn("explicit_merge", first, second, branch,
-"--resolve-conflicts"), 0, nil, true) merged = merged_revision()
+check(mtn("explicit_merge", first, second, branch,"--resolve-conflicts"), 0, nil, true)
+merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)
 
 -- create a second head on 'branch'
 writefile("foo", branch .. "-foo third revision")
 commit(branch)
+check(mtn("conflicts", "store"), 0, nil, true)
+check(mtn("conflicts", "resolve_first", "user", "foo"), 0, nil, nil)
 check(mtn("merge", "--branch", branch, "--resolve-conflicts"), 0, nil, true)
 merged = merged_revision()
 check(mtn("db", "kill_rev_locally", merged), 0, nil, true)

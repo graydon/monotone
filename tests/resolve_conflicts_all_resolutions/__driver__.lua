@@ -104,8 +104,10 @@ check(mtn("conflicts", "--conflicts-file=_MTN/conflicts-1", "resolve_first", "us
 
 check(samefilestd("conflicts-resolved", "_MTN/conflicts-1"))
 
--- This succeeds
-check(mtn("merge", "--resolve-conflicts-file", "_MTN/conflicts-1"), 0, nil, true)
+-- This succeeds. In 'mtn conflicts store' above, we specified 'abe_1,
+-- beth_1', which is the opposite order that 'merge' would choose, so
+-- we need to use 'explicit_merge' here.
+check(mtn("explicit_merge", "--resolve-conflicts-file", "_MTN/conflicts-1", abe_1, beth_1, "testbranch"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("merge-1", "stderr"))
 

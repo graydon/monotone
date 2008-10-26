@@ -489,7 +489,7 @@ bookkeeping_path::external_string_is_bookkeeping_path(utf8 const & path)
   string normalized;
   try
     {
-      normalize_external_path(path(), normalized, true);
+      normalize_external_path(path(), normalized, false);
     }
   catch (informative_failure &)
     {
