@@ -4573,6 +4573,9 @@ multiple heads, and commits the results to the database, marking the
 resulting merged revision as a member of @var{branchname}. The merged
 revision will contain each of the head revision IDs as ancestors.
 
+A commit message may be provided. A message stating the revision ids
+that were merged will be prepended to any user commit message.
+
 Merging is performed by repeated pairwise merges: two heads are
 selected, then their least common ancestor is located in the ancestry
 graph and these 3 revisions are provided to the built-in 3-way merge
@@ -4586,6 +4589,9 @@ ancestor of the two heads for a 3-way merge. The resulting revision is
 committed to @var{destbranch}. If
 either @var{sourcebranch} or @var{destbranch} has multiple heads,
 @command{propagate} aborts, doing nothing.
+
+A commit message may be provided. A message stating the source and
+target branches will be prepended to any user commit message.
 
 The purpose of @command{propagate} is to copy all the changes on
 @var{sourcebranch}, since the last @command{propagate}, to

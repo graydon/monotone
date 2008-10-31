@@ -505,8 +505,8 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile |
-    options::opts::messages | options::opts::resolve_conflicts_opts)
+    options::opts::date | options::opts::author | options::opts::messages |
+    options::opts::resolve_conflicts_opts)
 {
   if (args.size() != 2)
     throw usage(execid);

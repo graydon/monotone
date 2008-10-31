@@ -405,6 +405,7 @@ OPTION(globals, log, true, "log", gettext_noop("file to write the log to"))
 OPTSET(messages)
 OPTVAR(messages, std::vector<std::string>, message, )
 OPTVAR(messages, utf8, msgfile, )
+OPTVAR(messages, bool, no_prefix, false)
 OPTION(messages, message, true, "message,m",
         gettext_noop("set commit changelog message"))
 #ifdef option_bodies
@@ -417,6 +418,13 @@ OPTION(messages, msgfile, true, "message-file",
 #ifdef option_bodies
 {
   msgfile = utf8(arg);
+}
+#endif
+OPTION(messages, no_prefix, false, "no-prefix",
+        gettext_noop("no prefix to message"))
+#ifdef option_bodies
+{
+  no_prefix = true;
 }
 #endif
 

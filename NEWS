@@ -19,7 +19,7 @@
 
 	- The Lua-based contributed Monotone extension introduced in
 	  0.38 haven't been added to the tarball; this has been fixed.
- 
+
         New features
 
         - New 'mtn ls duplicates' command which lets you list
@@ -27,6 +27,13 @@
 
         - New option --no-workspace, to make monotone ignore any
           workspace it might have been run in.
+
+        - New command group 'mtn conflicts *'; provides asynchronous
+          conflict resolutions for merge and propagate.
+
+        - 'merge' and 'propagate' accept user commit messages; the
+          'merge rev rev' or 'propagate branch branch' message will be
+          prefixed to the user message. --no-prefix removes the prefix.
 
         Internal
 
