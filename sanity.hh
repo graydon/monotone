@@ -321,32 +321,70 @@ do { \
 #define UNLIKELY(zz) (zz)
 #endif
 
+struct bad_decode {
+  bad_decode(i18n_format const & fmt) : what(fmt.str()) {}
+  std::string what;
+};
+
+enum made_from_t { made_from_local, made_from_network };
+made_from_t const made_from = made_from_local;
+
+// Something that knows where it came from, so that its sanity checks
+// can throw bad_decode instead of informative_error if it came from
+// the network.
+class origin_aware
+{
+public:
+  made_from_t made_from;
+  origin_aware() : made_from(made_from_local) {}
+  origin_aware(made_from_t m) : made_from(m) {}
+};
+
 // I is for invariants that "should" always be true
 // (if they are wrong, there is a *bug*)
-#define I(e) \
-do { \
-  if(UNLIKELY(!(e))) { \
-    global_sanity.invariant_failure("I("#e")", __FILE__, __LINE__); \
-  } \
-} while(0)
+#define I(e)                                                            \
+  do {                                                                  \
+    if (UNLIKELY(!(e)))                                                 \
+      {                                                                 \
+        if (made_from == made_from_network)                             \
+          throw bad_decode(F("%s:%s : %s")                              \
+                           % __FILE__ % __LINE__ % "I("#e")");          \
+        else                                                            \
+          global_sanity.invariant_failure("I("#e")", __FILE__, __LINE__); \
+      }                                                                 \
+  } while (0)
 
 // N is for naughtyness on behalf of the user
 // (if they are wrong, the user just did something wrong)
-#define N(e, explain)\
-do { \
-  if(UNLIKELY(!(e))) { \
-    global_sanity.naughty_failure("N("#e")", (explain), __FILE__, __LINE__); \
-  } \
-} while(0)
+#define N(e, explain)                                                   \
+  do {                                                                  \
+    if (UNLIKELY(!(e)))                                                 \
+      {                                                                 \
+        if (made_from == made_from_network)                             \
+          throw bad_decode(F("%s:%s : %s")                              \
+                           % __FILE__ % __LINE__ % (explain));          \
+        else                                                            \
+          global_sanity.naughty_failure("N("#e")",                      \
+                                        (explain),                      \
+                                        __FILE__, __LINE__);            \
+      }                                                                 \
+  } while (0)
 
 // E is for errors; they are normal (i.e., not a bug), but not necessarily
 // attributable to user naughtiness
-#define E(e, explain)\
-do { \
-  if(UNLIKELY(!(e))) { \
-    global_sanity.error_failure("E("#e")", (explain), __FILE__, __LINE__); \
-  } \
-} while(0)
+#define E(e, explain)                                                  \
+  do {                                                                 \
+    if (UNLIKELY(!(e)))                                                \
+      {                                                                \
+        if (made_from == made_from_network)                            \
+          throw bad_decode(F("%s:%s : %s")                             \
+                           % __FILE__ % __LINE__ % (explain));         \
+        else                                                           \
+          global_sanity.error_failure("E("#e")",                       \
+                                      (explain),                       \
+                                      __FILE__, __LINE__);             \
+      }                                                                \
+  } while (0)
 
 // Last gasp dumps
 

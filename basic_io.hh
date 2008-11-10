@@ -61,7 +61,7 @@ namespace basic_io
     } token_type;
 
   struct
-  input_source
+  input_source : public origin_aware
   {
     size_t line, col;
     std::string const & in;

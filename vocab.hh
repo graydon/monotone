@@ -12,6 +12,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "sanity.hh"
+
 // the purpose of this file is to wrap things which are otherwise strings
 // in a bit of typesafety, set up enumerations and tuple-types, and
 // generally describe the "vocabulary" (nouns anyways) that modules in this

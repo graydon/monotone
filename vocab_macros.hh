@@ -14,11 +14,12 @@ template <typename INNER>                              \
 void dump(enc<INNER> const &, std::string &);          \
                                                        \
 template<typename INNER>                               \
-class enc {                                            \
+class enc : public origin_aware {                      \
   immutable_string s;                                  \
 public:                                                \
   enc() {}                                             \
   explicit enc(std::string const & s);                 \
+  enc(std::string const & s, made_from_t m);           \
   enc(enc<INNER> const & other);                       \
   enc<INNER> const &                                   \
   operator=(enc<INNER> const & other);                 \
@@ -55,6 +56,7 @@ class dec {                                            \
 public:                                                \
   dec() {}                                             \
   explicit dec(std::string const & s);                 \
+  dec(std::string const & s, made_from_t m);           \
   explicit dec(INNER const & inner);                   \
   dec(dec<INNER> const & other);                       \
   bool operator<(dec<INNER> const & x) const           \
@@ -80,11 +82,12 @@ std::ostream & operator<<(std::ostream &, ty const &); \
 template <>                                            \
 void dump(ty const &, std::string &);                  \
                                                        \
-class ty {                                             \
+class ty : public origin_aware {                       \
   immutable_string s;                                  \
 public:                                                \
   ty() {}                                              \
   explicit ty(std::string const & str);                \
+  ty(std::string const & str, made_from_t m);          \
   ty(ty const & other);                                \
   ty const & operator=(ty const & other);              \
   std::string const & operator()() const               \
@@ -118,12 +121,22 @@ static symtab_impl ty ## _tab;               \
 static size_t ty ## _tab_active = 0;         \
                                              \
 ty::ty(string const & str) :                 \
+  origin_aware(),                            \
   s((ty ## _tab_active > 0)                  \
     ? (ty ## _tab.unique(str))               \
     : str)                                   \
 { verify(*this); }                           \
                                              \
-ty::ty(ty const & other) : s(other.s) {}     \
+ty::ty(string const & str,                   \
+       made_from_t m) :                      \
+  origin_aware(m),                           \
+  s((ty ## _tab_active > 0)                  \
+    ? (ty ## _tab.unique(str))               \
+    : str)                                   \
+{ verify(*this); }                           \
+                                             \
+ty::ty(ty const & other) :                   \
+  origin_aware(other), s(other.s) {}         \
                                              \
 ty const & ty::operator=(ty const & other)   \
 { s = other.s; return *this; }               \
@@ -141,6 +154,7 @@ ty::symtab::symtab()                         \
                                              \
 ty::symtab::~symtab()                        \
 {                                            \
+  made_from_t made_from(::made_from);        \
   I(ty ## _tab_active > 0);                  \
   ty ## _tab_active--;                       \
   if (ty ## _tab_active == 0)                \
@@ -159,12 +173,22 @@ static symtab_impl ty ## _tab;               \
 static size_t ty ## _tab_active = 0;         \
                                              \
 ty::ty(string const & str) :                 \
+  origin_aware(),                            \
   s((ty ## _tab_active > 0)                  \
     ? (ty ## _tab.unique(str))               \
     : str)                                   \
 { verify(*this); }                           \
                                              \
-ty::ty(ty const & other) : s(other.s) {}     \
+ty::ty(string const & str,                   \
+       made_from_t m) :                      \
+  origin_aware(m),                           \
+  s((ty ## _tab_active > 0)                  \
+    ? (ty ## _tab.unique(str))               \
+    : str)                                   \
+{ verify(*this); }                           \
+                                             \
+ty::ty(ty const & other) :                   \
+  origin_aware(other), s(other.s) {}         \
                                              \
 ty const & ty::operator=(ty const & other)   \
 { s = other.s; return *this; }               \
@@ -178,6 +202,7 @@ ty::symtab::symtab()                         \
                                              \
 ty::symtab::~symtab()                        \
 {                                            \
+  made_from_t made_from(::made_from);        \
   I(ty ## _tab_active > 0);                  \
   ty ## _tab_active--;                       \
   if (ty ## _tab_active == 0)                \
@@ -189,12 +214,18 @@ ty::symtab::~symtab()                        \
 #define cc_ENCODING(enc)                                 \
                                                          \
 template<typename INNER>                                 \
-enc<INNER>::enc(string const & s) : s(s)                 \
+enc<INNER>::enc(string const & s) :                      \
+  origin_aware(), s(s)                                   \
+  { verify(*this); }                                     \
+                                                         \
+template<typename INNER>                                 \
+enc<INNER>::enc(string const & s, made_from_t m) :       \
+  origin_aware(m), s(s)                                  \
   { verify(*this); }                                     \
                                                          \
 template<typename INNER>                                 \
 enc<INNER>::enc(enc<INNER> const & other)                \
-  : s(other.s) {}                                        \
+  : origin_aware(other), s(other.s) {}                   \
                                                          \
 template<typename INNER>                                 \
 enc<INNER> const &                                       \
@@ -226,6 +257,11 @@ dec<INNER>::dec(dec<INNER> const & other)                \
 template<typename INNER>                                 \
 dec<INNER>::dec(std::string const & s)                   \
   : i(s) { verify(i); }                                  \
+                                                         \
+template<typename INNER>                                 \
+dec<INNER>::dec(std::string const & s,                   \
+                made_from_t m)                           \
+  : i(s, m) { verify(i); }                               \
                                                          \
 template<typename INNER>                                 \
 dec<INNER>::dec(INNER const & inner)                     \

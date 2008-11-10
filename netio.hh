@@ -19,11 +19,6 @@
 #include "sanity.hh"
 #include "string_queue.hh"
 
-struct bad_decode {
-  bad_decode(i18n_format const & fmt) : what(fmt.str()) {}
-  std::string what;
-};
-
 inline void
 require_bytes(std::string const & str,
               size_t pos,

@@ -52,7 +52,7 @@ base64<T> encode_base64(T const & in)
 
 template <typename T>
 T decode_base64(base64<T> const & in)
-{ return T(xform<Botan::Base64_Decoder>(in())); }
+{ return T(xform<Botan::Base64_Decoder>(in()), in.made_from); }
 
 template <typename T>
 T decode_base64_as(std::string const & in)
@@ -67,7 +67,7 @@ void encode_hexenc(T const & in, hexenc<T> & out)
 
 template <typename T>
 void decode_hexenc(hexenc<T> const & in, T & out)
-{ out = T(xform<Botan::Hex_Decoder>(in())); }
+{ out = T(xform<Botan::Hex_Decoder>(in()), in.made_from); }
 
 inline std::string encode_hexenc(std::string const & in)
 { return xform<Botan::Hex_Encoder>(in); }
@@ -83,7 +83,7 @@ void encode_gzip(T const & in, gzip<T> & out)
 
 template <typename T>
 void decode_gzip(gzip<T> const & in, T & out)
-{ out = T(xform<Botan::Gzip_Decompression>(in())); }
+{ out = T(xform<Botan::Gzip_Decompression>(in()), in.made_from); }
 
 // string variant for netsync
 template <typename T>

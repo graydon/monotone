@@ -2272,7 +2272,10 @@ session::process_data_cmd(netcmd_item_type type,
     case revision_item:
       {
         L(FL("received revision '%s'") % hitem());
-        if (project.db.put_revision(revision_id(item), revision_data(dat)))
+        revision_t rev;
+        rev.made_from = made_from_network;
+        read_revision(data(dat), rev);
+        if (project.db.put_revision(revision_id(item), rev))
           written_revisions.push_back(revision_id(item));
       }
       break;

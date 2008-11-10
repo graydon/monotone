@@ -47,7 +47,7 @@ class path_restriction;
 enum made_for { made_for_nobody, made_for_workspace, made_for_database };
 
 struct
-revision_t
+revision_t : public origin_aware
 {
   void check_sane() const;
   bool is_merge_node() const;

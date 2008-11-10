@@ -2514,6 +2514,7 @@ database::put_roster_for_revision(revision_id const & new_id,
   MM(roster_manifest_id);
   make_roster_for_revision(*this, rev, new_id, *ros_writeable, *mm_writeable);
   calculate_ident(*ros_writeable, roster_manifest_id);
+  made_from_t made_from(rev.made_from);
   I(rev.new_manifest == roster_manifest_id);
   // const'ify the objects, suitable for caching etc.
   roster_t_cp ros = ros_writeable;
