@@ -1870,9 +1870,8 @@ read_revision(data const & dat,
 {
   MM(rev);
   basic_io::input_source src(dat(), "revision");
-  // FIXME: maybe this is backwards, and made_from should
-  // come from @param{dat}?
-  src.made_from = rev.made_from;
+  rev.made_from = dat.made_from;
+  src.made_from = dat.made_from;
   made_from_t made_from(rev.made_from);
   basic_io::tokenizer tok(src);
   basic_io::parser pars(tok);
@@ -1994,12 +1993,12 @@ UNIT_TEST(revision, from_network)
     "   foo \"some_file\"\n"
   };
   revision_t rev;
-  rev.made_from = made_from_network;
   for (unsigned i = 0; i < sizeof(bad_revisions)/sizeof(char const*); ++i)
     {
       UNIT_TEST_CHECKPOINT((string("iteration ")
                             + boost::lexical_cast<string>(i)).c_str());
-      UNIT_TEST_CHECK_THROW(read_revision(data(bad_revisions[i]),
+      UNIT_TEST_CHECK_THROW(read_revision(data(bad_revisions[i],
+                                               made_from_network),
                                           rev),
                             bad_decode);
     }

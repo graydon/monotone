@@ -2273,8 +2273,7 @@ session::process_data_cmd(netcmd_item_type type,
       {
         L(FL("received revision '%s'") % hitem());
         revision_t rev;
-        rev.made_from = made_from_network;
-        read_revision(data(dat), rev);
+        read_revision(data(dat, made_from_network), rev);
         if (project.db.put_revision(revision_id(item), rev))
           written_revisions.push_back(revision_id(item));
       }
@@ -2283,7 +2282,8 @@ session::process_data_cmd(netcmd_item_type type,
     case file_item:
       {
         L(FL("received file '%s'") % hitem());
-        project.db.put_file(file_id(item), file_data(dat));
+        project.db.put_file(file_id(item),
+                            file_data(dat, made_from_network));
       }
       break;
     }

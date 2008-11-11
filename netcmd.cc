@@ -215,13 +215,13 @@ netcmd::read_hello_cmd(rsa_keypair_id & server_keyname,
   string skn_str, sk_str;
   extract_variable_length_string(payload, skn_str, pos,
                                  "hello netcmd, server key name");
-  server_keyname = rsa_keypair_id(skn_str);
+  server_keyname = rsa_keypair_id(skn_str, made_from_network);
   extract_variable_length_string(payload, sk_str, pos,
                                  "hello netcmd, server key");
-  server_key = rsa_pub_key(sk_str);
+  server_key = rsa_pub_key(sk_str, made_from_network);
   nonce = id(extract_substring(payload, pos,
                                constants::merkle_hash_length_in_bytes,
-                               "hello netcmd, nonce"));
+                               "hello netcmd, nonce"), made_from_network);
   assert_end_of_buffer(payload, pos, "hello netcmd payload");
 }
 
@@ -275,14 +275,14 @@ netcmd::read_anonymous_cmd(protocol_role & role,
   string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, include_pattern");
-  include_pattern = globish(pattern_string);
+  include_pattern = globish(pattern_string, made_from_network);
   extract_variable_length_string(payload, pattern_string, pos,
                                  "anonymous(hmac) netcmd, exclude_pattern");
-  exclude_pattern = globish(pattern_string);
+  exclude_pattern = globish(pattern_string, made_from_network);
   string hmac_key_string;
   extract_variable_length_string(payload, hmac_key_string, pos,
                                  "anonymous(hmac) netcmd, hmac_key_encrypted");
-  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key_string);
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key_string, made_from_network);
   assert_end_of_buffer(payload, pos, "anonymous(hmac) netcmd payload");
 }
 
@@ -321,24 +321,26 @@ netcmd::read_auth_cmd(protocol_role & role,
   string pattern_string;
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, include_pattern");
-  include_pattern = globish(pattern_string);
+  include_pattern = globish(pattern_string, made_from_network);
   extract_variable_length_string(payload, pattern_string, pos,
                                  "auth(hmac) netcmd, exclude_pattern");
-  exclude_pattern = globish(pattern_string);
+  exclude_pattern = globish(pattern_string, made_from_network);
   client = id(extract_substring(payload, pos,
                                 constants::merkle_hash_length_in_bytes,
-                                "auth(hmac) netcmd, client identifier"));
+                                "auth(hmac) netcmd, client identifier"),
+              made_from_network);
   nonce1 = id(extract_substring(payload, pos,
                                 constants::merkle_hash_length_in_bytes,
-                                "auth(hmac) netcmd, nonce1"));
+                                "auth(hmac) netcmd, nonce1"),
+              made_from_network);
   string hmac_key;
   extract_variable_length_string(payload, hmac_key, pos,
                                  "auth(hmac) netcmd, hmac_key_encrypted");
-  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key);
+  hmac_key_encrypted = rsa_oaep_sha_data(hmac_key, made_from_network);
   string sig_string;
   extract_variable_length_string(payload, sig_string, pos,
                                  "auth(hmac) netcmd, signature");
-  signature = rsa_sha1_signature(sig_string);
+  signature = rsa_sha1_signature(sig_string, made_from_network);
   assert_end_of_buffer(payload, pos, "auth(hmac) netcmd payload");
 }
 
@@ -431,7 +433,8 @@ netcmd::read_data_cmd(netcmd_item_type & type,
   type = read_netcmd_item_type(payload, pos, "data netcmd, item type");
   item = id(extract_substring(payload, pos,
                               constants::merkle_hash_length_in_bytes,
-                              "data netcmd, item identifier"));
+                              "data netcmd, item identifier"),
+            made_from_network);
 
   dat.clear();
   u8 compressed_p = extract_datum_lsb<u8>(payload, pos,
@@ -440,7 +443,7 @@ netcmd::read_data_cmd(netcmd_item_type & type,
                                   "data netcmd, data payload");
   if (compressed_p == 1)
   {
-    gzip<data> zdat(dat);
+    gzip<data> zdat(dat, made_from_network);
     data tdat;
     decode_gzip(zdat, tdat);
     dat = tdat();
@@ -482,10 +485,12 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
   type = read_netcmd_item_type(payload, pos, "delta netcmd, item type");
   base = id(extract_substring(payload, pos,
                               constants::merkle_hash_length_in_bytes,
-                              "delta netcmd, base identifier"));
+                              "delta netcmd, base identifier"),
+            made_from_network);
   ident = id(extract_substring(payload, pos,
                                constants::merkle_hash_length_in_bytes,
-                               "delta netcmd, ident identifier"));
+                               "delta netcmd, ident identifier"),
+             made_from_network);
   u8 compressed_p = extract_datum_lsb<u8>(payload, pos,
                                           "delta netcmd, compression flag");
   string tmp;
@@ -493,12 +498,12 @@ netcmd::read_delta_cmd(netcmd_item_type & type,
                                  "delta netcmd, delta payload");
   if (compressed_p == 1)
     {
-      gzip<delta> zdel(tmp);
+      gzip<delta> zdel(tmp, made_from_network);
       decode_gzip(zdel, del);
     }
   else
     {
-      del = delta(tmp);
+      del = delta(tmp, made_from_network);
     }
   assert_end_of_buffer(payload, pos, "delta netcmd payload");
 }
@@ -539,7 +544,7 @@ netcmd::read_usher_cmd(utf8 & greeting) const
   size_t pos = 0;
   string str;
   extract_variable_length_string(payload, str, pos, "error netcmd, message");
-  greeting = utf8(str);
+  greeting = utf8(str, made_from_network);
   assert_end_of_buffer(payload, pos, "error netcmd payload");
 }
 

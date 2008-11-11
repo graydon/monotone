@@ -298,7 +298,7 @@ read_node(string const & inbuf, size_t & pos, merkle_node & out)
           string slot_val = extract_substring(inbuf, pos,
                                               constants::merkle_hash_length_in_bytes,
                                               "slot value");
-          out.set_raw_slot(slot, id(slot_val));
+          out.set_raw_slot(slot, id(slot_val, made_from_network));
         }
     }
 
