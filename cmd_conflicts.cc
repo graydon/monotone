@@ -289,11 +289,10 @@ set_first_conflict(database & db,
             {
               if ("interactive" == idx(args,0)())
                 {
+                  N(args.size() == 2, F("wrong number of arguments"));
                   N(bookkeeping_path::external_string_is_bookkeeping_path(utf8(idx(args,1)())),
                     F("result path must be under _MTN"));
                   bookkeeping_path const result_path(idx(args,1)());
-
-                  N(args.size() == 2, F("wrong number of arguments"));
 
                   if (do_interactive_merge(db, lua, conflicts, conflict.nid,
                                            conflict.ancestor, conflict.left, conflict.right, result_path))
@@ -352,6 +351,7 @@ CMD(show_first, "show_first", "", CMD_REF(conflicts),
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
+  N(args.size() == 0, F("wrong number of arguments"));
   show_conflicts(db, conflicts, first);
 }
 
@@ -364,6 +364,7 @@ CMD(show_remaining, "show_remaining", "", CMD_REF(conflicts),
   database db(app);
   conflicts_t conflicts (db, app.opts.conflicts_file);
 
+  N(args.size() == 0, F("wrong number of arguments"));
   show_conflicts(db, conflicts, remaining);
 }
 

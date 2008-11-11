@@ -18,13 +18,23 @@ check(mtn("attr", "set", "simple_file", "foo", "2"), 0, nil, nil)
 commit("testbranch", "right 1")
 right_1 = base_revision()
 
+-- invalid number of parameters for 'store'
+check(mtn("conflicts", "store", left_1), 1, nil, true)
+check(mtn("conflicts", "store", left_1, right_1, right_1), 1, nil, true)
+
 check(mtn("conflicts", "store", left_1, right_1), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("conflicts-attr-store-1", "stderr"))
 
+check(mtn("conflicts", "show_remaining", "foo"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
+
 check(mtn("conflicts", "show_remaining"), 0, nil, true)
 canonicalize("stderr")
 check(samefilestd("conflicts-attr-show-1", "stderr"))
+
+check(mtn("conflicts", "show_first", "foo"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
 
 check(mtn("conflicts", "show_first"), 0, nil, true)
 canonicalize("stderr")
@@ -61,6 +71,16 @@ addfile("checkout.sh", "checkout.sh left 1")
 commit("testbranch", "left 2")
 
 check(mtn("conflicts", "store"), 0, true, nil)
+
+-- invalid number of params
+check(mtn("conflicts", "resolve_first_left", "user"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
+check(mtn("conflicts", "resolve_first_left", "user", "checkout.sh", "foo"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
+check(mtn("conflicts", "resolve_first_right", "user"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
+check(mtn("conflicts", "resolve_first_right", "user", "checkout.sh", "foo"), 1, nil, true)
+check(qgrep("wrong number of arguments", "stderr"))
 
 -- both sides specify user file
 check(mtn("conflicts", "resolve_first_left", "user", "checkout.sh"), 0, nil, nil)
