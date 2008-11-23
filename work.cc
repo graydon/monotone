@@ -400,6 +400,8 @@ read_options_file(any_path const & optspath,
         W(F("unrecognized key '%s' in options file %s - ignored")
           % opt % optspath);
     }
+  E(src.lookahead == EOF,
+    F("Could not parse entire options file %s") % optspath);
 }
 
 static void

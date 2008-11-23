@@ -231,6 +231,11 @@ cert::cert(std::string const & s)
 {
   read_cert(s, *this);
 }
+cert::cert(std::string const & s, made_from_t m)
+  : origin_aware(m)
+{
+  read_cert(s, *this);
+}
 
 cert::cert(revision_id const & ident,
            cert_name const & name,

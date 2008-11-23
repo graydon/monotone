@@ -146,7 +146,8 @@ compile_charclass(string const & pat, string::const_iterator p,
 // Compile one fragment of a glob pattern.
 
 static void
-compile_frag(string const & pat, back_insert_iterator<string> & to)
+compile_frag(string const & pat, back_insert_iterator<string> & to,
+             made_from_t made_from = made_from_local)
 {
   unsigned int brace_depth = 0;
 
@@ -235,11 +236,11 @@ compile_frag(string const & pat, back_insert_iterator<string> & to)
 // common code used by the constructors.
 
 static inline string
-compile(string const & pat)
+compile(string const & pat, made_from_t made_from = made_from_local)
 {
   string s;
   back_insert_iterator<string> to = back_inserter(s);
-  compile_frag(pat, to);
+  compile_frag(pat, to, made_from);
   return s;
 }
 
@@ -269,8 +270,10 @@ compile(vector<arg_type>::const_iterator const & beg,
   return s;
 }
 
-globish::globish(string const & p) : compiled_pattern(compile(p)) {}
-globish::globish(char const * p) : compiled_pattern(compile(p)) {}
+globish::globish(string const & p, made_from_t made_from)
+  : compiled_pattern(compile(p, made_from)) {}
+globish::globish(char const * p, made_from_t made_from)
+  : compiled_pattern(compile(p, made_from)) {}
 
 globish::globish(vector<arg_type> const & p)
   : compiled_pattern(compile(p.begin(), p.end())) {}
@@ -334,23 +337,28 @@ find_next_subpattern(string::const_iterator p,
                        string::const_iterator pe,
                        bool want_alternatives)
 {
+  L(FL("Finding subpattern in '%s'") % decode(p, pe));
   unsigned int depth = 1;
   for (; p != pe; p++)
     switch (*p)
       {
-      default: break;
+      default:
+        break;
 
       case META_ALT_BRA:
-        depth++; break;
+        depth++;
+        break;
 
       case META_ALT_KET:
         depth--;
         if (depth == 0)
           return p+1;
+        break;
 
       case META_ALT_OR:
         if (depth == 1 && want_alternatives)
           return p+1;
+        break;
       }
 
   I(false);
@@ -703,6 +711,19 @@ UNIT_TEST(globish, complex_matches)
     UNIT_TEST_CHECK(m("foo"));
     UNIT_TEST_CHECK(!m("bar"));
   }
+}
+
+UNIT_TEST(globish, nested_matches)
+{
+  globish g("a.{i.{x,y},j}");
+  UNIT_TEST_CHECK(g.matches("a.i.x"));
+  UNIT_TEST_CHECK(g.matches("a.i.y"));
+  UNIT_TEST_CHECK(g.matches("a.j"));
+  UNIT_TEST_CHECK(!g.matches("q"));
+  UNIT_TEST_CHECK(!g.matches("a.q"));
+  UNIT_TEST_CHECK(!g.matches("a.j.q"));
+  UNIT_TEST_CHECK(!g.matches("a.i.q"));
+  UNIT_TEST_CHECK(!g.matches("a.i.x.q"));
 }
 
 #endif // BUILD_UNIT_TESTS

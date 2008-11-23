@@ -478,7 +478,7 @@ mergers.vim = {
       os.rename(lfile_merged, tbl.lfile)
       os.rename(rfile_merged, tbl.rfile)
 
-      local ret = execute(vim, "-f", "-d", "-c", string.format("file %s", tbl.outfile),
+      local ret = execute(vim, "-f", "-d", "-c", string.format("silent file %s", tbl.outfile),
                           tbl.lfile, tbl.rfile)
       if (ret ~= 0) then
          io.write(string.format(gettext("Error running merger '%s'\n"), vim))

@@ -51,8 +51,8 @@ class arg_type;
 struct globish
 {
   globish() : compiled_pattern() {}
-  globish(char const * pat);
-  globish(std::string const & pat);
+  globish(char const * pat, made_from_t made_from = made_from_local);
+  globish(std::string const & pat, made_from_t made_from = made_from_local);
   globish(std::vector<arg_type> const & pat);
   globish(std::vector<arg_type>::const_iterator const & beg,
           std::vector<arg_type>::const_iterator const & end);

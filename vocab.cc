@@ -29,6 +29,7 @@ template <typename INNER>
 inline void
 verify(hexenc<INNER> const & val)
 {
+  made_from_t made_from(val.made_from);
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_xdigit(*i),
@@ -43,6 +44,7 @@ verify(hexenc<id> const & val)
   if (val().empty())
     return;
 
+  made_from_t made_from(val.made_from);
   N(val().size() == constants::idlen,
     F("hex encoded ID '%s' size != %d") % val % constants::idlen);
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
@@ -59,6 +61,7 @@ verify(id & val)
   if (val().empty())
     return;
 
+  made_from_t made_from(val.made_from);
   N(val().size() == constants::idlen_bytes,
     F("invalid ID '%s'") % val);
 }
@@ -66,6 +69,7 @@ verify(id & val)
 inline void
 verify(symbol const & val)
 {
+  made_from_t made_from(val.made_from);
   for (string::const_iterator i = val().begin(); i != val().end(); ++i)
     {
       N(is_alnum(*i) || *i == '_',
@@ -76,6 +80,7 @@ verify(symbol const & val)
 inline void
 verify(cert_name const & val)
 {
+  made_from_t made_from(val.made_from);
   string::size_type pos = val().find_first_not_of(constants::legal_cert_name_bytes);
   N(pos == string::npos,
     F("bad character '%c' in cert name '%s'") % val().at(pos) % val);
@@ -84,6 +89,7 @@ verify(cert_name const & val)
 inline void
 verify(rsa_keypair_id const & val)
 {
+  made_from_t made_from(val.made_from);
   string::size_type pos = val().find_first_not_of(constants::legal_key_name_bytes);
   N(pos == string::npos,
     F("bad character '%c' in key name '%s'") % val().at(pos) % val);
@@ -102,6 +108,7 @@ verify(netsync_session_key & val)
       return;
     }
 
+  made_from_t made_from(val.made_from);
   N(val().size() == constants::netsync_session_key_length_in_bytes,
     F("Invalid key length of %d bytes") % val().length());
 }
@@ -115,6 +122,7 @@ verify(netsync_hmac_value & val)
       return;
     }
 
+  made_from_t made_from(val.made_from);
   N(val().size() == constants::netsync_hmac_value_length_in_bytes,
     F("Invalid hmac length of %d bytes") % val().length());
 }

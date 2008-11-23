@@ -125,8 +125,8 @@ BOTAN_SOURCES = 							\
 	botan/dsa_gen.cpp botan/eax.cpp botan/ecb.cpp botan/eme1.cpp	\
 	botan/eme_pkcs.cpp botan/emsa1.cpp botan/emsa2.cpp		\
 	botan/emsa3.cpp botan/emsa4.cpp botan/emsa_raw.cpp		\
-	botan/eng_base.cpp botan/engine.cpp 		\
-	botan/exceptn.cpp botan/filter.cpp		\
+	botan/eng_base.cpp botan/engine.cpp				\
+	botan/exceptn.cpp botan/filter.cpp				\
 	botan/filters.cpp botan/get_algo.cpp botan/get_enc.cpp		\
 	botan/get_pbe.cpp botan/hash_id.cpp botan/hex.cpp		\
 	botan/hmac.cpp botan/if_algo.cpp botan/init_def.cpp		\
@@ -169,7 +169,7 @@ BOTAN_SOURCES = 							\
 	botan/dh.h botan/dl_algo.h botan/dl_group.h botan/dlies.h	\
 	botan/eax.h botan/ecb.h botan/eme.h botan/emsa.h		\
 	botan/eng_def.h botan/engine.h botan/enums.h botan/es_dev.h	\
-	botan/es_egd.h botan/exceptn.h botan/filter.h botan/filters.h	\
+	botan/exceptn.h botan/filter.h botan/filters.h			\
 	botan/hash_id.h botan/hex.h botan/hmac.h botan/if_algo.h	\
 	botan/init.h botan/kdf.h botan/keypair.h botan/libstate.h	\
 	botan/loadstor.h botan/look_add.h botan/look_pk.h		\
@@ -192,8 +192,9 @@ BOTAN_SOURCES = 							\
 	botan/x509self.h botan/x509stor.h botan/x931_rng.h		\
 	botan/xor_buf.h
 
-
-# windows only: botan/es_capi.h  botan/es_capi.cpp  botan/es_win32.{cpp,h}
+# unix only:	botan/es_dev.{cpp,h} botan/es_egd.{cpp,h}
+# windows only:	botan/es_capi.h  botan/es_capi.cpp
+#		botan/es_win32.{cpp,h}
 
 BOOST_SANDBOX_SOURCES =							\
 	boost/circular_buffer_adaptor.hpp				\
@@ -444,14 +445,14 @@ if WIN32_PLATFORM
   mtn_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   unit_tester_LDADD += -lshfolder -lws2_32 -lintl -liconv -liphlpapi
   lib3rdparty_a_CPPFLAGS += -DWIN32
-  lib3rdparty_a_SOURCES += botan/es_capi.cpp botan/es_win32.cpp
+  lib3rdparty_a_SOURCES += botan/es_capi.h botan/es_capi.cpp		\
+			   botan/es_win32.cpp botan/es_win32.h
   tester_SOURCES += win32/tester-plaf.cc
   check_net_SOURCES = win32/tester-check-net.c
 else
   libplatform_a_SOURCES += $(UNIX_PLATFORM_SOURCES)
   mtn_SOURCES += unix/main.cc
-  lib3rdparty_a_SOURCES += botan/es_dev.cpp
-  lib3rdparty_a_SOURCES += botan/es_egd.cpp
+  lib3rdparty_a_SOURCES += botan/es_dev.cpp botan/es_egd.cpp botan/es_egd.h
   tester_SOURCES += unix/tester-plaf.cc
   check_net_SOURCES = unix/tester-check-net.c
 endif

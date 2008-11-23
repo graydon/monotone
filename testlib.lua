@@ -606,6 +606,7 @@ function post_cmd(result, ret, stdout, stderr, ident)
   log_file_contents(ident .. "stdout")
   L("stderr:\n")
   log_file_contents(ident .. "stderr")
+  L("exit code: " .. result .. "\n")
   if result ~= ret and ret ~= false then
     err("Check failed (return value): wanted " .. ret .. " got " .. result, 3)
   end
