@@ -1,0 +1,6 @@
+mtn: 2 heads on branch 'testbranch'
+mtn: merge 1 / 1:
+mtn: calculating best pair of heads to merge next
+mtn: [left]  52f8049a6454895521a6a5f7d739ebfd58e72655
+mtn: [right] 7d425fa3827653bfc4ea9b62560ef896bb3c83ca
+mtn: misuse: right revision id does not match conflict file

@@ -68,7 +68,7 @@ namespace commands {
   }
 }
 
-static string const interface_version = "8.1";
+static string const interface_version = "8.2";
 // Major or minor number only increments once for each monotone release;
 // check the most recent release before incrementing this.
 

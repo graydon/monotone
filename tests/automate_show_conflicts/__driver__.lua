@@ -353,7 +353,7 @@ create_second()
 check_asc()
 
 
--- content conflict on detached node
+-- content conflict plus multiple names
 
 branch = "content-detached"
 setup(branch)

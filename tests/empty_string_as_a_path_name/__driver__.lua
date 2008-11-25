@@ -1,4 +1,4 @@
-
+-- Most commands can't handle "" as a parameter, but some can.
 mtn_setup()
 
 addfile("testfile", "blah blah")
@@ -15,4 +15,6 @@ check(mtn("--bookkeep-only", "drop", ""), 1, false, false)
 check(mtn("--bookkeep-only", "rename", "testfile", ""), 1, false, false)
 check(mtn("--bookkeep-only", "rename", "", "otherfile"), 1, false, false)
 
-check(mtn("revert", ""), 1, false, false)
+-- These two have the same meaning, and the same result.
+check(mtn("revert", "."), 0, false, false)
+check(mtn("revert", ""), 0, false, false)

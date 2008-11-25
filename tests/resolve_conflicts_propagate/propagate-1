@@ -1,0 +1,8 @@
+mtn: propagating abe_branch -> beth_branch
+mtn: [left]  1337cb1059c4bc3e376b14381b43e9383c654da1
+mtn: [right] d5f1dd136c86b5bbd5e71b0c3365667e328af492
+mtn: dropping checkout.sh
+mtn: replacing content of checkout.sh with checkout.sh
+mtn: renaming thermostat.c to thermostat-westinghouse.c
+mtn: renaming thermostat.c to thermostat-honeywell.c
+mtn: [merged] a74c964afba9c299c81ec404e5233ad6faffadc1

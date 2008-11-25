@@ -1,0 +1,8 @@
+mtn: duplicate_name thermostat.c
+mtn: possible resolutions:
+mtn: resolve_first_left drop
+mtn: resolve_first_left rename "name"
+mtn: resolve_first_left user "name"
+mtn: resolve_first_right drop
+mtn: resolve_first_right rename "name"
+mtn: resolve_first_right user "name"

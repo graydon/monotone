@@ -1,6 +1,7 @@
 #ifndef __MERGE_HH__
 #define __MERGE_HH__
 
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -23,13 +24,15 @@ class roster_t;
 
 struct roster_merge_result;
 struct content_merge_adaptor;
+struct options;
 
 void
 resolve_merge_conflicts(lua_hooks & lua,
                         roster_t const & left_roster,
                         roster_t const & right_roster,
                         roster_merge_result & result,
-                        content_merge_adaptor & adaptor);
+                        content_merge_adaptor & adaptor,
+                        bool const resolutions_given);
 
 // traditional resolve-all-conflicts-as-you-go style merging with 3-way merge
 //   for file texts
@@ -43,7 +46,9 @@ resolve_merge_conflicts(lua_hooks & lua,
 //   around the revision and its files not being in the db, and the resulting
 //   revision and its merged files not being written back to the db
 void
-interactive_merge_and_store(lua_hooks & lua, database & db,
+interactive_merge_and_store(lua_hooks & lua,
+                            database & db,
+                            options const & opts,
                             revision_id const & left,
                             revision_id const & right,
                             revision_id & merged);

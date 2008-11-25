@@ -204,7 +204,7 @@ namespace commands {
     I(this != CMD_REF(__root__));
 
     command_id i;
-    
+
     if (parent() != CMD_REF(__root__))
       i = parent()->ident();
     i.push_back(primary_name());
@@ -267,7 +267,7 @@ namespace commands {
   {
     return abstract() + ".\n" + safe_gettext(m_desc().c_str());
   }
-  
+
   command::names_set
   command::subcommands(void) const
   {
@@ -919,7 +919,7 @@ process_commit_message_args(options const & opts,
       string msg;
       join_lines(opts.message, msg);
       log_message = utf8(msg);
-      if (message_prefix().length() != 0)
+      if (!opts.no_prefix && message_prefix().length() != 0)
         log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
@@ -929,7 +929,7 @@ process_commit_message_args(options const & opts,
       read_data_for_command_line(opts.msgfile, dat);
       external dat2 = external(dat());
       system_to_utf8(dat2, log_message);
-      if (message_prefix().length() != 0)
+      if (!opts.no_prefix && message_prefix().length() != 0)
         log_message = utf8(message_prefix() + "\n\n" + log_message());
       given = true;
     }
@@ -1063,7 +1063,7 @@ UNIT_TEST(commands, command_complete_command)
     UNIT_TEST_CHECK(*matches.begin() == make_command_id("alias1"));
   }
 
-  // Single-word identifier with multiple matches. 
+  // Single-word identifier with multiple matches.
   {
     command_id id = make_command_id("tes");
     set< command_id > matches = CMD_REF(top)->complete_command(id);

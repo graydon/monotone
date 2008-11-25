@@ -1,0 +1,7 @@
+mtn: 2 heads on branch 'testbranch'
+mtn: merge 1 / 1:
+mtn: calculating best pair of heads to merge next
+mtn: [left]  bcd098b31f9ed42acfb5ab550c973e7d8f7203fd
+mtn: [right] c28c3c0f5a7f9cde848be91f79d86a6dd63e88ca
+mtn: [merged] 7f38dd536c4f995a4a7ccd788d2b5be2755805cf
+mtn: note: your workspaces have not been updated

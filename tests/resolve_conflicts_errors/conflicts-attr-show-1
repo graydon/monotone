@@ -1,0 +1,4 @@
+mtn: warning: 1 conflict with no supported resolutions.
+mtn: conflict: multiple values for attribute 'foo' on file 'simple_file' from revision 30c20be14d4d18c404bc4c121bb0232c9c9b975f
+mtn: set to '1' on left file 'simple_file'
+mtn: set to '2' on right file 'simple_file'

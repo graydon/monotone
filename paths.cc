@@ -1,3 +1,4 @@
+// Copyright (C) 2008 Stephen Leake <stephen_leake@stephe-leake.org>
 // Copyright (C) 2005 Nathaniel Smith <njs@pobox.com>
 //
 // This program is made available under the GNU GPL version 2.0 or
@@ -351,7 +352,7 @@ LUAEXT(normalize_path, )
 }
 
 static void
-normalize_external_path(string const & path, string & normalized)
+normalize_external_path(string const & path, string & normalized, bool to_workspace_root)
 {
   if (!initial_rel_path.initialized)
     {
@@ -366,12 +367,15 @@ normalize_external_path(string const & path, string & normalized)
     }
   else
     {
-      N(!path.empty(), F("empty path '%s' is invalid") % path);
       N(!is_absolute_here(path), F("absolute path '%s' is invalid") % path);
       string base;
       try
         {
-          base = initial_rel_path.get();
+          if (to_workspace_root)
+            base = "";
+          else
+            base = initial_rel_path.get();
+
           if (base == "")
             normalized = normalize_path(path);
           else
@@ -435,14 +439,14 @@ template <> void dump(path_component const & pc, std::string & to)
 // complete paths to files within a working directory
 ///////////////////////////////////////////////////////////////////////////
 
-file_path::file_path(file_path::source_type type, string const & path)
+file_path::file_path(file_path::source_type type, string const & path, bool to_workspace_root)
 {
   MM(path);
   I(utf8_validate(utf8(path)));
   if (type == external)
     {
       string normalized;
-      normalize_external_path(path, normalized);
+      normalize_external_path(path, normalized, to_workspace_root);
       N(!in_bookkeeping_dir(normalized),
         F("path '%s' is in bookkeeping dir") % normalized);
       data = normalized;
@@ -453,14 +457,14 @@ file_path::file_path(file_path::source_type type, string const & path)
   I(is_valid_internal(data));
 }
 
-file_path::file_path(file_path::source_type type, utf8 const & path)
+file_path::file_path(file_path::source_type type, utf8 const & path, bool to_workspace_root)
 {
   MM(path);
   I(utf8_validate(path));
   if (type == external)
     {
       string normalized;
-      normalize_external_path(path(), normalized);
+      normalize_external_path(path(), normalized, to_workspace_root);
       N(!in_bookkeeping_dir(normalized),
         F("path '%s' is in bookkeeping dir") % normalized);
       data = normalized;
@@ -483,7 +487,14 @@ bookkeeping_path::external_string_is_bookkeeping_path(utf8 const & path)
 {
   // FIXME: this charset casting everywhere is ridiculous
   string normalized;
-  normalize_external_path(path(), normalized);
+  try
+    {
+      normalize_external_path(path(), normalized, false);
+    }
+  catch (informative_failure &)
+    {
+      return false;
+    }
   return internal_string_is_bookkeeping_path(utf8(normalized));
 }
 bool bookkeeping_path::internal_string_is_bookkeeping_path(utf8 const & path)
@@ -799,6 +810,27 @@ system_path::system_path(utf8 const & path)
 {
   data = const_system_path(utf8(path));
 }
+
+boost::shared_ptr<any_path>
+new_optimal_path(std::string path, bool to_workspace_root)
+{
+  utf8 const utf8_path = utf8(path);
+  string normalized;
+  try
+    {
+      normalize_external_path(utf8_path(), normalized, to_workspace_root);
+    }
+  catch (informative_failure &)
+    {
+      // not in workspace
+      return boost::shared_ptr<any_path>(new system_path(path));
+    }
+
+  if (in_bookkeeping_dir(normalized))
+    return boost::shared_ptr<any_path>(new bookkeeping_path(normalized));
+  else
+    return boost::shared_ptr<any_path>(new file_path(file_path_internal(normalized)));
+};
 
 ///////////////////////////////////////////////////////////////////////////
 // workspace (and path root) handling
@@ -1117,7 +1149,6 @@ UNIT_TEST(paths, file_path_external_null_prefix)
                             "c:\\foo",
                             "c:foo",
                             "c:/foo",
-                            "",
                             // some baddies made bad by a security kluge --
                             // see the comment in in_bookkeeping_dir
                             "_mtn",
@@ -1151,22 +1182,21 @@ UNIT_TEST(paths, file_path_external_null_prefix)
   check_fp_normalizes_to(".foo/bar", ".foo/bar");
   check_fp_normalizes_to("..foo/bar", "..foo/bar");
   check_fp_normalizes_to(".", "");
+  check_fp_normalizes_to("", "");
 #ifndef WIN32
   check_fp_normalizes_to("foo:bar", "foo:bar");
 #endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "foo/with,other+@weird*%#$=stuff/bar");
 
-  // Why are these tests with // in them commented out?  because boost::fs
-  // sucks and can't normalize them.  FIXME.
-  //check_fp_normalizes_to("foo//bar", "foo/bar");
+  check_fp_normalizes_to("foo//bar", "foo/bar");
   check_fp_normalizes_to("foo/../bar", "bar");
   check_fp_normalizes_to("foo/bar/", "foo/bar");
   check_fp_normalizes_to("foo/bar/.", "foo/bar");
   check_fp_normalizes_to("foo/bar/./", "foo/bar");
   check_fp_normalizes_to("foo/./bar/", "foo/bar");
   check_fp_normalizes_to("./foo", "foo");
-  //check_fp_normalizes_to("foo///.//", "foo");
+  check_fp_normalizes_to("foo///.//", "foo");
 
   initial_rel_path.unset();
 }
@@ -1200,7 +1230,6 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
                             "c:foo",
                             "c:/foo",
 #endif
-                            "",
                             // some baddies made bad by a security kluge --
                             // see the comment in in_bookkeeping_dir
                             "../../_mtn",
@@ -1234,21 +1263,20 @@ UNIT_TEST(paths, file_path_external_prefix_a_b)
   check_fp_normalizes_to(".foo/bar", "a/b/.foo/bar");
   check_fp_normalizes_to("..foo/bar", "a/b/..foo/bar");
   check_fp_normalizes_to(".", "a/b");
+  check_fp_normalizes_to("", "a/b");
 #ifndef WIN32
   check_fp_normalizes_to("foo:bar", "a/b/foo:bar");
 #endif
   check_fp_normalizes_to("foo/with,other+@weird*%#$=stuff/bar",
                          "a/b/foo/with,other+@weird*%#$=stuff/bar");
-  // why are the tests with // in them commented out?  because boost::fs sucks
-  // and can't normalize them.  FIXME.
-  //check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
+  check_fp_normalizes_to("foo//bar", "a/b/foo/bar");
   check_fp_normalizes_to("foo/../bar", "a/b/bar");
   check_fp_normalizes_to("foo/bar/", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/.", "a/b/foo/bar");
   check_fp_normalizes_to("foo/bar/./", "a/b/foo/bar");
   check_fp_normalizes_to("foo/./bar/", "a/b/foo/bar");
   check_fp_normalizes_to("./foo", "a/b/foo");
-  //check_fp_normalizes_to("foo///.//", "a/b/foo");
+  check_fp_normalizes_to("foo///.//", "a/b/foo");
   // things that would have been bad without the initial_rel_path:
   check_fp_normalizes_to("../foo", "a/foo");
   check_fp_normalizes_to("..", "a");
@@ -1928,6 +1956,11 @@ UNIT_TEST(paths, test_external_string_is_bookkeeping_path_prefix__MTN)
   char const * const no[] = {"../foo",
                        "../foo/bar",
                        "../foo/_MTN",
+#ifdef WIN32
+                       "c:/foo/foo", // don't throw informative_failure exception
+#else
+                       "/foo/foo", // don't throw informative_failure exception
+#endif
                        0 };
   for (char const * const * c = yes; *c; ++c)
     UNIT_TEST_CHECK(bookkeeping_path

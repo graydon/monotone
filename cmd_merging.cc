@@ -282,7 +282,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
                                       left_markings, right_markings, paths);
   wca.cache_roster(working_rid, working_roster);
   resolve_merge_conflicts(app.lua, *working_roster, chosen_roster,
-                          result, wca);
+                          result, wca, false);
 
   // Make sure it worked...
   I(result.is_clean());
@@ -297,7 +297,7 @@ CMD(update, "update", "", CMD_REF(workspace), "",
   make_revision_for_workspace(chosen_rid, chosen_roster,
                               merged_roster, remaining);
 
-  // small race condition here...
+  // small race condition here... FIXME: what is it?
   work.put_work_rev(remaining);
   work.update_any_attrs(db);
   work.maybe_update_inodeprints(db);
@@ -330,6 +330,8 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
   using std::max;
 
   ostringstream log;
+  utf8 log_message("");
+  bool log_message_given;
   size_t fieldwidth = max(caller.size() + strlen(" of '"), strlen("and '"));
 
   if (branch != opts.branchname)
@@ -341,6 +343,8 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
 
   if (branch != opts.branchname)
     log << setw(fieldwidth) << "to branch '" << branch << "'\n";
+
+  process_commit_message_args(opts, log_message_given, log_message, utf8(log.str()));
 
   // Now it's time for the real work.
   if (automate)
@@ -355,10 +359,9 @@ merge_two(options & opts, lua_hooks & lua, project_t & project,
 
   revision_id merged;
   transaction_guard guard(project.db);
-  interactive_merge_and_store(lua, project.db, left, right, merged);
+  interactive_merge_and_store(lua, project.db, opts, left, right, merged);
 
-  project.put_standard_certs_from_options(opts, lua, keys, merged, branch,
-                                          utf8(log.str()));
+  project.put_standard_certs_from_options(opts, lua, keys, merged, branch, log_message);
 
   guard.commit();
   if (automate)
@@ -375,7 +378,16 @@ typedef set<revision_id>::const_iterator rid_set_iter;
 static revpair
 find_heads_to_merge(database & db, set<revision_id> const heads)
 {
-  I(heads.size() > 2);
+  I(heads.size() >= 2);
+
+  if (heads.size() == 2)
+    {
+      rid_set_iter i = heads.begin();
+      revision_id left = *i++;
+      revision_id right = *i++;
+      return revpair(left, right);
+    };
+
   map<revision_id, revpair> heads_for_ancestor;
   set<revision_id> ancestors;
 
@@ -417,7 +429,8 @@ find_heads_to_merge(database & db, set<revision_id> const heads)
 CMD(merge, "merge", "", CMD_REF(tree), "",
     N_("Merges unmerged heads of a branch"),
     "",
-    options::opts::branch | options::opts::date | options::opts::author)
+    options::opts::branch | options::opts::date | options::opts::author |
+    options::opts::messages | options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -448,6 +461,12 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
 
   size_t pass = 1, todo = heads.size() - 1;
 
+  if (app.opts.resolve_conflicts_given || app.opts.resolve_conflicts_file_given)
+    {
+      // conflicts and resolutions only apply to first merge, so only do that one.
+      todo = 1;
+    }
+
   // If there are more than two heads to be merged, on each iteration we
   // merge a pair whose least common ancestor is not an ancestor of any
   // other pair's least common ancestor.  For example, if the history graph
@@ -460,7 +479,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
   //        A   B
   //
   // A and B will be merged first, and then the result will be merged with C.
-  while (heads.size() > 2)
+  while (pass <= todo)
     {
       P(F("merge %d / %d:") % pass % todo);
       P(F("calculating best pair of heads to merge next"));
@@ -476,19 +495,9 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
       pass++;
     }
 
-  // Last one.
-  I(pass == todo);
-  if (todo > 1)
-    P(F("merge %d / %d:") % pass % todo);
+  if (heads.size() > 1)
+    P(F("note: branch '%s' still has %s heads; run merge again") % app.opts.branchname % heads.size());
 
-  rid_set_iter i = heads.begin();
-  revision_id left = *i++;
-  revision_id right = *i++;
-  I(i == heads.end());
-
-  merge_two(app.opts, app.lua, project, keys,
-            left, right, app.opts.branchname, string("merge"),
-            std::cout, false);
   P(F("note: your workspaces have not been updated"));
 }
 
@@ -496,7 +505,8 @@ CMD(propagate, "propagate", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH"),
     N_("Merges from one branch to another asymmetrically"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
+    options::opts::date | options::opts::author | options::opts::messages |
+    options::opts::resolve_conflicts_opts)
 {
   if (args.size() != 2)
     throw usage(execid);
@@ -535,7 +545,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
     N_("SOURCE-BRANCH DEST-BRANCH DIR"),
     N_("Merges one branch into a subdirectory in another branch"),
     "",
-    options::opts::date | options::opts::author | options::opts::message | options::opts::msgfile)
+    options::opts::date | options::opts::author | options::opts::messages |
+    options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -601,8 +612,8 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         db.get_roster(left_rid, left_roster, left_marking_map);
         db.get_roster(right_rid, right_roster, right_marking_map);
         db.get_uncommon_ancestors(left_rid, right_rid,
-                                      left_uncommon_ancestors,
-                                      right_uncommon_ancestors);
+                                  left_uncommon_ancestors,
+                                  right_uncommon_ancestors);
 
         if (!idx(args,2)().empty())
           {
@@ -637,8 +648,13 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
         content_merge_database_adaptor
           dba(db, left_rid, right_rid, left_marking_map, right_marking_map);
 
+        bool resolutions_given;
+
+        parse_resolve_conflicts_opts
+          (app.opts, left_rid, left_roster, right_rid, right_roster, result, resolutions_given);
+
         resolve_merge_conflicts(app.lua, left_roster, right_roster,
-                                result, dba);
+                                result, dba, resolutions_given);
 
         {
           dir_t moved_root = left_roster.root();
@@ -653,14 +669,14 @@ CMD(merge_into_dir, "merge_into_dir", "", CMD_REF(tree),
 
       bool log_message_given;
       utf8 log_message;
-      process_commit_message_args(app.opts, log_message_given, log_message);
-      if (!log_message_given)
-        log_message = utf8((FL("propagate from branch '%s' (head %s)\n"
+      utf8 log_prefix = utf8((FL("propagate from branch '%s' (head %s)\n"
                                "            to branch '%s' (head %s)\n")
                             % idx(args, 0)
                             % *src_i
                             % idx(args, 1)
                             % *dst_i).str());
+
+      process_commit_message_args(app.opts, log_message_given, log_message, log_prefix);
 
       project.put_standard_certs_from_options(app.opts, app.lua,
                                               keys,
@@ -752,7 +768,7 @@ CMD(merge_into_workspace, "merge_into_workspace", "", CMD_REF(tree),
   content_merge_workspace_adaptor wca(db, lca_id, lca.first,
                                       *left.second, *right.second, paths);
   wca.cache_roster(working_rid, working_roster);
-  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca);
+  resolve_merge_conflicts(app.lua, *left.first, *right.first, merge_result, wca, false);
 
   // Make sure it worked...
   I(merge_result.is_clean());
@@ -789,7 +805,8 @@ CMD(explicit_merge, "explicit_merge", "", CMD_REF(tree),
     N_("Merges two explicitly given revisions"),
     N_("The results of the merge are placed on the branch specified by "
        "DEST-BRANCH."),
-    options::opts::date | options::opts::author)
+    options::opts::date | options::opts::author |
+    options::opts::messages | options::opts::resolve_conflicts_opts)
 {
   database db(app);
   key_store keys(app);
@@ -832,28 +849,16 @@ namespace
 }
 
 static void
-show_conflicts_core (database & db, revision_id const & l_id, revision_id const & r_id, bool const basic_io, std::ostream & output)
+show_conflicts_core (database & db,
+                     lua_hooks & lua,
+                     revision_id const & l_id,
+                     revision_id const & r_id,
+                     bool const basic_io,
+                     bool warn_unsupported,
+                     std::ostream & output)
 {
-  N(!is_ancestor(db, l_id, r_id),
-    F("%s is an ancestor of %s; no merge is needed.")
-    % l_id % r_id);
-  N(!is_ancestor(db, r_id, l_id),
-    F("%s is an ancestor of %s; no merge is needed.")
-    % r_id % l_id);
-  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
-  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
-  marking_map l_marking, r_marking;
-  db.get_roster(l_id, *l_roster, l_marking);
-  db.get_roster(r_id, *r_roster, r_marking);
-  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
-  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
-  roster_merge_result result;
-  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
-               *r_roster, r_marking, r_uncommon_ancestors,
-               result);
-
-  // note that left and right are in the order specified on the command line
-  // they are not in lexical order as they are with other merge commands so
+  // Note that left and right are in the order specified on the command line.
+  // They are not in lexical order as they are with other merge commands so
   // they may appear swapped here. The user may have done that deliberately,
   // especially via automate, so we don't sort them here.
 
@@ -869,6 +874,48 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       P(F("[left]  %s") % l_id);
       P(F("[right] %s") % r_id);
     }
+
+  if (is_ancestor(db, l_id, r_id))
+    {
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
+        P(F("%s is an ancestor of %s; no merge is needed.")
+          % l_id % r_id);
+
+      return;
+    }
+
+  if (is_ancestor(db, r_id, l_id))
+    {
+      if (basic_io)
+        {
+          basic_io::printer pr;
+          pr.print_stanza(st);
+          output.write(pr.buf.data(), pr.buf.size());
+        }
+      else
+        P(F("%s is an ancestor of %s; no merge is needed.")
+          % r_id % l_id);
+
+      return;
+    }
+
+  shared_ptr<roster_t> l_roster = shared_ptr<roster_t>(new roster_t());
+  shared_ptr<roster_t> r_roster = shared_ptr<roster_t>(new roster_t());
+  marking_map l_marking, r_marking;
+  db.get_roster(l_id, *l_roster, l_marking);
+  db.get_roster(r_id, *r_roster, r_marking);
+  set<revision_id> l_uncommon_ancestors, r_uncommon_ancestors;
+  db.get_uncommon_ancestors(l_id, r_id, l_uncommon_ancestors, r_uncommon_ancestors);
+  roster_merge_result result;
+  roster_merge(*l_roster, l_marking, l_uncommon_ancestors,
+               *r_roster, r_marking, r_uncommon_ancestors,
+               result);
 
   if (result.is_clean())
     {
@@ -907,7 +954,16 @@ show_conflicts_core (database & db, revision_id const & l_id, revision_id const 
       result.report_duplicate_name_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
 
       result.report_attribute_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
-      result.report_file_content_conflicts(*l_roster, *r_roster, adaptor, basic_io, output);
+      result.report_file_content_conflicts(lua, *l_roster, *r_roster, adaptor, basic_io, output);
+
+      if (warn_unsupported)
+        {
+          int const count = result.count_unsupported_resolution();
+          if (count > 0)
+            P(FP("warning: %s conflict with no supported resolutions.",
+                 "warning: %s conflicts with no supported resolutions.",
+                 count) % count);
+        }
     }
 }
 
@@ -926,7 +982,41 @@ CMD(show_conflicts, "show_conflicts", "", CMD_REF(informative), N_("REV REV"),
   complete(app.opts, app.lua, project, idx(args,0)(), l_id);
   complete(app.opts, app.lua, project, idx(args,1)(), r_id);
 
-  show_conflicts_core(db, l_id, r_id, false, std::cout);
+  show_conflicts_core(db, app.lua, l_id, r_id, false, false, std::cout);
+}
+
+static void get_conflicts_rids(args_vector const & args,
+                               database & db,
+                               project_t & project,
+                               app_state & app,
+                               revision_id & left_rid,
+                               revision_id & right_rid)
+{
+  if (args.empty())
+    {
+      // get ids from heads
+      N(app.opts.branchname() != "",
+        F("please specify a branch, with --branch=BRANCH"));
+
+      set<revision_id> heads;
+      project.get_branch_heads(app.opts.branchname, heads,
+                               app.opts.ignore_suspend_certs);
+
+      N(heads.size() >= 2,
+        F("branch '%s' has only 1 head; must be at least 2 for conflicts") % app.opts.branchname);
+
+      revpair p = find_heads_to_merge (db, heads);
+      left_rid = p.first;
+      right_rid = p.second;
+    }
+  else if (args.size() == 2)
+    {
+      // get ids from args
+      complete(app.opts, app.lua, project, idx(args,0)(), left_rid);
+      complete(app.opts, app.lua, project, idx(args,1)(), right_rid);
+    }
+  else
+    N(false, F("wrong argument count"));
 }
 
 // Name: show_conflicts
@@ -949,49 +1039,92 @@ CMD_AUTOMATE(show_conflicts, N_("[LEFT_REVID RIGHT_REVID]"),
              N_("Shows the conflicts between two revisions."),
              N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
                 "first two heads that would be chosen by the 'merge' command."),
-             options::opts::branch)
+             options::opts::branch | options::opts::ignore_suspend_certs)
 {
   database    db(app);
   project_t   project(db);
   revision_id l_id, r_id;
 
-  if (args.empty())
-    {
-      // get ids from heads
-      N(app.opts.branchname() != "",
-        F("please specify a branch, with --branch=BRANCH"));
+  get_conflicts_rids(args, db, project, app, l_id, r_id);
+  show_conflicts_core(db, app.lua, l_id, r_id, true, false, output);
+}
 
-      set<revision_id> heads;
-      project.get_branch_heads(app.opts.branchname, heads,
-                               app.opts.ignore_suspend_certs);
+CMD(store, "store", "", CMD_REF(conflicts),
+    "[LEFT_REVID RIGHT_REVID]",
+    N_("Store the conflicts from merging two revisions."),
+    N_("If no arguments are given, LEFT_REVID and RIGHT_REVID default to the "
+       "first two heads that would be chosen by the 'merge' command. If "
+       "--conflicts-file is not given, '_MTN/conflicts' is used."),
+    options::opts::branch | options::opts::conflicts_opts)
+{
+  database    db(app);
+  project_t   project(db);
+  revision_id left_id, right_id;
 
-      N(heads.size() >= 2,
-        F("branch '%s' has %d heads; must be at least 2 for show_conflicts") % app.opts.branchname % heads.size());
+  get_conflicts_rids(args, db, project, app, left_id, right_id);
 
-      if (heads.size() == 2)
-        {
-          set<revision_id>::const_iterator i = heads.begin();
-          l_id = *i;
-          ++i;
-          r_id = *i;
-        }
-      else
-        {
-          revpair p = find_heads_to_merge (db, heads);
-          l_id = p.first;
-          r_id = p.second;
-        }
-    }
-  else if (args.size() == 2)
-    {
-      // get ids from args
-      complete(app.opts, app.lua, project, idx(args,0)(), l_id);
-      complete(app.opts, app.lua, project, idx(args,1)(), r_id);
-    }
-  else
-    N(false, F("wrong argument count"));
+  std::ostringstream output;
+  show_conflicts_core(db, app.lua, left_id, right_id, true, true, output);
 
-  show_conflicts_core(db, l_id, r_id, true, output);
+  data dat(output.str());
+  write_data(app.opts.conflicts_file, dat);
+}
+
+CMD_AUTOMATE(file_merge, N_("LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"),
+             N_("Prints the results of the internal line merger, given two child revisions and file names"),
+             "",
+             options::opts::none)
+{
+  // We would have liked to take arguments of ancestor, left, right revision
+  // and file ids; those are provided by show_conflicts and would save
+  // computing the common ancestor and searching for file names. But we need
+  // the file names to get the manual merge and file encoding attributes,
+  // and there is no way to go from file id to file name. And there is no
+  // way to specify the ancestor id for a merge adaptor; why should we trust
+  // the user?
+
+  N(args.size() == 4,
+    F("wrong argument count"));
+
+  database  db(app);
+  project_t project(db);
+
+  revision_id left_rid;
+  complete(app.opts, app.lua, project, idx(args,0)(), left_rid);
+  file_path const left_path = file_path_external(idx(args,1));
+
+  revision_id right_rid;
+  complete(app.opts, app.lua, project, idx(args,2)(), right_rid);
+  file_path const right_path = file_path_external(idx(args,3));
+
+  roster_t left_roster;
+  roster_t right_roster;
+  marking_map left_marking, right_marking;
+  db.get_roster(left_rid, left_roster, left_marking);
+  db.get_roster(right_rid, right_roster, right_marking);
+
+  content_merge_database_adaptor adaptor(db, left_rid, right_rid,
+                                         left_marking, right_marking);
+
+  file_t left_n = downcast_to_file_t(left_roster.get_node(left_path));
+  file_t right_n = downcast_to_file_t(right_roster.get_node(right_path));
+
+  revision_id ancestor_rid;
+  file_path ancestor_path;
+  file_id ancestor_fid;
+  shared_ptr<roster_t const> ancestor_roster;
+  adaptor.get_ancestral_roster(left_n->self, ancestor_rid, ancestor_roster);
+  ancestor_roster->get_file_details(left_n->self, ancestor_fid, ancestor_path);
+
+  content_merger cm(app.lua, *ancestor_roster, left_roster, right_roster, adaptor);
+  file_data ancestor_data, left_data, right_data, merge_data;
+
+  N(cm.attempt_auto_merge(ancestor_path, left_path, right_path,
+                          ancestor_fid, left_n->content, right_n->content,
+                          left_data, right_data, merge_data),
+    F("internal line merger failed"));
+
+  output << merge_data;
 }
 
 CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
@@ -1136,7 +1269,7 @@ CMD(pluck, "pluck", "", CMD_REF(workspace), N_("[-r FROM] -r TO [PATH...]"),
   wca.cache_roster(to_rid, to_roster);
 
   resolve_merge_conflicts(app.lua, *working_roster, *to_roster,
-                          result, wca);
+                          result, wca, false);
 
   I(result.is_clean());
   // temporary node ids may appear
