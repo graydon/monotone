@@ -1,6 +1,7 @@
 /*************************************************
 * Gzip Compressor Source File                    *
-* (C) 1999-2004 The Botan Project                *
+* (C) 2001 Peter J Jones (pjones@pmade.org)      *
+*     2001-2004 Jack Lloyd                       *
 *                                                *
 * Based on the comp_zlib module, modified        *
 * by Matt Johnston. This is not a complete       *
