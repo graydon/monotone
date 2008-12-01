@@ -459,8 +459,8 @@ workspace::get_ws_options(options & opts)
       opts.dbname = database_option;
     }
 
-  if (!opts.key_dir_given && !opts.conf_dir_given)
-    {
+  if (!opts.key_dir_given && !opts.conf_dir_given && !keydir_option.empty())
+    { // if empty/missing, we want to keep the default
       opts.key_dir = keydir_option;
       opts.key_dir_given = true;
     }
