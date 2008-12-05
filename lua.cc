@@ -100,7 +100,7 @@ Lua::check_stack(int count)
 {
   if (!lua_checkstack(st, count))
     {
-      fail((F("lua stack limit '%d' reached") % LUAI_MAXCSTACK).str());
+      fail((FL("lua stack limit '%d' reached") % LUAI_MAXCSTACK).str());
       return false;
     }
   return true;
