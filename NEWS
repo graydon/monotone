@@ -20,6 +20,9 @@
 	- The Lua-based contributed Monotone extension introduced in
 	  0.38 haven't been added to the tarball; this has been fixed.
 
+        - Monotone crashed if it was called with more than 2048 command
+          line arguments. This has been fixed.
+
         New features
 
         - New 'mtn ls duplicates' command which lets you list
