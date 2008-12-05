@@ -449,8 +449,12 @@
 ** functions. This limit is arbitrary; its only purpose is to stop C
 ** functions to consume unlimited stack space.
 */
-#define LUAI_MAXCSTACK	2048
 
+/* Monotone local: Newer kernels (>=2.6.23) provide unlimited argument
+                   length and numbers, up to 2.6.22 this was the old
+                   "limit" - ensure that we provide that at least instead
+                   of the default 2048 */    
+#define LUAI_MAXCSTACK	32767
 
 
 /*

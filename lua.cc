@@ -95,6 +95,17 @@ Lua::report_error()
   failed = true;
 }
 
+bool
+Lua::check_stack(int count)
+{
+  if (!lua_checkstack(st, count))
+    {
+      fail((F("lua stack limit '%d' reached") % LUAI_MAXCSTACK).str());
+      return false;
+    }
+  return true;
+}
+
 // getters
 
 Lua &
@@ -251,7 +262,7 @@ Lua::begin()
       fail("istable() in begin");
       return *this;
     }
-  I(lua_checkstack (st, 1));
+  check_stack(1);
   lua_pushnil(st);
   return *this;
 }
@@ -265,7 +276,7 @@ Lua::next()
       fail("istable() in next");
       return false;
     }
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return false;
   if (lua_next(st, -2) != 0)
     {
       return true;
@@ -280,7 +291,7 @@ Lua &
 Lua::push_str(string const & str)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_pushlstring(st, str.c_str(), str.size());
   return *this;
 }
@@ -289,7 +300,7 @@ Lua &
 Lua::push_int(int num)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_pushnumber(st, num);
   return *this;
 }
@@ -298,7 +309,7 @@ Lua &
 Lua::push_double(double num)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (check_stack(1)) return *this;
   lua_pushnumber(st, num);
   return *this;
 }
@@ -307,7 +318,7 @@ Lua &
 Lua::push_bool(bool b)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_pushboolean(st, b);
   return *this;
 }
@@ -316,7 +327,7 @@ Lua &
 Lua::push_nil()
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_pushnil(st);
   return *this;
 }
@@ -325,7 +336,7 @@ Lua &
 Lua::push_table()
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_newtable(st);
   return *this;
 }
@@ -334,7 +345,7 @@ Lua &
 Lua::set_table(int idx)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, 1));
+  if (!check_stack(1)) return *this;
   lua_settable(st, idx);
   return *this;
 }
@@ -351,7 +362,7 @@ Lua &
 Lua::call(int in, int out)
 {
   if (failed) return *this;
-  I(lua_checkstack (st, out));
+  if (!check_stack(out)) return *this;
   if (lua_pcall(st, in, out, 0) != 0)
     {
       report_error();

@@ -28,6 +28,7 @@ Lua
   void fail(std::string const & reason);
   bool ok();
   void report_error();
+  bool check_stack(int count);
 
   // getters
   Lua & get(int idx = LUA_GLOBALSINDEX);
