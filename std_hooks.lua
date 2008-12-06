@@ -1160,13 +1160,15 @@ end
 dump                = {}
 dump.depth          = 0
 dump._string        = function(s) return string.format("%q", s) end
-dump._number        = function(n) return tonumber(n) end
+dump._number        = function(n) return tostring(n) end
 dump._boolean       = function(b) if (b) then return "true" end return "false" end
-dump._userdata      = function(u) return "<userdata>" end
-dump._function      = function(f) return "<function>" end
+dump._userdata      = function(u) return "nil --[[ userdata ]]--" end
+-- if we really need to return / serialize functions we could do it
+-- like cbreak@irc.freenode.net did here: http://lua-users.org/wiki/TablePersistence
+dump._function      = function(f) return "nil --[[ function ]]--" end
 dump._nil           = function(n) return "nil" end
-dump._thread        = function(t) return "<thread>" end
-dump._lightuserdata = function(l) return "<lightuserdata>" end
+dump._thread        = function(t) return "nil --[[ thread ]]--" end
+dump._lightuserdata = function(l) return "nil --[[ lightuserdata ]]--" end
 
 dump._table = function(t)
     local buf = ''
