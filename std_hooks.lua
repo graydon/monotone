@@ -1192,8 +1192,11 @@ function hook_wrapper(func_name, ...)
     -- function call, see http://lua-users.org/wiki/StoringNilsInTables
     local args = { n=select('#', ...), ... }
     for i=1,args.n do
-        args[i] = assert(loadstring("return " .. args[i]),
+        local val = assert(loadstring("return " .. args[i]),
                          "argument "..args[i].." could not be evaluated")()
+        assert(val or args[i] == "nil",
+               "argument "..args[i].." was evaluated to nil")
+        args[i] = val
     end
     local res = { _G[func_name](unpack(args, 1, args.n)) }
     return dump._table(res)
