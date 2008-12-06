@@ -9218,7 +9218,7 @@ A nested table:
 A callback function:
 
 @verbatim
-[1] = nil --[[ function ]]--;
+[1] = nil --[[function]];
 @end verbatim
 
 @item Error conditions:
