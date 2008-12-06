@@ -2302,7 +2302,9 @@ CMD_AUTOMATE(lua, "LUA_FUNCTION [ARG1 [ARG2 [...]]]",
     N(app.lua.hook_hook_wrapper(func, func_args, out),
       F("lua call '%s' failed") % func);
 
-    output << out << '\n';
+    // the output already contains a trailing newline, so we don't add
+    // another one here
+    output << out;
 }
 
 // Local Variables:
