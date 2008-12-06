@@ -1188,15 +1188,13 @@ dump._table = function(t)
 end
 
 function hook_wrapper(func_name, ...)
-    -- evaluate each single string argument to resolve types
-    -- like nil's, table's and others - the select('#', ...) syntax is
-    -- borrowed from http://lua-users.org/wiki/StoringNilsInTables to
-    -- let this code properly work for nil arguments as well
-    local args = {n=select('#',...), ...}
-    for i=2,args.n do
+    -- we have to ensure that nil arguments are restored properly for the
+    -- function call, see http://lua-users.org/wiki/StoringNilsInTables
+    local args = { n=select('#', ...), ... }
+    for i=1,args.n do
         args[i] = assert(loadstring("return " .. args[i]))()
     end
-    local res = { _G[func_name](unpack(unpack(args, 1, args.n))) }
+    local res = { _G[func_name](unpack(args, 1, args.n)) }
     return dump._table(res)
 end
 
