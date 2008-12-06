@@ -1157,6 +1157,49 @@ function get_default_command_options(command)
    return default_args
 end
 
+dump                = {}
+dump.depth          = 0
+dump._string        = function(s) return string.format("%q", s) end
+dump._number        = function(n) return tonumber(n) end
+dump._boolean       = function(b) if (b) then return "true" end return "false" end
+dump._userdata      = function(u) return "<userdata>" end
+dump._function      = function(f) return "<function>" end
+dump._nil           = function(n) return "nil" end
+dump._thread        = function(t) return "<thread>" end
+dump._lightuserdata = function(l) return "<lightuserdata>" end
+
+dump._table = function(t)
+    local buf = ''
+    if (dump.depth > 0) then
+        buf = buf .. '{\n'
+    end
+    dump.depth = dump.depth + 1;
+    for k,v in pairs(t) do
+        buf = buf..string.format('%s[%s] = %s;\n',
+              string.rep("\t", dump.depth - 1),
+              dump["_" .. type(k)](k),
+              dump["_" .. type(v)](v))
+    end
+    dump.depth = dump.depth - 1;
+    if (dump.depth > 0) then
+        buf = buf .. string.rep("\t", dump.depth - 1) .. '}'
+    end
+    return buf
+end
+
+function hook_wrapper(func_name, ...)
+    -- evaluate each single string argument to resolve types
+    -- like nil's, table's and others - the select('#', ...) syntax is
+    -- borrowed from http://lua-users.org/wiki/StoringNilsInTables to
+    -- let this code properly work for nil arguments as well
+    local args = {n=select('#',...), ...}
+    for i=2,args.n do
+        args[i] = assert(loadstring("return " .. args[i]))()
+    end
+    local res = { _G[func_name](unpack(unpack(args, 1, args.n))) }
+    return dump._table(res)
+end
+
 
 function get_remote_unix_socket_command(host)
     return "socat"
