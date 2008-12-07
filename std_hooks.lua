@@ -1157,34 +1157,34 @@ function get_default_command_options(command)
    return default_args
 end
 
-dump                = {}
-dump.depth          = 0
-dump._string        = function(s) return string.format("%q", s) end
-dump._number        = function(n) return tostring(n) end
-dump._boolean       = function(b) if (b) then return "true" end return "false" end
-dump._userdata      = function(u) return "nil --[[userdata]]" end
+hook_wrapper_dump                = {}
+hook_wrapper_dump.depth          = 0
+hook_wrapper_dump._string        = function(s) return string.format("%q", s) end
+hook_wrapper_dump._number        = function(n) return tostring(n) end
+hook_wrapper_dump._boolean       = function(b) if (b) then return "true" end return "false" end
+hook_wrapper_dump._userdata      = function(u) return "nil --[[userdata]]" end
 -- if we really need to return / serialize functions we could do it
 -- like cbreak@irc.freenode.net did here: http://lua-users.org/wiki/TablePersistence
-dump._function      = function(f) return "nil --[[function]]" end
-dump._nil           = function(n) return "nil" end
-dump._thread        = function(t) return "nil --[[thread]]" end
-dump._lightuserdata = function(l) return "nil --[[lightuserdata]]" end
+hook_wrapper_dump._function      = function(f) return "nil --[[function]]" end
+hook_wrapper_dump._nil           = function(n) return "nil" end
+hook_wrapper_dump._thread        = function(t) return "nil --[[thread]]" end
+hook_wrapper_dump._lightuserdata = function(l) return "nil --[[lightuserdata]]" end
 
-dump._table = function(t)
+hook_wrapper_dump._table = function(t)
     local buf = ''
-    if (dump.depth > 0) then
+    if (hook_wrapper_dump.depth > 0) then
         buf = buf .. '{\n'
     end
-    dump.depth = dump.depth + 1;
+    hook_wrapper_dump.depth = hook_wrapper_dump.depth + 1;
     for k,v in pairs(t) do
         buf = buf..string.format('%s[%s] = %s;\n',
-              string.rep("\t", dump.depth - 1),
-              dump["_" .. type(k)](k),
-              dump["_" .. type(v)](v))
+              string.rep("\t", hook_wrapper_dump.depth - 1),
+              hook_wrapper_dump["_" .. type(k)](k),
+              hook_wrapper_dump["_" .. type(v)](v))
     end
-    dump.depth = dump.depth - 1;
-    if (dump.depth > 0) then
-        buf = buf .. string.rep("\t", dump.depth - 1) .. '}'
+    hook_wrapper_dump.depth = hook_wrapper_dump.depth - 1;
+    if (hook_wrapper_dump.depth > 0) then
+        buf = buf .. string.rep("\t", hook_wrapper_dump.depth - 1) .. '}'
     end
     return buf
 end
@@ -1201,7 +1201,7 @@ function hook_wrapper(func_name, ...)
         args[i] = val
     end
     local res = { _G[func_name](unpack(args, 1, args.n)) }
-    return dump._table(res)
+    return hook_wrapper_dump._table(res)
 end
 
 
