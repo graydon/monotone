@@ -670,8 +670,8 @@ key_store::make_signature(database & db,
           "monotone signature: %s")
         % ssh_sig.length()
         % sig_string.length()
-        % encode_hexenc(ssh_sig)
-        % encode_hexenc(sig_string));
+        % ssh_sig
+        % sig_string);
       L(FL("make_signature: signatures from ssh-agent and monotone"
            " are the same"));
     }

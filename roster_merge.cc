@@ -2700,7 +2700,7 @@ namespace
                         "removed on one side of the merge.  Affected revisions include:") % fp);
                   }
                 found_one_ignored_content = true;
-                W(F("Revision: %s") % encode_hexenc(it->inner()()));
+                W(F("Revision: %s") % (*it));
               }
           }
       }

@@ -1807,7 +1807,7 @@ session::process_auth_cmd(protocol_role their_role,
                                       their_exclude_pattern);
           error(unknown_key,
                 (F("remote public key hash '%s' is unknown")
-                 % encode_hexenc(client())).str());
+                 % client).str());
           */
         }
     }
@@ -2196,7 +2196,7 @@ session::process_data_cmd(netcmd_item_type type,
         epoch_data epoch;
         read_epoch(dat, branch, epoch);
         L(FL("received epoch %s for branch %s")
-          % encode_hexenc(epoch.inner()()) % branch);
+          % epoch % branch);
         map<branch_name, epoch_data> epochs;
         project.db.get_epochs(epochs);
         map<branch_name, epoch_data>::const_iterator i;
@@ -2204,7 +2204,7 @@ session::process_data_cmd(netcmd_item_type type,
         if (i == epochs.end())
           {
             L(FL("branch %s has no epoch; setting epoch to %s")
-              % branch % encode_hexenc(epoch.inner()()));
+              % branch % epoch);
             project.db.set_epoch(branch, epoch);
           }
         else
@@ -2225,10 +2225,8 @@ session::process_data_cmd(netcmd_item_type type,
                   (F("Mismatched epoch on branch %s."
                      " Server has '%s', client has '%s'.")
                    % branch
-                   % encode_hexenc((voice == server_voice
-                                    ? i->second: epoch).inner()())
-                   % encode_hexenc((voice == server_voice
-                                    ? epoch : i->second).inner()())).str());
+                   % (voice == server_voice ? i->second : epoch)
+                   % (voice == server_voice ? epoch : i->second)).str());
           }
       }
       maybe_note_epochs_finished();
@@ -2246,7 +2244,7 @@ session::process_data_cmd(netcmd_item_type type,
             throw bad_decode(F("hash check failed for public key '%s' (%s);"
                                " wanted '%s' got '%s'")
                                % hitem() % keyid % hitem()
-                               % encode_hexenc(tmp()));
+                               % tmp);
           }
         if (project.db.put_key(keyid, pub))
           written_keys.push_back(keyid);
@@ -3403,7 +3401,7 @@ session::rebuild_merkle_trees(set<branch_name> const & branchnames)
           if (global_sanity.debug_p())
             L(FL("noting key '%s' = '%s' to send")
               % *key
-              % encode_hexenc(keyhash()));
+              % keyhash);
 
           key_refiner.note_local_item(keyhash);
           ++keys_ticker;

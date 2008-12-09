@@ -642,7 +642,7 @@ make_revision(revision_id const & old_rev_id,
 
   if (global_sanity.debug_p())
     L(FL("new manifest_id is %s")
-      % encode_hexenc(rev.new_manifest.inner()()));
+      % rev.new_manifest);
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -668,7 +668,7 @@ make_revision(revision_id const & old_rev_id,
 
   if (global_sanity.debug_p())
     L(FL("new manifest_id is %s")
-      % encode_hexenc(rev.new_manifest.inner()()));
+      % rev.new_manifest);
 
   safe_insert(rev.edges, make_pair(old_rev_id, cs));
   rev.made_for = made_for_database;
@@ -694,7 +694,7 @@ make_revision(parent_map const & old_rosters,
 
   if (global_sanity.debug_p())
     L(FL("new manifest_id is %s")
-      % encode_hexenc(rev.new_manifest.inner()()));
+      % rev.new_manifest);
 }
 
 static void
@@ -718,7 +718,7 @@ recalculate_manifest_id_for_restricted_rev(parent_map const & old_rosters,
 
   if (global_sanity.debug_p())
     L(FL("new manifest_id is %s")
-      % encode_hexenc(rev.new_manifest.inner()()));
+      % rev.new_manifest);
 }
 
 void

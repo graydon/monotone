@@ -176,8 +176,8 @@ netcmd::read(string_queue & inbuf, chained_hmac & hmac)
     {
       throw bad_decode(F("bad HMAC checksum (got %s, wanted %s)\n"
 			 "this suggests data was corrupted in transit")
-		       % encode_hexenc(cmd_digest)
-		       % encode_hexenc(digest));
+		       % cmd_digest
+		       % digest);
     }
 
   return true;
