@@ -1196,7 +1196,7 @@ function hook_wrapper(func_name, ...)
     for i=1,args.n do
         local val = assert(loadstring("return " .. args[i]),
                          "argument "..args[i].." could not be evaluated")()
-        assert(val or args[i] == "nil",
+        assert(type(val) ~= nil or args[i] == "nil",
                "argument "..args[i].." was evaluated to nil")
         args[i] = val
     end
