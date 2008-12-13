@@ -496,7 +496,7 @@ CMD(merge, "merge", "", CMD_REF(tree), "",
     }
 
   if (heads.size() > 1)
-    P(F("note: branch '%s' still has %s heads; run merge again") % app.opts.branchname % heads.size());
+    P(F("note: branch '%s' still has %d heads; run merge again") % app.opts.branchname % heads.size());
 
   P(F("note: your workspaces have not been updated"));
 }
@@ -960,8 +960,8 @@ show_conflicts_core (database & db,
         {
           int const count = result.count_unsupported_resolution();
           if (count > 0)
-            P(FP("warning: %s conflict with no supported resolutions.",
-                 "warning: %s conflicts with no supported resolutions.",
+            P(FP("warning: %d conflict with no supported resolutions.",
+                 "warning: %d conflicts with no supported resolutions.",
                  count) % count);
         }
     }

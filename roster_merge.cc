@@ -2179,7 +2179,7 @@ validate_file_content_conflicts(basic_io::parser & pars,
       read_file_content_conflict(pars, file_conflict, left_roster, right_roster);
 
       N(merge_conflict.nid == file_conflict.nid,
-        F("conflicts_mismatch_msg"));
+        F(conflicts_mismatch_msg));
 
       merge_conflict.resolution = file_conflict.resolution;
 
