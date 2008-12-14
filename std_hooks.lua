@@ -1157,6 +1157,53 @@ function get_default_command_options(command)
    return default_args
 end
 
+hook_wrapper_dump                = {}
+hook_wrapper_dump.depth          = 0
+hook_wrapper_dump._string        = function(s) return string.format("%q", s) end
+hook_wrapper_dump._number        = function(n) return tostring(n) end
+hook_wrapper_dump._boolean       = function(b) if (b) then return "true" end return "false" end
+hook_wrapper_dump._userdata      = function(u) return "nil --[[userdata]]" end
+-- if we really need to return / serialize functions we could do it
+-- like cbreak@irc.freenode.net did here: http://lua-users.org/wiki/TablePersistence
+hook_wrapper_dump._function      = function(f) return "nil --[[function]]" end
+hook_wrapper_dump._nil           = function(n) return "nil" end
+hook_wrapper_dump._thread        = function(t) return "nil --[[thread]]" end
+hook_wrapper_dump._lightuserdata = function(l) return "nil --[[lightuserdata]]" end
+
+hook_wrapper_dump._table = function(t)
+    local buf = ''
+    if (hook_wrapper_dump.depth > 0) then
+        buf = buf .. '{\n'
+    end
+    hook_wrapper_dump.depth = hook_wrapper_dump.depth + 1;
+    for k,v in pairs(t) do
+        buf = buf..string.format('%s[%s] = %s;\n',
+              string.rep("\t", hook_wrapper_dump.depth - 1),
+              hook_wrapper_dump["_" .. type(k)](k),
+              hook_wrapper_dump["_" .. type(v)](v))
+    end
+    hook_wrapper_dump.depth = hook_wrapper_dump.depth - 1;
+    if (hook_wrapper_dump.depth > 0) then
+        buf = buf .. string.rep("\t", hook_wrapper_dump.depth - 1) .. '}'
+    end
+    return buf
+end
+
+function hook_wrapper(func_name, ...)
+    -- we have to ensure that nil arguments are restored properly for the
+    -- function call, see http://lua-users.org/wiki/StoringNilsInTables
+    local args = { n=select('#', ...), ... }
+    for i=1,args.n do
+        local val = assert(loadstring("return " .. args[i]),
+                         "argument "..args[i].." could not be evaluated")()
+        assert(val ~= nil or args[i] == "nil",
+               "argument "..args[i].." was evaluated to nil")
+        args[i] = val
+    end
+    local res = { _G[func_name](unpack(args, 1, args.n)) }
+    return hook_wrapper_dump._table(res)
+end
+
 
 function get_remote_unix_socket_command(host)
     return "socat"

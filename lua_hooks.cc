@@ -594,6 +594,25 @@ lua_hooks::hook_get_default_command_options(commands::command_id const & cmd,
   return ll.ok() && !args.empty();
 }
 
+bool lua_hooks::hook_hook_wrapper(std::string const & func_name,
+                                  std::vector<std::string> const & args,
+                                  std::string & out)
+{
+  Lua ll(st);
+  ll.func("hook_wrapper")
+    .push_str(func_name);
+
+  for (std::vector<std::string>::const_iterator i = args.begin();
+        i != args.end(); ++i)
+    {
+      ll.push_str(*i);
+    }
+
+  ll.call(args.size() + 1, 1);
+  ll.extract_str_nolog(out);
+  return ll.ok();
+}
+
 bool
 lua_hooks::hook_use_inodeprints()
 {

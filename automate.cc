@@ -2276,6 +2276,37 @@ CMD_AUTOMATE(get_workspace_root, "",
   output << get_current_working_dir() << '\n';
 }
 
+CMD_AUTOMATE(lua, "LUA_FUNCTION [ARG1 [ARG2 [...]]]",
+             N_("Executes the given lua function and returns the result"),
+             "",
+             options::opts::none)
+{
+    N(args.size() >= 1,
+      F("wrong argument count"));
+
+    std::string func = idx(args, 0)();
+
+    N(app.lua.hook_exists(func),
+      F("lua function '%s' does not exist") % func);
+
+    std::vector<std::string> func_args;
+    if (args.size() > 1)
+      {
+        for (unsigned int i=1; i<args.size(); i++)
+        {
+          func_args.push_back(idx(args, i)());
+        }
+      }
+
+    std::string out;
+    N(app.lua.hook_hook_wrapper(func, func_args, out),
+      F("lua call '%s' failed") % func);
+
+    // the output already contains a trailing newline, so we don't add
+    // another one here
+    output << out;
+}
+
 // Local Variables:
 // mode: C++
 // fill-column: 76
