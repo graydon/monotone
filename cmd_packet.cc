@@ -149,7 +149,7 @@ namespace
 // Name : read_packets
 // Arguments:
 //   packet-data
-// Added in: 8.1
+// Added in: 9.0
 // Purpose:
 //   Store public keys (and incidentally anything else that can be
 //   represented as a packet) into the database.
