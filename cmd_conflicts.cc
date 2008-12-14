@@ -125,8 +125,8 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
       {
         int const count = conflicts.result.count_unsupported_resolution();
         if (count > 0)
-            P(FP("warning: %s conflict with no supported resolutions.",
-                 "warning: %s conflicts with no supported resolutions.",
+            P(FP("warning: %d conflict with no supported resolutions.",
+                 "warning: %d conflicts with no supported resolutions.",
                  count) % count);
         else
           P(F("all conflicts resolved"));
@@ -138,8 +138,8 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
         int const count = conflicts.result.count_unsupported_resolution();
         if (count > 0)
           {
-            P(FP("warning: %s conflict with no supported resolutions.",
-                 "warning: %s conflicts with no supported resolutions.",
+            P(FP("warning: %d conflict with no supported resolutions.",
+                 "warning: %d conflicts with no supported resolutions.",
                  count) % count);
 
             content_merge_database_adaptor adaptor
