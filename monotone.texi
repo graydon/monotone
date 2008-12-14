@@ -8045,7 +8045,7 @@ workspace is needed in this case.
 
 @item Updated in:
 
-8.1
+9.0
 
 Added @option{--with-header} option.
 
@@ -9139,7 +9139,7 @@ A data packet, @var{packet-data}, as produced by @command{mtn pubkey @var{keynam
 
 @item Added in:
 
-8.1
+9.0
 
 @item Purpose:
 
@@ -9171,7 +9171,7 @@ like f.e. @code{@{1,true,@{['func'] = function(...) return ... end @}@}}
 
 @item Added in:
 
-8.2
+9.0
 
 @item Purpose:
 

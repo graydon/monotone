@@ -2276,6 +2276,20 @@ CMD_AUTOMATE(get_workspace_root, "",
   output << get_current_working_dir() << '\n';
 }
 
+// Name: lua
+// Arguments:
+//   A lua function name
+//   Zero or more function arguments
+// Changes:
+//   9.0 (added)
+// Purpose:
+//   Execute lua functions and return their results.
+// Output format:
+//   Lua parsable output.
+// Error conditions:
+//   a runtime exception is thrown if the function does not exists, the arguments cannot be parsed
+//   or the function cannot be executed for some other reason.
+
 CMD_AUTOMATE(lua, "LUA_FUNCTION [ARG1 [ARG2 [...]]]",
              N_("Executes the given lua function and returns the result"),
              "",

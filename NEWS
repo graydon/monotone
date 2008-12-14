@@ -34,6 +34,11 @@
         - New command group 'mtn conflicts *'; provides asynchronous
           conflict resolutions for merge and propagate.
 
+	- New 'automate lua' command with which lua functions, like
+          monotone hooks, can be called over automate. This is particularily
+	  useful to get user defaults, like ignorable files, branch keys and
+          passwords, which are managed through one or more monotonerc files.
+	  
         - 'merge' and 'propagate' accept user commit messages; the
           'merge rev rev' or 'propagate branch branch' message will be
           prefixed to the user message. --no-prefix removes the prefix.
