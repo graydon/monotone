@@ -30,11 +30,12 @@
 # option         -> Option
 #
 # ##############################################################################
+#: cmd_conflicts.cc:414
 msgid ""
 msgstr ""
 "Project-Id-Version: de\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-14 00:02+0100\n"
+"POT-Creation-Date: 2008-12-15 00:30+0100\n"
 "PO-Revision-Date: 2007-08-07 11:35+0200\n"
 "Last-Translator: Thomas Keller <me@thomaskeller.biz>\n"
 "Language-Team: Deutsch <me@thomaskeller.biz>\n"
@@ -58,11 +59,11 @@ msgstr "Gibt eine ASCII-Repräsentation des Graphen aus"
 #: automate.cc:1518 automate.cc:1549 automate.cc:1589 automate.cc:1678
 #: automate.cc:1777 automate.cc:1826 automate.cc:1859 automate.cc:1924
 #: automate.cc:1976 automate.cc:2031 automate.cc:2090 automate.cc:2123
-#: automate.cc:2193 automate.cc:2223 cmd_files.cc:232 cmd_files.cc:329
-#: cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019 cmd_merging.cc:1087
-#: cmd_packet.cc:169 cmd_ws_commit.cc:717 cmd_ws_commit.cc:765
-#: cmd_ws_commit.cc:816 cmd_ws_commit.cc:869 cmd_ws_commit.cc:987
-#: cmd_ws_commit.cc:1033
+#: automate.cc:2193 automate.cc:2223 automate.cc:2299 cmd_files.cc:232
+#: cmd_files.cc:329 cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019
+#: cmd_merging.cc:1088 cmd_packet.cc:169 cmd_ws_commit.cc:717
+#: cmd_ws_commit.cc:765 cmd_ws_commit.cc:816 cmd_ws_commit.cc:869
+#: cmd_ws_commit.cc:987 cmd_ws_commit.cc:1033
 #, c-format
 msgid "wrong argument count"
 msgstr "falsche Anzahl an Parametern"
@@ -228,7 +229,7 @@ msgstr "Gibt die Revision zurück, auf der der Arbeitsbereich basiert"
 msgid "Shows the revision of the current workspace"
 msgstr "Gibt die Revision des derzeitigen Arbeitsbereiches zurück"
 
-#: automate.cc:1399 cmd_merging.cc:1347
+#: automate.cc:1399 cmd_merging.cc:1348
 msgid "[REVID]"
 msgstr "[REVISIONS_ID]"
 
@@ -409,6 +410,20 @@ msgid "Prints the workspace root for the current directory"
 msgstr ""
 "Gibt das Wurzelverzeichnis des Arbeitsbereichs für das aktuelle Verzeichnis "
 "aus"
+
+#: automate.cc:2294
+msgid "Executes the given lua function and returns the result"
+msgstr "Führt die gegebene Lua-Funktion aus und gibt deren Rückgabewert zurück"
+
+#: automate.cc:2304
+#, c-format
+msgid "lua function '%s' does not exist"
+msgstr "Lua-Funktion '%s' existiert nicht"
+
+#: automate.cc:2317
+#, c-format
+msgid "lua call '%s' failed"
+msgstr "Ausführung der Lua-Funktion '%s' schlug fehl"
 
 #: basic_io.cc:30
 #, c-format
@@ -759,6 +774,145 @@ msgstr "Zeigt die Höhenangabe einer Revision an"
 #, c-format
 msgid "cached height: %s"
 msgstr "zwischengespeicherte Höhenangabe: %s"
+
+#: cmd_conflicts.cc:19
+msgid "Commands for conflict resolutions"
+msgstr "Kommandos zur Konfliktauflösung"
+
+#: cmd_conflicts.cc:68
+#, c-format
+msgid "duplicate_name %s"
+msgstr "duplicate_name %s"
+
+#: cmd_conflicts.cc:73 cmd_conflicts.cc:111
+#, c-format
+msgid "possible resolutions:"
+msgstr "mögliche Lösungen:"
+
+#: cmd_conflicts.cc:77
+#, c-format
+msgid "resolve_first_left drop"
+msgstr "resolve_first_left drop"
+
+#: cmd_conflicts.cc:78
+#, c-format
+msgid "resolve_first_left rename \"name\""
+msgstr "resolve_first_left rename \"Name\""
+
+#: cmd_conflicts.cc:79
+#, c-format
+msgid "resolve_first_left user \"name\""
+msgstr "resolve_first_left user \"Name\""
+
+#: cmd_conflicts.cc:84
+#, c-format
+msgid "resolve_first_right drop"
+msgstr "resolve_first_right drop"
+
+#: cmd_conflicts.cc:85
+#, c-format
+msgid "resolve_first_right rename \"name\""
+msgstr "resolve_first_right rename \"Name\""
+
+#: cmd_conflicts.cc:86
+#, c-format
+msgid "resolve_first_right user \"name\""
+msgstr "resolve_first_right user \"Name\""
+
+#: cmd_conflicts.cc:106
+#, c-format
+msgid "content %s"
+msgstr "Inhalt %s"
+
+#: cmd_conflicts.cc:112
+#, c-format
+msgid "resolve_first interactive \"file_name\""
+msgstr "resolve_first interactive \"Dateiname\""
+
+#: cmd_conflicts.cc:113
+#, c-format
+msgid "resolve_first user \"file_name\""
+msgstr "resolve_first user \"Dateiname\""
+
+#: cmd_conflicts.cc:128 cmd_conflicts.cc:141 cmd_merging.cc:963
+#, c-format
+msgid "warning: %d conflict with no supported resolutions."
+msgid_plural "warning: %d conflicts with no supported resolutions."
+msgstr[0] "Warnung: %d Konflikt ohne unterstützte Konfliktlösungen"
+msgstr[1] "Warnung: %d Konflikte ohne unterstützte Konfliktlösungen"
+
+#: cmd_conflicts.cc:132
+#, c-format
+msgid "all conflicts resolved"
+msgstr "alle Konflikte aufgelöst"
+
+#: cmd_conflicts.cc:218
+#, c-format
+msgid "too many arguments"
+msgstr "zu viele Argumente"
+
+#: cmd_conflicts.cc:223 cmd_conflicts.cc:229 cmd_conflicts.cc:292
+#: cmd_conflicts.cc:306 cmd_conflicts.cc:354 cmd_conflicts.cc:367
+#, c-format
+msgid "wrong number of arguments"
+msgstr "falsche Anzahl an Parametern"
+
+#: cmd_conflicts.cc:231
+#, c-format
+msgid "left and right resolutions cannot both be 'user'"
+msgstr "linke und rechte Konfliktlösung können nicht beide 'user' sein"
+
+#: cmd_conflicts.cc:294
+#, c-format
+msgid "result path must be under _MTN"
+msgstr "Konfliktlösungsdatei muss sich unterhalb des _MTN-Verzeichnisses befinden"
+
+#: cmd_conflicts.cc:325
+#, c-format
+msgid "no resolvable yet unresolved left side conflicts"
+msgstr "keine lösbaren oder nicht aufgelösten linksseitigen Konflikte"
+
+#: cmd_conflicts.cc:329
+#, c-format
+msgid "no resolvable yet unresolved right side conflicts"
+msgstr "keine lösbaren oder nicht aufgelösten rechtsseitigen Konflikte"
+
+#: cmd_conflicts.cc:333
+#, c-format
+msgid "no resolvable yet unresolved single-file conflicts"
+msgstr "keine lösbaren oder nicht aufgelösten Einzeldatei-Konflikte"
+
+#: cmd_conflicts.cc:347
+msgid ""
+"Show the first unresolved conflict in the conflicts file, and possible "
+"resolutions"
+msgstr ""
+"Zeigt den ersten nicht aufgelösten Konflikt in der Konfliktdatei und "
+"mögliche Konfliktlösungen"
+
+#: cmd_conflicts.cc:360
+msgid "Show the remaining unresolved conflicts in the conflicts file"
+msgstr "Zeigt die verbliebenen ungelösten Probleme in der Konfliktdatei"
+
+#: cmd_conflicts.cc:372 cmd_conflicts.cc:386 cmd_conflicts.cc:400
+msgid "RESOLUTION"
+msgstr "LÖSUNG"
+
+#: cmd_conflicts.cc:373
+msgid "Set the resolution for the first unresolved single-file conflict"
+msgstr "Setzt die Lösung für den ersten, nicht gelösten Einzeldatei-Konflikt"
+
+#: cmd_conflicts.cc:387
+msgid "Set the left resolution for the first unresolved two-file conflict"
+msgstr "Setzt die linksseitige Lösung für den ersten, nicht aufgelösten Zwei-Dateien-Konflikt"
+
+#: cmd_conflicts.cc:401
+msgid "Set the right resolution for the first unresolved two-file conflict"
+msgstr "Setzt die rechtsseitige Lösung für den ersten, nicht aufgelösten Zwei-Dateien-Konflikt"
+
+#: cmd_conflicts.cc:415
+msgid "Delete any bookkeeping files related to conflict resolution"
+msgstr "Entfernt alle konfliktlösungsrelevanten Dateien aus dem monotone-Systempfad"
 
 #: cmd_diff_log.cc:128
 msgid "Deleted entries:"
@@ -1449,13 +1603,13 @@ msgstr "[vereinigt] %s"
 msgid "Merges unmerged heads of a branch"
 msgstr "Führt nicht-vereinigte Köpfe eines Zweiges zusammen"
 
-#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1327
+#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1328
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "bitte geben Sie einen Zweig mit '--branch=ZWEIG' an"
 
 #: cmd_merging.cc:449 cmd_merging.cc:564 cmd_merging.cc:567
-#: cmd_merging.cc:1336 cmd_netsync.cc:404 cmd_ws_commit.cc:625
+#: cmd_merging.cc:1337 cmd_netsync.cc:404 cmd_ws_commit.cc:625
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "Zweig '%s' ist leer"
@@ -1486,7 +1640,9 @@ msgstr ""
 #: cmd_merging.cc:499
 #, c-format
 msgid "note: branch '%s' still has %d heads; run merge again"
-msgstr "Hinweis: Zweig '%s' hat weitere %d Köpfe; führen Sie das merge-Kommando erneut aus"
+msgstr ""
+"Hinweis: Zweig '%s' hat weitere %d Köpfe; führen Sie das merge-Kommando "
+"erneut aus"
 
 #: cmd_merging.cc:501
 #, c-format
@@ -1621,13 +1777,6 @@ msgstr "%s ist ein Vorgänger von %s; kein Vereinigen notwendig."
 msgid "no conflicts detected"
 msgstr "keine Konflikte erkannt"
 
-#: cmd_merging.cc:963
-#, c-format
-msgid "warning: %d conflict with no supported resolutions."
-msgid_plural "warning: %d conflicts with no supported resolutions."
-msgstr[0] "Warnung: %d Konflikt ohne unterstützte Konfliktlösungen"
-msgstr[1] "Warnung: %d Konflikte ohne unterstützte Konfliktlösungen"
-
 #: cmd_merging.cc:970
 msgid "REV REV"
 msgstr "REVISION REVISION"
@@ -1651,15 +1800,15 @@ msgid "branch '%s' has only 1 head; must be at least 2 for conflicts"
 msgstr ""
 "Zweig '%s' hat nur einen Kopf; es müssen mindestens zwei für conflicts sein"
 
-#: cmd_merging.cc:1038
+#: cmd_merging.cc:1039
 msgid "[LEFT_REVID RIGHT_REVID]"
 msgstr "[LINKE_REVID RECHTE_REVID]"
 
-#: cmd_merging.cc:1039
+#: cmd_merging.cc:1040
 msgid "Shows the conflicts between two revisions."
 msgstr "Zeigt die Konflikte zwischen zwei Revisionen."
 
-#: cmd_merging.cc:1040
+#: cmd_merging.cc:1041
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command."
@@ -1668,11 +1817,11 @@ msgstr ""
 "standardmäßig mit den ersten zwei Köpfen vorbelegt, die auch das 'merge'-"
 "Kommando auswählen würde."
 
-#: cmd_merging.cc:1054
+#: cmd_merging.cc:1055
 msgid "Store the conflicts from merging two revisions."
 msgstr "Speichert die Konflikte vom Zusammenführen zweier Revisionen."
 
-#: cmd_merging.cc:1055
+#: cmd_merging.cc:1056
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command. If --conflicts-file "
@@ -1683,34 +1832,34 @@ msgstr ""
 "Kommando auswählen würde. Wenn die Option --conflicts-file nicht übergeben "
 "wird, wird '_MTN/conflicts' benutzt."
 
-#: cmd_merging.cc:1073
+#: cmd_merging.cc:1074
 msgid "LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"
 msgstr "LINKE_REVID LINKER_DATEINAME RECHTE_REVID RECHTER_DATEINAME"
 
-#: cmd_merging.cc:1074
+#: cmd_merging.cc:1075
 msgid ""
 "Prints the results of the internal line merger, given two child revisions "
 "and file names"
 msgstr ""
-"Gibt die Ergebnisse des internen Zeilenzusammenführers anhand der übergebenen "
-"beiden Kindrevisionen und Dateinamen aus"
+"Gibt die Ergebnisse des internen Zeilenzusammenführers anhand der "
+"übergebenen beiden Kindrevisionen und Dateinamen aus"
 
-#: cmd_merging.cc:1125
+#: cmd_merging.cc:1126
 #, c-format
 msgid "internal line merger failed"
 msgstr "Ausführung des internen Zeilenzusammenführers fehlgeschlagen"
 
-#: cmd_merging.cc:1130
+#: cmd_merging.cc:1131
 msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r VON] -r BIS [PFAD...]"
 
-#: cmd_merging.cc:1131
+#: cmd_merging.cc:1132
 msgid "Applies changes made at arbitrary places in history"
 msgstr ""
 "Wendet Änderungen an, die an beliebigen Stellen in der Historie vollzogen "
 "wurden"
 
-#: cmd_merging.cc:1132
+#: cmd_merging.cc:1133
 msgid ""
 "This command takes changes made at any point in history, and edits your "
 "current workspace to include those changes.  The end result is identical to "
@@ -1733,7 +1882,7 @@ msgstr ""
 "Wenn zwei Revisionen übergeben wurden, werden die Änderungen, die zwischen "
 "der ersten und der zweiten Revision gemacht wurden, angewendet."
 
-#: cmd_merging.cc:1155
+#: cmd_merging.cc:1156
 #, c-format
 msgid ""
 "revision %s is a merge\n"
@@ -1745,46 +1894,46 @@ msgstr ""
 "Sie:\n"
 " %s pluck -r ELTERNREVISION -r %s"
 
-#: cmd_merging.cc:1171
+#: cmd_merging.cc:1172
 #, c-format
 msgid "no changes to apply"
 msgstr "keine Änderungen anwendbar"
 
-#: cmd_merging.cc:1232
+#: cmd_merging.cc:1233
 #, c-format
 msgid "no changes to be applied"
 msgstr "Es gab keine Änderungen vorzunehmen."
 
-#: cmd_merging.cc:1282
+#: cmd_merging.cc:1283
 #, c-format
 msgid "no changes were applied"
 msgstr "Es wurden keine Änderungen vorgenommen."
 
-#: cmd_merging.cc:1285
+#: cmd_merging.cc:1286
 #, c-format
 msgid "applied changes to workspace"
 msgstr "Änderungen auf Arbeitsbereich angewendet"
 
-#: cmd_merging.cc:1318
+#: cmd_merging.cc:1319
 msgid "Shows unmerged head revisions of a branch"
 msgstr "Zeigt nicht-vereinigte Köpfe (Revisionen) eines Zweiges"
 
-#: cmd_merging.cc:1338
+#: cmd_merging.cc:1339
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "Zweig '%s' ist derzeit vereinigt:"
 
-#: cmd_merging.cc:1340
+#: cmd_merging.cc:1341
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "Zweig '%s' ist derzeit nicht vereinigt:"
 
-#: cmd_merging.cc:1348
+#: cmd_merging.cc:1349
 msgid "Dumps the roster associated with a given identifier"
 msgstr ""
 "Exportiert den Katalog, welcher einer gegebenen Revisions-ID zugeordnet ist"
 
-#: cmd_merging.cc:1349
+#: cmd_merging.cc:1350
 msgid "If no REVID is given, the workspace is used."
 msgstr "Wenn keine REVID übergeben wurde, wird der Arbeitsbereich genutzt."
 
@@ -3668,7 +3817,7 @@ msgstr ""
 "Der in der Datenbank gespeicherte Schlüssel '%s'\n"
 "passt nicht auf die Version im lokalen Schlüsselbund!"
 
-#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1176 lua_hooks.cc:1199
+#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1195 lua_hooks.cc:1218
 #: paths.cc:348
 #, c-format
 msgid "%s called with an invalid parameter"
@@ -3694,7 +3843,7 @@ msgstr "lua-Fehler beim Laden von '%s'"
 msgid "rcfile '%s' does not exist"
 msgstr "rc-Datei '%s' existiert nicht"
 
-#: lua_hooks.cc:1168
+#: lua_hooks.cc:1187
 #, c-format
 msgid "Call to user command %s (lua command: %s) failed."
 msgstr "Aufruf des Benutzerkommandos %s (Lua-Kommando: %s) schlug fehl"
@@ -4653,7 +4802,7 @@ msgstr "nutze Datei zum Auflösen von Konflikten"
 #: options_list.hh:685 options_list.hh:710
 #, c-format
 msgid "conflicts file must be under _MTN"
-msgstr "Konfliktdatei muss sich unterhalbdes _MTN-Verzeichnisses befinden"
+msgstr "Konfliktdatei muss sich unterhalb des _MTN-Verzeichnisses befinden"
 
 #: options_list.hh:691
 msgid "use _MTN/conflicts to resolve conflicts"
@@ -6465,3 +6614,8 @@ msgid "this workspace is in the current format, no migration is necessary."
 msgstr ""
 "Der Arbeitsbereich hat bereits das neueste Format, keine Migration notwendig."
 
+#, fuzzy
+#~ msgid "warning: %s conflict with no supported resolutions."
+#~ msgid_plural "warning: %s conflicts with no supported resolutions."
+#~ msgstr[0] "Warnung: %d Konflikt ohne unterstützte Konfliktlösungen"
+#~ msgstr[1] "Warnung: %d Konflikte ohne unterstützte Konfliktlösungen"
