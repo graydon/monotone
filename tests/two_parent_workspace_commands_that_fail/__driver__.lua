@@ -1,6 +1,6 @@
 -- Create a simple two-parent workspace and then run a bunch of
 -- commands all of which should give errors (but not I()s).
--- see http://venge.net/mtn-wiki/MultiParentWorkspaceFallout
+-- see http://monotone.ca/wiki/MultiParentWorkspaceFallout/
 -- for rationales for failures
 
 mtn_setup()
@@ -27,7 +27,7 @@ check(not qgrep("ancestor", "testfile"))
 
 diag = "mtn: misuse: this command can only be used in a single-parent workspace\n"
 diffdiag = ("mtn: misuse: this workspace has more than one parent\n"..
-	    "mtn: misuse: (specify a revision to diff against with --revision)\n")
+        "mtn: misuse: (specify a revision to diff against with --revision)\n")
 
 check(mtn("merge_into_workspace", anc), 1, nil, diag)
 

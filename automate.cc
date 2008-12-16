@@ -1018,7 +1018,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   work.get_parent_rosters(db, parents);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
-  // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
+  // see: http://monotone.ca/wiki/MultiParentWorkspaceFallout/
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
