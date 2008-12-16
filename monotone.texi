@@ -7520,14 +7520,14 @@ whatever error message would have been given.
 The argument @var{id} specifies the revision id for which the changeset
 information should be printed.
 
-@item Added in:
+@item Changes:
 
-1.0
-
-@item Changed in:
-
-7.0 (@var{id} is now mandatory)
-
+@itemize
+@item
+7.0 -- @var{id} is now mandatory
+@item
+1.0 -- initial
+@end itemize
 
 @item Purpose:
 
@@ -7879,11 +7879,12 @@ The argument @var{path} determines which path's attributes should be printed.
 
 @item Added in:
 
-3.0
-
-@item Renamed from @command{attributes} to @command{get_attributes} in:
-
-5.0
+@itemize
+@item
+5.0 -- renamed from @command{attributes} to @command{get_attributes}
+@item
+3.0 -- initial
+@end itemize
 
 @item Purpose:
 
@@ -8039,15 +8040,14 @@ two revisions: the diff is done between @option{id1} and @option{id2}; no
 workspace is needed in this case.
 @end itemize
 
-@item Added in:
+@item Changes:
 
-4.0
-
-@item Updated in:
-
-9.0
-
-Added @option{--with-header} option.
+@itemize
+@item
+9.0 -- added @option{--with-header} option
+@item
+4.0 -- initial
+@end itemize
 
 @item Purpose:
 
@@ -8171,7 +8171,7 @@ specify two files to merge, by revision and file path.
 
 @item Added in:
 
-8.0
+9.0
 
 @item Purpose:
 
@@ -8815,7 +8815,7 @@ option.
 
 @itemize
 @item
-9.0: -- Added default resolution for file content conflicts, user
+9.0 -- Added default resolution for file content conflicts, user
 resolutions for others. @code{directory_loop_created} changed to @code{directory_loop}.
 @item
 8.0 -- initial
