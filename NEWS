@@ -4,6 +4,16 @@
 
         Changes
 
+        - The output of 'automate show_conflicts' has been changed; a
+          default resolution for file content conflicts and user resolutions
+          for other conflict types has been added. 'directory_loop_created'
+          changed to 'directory_loop'.
+
+        - The French, Brazilian-Portuguese and Japanese translations were
+          outdated and thus have been removed from the distribution. In case
+          you care about them and want them back, drop us a note at
+          monotone-devel@nongnu.org.
+
         Bugs fixed
 
         - 'mtn db kill_rev_locally' did not update the inodeprint
@@ -17,11 +27,28 @@
             would reinitialize the database. This was rather slow, so
             monotone will now keep the database open between commands.
 
-	- The Lua-based contributed Monotone extension introduced in
-	  0.38 haven't been added to the tarball; this has been fixed.
+        - The Lua-based contributed Monotone extension introduced in
+          0.38 haven't been added to the tarball; this has been fixed.
+
+        - Monotone died if _MTN/options contained an empty / not-existing
+          'keydir' entry. This has been fixed. Also, invalid options are now
+          better detected and give a more useful error message.
 
         - Monotone crashed if it was called with more than 2048 command
           line arguments. This has been fixed.
+
+        - If vim is used as merger, it no longer prompts the user for an
+          enter key press.
+
+        - Decoding errors f.e. through to garbage from the network no longer
+          results in informative failures, but in warning. This was made
+          possible by introducing the concept of origin-aware sanity checks.
+
+        - Monotone crashed if it was called with nested wildcards such as
+          'a.{i.{x,y},j}'. This has been fixed.
+
+        - The standard implementation of the 'ignore_file' hook now accepts
+          windows and unix line endings in .mtn-ignore files.
 
         New features
 
@@ -34,11 +61,17 @@
         - New command group 'mtn conflicts *'; provides asynchronous
           conflict resolutions for merge and propagate.
 
-	- New 'automate lua' command with which lua functions, like
+        - New 'automate file_merge' command which runs the internal line
+          merger on two files from two revisions and outputs the result.
+
+        - New 'automate lua' command with which lua functions, like
           monotone hooks, can be called over automate. This is particularily
-	  useful to get user defaults, like ignorable files, branch keys and
+          useful to get user defaults, like ignorable files, branch keys and
           passwords, which are managed through one or more monotonerc files.
-	  
+
+        - New 'automate read_packets' command which reads data packets like
+          public keys similar to 'mtn read'.
+
         - 'merge' and 'propagate' accept user commit messages; the
           'merge rev rev' or 'propagate branch branch' message will be
           prefixed to the user message. --no-prefix removes the prefix.
@@ -46,6 +79,15 @@
         Internal
 
         - Update Botan to 1.7.12.
+
+        - Faster encoding and decoding of hex-encoded ids which speed up roster
+          parsing and fix speed penalties introduced in 0.40 in several commands.
+
+        - 'automate stdio' can now reuse the database instance (which is now
+          saved in the applications state) instead of having to create a new
+          one for each command. This improves the performance for many
+          subsequently triggered commands slightly.
+
 
 
 Wed Sep  3 21:13:18 UTC 2008
