@@ -80,15 +80,6 @@
 
         - Update Botan to 1.7.12.
 
-        - Faster encoding and decoding of hex-encoded ids which speed up roster
-          parsing and fix speed penalties introduced in 0.40 in several commands.
-
-        - 'automate stdio' can now reuse the database instance (which is now
-          saved in the applications state) instead of having to create a new
-          one for each command. This improves the performance for many
-          subsequently triggered commands slightly.
-
-
 
 Wed Sep  3 21:13:18 UTC 2008
 
