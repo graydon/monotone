@@ -62,18 +62,19 @@
 # (to) update		-> actualizar
 # workspace		-> (el) área de trabajo
 #
-# Nicolas Ruiz <juan.ruiz at ula.ve>, 2006, 2007, 2008.
 # #########################################################################
 #  Thanks to Lapo Luchini <lapo@lapo.it> for it.po and
 # + Alex Sandro Queiroz e Silva <alex@ventonegro.org> for pt_BR.po
 # + from both files many a translation string were shamelessly copied.
 # #########################################################################
+#: cmd_conflicts.cc:414
+# Nicolas Ruiz <juan.ruiz at ula.ve>, 2006, 2007, 2008.
 msgid ""
 msgstr ""
 "Project-Id-Version: Monotone\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-09 19:25-0600\n"
-"PO-Revision-Date: 2008-12-10 00:10-0600\n"
+"POT-Creation-Date: 2008-12-19 01:17-0600\n"
+"PO-Revision-Date: 2008-12-19 01:57-0600\n"
 "Last-Translator: Nicolas Ruiz <juan.ruiz at ula.ve>\n"
 "Language-Team:  <juan.ruiz at ula.ve>\n"
 "MIME-Version: 1.0\n"
@@ -96,11 +97,11 @@ msgstr "Imprime una representación ASCII del grafo de revisiones"
 #: automate.cc:1518 automate.cc:1549 automate.cc:1589 automate.cc:1678
 #: automate.cc:1777 automate.cc:1826 automate.cc:1859 automate.cc:1924
 #: automate.cc:1976 automate.cc:2031 automate.cc:2090 automate.cc:2123
-#: automate.cc:2193 automate.cc:2223 cmd_files.cc:232 cmd_files.cc:329
-#: cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019 cmd_merging.cc:1087
-#: cmd_packet.cc:169 cmd_ws_commit.cc:717 cmd_ws_commit.cc:765
-#: cmd_ws_commit.cc:816 cmd_ws_commit.cc:869 cmd_ws_commit.cc:987
-#: cmd_ws_commit.cc:1033
+#: automate.cc:2193 automate.cc:2223 automate.cc:2299 cmd_files.cc:232
+#: cmd_files.cc:329 cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019
+#: cmd_merging.cc:1088 cmd_packet.cc:169 cmd_ws_commit.cc:717
+#: cmd_ws_commit.cc:765 cmd_ws_commit.cc:816 cmd_ws_commit.cc:869
+#: cmd_ws_commit.cc:987 cmd_ws_commit.cc:1033
 #, c-format
 msgid "wrong argument count"
 msgstr "conteo de argumentos incorrecto"
@@ -261,7 +262,7 @@ msgstr "Muestra la revisión sobre la cual está basada el área de tabajo"
 msgid "Shows the revision of the current workspace"
 msgstr "Muestra la revisión actual del área de trabajo"
 
-#: automate.cc:1399 cmd_merging.cc:1347
+#: automate.cc:1399 cmd_merging.cc:1348
 msgid "[REVID]"
 msgstr "[ID_REV]"
 
@@ -434,6 +435,20 @@ msgstr "no se encontraron variables en el dominio %s"
 #: automate.cc:2271
 msgid "Prints the workspace root for the current directory"
 msgstr "Imprime la raíz del área de trabajo del actual directorio"
+
+#: automate.cc:2294
+msgid "Executes the given lua function and returns the result"
+msgstr "Ejecuta la función lua dada y devuelve el resultado"
+
+#: automate.cc:2304
+#, c-format
+msgid "lua function '%s' does not exist"
+msgstr "la función lua '%s' no existe"
+
+#: automate.cc:2317
+#, c-format
+msgid "lua call '%s' failed"
+msgstr "la llamada lua '%s' falló"
 
 #: basic_io.cc:30
 #, c-format
@@ -784,6 +799,145 @@ msgstr "Muestra la altura de una revisión"
 #, c-format
 msgid "cached height: %s"
 msgstr "altura en cache: %s"
+
+#: cmd_conflicts.cc:19
+msgid "Commands for conflict resolutions"
+msgstr "Comandos para resoluciones de conflictos"
+
+#: cmd_conflicts.cc:68
+#, c-format
+msgid "duplicate_name %s"
+msgstr "nombre_duplicado %s"
+
+#: cmd_conflicts.cc:73 cmd_conflicts.cc:111
+#, c-format
+msgid "possible resolutions:"
+msgstr "resoluciones posibles:"
+
+#: cmd_conflicts.cc:77
+#, c-format
+msgid "resolve_first_left drop"
+msgstr "resolve_first_left drop"
+
+#: cmd_conflicts.cc:78
+#, c-format
+msgid "resolve_first_left rename \"name\""
+msgstr "resolve_first_left rename\"name\""
+
+#: cmd_conflicts.cc:79
+#, c-format
+msgid "resolve_first_left user \"name\""
+msgstr "resolve_first_left user \"name\""
+
+#: cmd_conflicts.cc:84
+#, c-format
+msgid "resolve_first_right drop"
+msgstr "resolve_first_right drop"
+
+#: cmd_conflicts.cc:85
+#, c-format
+msgid "resolve_first_right rename \"name\""
+msgstr "resolve_first_right rename \"name\""
+
+#: cmd_conflicts.cc:86
+#, c-format
+msgid "resolve_first_right user \"name\""
+msgstr "resolve_first_right user \"rename\""
+
+#: cmd_conflicts.cc:106
+#, c-format
+msgid "content %s"
+msgstr "contenido %s"
+
+#: cmd_conflicts.cc:112
+#, c-format
+msgid "resolve_first interactive \"file_name\""
+msgstr "resolve_first interactive \"nombre_archivo\""
+
+#: cmd_conflicts.cc:113
+#, c-format
+msgid "resolve_first user \"file_name\""
+msgstr "resolve_first user \"nombre_archivo\""
+
+#: cmd_conflicts.cc:128 cmd_conflicts.cc:141 cmd_merging.cc:963
+#, c-format
+msgid "warning: %d conflict with no supported resolutions."
+msgid_plural "warning: %d conflicts with no supported resolutions."
+msgstr[0] "advertencia: %d conflicto sin resolución soportada."
+msgstr[1] "advertencia: %d conflictos sin resoluciones soportadas."
+
+#: cmd_conflicts.cc:132
+#, c-format
+msgid "all conflicts resolved"
+msgstr "todos los conflictos resueltos"
+
+#: cmd_conflicts.cc:218
+#, c-format
+msgid "too many arguments"
+msgstr "demasiados argumentos"
+
+#: cmd_conflicts.cc:223 cmd_conflicts.cc:229 cmd_conflicts.cc:292
+#: cmd_conflicts.cc:306 cmd_conflicts.cc:354 cmd_conflicts.cc:367
+#, c-format
+msgid "wrong number of arguments"
+msgstr "número incorrecto de argumentos"
+
+#: cmd_conflicts.cc:231
+#, c-format
+msgid "left and right resolutions cannot both be 'user'"
+msgstr "las resoluciones derecha e izquierda no pueden ser ambas 'user'"
+
+#: cmd_conflicts.cc:294
+#, c-format
+msgid "result path must be under _MTN"
+msgstr "archivo de resultados debe estar bajo _MTN"
+
+#: cmd_conflicts.cc:325
+#, c-format
+msgid "no resolvable yet unresolved left side conflicts"
+msgstr "no hay conflictos del lado izquierdo resolubles aún no resueltos"
+
+#: cmd_conflicts.cc:329
+#, c-format
+msgid "no resolvable yet unresolved right side conflicts"
+msgstr "no hay conflictos del lado derecho resolubles aún no resueltos"
+
+#: cmd_conflicts.cc:333
+#, c-format
+msgid "no resolvable yet unresolved single-file conflicts"
+msgstr "no hay conflictos de un solo archivo resolubles aún no resueltos"
+
+#: cmd_conflicts.cc:347
+msgid ""
+"Show the first unresolved conflict in the conflicts file, and possible "
+"resolutions"
+msgstr ""
+"Mostrar el primer conflicto no resuelto en el archivo de conflictos, "
+"y posibles resoluciones"
+
+#: cmd_conflicts.cc:360
+msgid "Show the remaining unresolved conflicts in the conflicts file"
+msgstr "Mostrar los conflictos no resueltos restantes en el archivo de conflictos"
+
+#: cmd_conflicts.cc:372 cmd_conflicts.cc:386 cmd_conflicts.cc:400
+msgid "RESOLUTION"
+msgstr "RESOLUCIÓN"
+
+#: cmd_conflicts.cc:373
+msgid "Set the resolution for the first unresolved single-file conflict"
+msgstr "Definir la resolución para el primer conflicto de un solo archivo aún no resuelto"
+
+#: cmd_conflicts.cc:387
+msgid "Set the left resolution for the first unresolved two-file conflict"
+msgstr "Definir la resolución izquierda para el primer conflicto de dos archivos aún no resuelto"
+
+#: cmd_conflicts.cc:401
+msgid "Set the right resolution for the first unresolved two-file conflict"
+msgstr "Definir la resolución derecha para el primer conflicto de dos archivos aún no resuelto"
+
+#: cmd_conflicts.cc:415
+msgid "Delete any bookkeeping files related to conflict resolution"
+msgstr "Borrar los archivos de registro relacionados con la resolución de conflictos"
 
 #: cmd_diff_log.cc:128
 msgid "Deleted entries:"
@@ -1456,13 +1610,13 @@ msgstr "[fusionado] %s"
 msgid "Merges unmerged heads of a branch"
 msgstr "Fusiona cabezas no fusionadas de una rama"
 
-#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1327
+#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1328
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "por favor especifice una rama con '--branch=RAMA'"
 
 #: cmd_merging.cc:449 cmd_merging.cc:564 cmd_merging.cc:567
-#: cmd_merging.cc:1336 cmd_netsync.cc:404 cmd_ws_commit.cc:625
+#: cmd_merging.cc:1337 cmd_netsync.cc:404 cmd_ws_commit.cc:625
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "rama '%s' está vacia"
@@ -1491,8 +1645,8 @@ msgstr "calculando el mejor par de cabezas a fusionar a continuación"
 
 #: cmd_merging.cc:499
 #, c-format
-msgid "note: branch '%s' still has %s heads; run merge again"
-msgstr "nota: la rama '%s' todavia tiene %s cabezas; haga una fusión nuevamente"
+msgid "note: branch '%s' still has %d heads; run merge again"
+msgstr "nota: la rama '%s' todavia tiene %d cabezas; haga una fusión nuevamente"
 
 #: cmd_merging.cc:501
 #, c-format
@@ -1620,13 +1774,6 @@ msgstr "%s es un ancestro de %s; no es necesaria una fusión."
 msgid "no conflicts detected"
 msgstr "no se detectaron conflictos"
 
-#: cmd_merging.cc:963
-#, c-format
-msgid "warning: %s conflict with no supported resolutions."
-msgid_plural "warning: %s conflicts with no supported resolutions."
-msgstr[0] "advertencia: %s conflicto sin resolución soportada"
-msgstr[1] "advertencia: %s conflictos sin resoluciones soportadas."
-
 #: cmd_merging.cc:970
 msgid "REV REV"
 msgstr "REV REV"
@@ -1648,15 +1795,15 @@ msgstr ""
 msgid "branch '%s' has only 1 head; must be at least 2 for conflicts"
 msgstr "la rama '%s' tiene 1 cabeza; se requieren al menos 2 para 'conflicts'"
 
-#: cmd_merging.cc:1038
+#: cmd_merging.cc:1039
 msgid "[LEFT_REVID RIGHT_REVID]"
 msgstr "[ID_REV_IZQUIERDA ID_REV_DERECHA]"
 
-#: cmd_merging.cc:1039
+#: cmd_merging.cc:1040
 msgid "Shows the conflicts between two revisions."
 msgstr "Muestra los conflictos entre dos revisiones."
 
-#: cmd_merging.cc:1040
+#: cmd_merging.cc:1041
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command."
@@ -1664,46 +1811,48 @@ msgstr ""
 "Si no se pasan argumentos, ID_REV_IZQUIERDA e ID_REV_DERECHA son las dos "
 "primeras cabezas que serían seleccionadas por el comando 'merge'."
 
-#: cmd_merging.cc:1054
+#: cmd_merging.cc:1055
 msgid "Store the conflicts from merging two revisions."
 msgstr "Guarda los conflictos resultantes de fusionar dos revisiones."
 
-#: cmd_merging.cc:1055
+#: cmd_merging.cc:1056
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command. If --conflicts-file "
 "is not given, '_MTN/conflicts' is used."
 msgstr ""
-"Si no se pasan argumentos, ID_REV_IZQUIERDA e ID_REV_DERECHA son "
-"por omisión las dos primeras cabezas que serían seleccionadas por el comando 'merge'. "
-"Si no se pasa el parámetro --conflict-file, se utiliza '_MTN/conflicts'."
-
-#: cmd_merging.cc:1073
-msgid "LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"
-msgstr "ID_REV_IZQUIERDA NOMBRE_ARCHIVO_IZQUIERDO ID_REV_DERECHA NOMBRE_ARCHIVO_DERECHO"
+"Si no se pasan argumentos, ID_REV_IZQUIERDA e ID_REV_DERECHA son por omisión "
+"las dos primeras cabezas que serían seleccionadas por el comando 'merge'. Si "
+"no se pasa el parámetro --conflict-file, se utiliza '_MTN/conflicts'."
 
 #: cmd_merging.cc:1074
+msgid "LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"
+msgstr ""
+"ID_REV_IZQUIERDA NOMBRE_ARCHIVO_IZQUIERDO ID_REV_DERECHA "
+"NOMBRE_ARCHIVO_DERECHO"
+
+#: cmd_merging.cc:1075
 msgid ""
 "Prints the results of the internal line merger, given two child revisions "
 "and file names"
 msgstr ""
-"Imprime los resultados del fusionador de lineas interno, dadas dos revisiones "
-"hijas y nombres de archivos"
+"Imprime los resultados del fusionador de lineas interno, dadas dos "
+"revisiones hijas y nombres de archivos"
 
-#: cmd_merging.cc:1125
+#: cmd_merging.cc:1126
 #, c-format
 msgid "internal line merger failed"
 msgstr "falló el fusionador de lineas interno"
 
-#: cmd_merging.cc:1130
+#: cmd_merging.cc:1131
 msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r DESDE] -r HACIA [CAMINO...]"
 
-#: cmd_merging.cc:1131
+#: cmd_merging.cc:1132
 msgid "Applies changes made at arbitrary places in history"
 msgstr "Aplica cambios hechos en puntos arbitrarios en la historia"
 
-#: cmd_merging.cc:1132
+#: cmd_merging.cc:1133
 msgid ""
 "This command takes changes made at any point in history, and edits your "
 "current workspace to include those changes.  The end result is identical to "
@@ -1725,7 +1874,7 @@ msgstr ""
 "Si se especifican dos revisiones, aplica los cambios hechos para ir de la "
 "primera revisión a la segunda."
 
-#: cmd_merging.cc:1155
+#: cmd_merging.cc:1156
 #, c-format
 msgid ""
 "revision %s is a merge\n"
@@ -1736,45 +1885,45 @@ msgstr ""
 "para aplicar los cambios relativos a uno de sus padres, use:\n"
 "  %s pluck -r PADRE -r %s"
 
-#: cmd_merging.cc:1171
+#: cmd_merging.cc:1172
 #, c-format
 msgid "no changes to apply"
 msgstr "no hay cambios que aplicar"
 
-#: cmd_merging.cc:1232
+#: cmd_merging.cc:1233
 #, c-format
 msgid "no changes to be applied"
 msgstr "no hay cambios que aplicar"
 
-#: cmd_merging.cc:1282
+#: cmd_merging.cc:1283
 #, c-format
 msgid "no changes were applied"
 msgstr "ningún cambio fué aplicado"
 
-#: cmd_merging.cc:1285
+#: cmd_merging.cc:1286
 #, c-format
 msgid "applied changes to workspace"
 msgstr "cambios aplicados al área de trabajo"
 
-#: cmd_merging.cc:1318
+#: cmd_merging.cc:1319
 msgid "Shows unmerged head revisions of a branch"
 msgstr "Muestra las revisiones cabeza no combinadas de una rama"
 
-#: cmd_merging.cc:1338
+#: cmd_merging.cc:1339
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "rama '%s' está actualmente fusionada:"
 
-#: cmd_merging.cc:1340
+#: cmd_merging.cc:1341
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "rama '%s' está actualmente no fusionada:"
 
-#: cmd_merging.cc:1348
+#: cmd_merging.cc:1349
 msgid "Dumps the roster associated with a given identifier"
 msgstr "Descarga el roster asociado con el identificador dado"
 
-#: cmd_merging.cc:1349
+#: cmd_merging.cc:1350
 msgid "If no REVID is given, the workspace is used."
 msgstr "Si no se especifica una ID_REV, se utiliza el área de trabajo"
 
@@ -3633,7 +3782,7 @@ msgstr ""
 "La llave '%s' guardada en su base de datos\n"
 "no concuerda con la versión en su llavero local!"
 
-#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1176 lua_hooks.cc:1199
+#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1195 lua_hooks.cc:1218
 #: paths.cc:348
 #, c-format
 msgid "%s called with an invalid parameter"
@@ -3659,7 +3808,7 @@ msgstr "error de lua al cargar '%s'"
 msgid "rcfile '%s' does not exist"
 msgstr "archivo rc '%s' no existe"
 
-#: lua_hooks.cc:1168
+#: lua_hooks.cc:1187
 #, c-format
 msgid "Call to user command %s (lua command: %s) failed."
 msgstr "Llamada al comando de usario %s (comando lua: %s) falló."
@@ -4615,7 +4764,9 @@ msgstr "utilice _MTN/conflicts para resolver conflictos"
 #: options_list.hh:695
 #, c-format
 msgid "only one of --resolve-conflicts or --resolve-conflicts-file may be given"
-msgstr "solo se puede pasar uno de los dos parámetros --resolve-conflicts o --resolve-conflicts-file"
+msgstr ""
+"solo se puede pasar uno de los dos parámetros --resolve-conflicts o --"
+"resolve-conflicts-file"
 
 #: options_list.hh:704
 msgid "file in which to store conflicts"
@@ -5230,11 +5381,6 @@ msgstr "hash del contenido es %s en la izquierda en archivo '%s'"
 msgid "content hash is %s on the right in file '%s'"
 msgstr "hash del contenido es %s en la derecha en archivo '%s'"
 
-#: roster_merge.cc:2182
-#, c-format
-msgid "conflicts_mismatch_msg"
-msgstr "mensaje_disconcordancia_conflictos"
-
 #: roster_merge.cc:2191
 #, c-format
 msgid "conflicts file does not match current conflicts"
@@ -5248,12 +5394,16 @@ msgstr "datos extra en el archivo"
 #: roster_merge.cc:2357
 #, c-format
 msgid "left revision id does not match conflict file"
-msgstr "identificador de la revisión izquierda no concuerda con el archivo de conflictos"
+msgstr ""
+"identificador de la revisión izquierda no concuerda con el archivo de "
+"conflictos"
 
 #: roster_merge.cc:2361
 #, c-format
 msgid "right revision id does not match conflict file"
-msgstr "identificador de la revisión derecha no concuerda con el archivo de conflictos"
+msgstr ""
+"identificador de la revisión derecha no concuerda con el archivo de "
+"conflictos"
 
 #: roster_merge.cc:2386
 #, c-format
