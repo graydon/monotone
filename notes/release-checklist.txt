@@ -18,7 +18,26 @@ How to release a new version of monotone
 1.5) Get people to read over your release notes, it's really easy to
    make mistakes or have stupid grammatical errors here.
 
-2) Update the UPGRADE file.  At the very least, bump the version
+2) Check the NEWS if any changes in the automation interface have happened.
+
+   Document changes in the wiki under http://monotone.ca/wiki/AutomateVersions/
+   by adding new commands with an 'A' marker or set a 'B' (for _B_ackwards
+   compatible change) or 'C' (for backwards in_C_ompatible change) markers for
+   changed commands.
+
+   Decide whether the interface version has to be bumped in the minor
+   ('A' and 'B' changes) or major ('C' changes) number.
+
+   Add the new interface version in cmd_automate.cc
+   (static string 'interface_version').
+
+   Verify that new / changed commands document their changes with the new
+   interface version properly (look for "@item (Added in|Changes)" stanzas), if
+   not, add the version numbers there.
+
+   Commit your changes.
+
+3) Update the UPGRADE file.  At the very least, bump the version
    number in the first line.  This file should always contain a
    complete description of how to upgrade from any version of monotone
    to the latest release -- you may need to tweak or remove earlier
@@ -26,10 +45,10 @@ How to release a new version of monotone
 
    Commit your changes.
 
-3) Double-check that INSTALL, AUTHORS, and README don't need any
+4) Double-check that INSTALL, AUTHORS, and README don't need any
    updates.  If they do, make them.
 
-4) Update version numbers.  The following files need to be touched:
+5) Update version numbers.  The following files need to be touched:
      configure.ac: change the call to AC_INIT
      monotone.spec: change the "Version:" field, and add an entry to
        the %changelog section.
@@ -43,13 +62,13 @@ How to release a new version of monotone
 
    Commit your changes.
 
-5) Okay, everything should be ready to go... double-check that:
+6) Okay, everything should be ready to go... double-check that:
      -- you've done the above steps correctly
      -- you've entered the correct date at the top of the NEWS file
         (esp. important when you wrote the notes a few days ago so
         people could look them over!)
 
-6) Build and test the source package, in a clean checkout (if you use
+7) Build and test the source package, in a clean checkout (if you use
    your main workspace, you increase the changes of accidentally
    picking up weird stuff):
 
@@ -62,14 +81,14 @@ How to release a new version of monotone
    bombs out, fix it, otherwise, SOMEDIR/monotone-<NEW VERSION>.tar.gz
    is the source package.
 
-7) Build docs for the website:
+8) Build docs for the website:
 
    $ tar xvzf SOMEDIR/monotone-<NEW VERSION>.tar.gz
    $ cd monotone-<NEW VERSION>
    $ ./configure
    $ LANG=C make monotone.pdf html
 
-8) Upload everything to the website (uses monotone):
+9) Upload everything to the website (uses monotone):
 
    # This requires that you have registered a SSH version 2 public key
    # with the administrators of monotone.ca, currently richard@levitte.org.
@@ -93,16 +112,16 @@ How to release a new version of monotone
    $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
    $ mtn sync
 
-9) Update index.html on the website to state the latest version at the
-   top, and modify the list of download links to point to the new
-   version.
+10) Update index.html on the website to state the latest version at the
+    top, and modify the list of download links to point to the new
+    version.
 
-   $ cd WEBDIR
-   $ vi index.html
-   $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
-   $ mtn sync
+    $ cd WEBDIR
+    $ vi index.html
+    $ mtn ci -m "Updates related to the release of monotone <NEW VERSION>"
+    $ mtn sync
 
-10) Update releases.xml on the website so the RSS feed contains information
+11) Update releases.xml on the website so the RSS feed contains information
     for the newly released version. Don't forget to update the feed's
     global pubDate date as well as the invididual item's pubDate
     and ensure you use the correct datetime format. Add an <enclosure>
@@ -117,7 +136,7 @@ How to release a new version of monotone
     $ mtn ci -m "Updates RSS feed for monotone <NEW VERSION>"
     $ mtn sync
 
-11) Once you're pretty sure things have gone well, tag the source:
+12) Once you're pretty sure things have gone well, tag the source:
 
     $ mtn tag <REVISION> monotone-<NEW VERSION>
 
@@ -125,10 +144,10 @@ How to release a new version of monotone
 
     $ mtn sync
 
-12) Change the topic in the IRC channel to state the new version
+13) Change the topic in the IRC channel to state the new version
     number.
 
-13) Send out a release announcement.  Format is something like:
+14) Send out a release announcement.  Format is something like:
 
     To: monotone-announce@nongnu.org
     CC: monotone-devel@nongnu.org
@@ -140,9 +159,9 @@ How to release a new version of monotone
 
     <sign off>
 
-14) Submit a release announcement to freshmeat.net.
+15) Submit a release announcement to freshmeat.net.
 
-15) Note any mistakes you made and update this file accordingly for
+16) Note any mistakes you made and update this file accordingly for
     next time.
 
-16) Party!
+17) Party!

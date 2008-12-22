@@ -16,7 +16,7 @@
 #include "roster_merge.hh"
 
 CMD_GROUP(conflicts, "conflicts", "", CMD_REF(tree),
-          N_("Commands for conflict resolutions."),
+          N_("Commands for conflict resolutions"),
           "");
 
 struct conflicts_t
@@ -125,8 +125,8 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
       {
         int const count = conflicts.result.count_unsupported_resolution();
         if (count > 0)
-            P(FP("warning: %s conflict with no supported resolutions.",
-                 "warning: %s conflicts with no supported resolutions.",
+            P(FP("warning: %d conflict with no supported resolutions.",
+                 "warning: %d conflicts with no supported resolutions.",
                  count) % count);
         else
           P(F("all conflicts resolved"));
@@ -138,8 +138,8 @@ show_conflicts(database & db, conflicts_t conflicts, show_conflicts_case_t show_
         int const count = conflicts.result.count_unsupported_resolution();
         if (count > 0)
           {
-            P(FP("warning: %s conflict with no supported resolutions.",
-                 "warning: %s conflicts with no supported resolutions.",
+            P(FP("warning: %d conflict with no supported resolutions.",
+                 "warning: %d conflicts with no supported resolutions.",
                  count) % count);
 
             content_merge_database_adaptor adaptor
@@ -344,7 +344,7 @@ set_first_conflict(database & db,
 
 CMD(show_first, "show_first", "", CMD_REF(conflicts),
     "",
-    N_("Show the first unresolved conflict in the conflicts file, and possible resolutions."),
+    N_("Show the first unresolved conflict in the conflicts file, and possible resolutions"),
     "",
     options::opts::conflicts_opts)
 {
@@ -357,7 +357,7 @@ CMD(show_first, "show_first", "", CMD_REF(conflicts),
 
 CMD(show_remaining, "show_remaining", "", CMD_REF(conflicts),
     "",
-    N_("Show the remaining unresolved conflicts in the conflicts file."),
+    N_("Show the remaining unresolved conflicts in the conflicts file"),
     "",
     options::opts::conflicts_opts)
 {
@@ -370,7 +370,7 @@ CMD(show_remaining, "show_remaining", "", CMD_REF(conflicts),
 
 CMD(resolve_first, "resolve_first", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the resolution for the first unresolved single-file conflict."),
+    N_("Set the resolution for the first unresolved single-file conflict"),
     "",
     options::opts::conflicts_opts)
 {
@@ -384,7 +384,7 @@ CMD(resolve_first, "resolve_first", "", CMD_REF(conflicts),
 
 CMD(resolve_first_left, "resolve_first_left", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the left resolution for the first unresolved two-file conflict."),
+    N_("Set the left resolution for the first unresolved two-file conflict"),
     "",
     options::opts::conflicts_opts)
 {
@@ -398,7 +398,7 @@ CMD(resolve_first_left, "resolve_first_left", "", CMD_REF(conflicts),
 
 CMD(resolve_first_right, "resolve_first_right", "", CMD_REF(conflicts),
     N_("RESOLUTION"),
-    N_("Set the right resolution for the first unresolved two-file conflict."),
+    N_("Set the right resolution for the first unresolved two-file conflict"),
     "",
     options::opts::conflicts_opts)
 {
@@ -412,7 +412,7 @@ CMD(resolve_first_right, "resolve_first_right", "", CMD_REF(conflicts),
 
 CMD(clean, "clean", "", CMD_REF(conflicts),
     N_(""),
-    N_("Delete any bookkeeping files related to conflict resolution."),
+    N_("Delete any bookkeeping files related to conflict resolution"),
     "",
     options::opts::none)
 {

@@ -138,6 +138,11 @@ public:
                                     bool & validated,
                                     std::string & reason);
 
+  // meta hooks
+  bool hook_hook_wrapper(std::string const & func_name,
+                         std::vector<std::string> const & args,
+                         std::string & out);
+
   // notification hooks
   bool hook_note_commit(revision_id const & new_id,
                         revision_data const & rdat,

@@ -5,10 +5,10 @@ MinGW. Instead, we use Inno Setup. Here are all the steps for
 creating a MinGW release, on a fresh Windows machine:
 
 Install MinGW tools, and a monotone binary; see
-http://www.venge.net/mtn-wiki/BuildingOnWindows.
+http://monotone.ca/wiki/Building/Windows/
 
 Get a copy of the monotone repository; see
-http://www.venge.net/mtn-wiki/SelfHostingInfo
+http://monotone.ca/wiki/SelfHostingInfo/
 
 Check out the release version of monotone:
 mtn -d /path/to/monotone.db checkout -r t:monotone-<version> monotone-<version>

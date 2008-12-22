@@ -77,7 +77,7 @@ If you are upgrading from:
     "designated migrator", then it is still possible to preserve your
     branches.  However, this requires some more understanding of what
     exactly is going on, and is outside the scope of this document.
-    See http://venge.net/mtn-wiki/RosterifyingPrivateBranches
+    See http://monotone.ca/wiki/RosterifyingPrivateBranches/
     for one approach, and if you don't understand the logic behind
     those commands, then we're happy to explain things in more detail
     on the mailing list (monotone-devel@nongnu.org) or IRC (#monotone

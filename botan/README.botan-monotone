@@ -28,8 +28,8 @@ Steps to update net.venge.monotone.botan with net.randombit.net:
 
 4) Make sure monotone tracks the botan files properly
 
-   "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If 
-   there are obviously renamed files, use "mtn rename" to fix them. 
+   "mtn ls unknown botan/" and "mtn ls missing botan/" in n.v.m.botan. If
+   there are obviously renamed files, use "mtn rename" to fix them.
    Otherwise add/drop files as appropriate. Also fix up Makefile.am
 
 5) Make monotone work with the upgraded botan library
@@ -39,4 +39,4 @@ Steps to update net.venge.monotone.botan with net.randombit.net:
    might need to move some files from Attic/src/ to / in the staging branch.
 
 Update this file if things don't work, and remember to push the staging branch
-to venge.net.
+to monotone.ca.

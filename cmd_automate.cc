@@ -68,9 +68,10 @@ namespace commands {
   }
 }
 
-static string const interface_version = "8.2";
-// Major or minor number only increments once for each monotone release;
-// check the most recent release before incrementing this.
+// This number is only raised once, during the process of releasing a new
+// version of monotone, by the release manager. For more details, see
+// point (2) in notes/release-checklist.txt
+static string const interface_version = "9.0";
 
 // Name: interface_version
 // Arguments: none

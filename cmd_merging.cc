@@ -1022,7 +1022,8 @@ static void get_conflicts_rids(args_vector const & args,
 // Name: show_conflicts
 // Arguments:
 //   Two revision ids (optional, determined from the workspace if not given; there must be exactly two heads)
-// Added in: 7.1
+// Added in: 8.0
+// Changed in: 9.0 (see monotone.texi for details)
 // Purpose: Prints the conflicts between two revisions, to aid in merging them.
 //
 // Output format: see monotone.texi

@@ -43,7 +43,7 @@ class config:
     # this script to watch the given collections at the given monotone
     # servers.
     watch_list = [
-        #("venge.net", "net.venge.monotone"),
+        #("monotone.ca", "net.venge.monotone"),
         ]
 
     # If this is non-None, then the web interface will make any file 'foo' a
@@ -195,9 +195,9 @@ def send_change_for(rid, m, c):
         </commit>
     </body>
 </message>"""
-    
+
     substs = {}
-    
+
     log = m.log(rid, 1)
     rev = m.get_revision(rid)
     # Stupid way to pull out everything inside quotes (which currently

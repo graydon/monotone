@@ -13,6 +13,7 @@ cleanup.hh
 cmd.hh
 cmd_automate.cc
 cmd_db.cc
+cmd_conflicts.cc
 cmd_diff_log.cc
 cmd_files.cc
 cmd_key_cert.cc

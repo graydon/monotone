@@ -1018,7 +1018,7 @@ CMD_AUTOMATE(inventory,  N_("[PATH]..."),
   work.get_parent_rosters(db, parents);
   // for now, until we've figured out what the format could look like
   // and what conceptional model we can implement
-  // see: http://www.venge.net/mtn-wiki/MultiParentWorkspaceFallout
+  // see: http://monotone.ca/wiki/MultiParentWorkspaceFallout/
   N(parents.size() == 1,
     F("this command can only be used in a single-parent workspace"));
 
@@ -2274,6 +2274,51 @@ CMD_AUTOMATE(get_workspace_root, "",
 {
   workspace work(app);
   output << get_current_working_dir() << '\n';
+}
+
+// Name: lua
+// Arguments:
+//   A lua function name
+//   Zero or more function arguments
+// Changes:
+//   9.0 (added)
+// Purpose:
+//   Execute lua functions and return their results.
+// Output format:
+//   Lua parsable output.
+// Error conditions:
+//   a runtime exception is thrown if the function does not exists, the arguments cannot be parsed
+//   or the function cannot be executed for some other reason.
+
+CMD_AUTOMATE(lua, "LUA_FUNCTION [ARG1 [ARG2 [...]]]",
+             N_("Executes the given lua function and returns the result"),
+             "",
+             options::opts::none)
+{
+    N(args.size() >= 1,
+      F("wrong argument count"));
+
+    std::string func = idx(args, 0)();
+
+    N(app.lua.hook_exists(func),
+      F("lua function '%s' does not exist") % func);
+
+    std::vector<std::string> func_args;
+    if (args.size() > 1)
+      {
+        for (unsigned int i=1; i<args.size(); i++)
+        {
+          func_args.push_back(idx(args, i)());
+        }
+      }
+
+    std::string out;
+    N(app.lua.hook_hook_wrapper(func, func_args, out),
+      F("lua call '%s' failed") % func);
+
+    // the output already contains a trailing newline, so we don't add
+    // another one here
+    output << out;
 }
 
 // Local Variables:
