@@ -144,12 +144,13 @@
 # work set                        arbetsmängd
 # workspace                       arbetskopia (el. kanske arbetskatalog, ibland)
 #
+#: cmd_conflicts.cc:414
 msgid ""
 msgstr ""
 "Project-Id-Version: monotone 0.26pre1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-14 10:24+0100\n"
-"PO-Revision-Date: 2008-12-22 14:36+0100\n"
+"POT-Creation-Date: 2008-12-22 14:57+0100\n"
+"PO-Revision-Date: 2008-12-22 15:09+0100\n"
 "Last-Translator: Joel Rosdahl <joel@rosdahl.net>\n"
 "Language-Team: Richard Levitte <richard@levitte.org>\n"
 "MIME-Version: 1.0\n"
@@ -171,11 +172,11 @@ msgstr "Visar en ASCII-representation av revisionsträdet"
 #: automate.cc:1518 automate.cc:1549 automate.cc:1589 automate.cc:1678
 #: automate.cc:1777 automate.cc:1826 automate.cc:1859 automate.cc:1924
 #: automate.cc:1976 automate.cc:2031 automate.cc:2090 automate.cc:2123
-#: automate.cc:2193 automate.cc:2223 cmd_files.cc:232 cmd_files.cc:329
-#: cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019 cmd_merging.cc:1087
-#: cmd_packet.cc:169 cmd_ws_commit.cc:717 cmd_ws_commit.cc:765
-#: cmd_ws_commit.cc:816 cmd_ws_commit.cc:869 cmd_ws_commit.cc:987
-#: cmd_ws_commit.cc:1033
+#: automate.cc:2193 automate.cc:2223 automate.cc:2299 cmd_files.cc:232
+#: cmd_files.cc:329 cmd_files.cc:357 cmd_list.cc:775 cmd_merging.cc:1019
+#: cmd_merging.cc:1088 cmd_packet.cc:169 cmd_ws_commit.cc:717
+#: cmd_ws_commit.cc:765 cmd_ws_commit.cc:816 cmd_ws_commit.cc:869
+#: cmd_ws_commit.cc:987 cmd_ws_commit.cc:1033
 #, c-format
 msgid "wrong argument count"
 msgstr "felaktigt antal givna argument"
@@ -243,7 +244,7 @@ msgid "Lists the leaves of the revision graph"
 msgstr "Visar revisionsgrafens löv"
 
 #: automate.cc:334 automate.cc:360 automate.cc:460 automate.cc:1308
-#: automate.cc:1336 automate.cc:1626 cmd_automate.cc:91 cmd_automate.cc:347
+#: automate.cc:1336 automate.cc:1626 cmd_automate.cc:92 cmd_automate.cc:348
 #: cmd_db.cc:44 cmd_db.cc:56 cmd_db.cc:68 cmd_db.cc:82 cmd_db.cc:96
 #: cmd_db.cc:112 cmd_db.cc:234 cmd_db.cc:249 cmd_db.cc:269 cmd_db.cc:287
 #: cmd_list.cc:681
@@ -336,7 +337,7 @@ msgstr "Visar revisionen denna arbetskopia grundar sig på"
 msgid "Shows the revision of the current workspace"
 msgstr "Visar nuvarande arbetskopias revision"
 
-#: automate.cc:1399 cmd_merging.cc:1347
+#: automate.cc:1399 cmd_merging.cc:1348
 msgid "[REVID]"
 msgstr "[REVID]"
 
@@ -514,6 +515,20 @@ msgstr "det finns inga variabler i domänen %s"
 msgid "Prints the workspace root for the current directory"
 msgstr "Visar arbetskopians rot gentemot nuvarande katalog"
 
+#: automate.cc:2294
+msgid "Executes the given lua function and returns the result"
+msgstr "Genomför den givna lua-funktionen och ger tillbaka resultatet"
+
+#: automate.cc:2304
+#, c-format
+msgid "lua function '%s' does not exist"
+msgstr "lua-funktionen '%s' finns inte"
+
+#: automate.cc:2317
+#, c-format
+msgid "lua call '%s' failed"
+msgstr "lua-anropet av '%s' misslyckades"
+
 #: basic_io.cc:30
 #, c-format
 msgid "parsing a %s at %d:%d:E: %s"
@@ -584,51 +599,51 @@ msgstr "alla givna argument är administrativa sökvägar; avbryter"
 msgid "Interface for scripted execution"
 msgstr "Gränssnitt till skriptat körning"
 
-#: cmd_automate.cc:86
+#: cmd_automate.cc:87
 msgid "Prints the automation interface's version"
 msgstr "Skriv ut automatiseringsgränssnittets versionsnummer"
 
-#: cmd_automate.cc:163
+#: cmd_automate.cc:164
 #, c-format
 msgid "Bad input to automate stdio: expected ':' after string size"
 msgstr ""
 "Felaktigt indata till automate stdio: ':' förväntad efter strängstorlek"
 
-#: cmd_automate.cc:182
+#: cmd_automate.cc:183
 #, c-format
 msgid "Bad input to automate stdio: unexpected EOF"
 msgstr "Felaktigt indata till automate stdio: oväntat filslut"
 
-#: cmd_automate.cc:210
+#: cmd_automate.cc:211
 #, c-format
 msgid "Bad input to automate stdio: unknown start token '%c'"
 msgstr "felaktigt indata till automate stdio: '%c' är ett okänt nyckelord"
 
-#: cmd_automate.cc:232
+#: cmd_automate.cc:233
 #, c-format
 msgid "Bad input to automate stdio: expected '%c' token"
 msgstr "Felaktigt indata till automate stdio: nyckelordet '%c' förväntat"
 
-#: cmd_automate.cc:342
+#: cmd_automate.cc:343
 msgid "Automates several commands in one run"
 msgstr "Automatiserar flera kommandon i en och sammam körning"
 
-#: cmd_automate.cc:364
+#: cmd_automate.cc:365
 #, c-format
 msgid "Bad input to automate stdio: command name is missing"
 msgstr "Felaktigt indata till automate stdio: saknar kommandonamn"
 
-#: cmd_automate.cc:389 cmd_automate.cc:480
+#: cmd_automate.cc:390 cmd_automate.cc:481
 #, c-format
 msgid "no completions for this command"
 msgstr "detta kommando gick inte att förstå"
 
-#: cmd_automate.cc:393 cmd_automate.cc:484
+#: cmd_automate.cc:394 cmd_automate.cc:485
 #, c-format
 msgid "multiple completions possible for this command"
 msgstr "detta kommando har flera möjliga tolkningar"
 
-#: cmd_automate.cc:447
+#: cmd_automate.cc:448
 #, c-format
 msgid ""
 "It is illegal to call the mtn_automate() lua extension,\n"
@@ -637,13 +652,13 @@ msgstr ""
 "Det är inte tillåtet att anropa lua-utökningen mtn_automate(),\n"
 "utom från funktioner definierade med register_command()."
 
-#: cmd_automate.cc:457
+#: cmd_automate.cc:458
 #, c-format
 msgid "Bad input to mtn_automate() lua extension: command name is missing"
 msgstr ""
 "Felaktigt indata till lua-utökningen ntn_automate(): saknar kommandonamn"
 
-#: cmd_automate.cc:473
+#: cmd_automate.cc:474
 #, c-format
 msgid "no command found"
 msgstr "hittade inget kommando"
@@ -848,6 +863,143 @@ msgstr "Visar en revisions höjd"
 #, c-format
 msgid "cached height: %s"
 msgstr "cachade höjder: %s"
+
+#: cmd_conflicts.cc:19
+msgid "Commands for conflict resolutions"
+msgstr "Kommandon för att lösa revisioner"
+
+#: cmd_conflicts.cc:68
+#, c-format
+msgid "duplicate_name %s"
+msgstr "duplicate_name %s"
+
+#: cmd_conflicts.cc:73 cmd_conflicts.cc:111
+#, c-format
+msgid "possible resolutions:"
+msgstr "möjliga lösningar:"
+
+#: cmd_conflicts.cc:77
+#, c-format
+msgid "resolve_first_left drop"
+msgstr "resolve_first_left drop"
+
+#: cmd_conflicts.cc:78
+#, c-format
+msgid "resolve_first_left rename \"name\""
+msgstr "resolve_first_left rename \"namn\""
+
+#: cmd_conflicts.cc:79
+#, c-format
+msgid "resolve_first_left user \"name\""
+msgstr "resolve_first_left user \"namn\""
+
+#: cmd_conflicts.cc:84
+#, c-format
+msgid "resolve_first_right drop"
+msgstr "resolve_first_right drop"
+
+#: cmd_conflicts.cc:85
+#, c-format
+msgid "resolve_first_right rename \"name\""
+msgstr "resolve_first_right rename \"namn\""
+
+#: cmd_conflicts.cc:86
+#, c-format
+msgid "resolve_first_right user \"name\""
+msgstr "resolve_first_right user \"namn\""
+
+#: cmd_conflicts.cc:106
+#, c-format
+msgid "content %s"
+msgstr "content %s"
+
+#: cmd_conflicts.cc:112
+#, c-format
+msgid "resolve_first interactive \"file_name\""
+msgstr "resolve_first interactive \"filnamn\""
+
+#: cmd_conflicts.cc:113
+#, c-format
+msgid "resolve_first user \"file_name\""
+msgstr "resolve_first user \"filnamn\""
+
+#: cmd_conflicts.cc:128 cmd_conflicts.cc:141 cmd_merging.cc:963
+#, c-format
+msgid "warning: %d conflict with no supported resolutions."
+msgid_plural "warning: %d conflicts with no supported resolutions."
+msgstr[0] "varning: %d konflikt utan lösning."
+msgstr[1] "varning: %d konflikter utan lösning."
+
+#: cmd_conflicts.cc:132
+#, c-format
+msgid "all conflicts resolved"
+msgstr "alla konflikter lösta"
+
+#: cmd_conflicts.cc:218
+#, c-format
+msgid "too many arguments"
+msgstr "för många givna argument"
+
+#: cmd_conflicts.cc:223 cmd_conflicts.cc:229 cmd_conflicts.cc:292
+#: cmd_conflicts.cc:306 cmd_conflicts.cc:354 cmd_conflicts.cc:367
+#, c-format
+msgid "wrong number of arguments"
+msgstr "felaktigt antal givna argument"
+
+#: cmd_conflicts.cc:231
+#, c-format
+msgid "left and right resolutions cannot both be 'user'"
+msgstr "vänster och höger lösning får inte båda vara 'user'"
+
+#: cmd_conflicts.cc:294
+#, c-format
+msgid "result path must be under _MTN"
+msgstr "resultatfilen måste ligga under _MTN"
+
+#: cmd_conflicts.cc:325
+#, c-format
+msgid "no resolvable yet unresolved left side conflicts"
+msgstr "inga lösningar på ännu olösta konflikter på vänstersidan"
+
+#: cmd_conflicts.cc:329
+#, c-format
+msgid "no resolvable yet unresolved right side conflicts"
+msgstr "inga lösningar på ännu olösta konflikter på högersidan"
+
+#: cmd_conflicts.cc:333
+#, c-format
+msgid "no resolvable yet unresolved single-file conflicts"
+msgstr "inga lösningar på ännu olösta enfilskonflikter"
+
+#: cmd_conflicts.cc:347
+msgid ""
+"Show the first unresolved conflict in the conflicts file, and possible "
+"resolutions"
+msgstr "Visa den första olösta konflikten i konfliktfilen och möjliga lösningar"
+
+#: cmd_conflicts.cc:360
+msgid "Show the remaining unresolved conflicts in the conflicts file"
+msgstr "Visa kvarvarande olösta konflikter i konfliktfilen"
+
+#: cmd_conflicts.cc:372 cmd_conflicts.cc:386 cmd_conflicts.cc:400
+msgid "RESOLUTION"
+msgstr "LÖSNING"
+
+#: cmd_conflicts.cc:373
+msgid "Set the resolution for the first unresolved single-file conflict"
+msgstr "Sätt lösningen till den första olösta enkelfilskonflikten"
+
+#: cmd_conflicts.cc:387
+msgid "Set the left resolution for the first unresolved two-file conflict"
+msgstr "Sätt den vänstra lösningen på den första tvåfilskonflikten"
+
+#: cmd_conflicts.cc:401
+msgid "Set the right resolution for the first unresolved two-file conflict"
+msgstr "Sätt den högra lösningen på den första tvåfilskonflikten"
+
+#: cmd_conflicts.cc:415
+msgid "Delete any bookkeeping files related to conflict resolution"
+msgstr "Ta bort alla administrativa filer som hör ihop med konfliktlösning"
 
 #: cmd_diff_log.cc:128
 msgid "Deleted entries:"
@@ -1304,7 +1456,9 @@ msgstr "okänd"
 msgid ""
 "Lists duplicate files in the specified revision. If no revision is "
 "specified, use the workspace"
-msgstr "Visa duplicerade filer i den angivna revisionen.  Om ingen revision anges används arbetskopian"
+msgstr ""
+"Visa duplicerade filer i den angivna revisionen.  Om ingen revision anges "
+"används arbetskopian"
 
 #: cmd_list.cc:173
 #, c-format
@@ -1519,13 +1673,13 @@ msgstr "[ihopslagen] %s"
 msgid "Merges unmerged heads of a branch"
 msgstr "Slår ihop ej ihopslagna löv i grenen"
 
-#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1327
+#: cmd_merging.cc:443 cmd_merging.cc:999 cmd_merging.cc:1328
 #, c-format
 msgid "please specify a branch, with --branch=BRANCH"
 msgstr "var god ange en gren med --branch=GREN"
 
 #: cmd_merging.cc:449 cmd_merging.cc:564 cmd_merging.cc:567
-#: cmd_merging.cc:1336 cmd_netsync.cc:404 cmd_ws_commit.cc:625
+#: cmd_merging.cc:1337 cmd_netsync.cc:404 cmd_ws_commit.cc:625
 #, c-format
 msgid "branch '%s' is empty"
 msgstr "grenen '%s' är tom"
@@ -1688,13 +1842,6 @@ msgstr "%s är en förfader till %s; någon ihopslagning behövs inte."
 msgid "no conflicts detected"
 msgstr "inga konflikter funna"
 
-#: cmd_merging.cc:963
-#, c-format
-msgid "warning: %d conflict with no supported resolutions."
-msgid_plural "warning: %d conflicts with no supported resolutions."
-msgstr[0] "varning: %d konflikt utan lösning."
-msgstr[1] "varning: %d konflikter utan lösning."
-
 #: cmd_merging.cc:970
 msgid "REV REV"
 msgstr "REV REV"
@@ -1713,17 +1860,19 @@ msgstr "Konflikten beräknas på bas av de två angivna revisionerna REV."
 #: cmd_merging.cc:1006
 #, c-format
 msgid "branch '%s' has only 1 head; must be at least 2 for conflicts"
-msgstr "grenen '%s' har bara 1 löv; det måste vara minst 2 stycken för 'show_conflicts'"
+msgstr ""
+"grenen '%s' har bara 1 löv; det måste vara minst 2 stycken för "
+"'show_conflicts'"
 
-#: cmd_merging.cc:1038
+#: cmd_merging.cc:1039
 msgid "[LEFT_REVID RIGHT_REVID]"
 msgstr "[VÄNSTER_REVID HÖGER_REVID]"
 
-#: cmd_merging.cc:1039
+#: cmd_merging.cc:1040
 msgid "Shows the conflicts between two revisions."
 msgstr "Visar konflikterna mellan två revisioner."
 
-#: cmd_merging.cc:1040
+#: cmd_merging.cc:1041
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command."
@@ -1731,41 +1880,46 @@ msgstr ""
 "Utan givna argument blir VÄNSTER_REVID och HÖGER_REVID de två första löven "
 "som kommandot 'merge' skulle ha valt."
 
-#: cmd_merging.cc:1054
+#: cmd_merging.cc:1055
 msgid "Store the conflicts from merging two revisions."
 msgstr "Spara konflikterna från en hopslagning av två revisioner."
 
-#: cmd_merging.cc:1055
+#: cmd_merging.cc:1056
 msgid ""
 "If no arguments are given, LEFT_REVID and RIGHT_REVID default to the first "
 "two heads that would be chosen by the 'merge' command. If --conflicts-file "
 "is not given, '_MTN/conflicts' is used."
-msgstr "Utan givna argument blir VÄNSTER_REVID och HÖGER_REVID de två första löven som kommandot 'merge' skulle ha valt.  Om --conflicts-file inte är angiven används '_MTN/conflicts'."
+msgstr ""
+"Utan givna argument blir VÄNSTER_REVID och HÖGER_REVID de två första löven "
+"som kommandot 'merge' skulle ha valt.  Om --conflicts-file inte är angiven "
+"används '_MTN/conflicts'."
 
-#: cmd_merging.cc:1073
+#: cmd_merging.cc:1074
 msgid "LEFT_REVID LEFT_FILENAME RIGHT_REVID RIGHT_FILENAME"
 msgstr "VÄNSTER_REVID VÄNSTER_FILNAMN HÖGER_REVID HÖGER_FILNAMN"
 
-#: cmd_merging.cc:1074
+#: cmd_merging.cc:1075
 msgid ""
 "Prints the results of the internal line merger, given two child revisions "
 "and file names"
-msgstr "Visa resultatet från den interna ihopslagningsmekanismen, utgående från två revisioner och filnamn"
+msgstr ""
+"Visa resultatet från den interna ihopslagningsmekanismen, utgående från två "
+"revisioner och filnamn"
 
-#: cmd_merging.cc:1125
+#: cmd_merging.cc:1126
 #, c-format
 msgid "internal line merger failed"
 msgstr "den interna ihopslagningsmekanismen misslyckades"
 
-#: cmd_merging.cc:1130
+#: cmd_merging.cc:1131
 msgid "[-r FROM] -r TO [PATH...]"
 msgstr "[-r FRÅN] -r TILL [SÖKVÄG...]"
 
-#: cmd_merging.cc:1131
+#: cmd_merging.cc:1132
 msgid "Applies changes made at arbitrary places in history"
 msgstr "Applicerar ändringar som gjorts på godtyckliga platser i historien"
 
-#: cmd_merging.cc:1132
+#: cmd_merging.cc:1133
 msgid ""
 "This command takes changes made at any point in history, and edits your "
 "current workspace to include those changes.  The end result is identical to "
@@ -1787,7 +1941,7 @@ msgstr ""
 "Om två revisioner har givits utförs alla ändringar som gjorts för att komma "
 "från den första till den andra."
 
-#: cmd_merging.cc:1155
+#: cmd_merging.cc:1156
 #, c-format
 msgid ""
 "revision %s is a merge\n"
@@ -1798,45 +1952,45 @@ msgstr ""
 "för att utföra ändringarna relativt en av dess föräldrar, gör så här:\n"
 "  %s pluck -r FÖRÄLDER -r %s"
 
-#: cmd_merging.cc:1171
+#: cmd_merging.cc:1172
 #, c-format
 msgid "no changes to apply"
 msgstr "inga ändringar att utföra"
 
-#: cmd_merging.cc:1232
+#: cmd_merging.cc:1233
 #, c-format
 msgid "no changes to be applied"
 msgstr "inga ändringar att utföra"
 
-#: cmd_merging.cc:1282
+#: cmd_merging.cc:1283
 #, c-format
 msgid "no changes were applied"
 msgstr "inga ändringar blev utförda"
 
-#: cmd_merging.cc:1285
+#: cmd_merging.cc:1286
 #, c-format
 msgid "applied changes to workspace"
 msgstr "utförde ändringarna i arbetskopian"
 
-#: cmd_merging.cc:1318
+#: cmd_merging.cc:1319
 msgid "Shows unmerged head revisions of a branch"
 msgstr "Visar ej ihopslagna lövrevisioner i grenen"
 
-#: cmd_merging.cc:1338
+#: cmd_merging.cc:1339
 #, c-format
 msgid "branch '%s' is currently merged:"
 msgstr "grenen '%s' har för tillfället ett löv:"
 
-#: cmd_merging.cc:1340
+#: cmd_merging.cc:1341
 #, c-format
 msgid "branch '%s' is currently unmerged:"
 msgstr "grenen '%s' har för tillfället mer än ett löv:"
 
-#: cmd_merging.cc:1348
+#: cmd_merging.cc:1349
 msgid "Dumps the roster associated with a given identifier"
 msgstr "Skriver ut den lista som hör ihop med angiven identifierare"
 
-#: cmd_merging.cc:1349
+#: cmd_merging.cc:1350
 msgid "If no REVID is given, the workspace is used."
 msgstr "Om ingen REVID angivits används arbetskopian."
 
@@ -3703,7 +3857,7 @@ msgstr ""
 "Nyckeln '%' som är lagrad i databasen stämmer inte ihop med versionen i ditt "
 "lokala nyckellager!"
 
-#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1176 lua_hooks.cc:1199
+#: lua.cc:477 lua.cc:488 lua.cc:500 lua_hooks.cc:1195 lua_hooks.cc:1218
 #: paths.cc:348
 #, c-format
 msgid "%s called with an invalid parameter"
@@ -3729,7 +3883,7 @@ msgstr "lua-fel vid läsning av '%s'"
 msgid "rcfile '%s' does not exist"
 msgstr "rcfilen '%s' finns inte"
 
-#: lua_hooks.cc:1168
+#: lua_hooks.cc:1187
 #, c-format
 msgid "Call to user command %s (lua command: %s) failed."
 msgstr "Anropet till användarkommandot %s (lua command: %s) misslyckades."
@@ -3897,12 +4051,15 @@ msgstr "kommunikationen med %s fallerade i tillståndet \"working\" (fel)"
 #: netsync.cc:563
 #, c-format
 msgid "peer %s IO failed in shutdown state (possibly client misreported error)"
-msgstr "kommunikationen med %s fallerade i tillståndet \"shutdown\" (klienten kan felaktigt ha rapporterat ett fel)"
+msgstr ""
+"kommunikationen med %s fallerade i tillståndet \"shutdown\" (klienten kan "
+"felaktigt ha rapporterat ett fel)"
 
 #: netsync.cc:569
 #, c-format
 msgid "peer %s IO failed in confirmed state (success)"
-msgstr "kommunikationen med %s fallerade i tillståndet \"confirmed\" (framgång)"
+msgstr ""
+"kommunikationen med %s fallerade i tillståndet \"confirmed\" (framgång)"
 
 #: netsync.cc:577
 #, c-format
@@ -4682,7 +4839,8 @@ msgstr "använd _MTN/conflicts för att lösa konflikter"
 #, c-format
 msgid ""
 "only one of --resolve-conflicts or --resolve-conflicts-file may be given"
-msgstr "--resolve-conflits och --resolve-conflicts-file får inte anges samtidigt"
+msgstr ""
+"--resolve-conflits och --resolve-conflicts-file får inte anges samtidigt"
 
 #: options_list.hh:704
 msgid "file in which to store conflicts"
@@ -5694,38 +5852,49 @@ msgstr "ssh_agent: pakettypen (%u) != 12"
 msgid ""
 "ssh_agent: get_keys: not all or too many key bytes consumed, location (%u), "
 "length (%i)"
-msgstr "ssh_agent: get_keys: för få eller för många nyckel-bytes använda, position (%u), längd (%i)"
+msgstr ""
+"ssh_agent: get_keys: för få eller för många nyckel-bytes använda, position (%"
+"u), längd (%i)"
 
 #: ssh_agent.cc:375
 #, c-format
 msgid ""
 "ssh_agent: get_keys: not all or too many packet bytes consumed, location (%"
 "u), length (%i)"
-msgstr "ssh_agent: get_keys: för få eller för många paket-bytes använda, position (%u), längd (%i)"
+msgstr ""
+"ssh_agent: get_keys: för få eller för många paket-bytes använda, position (%"
+"u), längd (%i)"
 
 #: ssh_agent.cc:418
 #, c-format
 msgid "ssh_agent: get_keys: attempted to sign data when not connected"
-msgstr "ssh_agent: get_keys: försökte signera data utan att vara kopplad till agenten"
+msgstr ""
+"ssh_agent: get_keys: försökte signera data utan att vara kopplad till agenten"
 
 #: ssh_agent.cc:464
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many signature bytes consumed, location "
 "(%u), length (%i)"
-msgstr "ssh_agent: sign_data: för få eller för många signatur-bytes använda, position (%u), längd (%i)"
+msgstr ""
+"ssh_agent: sign_data: för få eller för många signatur-bytes använda, "
+"position (%u), längd (%i)"
 
 #: ssh_agent.cc:470
 #, c-format
 msgid ""
 "ssh_agent: sign_data: not all or too many packet bytes consumed, location (%"
 "u), length (%i)"
-msgstr "ssh_agent: sign_data: för få eller för många paket-bytes använda, position (%u), längd (%i)"
+msgstr ""
+"ssh_agent: sign_data: för få eller för många paket-bytes använda, position (%"
+"u), längd (%i)"
 
 #: ssh_agent.cc:480
 #, c-format
 msgid "ssh_agent: add_identity: attempted to add a key when not connected"
-msgstr "ssh_agent: add_identity: försökte lägga till en nyckel utan att vara kopplad till agenten"
+msgstr ""
+"ssh_agent: add_identity: försökte lägga till en nyckel utan att vara kopplad "
+"till agenten"
 
 #: ssh_agent.cc:496
 #, c-format
@@ -6137,7 +6306,9 @@ msgstr "lägger till %s i arbetskopians manifest"
 msgid ""
 "Non-recursive add: Files in the directory '%s' will not be added "
 "automatically."
-msgstr "Icke-rekursiv addering: Filer i katalogen '%s' kommer inte att läggas till automatiskt"
+msgstr ""
+"Icke-rekursiv addering: Filer i katalogen '%s' kommer inte att läggas till "
+"automatiskt"
 
 #: work.cc:877
 #, c-format
