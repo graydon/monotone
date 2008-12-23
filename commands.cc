@@ -660,6 +660,10 @@ namespace commands
     string visibleid = join_words(vector< utf8 >(ident.begin() + 1,
                                                  ident.end()))();
 
+    // Print command parameters.
+    string params = cmd->params();
+    split_into_lines(params, lines);
+
     if (visibleid.empty())
       out << format_text(F("Commands in group '%s':") %
                          join_words(ident)())
@@ -670,15 +674,14 @@ namespace commands
           out << format_text(F("Subcommands of '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
-        else
+        else if (!lines.empty())
           out << format_text(F("Syntax specific to '%s %s':") %
                              ui.prog_name % visibleid)
               << "\n\n";
       }
 
-    // Print command parameters.
-    string params = cmd->params();
-    split_into_lines(params, lines);
+    // lines might be empty, but only when specific syntax is to be
+    // displayed, not in the other cases.
     if (!lines.empty())
       {
         for (vector<string>::const_iterator j = lines.begin();
