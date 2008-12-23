@@ -93,7 +93,7 @@ endif
 build-arch: build-arch-stamp
 build-arch-stamp: config.status
 	make $(PAR) -C po all
-	make $(PAR) mtn
+	make $(PAR) mtn mtnopt
 ifeq "$(findstring nocheck, $(DEB_BUILD_OPTIONS))" ""
 	make $(PAR) unit_tester tester check_net
 	DISABLE_NETWORK_TESTS=1 make check-local || sh contrib/dump-test-logs.sh
