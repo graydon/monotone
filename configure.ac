@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.58)
-AC_INIT(monotone, 0.41, monotone-devel@nongnu.org)
+AC_INIT(monotone, 0.42, monotone-devel@nongnu.org)
 AM_INIT_AUTOMAKE([1.9 tar-ustar std-options])
 AC_CONFIG_SRCDIR([app_state.cc])
 AM_CONFIG_HEADER([config.h])
@@ -67,8 +67,8 @@ AC_HEADER_STDC
 dnl Explicitly specifying AC_INCLUDES_DEFAULT gets autoconf not to do all
 dnl the tests twice.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h sys/file.h \
-		  sys/socket.h sys/time.h termios.h errno.h],,,
-		 [AC_INCLUDES_DEFAULT()])
+          sys/socket.h sys/time.h termios.h errno.h],,,
+         [AC_INCLUDES_DEFAULT()])
 AC_HEADER_STDBOOL
 
 # gettext is nominally a library, but its tests don't work in C++ mode.
@@ -90,12 +90,12 @@ AC_OUTPUT_COMMANDS([
       # PO directories have a Makefile.in generated from Makefile.in.in.
       case "$ac_file" in */Makefile.in)
         target="`echo x$ac_file | sed -e 's/.in$//' -e 's/^x//'`"
-	mtn_tmp="${target}.tmp"
+    mtn_tmp="${target}.tmp"
         test -n "$as_me" && echo "$as_me: fixing $target" || echo "fixing $target"
-	sed -e 's/^MSGMERGE =.*$/MSGMERGE = false/' \
+    sed -e 's/^MSGMERGE =.*$/MSGMERGE = false/' \
             -e 's/^MSGMERGE_UPDATE =.*$/MSGMERGE_UPDATE = true/' \
                "$target" > "$mtn_tmp"
-	mv -f "$mtn_tmp" "$target" ;;
+    mv -f "$mtn_tmp" "$target" ;;
       esac
     done
 ])
@@ -121,11 +121,11 @@ AC_TYPE_SIZE_T
 AC_TYPE_PID_T
 
 AC_CHECK_MEMBERS([struct stat.st_ctim.tv_nsec,
-	          struct stat.st_mtim.tv_nsec,
-		  struct stat.st_ctimespec.tv_nsec, 
-	          struct stat.st_mtimespec.tv_nsec,
-		  struct stat.st_ctimensec,
-		  struct stat.st_mtimensec])
+              struct stat.st_mtim.tv_nsec,
+          struct stat.st_ctimespec.tv_nsec,
+              struct stat.st_mtimespec.tv_nsec,
+          struct stat.st_ctimensec,
+          struct stat.st_mtimensec])
 AC_CHECK_MEMBERS([struct dirent.d_type], , ,[#include <dirent.h>])
 
 # Checks for library functions.
@@ -134,7 +134,7 @@ AC_FUNC_MMAP
 AC_FUNC_LOCALE_WORKS
 AC_FUNC_ICONV_TRANSLIT
 AC_CHECK_FUNCS([atexit memset mkstemp strptime lrint \
-		__cxa_current_exception_type __cxa_demangle \
+        __cxa_current_exception_type __cxa_demangle \
                 putenv setenv unsetenv dirfd fstatat mkdtemp])
 
 # simple library checks

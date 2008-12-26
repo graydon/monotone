@@ -1,5 +1,5 @@
 #define APPNAME="monotone"
-#define APPVERS="0.41"
+#define APPVERS="0.42"
 
 [Setup]
 AppName={#APPNAME}
@@ -27,10 +27,7 @@ Source: "..\figures\*.png"; DestDir: "{app}\documentation\figures"; Flags: ignor
 Source: "..\COPYING"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\po\de.gmo"; DestDir: "{app}\locale\de\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
 Source: "..\po\es.gmo"; DestDir: "{app}\locale\es\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
-Source: "..\po\fr.gmo"; DestDir: "{app}\locale\fr\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
 Source: "..\po\it.gmo"; DestDir: "{app}\locale\it\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
-Source: "..\po\ja.gmo"; DestDir: "{app}\locale\ja\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
-Source: "..\po\pt_BR.gmo"; DestDir: "{app}\locale\pt_BR\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
 Source: "..\po\sv.gmo"; DestDir: "{app}\locale\sv\LC_MESSAGES"; DestName: "monotone.mo"; Flags: ignoreversion
 Source: "\mingw\bin\libiconv-2.dll"; DestDir: "{app}"
 Source: "\mingw\bin\libintl-8.dll"; DestDir: "{app}"
